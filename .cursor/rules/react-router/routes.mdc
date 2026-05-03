@@ -1,0 +1,28 @@
+---
+description: Use when implementing a new route or update an existing route. Useful to understand the necessary routing component structure.
+globs: app/routes/**/*
+alwaysApply: false
+---
+
+# Route handling
+
+## Conventions
+
+- Configure route paths in [app/routes.js](mdc:app/routes.js).
+- Route modules should default-export a route component function (typically `PascalCaseRoute` naming).
+- Export `meta` when the page should set title/metadata.
+
+## Data and mutations
+
+- Read data in `loader`.
+- Handle mutations in `action`, typically from `<Form>` or `fetcher` submissions.
+
+## Auth and errors
+
+- For authenticated routes, export `middleware = [authMiddleware]` from `#/libs/auth/index.server`.
+- In loader/action `catch` blocks, return `handleError` from `#/libs/error.server`.
+
+## Boundaries
+
+- Keep route orchestration in route modules.
+- Move reusable UI to `app/components` and domain workflows to `app/services`.

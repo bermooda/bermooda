@@ -1,0 +1,18 @@
+---
+description: Rules for changes to the Prisma schema that require migration and client regeneration
+globs: prisma/schema.prisma
+alwaysApply: false
+---
+
+# Prisma Schema Changes
+
+When `prisma/schema.prisma` changes, complete these steps before finishing:
+
+1. Create a migration:
+   - `npm run prisma:migrate -- --name <descriptive_snake_case_name>`
+   - Confirm generated SQL in `prisma/migrations/` matches the intent.
+2. Regenerate client:
+   - `npx prisma generate`
+3. Verify that `prisma/generated/` reflects the updated schema.
+
+Do not ship schema changes without a migration.

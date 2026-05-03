@@ -1,0 +1,27 @@
+---
+description: Rules for organizing React components in app/components directory
+globs: app/components/**/*.jsx,app/components/**/*.js
+alwaysApply: false
+---
+
+# Component organization (minimal)
+
+Keep component rules short and practical. Favor existing patterns in `app/components`.
+
+## Placement
+
+- Put reusable primitives in `app/components/ui/`.
+- Put feature-specific UI in its feature folder (for example `auth/`, `dashboard/`, `landing/`, `support/`).
+- Keep route-level data loading/mutations in routes and services, not in shared UI primitives.
+
+## Boundaries
+
+- `ui` components should be presentation-focused and reusable.
+- Feature components can compose UI components and local hooks.
+- Move business workflows to `app/services` when logic grows beyond view orchestration.
+
+## Naming and imports
+
+- Component file names are lowercase and hyphenated.
+- Use PascalCase for component function names.
+- Use `#/*` imports inside `app/`, without file extensions.

@@ -1,0 +1,28 @@
+---
+description: Rules for organizing code in app/libs and app/services directories
+globs: app/libs/**/*.js,app/services/**/*.js
+alwaysApply: false
+---
+
+# Libs vs services (minimal)
+
+## `app/libs`
+
+- Infrastructure and integrations (auth setup, db clients, queue, third-party SDK wrappers).
+- Keep modules reusable and low-level.
+- Do not put domain workflows here.
+
+## `app/services`
+
+- Domain/business workflows that orchestrate libs and persistence.
+- Services may depend on libs and other services.
+
+## Dependency boundary
+
+- `services -> libs` is allowed.
+- `libs -> services` is not allowed.
+
+## File pattern
+
+- Prefer `*.server.js` for server-only modules in both directories.
+- Use `#/*` imports and omit extensions.

@@ -1,0 +1,18 @@
+---
+description: Framework specific rules for React Router / Remix
+globs: app/**/*.js,app/**/*.jsx,app/root.jsx,app/routes.js
+alwaysApply: false
+---
+
+# React Router
+
+Use React Router framework mode for routing and data APIs in this repo.
+
+## Required conventions
+
+- Do not use Remix imports.
+- Define URL mappings in [app/routes.js](mdc:app/routes.js), not via route-file naming conventions.
+- When adding/removing a route module, update `app/routes.js` in the same change.
+- Prefer React Router loaders/actions for server data work in route modules.
+
+Reference docs: https://reactrouter.com/home
