@@ -1,0 +1,143 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* The Inter font is loaded in the root.jsx file */
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+  /* Modern Dark Mode Color Palette */
+  --color-dark-950: oklch(0.12 0.02 280);
+  --color-dark-900: oklch(0.15 0.025 280);
+  --color-dark-850: oklch(0.17 0.025 280);
+  --color-dark-800: oklch(0.2 0.025 280);
+  --color-dark-700: oklch(0.25 0.02 280);
+  --color-dark-600: oklch(0.35 0.015 280);
+  --color-dark-500: oklch(0.45 0.01 280);
+  --color-dark-400: oklch(0.6 0.01 280);
+  --color-dark-300: oklch(0.75 0.005 280);
+
+  /* Accent gradient colors */
+  --color-accent-cyan: oklch(0.75 0.15 195);
+  --color-accent-violet: oklch(0.65 0.2 290);
+  --color-accent-fuchsia: oklch(0.7 0.18 320);
+  --color-accent-indigo: oklch(0.6 0.22 275);
+}
+
+/* Dark mode gradient backgrounds - scoped to .dark */
+.dark .dark-gradient-main {
+  background: linear-gradient(
+    135deg,
+    var(--color-dark-950) 0%,
+    var(--color-dark-900) 50%,
+    oklch(0.14 0.04 290) 100%
+  );
+}
+
+.dark .dark-gradient-subtle {
+  background: linear-gradient(
+    180deg,
+    var(--color-dark-900) 0%,
+    var(--color-dark-950) 100%
+  );
+}
+
+.dark .dark-gradient-card {
+  background: linear-gradient(
+    145deg,
+    var(--color-dark-800) 0%,
+    var(--color-dark-850) 100%
+  );
+}
+
+.dark .dark-gradient-hero {
+  background: linear-gradient(
+    135deg,
+    oklch(0.16 0.04 280) 0%,
+    oklch(0.13 0.03 290) 50%,
+    var(--color-dark-950) 100%
+  );
+}
+
+/* Glassmorphism effect for dark mode */
+.dark .dark-glass {
+  background: oklch(0.18 0.025 280 / 0.7);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid oklch(1 0 0 / 0.08);
+}
+
+/* Accent gradient for buttons and highlights - only in dark mode */
+.dark .accent-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-violet) 0%,
+    var(--color-accent-fuchsia) 100%
+  );
+}
+
+.dark .accent-gradient:hover,
+.dark .accent-gradient-hover {
+  background: linear-gradient(
+    135deg,
+    oklch(0.7 0.22 290) 0%,
+    oklch(0.75 0.2 320) 100%
+  );
+}
+
+/* Glow effects - only in dark mode */
+.dark .glow-accent {
+  box-shadow:
+    0 0 20px oklch(0.65 0.2 290 / 0.3),
+    0 0 40px oklch(0.65 0.2 290 / 0.1);
+}
+
+.dark .glow-accent-sm {
+  box-shadow: 0 0 10px oklch(0.65 0.2 290 / 0.25);
+}
+
+/* Text gradient for headings - only in dark mode */
+.dark .text-gradient-accent {
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-cyan) 0%,
+    var(--color-accent-violet) 50%,
+    var(--color-accent-fuchsia) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Mesh gradient background for hero sections - only in dark mode */
+.dark .dark-mesh-gradient {
+  background-color: var(--color-dark-950);
+  background-image:
+    radial-gradient(
+      at 40% 20%,
+      oklch(0.25 0.08 290 / 0.4) 0px,
+      transparent 50%
+    ),
+    radial-gradient(at 80% 0%, oklch(0.2 0.06 320 / 0.3) 0px, transparent 40%),
+    radial-gradient(at 0% 50%, oklch(0.2 0.05 270 / 0.2) 0px, transparent 50%),
+    radial-gradient(
+      at 80% 50%,
+      oklch(0.15 0.04 200 / 0.15) 0px,
+      transparent 40%
+    ),
+    radial-gradient(at 0% 100%, oklch(0.2 0.06 290 / 0.25) 0px, transparent 50%);
+}
+
+/* Border gradient effect - only in dark mode */
+.dark .border-gradient-accent {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--color-dark-800), var(--color-dark-800)) padding-box,
+    linear-gradient(
+        135deg,
+        var(--color-accent-violet),
+        var(--color-accent-fuchsia)
+      )
+      border-box;
+}

@@ -1,0 +1,26 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+# Project-wide rules (minimal, high-signal)
+
+This ruleset intentionally keeps only non-obvious, repository-specific requirements.
+
+## Core
+
+- Make the smallest change that fully solves the task.
+- Prefer existing patterns in nearby files over introducing new abstractions.
+- In `app/`, write JavaScript/JSX (not TypeScript) unless explicitly requested.
+
+## Imports and logging
+
+- For imports inside `app/`, use the `#/*` alias instead of deep relative paths.
+- Do not include file extensions in imports.
+- On the server, use `#/utils/logger.server` for logging; avoid `console.log`.
+
+## Validation
+
+- Before finishing, run at least one relevant validation step for touched code (targeted test, lint, or build command).
+- Add new persistent rules only when they fix repeated agent mistakes.

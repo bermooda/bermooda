@@ -1,0 +1,14 @@
+.DS_Store
+/node_modules/
+
+# React Router
+/.react-router/
+/build/
+
+# Files
+.env
+/prisma/dev.db
+/prisma/dev.db-journal
+/prisma/queue.db
+/prisma/queue.db-shm
+/prisma/queue.db-wal

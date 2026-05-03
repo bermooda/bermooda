@@ -1,0 +1,29 @@
+---
+description: File naming conventions and server-side file patterns
+globs: app/**/*.js,app/**/*.jsx
+alwaysApply: false
+---
+
+# File naming conventions (minimal)
+
+## Naming
+
+- Use lowercase, hyphenated file and directory names.
+- Use `PascalCase` for exported React component function names.
+
+## Extensions
+
+- Use `.jsx` for files containing JSX.
+- Use `.js` for non-JSX modules.
+- Add `.server` before extension for server-only modules (`*.server.js`, `*.server.jsx`).
+
+## Common patterns
+
+- Custom hooks in `app/hooks` should use `use-*.jsx` naming.
+- Layout route modules use `_layout.jsx`.
+- Use `index.jsx`/`index.js` only for directory entry modules.
+
+## Imports
+
+- Inside `app/`, import with `#/*` alias.
+- Do not include file extensions in imports.

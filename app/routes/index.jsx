@@ -1,0 +1,52 @@
+import { redirect } from 'react-router';
+
+import config from '#/config';
+import { getCheckoutSession } from '#/services/stripe.server';
+import LandingHeader from '#/components/header/landing';
+import Benefits from '#/components/landing/benefits';
+import CTA from '#/components/landing/cta';
+import FAQ from '#/components/landing/faq';
+import Footer from '#/components/landing/footer';
+import Hero from '#/components/landing/hero';
+import Pricing from '#/components/landing/pricing';
+import Technologies from '#/components/landing/technologies';
+import Testimonials from '#/components/landing/testimonials';
+import TimeSavings from '#/components/landing/time-savings';
+
+export function meta() {
+  return [
+    { title: config.appName },
+    { name: 'description', content: config.appDescription },
+  ];
+}
+
+export async function action({ request }) {
+  const formData = await request.formData();
+  const priceId = formData.get('priceId');
+
+  // Create a new checkout session
+  const { url } = await getCheckoutSession(priceId, 'checkout/successful');
+
+  return redirect(url);
+}
+
+/**
+ * Landing page route
+ * A comprehensive landing page with multiple sections showcasing the CursorStack template
+ */
+export default function LandingRoute() {
+  return (
+    <div className="dark-mesh-gradient bg-white">
+      <LandingHeader />
+      <Hero />
+      <Technologies />
+      <TimeSavings />
+      <Benefits />
+      <Pricing />
+      <FAQ />
+      <Testimonials />
+      <CTA />
+      <Footer />
+    </div>
+  );
+}
