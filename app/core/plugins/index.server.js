@@ -200,11 +200,7 @@ export async function enable(pluginId) {
   const { manifest } = entry;
   const settingKey = `plugin.${pluginId}.enabled`;
 
-  await prisma.setting.upsert({
-    where: { key: settingKey },
-    create: { key: settingKey, value: 'true' },
-    update: { value: 'true' },
-  });
+  await settingsSet(settingKey, true);
 
   // Register hooks from the manifest.
   if (manifest.hooks) {
@@ -242,11 +238,7 @@ export async function disable(pluginId) {
   const { manifest } = entry;
   const settingKey = `plugin.${pluginId}.enabled`;
 
-  await prisma.setting.upsert({
-    where: { key: settingKey },
-    create: { key: settingKey, value: 'false' },
-    update: { value: 'false' },
-  });
+  await settingsSet(settingKey, false);
 
   const ctx = buildCtx(pluginId);
 

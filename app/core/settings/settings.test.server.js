@@ -107,6 +107,13 @@ describe('seedDefaults', () => {
         'pluginOrder',
       ])
     );
+
+    // Scalar string defaults must be JSON.stringify'd (value: '"USD"', not 'USD').
+    const currencyCall = prisma.setting.upsert.mock.calls.find(
+      (c) => c[0].where.key === 'defaultCurrency'
+    );
+    expect(currencyCall[0].create.value).toBe('"USD"');
+    expect(currencyCall[0].update.value).toBe('"USD"');
   });
 
   it('skips keys that already exist', async () => {
