@@ -17,11 +17,7 @@ export { useT } from './i18n/index.js';
 
 // -- Utilities --------------------------------------------------------------
 
-export function formatPrice(cents, currency = 'USD', locale = 'en') {
-  return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(
-    cents / 100
-  );
-}
+export { formatPrice } from './currency/index.server.js';
 
 // -- Components -------------------------------------------------------------
 
