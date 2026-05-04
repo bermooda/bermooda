@@ -1,4 +1,4 @@
-import TTLCache from '@isaacs/ttlcache';
+import { TTLCache } from '@isaacs/ttlcache';
 
 // Default TTL is 5 minutes
 const DEFAULT_TTL = 1000 * 60 * 5;
