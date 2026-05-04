@@ -46,7 +46,7 @@ const {
   getStorefrontComponent,
   getSlotBlocks,
   SLOT_NAMES,
-  _registry,
+  __resetRegistry,
 } = await import('./index.server.js');
 
 import prisma from '#/libs/prisma.server';
@@ -111,7 +111,9 @@ describe('defineTheme — required manifest fields', () => {
   });
 
   it('throws when "version" is an empty string', () => {
-    expect(() => defineTheme(validManifest({ version: '' }))).toThrow(/version/);
+    expect(() => defineTheme(validManifest({ version: '' }))).toThrow(
+      /version/
+    );
   });
 
   it('throws when "components" is missing', () => {
@@ -167,7 +169,7 @@ describe('defineTheme — required component presence', () => {
 
 describe('registerTheme + resolveActiveTheme', () => {
   beforeEach(() => {
-    _registry.clear();
+    __resetRegistry();
     vi.clearAllMocks();
   });
 
@@ -208,7 +210,7 @@ describe('registerTheme + resolveActiveTheme', () => {
 
 describe('getStorefrontComponent', () => {
   beforeEach(() => {
-    _registry.clear();
+    __resetRegistry();
     vi.clearAllMocks();
   });
 

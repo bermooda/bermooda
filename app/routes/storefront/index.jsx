@@ -1,8 +1,8 @@
 import { resolveActiveTheme } from '#/core/themes/index.server';
 
 export async function loader({ request: _request }) {
-  const theme = resolveActiveTheme();
-  return { themeName: theme.name };
+  const theme = await resolveActiveTheme();
+  return { themeName: theme?.name ?? null };
 }
 
 export default function StorefrontIndex() {
