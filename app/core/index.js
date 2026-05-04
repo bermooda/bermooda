@@ -18,6 +18,7 @@ export { useT } from './i18n/index.js';
 // -- Utilities --------------------------------------------------------------
 
 export { formatPrice } from './currency/index.server.js';
+export { uploadMedia } from './storage/index.server.js';
 
 // -- Components -------------------------------------------------------------
 
