@@ -55,7 +55,7 @@ app/
         forgot-password.jsx
         reset-password.jsx
         verify-2fa.jsx
-      _layout.jsx        # protected shell — requireAdmin() guard
+      _layout.jsx        # protected shell — admin auth via RR7 route middleware
         dashboard.jsx
         products/...
         categories/...
@@ -120,7 +120,7 @@ app/
 - `CheckoutSession` — `id`, `cartId`, `email`, `shippingAddressId?`, `billingAddressId?`, `shippingMethodId?`, `paymentProviderId?`, `status`, `expiresAt`.
 
 **Orders**
-- `Order` — `id`, `number` (sequential), `customerId?` (nullable for guest orders), `email`, `currency`, `locale`, totals (`subtotal`, `shipping`, `tax`, `discount`, `total`), `status`, `paymentStatus`, `fulfillmentStatus`, `paymentProvider`, `paymentRef?`, `placedAt`, **denormalized JSON snapshot** of shipping/billing addresses.
+- `Order` — `id`, `number` (sequential), `customerId?` (nullable for guest orders), `email`, `currency`, `locale`, totals (`subtotal`, `shipping`, `tax`, `discount`, `total`), `status`, `paymentStatus`, `fulfillmentStatus`, `paymentProvider`, `paymentRef?`, `createdAt`, `updatedAt`, **denormalized JSON snapshot** of shipping/billing addresses. (No separate `placedAt`: an `Order` row is only created on successful placement, so `createdAt` is the placement timestamp.)
 - `OrderLine` — `id`, `orderId`, `variantId?`, `sku`, `title`, `quantity`, `unitPriceCents`, `lineTotalCents`, `taxCents`.
 - `Shipment` — `id`, `orderId`, `carrier?`, `tracking?`, `status`, `shippedAt?`.
 - `Refund` — `id`, `orderId`, `amountCents`, `reason?`, `providerRef?`, timestamps.
@@ -244,7 +244,7 @@ Computed on every cart mutation, every checkout step, and re-run server-side at 
   - **Themes** — list, current selection, manifest-driven settings form, preview link.
   - **Plugins** — list, enable/disable, drag-to-reorder, manifest-driven settings form, link to plugin admin pages.
   - **Settings** — Shop name, contact email, currencies + default (USD/EUR/AUD shipped enabled by default, USD default), locales + default, tax mode, tax regions, shipping zones, admin user CRUD, email templates.
-- **Auth gate:** `requireAdmin()` in `routes/admin/_layout.jsx`. Staff and admin equal access in v1; granular permissions deferred.
+- **Auth gate:** RR7 route middleware (already enabled via `future.v8_middleware: true` in [react-router.config.js](../react-router.config.js)) attached to the admin `_layout.jsx`. The middleware reads the admin session cookie and redirects to `/admin/login` on failure — loaders no longer need per-handler `requireAdmin()` calls. The `account/*` tree uses the same pattern with the customer session cookie. Staff and admin equal access in v1; granular permissions deferred.
 - **Email templates** — order confirmation, password reset (admin & customer), customer welcome, abandoned cart (basic). React Email in `app/emails/shop/`. Triggered via existing `app/emails/job.server.js` queue. Translatable per locale.
 
 ---
@@ -281,17 +281,34 @@ Computed on every cart mutation, every checkout step, and re-run server-side at 
 
 ---
 
-## Removals from existing template (first commit)
+## Removals & cleanup from existing template (first commit)
 
-- `prisma/schema.prisma` — drop `Organization`, `Member`, `Invitation`, `Subscription`. Replace existing migrations with a fresh initial migration.
-- `app/services/polar.server.js` — drop.
-- `app/routes/checkout/polar.jsx`, `app/routes/webhooks/polar.jsx` — drop.
-- `app/routes/app/*` SaaS dashboard scaffolding — replaced by `app/routes/admin/*`.
-- `app/routes/organization/*` — drop.
-- `@polar-sh/remix` dep — remove from `package.json`.
-- `app/services/stripe.server.js` — repurposed as `app/core/payments/stripe.js` (Stripe payment-provider adapter).
+**Schema ([prisma/schema.prisma](../prisma/schema.prisma))**
+- Drop the `Organization`, `Member`, `Invitation`, `Subscription` models.
+- Drop the `Session.activeOrganizationId` column (added by the better-auth `organization` plugin; orphaned once the plugin is removed).
+- Replace existing migrations with a fresh initial migration.
 
-**Kept:** better-auth, Resend + React Email, LiteQuu, Pino, `@isaacs/ttlcache`, Telegram, Tailwind, Headless UI, Heroicons, oxlint/oxfmt, LiteFS, Tigris setup, `fly.toml`.
+**Subscription / billing cascade** (knock-on from dropping `Subscription`)
+- [app/services/stripe.server.js](../app/services/stripe.server.js) — **rewrite** (not just move) into `app/core/payments/stripe.js`: drop the subscription `checkout.session` helper and `customer.subscription.*` event handling; keep only one-time-payment Stripe Checkout + signature verification.
+- [app/routes/webhooks/stripe.jsx](../app/routes/webhooks/stripe.jsx) — drop the existing subscription event handlers; the Stripe webhook now flows through the generic `routes/webhooks/$provider.jsx` dispatcher.
+- [app/components/landing/hero.jsx](../app/components/landing/hero.jsx) — remove the `/checkout/polar?...` CTA link.
+- [app/config.js](../app/config.js) — drop the `polar.plans` block.
+
+**Polar removal**
+- [app/services/polar.server.js](../app/services/polar.server.js) — drop.
+- [app/routes/checkout/polar.jsx](../app/routes/checkout/polar.jsx), [app/routes/webhooks/polar.jsx](../app/routes/webhooks/polar.jsx) — drop.
+- `@polar-sh/remix` dependency — remove from [package.json](../package.json).
+
+**SaaS / organization scaffolding**
+- [app/routes/app/*](../app/routes/app/) — drop (`_layout.jsx`, `dashboard.jsx`, `organization.jsx`, `settings.jsx`, `support.jsx`); replaced by `app/routes/admin/*`.
+- [app/routes/organization/accept-invitation.jsx](../app/routes/organization/accept-invitation.jsx) — drop (the only file under `routes/organization/`).
+- [app/libs/auth/index.server.js](../app/libs/auth/index.server.js) — remove the better-auth `organization` plugin import + config block (the client-side `organizationClient` plugin import in `app/libs/auth/client.js` goes too).
+
+**Polish (drive-bys with the same first commit)**
+- [app/utils/logger.server.js](../app/utils/logger.server.js) — change the default Pino `name` from the stale `easyedit-order-editing` to `bermooda`.
+- [README.md](../README.md) — fix the dev URL from `http://localhost:5173` to `http://localhost:3000`.
+
+**Kept:** better-auth, Resend + React Email, LiteQuu, Pino, `@isaacs/ttlcache` (used for the `Setting` cache via [app/utils/cache.server.js](../app/utils/cache.server.js)), Telegram, Tailwind, Headless UI, Heroicons, oxlint/oxfmt, LiteFS, Tigris setup, `fly.toml`.
 
 ---
 
