@@ -54,6 +54,10 @@ const {
   defineHooks,
   defineProvider,
   register,
+  loadPlugins,
+  resolvePluginRoute,
+  enable: _enable,
+  disable: _disable,
   _registry,
   _buildCtx,
 } = await import('./index.server.js');
@@ -279,7 +283,7 @@ describe('Plugin ctx — plugin.get / plugin.set / plugin.delete', () => {
 
       expect(mockPluginData.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          create: expect.objectContaining({ value: String(obj) }),
+          create: expect.objectContaining({ value: JSON.stringify(obj) }),
         })
       );
     });
@@ -307,14 +311,12 @@ describe('loadPlugins', () => {
     _registry.clear();
   });
 
-  it('returns { plugins: [], hooks: {} } when no plugins are registered', async () => {
-    const { loadPlugins } = await import('./index.server.js');
+  it('returns { plugins: [], hooks: {} } when no plugins are registered', () => {
     const result = loadPlugins();
     expect(result).toEqual({ plugins: [], hooks: {} });
   });
 
-  it('returns registered plugins after register()', async () => {
-    const { loadPlugins } = await import('./index.server.js');
+  it('returns registered plugins after register()', () => {
     register(validManifest({ id: 'plugin-a', name: 'Plugin A' }));
     const { plugins } = loadPlugins();
     expect(plugins).toHaveLength(1);
@@ -327,8 +329,7 @@ describe('loadPlugins', () => {
 // ---------------------------------------------------------------------------
 
 describe('resolvePluginRoute', () => {
-  it('returns null for any input', async () => {
-    const { resolvePluginRoute } = await import('./index.server.js');
+  it('returns null for any input', () => {
     expect(resolvePluginRoute('my-plugin', '/admin')).toBeNull();
     expect(resolvePluginRoute('', '')).toBeNull();
     expect(resolvePluginRoute(null, null)).toBeNull();
