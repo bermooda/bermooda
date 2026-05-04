@@ -126,13 +126,19 @@ function buildCtx(pluginId) {
   const settings = {
     get: async (key) => {
       const row = await prisma.setting.findUnique({ where: { key } });
-      return row ? row.value : null;
+      if (!row) return null;
+      try {
+        return JSON.parse(row.value);
+      } catch {
+        return row.value;
+      }
     },
     set: async (key, value) => {
+      const serialized = JSON.stringify(value);
       await prisma.setting.upsert({
         where: { key },
-        create: { key, value: String(value) },
-        update: { value: String(value) },
+        create: { key, value: serialized },
+        update: { value: serialized },
       });
     },
   };
@@ -143,13 +149,19 @@ function buildCtx(pluginId) {
       const row = await prisma.pluginData.findUnique({
         where: { pluginId_key: { pluginId, key } },
       });
-      return row ? row.value : null;
+      if (!row) return null;
+      try {
+        return JSON.parse(row.value);
+      } catch {
+        return row.value;
+      }
     },
     set: async (key, value) => {
+      const serialized = JSON.stringify(value);
       await prisma.pluginData.upsert({
         where: { pluginId_key: { pluginId, key } },
-        create: { pluginId, key, value: String(value) },
-        update: { value: String(value) },
+        create: { pluginId, key, value: serialized },
+        update: { value: serialized },
       });
     },
     delete: async (key) => {
@@ -193,9 +205,8 @@ function buildCtx(pluginId) {
  */
 export async function enable(pluginId) {
   const entry = registry.get(pluginId);
-  if (!entry) {
-    throw new Error(`Plugin "${pluginId}" is not registered`);
-  }
+  if (!entry) throw new Error(`Plugin "${pluginId}" is not registered`);
+  if (entry.handlers.size > 0) return; // already enabled
 
   const { manifest } = entry;
   const settingKey = `plugin.${pluginId}.enabled`;
@@ -291,14 +302,12 @@ export function register(manifest) {
 export function loadPlugins() {
   const plugins = Array.from(registry.values()).map((e) => e.manifest);
 
-  // Aggregate hooks from all registered plugins.
+  // Aggregate hooks from all registered plugins (only active/registered handlers).
   const hooks = {};
-  for (const { manifest } of registry.values()) {
-    if (manifest.hooks) {
-      for (const [event, handler] of Object.entries(manifest.hooks)) {
-        if (!hooks[event]) hooks[event] = [];
-        hooks[event].push(handler);
-      }
+  for (const { handlers } of registry.values()) {
+    for (const [event, handler] of handlers) {
+      if (!hooks[event]) hooks[event] = [];
+      hooks[event].push(handler);
     }
   }
 
