@@ -13,14 +13,7 @@ export function useShop() {
   return { currency: 'USD', locale: 'en' };
 }
 
-/**
- * Returns a translation function for the active locale.
- * Stub: returns pass-through until P3-7 i18n resolver is wired in.
- * @returns {(key: string, params?: Record<string, unknown>) => string}
- */
-export function useT() {
-  return (key) => key;
-}
+export { useT } from './i18n/index.js';
 
 // -- Utilities --------------------------------------------------------------
 

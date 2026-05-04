@@ -6,6 +6,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 import { getCachedResult } from '#/utils/cache.server';
+
 import { get as settingsGet } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
@@ -116,14 +117,40 @@ export async function getRequestLocale(request) {
  * Appends a `Set-Cookie: locale=<locale>; Path=/; SameSite=Lax` header to
  * the given Response object.
  *
+ * Silently returns without setting the cookie if `locale` is not a valid
+ * locale tag (e.g. rejects values containing injection characters).
+ *
  * @param {Response} response
  * @param {string} locale
  */
 export function setLocaleCookie(response, locale) {
+  if (!/^[a-z]{2,8}(-[A-Z]{2,4})?$/.test(locale)) return;
   response.headers.append(
     'Set-Cookie',
     `locale=${locale}; Path=/; SameSite=Lax`
   );
+}
+
+// ---------------------------------------------------------------------------
+// resolveLocale(request, response)
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolves the locale for the incoming request (via `getRequestLocale`) and,
+ * when the locale was NOT already present in the request's `locale` cookie,
+ * writes it back via `setLocaleCookie` so subsequent requests are fast.
+ *
+ * @param {Request} request
+ * @param {Response} response
+ * @returns {Promise<string>}
+ */
+export async function resolveLocale(request, response) {
+  const cookieLocale = parseCookieLocale(request.headers.get('cookie'));
+  const locale = await getRequestLocale(request);
+  if (!cookieLocale) {
+    setLocaleCookie(response, locale);
+  }
+  return locale;
 }
 
 // ---------------------------------------------------------------------------
