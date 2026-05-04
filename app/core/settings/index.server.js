@@ -9,10 +9,10 @@ import prisma from '#/libs/prisma.server';
 // ---------------------------------------------------------------------------
 
 const DEFAULTS = {
-  defaultCurrency: 'USD',
+  defaultCurrency: JSON.stringify('USD'),
   currencies: JSON.stringify(['USD', 'EUR', 'AUD']),
-  defaultLocale: 'en',
-  activeTheme: 'default',
+  defaultLocale: JSON.stringify('en'),
+  activeTheme: JSON.stringify('default'),
   pluginOrder: JSON.stringify([]),
 };
 
