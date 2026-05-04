@@ -8,7 +8,7 @@ vi.mock('#/utils/logger.server', () => ({
 }));
 
 // Import after mock is registered.
-const { emit, on, _handlers } = await import('./index.server.js');
+const { emit, on, off, _handlers } = await import('./index.server.js');
 
 describe('event bus', () => {
   beforeEach(() => {
@@ -98,9 +98,38 @@ describe('event bus', () => {
 
       expect(logger.error).toHaveBeenCalledOnce();
       expect(logger.error).toHaveBeenCalledWith(
-        expect.objectContaining({ event: 'payment.refunded' }),
+        expect.objectContaining({
+          event: 'payment.refunded',
+          err: expect.any(Error),
+        }),
         expect.any(String)
       );
+    });
+  });
+
+  describe('off — handler deregistration', () => {
+    it('removes a registered handler', async () => {
+      const calls = [];
+      const handler = () => calls.push(1);
+      on('test.off', handler);
+      off('test.off', handler);
+      await emit('test.off', {});
+      expect(calls).toHaveLength(0);
+    });
+
+    it('only removes the matching reference', async () => {
+      const calls = [];
+      const h1 = () => calls.push(1);
+      const h2 = () => calls.push(2);
+      on('test.off2', h1);
+      on('test.off2', h2);
+      off('test.off2', h1);
+      await emit('test.off2', {});
+      expect(calls).toEqual([2]);
+    });
+
+    it('is a no-op for an unregistered event', () => {
+      expect(() => off('nonexistent', () => {})).not.toThrow();
     });
   });
 

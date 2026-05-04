@@ -21,6 +21,22 @@ export function on(event, handler) {
 }
 
 /**
+ * Removes a previously registered handler for an event.
+ * @param {string} event
+ * @param {Function} handler - Must be the same function reference passed to `on`.
+ */
+export function off(event, handler) {
+  const existing = handlers.get(event);
+  if (!existing) return;
+  const updated = existing.filter((h) => h !== handler);
+  if (updated.length === 0) {
+    handlers.delete(event);
+  } else {
+    handlers.set(event, updated);
+  }
+}
+
+/**
  * Dispatch payload to all registered handlers for an event.
  *
  * Handlers are awaited in registration order.
@@ -34,6 +50,9 @@ export function on(event, handler) {
  * @param {*} payload - The event payload
  */
 export async function emit(event, payload) {
+  // ALL checkout.* events are considered transactional — errors rethrow and
+  // abort dispatch. Non-transactional checkout analytics must use a different
+  // namespace (e.g. analytics.*) so they receive the fault-tolerant path.
   const isCheckout = event.startsWith('checkout.');
   const eventHandlers = handlers.get(event) ?? [];
 
