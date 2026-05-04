@@ -95,7 +95,8 @@ describe('uploadMedia', () => {
 });
 
 describe('re-exports from client.server', () => {
-  it('re-exports getObjectUrl and deleteObject', () => {
+  it('re-exports putObject, getObjectUrl, and deleteObject', () => {
+    expect(typeof putObject).toBe('function');
     expect(typeof getObjectUrl).toBe('function');
     expect(typeof deleteObject).toBe('function');
   });
