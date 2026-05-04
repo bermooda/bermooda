@@ -25,12 +25,17 @@ export default [
 
   // Better Auth API routes
   route('auth/*', 'routes/auth/all.jsx'),
+  route('admin/auth/*', 'routes/auth/admin.jsx'),
+  route('account/auth/*', 'routes/auth/customer.jsx'),
 
   // Checkout
   route('checkout/successful', 'routes/checkout/successful.jsx'),
 
   // Webhooks
   route('webhooks/stripe', 'routes/webhooks/stripe.jsx'),
+
+  // Plugin storefront dispatcher — static route, descriptor resolved at request time
+  route('apps/:pluginId/*', 'routes/storefront/apps.$pluginId.jsx'),
 
   // Healthcheck for deployments
   route('health', 'routes/health.jsx'),
