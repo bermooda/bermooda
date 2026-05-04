@@ -69,6 +69,18 @@ describe('getRequestCurrency', () => {
     const result = await getRequestCurrency(req);
     expect(result).toBe('USD');
   });
+
+  it('ignores invalid cookie values and falls back to settings', async () => {
+    settingsGet.mockResolvedValueOnce('EUR');
+    // lowercase 'usd' — fails /^[A-Z]{3}$/ guard
+    const req1 = makeRequest('currency=usd');
+    expect(await getRequestCurrency(req1)).toBe('EUR');
+
+    settingsGet.mockResolvedValueOnce('GBP');
+    // too long — fails guard
+    const req2 = makeRequest('currency=TOOLONG');
+    expect(await getRequestCurrency(req2)).toBe('GBP');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -147,7 +159,9 @@ describe('lookupVariantPriceForBrowsing', () => {
   });
 
   it('returns null when neither exact nor fallback found', async () => {
-    prisma.variantPrice.findUnique.mockResolvedValue(null);
+    prisma.variantPrice.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
     settingsGet.mockResolvedValueOnce('USD');
 
     const result = await lookupVariantPriceForBrowsing('var_4', 'EUR');
@@ -182,7 +196,7 @@ describe('setCurrencyCookie', () => {
     const res = makeResponse();
     setCurrencyCookie(res, 'USD');
     expect(res.headers.get('Set-Cookie')).toBe(
-      'currency=USD; Path=/; SameSite=Lax'
+      'currency=USD; Path=/; SameSite=Lax; Max-Age=31536000'
     );
   });
 

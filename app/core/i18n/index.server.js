@@ -127,7 +127,7 @@ export function setLocaleCookie(response, locale) {
   if (!/^[a-z]{2,8}(-[A-Z]{2,4})?$/.test(locale)) return;
   response.headers.append(
     'Set-Cookie',
-    `locale=${locale}; Path=/; SameSite=Lax`
+    `locale=${locale}; Path=/; SameSite=Lax; Max-Age=31536000`
   );
 }
 
