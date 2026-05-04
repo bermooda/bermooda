@@ -8,10 +8,16 @@ const config = {
       ? 'http://localhost:3000'
       : 'https://cursorstack.fly.dev',
   auth: {
-    cookiePrefix: 'cursorstack',
+    cookiePrefix: 'cursorstack', // used by index.server.js (legacy shim)
+    adminCookiePrefix: 'bermooda_admin_',
+    customerCookiePrefix: 'bermooda_customer_',
     betterAuthBasePath: '/auth',
-    // Redirect users after successfull login (i.e. /dashboard, /overview)
+    adminBasePath: '/admin/auth',
+    customerBasePath: '/account/auth',
+    // Redirect users after successful login (i.e. /dashboard, /overview)
     callbackUrl: '/dashboard',
+    adminCallbackUrl: '/admin/dashboard',
+    customerCallbackUrl: '/account',
   },
   stripe: {
     // Create multiple plans in your Stripe dashboard, then add them here. You can add as many plans as you want, just make sure to add the priceId
