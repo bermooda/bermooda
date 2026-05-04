@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { createAuthMiddleware } from 'better-auth/api';
-import { organization, twoFactor } from 'better-auth/plugins';
+import { twoFactor } from 'better-auth/plugins';
 import { networkInterfaces } from 'os';
 import { createContext, redirect } from 'react-router';
 
@@ -10,7 +10,6 @@ import config from '#/config';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import {
-  queueInvitationEmail,
   queuePasswordResetEmail,
   queueTwoFactorOtp,
   queueVerifyEmail,
@@ -123,16 +122,6 @@ export const auth = betterAuth({
         async sendOTP({ user, otp }) {
           queueTwoFactorOtp(user.email, user.name, otp);
         },
-      },
-    }),
-    organization({
-      allowUserToCreateOrganization: true,
-      creatorRole: 'owner',
-      membershipLimit: 100,
-      cancelPendingInvitationsOnReInvite: true,
-      async sendInvitationEmail({ email, organization: org, inviter, id }) {
-        const inviteUrl = `${config.baseUrl}/organization/accept-invitation?id=${id}`;
-        queueInvitationEmail(email, org.name, inviter.user.name, inviteUrl);
       },
     }),
   ],
