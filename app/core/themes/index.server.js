@@ -65,14 +65,18 @@ export function defineTheme(manifest) {
 
   for (const field of REQUIRED_FIELDS) {
     if (!manifest[field]) {
-      throw new Error(`defineTheme: manifest is missing required field "${field}"`);
+      throw new Error(
+        `defineTheme: manifest is missing required field "${field}"`
+      );
     }
   }
 
   // Validate string fields are non-empty
   for (const field of ['id', 'name', 'version']) {
     if (typeof manifest[field] !== 'string' || !manifest[field].trim()) {
-      throw new Error(`defineTheme: manifest field "${field}" must be a non-empty string`);
+      throw new Error(
+        `defineTheme: manifest field "${field}" must be a non-empty string`
+      );
     }
   }
 
@@ -187,4 +191,7 @@ export async function getSlotBlocks(_slotName) {
 // Internal exports (for testing)
 // ---------------------------------------------------------------------------
 
-export { _registry };
+// Exported only for testing — never call in production code.
+export function __resetRegistry() {
+  _registry.clear();
+}
