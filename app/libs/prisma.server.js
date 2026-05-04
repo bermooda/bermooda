@@ -7,7 +7,6 @@ import { PrismaClient } from '../../prisma/generated/client';
  * @typedef {import('../../prisma/generated/client').User} User
  * @typedef {import('../../prisma/generated/client').Session} Session
  * @typedef {import('../../prisma/generated/client').Account} Account
- * @typedef {import('../../prisma/generated/client').Subscription} Subscription
  * @typedef {import('../../prisma/generated/client').Verification} Verification
  * @typedef {import('../../prisma/generated/client').TwoFactor} TwoFactor
  */
