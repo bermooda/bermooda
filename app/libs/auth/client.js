@@ -1,7 +1,4 @@
-import {
-  organizationClient,
-  twoFactorClient,
-} from 'better-auth/client/plugins';
+import { twoFactorClient } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 
 import config from '#/config';
@@ -28,6 +25,5 @@ export const authClient = createAuthClient({
         window.location.href = '/verify-2fa';
       },
     }),
-    organizationClient(),
   ],
 });

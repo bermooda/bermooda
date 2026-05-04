@@ -1,12 +1,5 @@
-import {
-  getVerifiedStripeEvent,
-  handleCheckoutSessionCompleted,
-  handleCustomerSubscriptionCreated,
-  handleCustomerSubscriptionDeleted,
-  handleCustomerSubscriptionUpdated,
-  handleInvoicePaid,
-  handleInvoicePaymentFailed,
-} from '#/services/stripe.server';
+import logger from '#/utils/logger.server';
+import { getVerifiedStripeEvent } from '#/services/stripe.server';
 
 /**
  * Handle a Stripe webhook
@@ -22,40 +15,11 @@ export async function action({ request }) {
   try {
     const event = await getVerifiedStripeEvent(request);
 
-    // Handle different event types
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        await handleCheckoutSessionCompleted(event.data.object);
-        break;
-      }
-      case 'customer.subscription.created': {
-        await handleCustomerSubscriptionCreated(event.data.object);
-        break;
-      }
-      case 'customer.subscription.updated': {
-        await handleCustomerSubscriptionUpdated(event.data.object);
-        break;
-      }
-      case 'customer.subscription.deleted': {
-        await handleCustomerSubscriptionDeleted(event.data.object);
-        break;
-      }
-      case 'invoice.paid': {
-        await handleInvoicePaid(event.data.object);
-        break;
-      }
-      case 'invoice.payment_failed': {
-        await handleInvoicePaymentFailed(event.data.object);
-        break;
-      }
-      default:
-        console.warn(`UNHANDLED EVENT: ${event.type}`);
-    }
+    logger.info({ type: event.type }, 'Stripe webhook received');
 
-    // Return a 200 response to acknowledge receipt of the event
     return Response.json({ received: true }, { status: 200 });
   } catch (error) {
-    console.error(`Webhook error: ${error.message}`);
+    logger.error({ err: error }, 'Stripe webhook error');
     return Response.json(
       { error: `Webhook Error: ${error.message}` },
       { status: 400 }

@@ -19,10 +19,10 @@ alwaysApply: false
 
 ## Auth and errors
 
-- For authenticated routes, export `middleware = [authMiddleware]` from `#/libs/auth/index.server`.
+- For authenticated routes, export `middleware = [authMiddleware]` from `#/libs/auth/admin.server`.
 - In loader/action `catch` blocks, return `handleError` from `#/libs/error.server`.
 
 ## Boundaries
 
 - Keep route orchestration in route modules.
-- Move reusable UI to `app/components` and domain workflows to `app/services`.
+- Move reusable UI to `app/components` and domain workflows to `app/core`.

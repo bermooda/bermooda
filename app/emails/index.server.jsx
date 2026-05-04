@@ -2,7 +2,6 @@ import { Resend } from 'resend';
 
 import config from '#/config';
 import logger from '#/utils/logger.server';
-import InvitationTemplate from '#/emails/templates/invitation.server';
 import ResetPasswordTemplate from '#/emails/templates/reset-password.server';
 import TwoFactorOtpTemplate from '#/emails/templates/two-factor-otp.server';
 import VerifyEmailTemplate from '#/emails/templates/verify-email.server';
@@ -12,11 +11,10 @@ import WelcomeEmail from '#/emails/templates/welcome.server';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Email subjects
-const SUBJECT_WELCOME = 'Welcome to CursorStack';
+const SUBJECT_WELCOME = 'Welcome to bermooda';
 const SUBJECT_VERIFY_EMAIL = 'Please verify your email address';
 const SUBJECT_RESET_PASSWORD = 'Reset your password';
 const SUBJECT_TWO_FACTOR_OTP = 'Your verification code';
-const SUBJECT_INVITATION = "You've been invited to join an organization";
 
 /**
  * Sends a welcome email to a newly registered user
@@ -129,44 +127,6 @@ export async function sendTwoFactorOtpEmail({ email, name, otp }) {
     return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send two-factor OTP email');
-    throw error;
-  }
-}
-
-/**
- * Sends an organization invitation email
- *
- * @param {Object} options - Email sending options
- * @param {string} options.email - Recipient email address
- * @param {string} options.organizationName - Name of the organization
- * @param {string} options.inviterName - Name of the person inviting
- * @param {string} options.inviteUrl - URL to accept the invitation
- * @returns {Promise<Object>} - Resend API response
- */
-export async function sendInvitationEmail({
-  email,
-  organizationName,
-  inviterName,
-  inviteUrl,
-}) {
-  try {
-    const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
-      to: email,
-      subject: SUBJECT_INVITATION,
-      react: (
-        <InvitationTemplate
-          organizationName={organizationName}
-          inviterName={inviterName}
-          inviteUrl={inviteUrl}
-        />
-      ),
-    });
-
-    logger.info(data, 'Invitation email sent successfully');
-    return { success: true, data };
-  } catch (error) {
-    logger.error(error, 'Failed to send invitation email');
     throw error;
   }
 }

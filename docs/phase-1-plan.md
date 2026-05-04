@@ -24,6 +24,7 @@ These are implementation constraints verified against the current CursorStack re
 ## High-level architecture
 
 Three surfaces in one app:
+
 - `/` — Storefront, rendered through the active theme.
 - `/admin/*` — Admin back office, core-owned UI (not themed).
 - `/api/*` — Reserved namespace; not implemented in v1.
@@ -120,6 +121,7 @@ app/
 ## Data model (Prisma)
 
 **Catalog**
+
 - `Product` — `id`, `defaultSlug`, `status` (`draft`|`active`|`archived`), `requiresShipping`, `taxClassId?`, SEO fields, timestamps. Translatable fields (`title`, `description`, `metaTitle`, `metaDescription`) live in `Translation`; localized slugs live in `Slug` so uniqueness can be enforced.
 - `ProductVariant` — `id`, `productId`, `sku` (unique), `inventoryQty`, `inventoryTracked`, `weightGrams?`, `optionValues` (JSON). **Price moved out** to `VariantPrice`.
 - `VariantPrice` — `id`, `variantId`, `currency`, `priceCents`, `compareAtPriceCents?`. Unique on (`variantId`, `currency`). Default-currency row is required; non-default currency rows are optional for browsing only, not for checkout fallback.
@@ -129,25 +131,30 @@ app/
 - `Media` — `id`, `url`, `storageKey?`, `altText?`, `mimeType`, `width?`, `height?`. `ProductMedia` join with `position`. v1 adds the storage abstraction around a manually configured storage client; this is not present in the template today.
 
 **Customers**
+
 - `Customer` — `id`, `email` (unique), `emailVerified`, `name?`, `phone?`, `marketingOptIn`, `preferredLocale?`, `preferredCurrency?`, timestamps.
 - `CustomerSession`, `CustomerAccount`, `CustomerVerification`, `CustomerTwoFactor?` — better-auth tables (separate instance; include `CustomerTwoFactor` only if customer 2FA is enabled).
 - `Address` — `id`, `customerId`, `type`, name/lines/city/region/postal/country/phone, `isDefault`.
 
 **Cart & checkout**
+
 - `Cart` — `id`, `token`, `customerId?`, `currency` (locked on first add), `locale`, `expiresAt`, timestamps.
 - `CartLine` — `id`, `cartId`, `variantId`, `quantity`, `priceCentsSnapshot`, `titleSnapshot` (locale-resolved at add time). `priceCentsSnapshot` must be an exact price in `Cart.currency`; do not snapshot fallback USD cents into an EUR/AUD cart.
 - `CheckoutSession` — `id`, `cartId`, `email`, `shippingAddressId?`, `billingAddressId?`, `shippingMethodId?`, `paymentProviderId?`, `status`, `expiresAt`.
 
 **Orders**
+
 - `Order` — `id`, `number` (sequential), `customerId?` (nullable for guest orders), `email`, `currency`, `locale`, totals (`subtotal`, `shipping`, `tax`, `discount`, `total`), `status`, `paymentStatus`, `fulfillmentStatus`, `paymentProvider`, `paymentRef?`, `createdAt`, `updatedAt`, **denormalized JSON snapshot** of shipping/billing addresses. (No separate `placedAt`: an `Order` row is only created on successful placement, so `createdAt` is the placement timestamp.)
 - `OrderLine` — `id`, `orderId`, `variantId?`, `sku`, `title`, `quantity`, `unitPriceCents`, `lineTotalCents`, `taxCents`.
 - `Shipment` — `id`, `orderId`, `carrier?`, `tracking?`, `status`, `shippedAt?`.
 - `Refund` — `id`, `orderId`, `amountCents`, `reason?`, `providerRef?`, timestamps.
 
 **Discounts**
+
 - `Discount` — `id`, `code` (unique), `type` (`percent`|`fixed`), `value`, `appliesTo` (`order`|`shipping`), `minSubtotalCents?`, `startsAt?`, `endsAt?`, `maxUses?`, `usedCount`, `active`.
 
 **Plugin & settings & misc**
+
 - `PluginData` — `id`, `pluginId`, `key`, `value` (JSON string), timestamps. Unique on (`pluginId`, `key`).
 - `Setting` — `id`, `key` (unique), `value` (JSON), `updatedAt`. Holds shop name, contact email, `defaultCurrency` (default `USD`), `currencies[]` (default `['USD','EUR','AUD']`), `defaultLocale` (default `en`), `locales[]`, `activeTheme`, theme settings, `enabledPlugins[]`, `pluginOrder[]`, tax mode (inclusive/exclusive), tax/shipping config.
 - `Translation` — `id`, `entityType` (`product`|`category`|`page`), `entityId`, `locale`, `field`, `value`. Unique on (`entityType`, `entityId`, `locale`, `field`).
@@ -247,6 +254,7 @@ total    = subtotal - discount + shipping + tax
 Computed on every cart mutation, every checkout step, and re-run server-side at order placement. Result snapshotted onto `Order`.
 
 **Built-in providers**
+
 - **Payment — Stripe** (default: Stripe Checkout, hosted; Elements available later). This is a rewrite of the current subscription-oriented `app/services/stripe.server.js`, not a rename. Use dynamic Checkout line items / `price_data`, order or checkout metadata, signature verification, idempotency via (`provider`, `eventId`), refunds, and Pino logging.
 - **Shipping — flat-rate** (per region in admin: free over X supported).
 - **Tax — simple-percent** (per country/region; tax-inclusive vs exclusive shop-wide setting).
@@ -283,13 +291,15 @@ Computed on every cart mutation, every checkout step, and re-run server-side at 
 ## Testing (Vitest)
 
 **Setup**
+
 - Add `vitest`, `@vitest/coverage-v8`, `@testing-library/react`, `@testing-library/jest-dom`, `happy-dom`, `supertest` to devDependencies.
 - Scripts: `"test": "vitest run"`, `"test:watch": "vitest"`, `"test:coverage": "vitest run --coverage"`.
-- `vitest.config.js` with two projects: `unit` (happy-dom env) and `server` (node env). `#/*` alias mirrored from `vite.config.js`. Coverage thresholds **80% for `app/core/**`**.
+- `vitest.config.js` with two projects: `unit` (happy-dom env) and `server` (node env). `#/*` alias mirrored from `vite.config.js`. Coverage thresholds **80% for `app/core/**`\*\*.
 - Test fixtures: in-memory SQLite per worker via `@prisma/adapter-better-sqlite3`. `vitest-setup.js` runs `prisma migrate deploy` against a tmp file once per worker; truncates between tests. Factory helpers in `app/test/factories/`.
 - CI: create `.github/workflows/` entries to run `npm run test:coverage`, `npm run lint`, and `npm run build` on PRs.
 
 **Coverage targets (v1 must-haves):**
+
 1. **Totals engine** — subtotal, discount, shipping, tax, exact cart-currency price resolution, browsing-only currency fallback, tax-inclusive vs exclusive, edge cases.
 2. **Cart service** — add/remove/update line, currency lock on first add, snapshot pricing, expiry, guest→customer cart merge on login.
 3. **Checkout pipeline** — step transitions, validation, server-side recompute, idempotent order creation, inventory decrement (incl. INSUFFICIENT_INVENTORY race-loss).
@@ -315,31 +325,37 @@ Computed on every cart mutation, every checkout step, and re-run server-side at 
 ## Removals & cleanup from existing template (first commit)
 
 **Schema ([prisma/schema.prisma](../prisma/schema.prisma))**
+
 - Drop the `Organization`, `Member`, `Invitation`, `Subscription` models.
 - Drop the `Session.activeOrganizationId` column (added by the better-auth `organization` plugin; orphaned once the plugin is removed).
 - Replace existing migrations with a fresh initial migration.
 
 **Subscription / billing cascade** (knock-on from dropping `Subscription`)
+
 - [app/services/stripe.server.js](../app/services/stripe.server.js) — **rewrite** (not just move) into `app/core/payments/stripe.server.js`: drop the subscription `checkout.session` helper and `customer.subscription.*` event handling; keep only one-time-payment Stripe Checkout + signature verification.
 - [app/routes/webhooks/stripe.jsx](../app/routes/webhooks/stripe.jsx) — drop the existing subscription event handlers; the Stripe webhook now flows through the generic `routes/webhooks/$provider.jsx` dispatcher.
 - [app/components/landing/hero.jsx](../app/components/landing/hero.jsx) — remove the `/checkout/polar?...` CTA link.
 - [app/config.js](../app/config.js) — drop the `polar.plans` block.
 
 **Polar removal**
+
 - [app/services/polar.server.js](../app/services/polar.server.js) — drop.
 - [app/routes/checkout/polar.jsx](../app/routes/checkout/polar.jsx), [app/routes/webhooks/polar.jsx](../app/routes/webhooks/polar.jsx) — drop.
 - `@polar-sh/remix` dependency — remove from [package.json](../package.json).
 
 **SaaS / organization scaffolding**
-- [app/routes/app/*](../app/routes/app/) — drop (`_layout.jsx`, `dashboard.jsx`, `organization.jsx`, `settings.jsx`, `support.jsx`); replaced by `app/routes/admin/*`.
+
+- [app/routes/app/\*](../app/routes/app/) — drop (`_layout.jsx`, `dashboard.jsx`, `organization.jsx`, `settings.jsx`, `support.jsx`); replaced by `app/routes/admin/*`.
 - [app/routes/organization/accept-invitation.jsx](../app/routes/organization/accept-invitation.jsx) — drop (the only file under `routes/organization/`).
 - [app/libs/auth/index.server.js](../app/libs/auth/index.server.js) — remove the better-auth `organization` plugin import + config block (the client-side `organizationClient` plugin import in `app/libs/auth/client.js` goes too).
 
 **Agent rules / architecture docs**
+
 - [.cursor/rules/general.mdc](../.cursor/rules/general.mdc), [.cursor/rules/react-router/routes.mdc](../.cursor/rules/react-router/routes.mdc), [.cursor/rules/libs-services.mdc](../.cursor/rules/libs-services.mdc), and any other local rule that says domain workflows belong in `app/services` — rewrite to say ecommerce domain workflows belong in `app/core/*`; `app/libs/*` remains infrastructure and SDK clients.
 - [AGENTS.md](../AGENTS.md) — add a short note that Phase 1 moves shop engine code to `app/core/*` and future agents should not introduce new ecommerce workflows under `app/services/*`.
 
 **Polish (drive-bys with the same first commit)**
+
 - [app/utils/logger.server.js](../app/utils/logger.server.js) — change the default Pino `name` from the stale `easyedit-order-editing` to `bermooda`.
 - [README.md](../README.md) — fix the dev URL from `http://localhost:5173` to `http://localhost:3000`.
 
@@ -362,6 +378,7 @@ Complete these before the broad schema/router rewrite:
 ## Critical files to modify or create
 
 **Modify**
+
 - [prisma/schema.prisma](../prisma/schema.prisma) — drop SaaS models; add catalog/cart/order/customer/plugin/setting/translation/webhook tables.
 - [app/routes.js](../app/routes.js) — add `/admin/*`, `/account/*`, `/checkout/*`, `/cart`, `/products/:slug`, `/categories/:slug`, `/thank-you/:orderNumber`, `/webhooks/$provider`, and static plugin/theme dispatcher routes. (No locale URL prefix — locale resolved from cookie.)
 - [app/services/stripe.server.js](../app/services/stripe.server.js) — rewrite into `app/core/payments/stripe.server.js` provider adapter.
@@ -374,6 +391,7 @@ Complete these before the broad schema/router rewrite:
 - [.github/workflows/](../.github/workflows/) — create runnable PR CI for `npm run test:coverage`, `npm run lint`, and `npm run build`; current repo only has `.github/_workflows/fly.yml`.
 
 **Create (new top-level)**
+
 - `app/core/{catalog,cart,checkout,orders,customers,payments,shipping,tax,settings,events,plugins,themes,i18n,currency}/`
 - `app/core/index.js` — public surface re-exports for themes/plugins.
 - `app/core/storage/` — storage abstraction around the manually configured Tigris/S3-compatible client.
@@ -385,6 +403,7 @@ Complete these before the broad schema/router rewrite:
 - `docs/themes.md`, `docs/plugins.md`, `docs/testing.md`, `docs/auth.md`, `docs/storage.md`.
 
 **Reuse**
+
 - [app/libs/prisma.server.js](../app/libs/prisma.server.js) — single Prisma client.
 - [app/libs/queue.server.js](../app/libs/queue.server.js) — LiteQuu for async jobs.
 - [app/utils/cache.server.js](../app/utils/cache.server.js) — TTL cache for `Setting`.
