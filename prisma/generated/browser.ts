@@ -33,11 +33,6 @@ export type Session = Prisma.SessionModel
  */
 export type Account = Prisma.AccountModel
 /**
- * Model Subscription
- * 
- */
-export type Subscription = Prisma.SubscriptionModel
-/**
  * Model Verification
  * 
  */
@@ -47,18 +42,3 @@ export type Verification = Prisma.VerificationModel
  * 
  */
 export type TwoFactor = Prisma.TwoFactorModel
-/**
- * Model Organization
- * 
- */
-export type Organization = Prisma.OrganizationModel
-/**
- * Model Member
- * 
- */
-export type Member = Prisma.MemberModel
-/**
- * Model Invitation
- * 
- */
-export type Invitation = Prisma.InvitationModel

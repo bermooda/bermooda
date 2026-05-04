@@ -1,10 +1,10 @@
 ---
-description: Rules for organizing code in app/libs and app/services directories
-globs: app/libs/**/*.js,app/services/**/*.js
+description: Rules for organizing code in app/libs and app/core directories
+globs: app/libs/**/*.js,app/core/**/*.js
 alwaysApply: false
 ---
 
-# Libs vs services (minimal)
+# Libs vs core (minimal)
 
 ## `app/libs`
 
@@ -12,15 +12,15 @@ alwaysApply: false
 - Keep modules reusable and low-level.
 - Do not put domain workflows here.
 
-## `app/services`
+## `app/core`
 
-- Domain/business workflows that orchestrate libs and persistence.
-- Services may depend on libs and other services.
+- Domain/business workflows that orchestrate libs and persistence (catalog, cart, orders, payments, shipping, customers, etc.).
+- Core modules may depend on libs and other core modules.
 
 ## Dependency boundary
 
-- `services -> libs` is allowed.
-- `libs -> services` is not allowed.
+- `core -> libs` is allowed.
+- `libs -> core` is not allowed.
 
 ## File pattern
 

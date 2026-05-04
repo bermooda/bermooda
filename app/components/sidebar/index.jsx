@@ -10,7 +10,6 @@ import {
   ArrowRightStartOnRectangleIcon,
   ChartBarIcon,
   ChevronUpIcon,
-  BuildingOffice2Icon,
   Cog6ToothIcon,
   MoonIcon,
   QuestionMarkCircleIcon,
@@ -25,7 +24,6 @@ import Logo from '#/components/ui/logo';
 
 const NAV_ITEMS = [
   { name: 'Dashboard', href: '/dashboard', Icon: ChartBarIcon },
-  { name: 'Organization', href: '/organization', Icon: BuildingOffice2Icon },
   { name: 'Settings', href: '/settings', Icon: Cog6ToothIcon },
 ];
 

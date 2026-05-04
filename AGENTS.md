@@ -2,7 +2,14 @@
 
 ### Overview
 
-CursorStack is a full-stack SaaS boilerplate using React Router 7 (SSR), Prisma 7 with SQLite, and Vite 7. It is a single-service monolith — no Docker, no external database server needed for development.
+bermooda is an ecommerce platform built with React Router 7 (SSR), Prisma 7 with SQLite, and Vite 7. It is a single-service monolith — no Docker, no external database server needed for development.
+
+**Architecture layers:**
+
+- `app/libs/*` = infrastructure (auth, db clients, queue, SDK wrappers)
+- `app/core/*` = domain layer (catalog, cart, orders, payments, shipping, customers, etc.)
+- `app/routes/*` = route modules
+- `app/components/*` = reusable UI
 
 ### Running the dev server
 
@@ -12,7 +19,7 @@ The `npm run dev` script wraps with `op run` (1Password CLI), which is **not** a
 npx react-router dev --port 3000 --host
 ```
 
-A `.env` file must exist in the repo root (see `.env.example`). Placeholder values are fine for basic local development — the app starts and serves pages without real API keys for Stripe, Resend, Polar, etc.
+A `.env` file must exist in the repo root (see `.env.example`). Placeholder values are fine for basic local development — the app starts and serves pages without real API keys for Stripe, Resend, etc.
 
 ### Key commands
 

@@ -10,7 +10,7 @@ function createLogger() {
 
   const baseConfig = {
     level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
-    name: process.env.APP_HANDLE || 'easyedit-order-editing',
+    name: process.env.APP_HANDLE || 'bermooda',
     timestamp: pino.stdTimeFunctions.isoTime,
   };
 

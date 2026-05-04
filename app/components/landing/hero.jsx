@@ -37,13 +37,6 @@ export default function Hero() {
                 Get {config.appName} Now
               </button>
             </Form>
-            {/* Use this for polar */}
-            {/* <Link
-              to="/checkout/polar?productId=4230c2ed-b5ab-44eb-b730-e28d5932fb04"
-              className="rounded-md bg-indigo-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              Get {config.appName} Now
-            </Link> */}
             <Link
               to="#features"
               className="dark:text-dark-300 text-base leading-6 font-semibold text-gray-900 dark:hover:text-white"

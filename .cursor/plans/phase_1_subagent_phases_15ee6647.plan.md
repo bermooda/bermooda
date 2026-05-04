@@ -3,37 +3,37 @@ name: Phase 1 Subagent Phases
 overview: Rewrite `docs/phase-1-plan.md` to keep all architecture/spec sections and replace the monolithic "Preflight / Critical files / Verification" tail with a 10-phase execution plan. Each phase lists parallel vs sequential tasks, owned file paths, and validation gates so subagents can be dispatched per task.
 todos:
   - id: rewrite-spec-doc
-    content: "Rewrite docs/phase-1-plan.md: keep spec sections, replace Preflight/Critical files/Verification with the 10-phase plan above"
+    content: 'Rewrite docs/phase-1-plan.md: keep spec sections, replace Preflight/Critical files/Verification with the 10-phase plan above'
     status: pending
   - id: p0-cleanup
-    content: "Phase 0: agent-rules rewrite, SaaS/org/Polar removal, Pino name + README polish, fresh Prisma baseline with User.role"
+    content: 'Phase 0: agent-rules rewrite, SaaS/org/Polar removal, Pino name + README polish, fresh Prisma baseline with User.role'
     status: pending
   - id: p1-proofs
-    content: "Phase 1: five parallel proofs (dual better-auth, static dispatcher routing, storage client, CI workflows, Vitest skeleton)"
+    content: 'Phase 1: five parallel proofs (dual better-auth, static dispatcher routing, storage client, CI workflows, Vitest skeleton)'
     status: pending
   - id: p2-schema
-    content: "Phase 2: draft catalog/customer/cart-checkout-order/misc schema models in parallel, assemble into single initial-shop migration"
+    content: 'Phase 2: draft catalog/customer/cart-checkout-order/misc schema models in parallel, assemble into single initial-shop migration'
     status: pending
   - id: p3-core
-    content: "Phase 3: app/core/* scaffolding in tiers (dirs + public surface + events → plugin loader + theme loader + settings → i18n + currency + storage finalize)"
+    content: 'Phase 3: app/core/* scaffolding in tiers (dirs + public surface + events → plugin loader + theme loader + settings → i18n + currency + storage finalize)'
     status: pending
   - id: p4-services
-    content: "Phase 4: Tier 1 services in parallel (catalog, cart, Stripe adapter, shipping, tax, inventory, discounts, customers), then Tier 2 (totals + checkout pipeline, orders, webhook dispatcher)"
+    content: 'Phase 4: Tier 1 services in parallel (catalog, cart, Stripe adapter, shipping, tax, inventory, discounts, customers), then Tier 2 (totals + checkout pipeline, orders, webhook dispatcher)'
     status: pending
   - id: p5-admin
-    content: "Phase 5: admin shell first, then Dashboard / Products / Categories / Orders / Customers / Discounts / Themes / Plugins / Settings / plugin dispatcher in parallel"
+    content: 'Phase 5: admin shell first, then Dashboard / Products / Categories / Orders / Customers / Discounts / Themes / Plugins / Settings / plugin dispatcher in parallel'
     status: pending
   - id: p6-storefront
-    content: "Phase 6: storefront routes + default theme skeleton first, then core components / product+category / cart / checkout / customer auth / account / switchers / translations in parallel"
+    content: 'Phase 6: storefront routes + default theme skeleton first, then core components / product+category / cart / checkout / customer auth / account / switchers / translations in parallel'
     status: pending
   - id: p7-sample-email-seed
-    content: "Phase 7: sample-analytics plugin, shop email templates, queue jobs, seed script — all parallel"
+    content: 'Phase 7: sample-analytics plugin, shop email templates, queue jobs, seed script — all parallel'
     status: pending
   - id: p8-tests
-    content: "Phase 8: Vitest infra + factories, then 17 coverage-target tasks in parallel, then CI test job enforcing app/core/** ≥ 80%"
+    content: 'Phase 8: Vitest infra + factories, then 17 coverage-target tasks in parallel, then CI test job enforcing app/core/** ≥ 80%'
     status: pending
   - id: p9-docs-verify
-    content: "Phase 9: themes.md, plugins.md, testing.md, finalize auth.md + storage.md, run 11-step E2E verification, confirm green lint + build + coverage"
+    content: 'Phase 9: themes.md, plugins.md, testing.md, finalize auth.md + storage.md, run 11-step E2E verification, confirm green lint + build + coverage'
     status: pending
 isProject: false
 ---
@@ -184,10 +184,10 @@ P2-1..P2-5 are parallel drafting; P2-6 is the single assembler.
 ## Phase 5 — `/admin/*` back office
 
 **Goal.** Core-owned admin UI against Phase 4 services.
-**Depends on:** Phase 4.  **Parallel with:** Phase 6, Phase 7.
+**Depends on:** Phase 4. **Parallel with:** Phase 6, Phase 7.
 **Exit gate:** admin seed user can log in, CRUD a product with translations + multi-currency prices + media, build a category tree, place a manual order, issue a refund, toggle a plugin, switch a theme, edit settings.
 
-- **P5-1. Admin shell (first).** Create [app/routes/admin/_public.jsx](app/routes/admin/_public.jsx) with `login`, `forgot-password`, `reset-password`, `verify-2fa`, `logout`. Create [app/routes/admin/_layout.jsx](app/routes/admin/_layout.jsx) with RR7 route middleware calling into `admin.server.js`; redirect `/admin/login` on failure. Build sidebar + topbar (search, admin user menu, dark-mode toggle, locale switcher via `useT()`). Add all routes to [app/routes.js](app/routes.js).
+- **P5-1. Admin shell (first).** Create [app/routes/admin/\_public.jsx](app/routes/admin/_public.jsx) with `login`, `forgot-password`, `reset-password`, `verify-2fa`, `logout`. Create [app/routes/admin/\_layout.jsx](app/routes/admin/_layout.jsx) with RR7 route middleware calling into `admin.server.js`; redirect `/admin/login` on failure. Build sidebar + topbar (search, admin user menu, dark-mode toggle, locale switcher via `useT()`). Add all routes to [app/routes.js](app/routes.js).
 
 Parallel after P5-1:
 
@@ -207,7 +207,7 @@ Parallel after P5-1:
 ## Phase 6 — Storefront + default theme + customer auth UI
 
 **Goal.** Themed, cookie-locale storefront with full shopping flow and customer account area.
-**Depends on:** Phase 4.  **Parallel with:** Phase 5, Phase 7.
+**Depends on:** Phase 4. **Parallel with:** Phase 5, Phase 7.
 **Exit gate:** guest can browse → add-to-cart → 4-step checkout → Stripe test payment → order confirmation; locale + currency switchers persist via cookies; customer can register, log in, view orders, manage addresses.
 
 - **P6-1. Storefront routes (first).** Extend [app/routes.js](app/routes.js) with `/`, `/products/:slug`, `/categories/:slug`, `/cart`, `/checkout/:step`, `/thank-you/:orderNumber`, `/account/*` + `/account/login|register|forgot-password|reset-password|logout`, `/apps/:pluginId/*`. Loaders live in `app/routes/storefront/*` and call `app/core/*`.
@@ -229,7 +229,7 @@ Parallel after P6-1 + P6-2:
 ## Phase 7 — Sample plugin, shop emails, seed
 
 **Goal.** Prove the plugin contract end-to-end, ship transactional emails, and produce a deterministic seed for E2E verification.
-**Depends on:** Phase 4.  **Parallel with:** Phase 5, Phase 6.
+**Depends on:** Phase 4. **Parallel with:** Phase 5, Phase 6.
 **Exit gate:** `npm run seed` yields an admin + default theme + enabled sample plugin; placing a test order queues the confirmation email; sample plugin's admin page lists the captured `order.created` event.
 
 All four tasks are parallel.
@@ -244,7 +244,7 @@ All four tasks are parallel.
 ## Phase 8 — Vitest coverage
 
 **Goal.** Hit the 17 v1 coverage targets with `app/core/**` ≥ 80%.
-**Depends on:** Phase 3 (ongoing) and Phase 4 (for integration tests); built on P1-E.  **Parallel with:** Phase 5, 6, 7.
+**Depends on:** Phase 3 (ongoing) and Phase 4 (for integration tests); built on P1-E. **Parallel with:** Phase 5, 6, 7.
 **Exit gate:** `npm run test:coverage` green; `app/core/**` ≥ 80%; CI runs `test:coverage` on PRs.
 
 P8-1 + P8-2 come first; P8-3..P8-19 are one coverage target each, all parallel.

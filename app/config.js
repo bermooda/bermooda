@@ -64,15 +64,6 @@ const config = {
       },
     ],
   },
-  polar: {
-    plans: [
-      {
-        productId: '4230c2ed-b5ab-44eb-b730-e28d5932fb04',
-        name: 'Standard',
-        description: 'Perfect for small projects',
-      },
-    ],
-  },
   resend: {
     // Email 'from' used when sending magic login links
     fromNoReply: `CursorStack <noreply@mail.sturmfrei.com.au>`,
