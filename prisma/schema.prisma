@@ -10,6 +10,8 @@ datasource db {
   provider = "sqlite"
 }
 
+// ─── Admin / staff auth ──────────────────────────────────────────────────────
+
 model User {
   id               String   @id @default(cuid())
   email            String   @unique
@@ -17,12 +19,10 @@ model User {
   name             String?
   image            String?
   twoFactorEnabled Boolean  @default(true)
-  // Role values: admin | staff
   role             String   @default("staff")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  // Better Auth relationships
   sessions  Session[]
   accounts  Account[]
   twoFactor TwoFactor?
@@ -37,7 +37,6 @@ model Session {
   expiresAt DateTime
   ipAddress String?
   userAgent String?
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -58,9 +57,8 @@ model Account {
   scope                 String?
   idToken               String?
   password              String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -69,27 +67,479 @@ model Account {
 }
 
 model Verification {
-  id         String @id @default(cuid())
+  id         String   @id @default(cuid())
   identifier String
-  value      String @unique
-
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  value      String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@unique([identifier, value])
 }
 
 model TwoFactor {
-  id          String @id @default(cuid())
-  userId      String @unique
+  id          String   @id @default(cuid())
+  userId      String   @unique
   secret      String
   backupCodes String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ─── Customer auth ───────────────────────────────────────────────────────────
+
+model Customer {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  emailVerified    Boolean  @default(false)
+  name             String?
+  phone            String?
+  preferredLocale  String?
+  twoFactorEnabled Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  sessions  CustomerSession[]
+  accounts  CustomerAccount[]
+  twoFactor CustomerTwoFactor?
+  addresses Address[]
+  carts     Cart[]
+  checkouts CheckoutSession[]
+  orders    Order[]
+
+  @@index([email])
+}
+
+model CustomerSession {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  customerId String
+  expiresAt  DateTime
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, token])
+}
+
+model CustomerAccount {
+  id                    String    @id @default(cuid())
+  accountId             String    @unique
+  providerId            String
+  customerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([customerId])
+}
+
+model CustomerVerification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+}
+
+model CustomerTwoFactor {
+  id          String   @id @default(cuid())
+  customerId  String   @unique
+  secret      String
+  backupCodes String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  customerId String
+  firstName  String
+  lastName   String
+  company    String?
+  line1      String
+  line2      String?
+  city       String
+  state      String?
+  postalCode String?
+  country    String
+  phone      String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+
+// ─── Catalog ─────────────────────────────────────────────────────────────────
+
+model Product {
+  id          String    @id @default(cuid())
+  publishedAt DateTime?
+  position    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  variants   ProductVariant[]
+  categories ProductCategory[]
+  media      ProductMedia[]
+  options    ProductOption[]
+}
+
+model ProductVariant {
+  id               String   @id @default(cuid())
+  productId        String
+  sku              String?
+  inventoryCount   Int      @default(0)
+  inventoryTracked Boolean  @default(true)
+  position         Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  product    Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  prices     VariantPrice[]
+  cartLines  CartLine[]
+  orderLines OrderLine[]
+
+  @@index([productId])
+}
+
+model VariantPrice {
+  id                String   @id @default(cuid())
+  variantId         String
+  currency          String
+  priceCents        Int
+  comparePriceCents Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, currency])
+  @@index([variantId])
+}
+
+model ProductOption {
+  id        String   @id @default(cuid())
+  productId String
+  name      String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  values  ProductOptionValue[]
+
+  @@index([productId])
+}
+
+model ProductOptionValue {
+  id        String   @id @default(cuid())
+  optionId  String
+  value     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  option ProductOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@index([optionId])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  parentId  String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent   Category?         @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[]        @relation("CategoryTree")
+  products ProductCategory[]
+
+  @@index([parentId])
+}
+
+model ProductCategory {
+  id         String   @id @default(cuid())
+  productId  String
+  categoryId String
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, categoryId])
+  @@index([categoryId])
+}
+
+model Media {
+  id         String   @id @default(cuid())
+  storageKey String
+  url        String
+  mimeType   String
+  width      Int?
+  height     Int?
+  altText    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  productMedia ProductMedia[]
+}
+
+model ProductMedia {
+  id        String   @id @default(cuid())
+  productId String
+  mediaId   String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  media   Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, mediaId])
+  @@index([mediaId])
+}
+
+// ─── Cart + Checkout + Orders ─────────────────────────────────────────────────
+
+model Cart {
+  id         String    @id @default(cuid())
+  customerId String?
+  token      String    @unique
+  currency   String    @default("USD")
+  lockedAt   DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  customer  Customer?         @relation(fields: [customerId], references: [id])
+  lines     CartLine[]
+  checkouts CheckoutSession[]
+
+  @@index([customerId])
+  @@index([token])
+}
+
+model CartLine {
+  id                 String   @id @default(cuid())
+  cartId             String
+  variantId          String?
+  quantity           Int
+  priceCentsSnapshot Int
+  titleSnapshot      String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  cart    Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@index([cartId])
+}
+
+model CheckoutSession {
+  id                  String    @id @default(cuid())
+  cartId              String
+  customerId          String?
+  email               String?
+  step                String    @default("address")
+  shippingAddressJson String?
+  billingAddressJson  String?
+  shippingOptionJson  String?
+  paymentIntentId     String?
+  couponCode          String?
+  expiresAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  cart     Cart      @relation(fields: [cartId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+
+  @@index([cartId])
+  @@index([customerId])
+}
+
+model Order {
+  id                  String   @id @default(cuid())
+  orderNumber         String   @unique
+  customerId          String?
+  email               String
+  status              String   @default("pending")
+  currency            String
+  subtotalCents       Int
+  shippingCents       Int      @default(0)
+  taxCents            Int      @default(0)
+  discountCents       Int      @default(0)
+  totalCents          Int
+  shippingAddressJson String
+  billingAddressJson  String?
+  paymentProvider     String?
+  paymentIntentId     String?
+  couponCode          String?
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  customer  Customer?   @relation(fields: [customerId], references: [id])
+  lines     OrderLine[]
+  shipments Shipment[]
+  refunds   Refund[]
+
+  @@index([customerId])
+  @@index([orderNumber])
+  @@index([status])
+}
+
+model OrderLine {
+  id         String   @id @default(cuid())
+  orderId    String
+  variantId  String?
+  title      String
+  sku        String?
+  quantity   Int
+  priceCents Int
+  totalCents Int
+  createdAt  DateTime @default(now())
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+}
+
+model Shipment {
+  id             String    @id @default(cuid())
+  orderId        String
+  status         String    @default("pending")
+  carrier        String?
+  trackingNumber String?
+  trackingUrl    String?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model Refund {
+  id               String   @id @default(cuid())
+  orderId          String
+  amountCents      Int
+  reason           String?
+  status           String   @default("pending")
+  providerRefundId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+// ─── Misc ─────────────────────────────────────────────────────────────────────
+
+model Discount {
+  id               String    @id @default(cuid())
+  code             String    @unique
+  type             String
+  value            Int
+  minSubtotalCents Int?
+  maxUsesCount     Int?
+  usedCount        Int       @default(0)
+  currency         String?
+  expiresAt        DateTime?
+  active           Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model PluginData {
+  id        String   @id @default(cuid())
+  pluginId  String
+  key       String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pluginId, key])
+  @@index([pluginId])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Translation {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  locale     String
+  field      String
+  value      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([entityType, entityId, locale, field])
+  @@index([entityType, entityId])
+}
+
+model Slug {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  locale     String
+  slug       String   @unique
+  canonical  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([entityType, entityId, locale])
+  @@index([entityType, entityId])
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  eventId     String
+  type        String
+  payload     String
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([provider, eventId])
+  @@index([provider])
 }
