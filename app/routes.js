@@ -1,4 +1,4 @@
-import { index, layout, prefix, route } from '@react-router/dev/routes';
+import { index, prefix, route } from '@react-router/dev/routes';
 
 /**
  * For more route config examples, see:
@@ -26,27 +26,11 @@ export default [
   // Better Auth API routes
   route('auth/*', 'routes/auth/all.jsx'),
 
-  // All authenticated app routes
-  layout('routes/app/_layout.jsx', [
-    route('dashboard', 'routes/app/dashboard.jsx'),
-    route('organization', 'routes/app/organization.jsx'),
-    route('settings', 'routes/app/settings.jsx'),
-    route('support', 'routes/app/support.jsx'),
-  ]),
-
-  // Organization invitation acceptance
-  route(
-    'organization/accept-invitation',
-    'routes/organization/accept-invitation.jsx'
-  ),
-
   // Checkout
-  route('checkout/polar', 'routes/checkout/polar.jsx'),
   route('checkout/successful', 'routes/checkout/successful.jsx'),
 
   // Webhooks
   route('webhooks/stripe', 'routes/webhooks/stripe.jsx'),
-  route('webhooks/polar', 'routes/webhooks/polar.jsx'),
 
   // Healthcheck for deployments
   route('health', 'routes/health.jsx'),
