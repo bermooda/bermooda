@@ -1,3 +1,5 @@
+# Moved from .github/_workflows/fly.yml (inactive underscore prefix) to activate on GitHub Actions.
+# The original _workflows/fly.yml is left in place for history; it is a no-op duplicate.
 name: Fly Deploy
 on:
   push:
