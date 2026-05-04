@@ -215,7 +215,7 @@ describe('setLocaleCookie', () => {
     const response = new Response();
     setLocaleCookie(response, 'fr');
     expect(response.headers.get('set-cookie')).toBe(
-      'locale=fr; Path=/; SameSite=Lax'
+      'locale=fr; Path=/; SameSite=Lax; Max-Age=31536000'
     );
   });
 
@@ -243,7 +243,7 @@ describe('resolveLocale', () => {
     const locale = await resolveLocale(request, response);
     expect(locale).toBe('de');
     expect(response.headers.get('set-cookie')).toBe(
-      'locale=de; Path=/; SameSite=Lax'
+      'locale=de; Path=/; SameSite=Lax; Max-Age=31536000'
     );
   });
 

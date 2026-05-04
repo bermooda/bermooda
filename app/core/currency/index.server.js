@@ -22,7 +22,8 @@ export async function getRequestCurrency(request) {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const match = cookieHeader.match(/(?:^|;\s*)currency=([^;]+)/);
   if (match) {
-    return match[1].trim();
+    const raw = match[1].trim();
+    if (raw && /^[A-Z]{3}$/.test(raw)) return raw;
   }
 
   const fromSettings = await settingsGet('defaultCurrency');
@@ -73,6 +74,7 @@ export async function lookupVariantPriceForBrowsing(variantId, currency) {
   if (exact) return { ...exact, isFallback: false };
 
   const defaultCurrency = (await settingsGet('defaultCurrency')) ?? 'USD';
+  if (defaultCurrency === currency) return null;
   const fallback = await lookupVariantPrice(variantId, defaultCurrency);
   if (fallback) return { ...fallback, isFallback: true };
 
@@ -120,6 +122,6 @@ export function setCurrencyCookie(response, currency) {
   }
   response.headers.append(
     'Set-Cookie',
-    `currency=${currency}; Path=/; SameSite=Lax`
+    `currency=${currency}; Path=/; SameSite=Lax; Max-Age=31536000`
   );
 }
