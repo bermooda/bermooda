@@ -5,6 +5,10 @@ import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
 import { emit, off, on } from '#/core/events/index.server';
+import {
+  get as settingsGet,
+  set as settingsSet,
+} from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -122,25 +126,10 @@ export function defineProvider(type, spec) {
 function buildCtx(pluginId) {
   const pluginLogger = logger.child({ plugin: pluginId });
 
-  // Settings stub — real service wired in P3-6.
+  // Settings — delegates to the real settings service (P3-6).
   const settings = {
-    get: async (key) => {
-      const row = await prisma.setting.findUnique({ where: { key } });
-      if (!row) return null;
-      try {
-        return JSON.parse(row.value);
-      } catch {
-        return row.value;
-      }
-    },
-    set: async (key, value) => {
-      const serialized = JSON.stringify(value);
-      await prisma.setting.upsert({
-        where: { key },
-        create: { key, value: serialized },
-        update: { value: serialized },
-      });
-    },
+    get: (key) => settingsGet(key),
+    set: (key, value) => settingsSet(key, value),
   };
 
   // PluginData — namespaced by pluginId.
