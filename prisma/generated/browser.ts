@@ -42,3 +42,143 @@ export type Verification = Prisma.VerificationModel
  * 
  */
 export type TwoFactor = Prisma.TwoFactorModel
+/**
+ * Model Customer
+ * 
+ */
+export type Customer = Prisma.CustomerModel
+/**
+ * Model CustomerSession
+ * 
+ */
+export type CustomerSession = Prisma.CustomerSessionModel
+/**
+ * Model CustomerAccount
+ * 
+ */
+export type CustomerAccount = Prisma.CustomerAccountModel
+/**
+ * Model CustomerVerification
+ * 
+ */
+export type CustomerVerification = Prisma.CustomerVerificationModel
+/**
+ * Model CustomerTwoFactor
+ * 
+ */
+export type CustomerTwoFactor = Prisma.CustomerTwoFactorModel
+/**
+ * Model Address
+ * 
+ */
+export type Address = Prisma.AddressModel
+/**
+ * Model Product
+ * 
+ */
+export type Product = Prisma.ProductModel
+/**
+ * Model ProductVariant
+ * 
+ */
+export type ProductVariant = Prisma.ProductVariantModel
+/**
+ * Model VariantPrice
+ * 
+ */
+export type VariantPrice = Prisma.VariantPriceModel
+/**
+ * Model ProductOption
+ * 
+ */
+export type ProductOption = Prisma.ProductOptionModel
+/**
+ * Model ProductOptionValue
+ * 
+ */
+export type ProductOptionValue = Prisma.ProductOptionValueModel
+/**
+ * Model Category
+ * 
+ */
+export type Category = Prisma.CategoryModel
+/**
+ * Model ProductCategory
+ * 
+ */
+export type ProductCategory = Prisma.ProductCategoryModel
+/**
+ * Model Media
+ * 
+ */
+export type Media = Prisma.MediaModel
+/**
+ * Model ProductMedia
+ * 
+ */
+export type ProductMedia = Prisma.ProductMediaModel
+/**
+ * Model Cart
+ * 
+ */
+export type Cart = Prisma.CartModel
+/**
+ * Model CartLine
+ * 
+ */
+export type CartLine = Prisma.CartLineModel
+/**
+ * Model CheckoutSession
+ * 
+ */
+export type CheckoutSession = Prisma.CheckoutSessionModel
+/**
+ * Model Order
+ * 
+ */
+export type Order = Prisma.OrderModel
+/**
+ * Model OrderLine
+ * 
+ */
+export type OrderLine = Prisma.OrderLineModel
+/**
+ * Model Shipment
+ * 
+ */
+export type Shipment = Prisma.ShipmentModel
+/**
+ * Model Refund
+ * 
+ */
+export type Refund = Prisma.RefundModel
+/**
+ * Model Discount
+ * 
+ */
+export type Discount = Prisma.DiscountModel
+/**
+ * Model PluginData
+ * 
+ */
+export type PluginData = Prisma.PluginDataModel
+/**
+ * Model Setting
+ * 
+ */
+export type Setting = Prisma.SettingModel
+/**
+ * Model Translation
+ * 
+ */
+export type Translation = Prisma.TranslationModel
+/**
+ * Model Slug
+ * 
+ */
+export type Slug = Prisma.SlugModel
+/**
+ * Model WebhookEvent
+ * 
+ */
+export type WebhookEvent = Prisma.WebhookEventModel
