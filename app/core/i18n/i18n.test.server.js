@@ -26,13 +26,15 @@ vi.mock('fs', () => ({
 // ---------------------------------------------------------------------------
 
 import { readFileSync } from 'fs';
-import { get as settingsGet } from '#/core/settings/index.server';
+
 import {
   getRequestLocale,
   loadMessages,
+  resolveLocale,
   setLocaleCookie,
   t,
 } from '#/core/i18n/index.server';
+import { get as settingsGet } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -175,7 +177,7 @@ describe('loadMessages', () => {
 
 describe('t', () => {
   const messages = {
-    cart: { empty: 'Your cart is empty' },
+    'cart': { empty: 'Your cart is empty' },
     'flat.key': 'flat value',
   };
 
@@ -215,5 +217,44 @@ describe('setLocaleCookie', () => {
     expect(response.headers.get('set-cookie')).toBe(
       'locale=fr; Path=/; SameSite=Lax'
     );
+  });
+
+  it('does not set a cookie for invalid locale values', () => {
+    const response = new Response();
+    setLocaleCookie(response, 'bad;locale');
+    expect(response.headers.get('set-cookie')).toBeNull();
+  });
+
+  it('does not set a cookie for locale with injection characters', () => {
+    const response = new Response();
+    setLocaleCookie(response, 'en; Path=/evil');
+    expect(response.headers.get('set-cookie')).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveLocale
+// ---------------------------------------------------------------------------
+
+describe('resolveLocale', () => {
+  it('sets the cookie when no locale cookie is present and returns the locale', async () => {
+    const request = makeRequest({ acceptLanguage: 'de-DE,de;q=0.9' });
+    const response = new Response();
+    const locale = await resolveLocale(request, response);
+    expect(locale).toBe('de');
+    expect(response.headers.get('set-cookie')).toBe(
+      'locale=de; Path=/; SameSite=Lax'
+    );
+  });
+
+  it('does not set the cookie when a locale cookie is already present', async () => {
+    const request = makeRequest({
+      cookie: 'locale=ja',
+      acceptLanguage: 'en-US',
+    });
+    const response = new Response();
+    const locale = await resolveLocale(request, response);
+    expect(locale).toBe('ja');
+    expect(response.headers.get('set-cookie')).toBeNull();
   });
 });
