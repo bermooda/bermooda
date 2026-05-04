@@ -1,4 +1,4 @@
-import TTLCache from '@isaacs/ttlcache';
+import { TTLCache } from '@isaacs/ttlcache';
 
 // Default TTL is 5 minutes
 const DEFAULT_TTL = 1000 * 60 * 5;
@@ -13,10 +13,8 @@ const cache = new TTLCache({ max: 10000, ttl: DEFAULT_TTL });
  * @returns {Promise<any>} - The cached result.
  */
 export async function getCachedResult(key, refreshCallback, ttl = DEFAULT_TTL) {
-  const cachedResult = cache.get(key);
-
-  if (cachedResult) {
-    return cachedResult;
+  if (cache.has(key)) {
+    return cache.get(key);
   }
 
   const result = await refreshCallback();
