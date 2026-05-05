@@ -4,5 +4,10 @@
     "error": "Something went wrong",
     "save": "Save",
     "cancel": "Cancel"
+  },
+  "admin": {
+    "topbar": {
+      "switchLocale": "Switch locale"
+    }
   }
 }

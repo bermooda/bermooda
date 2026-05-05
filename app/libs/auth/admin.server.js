@@ -219,7 +219,7 @@ export async function authenticate(request) {
       throw error;
     }
 
-    console.error('Admin authentication error:', error);
+    logger.error({ err: error }, 'Admin authentication error');
     throw redirect('/admin/login', 302);
   }
 }

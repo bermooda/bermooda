@@ -27,8 +27,8 @@ export function meta() {
 export default function AdminLoginRoute() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const returnTo =
-    searchParams.get('returnTo') || config.auth.adminCallbackUrl;
+  const rawReturnTo = searchParams.get('returnTo') || '';
+  const returnTo = rawReturnTo.startsWith('/admin') ? rawReturnTo : config.auth.adminCallbackUrl;
   const urlError = searchParams.get('error');
 
   const [email, setEmail] = useState('');

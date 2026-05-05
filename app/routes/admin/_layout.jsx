@@ -7,7 +7,6 @@ import {
   TransitionChild,
 } from '@headlessui/react';
 import {
-  ArchiveBoxIcon,
   ArrowRightStartOnRectangleIcon,
   Bars3Icon,
   ChartBarIcon,
@@ -23,7 +22,6 @@ import {
   SunIcon,
   TagIcon,
   UserGroupIcon,
-  UserIcon as UserIconOutline,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { UserIcon as UserIconSolid } from '@heroicons/react/24/solid';
