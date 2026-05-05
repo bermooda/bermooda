@@ -136,7 +136,7 @@ describe('addLine — upsert', () => {
 
     expect(prisma.cartLine.update).toHaveBeenCalledWith({
       where: { id: 'line_1' },
-      data: { quantity: 5 }, // 2 + 3
+      data: { quantity: { increment: 3 } },
     });
     expect(prisma.cartLine.create).not.toHaveBeenCalled();
   });
@@ -269,11 +269,13 @@ describe('mergeGuestCart', () => {
     prisma.cart.findUnique.mockResolvedValue({
       id: 'guest_cart',
       token: 'guest-token',
+      currency: 'USD',
       lines: guestLines,
     });
     prisma.cart.findFirst.mockResolvedValue({
       id: 'cust_cart',
       customerId: 'cust_1',
+      currency: 'USD',
       lines: customerLines,
     });
     prisma.cartLine.update.mockResolvedValue({});
@@ -298,6 +300,44 @@ describe('mergeGuestCart', () => {
     expect(prisma.cart.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 'cust_cart' } })
     );
+  });
+
+  it('deletes guest cart and returns customer cart unchanged when currencies differ', async () => {
+    prisma.cart.findUnique.mockResolvedValue({
+      id: 'guest_cart',
+      token: 'guest-token',
+      currency: 'EUR',
+      lines: [],
+    });
+    prisma.cart.findFirst.mockResolvedValue({
+      id: 'cust_cart',
+      customerId: 'cust_1',
+      currency: 'USD',
+      lines: [],
+    });
+    prisma.cart.delete.mockResolvedValue({});
+
+    const result = await mergeGuestCart('guest-token', 'cust_1');
+
+    expect(prisma.cart.delete).toHaveBeenCalledWith({ where: { id: 'guest_cart' } });
+    expect(result).toMatchObject({ id: 'cust_cart', currency: 'USD' });
+    expect(prisma.cartLine.update).not.toHaveBeenCalled();
+    expect(prisma.cartLine.create).not.toHaveBeenCalled();
+  });
+
+  it('returns null when guest cart is already claimed by a different customer', async () => {
+    prisma.cart.findUnique.mockResolvedValue({
+      id: 'guest_cart',
+      token: 'guest-token',
+      currency: 'USD',
+      customerId: 'other_cust',
+      lines: [],
+    });
+
+    const result = await mergeGuestCart('guest-token', 'cust_1');
+
+    expect(result).toBeNull();
+    expect(prisma.cart.findFirst).not.toHaveBeenCalled();
   });
 });
 
@@ -348,6 +388,7 @@ describe('expireCarts', () => {
     const call = prisma.cart.deleteMany.mock.calls[0][0];
     expect(call.where.expiresAt.lt).toBeInstanceOf(Date);
     expect(call.where.expiresAt.lt.getTime()).toBeGreaterThanOrEqual(before - 100);
+    expect(call.where.checkouts).toEqual({ none: {} });
     expect(result.count).toBe(3);
   });
 });
