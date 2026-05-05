@@ -81,7 +81,7 @@ export async function addLine(cartId, variantId, quantity, { currency, locale } 
   if (existing) {
     return prisma.cartLine.update({
       where: { id: existing.id },
-      data: { quantity: existing.quantity + quantity },
+      data: { quantity: { increment: quantity } },
     });
   }
 
@@ -131,6 +131,10 @@ export async function mergeGuestCart(guestToken, customerId) {
 
   if (!guestCart) return null;
 
+  if (guestCart.customerId && guestCart.customerId !== customerId) {
+    return null; // cart already belongs to another customer
+  }
+
   const customerCart = await prisma.cart.findFirst({
     where: { customerId, lockedAt: null },
     include: { lines: true },
@@ -146,6 +150,12 @@ export async function mergeGuestCart(guestToken, customerId) {
   }
 
   // Customer already has a cart — merge guest lines into it, then delete guest cart.
+  if (guestCart.currency !== customerCart.currency) {
+    // Cannot merge carts with different currencies; discard guest cart
+    await prisma.cart.delete({ where: { id: guestCart.id } });
+    return customerCart;
+  }
+
   for (const guestLine of guestCart.lines) {
     const match = customerCart.lines.find((l) => l.variantId === guestLine.variantId);
     if (match) {
@@ -181,8 +191,12 @@ export async function mergeGuestCart(guestToken, customerId) {
 // ---------------------------------------------------------------------------
 
 export async function expireCarts() {
+  // skip carts with active checkouts to avoid FK constraint violations
   const result = await prisma.cart.deleteMany({
-    where: { expiresAt: { lt: new Date() } },
+    where: {
+      expiresAt: { lt: new Date() },
+      checkouts: { none: {} },
+    },
   });
   logger.info({ count: result.count }, 'expired carts deleted');
   return result;
