@@ -22,7 +22,7 @@ export const adminAuthClient = createAuthClient({
   plugins: [
     twoFactorClient({
       onTwoFactorRedirect() {
-        window.location.href = '/verify-2fa';
+        window.location.href = '/admin/verify-2fa';
       },
     }),
   ],
