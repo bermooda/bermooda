@@ -7,12 +7,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // (vi.mock calls are hoisted to the top of the file by Vitest/Vite).
 // ---------------------------------------------------------------------------
 
-const { mockSessionCreate, mockRefundsCreate, mockConstructEvent } =
-  vi.hoisted(() => ({
+const { mockSessionCreate, mockRefundsCreate, mockConstructEvent } = vi.hoisted(
+  () => ({
     mockSessionCreate: vi.fn(),
     mockRefundsCreate: vi.fn(),
     mockConstructEvent: vi.fn(),
-  }));
+  })
+);
 
 vi.mock('#/utils/logger.server', () => ({
   default: {
@@ -56,7 +57,6 @@ import {
   registerProvider,
   verifyWebhook,
 } from './index.server.js';
-
 import { stripeProvider } from './stripe.server.js';
 
 // ---------------------------------------------------------------------------
@@ -65,9 +65,7 @@ import { stripeProvider } from './stripe.server.js';
 
 function makeCart({
   currency = 'USD',
-  lines = [
-    { priceCentsSnapshot: 1999, titleSnapshot: 'Widget', quantity: 2 },
-  ],
+  lines = [{ priceCentsSnapshot: 1999, titleSnapshot: 'Widget', quantity: 2 }],
 } = {}) {
   return { currency, lines };
 }
@@ -113,7 +111,9 @@ describe('payment registry', () => {
   it('listProviders returns all registered provider ids', () => {
     registerProvider('stripe', stripeProvider);
     registerProvider('paypal', { createCheckoutSession: vi.fn() });
-    expect(listProviders()).toEqual(expect.arrayContaining(['stripe', 'paypal']));
+    expect(listProviders()).toEqual(
+      expect.arrayContaining(['stripe', 'paypal'])
+    );
     expect(listProviders()).toHaveLength(2);
   });
 

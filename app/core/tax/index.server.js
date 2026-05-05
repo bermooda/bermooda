@@ -9,7 +9,7 @@ import { get as settingsGet } from '#/core/settings/index.server';
 
 const DEFAULT_TAX_CONFIG = {
   mode: 'exclusive',
-  regions: [{ country: 'AU', rate: 0.10 }],
+  regions: [{ country: 'AU', rate: 0.1 }],
 };
 
 // ---------------------------------------------------------------------------
@@ -85,9 +85,17 @@ export function listProviders() {
  * @param {{ subtotalCents: number, shippingCents: number, shippingAddress: Object, currency: string }} params
  * @returns {Promise<{ taxCents: number, rate: number, provider: string }>}
  */
-export async function computeTax(providerId, { subtotalCents, shippingCents, shippingAddress, currency }) {
+export async function computeTax(
+  providerId,
+  { subtotalCents, shippingCents, shippingAddress, currency }
+) {
   const provider = getProvider(providerId);
-  const result = await provider.compute({ subtotalCents, shippingCents, shippingAddress, currency });
+  const result = await provider.compute({
+    subtotalCents,
+    shippingCents,
+    shippingAddress,
+    currency,
+  });
   return { ...result, provider: providerId };
 }
 
@@ -102,9 +110,19 @@ export async function computeTax(providerId, { subtotalCents, shippingCents, shi
  * @param {{ subtotalCents: number, shippingCents: number, shippingAddress: Object, currency: string }} params
  * @returns {Promise<{ taxCents: number, rate: number, provider: string }>}
  */
-export async function computeActiveTax({ subtotalCents, shippingCents, shippingAddress, currency }) {
+export async function computeActiveTax({
+  subtotalCents,
+  shippingCents,
+  shippingAddress,
+  currency,
+}) {
   const providerId = (await settingsGet('tax.provider')) ?? 'simple_percent';
-  return computeTax(providerId, { subtotalCents, shippingCents, shippingAddress, currency });
+  return computeTax(providerId, {
+    subtotalCents,
+    shippingCents,
+    shippingAddress,
+    currency,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -133,16 +151,15 @@ export const simplePercentProvider = {
     if (country) {
       // First pass: look for country + state exact match
       if (state) {
-        matchedRegion = regions.find(
-          (r) => r.country === country && r.state === state
-        ) ?? null;
+        matchedRegion =
+          regions.find((r) => r.country === country && r.state === state) ??
+          null;
       }
 
       // Second pass: fall back to country-only (no state specified in region)
       if (!matchedRegion) {
-        matchedRegion = regions.find(
-          (r) => r.country === country && !r.state
-        ) ?? null;
+        matchedRegion =
+          regions.find((r) => r.country === country && !r.state) ?? null;
       }
     }
 
@@ -157,7 +174,7 @@ export const simplePercentProvider = {
     let taxCents;
     if (mode === 'inclusive') {
       // Prices already include tax — extract it
-      taxCents = Math.round(base * rate / (1 + rate));
+      taxCents = Math.round((base * rate) / (1 + rate));
     } else {
       // exclusive: add tax on top
       taxCents = Math.round(base * rate);

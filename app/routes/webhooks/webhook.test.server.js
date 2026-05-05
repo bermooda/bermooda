@@ -118,7 +118,11 @@ describe('webhook dispatcher — action()', () => {
   it('creates a WebhookEvent and emits the domain event for a valid webhook', async () => {
     const fakeEvent = { id: 'evt_new', type: 'payment_intent.succeeded' };
     const rawBody = '{"id":"evt_new"}';
-    const domainResult = { type: 'payment.succeeded', orderId: 'ord_1', amount: 2000 };
+    const domainResult = {
+      type: 'payment.succeeded',
+      orderId: 'ord_1',
+      amount: 2000,
+    };
 
     mockGetProvider.mockReturnValue({
       verifyWebhook: vi.fn().mockResolvedValue({ event: fakeEvent, rawBody }),

@@ -22,7 +22,12 @@ import { computeActiveTax } from '#/core/tax/index.server';
  *   shippingOption: object|null
  * }>}
  */
-export async function computeTotals({ cart, shippingAddress, couponCode, shippingOptionId }) {
+export async function computeTotals({
+  cart,
+  shippingAddress,
+  couponCode,
+  shippingOptionId,
+}) {
   // 1. Subtotal
   const lines = cart?.lines ?? [];
   const subtotalCents = lines.reduce(

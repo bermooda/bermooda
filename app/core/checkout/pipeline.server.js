@@ -2,6 +2,7 @@
 // 4-step checkout pipeline: address → shipping → payment → review
 
 import prisma from '#/libs/prisma.server';
+
 import { lockCart, unlockCart } from '#/core/cart/index.server';
 import { computeTotals } from './totals.server.js';
 
@@ -28,7 +29,10 @@ function nextStep(current) {
  * @param {{ customerId?: string, email?: string }} options
  * @returns {Promise<object>} created CheckoutSession
  */
-export async function createCheckoutSession(cartId, { customerId, email } = {}) {
+export async function createCheckoutSession(
+  cartId,
+  { customerId, email } = {}
+) {
   await lockCart(cartId);
 
   const session = await prisma.checkoutSession.create({

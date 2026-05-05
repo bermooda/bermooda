@@ -1,8 +1,8 @@
 // app/core/catalog/index.server.js
 // Catalog service: product/variant/category CRUD, slug resolution, translations, media.
 
-import prisma from '#/libs/prisma.server';
 import logger from '#/utils/logger.server';
+import prisma from '#/libs/prisma.server';
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -22,9 +22,17 @@ function withTranslations(base, translationMap) {
 // Translations
 // ---------------------------------------------------------------------------
 
-export async function setTranslation(entityType, entityId, locale, field, value) {
+export async function setTranslation(
+  entityType,
+  entityId,
+  locale,
+  field,
+  value
+) {
   await prisma.translation.upsert({
-    where: { entityType_entityId_locale_field: { entityType, entityId, locale, field } },
+    where: {
+      entityType_entityId_locale_field: { entityType, entityId, locale, field },
+    },
     create: { entityType, entityId, locale, field, value },
     update: { value },
   });
@@ -44,7 +52,10 @@ export async function getTranslations(entityType, entityId, locale) {
 export async function setSlug(entityType, entityId, locale, slug) {
   // Reject if this slug string is already claimed by a different entity.
   const existing = await prisma.slug.findUnique({ where: { slug } });
-  if (existing && (existing.entityType !== entityType || existing.entityId !== entityId)) {
+  if (
+    existing &&
+    (existing.entityType !== entityType || existing.entityId !== entityId)
+  ) {
     throw new Error('Slug already taken');
   }
 
@@ -60,14 +71,24 @@ export async function setSlug(entityType, entityId, locale, slug) {
 export async function resolveSlug(slug) {
   const row = await prisma.slug.findUnique({ where: { slug } });
   if (!row) return null;
-  return { entityType: row.entityType, entityId: row.entityId, locale: row.locale };
+  return {
+    entityType: row.entityType,
+    entityId: row.entityId,
+    locale: row.locale,
+  };
 }
 
 // ---------------------------------------------------------------------------
 // Products
 // ---------------------------------------------------------------------------
 
-export async function listProducts({ locale, currency, page = 1, limit = 20, published } = {}) {
+export async function listProducts({
+  locale,
+  currency,
+  page = 1,
+  limit = 20,
+  published,
+} = {}) {
   const where = {};
   if (published === true) where.publishedAt = { not: null };
   if (published === false) where.publishedAt = null;
@@ -102,9 +123,19 @@ export async function listProducts({ locale, currency, page = 1, limit = 20, pub
     products.map(async (product) => {
       const [translations, slugRow] = await Promise.all([
         getTranslations('product', product.id, locale),
-        prisma.slug.findFirst({ where: { entityType: 'product', entityId: product.id, locale, canonical: true } }),
+        prisma.slug.findFirst({
+          where: {
+            entityType: 'product',
+            entityId: product.id,
+            locale,
+            canonical: true,
+          },
+        }),
       ]);
-      return withTranslations({ ...product, slug: slugRow?.slug ?? null }, translations);
+      return withTranslations(
+        { ...product, slug: slugRow?.slug ?? null },
+        translations
+      );
     })
   );
 }
@@ -141,10 +172,15 @@ export async function getProduct(id, { locale, currency } = {}) {
 
   const [translations, slugRow] = await Promise.all([
     getTranslations('product', id, locale),
-    prisma.slug.findFirst({ where: { entityType: 'product', entityId: id, locale, canonical: true } }),
+    prisma.slug.findFirst({
+      where: { entityType: 'product', entityId: id, locale, canonical: true },
+    }),
   ]);
 
-  return withTranslations({ ...product, slug: slugRow?.slug ?? null }, translations);
+  return withTranslations(
+    { ...product, slug: slugRow?.slug ?? null },
+    translations
+  );
 }
 
 export async function getProductBySlug(slug, opts = {}) {
@@ -157,7 +193,9 @@ export async function createProduct(data) {
   // prices are managed per-variant via createVariant/updateVariant.
   const { title, description, locale, prices, ...productData } = data;
   if (prices !== undefined) {
-    throw new Error('prices must be set per-variant via createVariant/updateVariant, not createProduct');
+    throw new Error(
+      'prices must be set per-variant via createVariant/updateVariant, not createProduct'
+    );
   }
 
   const product = await prisma.product.create({ data: productData });
@@ -166,7 +204,13 @@ export async function createProduct(data) {
     await setTranslation('product', product.id, locale, 'title', title);
   }
   if (locale && description) {
-    await setTranslation('product', product.id, locale, 'description', description);
+    await setTranslation(
+      'product',
+      product.id,
+      locale,
+      'description',
+      description
+    );
   }
 
   logger.info({ productId: product.id }, 'product created');
@@ -226,7 +270,12 @@ export async function createVariant(productId, data) {
       prices.map(({ currency, priceCents, comparePriceCents }) =>
         prisma.variantPrice.upsert({
           where: { variantId_currency: { variantId: variant.id, currency } },
-          create: { variantId: variant.id, currency, priceCents, comparePriceCents },
+          create: {
+            variantId: variant.id,
+            currency,
+            priceCents,
+            comparePriceCents,
+          },
           update: { priceCents, comparePriceCents },
         })
       )
@@ -287,8 +336,17 @@ export async function listCategories({ locale } = {}) {
   const allIds = [...parentIds, ...childIds];
 
   const [allTranslationRows, allSlugRows] = await Promise.all([
-    prisma.translation.findMany({ where: { entityType: 'category', entityId: { in: allIds }, locale } }),
-    prisma.slug.findMany({ where: { entityType: 'category', entityId: { in: allIds }, locale, canonical: true } }),
+    prisma.translation.findMany({
+      where: { entityType: 'category', entityId: { in: allIds }, locale },
+    }),
+    prisma.slug.findMany({
+      where: {
+        entityType: 'category',
+        entityId: { in: allIds },
+        locale,
+        canonical: true,
+      },
+    }),
   ]);
 
   // Index by entityId for O(1) lookup.
@@ -296,15 +354,31 @@ export async function listCategories({ locale } = {}) {
   for (const row of allTranslationRows) {
     (translationsByEntity[row.entityId] ??= []).push(row);
   }
-  const slugByEntity = Object.fromEntries(allSlugRows.map((r) => [r.entityId, r.slug]));
+  const slugByEntity = Object.fromEntries(
+    allSlugRows.map((r) => [r.entityId, r.slug])
+  );
 
   return categories.map((cat) => {
     const translatedChildren = cat.children.map((child) => {
-      const childTranslations = toTranslationMap(translationsByEntity[child.id] ?? []);
-      return withTranslations({ ...child, slug: slugByEntity[child.id] ?? null }, childTranslations);
+      const childTranslations = toTranslationMap(
+        translationsByEntity[child.id] ?? []
+      );
+      return withTranslations(
+        { ...child, slug: slugByEntity[child.id] ?? null },
+        childTranslations
+      );
     });
-    const catTranslations = toTranslationMap(translationsByEntity[cat.id] ?? []);
-    return withTranslations({ ...cat, slug: slugByEntity[cat.id] ?? null, children: translatedChildren }, catTranslations);
+    const catTranslations = toTranslationMap(
+      translationsByEntity[cat.id] ?? []
+    );
+    return withTranslations(
+      {
+        ...cat,
+        slug: slugByEntity[cat.id] ?? null,
+        children: translatedChildren,
+      },
+      catTranslations
+    );
   });
 }
 
@@ -325,10 +399,15 @@ export async function getCategory(id, { locale } = {}) {
 
   const [translations, slugRow] = await Promise.all([
     getTranslations('category', id, locale),
-    prisma.slug.findFirst({ where: { entityType: 'category', entityId: id, locale, canonical: true } }),
+    prisma.slug.findFirst({
+      where: { entityType: 'category', entityId: id, locale, canonical: true },
+    }),
   ]);
 
-  return withTranslations({ ...category, slug: slugRow?.slug ?? null }, translations);
+  return withTranslations(
+    { ...category, slug: slugRow?.slug ?? null },
+    translations
+  );
 }
 
 export async function getCategoryBySlug(slug, opts = {}) {

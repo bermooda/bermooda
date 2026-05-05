@@ -1,10 +1,11 @@
 // app/routes/webhooks/$provider.jsx
 // Generic webhook dispatcher — handles POST /webhooks/:provider
 
-import { getProvider } from '#/core/payments/index.server';
-import { emit } from '#/core/events/index.server';
-import prisma from '#/libs/prisma.server';
 import logger from '#/utils/logger.server';
+import prisma from '#/libs/prisma.server';
+
+import { emit } from '#/core/events/index.server';
+import { getProvider } from '#/core/payments/index.server';
 
 // Note: payment providers must be registered at server startup.
 // See app/core/payments/index.server.js for registerProvider().
@@ -58,7 +59,10 @@ export async function action({ request, params }) {
     });
 
     if (existing) {
-      return Response.json({ received: true, duplicate: true }, { status: 200 });
+      return Response.json(
+        { received: true, duplicate: true },
+        { status: 200 }
+      );
     }
 
     // 4. Persist the raw event before processing

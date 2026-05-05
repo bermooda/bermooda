@@ -36,7 +36,9 @@ import {
 function makeTxClient(variantMap = {}) {
   return {
     productVariant: {
-      findUnique: vi.fn(({ where }) => Promise.resolve(variantMap[where.id] ?? null)),
+      findUnique: vi.fn(({ where }) =>
+        Promise.resolve(variantMap[where.id] ?? null)
+      ),
       update: vi.fn(() => Promise.resolve({})),
     },
   };
@@ -57,10 +59,17 @@ beforeEach(() => {
 describe('decrementInventory', () => {
   it('skips variants with inventoryTracked = false', async () => {
     const txClient = makeTxClient({
-      'v-untracked': { id: 'v-untracked', inventoryCount: 0, inventoryTracked: false },
+      'v-untracked': {
+        id: 'v-untracked',
+        inventoryCount: 0,
+        inventoryTracked: false,
+      },
     });
 
-    await decrementInventory([{ variantId: 'v-untracked', quantity: 5 }], txClient);
+    await decrementInventory(
+      [{ variantId: 'v-untracked', quantity: 5 }],
+      txClient
+    );
 
     // update should never be called for an untracked variant
     expect(txClient.productVariant.update).not.toHaveBeenCalled();
@@ -152,7 +161,10 @@ describe('incrementInventory', () => {
       'v-tracked': { id: 'v-tracked', inventoryTracked: true },
     });
 
-    await incrementInventory([{ variantId: 'v-tracked', quantity: 4 }], txClient);
+    await incrementInventory(
+      [{ variantId: 'v-tracked', quantity: 4 }],
+      txClient
+    );
 
     expect(txClient.productVariant.update).toHaveBeenCalledWith({
       where: { id: 'v-tracked' },
@@ -165,7 +177,10 @@ describe('incrementInventory', () => {
       'v-untracked': { id: 'v-untracked', inventoryTracked: false },
     });
 
-    await incrementInventory([{ variantId: 'v-untracked', quantity: 10 }], txClient);
+    await incrementInventory(
+      [{ variantId: 'v-untracked', quantity: 10 }],
+      txClient
+    );
 
     expect(txClient.productVariant.update).not.toHaveBeenCalled();
   });
@@ -193,7 +208,9 @@ describe('checkAvailability', () => {
       inventoryTracked: true,
     });
 
-    const result = await checkAvailability([{ variantId: 'v-short', quantity: 3 }]);
+    const result = await checkAvailability([
+      { variantId: 'v-short', quantity: 3 },
+    ]);
 
     expect(result.available).toBe(false);
     expect(result.insufficient).toEqual([
@@ -207,7 +224,9 @@ describe('checkAvailability', () => {
       inventoryTracked: false,
     });
 
-    const result = await checkAvailability([{ variantId: 'v-free', quantity: 999 }]);
+    const result = await checkAvailability([
+      { variantId: 'v-free', quantity: 999 },
+    ]);
 
     expect(result).toEqual({ available: true });
   });

@@ -1,17 +1,23 @@
 // app/core/orders/index.server.js
 // Order service: transactional placement, fulfillment, and refunds.
 
+import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+
+import { validateDiscount } from '#/core/discounts/index.server';
 import { emit } from '#/core/events/index.server';
 import { decrementInventory } from '#/core/inventory/index.server';
-import { validateDiscount } from '#/core/discounts/index.server';
-import logger from '#/utils/logger.server';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const VALID_ORDER_STATUSES = new Set(['pending', 'confirmed', 'cancelled', 'refunded']);
+const VALID_ORDER_STATUSES = new Set([
+  'pending',
+  'confirmed',
+  'cancelled',
+  'refunded',
+]);
 const VALID_REFUND_STATUSES = new Set(['pending', 'succeeded', 'failed']);
 
 // ---------------------------------------------------------------------------
@@ -31,7 +37,10 @@ const VALID_REFUND_STATUSES = new Set(['pending', 'succeeded', 'failed']);
  * @param {{ paymentProvider?: string, paymentIntentId?: string }} options
  * @returns {Promise<object>} created Order with lines
  */
-export async function placeOrder(checkoutSessionId, { paymentProvider, paymentIntentId } = {}) {
+export async function placeOrder(
+  checkoutSessionId,
+  { paymentProvider, paymentIntentId } = {}
+) {
   let createdOrder;
 
   await prisma.$transaction(async (tx) => {
@@ -179,7 +188,10 @@ export async function placeOrder(checkoutSessionId, { paymentProvider, paymentIn
     currency: createdOrder.currency,
   });
 
-  logger.info({ orderId: createdOrder.id, orderNumber: createdOrder.orderNumber }, 'order placed');
+  logger.info(
+    { orderId: createdOrder.id, orderNumber: createdOrder.orderNumber },
+    'order placed'
+  );
 
   return createdOrder;
 }
@@ -213,7 +225,12 @@ export async function getOrder(id) {
  * @param {{ customerId?: string, status?: string, page?: number, limit?: number }} options
  * @returns {Promise<object[]>}
  */
-export async function listOrders({ customerId, status, page = 1, limit = 20 } = {}) {
+export async function listOrders({
+  customerId,
+  status,
+  page = 1,
+  limit = 20,
+} = {}) {
   const where = {};
   if (customerId !== undefined) where.customerId = customerId;
   if (status !== undefined) where.status = status;
@@ -285,7 +302,10 @@ export async function addShipment(orderId, data = {}) {
  * @param {{ carrier?: string, trackingNumber?: string, trackingUrl?: string }} data
  * @returns {Promise<object>} updated Shipment
  */
-export async function markShipped(shipmentId, { carrier, trackingNumber, trackingUrl } = {}) {
+export async function markShipped(
+  shipmentId,
+  { carrier, trackingNumber, trackingUrl } = {}
+) {
   const updateData = {
     status: 'shipped',
     shippedAt: new Date(),
@@ -338,7 +358,10 @@ export async function markDelivered(shipmentId) {
  * @param {{ amountCents: number, reason?: string, providerRefundId?: string }} data
  * @returns {Promise<object>} created Refund
  */
-export async function createRefund(orderId, { amountCents, reason, providerRefundId } = {}) {
+export async function createRefund(
+  orderId,
+  { amountCents, reason, providerRefundId } = {}
+) {
   const refund = await prisma.refund.create({
     data: {
       orderId,

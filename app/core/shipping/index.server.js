@@ -145,7 +145,8 @@ export const flatRateProvider = {
     );
 
     const matchingZones = zones.filter(
-      (zone) => Array.isArray(zone.countries) && zone.countries.includes(country)
+      (zone) =>
+        Array.isArray(zone.countries) && zone.countries.includes(country)
     );
 
     if (matchingZones.length === 0) {
