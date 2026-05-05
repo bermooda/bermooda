@@ -32,7 +32,7 @@ export default [
   route('checkout/successful', 'routes/checkout/successful.jsx'),
 
   // Webhooks
-  route('webhooks/stripe', 'routes/webhooks/stripe.jsx'),
+  route('webhooks/:provider', 'routes/webhooks/$provider.jsx'),
 
   // Plugin storefront dispatcher — static route, descriptor resolved at request time
   route('apps/:pluginId/*', 'routes/storefront/apps.$pluginId.jsx'),

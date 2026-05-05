@@ -1,0 +1,149 @@
+// app/core/payments/stripe.server.js
+// Stripe payment provider adapter.
+
+import Stripe from 'stripe';
+
+import logger from '#/utils/logger.server';
+
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+
+const stripe = new Stripe(STRIPE_SECRET_KEY, {
+  apiVersion: '2025-02-24.acacia',
+});
+
+const log = logger.child({ provider: 'stripe' });
+
+/**
+ * Stripe payment provider adapter.
+ *
+ * Implements the payment provider interface:
+ *   createCheckoutSession({ cart, successUrl, cancelUrl })
+ *   verifyWebhook(request)
+ *   handleWebhookEvent(event)
+ *   createRefund({ paymentIntentId, amountCents, reason })
+ */
+export const stripeProvider = {
+  /**
+   * Create a Stripe Checkout session using dynamic price_data for each cart line.
+   *
+   * @param {{ cart: Object, successUrl: string, cancelUrl: string }} params
+   * @returns {Promise<Stripe.Checkout.Session>}
+   */
+  async createCheckoutSession({ cart, successUrl, cancelUrl }) {
+    const line_items = cart.lines.map((line) => ({
+      price_data: {
+        currency: cart.currency.toLowerCase(),
+        unit_amount: line.priceCentsSnapshot,
+        product_data: {
+          name: line.titleSnapshot,
+        },
+      },
+      quantity: line.quantity,
+    }));
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    });
+
+    log.info({ sessionId: session.id }, 'Stripe checkout session created');
+
+    return session;
+  },
+
+  /**
+   * Verify a Stripe webhook request.
+   * Reads the raw body via request.text() and validates the stripe-signature header.
+   *
+   * @param {Request} request
+   * @returns {Promise<{ event: Stripe.Event, rawBody: string }>}
+   */
+  async verifyWebhook(request) {
+    const signature = request.headers.get('stripe-signature');
+
+    if (!signature) {
+      throw new Error('Missing stripe-signature header');
+    }
+
+    const rawBody = await request.text();
+
+    const event = stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      STRIPE_WEBHOOK_SECRET
+    );
+
+    log.info(
+      { eventId: event.id, type: event.type },
+      'Stripe webhook verified'
+    );
+
+    return { event, rawBody };
+  },
+
+  /**
+   * Handle a verified Stripe webhook event.
+   * Returns a normalised payload describing what happened.
+   *
+   * @param {Stripe.Event} event
+   * @returns {Promise<{ type: string, orderId?: string, amount?: number }>}
+   */
+  async handleWebhookEvent(event) {
+    switch (event.type) {
+      case 'payment_intent.succeeded': {
+        const intent = event.data.object;
+        log.info(
+          { intentId: intent.id, amount: intent.amount },
+          'payment_intent.succeeded'
+        );
+        return {
+          type: 'payment.succeeded',
+          orderId: intent.metadata?.orderId,
+          amount: intent.amount,
+        };
+      }
+
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        log.info(
+          { sessionId: session.id, amount: session.amount_total },
+          'checkout.session.completed'
+        );
+        return {
+          type: 'payment.succeeded',
+          orderId: session.metadata?.orderId,
+          amount: session.amount_total,
+        };
+      }
+
+      default: {
+        log.info({ type: event.type }, 'Unhandled Stripe event type');
+        return { type: 'payment.other' };
+      }
+    }
+  },
+
+  /**
+   * Create a Stripe refund for a payment intent.
+   *
+   * @param {{ paymentIntentId: string, amountCents: number, reason: string }} params
+   * @returns {Promise<{ refundId: string, status: string }>}
+   */
+  async createRefund({ paymentIntentId, amountCents, reason }) {
+    const refund = await stripe.refunds.create({
+      payment_intent: paymentIntentId,
+      amount: amountCents,
+      reason,
+    });
+
+    log.info(
+      { refundId: refund.id, status: refund.status },
+      'Stripe refund created'
+    );
+
+    return { refundId: refund.id, status: refund.status };
+  },
+};
