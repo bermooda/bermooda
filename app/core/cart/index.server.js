@@ -3,8 +3,8 @@
 
 import { randomUUID } from 'crypto';
 
-import prisma from '#/libs/prisma.server';
 import logger from '#/utils/logger.server';
+import prisma from '#/libs/prisma.server';
 
 // ---------------------------------------------------------------------------
 // createCart
@@ -41,7 +41,12 @@ export async function getCart(token) {
 // addLine
 // ---------------------------------------------------------------------------
 
-export async function addLine(cartId, variantId, quantity, { currency, locale } = {}) {
+export async function addLine(
+  cartId,
+  variantId,
+  quantity,
+  { currency, locale } = {}
+) {
   const cart = await prisma.cart.findUnique({ where: { id: cartId } });
 
   // Enforce currency lock: caller-supplied currency must match the cart's currency.
@@ -157,7 +162,9 @@ export async function mergeGuestCart(guestToken, customerId) {
   }
 
   for (const guestLine of guestCart.lines) {
-    const match = customerCart.lines.find((l) => l.variantId === guestLine.variantId);
+    const match = customerCart.lines.find(
+      (l) => l.variantId === guestLine.variantId
+    );
     if (match) {
       await prisma.cartLine.update({
         where: { id: match.id },

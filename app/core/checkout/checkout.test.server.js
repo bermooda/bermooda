@@ -38,18 +38,18 @@ vi.mock('#/core/tax/index.server', () => ({
 // ---------------------------------------------------------------------------
 
 import prisma from '#/libs/prisma.server';
+
 import { lockCart, unlockCart } from '#/core/cart/index.server';
 import { validateDiscount } from '#/core/discounts/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
-
-import { computeTotals } from './totals.server.js';
 import {
   createCheckoutSession,
   getCheckoutSession,
   advanceStep,
   abandonCheckoutSession,
 } from './pipeline.server.js';
+import { computeTotals } from './totals.server.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -148,7 +148,10 @@ describe('computeTotals — with coupon code', () => {
 
     const result = await computeTotals({ cart, couponCode: 'SAVE10' });
 
-    expect(validateDiscount).toHaveBeenCalledWith('SAVE10', { subtotalCents: 2500, currency: 'USD' });
+    expect(validateDiscount).toHaveBeenCalledWith('SAVE10', {
+      subtotalCents: 2500,
+      currency: 'USD',
+    });
     expect(result.discountCents).toBe(250);
     expect(result.totalCents).toBe(2500 - 250); // no shipping or tax (no address)
   });
@@ -182,7 +185,11 @@ describe('computeTotals — shippingOptionId matching', () => {
     const address = { country: 'AU' };
     getAllQuotes.mockResolvedValue([
       { id: 'flat_rate:domestic', priceCents: 1500, label: 'Domestic' },
-      { id: 'flat_rate:international', priceCents: 3000, label: 'International' },
+      {
+        id: 'flat_rate:international',
+        priceCents: 3000,
+        label: 'International',
+      },
     ]);
     computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
 
@@ -335,15 +342,22 @@ describe('advanceStep — validation errors', () => {
     const session = makeSession({ step: 'address' });
     prisma.checkoutSession.findUnique.mockResolvedValue(session);
 
-    await expect(advanceStep('sess_1', {})).rejects.toThrow('MISSING_SHIPPING_ADDRESS');
+    await expect(advanceStep('sess_1', {})).rejects.toThrow(
+      'MISSING_SHIPPING_ADDRESS'
+    );
     expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
   });
 
   it('throws MISSING_SHIPPING_OPTION when shippingOptionId is absent on shipping step', async () => {
-    const session = makeSession({ step: 'shipping', shippingAddressJson: '{"country":"AU"}' });
+    const session = makeSession({
+      step: 'shipping',
+      shippingAddressJson: '{"country":"AU"}',
+    });
     prisma.checkoutSession.findUnique.mockResolvedValue(session);
 
-    await expect(advanceStep('sess_1', {})).rejects.toThrow('MISSING_SHIPPING_OPTION');
+    await expect(advanceStep('sess_1', {})).rejects.toThrow(
+      'MISSING_SHIPPING_OPTION'
+    );
     expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
   });
 
@@ -355,7 +369,9 @@ describe('advanceStep — validation errors', () => {
     });
     prisma.checkoutSession.findUnique.mockResolvedValue(session);
 
-    await expect(advanceStep('sess_1', {})).rejects.toThrow('MISSING_PAYMENT_INTENT');
+    await expect(advanceStep('sess_1', {})).rejects.toThrow(
+      'MISSING_PAYMENT_INTENT'
+    );
     expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
   });
 });

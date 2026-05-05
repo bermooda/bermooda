@@ -93,7 +93,9 @@ describe('resolveSlug', () => {
     const result = await resolveSlug('no-such-slug');
 
     expect(result).toBeNull();
-    expect(prisma.slug.findUnique).toHaveBeenCalledWith({ where: { slug: 'no-such-slug' } });
+    expect(prisma.slug.findUnique).toHaveBeenCalledWith({
+      where: { slug: 'no-such-slug' },
+    });
   });
 
   it('returns entityType, entityId, locale when slug exists', async () => {
@@ -107,7 +109,11 @@ describe('resolveSlug', () => {
 
     const result = await resolveSlug('cool-shirt');
 
-    expect(result).toEqual({ entityType: 'product', entityId: 'prod_1', locale: 'en' });
+    expect(result).toEqual({
+      entityType: 'product',
+      entityId: 'prod_1',
+      locale: 'en',
+    });
   });
 });
 
@@ -122,10 +128,24 @@ describe('setSlug', () => {
 
     await setSlug('product', 'prod_1', 'en', 'new-slug');
 
-    expect(prisma.slug.findUnique).toHaveBeenCalledWith({ where: { slug: 'new-slug' } });
+    expect(prisma.slug.findUnique).toHaveBeenCalledWith({
+      where: { slug: 'new-slug' },
+    });
     expect(prisma.slug.upsert).toHaveBeenCalledWith({
-      where: { entityType_entityId_locale: { entityType: 'product', entityId: 'prod_1', locale: 'en' } },
-      create: { entityType: 'product', entityId: 'prod_1', locale: 'en', slug: 'new-slug', canonical: true },
+      where: {
+        entityType_entityId_locale: {
+          entityType: 'product',
+          entityId: 'prod_1',
+          locale: 'en',
+        },
+      },
+      create: {
+        entityType: 'product',
+        entityId: 'prod_1',
+        locale: 'en',
+        slug: 'new-slug',
+        canonical: true,
+      },
       update: { slug: 'new-slug', canonical: true },
     });
   });
@@ -139,7 +159,9 @@ describe('setSlug', () => {
       canonical: true,
     });
 
-    await expect(setSlug('product', 'prod_1', 'en', 'new-slug')).rejects.toThrow('Slug already taken');
+    await expect(
+      setSlug('product', 'prod_1', 'en', 'new-slug')
+    ).rejects.toThrow('Slug already taken');
     expect(prisma.slug.upsert).not.toHaveBeenCalled();
   });
 
@@ -153,7 +175,9 @@ describe('setSlug', () => {
     });
     prisma.slug.upsert.mockResolvedValue({});
 
-    await expect(setSlug('product', 'prod_1', 'en', 'new-slug')).resolves.toBeUndefined();
+    await expect(
+      setSlug('product', 'prod_1', 'en', 'new-slug')
+    ).resolves.toBeUndefined();
     expect(prisma.slug.upsert).toHaveBeenCalled();
   });
 });
@@ -177,7 +201,13 @@ describe('setTranslation', () => {
           field: 'title',
         },
       },
-      create: { entityType: 'product', entityId: 'prod_1', locale: 'en', field: 'title', value: 'Cool Shirt' },
+      create: {
+        entityType: 'product',
+        entityId: 'prod_1',
+        locale: 'en',
+        field: 'title',
+        value: 'Cool Shirt',
+      },
       update: { value: 'Cool Shirt' },
     });
   });
@@ -251,9 +281,16 @@ describe('listProducts', () => {
   });
 
   it('returns products with translations when locale is provided', async () => {
-    const product = { id: 'prod_1', publishedAt: new Date(), variants: [], media: [] };
+    const product = {
+      id: 'prod_1',
+      publishedAt: new Date(),
+      variants: [],
+      media: [],
+    };
     prisma.product.findMany.mockResolvedValue([product]);
-    prisma.translation.findMany.mockResolvedValue([{ field: 'title', value: 'Localised Title' }]);
+    prisma.translation.findMany.mockResolvedValue([
+      { field: 'title', value: 'Localised Title' },
+    ]);
     prisma.slug.findFirst.mockResolvedValue({ slug: 'localised-title' });
 
     const result = await listProducts({ locale: 'en' });
@@ -269,7 +306,10 @@ describe('listProducts', () => {
 
 describe('publishProduct', () => {
   it('sets publishedAt to a Date', async () => {
-    prisma.product.update.mockResolvedValue({ id: 'prod_1', publishedAt: new Date() });
+    prisma.product.update.mockResolvedValue({
+      id: 'prod_1',
+      publishedAt: new Date(),
+    });
 
     await publishProduct('prod_1');
 
@@ -281,7 +321,10 @@ describe('publishProduct', () => {
 
 describe('unpublishProduct', () => {
   it('sets publishedAt to null', async () => {
-    prisma.product.update.mockResolvedValue({ id: 'prod_1', publishedAt: null });
+    prisma.product.update.mockResolvedValue({
+      id: 'prod_1',
+      publishedAt: null,
+    });
 
     await unpublishProduct('prod_1');
 

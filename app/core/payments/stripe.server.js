@@ -76,7 +76,10 @@ export const stripeProvider = {
       STRIPE_WEBHOOK_SECRET
     );
 
-    log.info({ eventId: event.id, type: event.type }, 'Stripe webhook verified');
+    log.info(
+      { eventId: event.id, type: event.type },
+      'Stripe webhook verified'
+    );
 
     return { event, rawBody };
   },

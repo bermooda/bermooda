@@ -57,7 +57,9 @@ describe('createCart', () => {
   it('generates a UUID token and sets expiresAt ~30 days from now', async () => {
     const before = Date.now();
 
-    prisma.cart.create.mockImplementation(({ data }) => Promise.resolve({ id: 'cart_1', ...data }));
+    prisma.cart.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 'cart_1', ...data })
+    );
 
     const cart = await createCart({ currency: 'USD' });
 
@@ -67,12 +69,18 @@ describe('createCart', () => {
     expect(cart.token).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
     );
-    expect(cart.expiresAt.getTime()).toBeGreaterThanOrEqual(before + thirtyDaysMs - 100);
-    expect(cart.expiresAt.getTime()).toBeLessThanOrEqual(after + thirtyDaysMs + 100);
+    expect(cart.expiresAt.getTime()).toBeGreaterThanOrEqual(
+      before + thirtyDaysMs - 100
+    );
+    expect(cart.expiresAt.getTime()).toBeLessThanOrEqual(
+      after + thirtyDaysMs + 100
+    );
   });
 
   it('uses USD as default currency when none provided', async () => {
-    prisma.cart.create.mockImplementation(({ data }) => Promise.resolve({ id: 'cart_1', ...data }));
+    prisma.cart.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 'cart_1', ...data })
+    );
 
     const cart = await createCart();
 
@@ -80,12 +88,16 @@ describe('createCart', () => {
   });
 
   it('passes customerId when provided', async () => {
-    prisma.cart.create.mockImplementation(({ data }) => Promise.resolve({ id: 'cart_1', ...data }));
+    prisma.cart.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 'cart_1', ...data })
+    );
 
     const cart = await createCart({ customerId: 'cust_1' });
 
     expect(prisma.cart.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ customerId: 'cust_1' }) })
+      expect.objectContaining({
+        data: expect.objectContaining({ customerId: 'cust_1' }),
+      })
     );
     expect(cart.customerId).toBe('cust_1');
   });
@@ -129,7 +141,11 @@ describe('addLine — upsert', () => {
     prisma.cart.findUnique.mockResolvedValue({ id: 'cart_1', currency: 'USD' });
     prisma.variantPrice.findUnique.mockResolvedValue({ priceCents: 1000 });
     prisma.translation.findUnique.mockResolvedValue(null);
-    prisma.cartLine.findFirst.mockResolvedValue({ id: 'line_1', quantity: 2, variantId: 'variant_1' });
+    prisma.cartLine.findFirst.mockResolvedValue({
+      id: 'line_1',
+      quantity: 2,
+      variantId: 'variant_1',
+    });
     prisma.cartLine.update.mockResolvedValue({ id: 'line_1', quantity: 5 });
 
     await addLine('cart_1', 'variant_1', 3, { locale: 'en' });
@@ -237,7 +253,15 @@ describe('mergeGuestCart', () => {
     prisma.cart.findUnique.mockResolvedValue({
       id: 'guest_cart',
       token: 'guest-token',
-      lines: [{ id: 'line_1', variantId: 'v1', quantity: 2, priceCentsSnapshot: 500, titleSnapshot: 'Item A' }],
+      lines: [
+        {
+          id: 'line_1',
+          variantId: 'v1',
+          quantity: 2,
+          priceCentsSnapshot: 500,
+          titleSnapshot: 'Item A',
+        },
+      ],
     });
     prisma.cart.findFirst.mockResolvedValue(null); // no existing customer cart
     prisma.cart.update.mockImplementation(({ data }) =>
@@ -259,8 +283,20 @@ describe('mergeGuestCart', () => {
 
   it('merges guest lines into existing customer cart, deletes guest cart, rotates token', async () => {
     const guestLines = [
-      { id: 'gl_1', variantId: 'v1', quantity: 3, priceCentsSnapshot: 500, titleSnapshot: 'Item A' },
-      { id: 'gl_2', variantId: 'v2', quantity: 1, priceCentsSnapshot: 800, titleSnapshot: 'Item B' },
+      {
+        id: 'gl_1',
+        variantId: 'v1',
+        quantity: 3,
+        priceCentsSnapshot: 500,
+        titleSnapshot: 'Item A',
+      },
+      {
+        id: 'gl_2',
+        variantId: 'v2',
+        quantity: 1,
+        priceCentsSnapshot: 800,
+        titleSnapshot: 'Item B',
+      },
     ];
     const customerLines = [
       { id: 'cl_1', variantId: 'v1', quantity: 1 }, // same variant — should increment
@@ -281,7 +317,10 @@ describe('mergeGuestCart', () => {
     prisma.cartLine.update.mockResolvedValue({});
     prisma.cartLine.create.mockResolvedValue({});
     prisma.cart.delete.mockResolvedValue({});
-    prisma.cart.update.mockResolvedValue({ id: 'cust_cart', token: 'new-token' });
+    prisma.cart.update.mockResolvedValue({
+      id: 'cust_cart',
+      token: 'new-token',
+    });
 
     await mergeGuestCart('guest-token', 'cust_1');
 
@@ -292,10 +331,16 @@ describe('mergeGuestCart', () => {
     });
     // v2 is new on customer cart — should be created.
     expect(prisma.cartLine.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ cartId: 'cust_cart', variantId: 'v2', quantity: 1 }),
+      data: expect.objectContaining({
+        cartId: 'cust_cart',
+        variantId: 'v2',
+        quantity: 1,
+      }),
     });
     // Guest cart deleted.
-    expect(prisma.cart.delete).toHaveBeenCalledWith({ where: { id: 'guest_cart' } });
+    expect(prisma.cart.delete).toHaveBeenCalledWith({
+      where: { id: 'guest_cart' },
+    });
     // Token rotated on surviving cart.
     expect(prisma.cart.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 'cust_cart' } })
@@ -319,7 +364,9 @@ describe('mergeGuestCart', () => {
 
     const result = await mergeGuestCart('guest-token', 'cust_1');
 
-    expect(prisma.cart.delete).toHaveBeenCalledWith({ where: { id: 'guest_cart' } });
+    expect(prisma.cart.delete).toHaveBeenCalledWith({
+      where: { id: 'guest_cart' },
+    });
     expect(result).toMatchObject({ id: 'cust_cart', currency: 'USD' });
     expect(prisma.cartLine.update).not.toHaveBeenCalled();
     expect(prisma.cartLine.create).not.toHaveBeenCalled();
@@ -348,7 +395,9 @@ describe('mergeGuestCart', () => {
 describe('lockCart', () => {
   it('sets lockedAt to a Date', async () => {
     const before = Date.now();
-    prisma.cart.update.mockImplementation(({ data }) => Promise.resolve({ id: 'cart_1', ...data }));
+    prisma.cart.update.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 'cart_1', ...data })
+    );
 
     const result = await lockCart('cart_1');
 
@@ -387,7 +436,9 @@ describe('expireCarts', () => {
 
     const call = prisma.cart.deleteMany.mock.calls[0][0];
     expect(call.where.expiresAt.lt).toBeInstanceOf(Date);
-    expect(call.where.expiresAt.lt.getTime()).toBeGreaterThanOrEqual(before - 100);
+    expect(call.where.expiresAt.lt.getTime()).toBeGreaterThanOrEqual(
+      before - 100
+    );
     expect(call.where.checkouts).toEqual({ none: {} });
     expect(result.count).toBe(3);
   });

@@ -145,7 +145,7 @@ describe('simplePercentProvider.compute', () => {
     mockSettingsGet.mockResolvedValue({
       mode: 'exclusive',
       regions: [
-        { country: 'US', rate: 0.05 },           // country-only
+        { country: 'US', rate: 0.05 }, // country-only
         { country: 'US', state: 'CA', rate: 0.1 }, // country + state
       ],
     });
@@ -243,7 +243,11 @@ describe('computeActiveTax', () => {
     });
 
     expect(mockSettingsGet).toHaveBeenCalledWith('tax.provider');
-    expect(result).toEqual({ taxCents: 200, rate: 0.2, provider: 'custom_tax' });
+    expect(result).toEqual({
+      taxCents: 200,
+      rate: 0.2,
+      provider: 'custom_tax',
+    });
   });
 
   // 12. Defaults to 'simple_percent' when tax.provider setting is absent
@@ -252,10 +256,11 @@ describe('computeActiveTax', () => {
 
     mockSettingsGet.mockImplementation((key) => {
       if (key === 'tax.provider') return Promise.resolve(null);
-      if (key === 'tax.config') return Promise.resolve({
-        mode: 'exclusive',
-        regions: [{ country: 'AU', rate: 0.1 }],
-      });
+      if (key === 'tax.config')
+        return Promise.resolve({
+          mode: 'exclusive',
+          regions: [{ country: 'AU', rate: 0.1 }],
+        });
       return Promise.resolve(null);
     });
 

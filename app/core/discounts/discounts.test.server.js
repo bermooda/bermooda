@@ -56,10 +56,13 @@ beforeEach(() => {
 
 describe('applyDiscount — DISCOUNT_INACTIVE', () => {
   it('throws when discount.active is false', async () => {
-    prisma.discount.findFirst.mockResolvedValue(makeDiscount({ active: false }));
+    prisma.discount.findFirst.mockResolvedValue(
+      makeDiscount({ active: false })
+    );
 
-    await expect(applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' }))
-      .rejects.toThrow('DISCOUNT_INACTIVE');
+    await expect(
+      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
+    ).rejects.toThrow('DISCOUNT_INACTIVE');
 
     expect(prisma.discount.update).not.toHaveBeenCalled();
   });
@@ -68,21 +71,27 @@ describe('applyDiscount — DISCOUNT_INACTIVE', () => {
 describe('applyDiscount — DISCOUNT_EXPIRED', () => {
   it('throws when expiresAt is in the past', async () => {
     const pastDate = new Date(Date.now() - 1000);
-    prisma.discount.findFirst.mockResolvedValue(makeDiscount({ expiresAt: pastDate }));
+    prisma.discount.findFirst.mockResolvedValue(
+      makeDiscount({ expiresAt: pastDate })
+    );
 
-    await expect(applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' }))
-      .rejects.toThrow('DISCOUNT_EXPIRED');
+    await expect(
+      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
+    ).rejects.toThrow('DISCOUNT_EXPIRED');
 
     expect(prisma.discount.update).not.toHaveBeenCalled();
   });
 
   it('does not throw when expiresAt is in the future', async () => {
     const futureDate = new Date(Date.now() + 60_000);
-    prisma.discount.findFirst.mockResolvedValue(makeDiscount({ expiresAt: futureDate }));
+    prisma.discount.findFirst.mockResolvedValue(
+      makeDiscount({ expiresAt: futureDate })
+    );
     prisma.discount.update.mockResolvedValue({});
 
-    await expect(applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' }))
-      .resolves.not.toThrow();
+    await expect(
+      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
+    ).resolves.not.toThrow();
   });
 });
 
@@ -92,8 +101,9 @@ describe('applyDiscount — DISCOUNT_MAX_USES_REACHED', () => {
       makeDiscount({ maxUsesCount: 5, usedCount: 5 })
     );
 
-    await expect(applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' }))
-      .rejects.toThrow('DISCOUNT_MAX_USES_REACHED');
+    await expect(
+      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
+    ).rejects.toThrow('DISCOUNT_MAX_USES_REACHED');
 
     expect(prisma.discount.update).not.toHaveBeenCalled();
   });
@@ -103,8 +113,9 @@ describe('applyDiscount — DISCOUNT_MAX_USES_REACHED', () => {
       makeDiscount({ maxUsesCount: 5, usedCount: 7 })
     );
 
-    await expect(applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' }))
-      .rejects.toThrow('DISCOUNT_MAX_USES_REACHED');
+    await expect(
+      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
+    ).rejects.toThrow('DISCOUNT_MAX_USES_REACHED');
   });
 });
 
@@ -114,8 +125,9 @@ describe('applyDiscount — DISCOUNT_MIN_SUBTOTAL_NOT_MET', () => {
       makeDiscount({ minSubtotalCents: 5000 })
     );
 
-    await expect(applyDiscount('SAVE10', { subtotalCents: 4999, currency: 'USD' }))
-      .rejects.toThrow('DISCOUNT_MIN_SUBTOTAL_NOT_MET');
+    await expect(
+      applyDiscount('SAVE10', { subtotalCents: 4999, currency: 'USD' })
+    ).rejects.toThrow('DISCOUNT_MIN_SUBTOTAL_NOT_MET');
 
     expect(prisma.discount.update).not.toHaveBeenCalled();
   });
@@ -126,8 +138,9 @@ describe('applyDiscount — DISCOUNT_MIN_SUBTOTAL_NOT_MET', () => {
     );
     prisma.discount.update.mockResolvedValue({});
 
-    await expect(applyDiscount('SAVE10', { subtotalCents: 5000, currency: 'USD' }))
-      .resolves.not.toThrow();
+    await expect(
+      applyDiscount('SAVE10', { subtotalCents: 5000, currency: 'USD' })
+    ).resolves.not.toThrow();
   });
 });
 
@@ -137,8 +150,9 @@ describe('applyDiscount — DISCOUNT_CURRENCY_MISMATCH', () => {
       makeDiscount({ currency: 'EUR' })
     );
 
-    await expect(applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' }))
-      .rejects.toThrow('DISCOUNT_CURRENCY_MISMATCH');
+    await expect(
+      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
+    ).rejects.toThrow('DISCOUNT_CURRENCY_MISMATCH');
 
     expect(prisma.discount.update).not.toHaveBeenCalled();
   });
@@ -155,7 +169,10 @@ describe('applyDiscount — percent calculation', () => {
     );
     prisma.discount.update.mockResolvedValue({});
 
-    const result = await applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' });
+    const result = await applyDiscount('SAVE10', {
+      subtotalCents: 1000,
+      currency: 'USD',
+    });
 
     expect(result.discountCents).toBe(200); // 20% of 1000
   });
@@ -166,7 +183,10 @@ describe('applyDiscount — percent calculation', () => {
     );
     prisma.discount.update.mockResolvedValue({});
 
-    const result = await applyDiscount('SAVE10', { subtotalCents: 999, currency: 'USD' });
+    const result = await applyDiscount('SAVE10', {
+      subtotalCents: 999,
+      currency: 'USD',
+    });
 
     // 10% of 999 = 99.9 → rounds to 100
     expect(result.discountCents).toBe(100);
@@ -181,7 +201,10 @@ describe('applyDiscount — fixed calculation caps at subtotal', () => {
     prisma.discount.update.mockResolvedValue({});
 
     // subtotal is 2000 but discount value is 5000 — should be capped at 2000
-    const result = await applyDiscount('FLAT50', { subtotalCents: 2000, currency: 'USD' });
+    const result = await applyDiscount('FLAT50', {
+      subtotalCents: 2000,
+      currency: 'USD',
+    });
 
     expect(result.discountCents).toBe(2000);
   });
@@ -192,7 +215,10 @@ describe('applyDiscount — fixed calculation caps at subtotal', () => {
     );
     prisma.discount.update.mockResolvedValue({});
 
-    const result = await applyDiscount('FLAT5', { subtotalCents: 2000, currency: 'USD' });
+    const result = await applyDiscount('FLAT5', {
+      subtotalCents: 2000,
+      currency: 'USD',
+    });
 
     expect(result.discountCents).toBe(500);
   });
@@ -234,9 +260,17 @@ describe('applyDiscount — return value', () => {
     );
     prisma.discount.update.mockResolvedValue({});
 
-    const result = await applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' });
+    const result = await applyDiscount('SAVE10', {
+      subtotalCents: 1000,
+      currency: 'USD',
+    });
 
-    expect(result).toEqual({ discountCents: 100, code: 'SAVE10', type: 'percent', value: 10 });
+    expect(result).toEqual({
+      discountCents: 100,
+      code: 'SAVE10',
+      type: 'percent',
+      value: 10,
+    });
   });
 });
 
@@ -259,17 +293,23 @@ describe('validateDiscount', () => {
     const discount = makeDiscount({ type: 'percent', value: 15 });
     prisma.discount.findFirst.mockResolvedValue(discount);
 
-    const result = await validateDiscount('SAVE10', { subtotalCents: 2000, currency: 'USD' });
+    const result = await validateDiscount('SAVE10', {
+      subtotalCents: 2000,
+      currency: 'USD',
+    });
 
     expect(result.discountCents).toBe(300); // 15% of 2000
     expect(result.code).toBe('SAVE10');
   });
 
   it('still validates — throws DISCOUNT_INACTIVE without updating', async () => {
-    prisma.discount.findFirst.mockResolvedValue(makeDiscount({ active: false }));
+    prisma.discount.findFirst.mockResolvedValue(
+      makeDiscount({ active: false })
+    );
 
-    await expect(validateDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' }))
-      .rejects.toThrow('DISCOUNT_INACTIVE');
+    await expect(
+      validateDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
+    ).rejects.toThrow('DISCOUNT_INACTIVE');
 
     expect(prisma.discount.update).not.toHaveBeenCalled();
   });
@@ -341,7 +381,9 @@ describe('deleteDiscount', () => {
 
     await deleteDiscount('disc_1');
 
-    expect(prisma.discount.delete).toHaveBeenCalledWith({ where: { id: 'disc_1' } });
+    expect(prisma.discount.delete).toHaveBeenCalledWith({
+      where: { id: 'disc_1' },
+    });
   });
 });
 

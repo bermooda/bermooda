@@ -22,11 +22,17 @@ function validateDiscountRecord(discount, { subtotalCents, currency }) {
     throw new Error('DISCOUNT_EXPIRED');
   }
 
-  if (discount.maxUsesCount !== null && discount.usedCount >= discount.maxUsesCount) {
+  if (
+    discount.maxUsesCount !== null &&
+    discount.usedCount >= discount.maxUsesCount
+  ) {
     throw new Error('DISCOUNT_MAX_USES_REACHED');
   }
 
-  if (discount.minSubtotalCents !== null && subtotalCents < discount.minSubtotalCents) {
+  if (
+    discount.minSubtotalCents !== null &&
+    subtotalCents < discount.minSubtotalCents
+  ) {
     throw new Error('DISCOUNT_MIN_SUBTOTAL_NOT_MET');
   }
 
@@ -43,7 +49,7 @@ function validateDiscountRecord(discount, { subtotalCents, currency }) {
  */
 function calculateDiscountCents(discount, subtotalCents) {
   if (discount.type === 'percent') {
-    return Math.round(subtotalCents * discount.value / 100);
+    return Math.round((subtotalCents * discount.value) / 100);
   }
   // fixed: cap at subtotal so the discount can't exceed the order total
   return Math.min(discount.value, subtotalCents);
@@ -78,7 +84,12 @@ export async function applyDiscount(code, { subtotalCents, currency }) {
     data: { usedCount: { increment: 1 } },
   });
 
-  return { discountCents, code: discount.code, type: discount.type, value: discount.value };
+  return {
+    discountCents,
+    code: discount.code,
+    type: discount.type,
+    value: discount.value,
+  };
 }
 
 // ---------------------------------------------------------------------------

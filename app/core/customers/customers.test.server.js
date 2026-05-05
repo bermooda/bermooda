@@ -149,7 +149,11 @@ describe('getCustomer', () => {
 
 describe('updateCustomer', () => {
   it('only updates allowed fields (name, phone, preferredLocale)', async () => {
-    const updated = makeCustomer({ name: 'Bob', phone: '+1555', preferredLocale: 'fr' });
+    const updated = makeCustomer({
+      name: 'Bob',
+      phone: '+1555',
+      preferredLocale: 'fr',
+    });
     prisma.customer.update.mockResolvedValue(updated);
 
     await updateCustomer('cust_1', {
@@ -157,11 +161,15 @@ describe('updateCustomer', () => {
       phone: '+1555',
       preferredLocale: 'fr',
       email: 'hacker@evil.com', // should be stripped
-      emailVerified: false,     // should be stripped
+      emailVerified: false, // should be stripped
     });
 
     const callData = prisma.customer.update.mock.calls[0][0].data;
-    expect(callData).toEqual({ name: 'Bob', phone: '+1555', preferredLocale: 'fr' });
+    expect(callData).toEqual({
+      name: 'Bob',
+      phone: '+1555',
+      preferredLocale: 'fr',
+    });
     expect(callData.email).toBeUndefined();
     expect(callData.emailVerified).toBeUndefined();
   });
@@ -215,7 +223,9 @@ describe('listAddresses', () => {
 
     const result = await listAddresses('cust_1');
 
-    expect(prisma.address.findMany).toHaveBeenCalledWith({ where: { customerId: 'cust_1' } });
+    expect(prisma.address.findMany).toHaveBeenCalledWith({
+      where: { customerId: 'cust_1' },
+    });
     expect(result).toHaveLength(2);
   });
 });
@@ -229,7 +239,11 @@ describe('addAddress', () => {
     const addr = makeAddress({ isDefault: false });
     prisma.address.create.mockResolvedValue(addr);
 
-    await addAddress('cust_1', { line1: '123 Main St', country: 'US', isDefault: false });
+    await addAddress('cust_1', {
+      line1: '123 Main St',
+      country: 'US',
+      isDefault: false,
+    });
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(prisma.address.create).toHaveBeenCalled();
@@ -255,7 +269,10 @@ describe('addAddress', () => {
     });
     expect(prisma._tx.address.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ customerId: 'cust_1', isDefault: true }),
+        data: expect.objectContaining({
+          customerId: 'cust_1',
+          isDefault: true,
+        }),
       })
     );
   });
@@ -283,7 +300,9 @@ describe('updateAddress', () => {
   });
 
   it('updates address without transaction when isDefault is not set', async () => {
-    prisma.address.update.mockResolvedValue(makeAddress({ line1: '456 Oak Ave' }));
+    prisma.address.update.mockResolvedValue(
+      makeAddress({ line1: '456 Oak Ave' })
+    );
 
     await updateAddress('addr_1', 'cust_1', { line1: '456 Oak Ave' });
 
@@ -310,18 +329,24 @@ describe('deleteAddress', () => {
   });
 
   it('deletes non-default address without promoting another', async () => {
-    prisma.address.findUnique.mockResolvedValue(makeAddress({ isDefault: false }));
+    prisma.address.findUnique.mockResolvedValue(
+      makeAddress({ isDefault: false })
+    );
     prisma.address.delete.mockResolvedValue({});
 
     await deleteAddress('addr_1', 'cust_1');
 
-    expect(prisma.address.delete).toHaveBeenCalledWith({ where: { id: 'addr_1' } });
+    expect(prisma.address.delete).toHaveBeenCalledWith({
+      where: { id: 'addr_1' },
+    });
     expect(prisma.address.findFirst).not.toHaveBeenCalled();
     expect(prisma.address.update).not.toHaveBeenCalled();
   });
 
   it('promotes most recently created address as default when deleted address was default', async () => {
-    prisma.address.findUnique.mockResolvedValue(makeAddress({ id: 'addr_1', isDefault: true }));
+    prisma.address.findUnique.mockResolvedValue(
+      makeAddress({ id: 'addr_1', isDefault: true })
+    );
     prisma.address.delete.mockResolvedValue({});
 
     const nextAddr = makeAddress({ id: 'addr_2', isDefault: false });
@@ -330,7 +355,9 @@ describe('deleteAddress', () => {
 
     await deleteAddress('addr_1', 'cust_1');
 
-    expect(prisma.address.delete).toHaveBeenCalledWith({ where: { id: 'addr_1' } });
+    expect(prisma.address.delete).toHaveBeenCalledWith({
+      where: { id: 'addr_1' },
+    });
     expect(prisma.address.findFirst).toHaveBeenCalledWith({
       where: { customerId: 'cust_1' },
       orderBy: { id: 'desc' },
@@ -342,7 +369,9 @@ describe('deleteAddress', () => {
   });
 
   it('does not call update when deleted was default but no other addresses remain', async () => {
-    prisma.address.findUnique.mockResolvedValue(makeAddress({ id: 'addr_1', isDefault: true }));
+    prisma.address.findUnique.mockResolvedValue(
+      makeAddress({ id: 'addr_1', isDefault: true })
+    );
     prisma.address.delete.mockResolvedValue({});
     prisma.address.findFirst.mockResolvedValue(null);
 
