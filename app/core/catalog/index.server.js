@@ -42,18 +42,18 @@ export async function getTranslations(entityType, entityId, locale) {
 // ---------------------------------------------------------------------------
 
 export async function setSlug(entityType, entityId, locale, slug) {
-  await prisma.$transaction(async (tx) => {
-    // Mark any existing canonical slug for this entity+locale as non-canonical.
-    await tx.slug.updateMany({
-      where: { entityType, entityId, locale, canonical: true },
-      data: { canonical: false },
-    });
-    // Upsert the new canonical slug.
-    await tx.slug.upsert({
-      where: { slug },
-      create: { entityType, entityId, locale, slug, canonical: true },
-      update: { entityType, entityId, locale, canonical: true },
-    });
+  // Reject if this slug string is already claimed by a different entity.
+  const existing = await prisma.slug.findUnique({ where: { slug } });
+  if (existing && (existing.entityType !== entityType || existing.entityId !== entityId)) {
+    throw new Error('Slug already taken');
+  }
+
+  // Upsert by the compound unique (entityType, entityId, locale) — the schema
+  // allows only one slug row per entity+locale, so there is nothing to un-canonicalize.
+  await prisma.slug.upsert({
+    where: { entityType_entityId_locale: { entityType, entityId, locale } },
+    create: { entityType, entityId, locale, slug, canonical: true },
+    update: { slug, canonical: true },
   });
 }
 
@@ -154,7 +154,11 @@ export async function getProductBySlug(slug, opts = {}) {
 }
 
 export async function createProduct(data) {
+  // prices are managed per-variant via createVariant/updateVariant.
   const { title, description, locale, prices, ...productData } = data;
+  if (prices !== undefined) {
+    throw new Error('prices must be set per-variant via createVariant/updateVariant, not createProduct');
+  }
 
   const product = await prisma.product.create({ data: productData });
 
@@ -276,15 +280,32 @@ export async function listCategories({ locale } = {}) {
 
   if (!locale) return categories;
 
-  return Promise.all(
-    categories.map(async (cat) => {
-      const [translations, slugRow] = await Promise.all([
-        getTranslations('category', cat.id, locale),
-        prisma.slug.findFirst({ where: { entityType: 'category', entityId: cat.id, locale, canonical: true } }),
-      ]);
-      return withTranslations({ ...cat, slug: slugRow?.slug ?? null }, translations);
-    })
-  );
+  // Collect all category IDs (parents + children) so we can batch-fetch
+  // translations and slugs in just two queries per tier.
+  const parentIds = categories.map((c) => c.id);
+  const childIds = categories.flatMap((c) => c.children.map((ch) => ch.id));
+  const allIds = [...parentIds, ...childIds];
+
+  const [allTranslationRows, allSlugRows] = await Promise.all([
+    prisma.translation.findMany({ where: { entityType: 'category', entityId: { in: allIds }, locale } }),
+    prisma.slug.findMany({ where: { entityType: 'category', entityId: { in: allIds }, locale, canonical: true } }),
+  ]);
+
+  // Index by entityId for O(1) lookup.
+  const translationsByEntity = {};
+  for (const row of allTranslationRows) {
+    (translationsByEntity[row.entityId] ??= []).push(row);
+  }
+  const slugByEntity = Object.fromEntries(allSlugRows.map((r) => [r.entityId, r.slug]));
+
+  return categories.map((cat) => {
+    const translatedChildren = cat.children.map((child) => {
+      const childTranslations = toTranslationMap(translationsByEntity[child.id] ?? []);
+      return withTranslations({ ...child, slug: slugByEntity[child.id] ?? null }, childTranslations);
+    });
+    const catTranslations = toTranslationMap(translationsByEntity[cat.id] ?? []);
+    return withTranslations({ ...cat, slug: slugByEntity[cat.id] ?? null, children: translatedChildren }, catTranslations);
+  });
 }
 
 export async function getCategory(id, { locale } = {}) {

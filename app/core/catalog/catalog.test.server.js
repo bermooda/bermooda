@@ -116,21 +116,45 @@ describe('resolveSlug', () => {
 // ---------------------------------------------------------------------------
 
 describe('setSlug', () => {
-  it('marks old canonical false then upserts new canonical slug', async () => {
-    prisma.slug.updateMany.mockResolvedValue({ count: 1 });
+  it('upserts slug by compound (entityType, entityId, locale) key', async () => {
+    prisma.slug.findUnique.mockResolvedValue(null);
     prisma.slug.upsert.mockResolvedValue({});
 
     await setSlug('product', 'prod_1', 'en', 'new-slug');
 
-    expect(prisma.slug.updateMany).toHaveBeenCalledWith({
-      where: { entityType: 'product', entityId: 'prod_1', locale: 'en', canonical: true },
-      data: { canonical: false },
-    });
+    expect(prisma.slug.findUnique).toHaveBeenCalledWith({ where: { slug: 'new-slug' } });
     expect(prisma.slug.upsert).toHaveBeenCalledWith({
-      where: { slug: 'new-slug' },
+      where: { entityType_entityId_locale: { entityType: 'product', entityId: 'prod_1', locale: 'en' } },
       create: { entityType: 'product', entityId: 'prod_1', locale: 'en', slug: 'new-slug', canonical: true },
-      update: { entityType: 'product', entityId: 'prod_1', locale: 'en', canonical: true },
+      update: { slug: 'new-slug', canonical: true },
     });
+  });
+
+  it('throws when the slug belongs to a different entity', async () => {
+    prisma.slug.findUnique.mockResolvedValue({
+      entityType: 'category',
+      entityId: 'cat_99',
+      locale: 'en',
+      slug: 'new-slug',
+      canonical: true,
+    });
+
+    await expect(setSlug('product', 'prod_1', 'en', 'new-slug')).rejects.toThrow('Slug already taken');
+    expect(prisma.slug.upsert).not.toHaveBeenCalled();
+  });
+
+  it('does not throw when the slug already belongs to the same entity', async () => {
+    prisma.slug.findUnique.mockResolvedValue({
+      entityType: 'product',
+      entityId: 'prod_1',
+      locale: 'en',
+      slug: 'new-slug',
+      canonical: true,
+    });
+    prisma.slug.upsert.mockResolvedValue({});
+
+    await expect(setSlug('product', 'prod_1', 'en', 'new-slug')).resolves.toBeUndefined();
+    expect(prisma.slug.upsert).toHaveBeenCalled();
   });
 });
 
@@ -303,6 +327,18 @@ describe('reorderMedia', () => {
     expect(prisma.productMedia.update).toHaveBeenCalledWith({
       where: { productId_mediaId: { productId: 'prod_1', mediaId: 'media_c' } },
       data: { position: 2 },
+    });
+  });
+});
+
+describe('detachMedia', () => {
+  it('deletes productMedia by compound key', async () => {
+    prisma.productMedia.delete.mockResolvedValue({});
+
+    await detachMedia('prod_1', 'media_1');
+
+    expect(prisma.productMedia.delete).toHaveBeenCalledWith({
+      where: { productId_mediaId: { productId: 'prod_1', mediaId: 'media_1' } },
     });
   });
 });
