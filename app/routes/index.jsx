@@ -1,7 +1,4 @@
-import { redirect } from 'react-router';
-
 import config from '#/config';
-import { getCheckoutSession } from '#/services/stripe.server';
 import LandingHeader from '#/components/header/landing';
 import Benefits from '#/components/landing/benefits';
 import CTA from '#/components/landing/cta';
@@ -18,16 +15,6 @@ export function meta() {
     { title: config.appName },
     { name: 'description', content: config.appDescription },
   ];
-}
-
-export async function action({ request }) {
-  const formData = await request.formData();
-  const priceId = formData.get('priceId');
-
-  // Create a new checkout session
-  const { url } = await getCheckoutSession(priceId, 'checkout/successful');
-
-  return redirect(url);
 }
 
 /**
