@@ -28,32 +28,19 @@ import {
 } from '@heroicons/react/24/outline';
 import { UserIcon as UserIconSolid } from '@heroicons/react/24/solid';
 import { useState } from 'react';
-import { Link, Outlet, redirect, useLoaderData, useLocation } from 'react-router';
+import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import useTheme from '#/hooks/use-theme';
+import { useT } from '#/core/i18n/index';
 import Logo from '#/components/ui/logo';
 
 /**
  * Loader — verifies admin session; redirects to /admin/login on failure.
  */
 export async function loader({ request }) {
-  try {
-    const session = await authenticate(request);
-    return { user: session.user };
-  } catch (error) {
-    // authenticate() already throws a redirect, but its target is /login.
-    // Re-route unauthenticated visitors to /admin/login instead.
-    if (error instanceof Response && error.status === 302) {
-      const url = new URL(request.url);
-      const returnTo = url.pathname + url.search;
-      throw redirect(
-        `/admin/login?returnTo=${encodeURIComponent(returnTo)}`,
-        302
-      );
-    }
-    throw error;
-  }
+  const session = await authenticate(request);
+  return { user: session.user };
 }
 
 // ------------------------------------------------------------------
@@ -282,6 +269,7 @@ function MobileSidebar({ isOpen, onClose }) {
  */
 function Topbar({ onMenuOpen }) {
   const { isDark, toggleTheme } = useTheme();
+  const t = useT();
 
   return (
     <header className="dark:border-dark-700/50 dark:bg-dark-900/80 sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-gray-200 bg-white/80 px-4 backdrop-blur-sm md:px-6">
@@ -309,6 +297,16 @@ function Topbar({ onMenuOpen }) {
 
       {/* Right-side actions */}
       <div className="flex items-center gap-2">
+        {/* Locale switcher (stub) */}
+        <button
+          type="button"
+          disabled
+          className="dark:text-dark-400 rounded-md p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          aria-label={t('admin.topbar.switchLocale')}
+        >
+          <GlobeAltIcon className="h-5 w-5" aria-hidden="true" />
+        </button>
+
         {/* Dark mode toggle */}
         <button
           type="button"
