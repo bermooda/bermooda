@@ -98,7 +98,7 @@ export async function action({ request, params }) {
         data: { isDefault: false },
       }),
       prisma.address.update({
-        where: { id: addressId },
+        where: { id: addressId, customerId: id },
         data: { isDefault: true },
       }),
     ]);
@@ -110,7 +110,7 @@ export async function action({ request, params }) {
     const addressId = formData.get('addressId')?.toString();
     if (!addressId) return { ok: false, error: 'Missing addressId.' };
 
-    await prisma.address.delete({ where: { id: addressId } });
+    await prisma.address.delete({ where: { id: addressId, customerId: id } });
 
     return { ok: true, intent };
   }
