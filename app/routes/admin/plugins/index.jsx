@@ -1,9 +1,14 @@
 // app/routes/admin/plugins/index.jsx
 // Admin Plugins page — list registered plugins, enable/disable, reorder, settings.
 
-import { useRef } from 'react';
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { Form, useActionData, useLoaderData, useNavigation } from 'react-router';
+import { useRef } from 'react';
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+} from 'react-router';
 
 import { _registry } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
@@ -33,7 +38,9 @@ export async function loader() {
 
   // enabledPlugins: JSON array of plugin IDs
   const enabledPluginsRaw = await get('enabledPlugins');
-  const enabledPlugins = Array.isArray(enabledPluginsRaw) ? enabledPluginsRaw : [];
+  const enabledPlugins = Array.isArray(enabledPluginsRaw)
+    ? enabledPluginsRaw
+    : [];
 
   // pluginOrder: JSON array of plugin IDs for display order
   const pluginOrderRaw = await get('pluginOrder');
@@ -63,7 +70,12 @@ export async function loader() {
     }
   }
 
-  return { plugins: orderedPlugins, enabledPlugins, pluginOrder, pluginSettings };
+  return {
+    plugins: orderedPlugins,
+    enabledPlugins,
+    pluginOrder,
+    pluginSettings,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -208,7 +220,7 @@ function SettingField({ setting, value }) {
           type="text"
           name={key}
           defaultValue={value}
-          className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-dark-600 dark:bg-dark-700 dark:text-white"
+          className="dark:border-dark-600 dark:bg-dark-700 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:text-white"
         />
       )}
 
@@ -217,7 +229,7 @@ function SettingField({ setting, value }) {
           id={id}
           name={key}
           defaultValue={value}
-          className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-dark-600 dark:bg-dark-700 dark:text-white"
+          className="dark:border-dark-600 dark:bg-dark-700 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:text-white"
         >
           {(options ?? []).map((opt) => {
             const optValue = typeof opt === 'object' ? opt.value : opt;
@@ -241,8 +253,8 @@ function SettingField({ setting, value }) {
               defaultChecked={value === true || value === 'true'}
               className="peer sr-only"
             />
-            <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-indigo-600 dark:bg-dark-600 dark:peer-checked:bg-indigo-500" />
-            <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-4" />
+            <div className="dark:bg-dark-600 h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-500" />
+            <div className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-4" />
           </div>
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {label ?? key}
@@ -273,8 +285,8 @@ function PluginSettingsForm({ manifest, values }) {
   if (!manifest.settings?.length) return null;
 
   return (
-    <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 dark:border-dark-700 dark:bg-dark-900/40">
-      <div className="border-b border-gray-200 px-4 py-3 dark:border-dark-700">
+    <div className="dark:border-dark-700 dark:bg-dark-900/40 mt-4 rounded-lg border border-gray-200 bg-gray-50">
+      <div className="dark:border-dark-700 border-b border-gray-200 px-4 py-3">
         <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
           Plugin Settings
         </h4>
@@ -296,9 +308,13 @@ function PluginSettingsForm({ manifest, values }) {
 
         <div className="mt-4 flex items-center justify-between">
           {savedThisPlugin ? (
-            <p className="text-sm text-green-600 dark:text-green-400">Settings saved.</p>
+            <p className="text-sm text-green-600 dark:text-green-400">
+              Settings saved.
+            </p>
           ) : actionData?.error ? (
-            <p className="text-sm text-red-600 dark:text-red-400">{actionData.error}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {actionData.error}
+            </p>
           ) : (
             <span />
           )}
@@ -339,7 +355,7 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
   const values = pluginSettings[manifest.id] ?? {};
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 transition-colors dark:border-dark-700 dark:bg-dark-800">
+    <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-5 transition-colors">
       {/* Header row */}
       <div className="flex items-start gap-3">
         {/* Reorder buttons */}
@@ -395,7 +411,7 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
           {manifest.adminPath && (
             <a
               href={manifest.adminPath}
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 dark:border-dark-600 dark:text-gray-300 dark:hover:bg-dark-700"
+              className="dark:border-dark-600 dark:hover:bg-dark-700 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 dark:text-gray-300"
             >
               Plugin Admin &rarr;
             </a>
@@ -455,8 +471,8 @@ export default function AdminPluginsRoute() {
           Plugins
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Manage installed plugins. Display order and enabled state are persisted
-          to settings.
+          Manage installed plugins. Display order and enabled state are
+          persisted to settings.
         </p>
       </div>
 
@@ -467,7 +483,7 @@ export default function AdminPluginsRoute() {
         </h2>
 
         {plugins.length === 0 ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-8 text-center dark:border-dark-700 dark:bg-dark-800">
+          <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-8 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               No plugins registered. Plugins are loaded from{' '}
               <span className="font-mono">app/plugins/</span> at startup.

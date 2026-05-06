@@ -73,8 +73,8 @@ export default function AdminPluginDispatcher() {
           Plugin not found
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          No plugin with ID{' '}
-          <span className="font-mono">{data.pluginId}</span> is registered.
+          No plugin with ID <span className="font-mono">{data.pluginId}</span>{' '}
+          is registered.
         </p>
       </div>
     );

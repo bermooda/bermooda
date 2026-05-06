@@ -95,7 +95,7 @@ export default function AdminNewProductRoute() {
               autoFocus
               pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
               placeholder="my-new-product"
-              className="mt-2 block w-full rounded-md border-0 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
+              className="mt-2 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
             />
           </div>
 

@@ -2,11 +2,17 @@
 // Admin Themes page — list registered themes, activate, and configure settings.
 
 import { useEffect, useRef } from 'react';
-import { Form, useActionData, useLoaderData, useNavigation } from 'react-router';
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+} from 'react-router';
 
 import cache from '#/utils/cache.server';
-import { _registry, resolveActiveTheme } from '#/core/themes/index.server';
+
 import { get, set } from '#/core/settings/index.server';
+import { _registry, resolveActiveTheme } from '#/core/themes/index.server';
 
 // ---------------------------------------------------------------------------
 // Meta
@@ -143,7 +149,8 @@ function ThemeCard({ manifest, isActive }) {
             {isActive && <ActiveBadge />}
           </div>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-            v{manifest.version} &middot; <span className="font-mono">{manifest.id}</span>
+            v{manifest.version} &middot;{' '}
+            <span className="font-mono">{manifest.id}</span>
           </p>
           {manifest.description && (
             <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-300">
@@ -195,17 +202,22 @@ function ThemeSettingsForm({ manifest, values }) {
   if (!manifest.settings?.length) return null;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white dark:border-dark-700 dark:bg-dark-800">
-      <div className="border-b border-gray-200 px-5 py-4 dark:border-dark-700">
+    <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white">
+      <div className="dark:border-dark-700 border-b border-gray-200 px-5 py-4">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">
           Theme Settings
         </h2>
         <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-          Configure options for <span className="font-medium">{manifest.name}</span>.
+          Configure options for{' '}
+          <span className="font-medium">{manifest.name}</span>.
         </p>
       </div>
 
-      <Form ref={formRef} method="post" className="divide-y divide-gray-100 dark:divide-dark-700/60">
+      <Form
+        ref={formRef}
+        method="post"
+        className="dark:divide-dark-700/60 divide-y divide-gray-100"
+      >
         <input type="hidden" name="intent" value="save-settings" />
         <input type="hidden" name="themeId" value={manifest.id} />
 
@@ -221,10 +233,14 @@ function ThemeSettingsForm({ manifest, values }) {
 
         <div className="flex items-center justify-between px-5 py-4">
           {actionData?.savedSettings && (
-            <p className="text-sm text-green-600 dark:text-green-400">Settings saved.</p>
+            <p className="text-sm text-green-600 dark:text-green-400">
+              Settings saved.
+            </p>
           )}
           {actionData?.error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{actionData.error}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {actionData.error}
+            </p>
           )}
           {!actionData?.savedSettings && !actionData?.error && <span />}
 
@@ -267,7 +283,7 @@ function SettingField({ setting, value }) {
           type="text"
           name={key}
           defaultValue={value}
-          className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-dark-600 dark:bg-dark-700 dark:text-white"
+          className="dark:border-dark-600 dark:bg-dark-700 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:text-white"
         />
       )}
 
@@ -276,7 +292,7 @@ function SettingField({ setting, value }) {
           id={id}
           name={key}
           defaultValue={value}
-          className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-dark-600 dark:bg-dark-700 dark:text-white"
+          className="dark:border-dark-600 dark:bg-dark-700 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:text-white"
         >
           {(options ?? []).map((opt) => {
             const optValue = typeof opt === 'object' ? opt.value : opt;
@@ -300,8 +316,8 @@ function SettingField({ setting, value }) {
               defaultChecked={value === true || value === 'true'}
               className="peer sr-only"
             />
-            <div className="h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-indigo-600 dark:bg-dark-600 dark:peer-checked:bg-indigo-500" />
-            <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-4" />
+            <div className="dark:bg-dark-600 h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-500" />
+            <div className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-4" />
           </div>
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {label ?? key}
@@ -342,7 +358,7 @@ export default function AdminThemesRoute() {
           href="/"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-300 dark:hover:bg-dark-700"
+          className="dark:border-dark-600 dark:bg-dark-800 dark:hover:bg-dark-700 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:text-gray-300"
         >
           Preview Storefront
           <svg
@@ -368,7 +384,8 @@ export default function AdminThemesRoute() {
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300">
           Active theme ID is set to{' '}
           <span className="font-mono font-medium">{activeThemeId}</span>, but no
-          matching theme is registered. Register the theme at startup to activate it.
+          matching theme is registered. Register the theme at startup to
+          activate it.
         </div>
       )}
 
@@ -379,7 +396,7 @@ export default function AdminThemesRoute() {
         </h2>
 
         {themes.length === 0 ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-8 text-center dark:border-dark-700 dark:bg-dark-800">
+          <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-8 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               No themes registered. Themes are loaded from{' '}
               <span className="font-mono">app/themes/</span> at startup.
