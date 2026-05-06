@@ -8,6 +8,7 @@ import {
   PhotoIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
+import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import {
   Form,
@@ -18,9 +19,9 @@ import {
   useRevalidator,
 } from 'react-router';
 import { redirect } from 'react-router';
-import clsx from 'clsx';
 
 import prisma from '#/libs/prisma.server';
+
 import { get } from '#/core/settings/index.server';
 import { uploadMedia } from '#/core/storage/index.server';
 
@@ -232,10 +233,7 @@ export async function action({ request, params }) {
         });
       }
 
-      const slugValue = formData
-        .get(`slug[${locale}]`)
-        ?.toString()
-        .trim();
+      const slugValue = formData.get(`slug[${locale}]`)?.toString().trim();
       if (slugValue) {
         try {
           await prisma.slug.upsert({
@@ -531,7 +529,7 @@ function LocaleEditor({ locale, translations, slugMap }) {
           name={`slug[${locale}]`}
           defaultValue={slug}
           placeholder="url-slug"
-          className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+          className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
         />
       </div>
 
@@ -543,7 +541,7 @@ function LocaleEditor({ locale, translations, slugMap }) {
           type="text"
           name={`translation[${locale}][title]`}
           defaultValue={t.title ?? ''}
-          className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+          className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
         />
       </div>
 
@@ -555,12 +553,12 @@ function LocaleEditor({ locale, translations, slugMap }) {
           name={`translation[${locale}][description]`}
           defaultValue={t.description ?? ''}
           rows={4}
-          className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+          className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
         />
       </div>
 
       <div className="rounded-lg bg-gray-50 p-4 dark:bg-zinc-800/50">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+        <p className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
           SEO
         </p>
         <div className="space-y-3">
@@ -572,7 +570,7 @@ function LocaleEditor({ locale, translations, slugMap }) {
               type="text"
               name={`translation[${locale}][seoTitle]`}
               defaultValue={t.seoTitle ?? ''}
-              className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+              className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
             />
           </div>
           <div>
@@ -583,7 +581,7 @@ function LocaleEditor({ locale, translations, slugMap }) {
               name={`translation[${locale}][seoDescription]`}
               defaultValue={t.seoDescription ?? ''}
               rows={2}
-              className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+              className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
             />
           </div>
         </div>
@@ -624,10 +622,7 @@ function OptionsEditor({ initialOptions }) {
         o.id === optId
           ? {
               ...o,
-              values: [
-                ...o.values,
-                { id: `new-${Date.now()}`, value: '' },
-              ],
+              values: [...o.values, { id: `new-${Date.now()}`, value: '' }],
             }
           : o
       )
@@ -674,7 +669,7 @@ function OptionsEditor({ initialOptions }) {
               value={opt.name}
               onChange={(e) => updateOptionName(opt.id, e.target.value)}
               placeholder="Option name (e.g. Size)"
-              className="flex-1 rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+              className="flex-1 rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
             />
             <button
               type="button"
@@ -699,7 +694,7 @@ function OptionsEditor({ initialOptions }) {
                   value={val.value}
                   onChange={(e) => updateValue(opt.id, val.id, e.target.value)}
                   placeholder="Value"
-                  className="flex-1 rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                  className="flex-1 rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
                 />
                 <button
                   type="button"
@@ -746,17 +741,17 @@ function VariantPriceGrid({ variants, currencies }) {
       <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-zinc-700">
         <thead>
           <tr className="bg-gray-50 dark:bg-zinc-800">
-            <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+            <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
               SKU
             </th>
-            <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+            <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
               Inventory
             </th>
             {currencies.map((cur) => (
               <th
                 key={cur}
                 colSpan={2}
-                className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400"
+                className="px-3 py-2 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400"
               >
                 {cur}
               </th>
@@ -785,7 +780,10 @@ function VariantPriceGrid({ variants, currencies }) {
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
           {variants.map((variant) => (
-            <tr key={variant.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/40">
+            <tr
+              key={variant.id}
+              className="hover:bg-gray-50 dark:hover:bg-zinc-800/40"
+            >
               <td className="px-3 py-2">
                 <input
                   type="text"
@@ -808,14 +806,15 @@ function VariantPriceGrid({ variants, currencies }) {
                 const priceData = variant.prices[cur];
                 return (
                   <>
-                    <td key={`${variant.id}-${cur}-price`} className="px-3 py-2">
+                    <td
+                      key={`${variant.id}-${cur}-price`}
+                      className="px-3 py-2"
+                    >
                       <input
                         type="number"
                         name={`price[${variant.id}][${cur}]`}
                         defaultValue={
-                          priceData
-                            ? centsToDisplay(priceData.priceCents)
-                            : ''
+                          priceData ? centsToDisplay(priceData.priceCents) : ''
                         }
                         min={0}
                         step="0.01"
@@ -823,7 +822,10 @@ function VariantPriceGrid({ variants, currencies }) {
                         className="w-24 rounded border-0 bg-white px-2 py-1 text-sm shadow-sm ring-1 ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
                       />
                     </td>
-                    <td key={`${variant.id}-${cur}-compare`} className="px-3 py-2">
+                    <td
+                      key={`${variant.id}-${cur}-compare`}
+                      className="px-3 py-2"
+                    >
                       <input
                         type="number"
                         name={`comparePrice[${variant.id}][${cur}]`}
@@ -888,7 +890,8 @@ function MediaUploader({ productId, initialMedia }) {
   }
 
   const isUploading =
-    fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'upload-media';
+    fetcher.state !== 'idle' &&
+    fetcher.formData?.get('intent') === 'upload-media';
 
   return (
     <div>
@@ -968,7 +971,10 @@ function CategoryPicker({ allCategories, selectedIds }) {
       {allCategories.map((cat) => {
         const checked = selected.has(cat.id);
         return (
-          <label key={cat.id} className="flex cursor-pointer items-center gap-2">
+          <label
+            key={cat.id}
+            className="flex cursor-pointer items-center gap-2"
+          >
             <input
               type="checkbox"
               name="categoryIds[]"
@@ -992,8 +998,14 @@ function CategoryPicker({ allCategories, selectedIds }) {
 // ---------------------------------------------------------------------------
 
 export default function AdminProductRoute() {
-  const { product, locales, currencies, translationMap, slugMap, allCategories } =
-    useLoaderData();
+  const {
+    product,
+    locales,
+    currencies,
+    translationMap,
+    slugMap,
+    allCategories,
+  } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving =
@@ -1010,10 +1022,7 @@ export default function AdminProductRoute() {
       <div className="mb-6 flex items-start justify-between">
         <div>
           <div className="mb-1 flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
-            <a
-              href="/admin/products"
-              className="hover:underline"
-            >
+            <a href="/admin/products" className="hover:underline">
               Products
             </a>
             <span>/</span>
@@ -1127,7 +1136,10 @@ export default function AdminProductRoute() {
           {currencies.map((c) => (
             <input key={c} type="hidden" name="currencies[]" value={c} />
           ))}
-          <VariantPriceGrid variants={product.variants} currencies={currencies} />
+          <VariantPriceGrid
+            variants={product.variants}
+            currencies={currencies}
+          />
         </div>
 
         {/* Category picker */}
@@ -1158,9 +1170,7 @@ export default function AdminProductRoute() {
               type="submit"
               onClick={(e) => {
                 if (
-                  !window.confirm(
-                    'Delete this product? This cannot be undone.'
-                  )
+                  !window.confirm('Delete this product? This cannot be undone.')
                 ) {
                   e.preventDefault();
                 }

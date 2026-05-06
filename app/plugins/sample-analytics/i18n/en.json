@@ -1,0 +1,8 @@
+{
+  "sampleAnalytics.admin.title": "Sample Analytics",
+  "sampleAnalytics.admin.noEvents": "No events captured yet. Place an order to see data here.",
+  "sampleAnalytics.admin.orderNumber": "Order #",
+  "sampleAnalytics.admin.total": "Total",
+  "sampleAnalytics.admin.currency": "Currency",
+  "sampleAnalytics.admin.capturedAt": "Captured At"
+}

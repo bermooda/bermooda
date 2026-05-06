@@ -1,9 +1,21 @@
 // app/routes/admin/customers/index.jsx
 // Customers admin list — paginated table with email/name search and inline create panel.
 
+import {
+  MagnifyingGlassIcon,
+  PlusIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { MagnifyingGlassIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { Form, Link, redirect, useActionData, useLoaderData, useNavigation, useSearchParams } from 'react-router';
+import {
+  Form,
+  Link,
+  redirect,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useSearchParams,
+} from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 
@@ -169,7 +181,7 @@ export default function AdminCustomersRoute() {
                 name="email"
                 required
                 placeholder="customer@example.com"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
+                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
               />
             </div>
             <div>
@@ -180,7 +192,7 @@ export default function AdminCustomersRoute() {
                 type="text"
                 name="name"
                 placeholder="Jane Doe"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
+                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
               />
             </div>
             <div>
@@ -191,10 +203,10 @@ export default function AdminCustomersRoute() {
                 type="tel"
                 name="phone"
                 placeholder="+1 555 000 0000"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
+                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
               />
             </div>
-            <div className="sm:col-span-3 flex gap-3">
+            <div className="flex gap-3 sm:col-span-3">
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -217,13 +229,13 @@ export default function AdminCustomersRoute() {
       {/* Search */}
       <Form method="get" className="mb-4">
         <div className="relative max-w-sm">
-          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="search"
             name="q"
             defaultValue={q}
             placeholder="Search by email or name…"
-            className="w-full rounded-md border-0 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700 dark:placeholder:text-zinc-500"
+            className="w-full rounded-md border-0 bg-white py-2 pr-3 pl-9 text-sm text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-700 dark:placeholder:text-zinc-500"
           />
         </div>
       </Form>
@@ -233,16 +245,16 @@ export default function AdminCustomersRoute() {
         <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
           <thead>
             <tr className="bg-gray-50 dark:bg-zinc-800">
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                 Email
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                 Name
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                 Phone
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                 Created
               </th>
               <th className="px-4 py-3" />
@@ -268,10 +280,14 @@ export default function AdminCustomersRoute() {
                   {row.email}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-700 dark:text-zinc-300">
-                  {row.name ?? <span className="text-gray-400 dark:text-zinc-500">—</span>}
+                  {row.name ?? (
+                    <span className="text-gray-400 dark:text-zinc-500">—</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-700 dark:text-zinc-300">
-                  {row.phone ?? <span className="text-gray-400 dark:text-zinc-500">—</span>}
+                  {row.phone ?? (
+                    <span className="text-gray-400 dark:text-zinc-500">—</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400">
                   {new Date(row.createdAt).toLocaleDateString('en-US', {

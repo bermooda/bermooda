@@ -9,12 +9,13 @@ import {
   UserPlusIcon,
 } from '@heroicons/react/24/outline';
 import bcrypt from 'bcryptjs';
+import clsx from 'clsx';
 import { useState } from 'react';
 import { useFetcher, useLoaderData } from 'react-router';
-import clsx from 'clsx';
+
+import prisma from '#/libs/prisma.server';
 
 import { get, set } from '#/core/settings/index.server';
-import prisma from '#/libs/prisma.server';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -129,14 +130,18 @@ export async function action({ request }) {
   if (intent === 'save-general') {
     const shopName = formData.get('shopName')?.toString().trim() ?? '';
     const contactEmail = formData.get('contactEmail')?.toString().trim() ?? '';
-    await Promise.all([set('shopName', shopName), set('contactEmail', contactEmail)]);
+    await Promise.all([
+      set('shopName', shopName),
+      set('contactEmail', contactEmail),
+    ]);
     return { ok: true, intent };
   }
 
   // ── Currencies ─────────────────────────────────────────────────────────────
   if (intent === 'save-currencies') {
     const enabled = formData.getAll('currencies').map(String);
-    const defaultCurrency = formData.get('defaultCurrency')?.toString() ?? 'USD';
+    const defaultCurrency =
+      formData.get('defaultCurrency')?.toString() ?? 'USD';
     await Promise.all([
       set('currencies', enabled),
       set('defaultCurrency', defaultCurrency),
@@ -189,7 +194,12 @@ export async function action({ request }) {
     if (!email) return { ok: false, error: 'Email is required.', intent };
 
     const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) return { ok: false, error: 'A user with that email already exists.', intent };
+    if (existing)
+      return {
+        ok: false,
+        error: 'A user with that email already exists.',
+        intent,
+      };
 
     const hashedPassword = await bcrypt.hash('ChangeMe123!', 10);
     const user = await prisma.user.create({
@@ -216,8 +226,12 @@ export async function action({ request }) {
   if (intent === 'change-role') {
     const userId = formData.get('userId')?.toString();
     const newRole = formData.get('role')?.toString();
-    if (!userId || !newRole) return { ok: false, error: 'Missing userId or role.', intent };
-    await prisma.user.update({ where: { id: userId }, data: { role: newRole } });
+    if (!userId || !newRole)
+      return { ok: false, error: 'Missing userId or role.', intent };
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: newRole },
+    });
     return { ok: true, intent };
   }
 
@@ -241,7 +255,10 @@ function selectClass() {
 
 function SaveButton({ fetcher, intent, label = 'Save' }) {
   const busy = fetcher.state !== 'idle';
-  const saved = fetcher.state === 'idle' && fetcher.data?.ok && fetcher.data?.intent === intent;
+  const saved =
+    fetcher.state === 'idle' &&
+    fetcher.data?.ok &&
+    fetcher.data?.intent === intent;
   return (
     <div className="flex items-center gap-3">
       <button
@@ -257,11 +274,14 @@ function SaveButton({ fetcher, intent, label = 'Save' }) {
           Saved
         </span>
       )}
-      {fetcher.state === 'idle' && fetcher.data && !fetcher.data.ok && fetcher.data?.intent === intent && (
-        <span className="text-sm text-red-600 dark:text-red-400">
-          {fetcher.data.error ?? 'Error saving.'}
-        </span>
-      )}
+      {fetcher.state === 'idle' &&
+        fetcher.data &&
+        !fetcher.data.ok &&
+        fetcher.data?.intent === intent && (
+          <span className="text-sm text-red-600 dark:text-red-400">
+            {fetcher.data.error ?? 'Error saving.'}
+          </span>
+        )}
     </div>
   );
 }
@@ -270,7 +290,9 @@ function SectionCard({ title, children }) {
   return (
     <div className="rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
       <div className="border-b border-gray-100 px-6 py-4 dark:border-zinc-800">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+          {title}
+        </h2>
       </div>
       <div className="px-6 py-5">{children}</div>
     </div>
@@ -279,7 +301,7 @@ function SectionCard({ title, children }) {
 
 function FieldLabel({ children }) {
   return (
-    <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
+    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-zinc-300">
       {children}
     </label>
   );
@@ -294,7 +316,7 @@ function GeneralTab({ data }) {
 
   return (
     <SectionCard title="General Settings">
-      <fetcher.Form method="post" className="space-y-4 max-w-lg">
+      <fetcher.Form method="post" className="max-w-lg space-y-4">
         <input type="hidden" name="intent" value="save-general" />
         <div>
           <FieldLabel>Shop Name</FieldLabel>
@@ -318,17 +340,32 @@ function GeneralTab({ data }) {
         </div>
         <div>
           <FieldLabel>Default Locale</FieldLabel>
-          <select name="defaultLocale" defaultValue={data.defaultLocale} className={selectClass()}>
+          <select
+            name="defaultLocale"
+            defaultValue={data.defaultLocale}
+            className={selectClass()}
+          >
             {(data.locales.length > 0 ? data.locales : ALL_LOCALES).map((l) => (
-              <option key={l} value={l}>{l}</option>
+              <option key={l} value={l}>
+                {l}
+              </option>
             ))}
           </select>
         </div>
         <div>
           <FieldLabel>Default Currency</FieldLabel>
-          <select name="defaultCurrency" defaultValue={data.defaultCurrency} className={selectClass()}>
-            {(data.currencies.length > 0 ? data.currencies : ALL_CURRENCIES).map((c) => (
-              <option key={c} value={c}>{c}</option>
+          <select
+            name="defaultCurrency"
+            defaultValue={data.defaultCurrency}
+            className={selectClass()}
+          >
+            {(data.currencies.length > 0
+              ? data.currencies
+              : ALL_CURRENCIES
+            ).map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
             ))}
           </select>
         </div>
@@ -363,20 +400,21 @@ function CurrenciesTab({ data }) {
         <input type="hidden" name="defaultCurrency" value={defaultCurrency} />
 
         <p className="text-sm text-gray-500 dark:text-zinc-400">
-          Enable or disable currencies. The default is used as the primary storefront currency.
+          Enable or disable currencies. The default is used as the primary
+          storefront currency.
         </p>
 
         <div className="overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-zinc-700">
           <table className="min-w-full divide-y divide-gray-100 dark:divide-zinc-800">
             <thead className="bg-gray-50 dark:bg-zinc-800">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Currency
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Enabled
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Default
                 </th>
               </tr>
@@ -386,7 +424,10 @@ function CurrenciesTab({ data }) {
                 const isEnabled = enabled.includes(c);
                 const isDefault = defaultCurrency === c;
                 return (
-                  <tr key={c} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+                  <tr
+                    key={c}
+                    className="hover:bg-gray-50 dark:hover:bg-zinc-800/50"
+                  >
                     <td className="px-4 py-3 font-mono text-sm font-semibold text-gray-900 dark:text-white">
                       {c}
                     </td>
@@ -445,20 +486,21 @@ function LocalesTab({ data }) {
         <input type="hidden" name="defaultLocale" value={defaultLocale} />
 
         <p className="text-sm text-gray-500 dark:text-zinc-400">
-          Enable locales for your storefront. The default locale is used when no locale is detected.
+          Enable locales for your storefront. The default locale is used when no
+          locale is detected.
         </p>
 
         <div className="overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-zinc-700">
           <table className="min-w-full divide-y divide-gray-100 dark:divide-zinc-800">
             <thead className="bg-gray-50 dark:bg-zinc-800">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Locale
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Enabled
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Default
                 </th>
               </tr>
@@ -468,7 +510,10 @@ function LocalesTab({ data }) {
                 const isEnabled = enabled.includes(l);
                 const isDefault = defaultLocale === l;
                 return (
-                  <tr key={l} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+                  <tr
+                    key={l}
+                    className="hover:bg-gray-50 dark:hover:bg-zinc-800/50"
+                  >
                     <td className="px-4 py-3 font-mono text-sm font-semibold text-gray-900 dark:text-white">
                       {l}
                     </td>
@@ -540,14 +585,21 @@ function TaxTab({ data }) {
       <fetcher.Form method="post" className="space-y-6">
         <input type="hidden" name="intent" value="save-tax" />
         <input type="hidden" name="taxMode" value={taxMode} />
-        <input type="hidden" name="taxRegions" value={JSON.stringify(regionsForSubmit)} />
+        <input
+          type="hidden"
+          name="taxRegions"
+          value={JSON.stringify(regionsForSubmit)}
+        />
 
         {/* Tax mode */}
         <div>
           <FieldLabel>Tax Mode</FieldLabel>
-          <div className="flex gap-6 mt-1">
+          <div className="mt-1 flex gap-6">
             {['inclusive', 'exclusive'].map((mode) => (
-              <label key={mode} className="flex items-center gap-2 cursor-pointer">
+              <label
+                key={mode}
+                className="flex cursor-pointer items-center gap-2"
+              >
                 <input
                   type="radio"
                   name="taxModeRadio"
@@ -556,7 +608,7 @@ function TaxTab({ data }) {
                   onChange={() => setTaxMode(mode)}
                   className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
                 />
-                <span className="text-sm text-gray-700 dark:text-zinc-300 capitalize">
+                <span className="text-sm text-gray-700 capitalize dark:text-zinc-300">
                   {mode}
                 </span>
               </label>
@@ -571,7 +623,7 @@ function TaxTab({ data }) {
 
         {/* Tax regions */}
         <div>
-          <div className="flex items-center justify-between mb-3">
+          <div className="mb-3 flex items-center justify-between">
             <FieldLabel>Tax Regions</FieldLabel>
             <button
               type="button"
@@ -584,7 +636,7 @@ function TaxTab({ data }) {
           </div>
 
           {regions.length === 0 ? (
-            <p className="text-sm text-gray-400 dark:text-zinc-500 italic">
+            <p className="text-sm text-gray-400 italic dark:text-zinc-500">
               No tax regions configured.
             </p>
           ) : (
@@ -594,7 +646,9 @@ function TaxTab({ data }) {
                   <input
                     type="text"
                     value={r.country}
-                    onChange={(e) => updateRegion(r._key, 'country', e.target.value)}
+                    onChange={(e) =>
+                      updateRegion(r._key, 'country', e.target.value)
+                    }
                     placeholder="Country code (e.g. US)"
                     maxLength={3}
                     className={inputClass('w-40 uppercase')}
@@ -602,14 +656,18 @@ function TaxTab({ data }) {
                   <input
                     type="number"
                     value={r.percent}
-                    onChange={(e) => updateRegion(r._key, 'percent', e.target.value)}
+                    onChange={(e) =>
+                      updateRegion(r._key, 'percent', e.target.value)
+                    }
                     placeholder="%"
                     min="0"
                     max="100"
                     step="0.01"
                     className={inputClass('w-24')}
                   />
-                  <span className="text-sm text-gray-500 dark:text-zinc-400">%</span>
+                  <span className="text-sm text-gray-500 dark:text-zinc-400">
+                    %
+                  </span>
                   <button
                     type="button"
                     onClick={() => removeRegion(r._key)}
@@ -662,25 +720,37 @@ function ShippingTab({ data }) {
     );
   }
 
-  const zonesForSubmit = zones.map(({ name, countries, rateCents, freeOverCents }) => ({
-    name,
-    countries: typeof countries === 'string'
-      ? countries.split(',').map((c) => c.trim().toUpperCase()).filter(Boolean)
-      : countries,
-    rateCents: parseInt(rateCents, 10) || 0,
-    freeOverCents: freeOverCents !== '' && freeOverCents != null
-      ? parseInt(freeOverCents, 10) || null
-      : null,
-  }));
+  const zonesForSubmit = zones.map(
+    ({ name, countries, rateCents, freeOverCents }) => ({
+      name,
+      countries:
+        typeof countries === 'string'
+          ? countries
+              .split(',')
+              .map((c) => c.trim().toUpperCase())
+              .filter(Boolean)
+          : countries,
+      rateCents: parseInt(rateCents, 10) || 0,
+      freeOverCents:
+        freeOverCents !== '' && freeOverCents != null
+          ? parseInt(freeOverCents, 10) || null
+          : null,
+    })
+  );
 
   return (
     <SectionCard title="Shipping Zones">
       <fetcher.Form method="post" className="space-y-6">
         <input type="hidden" name="intent" value="save-shipping" />
-        <input type="hidden" name="shippingZones" value={JSON.stringify(zonesForSubmit)} />
+        <input
+          type="hidden"
+          name="shippingZones"
+          value={JSON.stringify(zonesForSubmit)}
+        />
 
         <p className="text-sm text-gray-500 dark:text-zinc-400">
-          Configure shipping zones with flat rates and optional free-shipping thresholds.
+          Configure shipping zones with flat rates and optional free-shipping
+          thresholds.
         </p>
 
         <div className="flex items-center justify-between">
@@ -698,7 +768,7 @@ function ShippingTab({ data }) {
         </div>
 
         {zones.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-zinc-500 italic">
+          <p className="text-sm text-gray-400 italic dark:text-zinc-500">
             No shipping zones configured.
           </p>
         ) : (
@@ -708,12 +778,12 @@ function ShippingTab({ data }) {
                 typeof z.countries === 'string'
                   ? z.countries
                   : Array.isArray(z.countries)
-                  ? z.countries.join(', ')
-                  : '';
+                    ? z.countries.join(', ')
+                    : '';
               return (
                 <div
                   key={z._key}
-                  className="rounded-lg border border-gray-200 dark:border-zinc-700 p-4 space-y-3"
+                  className="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-700"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700 dark:text-zinc-300">
@@ -729,50 +799,58 @@ function ShippingTab({ data }) {
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400 mb-1">
+                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
                         Zone name
                       </label>
                       <input
                         type="text"
                         value={z.name}
-                        onChange={(e) => updateZone(z._key, 'name', e.target.value)}
+                        onChange={(e) =>
+                          updateZone(z._key, 'name', e.target.value)
+                        }
                         placeholder="US Domestic"
                         className={inputClass()}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400 mb-1">
+                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
                         Countries (comma-separated codes)
                       </label>
                       <input
                         type="text"
                         value={countriesStr}
-                        onChange={(e) => updateZone(z._key, 'countries', e.target.value)}
+                        onChange={(e) =>
+                          updateZone(z._key, 'countries', e.target.value)
+                        }
                         placeholder="US, CA"
                         className={inputClass('uppercase')}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400 mb-1">
+                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
                         Rate (cents)
                       </label>
                       <input
                         type="number"
                         value={z.rateCents}
-                        onChange={(e) => updateZone(z._key, 'rateCents', e.target.value)}
+                        onChange={(e) =>
+                          updateZone(z._key, 'rateCents', e.target.value)
+                        }
                         placeholder="999"
                         min="0"
                         className={inputClass()}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400 mb-1">
+                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
                         Free over (cents, optional)
                       </label>
                       <input
                         type="number"
                         value={z.freeOverCents ?? ''}
-                        onChange={(e) => updateZone(z._key, 'freeOverCents', e.target.value)}
+                        onChange={(e) =>
+                          updateZone(z._key, 'freeOverCents', e.target.value)
+                        }
                         placeholder="5000"
                         min="0"
                         className={inputClass()}
@@ -839,7 +917,9 @@ function AdminUsersTab({ data }) {
 
             {inviteSuccess && (
               <div className="mb-3 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
-                User created. Temporary password: <code className="font-mono font-bold">ChangeMe123!</code> — ask them to change it on first login.
+                User created. Temporary password:{' '}
+                <code className="font-mono font-bold">ChangeMe123!</code> — ask
+                them to change it on first login.
               </div>
             )}
             {inviteError && (
@@ -848,10 +928,10 @@ function AdminUsersTab({ data }) {
               </div>
             )}
 
-            <inviteFetcher.Form method="post" className="space-y-3 max-w-sm">
+            <inviteFetcher.Form method="post" className="max-w-sm space-y-3">
               <input type="hidden" name="intent" value="invite-admin" />
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400 mb-1">
+                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
                   Email
                 </label>
                 <input
@@ -863,7 +943,7 @@ function AdminUsersTab({ data }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400 mb-1">
+                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
                   Name (optional)
                 </label>
                 <input
@@ -898,22 +978,22 @@ function AdminUsersTab({ data }) {
           <table className="min-w-full divide-y divide-gray-100 dark:divide-zinc-800">
             <thead className="bg-gray-50 dark:bg-zinc-800">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Name
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Email
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Role
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Verified
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Joined
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Actions
                 </th>
               </tr>
@@ -930,7 +1010,10 @@ function AdminUsersTab({ data }) {
                 </tr>
               )}
               {data.users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+                <tr
+                  key={user.id}
+                  className="hover:bg-gray-50 dark:hover:bg-zinc-800/50"
+                >
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                     {user.name || '—'}
                   </td>
@@ -980,7 +1063,7 @@ function AdminUsersTab({ data }) {
                       <button
                         type="submit"
                         disabled={roleFetcher.state !== 'idle'}
-                        className="text-xs text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 disabled:opacity-50"
+                        className="text-xs text-indigo-600 hover:text-indigo-500 disabled:opacity-50 dark:text-indigo-400"
                         title={`Switch to ${user.role === 'admin' ? 'staff' : 'admin'}`}
                       >
                         {user.role === 'admin' ? 'Make staff' : 'Make admin'}
@@ -1005,7 +1088,8 @@ function EmailTemplatesTab() {
   return (
     <SectionCard title="Email Templates">
       <p className="mb-4 text-sm text-gray-500 dark:text-zinc-400">
-        These are the available email templates. Preview links will be active in a future update.
+        These are the available email templates. Preview links will be active in
+        a future update.
       </p>
       <div className="space-y-3">
         {EMAIL_TEMPLATES.map((tpl) => (
@@ -1014,11 +1098,15 @@ function EmailTemplatesTab() {
             className="flex items-start justify-between rounded-lg border border-gray-200 px-4 py-3 dark:border-zinc-700"
           >
             <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{tpl.name}</p>
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-zinc-400">{tpl.description}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {tpl.name}
+              </p>
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-zinc-400">
+                {tpl.description}
+              </p>
             </div>
             <span
-              className="ml-4 shrink-0 text-xs text-gray-400 dark:text-zinc-500 italic"
+              className="ml-4 shrink-0 text-xs text-gray-400 italic dark:text-zinc-500"
               title="Preview not yet available"
             >
               Preview coming soon
@@ -1042,7 +1130,9 @@ export default function AdminSettingsRoute() {
     <div>
       {/* Page header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Settings
+        </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Manage your shop configuration.
         </p>

@@ -30,8 +30,9 @@ import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import useTheme from '#/hooks/use-theme';
-import { useT } from '#/core/i18n/index';
 import Logo from '#/components/ui/logo';
+
+import { useT } from '#/core/i18n/index';
 
 /**
  * Loader — verifies admin session; redirects to /admin/login on failure.
@@ -284,11 +285,11 @@ function Topbar({ onMenuOpen }) {
       {/* Search */}
       <div className="flex flex-1 items-center">
         <div className="relative max-w-md flex-1">
-          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="search"
             placeholder="Search..."
-            className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 w-full rounded-md bg-gray-50 py-1.5 pl-9 pr-3 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 dark:bg-zinc-800"
+            className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 w-full rounded-md bg-gray-50 py-1.5 pr-3 pl-9 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 dark:bg-zinc-800"
           />
         </div>
       </div>
@@ -345,10 +346,7 @@ export default function AdminLayout() {
     <div className="dark:bg-dark-950 flex h-full min-h-screen bg-gray-50">
       {/* Sidebars */}
       <DesktopSidebar />
-      <MobileSidebar
-        isOpen={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-      />
+      <MobileSidebar isOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
       {/* Main content area */}
       <div className="flex flex-1 flex-col md:ml-64">
