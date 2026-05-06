@@ -87,6 +87,23 @@ export async function action({ request, params }) {
 
   if (intent === 'update-status') {
     const newStatus = formData.get('status');
+
+    const VALID_TRANSITIONS = {
+      pending: ['paid'],
+      paid: ['fulfilled', 'cancelled'],
+      fulfilled: ['cancelled', 'refunded'],
+    };
+
+    const current = await prisma.order.findUniqueOrThrow({
+      where: { id },
+      select: { status: true },
+    });
+
+    const allowed = VALID_TRANSITIONS[current.status] ?? [];
+    if (!allowed.includes(newStatus)) {
+      return { ok: false, error: 'Invalid status transition.' };
+    }
+
     await prisma.order.update({
       where: { id },
       data: { status: newStatus },
