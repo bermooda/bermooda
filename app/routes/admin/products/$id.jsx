@@ -15,6 +15,7 @@ import {
   useFetcher,
   useLoaderData,
   useNavigation,
+  useRevalidator,
 } from 'react-router';
 import { redirect } from 'react-router';
 import clsx from 'clsx';
@@ -283,15 +284,6 @@ export async function action({ request, params }) {
     }
 
     // Options + values
-    const optionIdsRaw = formData.getAll('optionIds[]');
-    const existingOptionIds = optionIdsRaw.filter((x) => !x.startsWith('new-'));
-    const newOptionNames = optionIdsRaw
-      .filter((x) => x.startsWith('new-'))
-      .map((_, i) => {
-        // new option ids are "new-{index}" — get the name via the name field
-        return null;
-      });
-
     // Collect all option ids submitted
     const submittedOptionKeys = [...formData.keys()].filter((k) =>
       k.startsWith('option[')
@@ -865,20 +857,15 @@ function VariantPriceGrid({ variants, currencies }) {
 /** Media uploader + grid */
 function MediaUploader({ productId, initialMedia }) {
   const fetcher = useFetcher();
+  const { revalidate } = useRevalidator();
   const fileRef = useRef(null);
   const [media, setMedia] = useState(initialMedia);
 
-  // Update local state when fetcher returns after upload or delete
+  // After a media upload or delete completes, revalidate loader data to
+  // refresh the media list without unmounting the form or resetting field values.
   useEffect(() => {
-    if (fetcher.state === 'idle' && fetcher.data?.ok) {
-      if (
-        fetcher.data.intent === 'upload-media' ||
-        fetcher.data.intent === 'delete-media'
-      ) {
-        // Reload media from the server — trigger a page re-fetch via a
-        // no-op navigation trick: just let the parent loader re-run.
-        window.location.reload();
-      }
+    if (fetcher.state === 'idle' && fetcher.data) {
+      revalidate();
     }
   }, [fetcher.state, fetcher.data]);
 
