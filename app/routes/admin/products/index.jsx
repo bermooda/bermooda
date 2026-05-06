@@ -3,8 +3,8 @@
 // category badges and a "New Product" button.
 
 import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { Form, Link, useLoaderData, useSearchParams } from 'react-router';
 import clsx from 'clsx';
+import { Form, Link, useLoaderData, useSearchParams } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 
@@ -54,9 +54,7 @@ export async function loader({ request }) {
 
   // Fetch translations for category names
   const categoryIds = [
-    ...new Set(
-      products.flatMap((p) => p.categories.map((c) => c.categoryId))
-    ),
+    ...new Set(products.flatMap((p) => p.categories.map((c) => c.categoryId))),
   ];
 
   const categoryTranslations =
@@ -180,13 +178,13 @@ export default function AdminProductsRoute() {
       {/* Search */}
       <Form method="get" className="mb-4">
         <div className="relative max-w-sm">
-          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="search"
             name="q"
             defaultValue={q}
             placeholder="Search by slug…"
-            className="w-full rounded-md border-0 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700 dark:placeholder:text-zinc-500"
+            className="w-full rounded-md border-0 bg-white py-2 pr-3 pl-9 text-sm text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-700 dark:placeholder:text-zinc-500"
           />
         </div>
       </Form>
@@ -196,22 +194,22 @@ export default function AdminProductsRoute() {
         <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
           <thead>
             <tr className="bg-gray-50 dark:bg-zinc-800">
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                 ID
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                 Slug
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                 Status
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                 Variants
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                 Categories
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                 Created
               </th>
             </tr>

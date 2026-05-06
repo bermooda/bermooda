@@ -11,16 +11,12 @@ import {
   XMarkIcon,
   CheckIcon,
 } from '@heroicons/react/24/outline';
-import { useState, useEffect } from 'react';
-import {
-  Form,
-  useFetcher,
-  useLoaderData,
-  useNavigation,
-} from 'react-router';
 import clsx from 'clsx';
+import { useState, useEffect } from 'react';
+import { Form, useFetcher, useLoaderData, useNavigation } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+
 import { get } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
@@ -80,8 +76,7 @@ export async function loader() {
           parentId: c.parentId ?? null,
           position: c.position,
           depth,
-          enTitle:
-            translationMap[c.id]?.en?.title ?? '',
+          enTitle: translationMap[c.id]?.en?.title ?? '',
           childCount: cats.filter((ch) => ch.parentId === c.id).length,
           translations: translationMap[c.id] ?? {},
           slugs: slugMap[c.id] ?? {},
@@ -165,10 +160,7 @@ export async function action({ request }) {
 
     for (const locale of locales) {
       const title = formData.get(`title[${locale}]`)?.toString() ?? '';
-      const slugValue = formData
-        .get(`slug[${locale}]`)
-        ?.toString()
-        .trim();
+      const slugValue = formData.get(`slug[${locale}]`)?.toString().trim();
 
       await prisma.translation.upsert({
         where: {
@@ -322,7 +314,7 @@ function InlineEditForm({ category, locales, onClose }) {
     fetcher.data?.intent === 'save';
 
   return (
-    <div className="bg-indigo-50 dark:bg-zinc-800/60 rounded-lg p-4 border border-indigo-200 dark:border-zinc-600">
+    <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-zinc-600 dark:bg-zinc-800/60">
       <div className="mb-3 flex items-center justify-between">
         <span className="text-sm font-semibold text-gray-900 dark:text-white">
           Edit category
@@ -359,7 +351,10 @@ function InlineEditForm({ category, locales, onClose }) {
         {locales.map((locale) => (
           <div
             key={locale}
-            className={clsx('mt-3 space-y-3', locale !== activeLocale && 'hidden')}
+            className={clsx(
+              'mt-3 space-y-3',
+              locale !== activeLocale && 'hidden'
+            )}
           >
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
@@ -370,7 +365,7 @@ function InlineEditForm({ category, locales, onClose }) {
                 name={`title[${locale}]`}
                 defaultValue={category.translations[locale]?.title ?? ''}
                 placeholder="Category title"
-                className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
             </div>
             <div>
@@ -382,7 +377,7 @@ function InlineEditForm({ category, locales, onClose }) {
                 name={`slug[${locale}]`}
                 defaultValue={category.slugs[locale] ?? ''}
                 placeholder="url-slug"
-                className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
             </div>
           </div>
@@ -440,7 +435,7 @@ function AddCategoryForm({ allForSelect }) {
   }
 
   return (
-    <div className="rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700 p-4">
+    <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
       <div className="mb-3 flex items-center justify-between">
         <span className="text-sm font-semibold text-gray-900 dark:text-white">
           New Category
@@ -466,7 +461,7 @@ function AddCategoryForm({ allForSelect }) {
             name="title"
             required
             placeholder="e.g. Apparel"
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
           />
         </div>
 
@@ -478,7 +473,7 @@ function AddCategoryForm({ allForSelect }) {
             type="text"
             name="slug"
             placeholder="apparel"
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
           />
         </div>
 
@@ -489,7 +484,7 @@ function AddCategoryForm({ allForSelect }) {
           <select
             name="parentId"
             defaultValue=""
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
           >
             <option value="">— None (root) —</option>
             {allForSelect.map((cat) => (
@@ -570,7 +565,7 @@ export default function AdminCategoriesRoute() {
                 >
                   {/* Depth indicator */}
                   {cat.depth > 0 && (
-                    <span className="mr-1 text-gray-300 dark:text-zinc-600 select-none">
+                    <span className="mr-1 text-gray-300 select-none dark:text-zinc-600">
                       {'└'}
                     </span>
                   )}
@@ -626,9 +621,7 @@ export default function AdminCategoriesRoute() {
                   <button
                     type="button"
                     onClick={() =>
-                      setEditingId((prev) =>
-                        prev === cat.id ? null : cat.id
-                      )
+                      setEditingId((prev) => (prev === cat.id ? null : cat.id))
                     }
                     title="Edit"
                     className={clsx(

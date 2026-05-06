@@ -2,6 +2,11 @@ import { Resend } from 'resend';
 
 import config from '#/config';
 import logger from '#/utils/logger.server';
+import AbandonedCartEmail from '#/emails/shop/abandoned-cart';
+import CustomerWelcomeEmail from '#/emails/shop/customer-welcome';
+import OrderConfirmationEmail from '#/emails/shop/order-confirmation';
+import PasswordResetAdminEmail from '#/emails/shop/password-reset-admin';
+import PasswordResetCustomerEmail from '#/emails/shop/password-reset-customer';
 import ResetPasswordTemplate from '#/emails/templates/reset-password.server';
 import TwoFactorOtpTemplate from '#/emails/templates/two-factor-otp.server';
 import VerifyEmailTemplate from '#/emails/templates/verify-email.server';
@@ -10,11 +15,18 @@ import WelcomeEmail from '#/emails/templates/welcome.server';
 // Initialize Resend with your API key
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Email subjects
+// Email subjects — admin/auth
 const SUBJECT_WELCOME = 'Welcome to bermooda';
 const SUBJECT_VERIFY_EMAIL = 'Please verify your email address';
 const SUBJECT_RESET_PASSWORD = 'Reset your password';
 const SUBJECT_TWO_FACTOR_OTP = 'Your verification code';
+
+// Email subjects — shop
+const SUBJECT_ORDER_CONFIRMATION = 'Your order confirmation';
+const SUBJECT_PASSWORD_RESET_ADMIN = 'Reset your admin password';
+const SUBJECT_PASSWORD_RESET_CUSTOMER = 'Reset your password';
+const SUBJECT_CUSTOMER_WELCOME = `Welcome to ${config.appName}`;
+const SUBJECT_ABANDONED_CART = 'You left something behind';
 
 /**
  * Sends a welcome email to a newly registered user
@@ -127,6 +139,134 @@ export async function sendTwoFactorOtpEmail({ email, name, otp }) {
     return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send two-factor OTP email');
+    throw error;
+  }
+}
+
+// ─── Shop emails ──────────────────────────────────────────────────────────────
+
+export async function sendOrderConfirmationEmail({
+  email,
+  locale = 'en',
+  ...props
+}) {
+  try {
+    const data = await resend.emails.send({
+      from: config.resend.fromNoReply,
+      to: email,
+      subject: SUBJECT_ORDER_CONFIRMATION,
+      react: <OrderConfirmationEmail locale={locale} {...props} />,
+    });
+
+    logger.info({ email }, 'Order confirmation email sent successfully');
+    return { success: true, data };
+  } catch (error) {
+    logger.error(error, 'Failed to send order confirmation email');
+    throw error;
+  }
+}
+
+export async function sendPasswordResetAdminEmail({
+  email,
+  locale = 'en',
+  name,
+  resetUrl,
+}) {
+  try {
+    const data = await resend.emails.send({
+      from: config.resend.fromNoReply,
+      to: email,
+      subject: SUBJECT_PASSWORD_RESET_ADMIN,
+      react: (
+        <PasswordResetAdminEmail
+          locale={locale}
+          name={name}
+          resetUrl={resetUrl}
+        />
+      ),
+    });
+
+    logger.info({ email }, 'Admin password reset email sent successfully');
+    return { success: true, data };
+  } catch (error) {
+    logger.error(error, 'Failed to send admin password reset email');
+    throw error;
+  }
+}
+
+export async function sendPasswordResetCustomerEmail({
+  email,
+  locale = 'en',
+  name,
+  resetUrl,
+}) {
+  try {
+    const data = await resend.emails.send({
+      from: config.resend.fromNoReply,
+      to: email,
+      subject: SUBJECT_PASSWORD_RESET_CUSTOMER,
+      react: (
+        <PasswordResetCustomerEmail
+          locale={locale}
+          name={name}
+          resetUrl={resetUrl}
+        />
+      ),
+    });
+
+    logger.info({ email }, 'Customer password reset email sent successfully');
+    return { success: true, data };
+  } catch (error) {
+    logger.error(error, 'Failed to send customer password reset email');
+    throw error;
+  }
+}
+
+export async function sendCustomerWelcomeEmail({
+  email,
+  locale = 'en',
+  name,
+  accountUrl,
+}) {
+  try {
+    const data = await resend.emails.send({
+      from: config.resend.fromNoReply,
+      to: email,
+      subject: SUBJECT_CUSTOMER_WELCOME,
+      react: (
+        <CustomerWelcomeEmail
+          locale={locale}
+          name={name}
+          accountUrl={accountUrl}
+        />
+      ),
+    });
+
+    logger.info({ email }, 'Customer welcome email sent successfully');
+    return { success: true, data };
+  } catch (error) {
+    logger.error(error, 'Failed to send customer welcome email');
+    throw error;
+  }
+}
+
+export async function sendAbandonedCartEmail({
+  email,
+  locale = 'en',
+  ...props
+}) {
+  try {
+    const data = await resend.emails.send({
+      from: config.resend.fromNoReply,
+      to: email,
+      subject: SUBJECT_ABANDONED_CART,
+      react: <AbandonedCartEmail locale={locale} {...props} />,
+    });
+
+    logger.info({ email }, 'Abandoned cart email sent successfully');
+    return { success: true, data };
+  } catch (error) {
+    logger.error(error, 'Failed to send abandoned cart email');
     throw error;
   }
 }
