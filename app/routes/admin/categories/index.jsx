@@ -11,7 +11,7 @@ import {
   XMarkIcon,
   CheckIcon,
 } from '@heroicons/react/24/outline';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Form,
   useFetcher,
@@ -415,17 +415,16 @@ function AddCategoryForm({ allForSelect }) {
   const fetcher = useFetcher();
   const isSubmitting = fetcher.state !== 'idle';
 
-  // Close + reset after successful creation
-  const wasSubmitting =
-    fetcher.state === 'idle' && fetcher.data?.ok && fetcher.data?.intent === 'create';
-
   // We use a key to reset the form after submit
   const [formKey, setFormKey] = useState(0);
 
-  if (wasSubmitting && open) {
-    setOpen(false);
-    setFormKey((k) => k + 1);
-  }
+  // Close + reset after successful creation
+  useEffect(() => {
+    if (fetcher.state === 'idle' && fetcher.data?.ok && open) {
+      setOpen(false);
+      setFormKey((k) => k + 1);
+    }
+  }, [fetcher.state, fetcher.data, open]);
 
   if (!open) {
     return (
