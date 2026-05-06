@@ -19,25 +19,6 @@ export async function loader({ request }) {
   const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10));
   const q = url.searchParams.get('q')?.trim() ?? '';
 
-  // Build a where clause that searches by slug (any locale)
-  const where = q
-    ? {
-        OR: [
-          {
-            id: {
-              contains: q,
-            },
-          },
-          {
-            // Products that have a matching slug
-            categories: {
-              some: {},
-            },
-          },
-        ],
-      }
-    : {};
-
   // For slug search, look up product IDs that match
   let productIds = null;
   if (q) {
