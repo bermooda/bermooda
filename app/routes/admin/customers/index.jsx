@@ -15,14 +15,15 @@ const PAGE_SIZE = 20;
 
 export async function loader({ request }) {
   const url = new URL(request.url);
-  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10));
+  const rawPage = parseInt(url.searchParams.get('page') ?? '1', 10);
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const q = url.searchParams.get('q')?.trim() ?? '';
 
   const where = q
     ? {
         OR: [
-          { email: { contains: q } },
-          { name: { contains: q } },
+          { email: { contains: q, mode: 'insensitive' } },
+          { name: { contains: q, mode: 'insensitive' } },
         ],
       }
     : {};
