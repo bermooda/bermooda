@@ -1,24 +1,25 @@
 // app/core/index.js
-// Public surface for the core module. Re-export everything consumers need;
-// internals (domain modules, storage, etc.) remain unexported.
+// Public client-safe surface for the core module. Re-export everything
+// consumers need; server-only internals live in index.server.js.
 
 // -- Hooks ------------------------------------------------------------------
 
 /**
  * Returns current shop context from Settings + i18n + currency services.
- * Stub: returns hard-coded defaults until P3-6/P3-7/P3-8 are wired in.
+ * Stub: returns hard-coded defaults until the storefront layout wires in
+ * the real values from the i18n/currency loaders.
  * @returns {{ currency: string, locale: string }}
  */
 export function useShop() {
   return { currency: 'USD', locale: 'en' };
 }
 
-export { useT } from './i18n/index.js';
+export { useT, translate } from './i18n/index.js';
 
 // -- Utilities --------------------------------------------------------------
 
-export { formatPrice } from './currency/index.server.js';
-export { uploadMedia } from './storage/index.server.js';
+// formatPrice is a pure Intl helper — client-safe.
+export { formatPrice } from './currency/format.js';
 
 // -- Components -------------------------------------------------------------
 
