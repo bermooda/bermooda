@@ -195,3 +195,6 @@ export async function getSlotBlocks(_slotName) {
 export function __resetRegistry() {
   _registry.clear();
 }
+
+// Admin-only export: exposes all registered themes for the admin UI.
+export { _registry };

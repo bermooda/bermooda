@@ -176,7 +176,7 @@ export async function adminAuthMiddleware({ request, context }) {
   const { user } = await authenticate(request);
 
   if (!user) {
-    throw redirect('/login', 302);
+    throw redirect('/admin/login', 302);
   }
 
   // Set user context for use in routes
@@ -207,7 +207,7 @@ export async function authenticate(request) {
     if (!session || !session?.user) {
       const url = new URL(request.url);
       const redirectTo = url.pathname + url.search;
-      const redirectUrl = `/login?returnTo=${encodeURIComponent(redirectTo)}`;
+      const redirectUrl = `/admin/login?returnTo=${encodeURIComponent(redirectTo)}`;
 
       throw redirect(redirectUrl, 302);
     }
@@ -219,8 +219,8 @@ export async function authenticate(request) {
       throw error;
     }
 
-    console.error('Admin authentication error:', error);
-    throw redirect('/login', 302);
+    logger.error({ err: error }, 'Admin authentication error');
+    throw redirect('/admin/login', 302);
   }
 }
 
