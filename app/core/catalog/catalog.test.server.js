@@ -16,6 +16,7 @@ vi.mock('#/libs/prisma.server', () => ({
     slug: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
+      findMany: vi.fn(),
       upsert: vi.fn(),
       updateMany: vi.fn(),
     },
@@ -69,13 +70,24 @@ import {
   setTranslation,
   getTranslations,
   listProducts,
+  getProduct,
+  getProductBySlug,
   createProduct,
+  updateProduct,
+  deleteProduct,
   publishProduct,
   unpublishProduct,
   attachMedia,
   reorderMedia,
   detachMedia,
-  createVariant,
+  updateVariant,
+  deleteVariant,
+  listCategories,
+  getCategory,
+  getCategoryBySlug,
+  createCategory,
+  updateCategory,
+  deleteCategory,
 } from '#/core/catalog/index.server';
 
 beforeEach(() => {
@@ -382,6 +394,450 @@ describe('detachMedia', () => {
 
     expect(prisma.productMedia.delete).toHaveBeenCalledWith({
       where: { productId_mediaId: { productId: 'prod_1', mediaId: 'media_1' } },
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getProduct
+// ---------------------------------------------------------------------------
+
+describe('getProduct', () => {
+  it('returns null when product not found', async () => {
+    prisma.product.findUnique.mockResolvedValue(null);
+
+    const result = await getProduct('prod_missing');
+
+    expect(result).toBeNull();
+  });
+
+  it('returns product without translations when no locale provided', async () => {
+    const product = {
+      id: 'prod_1',
+      publishedAt: null,
+      variants: [],
+      media: [],
+      categories: [],
+      options: [],
+    };
+    prisma.product.findUnique.mockResolvedValue(product);
+
+    const result = await getProduct('prod_1');
+
+    expect(result).toEqual(product);
+    expect(prisma.translation.findMany).not.toHaveBeenCalled();
+  });
+
+  it('merges translations when locale provided', async () => {
+    const product = {
+      id: 'prod_1',
+      publishedAt: null,
+      variants: [],
+      media: [],
+      options: [],
+      categories: [],
+    };
+    prisma.product.findUnique.mockResolvedValue(product);
+    prisma.translation.findMany.mockResolvedValue([
+      { field: 'title', value: 'Product Title' },
+    ]);
+    prisma.slug.findFirst.mockResolvedValue({ slug: 'product-title' });
+
+    const result = await getProduct('prod_1', { locale: 'en' });
+
+    expect(result.title).toBe('Product Title');
+    expect(result.slug).toBe('product-title');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getProductBySlug
+// ---------------------------------------------------------------------------
+
+describe('getProductBySlug', () => {
+  it('returns null when slug does not resolve', async () => {
+    prisma.slug.findUnique.mockResolvedValue(null);
+
+    const result = await getProductBySlug('no-such-slug');
+
+    expect(result).toBeNull();
+  });
+
+  it('returns null when slug resolves to a category, not a product', async () => {
+    prisma.slug.findUnique.mockResolvedValue({
+      entityType: 'category',
+      entityId: 'cat_1',
+      locale: 'en',
+      slug: 'a-cat',
+    });
+
+    const result = await getProductBySlug('a-cat');
+
+    expect(result).toBeNull();
+  });
+
+  it('returns product when slug resolves to a product', async () => {
+    prisma.slug.findUnique.mockResolvedValue({
+      entityType: 'product',
+      entityId: 'prod_1',
+      locale: 'en',
+      slug: 'cool-shirt',
+    });
+    const product = {
+      id: 'prod_1',
+      variants: [],
+      media: [],
+      categories: [],
+      options: [],
+    };
+    prisma.product.findUnique.mockResolvedValue(product);
+
+    const result = await getProductBySlug('cool-shirt');
+
+    expect(result).toEqual(product);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createProduct
+// ---------------------------------------------------------------------------
+
+describe('createProduct', () => {
+  it('creates a product and stores title translation when locale provided', async () => {
+    prisma.product.create.mockResolvedValue({ id: 'prod_new' });
+    prisma.translation.upsert.mockResolvedValue({});
+
+    const result = await createProduct({ locale: 'en', title: 'New Shirt' });
+
+    expect(prisma.product.create).toHaveBeenCalled();
+    expect(prisma.translation.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          entityType: 'product',
+          entityId: 'prod_new',
+          locale: 'en',
+          field: 'title',
+          value: 'New Shirt',
+        }),
+      })
+    );
+    expect(result.id).toBe('prod_new');
+  });
+
+  it('creates a product without translations when no locale', async () => {
+    prisma.product.create.mockResolvedValue({ id: 'prod_no_locale' });
+
+    await createProduct({});
+
+    expect(prisma.product.create).toHaveBeenCalled();
+    expect(prisma.translation.upsert).not.toHaveBeenCalled();
+  });
+
+  it('throws when prices are passed (prices must be set per-variant)', async () => {
+    await expect(
+      createProduct({ prices: [{ currency: 'USD', priceCents: 1000 }] })
+    ).rejects.toThrow(/prices must be set per-variant/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// updateProduct
+// ---------------------------------------------------------------------------
+
+describe('updateProduct', () => {
+  it('updates product fields and title translation when locale provided', async () => {
+    prisma.product.update.mockResolvedValue({ id: 'prod_1' });
+    prisma.translation.upsert.mockResolvedValue({});
+
+    await updateProduct('prod_1', { locale: 'en', title: 'Updated Shirt' });
+
+    expect(prisma.product.update).toHaveBeenCalledWith({
+      where: { id: 'prod_1' },
+      data: {},
+    });
+    expect(prisma.translation.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          field: 'title',
+          value: 'Updated Shirt',
+        }),
+      })
+    );
+  });
+
+  it('does not update translations when no locale provided', async () => {
+    prisma.product.update.mockResolvedValue({ id: 'prod_1' });
+
+    await updateProduct('prod_1', { position: 2 });
+
+    expect(prisma.translation.upsert).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// deleteProduct
+// ---------------------------------------------------------------------------
+
+describe('deleteProduct', () => {
+  it('calls prisma.product.delete', async () => {
+    prisma.product.delete.mockResolvedValue({});
+
+    await deleteProduct('prod_1');
+
+    expect(prisma.product.delete).toHaveBeenCalledWith({
+      where: { id: 'prod_1' },
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// updateVariant
+// ---------------------------------------------------------------------------
+
+describe('updateVariant', () => {
+  it('updates variant fields without prices', async () => {
+    prisma.productVariant.update.mockResolvedValue({ id: 'v_1' });
+
+    await updateVariant('v_1', { inventoryQuantity: 50 });
+
+    expect(prisma.productVariant.update).toHaveBeenCalledWith({
+      where: { id: 'v_1' },
+      data: { inventoryQuantity: 50 },
+    });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('upserts prices when prices array is provided', async () => {
+    prisma.productVariant.update.mockResolvedValue({ id: 'v_1' });
+    prisma.variantPrice.upsert.mockResolvedValue({});
+    prisma.$transaction.mockImplementation((ops) => Promise.all(ops));
+
+    await updateVariant('v_1', {
+      prices: [{ currency: 'USD', priceCents: 2500, comparePriceCents: null }],
+    });
+
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.variantPrice.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { variantId_currency: { variantId: 'v_1', currency: 'USD' } },
+        update: { priceCents: 2500, comparePriceCents: null },
+      })
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// deleteVariant
+// ---------------------------------------------------------------------------
+
+describe('deleteVariant', () => {
+  it('calls prisma.productVariant.delete', async () => {
+    prisma.productVariant.delete.mockResolvedValue({});
+
+    await deleteVariant('v_1');
+
+    expect(prisma.productVariant.delete).toHaveBeenCalledWith({
+      where: { id: 'v_1' },
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// listCategories
+// ---------------------------------------------------------------------------
+
+describe('listCategories', () => {
+  it('returns categories without translations when no locale', async () => {
+    const cats = [{ id: 'cat_1', children: [] }];
+    prisma.category.findMany.mockResolvedValue(cats);
+
+    const result = await listCategories();
+
+    expect(result).toEqual(cats);
+    expect(prisma.translation.findMany).not.toHaveBeenCalled();
+  });
+
+  it('merges translations and slugs when locale provided', async () => {
+    const cats = [{ id: 'cat_1', children: [{ id: 'cat_2' }] }];
+    prisma.category.findMany.mockResolvedValue(cats);
+    prisma.translation.findMany.mockResolvedValue([
+      { entityId: 'cat_1', field: 'name', value: 'Category One' },
+    ]);
+    prisma.slug.findMany.mockResolvedValue([
+      { entityId: 'cat_1', slug: 'category-one' },
+    ]);
+
+    const result = await listCategories({ locale: 'en' });
+
+    expect(result[0].name).toBe('Category One');
+    expect(result[0].slug).toBe('category-one');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getCategory
+// ---------------------------------------------------------------------------
+
+describe('getCategory', () => {
+  it('returns null when category not found', async () => {
+    prisma.category.findUnique.mockResolvedValue(null);
+
+    const result = await getCategory('cat_missing');
+
+    expect(result).toBeNull();
+  });
+
+  it('returns category without translations when no locale', async () => {
+    const cat = { id: 'cat_1', children: [], products: [] };
+    prisma.category.findUnique.mockResolvedValue(cat);
+
+    const result = await getCategory('cat_1');
+
+    expect(result).toEqual(cat);
+  });
+
+  it('merges translations when locale provided', async () => {
+    const cat = { id: 'cat_1', children: [], products: [] };
+    prisma.category.findUnique.mockResolvedValue(cat);
+    prisma.translation.findMany.mockResolvedValue([
+      { field: 'name', value: 'Shirts' },
+    ]);
+    prisma.slug.findFirst.mockResolvedValue({ slug: 'shirts' });
+
+    const result = await getCategory('cat_1', { locale: 'en' });
+
+    expect(result.name).toBe('Shirts');
+    expect(result.slug).toBe('shirts');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getCategoryBySlug
+// ---------------------------------------------------------------------------
+
+describe('getCategoryBySlug', () => {
+  it('returns null when slug does not resolve', async () => {
+    prisma.slug.findUnique.mockResolvedValue(null);
+
+    const result = await getCategoryBySlug('no-slug');
+
+    expect(result).toBeNull();
+  });
+
+  it('returns null when slug resolves to a product', async () => {
+    prisma.slug.findUnique.mockResolvedValue({
+      entityType: 'product',
+      entityId: 'prod_1',
+      locale: 'en',
+      slug: 'a-product',
+    });
+
+    const result = await getCategoryBySlug('a-product');
+
+    expect(result).toBeNull();
+  });
+
+  it('returns category when slug resolves to a category', async () => {
+    prisma.slug.findUnique.mockResolvedValue({
+      entityType: 'category',
+      entityId: 'cat_1',
+      locale: 'en',
+      slug: 'shirts',
+    });
+    const cat = { id: 'cat_1', children: [], products: [] };
+    prisma.category.findUnique.mockResolvedValue(cat);
+
+    const result = await getCategoryBySlug('shirts');
+
+    expect(result).toEqual(cat);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createCategory
+// ---------------------------------------------------------------------------
+
+describe('createCategory', () => {
+  it('creates a category with name translation and slug', async () => {
+    prisma.category.create.mockResolvedValue({ id: 'cat_new' });
+    prisma.translation.upsert.mockResolvedValue({});
+    prisma.slug.findUnique.mockResolvedValue(null);
+    prisma.slug.upsert.mockResolvedValue({});
+
+    await createCategory({
+      locale: 'en',
+      name: 'Electronics',
+      slug: 'electronics',
+    });
+
+    expect(prisma.category.create).toHaveBeenCalled();
+    expect(prisma.translation.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          entityId: 'cat_new',
+          field: 'name',
+          value: 'Electronics',
+        }),
+      })
+    );
+    expect(prisma.slug.upsert).toHaveBeenCalled();
+  });
+
+  it('creates a category without translation when no locale', async () => {
+    prisma.category.create.mockResolvedValue({ id: 'cat_new' });
+
+    await createCategory({});
+
+    expect(prisma.translation.upsert).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// updateCategory
+// ---------------------------------------------------------------------------
+
+describe('updateCategory', () => {
+  it('updates category and translation when locale provided', async () => {
+    prisma.category.update.mockResolvedValue({ id: 'cat_1' });
+    prisma.translation.upsert.mockResolvedValue({});
+
+    await updateCategory('cat_1', { locale: 'en', name: 'Updated Category' });
+
+    expect(prisma.category.update).toHaveBeenCalledWith({
+      where: { id: 'cat_1' },
+      data: {},
+    });
+    expect(prisma.translation.upsert).toHaveBeenCalled();
+  });
+
+  it('updates slug when locale and slug provided', async () => {
+    prisma.category.update.mockResolvedValue({ id: 'cat_1' });
+    prisma.translation.upsert.mockResolvedValue({});
+    prisma.slug.findUnique.mockResolvedValue(null);
+    prisma.slug.upsert.mockResolvedValue({});
+
+    await updateCategory('cat_1', {
+      locale: 'en',
+      name: 'Name',
+      slug: 'new-slug',
+    });
+
+    expect(prisma.slug.upsert).toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// deleteCategory
+// ---------------------------------------------------------------------------
+
+describe('deleteCategory', () => {
+  it('calls prisma.category.delete', async () => {
+    prisma.category.delete.mockResolvedValue({});
+
+    await deleteCategory('cat_1');
+
+    expect(prisma.category.delete).toHaveBeenCalledWith({
+      where: { id: 'cat_1' },
     });
   });
 });

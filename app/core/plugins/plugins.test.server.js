@@ -335,3 +335,162 @@ describe('resolvePluginRoute', () => {
     expect(resolvePluginRoute(null, null)).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// enable
+// ---------------------------------------------------------------------------
+
+describe('enable', () => {
+  beforeEach(() => {
+    _registry.clear();
+    vi.clearAllMocks();
+  });
+
+  it('throws when pluginId is not registered', async () => {
+    await expect(_enable('unregistered-plugin')).rejects.toThrow(
+      /Plugin "unregistered-plugin" is not registered/
+    );
+  });
+
+  it('persists enabled=true in settings and calls on() for each hook', async () => {
+    const handler = vi.fn();
+    const manifest = validManifest({
+      id: 'plugin-a',
+      name: 'Plugin A',
+      hooks: { 'order.created': handler },
+    });
+    register(manifest);
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _enable('plugin-a');
+
+    // Setting persisted
+    expect(mockSetting.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          key: 'plugin.plugin-a.enabled',
+          value: 'true',
+        }),
+      })
+    );
+
+    // Hook registered
+    const { on } = await import('#/core/events/index.server');
+    expect(on).toHaveBeenCalledWith('order.created', handler);
+  });
+
+  it('calls onEnable(ctx) when present', async () => {
+    const onEnable = vi.fn().mockResolvedValue(undefined);
+    const manifest = validManifest({
+      id: 'plugin-b',
+      name: 'Plugin B',
+      onEnable,
+    });
+    register(manifest);
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _enable('plugin-b');
+
+    expect(onEnable).toHaveBeenCalledOnce();
+    // ctx should have plugin, settings, emit, queue, logger, t properties
+    const ctx = onEnable.mock.calls[0][0];
+    expect(ctx).toHaveProperty('plugin');
+    expect(ctx).toHaveProperty('settings');
+    expect(ctx).toHaveProperty('emit');
+    expect(ctx).toHaveProperty('logger');
+  });
+
+  it('is idempotent — second call does nothing when already enabled', async () => {
+    // The guard is `handlers.size > 0`, so the plugin must have at least one
+    // hook so the first enable() populates handlers and the second no-ops.
+    const handler = vi.fn();
+    const manifest = validManifest({
+      id: 'plugin-c',
+      name: 'Plugin C',
+      hooks: { 'order.created': handler },
+    });
+    register(manifest);
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _enable('plugin-c');
+    await _enable('plugin-c'); // second call — should be a no-op
+
+    // upsert called only once (on first enable)
+    expect(mockSetting.upsert).toHaveBeenCalledOnce();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// disable
+// ---------------------------------------------------------------------------
+
+describe('disable', () => {
+  beforeEach(() => {
+    _registry.clear();
+    vi.clearAllMocks();
+  });
+
+  it('throws when pluginId is not registered', async () => {
+    await expect(_disable('unregistered-plugin')).rejects.toThrow(
+      /Plugin "unregistered-plugin" is not registered/
+    );
+  });
+
+  it('persists enabled=false in settings', async () => {
+    const manifest = validManifest({ id: 'plugin-d', name: 'Plugin D' });
+    register(manifest);
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _disable('plugin-d');
+
+    expect(mockSetting.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          key: 'plugin.plugin-d.enabled',
+          value: 'false',
+        }),
+      })
+    );
+  });
+
+  it('calls off() for each registered handler and clears handlers', async () => {
+    const handler = vi.fn();
+    const manifest = validManifest({
+      id: 'plugin-e',
+      name: 'Plugin E',
+      hooks: { 'order.created': handler },
+    });
+    register(manifest);
+    mockSetting.upsert.mockResolvedValue({});
+
+    // Enable first so handlers are registered
+    await _enable('plugin-e');
+
+    const { off } = await import('#/core/events/index.server');
+    vi.clearAllMocks();
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _disable('plugin-e');
+
+    expect(off).toHaveBeenCalledWith('order.created', handler);
+    // Registry entry's handlers map should be cleared
+    expect(_registry.get('plugin-e').handlers.size).toBe(0);
+  });
+
+  it('calls onDisable(ctx) when present', async () => {
+    const onDisable = vi.fn().mockResolvedValue(undefined);
+    const manifest = validManifest({
+      id: 'plugin-f',
+      name: 'Plugin F',
+      onDisable,
+    });
+    register(manifest);
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _disable('plugin-f');
+
+    expect(onDisable).toHaveBeenCalledOnce();
+    const ctx = onDisable.mock.calls[0][0];
+    expect(ctx).toHaveProperty('plugin');
+  });
+});
