@@ -7,35 +7,86 @@ import { index, layout, prefix, route } from '@react-router/dev/routes';
  * @type {import('@react-router/dev/routes').RouteConfigEntry[]}
  */
 export default [
-  // Landing page
-  index('routes/index.jsx'),
+  // ---------------------------------------------------------------------------
+  // Storefront — all wrapped in the i18n/currency layout
+  // ---------------------------------------------------------------------------
 
-  // Login/out
+  layout('routes/storefront/_layout.jsx', [
+    // Home
+    index('routes/storefront/index.jsx'),
+
+    // Product catalog
+    route('products/:slug', 'routes/storefront/products.$slug.jsx'),
+    route('categories/:slug', 'routes/storefront/categories.$slug.jsx'),
+
+    // Cart
+    route('cart', 'routes/storefront/cart.jsx'),
+
+    // Checkout — 4-step flow (:step = address | shipping | payment | review)
+    route('checkout/:step', 'routes/storefront/checkout.$step.jsx'),
+    route(
+      'thank-you/:orderNumber',
+      'routes/storefront/thank-you.$orderNumber.jsx'
+    ),
+
+    // Customer account — public auth pages (no authentication required)
+    route('account/login', 'routes/storefront/account.login.jsx'),
+    route('account/register', 'routes/storefront/account.register.jsx'),
+    route(
+      'account/forgot-password',
+      'routes/storefront/account.forgot-password.jsx'
+    ),
+    route(
+      'account/reset-password',
+      'routes/storefront/account.reset-password.jsx'
+    ),
+    route('account/logout', 'routes/storefront/account.logout.jsx'),
+
+    // Customer account — protected area (auth verified in inner layout loader)
+    layout('routes/storefront/account._layout.jsx', [
+      route('account', 'routes/storefront/account._index.jsx'),
+      route('account/orders', 'routes/storefront/account.orders.jsx'),
+      route('account/orders/:id', 'routes/storefront/account.orders.$id.jsx'),
+      route('account/addresses', 'routes/storefront/account.addresses.jsx'),
+      route('account/profile', 'routes/storefront/account.profile.jsx'),
+    ]),
+
+    // Plugin storefront dispatcher — static route, descriptor resolved at request time
+    route('apps/:pluginId/*', 'routes/storefront/apps.$pluginId.jsx'),
+  ]),
+
+  // ---------------------------------------------------------------------------
+  // Admin auth (staff login — outside storefront layout)
+  // ---------------------------------------------------------------------------
+
   route('login', 'routes/login.jsx'),
   route('logout', 'routes/logout.jsx'),
   route('verify-2fa', 'routes/verify-2fa.jsx'),
   route('forgot-password', 'routes/password/forgot.jsx'),
   route('reset-password', 'routes/password/reset.jsx'),
 
-  // Sign up
   ...prefix('signup', [
     index('routes/signup/index.jsx'),
     route('verify-email', 'routes/signup/verify-email.jsx'),
   ]),
 
-  // Better Auth API routes
+  // ---------------------------------------------------------------------------
+  // Better Auth API handlers
+  // ---------------------------------------------------------------------------
+
   route('auth/*', 'routes/auth/all.jsx'),
   route('admin/auth/*', 'routes/auth/admin.jsx'),
   route('account/auth/*', 'routes/auth/customer.jsx'),
 
-  // Checkout
-  route('checkout/successful', 'routes/checkout/successful.jsx'),
+  // ---------------------------------------------------------------------------
+  // Webhooks + infrastructure
+  // ---------------------------------------------------------------------------
 
-  // Webhooks
   route('webhooks/:provider', 'routes/webhooks/$provider.jsx'),
 
-  // Plugin storefront dispatcher — static route, descriptor resolved at request time
-  route('apps/:pluginId/*', 'routes/storefront/apps.$pluginId.jsx'),
+  // Locale + currency cookie API endpoints (POST-redirect pattern)
+  route('api/set-locale', 'routes/storefront/api.set-locale.jsx'),
+  route('api/set-currency', 'routes/storefront/api.set-currency.jsx'),
 
   // Healthcheck for deployments
   route('health', 'routes/health.jsx'),
@@ -81,17 +132,19 @@ export default [
     ]),
   ]),
 
-  // 404 catch all route - must be the last route
+  // 404 catch-all — must be last
   route('*', 'routes/404.jsx'),
 ];
 
 /**
  * Routes that should be indexed by search engines (SEO)
- * The root landing page is indexed by default
  */
 export const INDEXED_ROUTES = [
   'login',
   'signup',
   'forgot-password',
   'sitemap.xml',
+  '',
+  'products',
+  'categories',
 ];
