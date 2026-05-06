@@ -1,8 +1,14 @@
 // app/routes/admin/customers/$id.jsx
 // Customer detail — header, edit form, addresses, order history.
 
-import { Form, Link, useActionData, useLoaderData, useNavigation } from 'react-router';
 import clsx from 'clsx';
+import {
+  Form,
+  Link,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+} from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 
@@ -78,7 +84,8 @@ export async function action({ request, params }) {
   if (intent === 'update-customer') {
     const name = formData.get('name')?.toString().trim() || null;
     const phone = formData.get('phone')?.toString().trim() || null;
-    const preferredLocale = formData.get('preferredLocale')?.toString().trim() || null;
+    const preferredLocale =
+      formData.get('preferredLocale')?.toString().trim() || null;
 
     await prisma.customer.update({
       where: { id },
@@ -186,7 +193,7 @@ export default function AdminCustomerRoute() {
             Customers
           </Link>
           <span>/</span>
-          <span className="truncate max-w-xs">{customer.email}</span>
+          <span className="max-w-xs truncate">{customer.email}</span>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -234,7 +241,7 @@ export default function AdminCustomerRoute() {
               name="name"
               defaultValue={customer.name ?? ''}
               placeholder="Jane Doe"
-              className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
+              className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
             />
           </div>
 
@@ -247,7 +254,7 @@ export default function AdminCustomerRoute() {
               name="phone"
               defaultValue={customer.phone ?? ''}
               placeholder="+1 555 000 0000"
-              className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
+              className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
             />
           </div>
 
@@ -260,7 +267,7 @@ export default function AdminCustomerRoute() {
               name="preferredLocale"
               defaultValue={customer.preferredLocale ?? ''}
               placeholder="en, de, fr…"
-              className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
+              className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
             />
           </div>
 
@@ -269,7 +276,7 @@ export default function AdminCustomerRoute() {
             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-zinc-400">
               Email (read-only)
             </label>
-            <p className="rounded-md bg-gray-50 px-3 py-1.5 text-sm text-gray-700 ring-1 ring-inset ring-gray-200 dark:bg-zinc-800/50 dark:text-zinc-300 dark:ring-zinc-700">
+            <p className="rounded-md bg-gray-50 px-3 py-1.5 text-sm text-gray-700 ring-1 ring-gray-200 ring-inset dark:bg-zinc-800/50 dark:text-zinc-300 dark:ring-zinc-700">
               {customer.email}
             </p>
           </div>
@@ -305,12 +312,12 @@ export default function AdminCustomerRoute() {
                 )}
               >
                 {addr.isDefault && (
-                  <span className="absolute right-3 top-3 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                  <span className="absolute top-3 right-3 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
                     Default
                   </span>
                 )}
 
-                <address className="not-italic text-sm text-gray-700 dark:text-zinc-300">
+                <address className="text-sm text-gray-700 not-italic dark:text-zinc-300">
                   <p className="font-medium">
                     {addr.firstName} {addr.lastName}
                   </p>
@@ -337,7 +344,11 @@ export default function AdminCustomerRoute() {
                 <div className="mt-3 flex gap-2">
                   {!addr.isDefault && (
                     <Form method="post">
-                      <input type="hidden" name="intent" value="set-default-address" />
+                      <input
+                        type="hidden"
+                        name="intent"
+                        value="set-default-address"
+                      />
                       <input type="hidden" name="addressId" value={addr.id} />
                       <button
                         type="submit"
@@ -355,7 +366,8 @@ export default function AdminCustomerRoute() {
                       type="submit"
                       disabled={isSubmitting}
                       onClick={(e) => {
-                        if (!confirm('Delete this address?')) e.preventDefault();
+                        if (!confirm('Delete this address?'))
+                          e.preventDefault();
                       }}
                       className="rounded-md px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-red-300 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:ring-red-700 dark:hover:bg-red-900/20"
                     >
@@ -380,16 +392,16 @@ export default function AdminCustomerRoute() {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
               <thead>
                 <tr className="bg-gray-50 dark:bg-zinc-800">
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Order #
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Status
                   </th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-right text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Total
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Date
                   </th>
                 </tr>

@@ -2,9 +2,15 @@
 // Order detail — line items, payment info, address, shipments, refunds,
 // manual notes, and status transitions.
 
-import { Form, Link, useActionData, useLoaderData, useNavigation } from 'react-router';
-import { redirect } from 'react-router';
 import clsx from 'clsx';
+import {
+  Form,
+  Link,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+} from 'react-router';
+import { redirect } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 
@@ -115,8 +121,7 @@ export async function action({ request, params }) {
     const carrier = formData.get('carrier')?.toString().trim() || null;
     const trackingNumber =
       formData.get('trackingNumber')?.toString().trim() || null;
-    const trackingUrl =
-      formData.get('trackingUrl')?.toString().trim() || null;
+    const trackingUrl = formData.get('trackingUrl')?.toString().trim() || null;
 
     await prisma.shipment.create({
       data: {
@@ -169,8 +174,7 @@ const STATUS_CLASSES = {
   fulfilled:
     'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
   cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  refunded:
-    'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+  refunded: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
 };
 
 function StatusBadge({ status }) {
@@ -234,11 +238,11 @@ function AddressDisplay({ json, label }) {
   return (
     <div>
       {label && (
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+        <p className="mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
           {label}
         </p>
       )}
-      <address className="not-italic text-sm text-gray-700 dark:text-zinc-300">
+      <address className="text-sm text-gray-700 not-italic dark:text-zinc-300">
         {lines.map((line, i) => (
           <span key={i} className="block">
             {line}
@@ -344,19 +348,19 @@ export default function AdminOrderRoute() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
             <thead>
               <tr className="bg-gray-50 dark:bg-zinc-800">
-                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Item
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   SKU
                 </th>
-                <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-3 py-2 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Qty
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-3 py-2 text-right text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Unit Price
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                <th className="px-3 py-2 text-right text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Total
                 </th>
               </tr>
@@ -509,16 +513,16 @@ export default function AdminOrderRoute() {
             <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-zinc-700">
               <thead>
                 <tr className="bg-gray-50 dark:bg-zinc-800">
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Status
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Carrier
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Tracking
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Shipped At
                   </th>
                 </tr>
@@ -526,7 +530,7 @@ export default function AdminOrderRoute() {
               <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
                 {order.shipments.map((s) => (
                   <tr key={s.id}>
-                    <td className="px-3 py-2 capitalize text-gray-700 dark:text-zinc-300">
+                    <td className="px-3 py-2 text-gray-700 capitalize dark:text-zinc-300">
                       {s.status}
                     </td>
                     <td className="px-3 py-2 text-gray-700 dark:text-zinc-300">
@@ -572,36 +576,36 @@ export default function AdminOrderRoute() {
           </p>
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <label className="block text-xs text-gray-500 dark:text-zinc-400 mb-1">
+              <label className="mb-1 block text-xs text-gray-500 dark:text-zinc-400">
                 Carrier
               </label>
               <input
                 type="text"
                 name="carrier"
                 placeholder="UPS, FedEx…"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 dark:text-zinc-400 mb-1">
+              <label className="mb-1 block text-xs text-gray-500 dark:text-zinc-400">
                 Tracking Number
               </label>
               <input
                 type="text"
                 name="trackingNumber"
                 placeholder="1Z999…"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 dark:text-zinc-400 mb-1">
+              <label className="mb-1 block text-xs text-gray-500 dark:text-zinc-400">
                 Tracking URL
               </label>
               <input
                 type="url"
                 name="trackingUrl"
                 placeholder="https://…"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
             </div>
           </div>
@@ -622,16 +626,16 @@ export default function AdminOrderRoute() {
             <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-zinc-700">
               <thead>
                 <tr className="bg-gray-50 dark:bg-zinc-800">
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Amount
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Reason
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Status
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                     Date
                   </th>
                 </tr>
@@ -645,7 +649,7 @@ export default function AdminOrderRoute() {
                     <td className="px-3 py-2 text-gray-700 dark:text-zinc-300">
                       {r.reason ?? '—'}
                     </td>
-                    <td className="px-3 py-2 capitalize text-gray-700 dark:text-zinc-300">
+                    <td className="px-3 py-2 text-gray-700 capitalize dark:text-zinc-300">
                       {r.status}
                     </td>
                     <td className="px-3 py-2 text-gray-500 dark:text-zinc-400">
@@ -670,7 +674,7 @@ export default function AdminOrderRoute() {
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="block text-xs text-gray-500 dark:text-zinc-400 mb-1">
+              <label className="mb-1 block text-xs text-gray-500 dark:text-zinc-400">
                 Amount (cents)
               </label>
               <input
@@ -678,18 +682,18 @@ export default function AdminOrderRoute() {
                 name="amountCents"
                 min={1}
                 placeholder="e.g. 1000 = $10.00"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 dark:text-zinc-400 mb-1">
+              <label className="mb-1 block text-xs text-gray-500 dark:text-zinc-400">
                 Reason
               </label>
               <input
                 type="text"
                 name="reason"
                 placeholder="Customer request, damaged item…"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
             </div>
           </div>
@@ -706,7 +710,7 @@ export default function AdminOrderRoute() {
       {/* Notes */}
       <SectionCard title="Notes">
         {order.notes && (
-          <p className="mb-4 whitespace-pre-wrap text-sm text-gray-700 dark:text-zinc-300">
+          <p className="mb-4 text-sm whitespace-pre-wrap text-gray-700 dark:text-zinc-300">
             {order.notes}
           </p>
         )}
@@ -717,7 +721,7 @@ export default function AdminOrderRoute() {
             defaultValue={order.notes}
             rows={4}
             placeholder="Internal notes about this order…"
-            className="w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700 dark:placeholder:text-zinc-500"
+            className="w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-700 dark:placeholder:text-zinc-500"
           />
           <button
             type="submit"

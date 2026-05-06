@@ -155,8 +155,7 @@ const STATUS_STYLES = {
   fulfilled:
     'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
   cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  refunded:
-    'bg-gray-100 text-gray-700 dark:bg-gray-700/40 dark:text-gray-300',
+  refunded: 'bg-gray-100 text-gray-700 dark:bg-gray-700/40 dark:text-gray-300',
 };
 
 /**
@@ -188,9 +187,9 @@ function StatusBadge({ status }) {
  */
 function KpiTile({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-dark-700 dark:bg-dark-800">
+    <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-dark-700">
+        <div className="dark:bg-dark-700 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
           <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
         </div>
         <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -270,15 +269,15 @@ export default function AdminDashboardRoute() {
         </h2>
 
         {recentOrders.length === 0 ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-8 text-center dark:border-dark-700 dark:bg-dark-800">
+          <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-8 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               No orders yet.
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-dark-700 dark:bg-dark-800">
+          <div className="dark:border-dark-700 dark:bg-dark-800 overflow-hidden rounded-xl border border-gray-200 bg-white">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
+              <table className="dark:divide-dark-700 min-w-full divide-y divide-gray-200">
                 <thead>
                   <tr>
                     {['Order', 'Customer', 'Status', 'Total', 'Date'].map(
@@ -286,7 +285,7 @@ export default function AdminDashboardRoute() {
                         <th
                           key={col}
                           scope="col"
-                          className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                          className="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
                         >
                           {col}
                         </th>
@@ -294,34 +293,34 @@ export default function AdminDashboardRoute() {
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-dark-700/60">
+                <tbody className="dark:divide-dark-700/60 divide-y divide-gray-100">
                   {recentOrders.map((order) => (
                     <tr
                       key={order.id}
-                      className="hover:bg-gray-50 dark:hover:bg-dark-700/30"
+                      className="dark:hover:bg-dark-700/30 hover:bg-gray-50"
                     >
                       {/* Order number */}
-                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                      <td className="px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">
                         #{order.orderNumber}
                       </td>
 
                       {/* Customer email */}
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                      <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-300">
                         {order.customer?.email ?? order.email}
                       </td>
 
                       {/* Status badge */}
-                      <td className="whitespace-nowrap px-4 py-3 text-sm">
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">
                         <StatusBadge status={order.status} />
                       </td>
 
                       {/* Total */}
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900 dark:text-white">
+                      <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-900 dark:text-white">
                         {formatCents(order.totalCents, order.currency)}
                       </td>
 
                       {/* Date */}
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                         {formatDate(order.createdAt)}
                       </td>
                     </tr>
