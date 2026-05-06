@@ -21,3 +21,25 @@ export function useT() {
   const { t } = useContext(I18nContext);
   return t;
 }
+
+/**
+ * Pure translation helper — usable on client and server without hooks.
+ * Looks up `key` in `messages`, substitutes `{param}` placeholders.
+ *
+ * @param {string} key
+ * @param {Record<string, string|number>} params
+ * @param {Record<string, string>} messages
+ * @returns {string}
+ */
+export function translate(key, params = {}, messages = {}) {
+  const value = messages[key];
+  if (typeof value !== 'string') return key;
+  if (params && Object.keys(params).length > 0) {
+    return value.replace(/\{(\w+)\}/g, (_, name) =>
+      Object.prototype.hasOwnProperty.call(params, name)
+        ? String(params[name])
+        : `{${name}}`
+    );
+  }
+  return value;
+}

@@ -1,19 +1,30 @@
-import { resolveActiveTheme } from '#/core/themes/index.server';
+import { useLoaderData } from 'react-router';
 
-export async function loader({ request: _request }) {
-  const theme = await resolveActiveTheme();
-  return { themeName: theme?.name ?? null };
+import { listProducts, listCategories } from '#/core/catalog/index.server';
+import { getRequestCurrency } from '#/core/currency/index.server';
+import { getRequestLocale } from '#/core/i18n/index.server';
+import HomePage from '#/themes/default/components/HomePage';
+
+export async function loader({ request }) {
+  const locale = await getRequestLocale(request);
+  const currency = await getRequestCurrency(request);
+
+  const [{ products }, categories] = await Promise.all([
+    listProducts({ locale, currency, limit: 8, published: true }),
+    listCategories({ locale }),
+  ]);
+
+  return { products, categories, locale, currency };
 }
 
-export default function StorefrontIndex() {
-  // Theme component resolution happens in the loader; the real
-  // implementation in Phase 6 will render the theme's HomePage component.
-  return (
-    <div>
-      <h1>bermooda storefront</h1>
-      <p>
-        Default theme active — Phase 6 will render the full themed storefront.
-      </p>
-    </div>
-  );
+export function meta() {
+  return [
+    { title: 'bermooda' },
+    { name: 'description', content: 'Welcome to bermooda' },
+  ];
+}
+
+export default function StorefrontIndexRoute() {
+  const data = useLoaderData();
+  return <HomePage {...data} />;
 }

@@ -82,24 +82,10 @@ export async function lookupVariantPriceForBrowsing(variantId, currency) {
 }
 
 // ---------------------------------------------------------------------------
-// formatPrice
+// formatPrice — re-exported from client-safe format.js for backward compat
 // ---------------------------------------------------------------------------
 
-/**
- * Format a price given in cents as a localised currency string.
- *
- * @param {number} cents
- * @param {string} [currency='USD']
- * @param {string} [locale='en']
- * @returns {string}
- */
-export function formatPrice(cents, currency = 'USD', locale = 'en') {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(cents / 100);
-}
+export { formatPrice } from './format.js';
 
 // ---------------------------------------------------------------------------
 // setCurrencyCookie
