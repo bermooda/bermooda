@@ -75,7 +75,7 @@ export async function loader() {
         currency: true,
         createdAt: true,
         customer: {
-          select: { email: true, name: true },
+          select: { email: true },
         },
       },
     }),
