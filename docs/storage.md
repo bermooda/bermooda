@@ -41,9 +41,28 @@ Set `STORAGE_ENDPOINT=http://localhost:9000` and create a bucket via the MinIO c
 - **Missing object**: `deleteObject` treats 404 as success (idempotent).
 - **`getObjectUrl`**: Pure URL construction — never throws, works even without configured credentials.
 
+## Storage key convention
+
+Uploaded media objects are stored under the key pattern:
+
+```
+media/{timestamp}-{randomSuffix}.{ext}
+```
+
+- `timestamp` — `Date.now()` at upload time
+- `randomSuffix` — random alphanumeric string for collision avoidance
+- `ext` — derived from the original filename; falls back to the MIME type if no extension is present
+
+Keys are stored in `Media.storageKey` in the database so they can be used to delete the object when a media record is removed.
+
 ## API
 
-Defined in `app/core/storage/client.server.js`:
+The storage layer is split into two modules:
+
+- `app/core/storage/client.server.js` — low-level S3-compatible primitives
+- `app/core/storage/index.server.js` — public API that re-exports the primitives and adds `uploadMedia`
+
+### Low-level primitives (`client.server.js`)
 
 ```js
 putObject(key, body, contentType); // → Promise<string> (public URL)
@@ -51,4 +70,18 @@ getObjectUrl(key); // → string
 deleteObject(key); // → Promise<void>
 ```
 
-Phase 3 (P3-9) will promote this client into `app/core/storage/index.server.js` and add `uploadMedia(file)`.
+`putObject` performs a plain HTTP PUT with the `x-amz-acl: public-read` header. This is sufficient for Tigris and MinIO in development. For production deployments that require proper AWS Signature V4 request signing, replace the fetch-based implementation with `@aws-sdk/client-s3` (`PutObjectCommand`).
+
+### High-level API (`index.server.js`)
+
+```js
+uploadMedia(file); // → Promise<{ url, storageKey, mimeType, width, height }>
+```
+
+`uploadMedia` accepts a Web API `File` object (as received from a browser form upload via Remix's `request.formData()`):
+
+- Generates a storage key following the `media/{timestamp}-{random}.{ext}` convention
+- Calls `putObject` internally
+- Returns `{ url: string, storageKey: string, mimeType: string, width: null, height: null }`
+
+Note: image dimensions (`width`, `height`) are always `null` — dimension detection requires `sharp` or `probe-image-size`, neither of which is currently installed. The fields are included in the return shape so callers can store them in the `Media` table without schema changes once detection is added.

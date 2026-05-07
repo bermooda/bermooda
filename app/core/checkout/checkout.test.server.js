@@ -45,7 +45,6 @@ import { getAllQuotes } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
 import {
   createCheckoutSession,
-  getCheckoutSession,
   advanceStep,
   abandonCheckoutSession,
 } from './pipeline.server.js';
