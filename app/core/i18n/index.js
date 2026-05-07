@@ -32,7 +32,20 @@ export function useT() {
  * @returns {string}
  */
 export function translate(key, params = {}, messages = {}) {
-  const value = messages[key];
+  let value = messages[key];
+  if (typeof value !== 'string') {
+    // Fall back to dot-notation traversal for nested catalogs.
+    const parts = key.split('.');
+    let current = messages;
+    for (const part of parts) {
+      if (current == null || typeof current !== 'object') {
+        current = undefined;
+        break;
+      }
+      current = current[part];
+    }
+    value = current;
+  }
   if (typeof value !== 'string') return key;
   if (params && Object.keys(params).length > 0) {
     return value.replace(/\{(\w+)\}/g, (_, name) =>
