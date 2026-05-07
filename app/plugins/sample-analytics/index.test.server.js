@@ -1,4 +1,4 @@
-// app/plugins/sample-analytics/sample-analytics.test.server.js
+// app/plugins/sample-analytics/index.test.server.js
 // Integration test: exercises the plugin contract end-to-end via order.created.
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';

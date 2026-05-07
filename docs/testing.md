@@ -10,19 +10,20 @@ The philosophy is to test behavior through mocks and factories rather than hitti
 
 ## File Naming Conventions
 
-| Pattern                   | Environment | Purpose                                               |
-| ------------------------- | ----------- | ----------------------------------------------------- |
-| `app/**/*.test.js`        | happy-dom   | Unit tests for pure logic, utilities, hooks           |
-| `app/**/*.test.jsx`       | happy-dom   | Unit tests for JSX/React components                   |
-| `app/**/*.test.server.js` | Node        | Server-side tests: Prisma services, loaders, adapters |
+| Pattern                    | Environment | Purpose                                                   |
+| -------------------------- | ----------- | --------------------------------------------------------- |
+| `app/**/*.test.js`         | happy-dom   | Unit tests for pure logic, utilities, hooks               |
+| `app/**/*.test.jsx`        | happy-dom   | Unit tests for JSX/React components                       |
+| `app/**/*.test.server.js`  | Node        | Server-side tests: Prisma services, loaders, adapters     |
+| `app/**/*.test.server.jsx` | Node        | Server-side tests for `.jsx` route modules (e.g. actions) |
 
-Server tests use the `.test.server.js` suffix so the `unit` project excludes them and the `server` project picks them up exclusively.
+Server tests use the `.test.server.js` / `.test.server.jsx` suffix so the `unit` project excludes them and the `server` project picks them up exclusively.
 
 **Examples:**
 
 ```
-app/core/cart/cart.service.test.server.js   # Prisma mock, Node env
-app/core/totals/totals.test.js              # Pure logic, happy-dom
+app/core/cart/index.test.server.js   # Mirrors index.server.js — Prisma mock, Node env
+app/core/totals/totals.test.js       # Pure logic, happy-dom
 app/components/ProductCard/ProductCard.test.jsx  # React component, happy-dom
 ```
 

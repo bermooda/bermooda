@@ -1,4 +1,4 @@
-// app/core/storage/storage.test.server.js
+// app/core/storage/index.test.server.js
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
