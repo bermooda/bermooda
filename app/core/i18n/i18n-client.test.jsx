@@ -65,6 +65,30 @@ describe('translate', () => {
       'Total: 42'
     );
   });
+
+  it('traverses nested objects via dot-notation', () => {
+    expect(
+      translate(
+        'admin.topbar.switchLocale',
+        {},
+        { admin: { topbar: { switchLocale: 'Switch locale' } } }
+      )
+    ).toBe('Switch locale');
+  });
+
+  it('prefers flat-dotted keys over nested traversal', () => {
+    expect(
+      translate(
+        'nav.home',
+        {},
+        { 'nav.home': 'Home', 'nav': { home: 'WRONG' } }
+      )
+    ).toBe('Home');
+  });
+
+  it('returns the key when nested traversal lands on a non-string', () => {
+    expect(translate('admin', {}, { admin: { topbar: 'x' } })).toBe('admin');
+  });
 });
 
 // ---------------------------------------------------------------------------
