@@ -1,4 +1,4 @@
-// app/core/core.test.jsx
+// app/core/index.test.jsx
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 

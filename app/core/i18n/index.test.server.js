@@ -1,4 +1,4 @@
-// app/core/i18n/i18n.test.server.js
+// app/core/i18n/index.test.server.js
 // Server-environment tests for the i18n resolver.
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';

@@ -1,4 +1,4 @@
-// app/core/shipping/shipping.test.server.js
+// app/core/shipping/index.test.server.js
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

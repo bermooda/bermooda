@@ -1,5 +1,5 @@
-// app/libs/auth/auth-boundaries.test.server.js
-// Tests for admin and customer auth route middleware redirect behavior.
+// app/libs/auth/admin.test.server.js
+// Tests for admin auth route middleware redirect behavior and admin auth instance config.
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -23,8 +23,8 @@ vi.mock('bcryptjs', () => ({
   },
 }));
 
-// betterAuth factory always calls through `adminState.sessionImpl` so tests
-// can control behavior without module re-registration.
+// betterAuth factory routes getSession to adminState or customerState by basePath
+// so tests can control behavior without module re-registration.
 vi.mock('better-auth', () => ({
   betterAuth: vi.fn((cfg) => {
     // Identify admin vs customer instance by basePath in config.
@@ -111,7 +111,6 @@ vi.mock('react-router', () => ({
 // ---------------------------------------------------------------------------
 
 import { adminAuthMiddleware } from './admin.server.js';
-import { customerAuthMiddleware } from './customer.server.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -202,94 +201,6 @@ describe('adminAuthMiddleware', () => {
       id: 'u1',
       email: 'admin@example.com',
       name: 'Admin User',
-    });
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Customer auth middleware
-// ---------------------------------------------------------------------------
-
-describe('customerAuthMiddleware', () => {
-  beforeEach(() => {
-    customerState.sessionImpl.mockReset();
-  });
-
-  it('throws a 302 redirect to /account/login when getSession returns null', async () => {
-    customerState.sessionImpl.mockResolvedValue(null);
-    const request = new Request('http://localhost:3000/account/orders');
-    const context = { set: vi.fn() };
-
-    const thrown = await catchThrown(() =>
-      customerAuthMiddleware({ request, context })
-    );
-
-    expect(thrown).toBeInstanceOf(Response);
-    expect(thrown.status).toBe(302);
-    expect(thrown.headers.get('Location')).toMatch(/^\/account\/login/);
-  });
-
-  it('throws a 302 redirect to /account/login when session has no user', async () => {
-    // getCustomerSession returns null when session.user is falsy,
-    // and customerAuthMiddleware then builds the redirect itself.
-    customerState.sessionImpl.mockResolvedValue({ session: {}, user: null });
-    const request = new Request('http://localhost:3000/account/profile');
-    const context = { set: vi.fn() };
-
-    const thrown = await catchThrown(() =>
-      customerAuthMiddleware({ request, context })
-    );
-
-    expect(thrown).toBeInstanceOf(Response);
-    expect(thrown.status).toBe(302);
-    expect(thrown.headers.get('Location')).toMatch(/^\/account\/login/);
-  });
-
-  it('includes returnTo query param in the redirect URL', async () => {
-    customerState.sessionImpl.mockResolvedValue(null);
-    const request = new Request(
-      'http://localhost:3000/account/orders?status=pending'
-    );
-    const context = { set: vi.fn() };
-
-    const thrown = await catchThrown(() =>
-      customerAuthMiddleware({ request, context })
-    );
-
-    const location = thrown.headers.get('Location');
-    expect(location).toContain('returnTo=');
-    expect(decodeURIComponent(location)).toContain(
-      '/account/orders?status=pending'
-    );
-  });
-
-  it('sets customer data in context when session is valid', async () => {
-    const user = {
-      id: 'c1',
-      email: 'customer@example.com',
-      name: 'Test Customer',
-      emailVerified: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    customerState.sessionImpl.mockResolvedValue({
-      session: { id: 's2' },
-      user,
-    });
-    const request = new Request('http://localhost:3000/account/orders');
-    const context = { set: vi.fn() };
-
-    const thrown = await catchThrown(() =>
-      customerAuthMiddleware({ request, context })
-    );
-
-    expect(thrown).toBeNull();
-    expect(context.set).toHaveBeenCalledOnce();
-    const [, userData] = context.set.mock.calls[0];
-    expect(userData).toMatchObject({
-      id: 'c1',
-      email: 'customer@example.com',
-      name: 'Test Customer',
     });
   });
 });

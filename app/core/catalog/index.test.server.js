@@ -1,4 +1,4 @@
-// app/core/catalog/catalog.test.server.js
+// app/core/catalog/index.test.server.js
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
