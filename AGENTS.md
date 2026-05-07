@@ -2,7 +2,7 @@
 
 ### Overview
 
-bermooda is an ecommerce platform built with React Router 7 (SSR), Prisma 7 with SQLite, and Vite 7. It is a single-service monolith — no Docker, no external database server needed for development.
+bermooda is an ecommerce platform built with React Router 7 (SSR), Prisma 7 with SQLite, and Vite 8. It is a single-service monolith — no Docker, no external database server needed for development.
 
 **Architecture layers:**
 
@@ -31,11 +31,12 @@ A `.env` file must exist in the repo root (see `.env.example`). Placeholder valu
 | Lint          | `npm run lint` (oxlint + oxfmt --check)   |
 | Format        | `npm run fmt`                             |
 | Build         | `npm run build`                           |
+| Tests         | `npm run test`                            |
 | New migration | `npm run prisma:migrate -- --name <name>` |
 
 ### Non-obvious notes
 
-- **No test framework** is configured in this repo. There are no unit or integration tests to run.
+- **Vitest** (`vitest.config.js`) runs two projects: `unit` (happy-dom) and `server` (Node). Shared setup is `app/test-setup.js`. Use `npm run test`, `npm run test:watch`, or `npm run test:coverage`.
 - The SQLite database file is created at `prisma/dev.db` on first `prisma migrate deploy`. Delete it and re-run `npm run setup` to reset.
 - `prisma/generated/` is committed but must match the schema; always run `npx prisma generate` after pulling schema changes.
 - Lint exit code 1 from pre-existing oxfmt formatting warnings is expected and not a sign of breakage.
