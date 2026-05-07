@@ -25,7 +25,7 @@ A `.env` file must exist in the repo root (see `.env.example`). Placeholder valu
 
 | Task          | Command                                   |
 | ------------- | ----------------------------------------- |
-| Install deps  | `npm install`                             |
+| Install deps  | `npm install --legacy-peer-deps`          |
 | Prisma setup  | `npm run setup` (generate + migrate)      |
 | Dev server    | `npx react-router dev --port 3000 --host` |
 | Lint          | `npm run lint` (oxlint + oxfmt --check)   |
@@ -36,7 +36,9 @@ A `.env` file must exist in the repo root (see `.env.example`). Placeholder valu
 ### Non-obvious notes
 
 - **No test framework** is configured in this repo. There are no unit or integration tests to run.
+- `npm install` requires `--legacy-peer-deps` due to a peer dependency conflict between `react-router@^7.15.0` and `@react-router/serve@^7.14.2`. Without this flag, install fails with `ERESOLVE`.
 - The SQLite database file is created at `prisma/dev.db` on first `prisma migrate deploy`. Delete it and re-run `npm run setup` to reset.
 - `prisma/generated/` is committed but must match the schema; always run `npx prisma generate` after pulling schema changes.
 - Lint exit code 1 from pre-existing oxfmt formatting warnings is expected and not a sign of breakage.
 - The `#/*` import alias maps to `./app/` (configured in `vite.config.js`).
+- There is no built-in admin account seeder. To create an admin user: register at `/signup`, then update the user's `role` to `admin` and `emailVerified` to `1` directly in the SQLite database.
