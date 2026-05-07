@@ -198,7 +198,6 @@ export async function action({ request, params }) {
   // ── Save product ──────────────────────────────────────────────────────────
   if (intent === 'save') {
     const locales = formData.getAll('locales[]');
-    const currencies = formData.getAll('currencies[]');
 
     // Publish toggle
     const publish = formData.get('publishedAt');
@@ -357,11 +356,6 @@ export async function action({ request, params }) {
         });
         dbOptionId = optId;
       }
-
-      // Collect current DB value ids for this option
-      const currentValues = await prisma.productOptionValue.findMany({
-        where: { optionId: dbOptionId },
-      });
 
       const submittedValueIds = (optData.values ?? [])
         .map((v) => v?.id)
@@ -857,11 +851,11 @@ function VariantPriceGrid({ variants, currencies }) {
 }
 
 /** Media uploader + grid */
-function MediaUploader({ productId, initialMedia }) {
+function MediaUploader({ productId: _productId, initialMedia }) {
   const fetcher = useFetcher();
   const { revalidate } = useRevalidator();
   const fileRef = useRef(null);
-  const [media, setMedia] = useState(initialMedia);
+  const [media] = useState(initialMedia);
 
   // After a media upload or delete completes, revalidate loader data to
   // refresh the media list without unmounting the form or resetting field values.
@@ -869,7 +863,7 @@ function MediaUploader({ productId, initialMedia }) {
     if (fetcher.state === 'idle' && fetcher.data) {
       revalidate();
     }
-  }, [fetcher.state, fetcher.data]);
+  }, [fetcher.state, fetcher.data, revalidate]);
 
   function handleFileChange(e) {
     const file = e.target.files?.[0];

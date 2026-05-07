@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
 import config from '#/config';
 import { adminAuthClient } from '#/libs/auth/admin-client';
@@ -25,7 +25,6 @@ export function meta() {
  * @returns {React.ReactElement}
  */
 export default function AdminLoginRoute() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const rawReturnTo = searchParams.get('returnTo') || '';
   const returnTo = rawReturnTo.startsWith('/admin')
