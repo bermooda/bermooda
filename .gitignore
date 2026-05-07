@@ -14,3 +14,4 @@
 /prisma/queue.db
 /prisma/queue.db-shm
 /prisma/queue.db-wal
+/prisma/e2e-smoke.db

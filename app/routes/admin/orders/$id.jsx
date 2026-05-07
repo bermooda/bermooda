@@ -10,7 +10,6 @@ import {
   useLoaderData,
   useNavigation,
 } from 'react-router';
-import { redirect } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 

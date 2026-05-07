@@ -35,7 +35,6 @@ import prisma from '#/libs/prisma.server';
 
 import {
   createCart,
-  getCart,
   addLine,
   removeLine,
   updateQuantity,
