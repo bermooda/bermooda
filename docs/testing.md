@@ -48,7 +48,7 @@ npx vitest run --project server
 
 ## Test Setup
 
-Both projects load `vitest-setup.js` before each test file. The setup file:
+Both projects load `app/test-setup.js` before each test file. The setup file:
 
 - Imports `@testing-library/jest-dom` to extend Vitest matchers with DOM assertions (`toBeInTheDocument`, `toHaveValue`, etc.)
 - Calls `vi.clearAllMocks()` after every test, so mock call history and return values never bleed between tests
