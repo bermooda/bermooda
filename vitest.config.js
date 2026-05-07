@@ -16,7 +16,7 @@ export default defineConfig({
             'app/**/*.test.server.jsx',
             'app/routes/**/*.test.jsx',
           ],
-          setupFiles: ['./vitest-setup.js'],
+          setupFiles: ['./app/test-setup.js'],
           alias: {
             '#': path.resolve('./app'),
             '#prisma/client': path.resolve('./prisma/generated/client'),
@@ -33,7 +33,7 @@ export default defineConfig({
             'app/**/*.test.server.jsx',
             'app/routes/**/*.test.jsx',
           ],
-          setupFiles: ['./vitest-setup.js'],
+          setupFiles: ['./app/test-setup.js'],
           alias: {
             '#': path.resolve('./app'),
             '#prisma/client': path.resolve('./prisma/generated/client'),
