@@ -11,7 +11,11 @@ export default defineConfig({
           environment: 'happy-dom',
           globals: true,
           include: ['app/**/*.test.jsx', 'app/**/*.test.js'],
-          exclude: ['app/**/*.test.server.js', 'app/**/*.test.server.jsx'],
+          exclude: [
+            'app/**/*.test.server.js',
+            'app/**/*.test.server.jsx',
+            'app/routes/**/*.test.jsx',
+          ],
           setupFiles: ['./vitest-setup.js'],
           alias: {
             '#': path.resolve('./app'),
@@ -23,7 +27,11 @@ export default defineConfig({
           name: 'server',
           environment: 'node',
           globals: true,
-          include: ['app/**/*.test.server.js', 'app/**/*.test.server.jsx'],
+          include: [
+            'app/**/*.test.server.js',
+            'app/**/*.test.server.jsx',
+            'app/routes/**/*.test.jsx',
+          ],
           setupFiles: ['./vitest-setup.js'],
           alias: {
             '#': path.resolve('./app'),

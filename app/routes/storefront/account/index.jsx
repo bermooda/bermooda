@@ -24,6 +24,6 @@ export function meta() {
 
 export default function AccountIndexRoute() {
   const data = useLoaderData();
-  const layoutData = useRouteLoaderData('routes/storefront/account._layout');
+  const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
   return <AccountDashboard {...data} customer={layoutData?.customer} />;
 }

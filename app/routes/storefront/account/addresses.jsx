@@ -61,6 +61,6 @@ export function meta() {
 
 export default function AccountAddressesRoute() {
   const data = useLoaderData();
-  const layoutData = useRouteLoaderData('routes/storefront/account._layout');
+  const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
   return <AccountAddressesPage {...data} customer={layoutData?.customer} />;
 }

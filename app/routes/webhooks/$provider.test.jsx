@@ -1,4 +1,4 @@
-// app/routes/webhooks/$provider.test.server.jsx
+// app/routes/webhooks/$provider.test.jsx
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

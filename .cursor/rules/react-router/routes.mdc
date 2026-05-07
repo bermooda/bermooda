@@ -6,6 +6,20 @@ alwaysApply: false
 
 # Route handling
 
+## File layout (this repo)
+
+Do **not** use React Router filename dot routing (e.g. avoid `account.orders.jsx`). Prefer nested directories.
+
+| Rule | Example |
+|------|---------|
+| Nested paths are directories | `storefront/account/orders.jsx`, not `storefront/account.orders.jsx` |
+| Only layout files use a leading `_` | `storefront/_layout.jsx`, `storefront/account/_layout.jsx` |
+| Index routes are plain `index.jsx` | `storefront/account/index.jsx` (never `_index.jsx`) |
+| Dynamic segments stay in the filename | `webhooks/$provider.jsx` |
+| No `.server` in route or test filenames | e.g. `webhooks/$provider.jsx` and `webhooks/$provider.test.jsx` — not `$provider.server.jsx` or `$provider.test.server.jsx` (use `#/libs/*.server` for server-only helpers) |
+
+Configure explicit URLs in [app/routes.js](mdc:app/routes.js) to match this tree.
+
 ## Conventions
 
 - Configure route paths in [app/routes.js](mdc:app/routes.js).
