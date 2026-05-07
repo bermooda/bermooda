@@ -85,6 +85,7 @@ export async function resolveSlug(slug) {
 export async function listProducts({
   locale,
   currency,
+  categoryId,
   page = 1,
   limit = 20,
   published,
@@ -92,35 +93,39 @@ export async function listProducts({
   const where = {};
   if (published === true) where.publishedAt = { not: null };
   if (published === false) where.publishedAt = null;
+  if (categoryId) where.categories = { some: { categoryId } };
 
   const skip = (page - 1) * limit;
 
-  const products = await prisma.product.findMany({
-    where,
-    skip,
-    take: limit,
-    orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
-    include: {
-      variants: {
-        orderBy: { position: 'asc' },
-        take: 1,
-        include: {
-          prices: currency ? { where: { currency } } : true,
+  const [rawProducts, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
+      include: {
+        variants: {
+          orderBy: { position: 'asc' },
+          take: 1,
+          include: {
+            prices: currency ? { where: { currency } } : true,
+          },
+        },
+        media: {
+          orderBy: { position: 'asc' },
+          take: 1,
+          include: { media: true },
         },
       },
-      media: {
-        orderBy: { position: 'asc' },
-        take: 1,
-        include: { media: true },
-      },
-    },
-  });
+    }),
+    prisma.product.count({ where }),
+  ]);
 
-  if (!locale) return products;
+  if (!locale) return { products: rawProducts, total };
 
   // Attach translations and slugs per product.
-  return Promise.all(
-    products.map(async (product) => {
+  const products = await Promise.all(
+    rawProducts.map(async (product) => {
       const [translations, slugRow] = await Promise.all([
         getTranslations('product', product.id, locale),
         prisma.slug.findFirst({
@@ -138,6 +143,8 @@ export async function listProducts({
       );
     })
   );
+
+  return { products, total };
 }
 
 export async function getProduct(id, { locale, currency } = {}) {

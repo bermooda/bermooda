@@ -16,7 +16,7 @@ function resolveSlug(product) {
 }
 
 export default function ProductCard({ product, locale, currency }) {
-  const imageUrl = product.media?.[0]?.url ?? null;
+  const imageUrl = product.media?.[0]?.media?.url ?? null;
   const priceCents = resolvePrice(product);
   const slug = resolveSlug(product);
 

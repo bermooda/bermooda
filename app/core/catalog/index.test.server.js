@@ -23,6 +23,7 @@ vi.mock('#/libs/prisma.server', () => ({
     product: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      count: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -305,10 +306,10 @@ describe('listProducts', () => {
     ]);
     prisma.slug.findFirst.mockResolvedValue({ slug: 'localised-title' });
 
-    const result = await listProducts({ locale: 'en' });
+    const { products } = await listProducts({ locale: 'en' });
 
-    expect(result[0].title).toBe('Localised Title');
-    expect(result[0].slug).toBe('localised-title');
+    expect(products[0].title).toBe('Localised Title');
+    expect(products[0].slug).toBe('localised-title');
   });
 });
 

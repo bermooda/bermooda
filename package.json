@@ -18,7 +18,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "seed": "node --experimental-strip-types prisma/seed.ts"
+    "seed": "node --experimental-strip-types prisma/seed.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
