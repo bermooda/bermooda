@@ -1,6 +1,6 @@
 import { useLoaderData } from 'react-router';
 
-import ForgotPasswordPage from '#/themes/default/components/ForgotPasswordPage';
+import ForgotPasswordPage from '#/themes/default/components/forgot-password-page';
 
 export async function loader({ request }) {
   const url = new URL(request.url);

@@ -187,7 +187,7 @@ P2-1..P2-5 are parallel drafting; P2-6 is the single assembler.
 **Depends on:** Phase 4. **Parallel with:** Phase 6, Phase 7.
 **Exit gate:** admin seed user can log in, CRUD a product with translations + multi-currency prices + media, build a category tree, place a manual order, issue a refund, toggle a plugin, switch a theme, edit settings.
 
-- **P5-1. Admin shell (first).** Create [app/routes/admin/\_public.jsx](app/routes/admin/_public.jsx) with `login`, `forgot-password`, `reset-password`, `verify-2fa`, `logout`. Create [app/routes/admin/\_layout.jsx](app/routes/admin/_layout.jsx) with RR7 route middleware calling into `admin.server.js`; redirect `/admin/login` on failure. Build sidebar + topbar (search, admin user menu, dark-mode toggle, locale switcher via `useT()`). Add all routes to [app/routes.js](app/routes.js).
+- **P5-1. Admin shell (first).** Create [app/routes/admin/public/\_layout.jsx](app/routes/admin/public/_layout.jsx) with `login`, `forgot-password`, `reset-password`, `verify-2fa`, `logout`. Create [app/routes/admin/\_layout.jsx](app/routes/admin/_layout.jsx) with RR7 route middleware calling into `admin.server.js`; redirect `/admin/login` on failure. Build sidebar + topbar (search, admin user menu, dark-mode toggle, locale switcher via `useT()`). Add all routes to [app/routes.js](app/routes.js).
 
 Parallel after P5-1:
 
@@ -234,7 +234,7 @@ Parallel after P6-1 + P6-2:
 
 All four tasks are parallel.
 
-- **P7-1. sample-analytics plugin** — [app/plugins/sample-analytics/manifest.js](app/plugins/sample-analytics/manifest.js), `index.server.js` (hooks `order.created` → append to `PluginData`), `admin/routes.js` (recent-events page), `blocks/product.afterDescription.jsx`, `i18n/en.json`.
+- **P7-1. sample-analytics plugin** — [app/plugins/sample-analytics/manifest.js](app/plugins/sample-analytics/manifest.js), `index.server.js` (hooks `order.created` → append to `PluginData`), `admin/routes.js` (recent-events page), `blocks/product/after-description.jsx`, `i18n/en.json`.
 - **P7-2. Shop email templates** — [app/emails/shop/order-confirmation.jsx](app/emails/shop/order-confirmation.jsx), `password-reset-admin.jsx`, `password-reset-customer.jsx`, `customer-welcome.jsx`, `abandoned-cart.jsx` as React Email templates accepting a `locale` prop.
 - **P7-3. Queue jobs** — extend [app/emails/job.server.js](app/emails/job.server.js) with `queueOrderConfirmation`, `queueCustomerWelcome`, `queueAbandonedCart`. Subscribe via the event bus to `order.created` and `customer.registered`.
 - **P7-4. Seed script** — add `npm run seed` in [package.json](package.json) + `prisma/seed.js`: 1 admin (`role=admin`, email verified), `Setting` defaults (USD default, USD/EUR/AUD enabled, `activeTheme=default`), `sample-analytics` in `Setting.enabledPlugins`, optional demo product + variant + prices.

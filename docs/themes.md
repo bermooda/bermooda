@@ -279,13 +279,13 @@ At minimum you must implement all seven required components. The copied files fr
 The required components are located at:
 
 ```
-app/themes/aurora/components/Layout.jsx
-app/themes/aurora/components/HomePage.jsx
-app/themes/aurora/components/ProductPage.jsx
-app/themes/aurora/components/CategoryPage.jsx
-app/themes/aurora/components/CartPage.jsx
-app/themes/aurora/components/CheckoutLayout.jsx
-app/themes/aurora/components/NotFoundPage.jsx
+app/themes/aurora/components/layout.jsx
+app/themes/aurora/components/home-page.jsx
+app/themes/aurora/components/product-page.jsx
+app/themes/aurora/components/category-page.jsx
+app/themes/aurora/components/cart-page.jsx
+app/themes/aurora/components/checkout-layout.jsx
+app/themes/aurora/components/not-found-page.jsx
 ```
 
 Optional components you do not intend to customize can be left as copied from the default, or removed from the manifest if they are not needed.

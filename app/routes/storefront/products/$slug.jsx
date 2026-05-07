@@ -3,7 +3,7 @@ import { useLoaderData } from 'react-router';
 import { getProductBySlug } from '#/core/catalog/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
-import ProductPage from '#/themes/default/components/ProductPage';
+import ProductPage from '#/themes/default/components/product-page';
 
 export async function loader({ request, params }) {
   const locale = await getRequestLocale(request);

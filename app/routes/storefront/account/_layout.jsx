@@ -3,7 +3,7 @@ import { Outlet, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
 
-import AccountLayout from '#/themes/default/components/AccountLayout';
+import AccountLayout from '#/themes/default/components/account-layout';
 
 export async function loader({ request }) {
   const session = await getCustomerSession(request);
