@@ -31,7 +31,7 @@ vi.mock('#/utils/logger.server', () => ({
 
 import prisma from '#/libs/prisma.server';
 
-import { pluginManifest } from './index.server.js';
+import { pluginManifest } from './index.server';
 
 const PLUGIN_ID = 'sample-analytics';
 const EVENTS_KEY = 'recentEvents';
@@ -204,7 +204,7 @@ describe('plugin contract end-to-end', () => {
 
     const { register, loadPlugins } =
       await import('#/core/plugins/index.server');
-    const { pluginManifest: manifest } = await import('./index.server.js');
+    const { pluginManifest: manifest } = await import('./index.server');
 
     register(manifest);
     const { plugins } = loadPlugins();

@@ -14,7 +14,7 @@ import {
   getObjectUrl,
   deleteObject,
   uploadMedia,
-} from './index.server.js';
+} from './index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

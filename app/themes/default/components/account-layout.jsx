@@ -7,7 +7,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Link, NavLink } from 'react-router';
 
-import { useT } from '#/core/i18n/index.js';
+import { useT } from '#/core/i18n/index';
 
 const NAV_ITEMS = [
   { href: '/account', label: 'account.dashboard', Icon: UserIcon, end: true },

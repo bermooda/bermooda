@@ -110,7 +110,7 @@ vi.mock('react-router', () => ({
 // Import modules under test (after all mocks are registered)
 // ---------------------------------------------------------------------------
 
-import { customerAuthMiddleware } from './customer.server.js';
+import { customerAuthMiddleware } from './customer.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

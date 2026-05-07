@@ -14,12 +14,12 @@ export function useShop() {
   return { currency: 'USD', locale: 'en' };
 }
 
-export { useT, translate } from './i18n/index.js';
+export { useT, translate } from './i18n/index';
 
 // -- Utilities --------------------------------------------------------------
 
 // formatPrice is a pure Intl helper — client-safe.
-export { formatPrice } from './currency/format.js';
+export { formatPrice } from './currency/format';
 
 // -- Components -------------------------------------------------------------
 
