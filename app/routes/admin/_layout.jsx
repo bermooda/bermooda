@@ -26,20 +26,37 @@ import {
 } from '@heroicons/react/24/outline';
 import { UserIcon as UserIconSolid } from '@heroicons/react/24/solid';
 import { useState } from 'react';
-import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
+import {
+  Link,
+  Outlet,
+  useFetcher,
+  useLoaderData,
+  useLocation,
+} from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import useTheme from '#/hooks/use-theme';
 import Logo from '#/components/ui/logo';
 
-import { useT } from '#/core/i18n/index';
+import { I18nContext } from '#/core/i18n/context';
+import { translate, useT } from '#/core/i18n/index';
+import { getRequestLocale, loadMessages } from '#/core/i18n/index.server';
+
+const ADMIN_AVAILABLE_LOCALES = ['en', 'de', 'fr'];
 
 /**
  * Loader — verifies admin session; redirects to /admin/login on failure.
  */
 export async function loader({ request }) {
   const session = await authenticate(request);
-  return { user: session.user };
+  const locale = await getRequestLocale(request);
+  const messages = await loadMessages(locale);
+  return {
+    user: session.user,
+    locale,
+    availableLocales: ADMIN_AVAILABLE_LOCALES,
+    messages,
+  };
 }
 
 // ------------------------------------------------------------------
@@ -263,12 +280,65 @@ function MobileSidebar({ isOpen, onClose }) {
   );
 }
 
+const LOCALE_LABELS = { en: 'English', de: 'Deutsch', fr: 'Français' };
+
+/**
+ * Locale switcher — POSTs to /api/set-locale, persists via cookie, revalidates without nav.
+ */
+function LocaleMenu() {
+  const { locale, availableLocales } = useLoaderData();
+  const fetcher = useFetcher();
+  const location = useLocation();
+  const t = useT();
+
+  if (!availableLocales || availableLocales.length <= 1) return null;
+
+  const returnTo = location.pathname + location.search;
+
+  return (
+    <Menu>
+      <MenuButton
+        className="dark:text-dark-400 dark:hover:bg-dark-700/50 rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:text-gray-200"
+        aria-label={t('admin.topbar.switchLocale')}
+      >
+        <GlobeAltIcon className="h-5 w-5" aria-hidden="true" />
+      </MenuButton>
+      <MenuItems
+        transition
+        anchor="bottom end"
+        className="dark-glass dark:ring-dark-700/50 isolate z-30 w-max min-w-40 overflow-y-auto rounded-xl bg-white/75 p-1 shadow-lg ring-1 ring-zinc-950/10 outline outline-transparent backdrop-blur-xl transition [--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] focus:outline-hidden data-leave:duration-100 data-leave:ease-in data-closed:data-leave:opacity-0"
+      >
+        {availableLocales.map((l) => (
+          <MenuItem key={l}>
+            <fetcher.Form method="post" action="/api/set-locale">
+              <input type="hidden" name="returnTo" value={returnTo} />
+              <input type="hidden" name="locale" value={l} />
+              <button
+                type="submit"
+                className="grid w-full cursor-default grid-cols-[auto_1fr] items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm text-zinc-950 focus:outline-hidden data-focus:bg-blue-500 data-focus:text-white dark:text-white"
+                aria-current={l === locale ? 'true' : undefined}
+              >
+                <span className="text-xs font-semibold text-zinc-500 uppercase data-focus:text-white dark:text-zinc-400">
+                  {l}
+                </span>
+                <span>
+                  {LOCALE_LABELS[l] ?? l}
+                  {l === locale ? ' ✓' : ''}
+                </span>
+              </button>
+            </fetcher.Form>
+          </MenuItem>
+        ))}
+      </MenuItems>
+    </Menu>
+  );
+}
+
 /**
  * Top bar with hamburger menu, search, and user actions
  */
 function Topbar({ onMenuOpen }) {
   const { isDark, toggleTheme } = useTheme();
-  const t = useT();
 
   return (
     <header className="dark:border-dark-700/50 dark:bg-dark-900/80 sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-gray-200 bg-white/80 px-4 backdrop-blur-sm md:px-6">
@@ -296,15 +366,7 @@ function Topbar({ onMenuOpen }) {
 
       {/* Right-side actions */}
       <div className="flex items-center gap-2">
-        {/* Locale switcher (stub) */}
-        <button
-          type="button"
-          disabled
-          className="dark:text-dark-400 rounded-md p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-          aria-label={t('admin.topbar.switchLocale')}
-        >
-          <GlobeAltIcon className="h-5 w-5" aria-hidden="true" />
-        </button>
+        <LocaleMenu />
 
         {/* Dark mode toggle */}
         <button
@@ -341,21 +403,31 @@ export const handle = {
  */
 export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { messages } = useLoaderData();
+
+  function t(key, params) {
+    return translate(key, params, messages);
+  }
 
   return (
-    <div className="dark:bg-dark-950 flex h-full min-h-screen bg-gray-50">
-      {/* Sidebars */}
-      <DesktopSidebar />
-      <MobileSidebar isOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+    <I18nContext.Provider value={{ t }}>
+      <div className="dark:bg-dark-950 flex h-full min-h-screen bg-gray-50">
+        {/* Sidebars */}
+        <DesktopSidebar />
+        <MobileSidebar
+          isOpen={mobileOpen}
+          onClose={() => setMobileOpen(false)}
+        />
 
-      {/* Main content area */}
-      <div className="flex flex-1 flex-col md:ml-64">
-        <Topbar onMenuOpen={() => setMobileOpen(true)} />
+        {/* Main content area */}
+        <div className="flex flex-1 flex-col md:ml-64">
+          <Topbar onMenuOpen={() => setMobileOpen(true)} />
 
-        <main className="flex-1 overflow-auto p-4 md:p-6">
-          <Outlet />
-        </main>
+          <main className="flex-1 overflow-auto p-4 md:p-6">
+            <Outlet />
+          </main>
+        </div>
       </div>
-    </div>
+    </I18nContext.Provider>
   );
 }
