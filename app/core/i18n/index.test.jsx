@@ -3,8 +3,8 @@ import { renderHook } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { I18nContext } from './context';
-import { translate, useT } from './index';
+import { I18nContext } from '#/core/i18n/context';
+import { translate, useT } from '#/core/i18n/index';
 
 // ---------------------------------------------------------------------------
 // I18nContext

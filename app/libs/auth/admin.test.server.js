@@ -110,7 +110,7 @@ vi.mock('react-router', () => ({
 // Import modules under test (after all mocks are registered)
 // ---------------------------------------------------------------------------
 
-import { adminAuthMiddleware } from './admin.server';
+import { adminAuthMiddleware } from '#/libs/auth/admin.server';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -211,8 +211,8 @@ describe('adminAuthMiddleware', () => {
 
 describe('auth isolation', () => {
   it('adminAuth and customerAuth are separate betterAuth instances', async () => {
-    const { adminAuth } = await import('./admin.server');
-    const { customerAuth } = await import('./customer.server');
+    const { adminAuth } = await import('#/libs/auth/admin.server');
+    const { customerAuth } = await import('#/libs/auth/customer.server');
 
     expect(adminAuth).toBeDefined();
     expect(customerAuth).toBeDefined();
@@ -220,12 +220,12 @@ describe('auth isolation', () => {
   });
 
   it('admin instance uses /admin/auth base path', async () => {
-    const { adminAuth } = await import('./admin.server');
+    const { adminAuth } = await import('#/libs/auth/admin.server');
     expect(adminAuth._cfg?.basePath).toBe('/admin/auth');
   });
 
   it('customer instance uses /account/auth base path', async () => {
-    const { customerAuth } = await import('./customer.server');
+    const { customerAuth } = await import('#/libs/auth/customer.server');
     expect(customerAuth._cfg?.basePath).toBe('/account/auth');
   });
 });

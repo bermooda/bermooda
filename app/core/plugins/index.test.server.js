@@ -60,7 +60,7 @@ const {
   disable: _disable,
   _registry,
   _buildCtx,
-} = await import('./index.server');
+} = await import('#/core/plugins/index.server');
 
 // ---------------------------------------------------------------------------
 // Helpers

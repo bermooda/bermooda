@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('./client.server', () => ({
+vi.mock('#/core/storage/client.server', () => ({
   putObject: vi.fn(),
   getObjectUrl: vi.fn(),
   deleteObject: vi.fn(),
@@ -14,7 +14,7 @@ import {
   getObjectUrl,
   deleteObject,
   uploadMedia,
-} from './index.server';
+} from '#/core/storage/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -23,7 +23,7 @@ import {
   decrementInventory,
   getInventoryCount,
   incrementInventory,
-} from './index.server';
+} from '#/core/inventory/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

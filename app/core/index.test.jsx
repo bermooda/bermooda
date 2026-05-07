@@ -2,7 +2,14 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { Slot, dto, formatPrice, selectors, translate, useShop } from './index';
+import {
+  Slot,
+  dto,
+  formatPrice,
+  selectors,
+  translate,
+  useShop,
+} from '#/core/index';
 
 // ---------------------------------------------------------------------------
 // useShop
