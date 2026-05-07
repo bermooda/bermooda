@@ -1,4 +1,4 @@
-// app/core/payments/payments.test.server.js
+// app/core/payments/index.test.server.js
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

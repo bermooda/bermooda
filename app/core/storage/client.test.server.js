@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// We test client.server.js directly (storage.test.server.js mocks it away).
+// We test client.server.js directly (index.test.server.js mocks it away).
 // Mock fetch at the global level so no real network calls happen.
 
 const originalEnv = { ...process.env };

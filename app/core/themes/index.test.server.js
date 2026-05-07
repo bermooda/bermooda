@@ -1,4 +1,4 @@
-// app/core/themes/themes.test.server.js
+// app/core/themes/index.test.server.js
 // Server-environment tests for the theme loader (runs in Node, not happy-dom).
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';

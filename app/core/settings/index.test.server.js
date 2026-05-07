@@ -1,4 +1,4 @@
-// app/core/settings/settings.test.server.js
+// app/core/settings/index.test.server.js
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 

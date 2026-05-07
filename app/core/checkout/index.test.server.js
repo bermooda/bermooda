@@ -1,4 +1,4 @@
-// app/core/checkout/checkout.test.server.js
+// app/core/checkout/index.test.server.js
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 

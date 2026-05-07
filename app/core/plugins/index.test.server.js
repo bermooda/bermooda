@@ -1,4 +1,4 @@
-// app/core/plugins/plugins.test.server.js
+// app/core/plugins/index.test.server.js
 // Server-environment tests for the plugin loader (runs in Node, not happy-dom).
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

@@ -1,4 +1,4 @@
-// app/core/inventory/inventory.test.server.js
+// app/core/inventory/index.test.server.js
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
