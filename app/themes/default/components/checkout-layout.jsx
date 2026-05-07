@@ -2,8 +2,8 @@ import { CheckIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { Link, Form, useNavigation } from 'react-router';
 
-import { useT } from '#/core/i18n/index.js';
-import { formatPrice } from '#/core/index.js';
+import { useT } from '#/core/i18n/index';
+import { formatPrice } from '#/core/index';
 
 // ---------------------------------------------------------------------------
 // Constants

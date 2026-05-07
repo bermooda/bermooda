@@ -1,8 +1,8 @@
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation } from 'react-router';
 
-import { useT } from '#/core/i18n/index.js';
-import ProductGrid from './product-grid';
+import { useT } from '#/core/i18n/index';
+import ProductGrid from '#/themes/default/components/product-grid';
 
 const PAGE_SIZE = 24;
 

@@ -60,7 +60,7 @@ const {
   disable: _disable,
   _registry,
   _buildCtx,
-} = await import('./index.server.js');
+} = await import('#/core/plugins/index.server');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -136,7 +136,7 @@ describe('definePlugin', () => {
   it('accepts optional fields without throwing', () => {
     const manifest = validManifest({
       description: 'A test plugin',
-      adminRoutes: '/plugins/test/routes.js',
+      adminRoutes: '/plugins/test/routes',
     });
     expect(() => definePlugin(manifest)).not.toThrow();
   });

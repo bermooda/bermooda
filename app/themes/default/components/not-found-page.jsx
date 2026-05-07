@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 
-import { useT } from '#/core/i18n/index.js';
+import { useT } from '#/core/i18n/index';
 
 export default function NotFoundPage() {
   const t = useT();

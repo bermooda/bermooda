@@ -1,4 +1,4 @@
 // app/core/checkout/index.server.js
 
-export * from './totals.server.js';
-export * from './pipeline.server.js';
+export * from '#/core/checkout/totals.server';
+export * from '#/core/checkout/pipeline.server';

@@ -3,8 +3,8 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { Link, Form, useNavigation } from 'react-router';
 
-import { useT } from '#/core/i18n/index.js';
-import { formatPrice } from '#/core/index.js';
+import { useT } from '#/core/i18n/index';
+import { formatPrice } from '#/core/index';
 
 export default function CartPage({ cart, locale, currency }) {
   const t = useT();

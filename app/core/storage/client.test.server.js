@@ -39,7 +39,7 @@ describe('getObjectUrl', () => {
     // The module is loaded once, so we test with the initially loaded PUBLIC_URL.
 
     // Import the module (will be cached from prior load or fresh)
-    const { getObjectUrl } = await import('./client.server.js');
+    const { getObjectUrl } = await import('#/core/storage/client.server');
 
     // The result depends on when the module was first loaded.
     // Just verify it returns a string URL containing the key.
@@ -60,7 +60,7 @@ describe('putObject', () => {
     delete process.env.STORAGE_ACCESS_KEY;
     delete process.env.STORAGE_SECRET_KEY;
 
-    const { putObject } = await import('./client.server.js');
+    const { putObject } = await import('#/core/storage/client.server');
 
     await expect(
       putObject('key', Buffer.from('data'), 'image/jpeg')
@@ -77,7 +77,7 @@ describe('putObject', () => {
 
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: true });
 
-    const { putObject } = await import('./client.server.js');
+    const { putObject } = await import('#/core/storage/client.server');
 
     await putObject('media/test.jpg', Buffer.from('data'), 'image/jpeg');
 
@@ -103,7 +103,7 @@ describe('putObject', () => {
       statusText: 'Forbidden',
     });
 
-    const { putObject } = await import('./client.server.js');
+    const { putObject } = await import('#/core/storage/client.server');
 
     await expect(
       putObject('key', Buffer.from('data'), 'image/jpeg')
@@ -119,7 +119,7 @@ describe('deleteObject', () => {
     delete process.env.STORAGE_ACCESS_KEY;
     delete process.env.STORAGE_SECRET_KEY;
 
-    const { deleteObject } = await import('./client.server.js');
+    const { deleteObject } = await import('#/core/storage/client.server');
 
     await expect(deleteObject('media/old.jpg')).rejects.toThrow(
       /Storage is not configured/
@@ -135,7 +135,7 @@ describe('deleteObject', () => {
 
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: true });
 
-    const { deleteObject } = await import('./client.server.js');
+    const { deleteObject } = await import('#/core/storage/client.server');
 
     await deleteObject('media/old.jpg');
 
@@ -154,7 +154,7 @@ describe('deleteObject', () => {
 
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 });
 
-    const { deleteObject } = await import('./client.server.js');
+    const { deleteObject } = await import('#/core/storage/client.server');
 
     await expect(deleteObject('media/gone.jpg')).resolves.toBeUndefined();
   });
@@ -172,7 +172,7 @@ describe('deleteObject', () => {
       statusText: 'Server Error',
     });
 
-    const { deleteObject } = await import('./client.server.js');
+    const { deleteObject } = await import('#/core/storage/client.server');
 
     await expect(deleteObject('media/file.jpg')).rejects.toThrow(
       /Storage DELETE failed: 500 Server Error/

@@ -9,7 +9,7 @@ import {
   selectors,
   translate,
   useShop,
-} from './index.js';
+} from '#/core/index';
 
 // ---------------------------------------------------------------------------
 // useShop

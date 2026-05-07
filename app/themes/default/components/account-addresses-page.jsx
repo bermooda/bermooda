@@ -2,7 +2,7 @@ import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { Form } from 'react-router';
 
-import { useT } from '#/core/i18n/index.js';
+import { useT } from '#/core/i18n/index';
 
 const COUNTRIES = ['US', 'GB', 'DE', 'FR', 'AU', 'CA'];
 
