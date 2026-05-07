@@ -10,7 +10,7 @@ export async function loader({ request }) {
   const currency = await getRequestCurrency(request);
 
   const [{ products }, categories] = await Promise.all([
-    listProducts({ locale, currency, limit: 8, published: true }),
+    listProducts({ locale, currency, limit: 12, published: true }),
     listCategories({ locale }),
   ]);
 
