@@ -25,7 +25,9 @@ function resolveSlug(product) {
 }
 
 function fmt(price, currency, locale) {
-  return price != null ? formatPrice(price, currency ?? 'USD', locale ?? 'en') : '—';
+  return price != null
+    ? formatPrice(price, currency ?? 'USD', locale ?? 'en')
+    : '—';
 }
 
 function hashSeed(str) {
@@ -79,8 +81,13 @@ export default function HomePage({
       const product = products[i];
       return {
         title: entry.title ?? entry.name ?? `Collection ${i + 1}`,
-        href: isCategory ? `/categories/${entry.slug}` : `/products/${resolveSlug(entry)}`,
-        img: product?.media?.[0]?.media?.url ?? entry.media?.[0]?.media?.url ?? null,
+        href: isCategory
+          ? `/categories/${entry.slug}`
+          : `/products/${resolveSlug(entry)}`,
+        img:
+          product?.media?.[0]?.media?.url ??
+          entry.media?.[0]?.media?.url ??
+          null,
       };
     });
 
@@ -95,7 +102,9 @@ export default function HomePage({
           <SparklesIcon className="h-4 w-4 text-amber-200" />
           <span>
             Take <strong>15% off</strong> your first order with code{' '}
-            <span className="rounded bg-white/15 px-1.5 py-0.5 font-mono">WELCOME15</span>
+            <span className="rounded bg-white/15 px-1.5 py-0.5 font-mono">
+              WELCOME15
+            </span>
           </span>
         </div>
       </div>
@@ -184,7 +193,8 @@ export default function HomePage({
                   ))}
                 </div>
                 <span>
-                  <strong className="text-stone-800">4.9/5</strong> from 8,200+ reviews
+                  <strong className="text-stone-800">4.9/5</strong> from 8,200+
+                  reviews
                 </span>
               </div>
             </div>
@@ -232,8 +242,12 @@ export default function HomePage({
                   <HeartIcon className="h-4 w-4" style={{ color: GREEN }} />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold">12,000+ happy homes</div>
-                  <div className="text-[11px] text-stone-500">in 38 countries</div>
+                  <div className="text-xs font-semibold">
+                    12,000+ happy homes
+                  </div>
+                  <div className="text-[11px] text-stone-500">
+                    in 38 countries
+                  </div>
                 </div>
               </div>
             </div>
@@ -245,7 +259,10 @@ export default function HomePage({
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mb-10 flex items-end justify-between gap-6">
           <div>
-            <div className="text-[11px] font-semibold tracking-[0.22em] uppercase" style={{ color: GREEN }}>
+            <div
+              className="text-[11px] font-semibold tracking-[0.22em] uppercase"
+              style={{ color: GREEN }}
+            >
               Featured
             </div>
             <h2 className="mt-2 font-serif text-3xl tracking-tight md:text-5xl">
@@ -278,7 +295,9 @@ export default function HomePage({
                 ) : (
                   <div
                     className="h-full w-full"
-                    style={{ background: `linear-gradient(135deg, ${SAND}, ${CREAM})` }}
+                    style={{
+                      background: `linear-gradient(135deg, ${SAND}, ${CREAM})`,
+                    }}
                   />
                 )}
                 <div className="absolute inset-0 bg-linear-to-t from-black/55 via-black/0 to-black/0" />
@@ -306,7 +325,10 @@ export default function HomePage({
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <div className="text-[11px] font-semibold tracking-[0.22em] uppercase" style={{ color: GREEN }}>
+              <div
+                className="text-[11px] font-semibold tracking-[0.22em] uppercase"
+                style={{ color: GREEN }}
+              >
                 Just in
               </div>
               <h2 className="mt-2 font-serif text-3xl tracking-tight md:text-5xl">
@@ -363,7 +385,9 @@ export default function HomePage({
                       ) : (
                         <div
                           className="h-full w-full"
-                          style={{ background: `linear-gradient(135deg, ${SAND}, ${CREAM})` }}
+                          style={{
+                            background: `linear-gradient(135deg, ${SAND}, ${CREAM})`,
+                          }}
                         />
                       )}
                     </div>
@@ -378,7 +402,7 @@ export default function HomePage({
                     <button
                       type="button"
                       aria-label="Add to favorites"
-                      className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-stone-700 opacity-0 transition-opacity hover:text-rose-600 group-hover:opacity-100"
+                      className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-stone-700 opacity-0 transition-opacity group-hover:opacity-100 hover:text-rose-600"
                     >
                       <HeartIcon className="h-4 w-4" />
                     </button>
@@ -411,7 +435,10 @@ export default function HomePage({
       {favorites.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="mb-10 text-center">
-            <div className="text-[11px] font-semibold tracking-[0.22em] uppercase" style={{ color: GREEN }}>
+            <div
+              className="text-[11px] font-semibold tracking-[0.22em] uppercase"
+              style={{ color: GREEN }}
+            >
               ★ ★ ★ ★ ★
             </div>
             <h2 className="mt-2 font-serif text-3xl tracking-tight md:text-5xl">
@@ -510,7 +537,10 @@ export default function HomePage({
       </section>
 
       {/* Newsletter offer */}
-      <section className="px-4 py-16 sm:px-6 lg:px-8 lg:py-24" style={{ background: GREEN }}>
+      <section
+        className="px-4 py-16 sm:px-6 lg:px-8 lg:py-24"
+        style={{ background: GREEN }}
+      >
         <div className="mx-auto max-w-3xl text-center text-white">
           <div className="text-[11px] font-semibold tracking-[0.22em] text-amber-100 uppercase">
             ✶ Join the list
@@ -527,7 +557,7 @@ export default function HomePage({
               type="email"
               required
               placeholder="your@email.com"
-              className="flex-1 rounded-full bg-white/10 px-5 py-3 text-sm text-white placeholder:text-white/60 outline-none ring-1 ring-white/30 focus:ring-2 focus:ring-white"
+              className="flex-1 rounded-full bg-white/10 px-5 py-3 text-sm text-white ring-1 ring-white/30 outline-none placeholder:text-white/60 focus:ring-2 focus:ring-white"
             />
             <button
               type="submit"

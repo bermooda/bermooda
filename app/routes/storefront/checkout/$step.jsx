@@ -11,7 +11,7 @@ import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { listProviders } from '#/core/payments/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
-import CheckoutLayout from '#/themes/default/components/CheckoutLayout';
+import CheckoutLayout from '#/themes/default/components/checkout-layout';
 
 const VALID_STEPS = ['address', 'shipping', 'payment', 'review'];
 

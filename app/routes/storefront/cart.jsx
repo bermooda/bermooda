@@ -4,7 +4,7 @@ import { useLoaderData } from 'react-router';
 import { getCart, removeLine, updateQuantity } from '#/core/cart/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
-import CartPage from '#/themes/default/components/CartPage';
+import CartPage from '#/themes/default/components/cart-page';
 
 function getCartToken(request) {
   const cookie = request.headers.get('cookie') ?? '';

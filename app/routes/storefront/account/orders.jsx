@@ -5,7 +5,7 @@ import { getCustomerSession } from '#/libs/auth/customer.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { listOrders } from '#/core/customers/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
-import AccountOrdersPage from '#/themes/default/components/AccountOrdersPage';
+import AccountOrdersPage from '#/themes/default/components/account-orders-page';
 
 export async function loader({ request }) {
   const locale = await getRequestLocale(request);
