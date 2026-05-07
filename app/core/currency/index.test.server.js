@@ -1,4 +1,4 @@
-// app/core/currency/currency.test.server.js
+// app/core/currency/index.test.server.js
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
