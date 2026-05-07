@@ -3,5 +3,5 @@ export default {
   name: 'Sample Analytics',
   version: '1.0.0',
   description: 'Captures order.created events and surfaces them in the admin.',
-  adminRoutes: './admin/routes.js',
+  adminRoutes: '#/plugins/sample-analytics/admin/routes',
 };

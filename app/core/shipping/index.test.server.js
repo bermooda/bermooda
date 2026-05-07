@@ -38,7 +38,7 @@ import {
   getQuotes,
   listProviders,
   registerProvider,
-} from './index.server.js';
+} from '#/core/shipping/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

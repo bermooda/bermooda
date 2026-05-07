@@ -45,7 +45,7 @@ vi.mock('#/utils/logger.server', () => ({
 // Import module under test AFTER mocks are registered
 // ---------------------------------------------------------------------------
 
-import { action } from './$provider.jsx';
+import { action } from '#/routes/webhooks/$provider';
 
 // ---------------------------------------------------------------------------
 // Helpers

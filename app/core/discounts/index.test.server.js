@@ -24,7 +24,7 @@ import {
   updateDiscount,
   deleteDiscount,
   listDiscounts,
-} from './index.server.js';
+} from '#/core/discounts/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

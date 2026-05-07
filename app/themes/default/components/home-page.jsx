@@ -9,7 +9,7 @@ import {
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { Link } from 'react-router';
 
-import { formatPrice } from '#/core/index.js';
+import { formatPrice } from '#/core/index';
 
 function resolvePrice(product) {
   if (product.displayPrice != null) return product.displayPrice;

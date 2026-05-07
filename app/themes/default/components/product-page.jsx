@@ -2,8 +2,8 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { useFetcher } from 'react-router';
 
-import { useT } from '#/core/i18n/index.js';
-import { formatPrice, Slot } from '#/core/index.js';
+import { useT } from '#/core/i18n/index';
+import { formatPrice, Slot } from '#/core/index';
 
 function getVariantPrice(variant, currency) {
   if (!variant?.prices?.length) return null;

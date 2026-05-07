@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '#': path.resolve(__dirname, './app'),
+      '#prisma/client': path.resolve(__dirname, './prisma/generated/client'),
     },
   },
 });

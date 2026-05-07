@@ -3,7 +3,7 @@
 
 import { useContext } from 'react';
 
-import { I18nContext } from './context';
+import { I18nContext } from '#/core/i18n/context';
 
 /**
  * React hook that returns the `t` translation function from the nearest

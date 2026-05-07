@@ -2,7 +2,7 @@ import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
 import { defineHooks, definePlugin } from '#/core/plugins/index.server';
-import manifest from './manifest.js';
+import manifest from '#/plugins/sample-analytics/manifest';
 
 const PLUGIN_ID = manifest.id;
 const EVENTS_KEY = 'recentEvents';
