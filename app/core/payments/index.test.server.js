@@ -56,8 +56,8 @@ import {
   listProviders,
   registerProvider,
   verifyWebhook,
-} from './index.server.js';
-import { stripeProvider } from './stripe.server.js';
+} from './index.server';
+import { stripeProvider } from './stripe.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

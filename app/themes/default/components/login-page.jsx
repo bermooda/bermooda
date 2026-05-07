@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router';
 
 import { customerAuthClient } from '#/libs/auth/customer-client';
 
-import { useT } from '#/core/i18n/index.js';
+import { useT } from '#/core/i18n/index';
 
 export default function LoginPage({ returnTo, error: propError }) {
   const t = useT();

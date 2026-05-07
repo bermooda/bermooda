@@ -4,9 +4,9 @@
 // Re-exports the low-level primitives and adds uploadMedia() for
 // handling Web API File objects from browser form uploads.
 
-import logger from '#/utils/logger.server.js';
+import logger from '#/utils/logger.server';
 
-import * as client from './client.server.js';
+import * as client from './client.server';
 
 export const putObject = client.putObject;
 export const getObjectUrl = client.getObjectUrl;

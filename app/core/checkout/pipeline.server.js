@@ -4,7 +4,7 @@
 import prisma from '#/libs/prisma.server';
 
 import { lockCart, unlockCart } from '#/core/cart/index.server';
-import { computeTotals } from './totals.server.js';
+import { computeTotals } from './totals.server';
 
 // ---------------------------------------------------------------------------
 // Step order

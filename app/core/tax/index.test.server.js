@@ -36,7 +36,7 @@ import {
   listProviders,
   registerProvider,
   simplePercentProvider,
-} from './index.server.js';
+} from './index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

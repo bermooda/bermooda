@@ -47,8 +47,8 @@ import {
   createCheckoutSession,
   advanceStep,
   abandonCheckoutSession,
-} from './pipeline.server.js';
-import { computeTotals } from './totals.server.js';
+} from './pipeline.server';
+import { computeTotals } from './totals.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

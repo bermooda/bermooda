@@ -81,7 +81,7 @@ import {
   markDelivered,
   createRefund,
   updateRefundStatus,
-} from './index.server.js';
+} from './index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

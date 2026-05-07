@@ -47,7 +47,7 @@ const {
   getSlotBlocks,
   SLOT_NAMES,
   __resetRegistry,
-} = await import('./index.server.js');
+} = await import('./index.server');
 
 import prisma from '#/libs/prisma.server';
 

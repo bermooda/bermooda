@@ -3,7 +3,7 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Fragment, useState } from 'react';
 import { Link } from 'react-router';
 
-import config from '#/config.js';
+import config from '#/config';
 import Logo from '#/components/ui/logo';
 import ThemeToggle from '#/components/ui/theme-toggle';
 

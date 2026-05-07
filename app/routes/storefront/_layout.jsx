@@ -9,7 +9,7 @@ import { Outlet, useLoaderData } from 'react-router';
 
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { I18nContext } from '#/core/i18n/context';
-import { translate } from '#/core/i18n/index.js';
+import { translate } from '#/core/i18n/index';
 import { getRequestLocale, loadMessages } from '#/core/i18n/index.server';
 import { get as settingsGet } from '#/core/settings/index.server';
 

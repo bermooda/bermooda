@@ -1,8 +1,8 @@
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router';
 
-import { useT } from '#/core/i18n/index.js';
-import { formatPrice } from '#/core/index.js';
+import { useT } from '#/core/i18n/index';
+import { formatPrice } from '#/core/index';
 
 export default function CheckoutThankYouPage({ order, locale, currency }) {
   const t = useT();

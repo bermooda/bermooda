@@ -1,7 +1,7 @@
 import { ChevronLeftIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router';
 
-import { formatPrice } from '#/core/index.js';
+import { formatPrice } from '#/core/index';
 
 function StatusBadge({ status }) {
   const colours = {

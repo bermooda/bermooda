@@ -1,7 +1,7 @@
 import { ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router';
 
-import { useT } from '#/core/i18n/index.js';
+import { useT } from '#/core/i18n/index';
 
 export default function Layout({
   children,
