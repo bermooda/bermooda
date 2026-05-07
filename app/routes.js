@@ -97,7 +97,7 @@ export default [
   // Admin panel
   ...prefix('admin', [
     // Public admin routes (no auth required)
-    layout('routes/admin/_public.jsx', [
+    layout('routes/admin/public/_layout.jsx', [
       route('login', 'routes/admin/login.jsx'),
       route('forgot-password', 'routes/admin/forgot-password.jsx'),
       route('reset-password', 'routes/admin/reset-password.jsx'),

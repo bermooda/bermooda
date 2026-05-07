@@ -1,4 +1,4 @@
-import ProductCard from './ProductCard.jsx';
+import ProductCard from './product-card';
 
 export default function ProductGrid({ products, locale, currency }) {
   if (!products?.length) {

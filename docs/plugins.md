@@ -439,10 +439,10 @@ Plugins can inject UI components into named slots in the storefront theme. Each 
 
 ### Contributing a Block
 
-Create a `.jsx` file in your plugin's `blocks/` directory. The filename (without the `.jsx` extension) must exactly match the slot name, with dots preserved:
+Create a `.jsx` file under your plugin's `blocks/` directory using lowercase, hyphenated paths. Mirror each dotted segment of the slot name as its own directory segment, then use a hyphenated leaf file (for example slot `product.afterDescription` → `blocks/product/after-description.jsx`):
 
 ```
-app/plugins/my-plugin/blocks/product.afterDescription.jsx
+app/plugins/my-plugin/blocks/product/after-description.jsx
 ```
 
 The file must have a default export that is a React component. The component receives slot-specific props (for example `product` on product page slots):
@@ -571,7 +571,7 @@ The `loader` fetches data server-side; `RecentEventsPage` renders it client-side
 
 ### Step 4 — The storefront block
 
-`app/plugins/sample-analytics/blocks/product.afterDescription.jsx` contributes a small indicator block to every product page:
+`app/plugins/sample-analytics/blocks/product/after-description.jsx` contributes a small indicator block to every product page:
 
 ```jsx
 export default function ProductAfterDescriptionBlock({ product }) {

@@ -10,7 +10,7 @@ import {
   setDefaultAddress,
 } from '#/core/customers/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
-import AccountAddressesPage from '#/themes/default/components/AccountAddressesPage';
+import AccountAddressesPage from '#/themes/default/components/account-addresses-page';
 
 export async function loader({ request }) {
   const locale = await getRequestLocale(request);

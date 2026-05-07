@@ -3,7 +3,7 @@ import { useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
 
-import RegisterPage from '#/themes/default/components/RegisterPage';
+import RegisterPage from '#/themes/default/components/register-page';
 
 export async function loader({ request }) {
   const session = await getCustomerSession(request);
