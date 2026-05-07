@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import cache, { getCachedResult } from './cache.server';
+import cache, { getCachedResult } from '#/utils/cache.server';
 
 beforeEach(() => {
   cache.clear();

@@ -19,6 +19,7 @@ export default defineConfig({
           setupFiles: ['./vitest-setup.js'],
           alias: {
             '#': path.resolve('./app'),
+            '#prisma/client': path.resolve('./prisma/generated/client'),
           },
         },
       },
@@ -35,6 +36,7 @@ export default defineConfig({
           setupFiles: ['./vitest-setup.js'],
           alias: {
             '#': path.resolve('./app'),
+            '#prisma/client': path.resolve('./prisma/generated/client'),
           },
         },
       },

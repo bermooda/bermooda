@@ -40,15 +40,15 @@ vi.mock('#/core/tax/index.server', () => ({
 import prisma from '#/libs/prisma.server';
 
 import { lockCart, unlockCart } from '#/core/cart/index.server';
-import { validateDiscount } from '#/core/discounts/index.server';
-import { getAllQuotes } from '#/core/shipping/index.server';
-import { computeActiveTax } from '#/core/tax/index.server';
 import {
   createCheckoutSession,
   advanceStep,
   abandonCheckoutSession,
-} from './pipeline.server';
-import { computeTotals } from './totals.server';
+} from '#/core/checkout/pipeline.server';
+import { computeTotals } from '#/core/checkout/totals.server';
+import { validateDiscount } from '#/core/discounts/index.server';
+import { getAllQuotes } from '#/core/shipping/index.server';
+import { computeActiveTax } from '#/core/tax/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

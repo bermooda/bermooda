@@ -85,7 +85,7 @@ export async function lookupVariantPriceForBrowsing(variantId, currency) {
 // formatPrice — re-exported from client-safe format.js for backward compat
 // ---------------------------------------------------------------------------
 
-export { formatPrice } from './format';
+export { formatPrice } from '#/core/currency/format';
 
 // ---------------------------------------------------------------------------
 // setCurrencyCookie

@@ -6,7 +6,7 @@
 
 import logger from '#/utils/logger.server';
 
-import * as client from './client.server';
+import * as client from '#/core/storage/client.server';
 
 export const putObject = client.putObject;
 export const getObjectUrl = client.getObjectUrl;

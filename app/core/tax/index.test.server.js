@@ -36,7 +36,7 @@ import {
   listProviders,
   registerProvider,
   simplePercentProvider,
-} from './index.server';
+} from '#/core/tax/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -8,7 +8,7 @@ vi.mock('#/utils/logger.server', () => ({
 }));
 
 // Import after mock is registered.
-const { emit, on, off, _handlers } = await import('./index.server');
+const { emit, on, off, _handlers } = await import('#/core/events/index.server');
 
 describe('event bus', () => {
   beforeEach(() => {
