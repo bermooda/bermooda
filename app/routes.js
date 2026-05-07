@@ -16,43 +16,43 @@ export default [
     index('routes/storefront/index.jsx'),
 
     // Product catalog
-    route('products/:slug', 'routes/storefront/products.$slug.jsx'),
-    route('categories/:slug', 'routes/storefront/categories.$slug.jsx'),
+    route('products/:slug', 'routes/storefront/products/$slug.jsx'),
+    route('categories/:slug', 'routes/storefront/categories/$slug.jsx'),
 
     // Cart
     route('cart', 'routes/storefront/cart.jsx'),
 
     // Checkout — 4-step flow (:step = address | shipping | payment | review)
-    route('checkout/:step', 'routes/storefront/checkout.$step.jsx'),
+    route('checkout/:step', 'routes/storefront/checkout/$step.jsx'),
     route(
       'thank-you/:orderNumber',
-      'routes/storefront/thank-you.$orderNumber.jsx'
+      'routes/storefront/thank-you/$orderNumber.jsx'
     ),
 
     // Customer account — public auth pages (no authentication required)
-    route('account/login', 'routes/storefront/account.login.jsx'),
-    route('account/register', 'routes/storefront/account.register.jsx'),
+    route('account/login', 'routes/storefront/account/login.jsx'),
+    route('account/register', 'routes/storefront/account/register.jsx'),
     route(
       'account/forgot-password',
-      'routes/storefront/account.forgot-password.jsx'
+      'routes/storefront/account/forgot-password.jsx'
     ),
     route(
       'account/reset-password',
-      'routes/storefront/account.reset-password.jsx'
+      'routes/storefront/account/reset-password.jsx'
     ),
-    route('account/logout', 'routes/storefront/account.logout.jsx'),
+    route('account/logout', 'routes/storefront/account/logout.jsx'),
 
     // Customer account — protected area (auth verified in inner layout loader)
-    layout('routes/storefront/account._layout.jsx', [
-      route('account', 'routes/storefront/account._index.jsx'),
-      route('account/orders', 'routes/storefront/account.orders.jsx'),
-      route('account/orders/:id', 'routes/storefront/account.orders.$id.jsx'),
-      route('account/addresses', 'routes/storefront/account.addresses.jsx'),
-      route('account/profile', 'routes/storefront/account.profile.jsx'),
+    layout('routes/storefront/account/_layout.jsx', [
+      route('account', 'routes/storefront/account/index.jsx'),
+      route('account/orders', 'routes/storefront/account/orders.jsx'),
+      route('account/orders/:id', 'routes/storefront/account/orders/$id.jsx'),
+      route('account/addresses', 'routes/storefront/account/addresses.jsx'),
+      route('account/profile', 'routes/storefront/account/profile.jsx'),
     ]),
 
     // Plugin storefront dispatcher — static route, descriptor resolved at request time
-    route('apps/:pluginId/*', 'routes/storefront/apps.$pluginId.jsx'),
+    route('apps/:pluginId/*', 'routes/storefront/apps/$pluginId.jsx'),
   ]),
 
   // ---------------------------------------------------------------------------
@@ -85,8 +85,8 @@ export default [
   route('webhooks/:provider', 'routes/webhooks/$provider.jsx'),
 
   // Locale + currency cookie API endpoints (POST-redirect pattern)
-  route('api/set-locale', 'routes/storefront/api.set-locale.jsx'),
-  route('api/set-currency', 'routes/storefront/api.set-currency.jsx'),
+  route('api/set-locale', 'routes/storefront/api/set-locale.jsx'),
+  route('api/set-currency', 'routes/storefront/api/set-currency.jsx'),
 
   // Healthcheck for deployments
   route('health', 'routes/health.jsx'),

@@ -29,6 +29,6 @@ export function meta() {
 
 export default function AccountOrdersRoute() {
   const data = useLoaderData();
-  const layoutData = useRouteLoaderData('routes/storefront/account._layout');
+  const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
   return <AccountOrdersPage {...data} customer={layoutData?.customer} />;
 }
