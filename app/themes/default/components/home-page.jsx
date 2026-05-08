@@ -1,5 +1,4 @@
 import {
-  MagnifyingGlassIcon,
   TruckIcon,
   GiftIcon,
   HeartIcon,
@@ -10,6 +9,11 @@ import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { Link } from 'react-router';
 
 import { formatPrice } from '#/core/index';
+import StorefrontShell, {
+  STOREFRONT_CREAM as CREAM,
+  STOREFRONT_GREEN as GREEN,
+  STOREFRONT_SAND as SAND,
+} from '#/themes/default/components/storefront-chrome';
 
 function resolvePrice(product) {
   if (product.displayPrice != null) return product.displayPrice;
@@ -44,10 +48,6 @@ function fakeRating(id) {
 function fakeReviews(id) {
   return (hashSeed(id) % 480) + 20;
 }
-
-const GREEN = '#2f4a3a';
-const CREAM = '#f7f1e6';
-const SAND = '#e8dcc4';
 
 function StarRow({ rating, count }) {
   const full = Math.floor(rating);
@@ -95,45 +95,7 @@ export default function HomePage({
   const favorites = products.slice(2, 6);
 
   return (
-    <div className="bg-[#fbf7ef] font-sans text-stone-800">
-      {/* Promo bar */}
-      <div className="border-b border-stone-200" style={{ background: GREEN }}>
-        <div className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-4 py-2.5 text-xs font-medium tracking-wide text-white sm:px-6 lg:px-8">
-          <SparklesIcon className="h-4 w-4 text-amber-200" />
-          <span>
-            Take <strong>15% off</strong> your first order with code{' '}
-            <span className="rounded bg-white/15 px-1.5 py-0.5 font-mono">
-              WELCOME15
-            </span>
-          </span>
-        </div>
-      </div>
-
-      {/* Search-forward sub-header */}
-      <div className="border-b border-stone-200 bg-[#fbf7ef]">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
-          <div className="flex flex-1 items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-2 focus-within:border-stone-700 focus-within:ring-2 focus-within:ring-stone-200 sm:max-w-md">
-            <MagnifyingGlassIcon className="h-4 w-4 text-stone-400" />
-            <input
-              type="search"
-              placeholder="Search the shop"
-              className="flex-1 bg-transparent text-sm outline-none placeholder:text-stone-400"
-            />
-          </div>
-          <div className="flex items-center gap-5 text-xs tracking-wide text-stone-600 uppercase">
-            <Link to="/" className="hover:text-stone-900">
-              Gift Guide
-            </Link>
-            <Link to="/" className="hover:text-stone-900">
-              Trade Program
-            </Link>
-            <Link to="/" className="hover:text-stone-900">
-              Stores
-            </Link>
-          </div>
-        </div>
-      </div>
-
+    <StorefrontShell>
       {/* Hero */}
       <section
         className="relative overflow-hidden border-b border-stone-200"
@@ -571,6 +533,6 @@ export default function HomePage({
           </p>
         </div>
       </section>
-    </div>
+    </StorefrontShell>
   );
 }

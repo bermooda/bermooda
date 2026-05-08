@@ -20,7 +20,7 @@ export default function CurrencySwitcher({
         name="currency"
         value={currentCurrency}
         onChange={(e) => fetcher.submit(e.currentTarget.form)}
-        className="cursor-pointer border-none bg-transparent text-sm font-medium text-zinc-700 hover:text-zinc-900 focus:outline-none dark:text-zinc-300 dark:hover:text-zinc-100"
+        className="cursor-pointer border-none bg-transparent text-sm font-medium text-stone-600 hover:text-stone-900 focus:outline-none"
         aria-label="Currency"
       >
         {availableCurrencies.map((c) => (

@@ -5,7 +5,7 @@ import Logo from '#/components/ui/logo';
 /**
  * Auth Layout Component
  * Centered form wrapper with logo, heading, and subtitle
- * Used by login, signup, forgot-password, reset-password, and verify-2fa pages
+ * Used by admin sign-in and password-reset flows
  *
  * @param {Object} props Component props
  * @param {string} props.title Main heading text

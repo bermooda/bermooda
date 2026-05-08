@@ -8,14 +8,10 @@ const config = {
       ? 'http://localhost:3000'
       : 'https://cursorstack.fly.dev',
   auth: {
-    cookiePrefix: 'cursorstack', // used by index.server.js (legacy shim)
     adminCookiePrefix: 'bermooda_admin_',
     customerCookiePrefix: 'bermooda_customer_',
-    betterAuthBasePath: '/auth',
     adminBasePath: '/admin/auth',
     customerBasePath: '/account/auth',
-    // Redirect users after successful login (i.e. /dashboard, /overview)
-    callbackUrl: '/dashboard',
     adminCallbackUrl: '/admin/dashboard',
     customerCallbackUrl: '/account',
   },

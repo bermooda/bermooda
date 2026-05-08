@@ -2,6 +2,8 @@ import { Link } from 'react-router';
 
 import config from '#/config';
 
+const accountHome = config.auth.customerCallbackUrl;
+
 export function meta() {
   return [
     { title: '404 - Page Not Found' },
@@ -37,11 +39,11 @@ export default function NotFoundRoute() {
             Go back home
           </Link>
           <Link
-            to={config.auth.callbackUrl}
+            to={accountHome}
             prefetch="intent"
             className="text-sm font-semibold text-gray-900"
           >
-            Go to Dashboard <span aria-hidden="true">&rarr;</span>
+            My account <span aria-hidden="true">&rarr;</span>
           </Link>
         </div>
       </div>

@@ -1,6 +1,10 @@
 import { Link } from 'react-router';
 
 import { formatPrice } from '#/core/index';
+import {
+  STOREFRONT_CREAM as CREAM,
+  STOREFRONT_SAND as SAND,
+} from '#/themes/default/components/storefront-chrome';
 
 function resolvePrice(product) {
   if (product.displayPrice != null) return product.displayPrice;
@@ -23,21 +27,26 @@ export default function ProductCard({ product, locale, currency }) {
   return (
     <Link
       to={`/products/${slug}`}
-      className="group flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white transition-colors hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-600"
+      className="group flex flex-col overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-stone-200/80 transition-shadow hover:shadow-lg"
     >
       {/* Image */}
-      <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800">
+      <div className="aspect-square overflow-hidden bg-stone-100">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={product.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-gray-300 dark:text-gray-600">
+          <div
+            className="flex h-full w-full items-center justify-center text-stone-300"
+            style={{
+              background: `linear-gradient(135deg, ${SAND}, ${CREAM})`,
+            }}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-12 w-12"
+              className="h-12 w-12 opacity-40"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -54,11 +63,14 @@ export default function ProductCard({ product, locale, currency }) {
       </div>
 
       {/* Info */}
-      <div className="flex flex-1 flex-col gap-1 p-4">
-        <h3 className="line-clamp-2 text-sm font-medium text-gray-900 dark:text-white">
+      <div className="flex flex-1 flex-col gap-1 px-4 py-4">
+        <div className="text-[10px] font-semibold tracking-[0.18em] text-stone-500 uppercase">
+          Bermooda Studio
+        </div>
+        <h3 className="line-clamp-2 font-serif text-base leading-snug text-stone-900">
           {product.title}
         </h3>
-        <p className="mt-auto pt-2 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-auto pt-2 text-sm font-semibold text-stone-800">
           {priceCents != null
             ? formatPrice(priceCents, currency ?? 'USD', locale ?? 'en')
             : '—'}

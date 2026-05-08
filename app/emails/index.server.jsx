@@ -46,7 +46,7 @@ export async function sendWelcomeEmail({ email, name }) {
       react: (
         <WelcomeEmail
           name={name}
-          getStartedUrl={`${config.baseUrl}/dashboard`}
+          getStartedUrl={`${config.baseUrl}${config.auth.customerCallbackUrl}`}
         />
       ),
     });
