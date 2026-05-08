@@ -4,6 +4,9 @@ import { Link, Form, useNavigation } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
 import { formatPrice } from '#/core/index';
+import StorefrontShell, {
+  STOREFRONT_GREEN as GREEN,
+} from '#/themes/default/components/storefront-chrome';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -41,7 +44,7 @@ function StepIndicator({ currentStep, t }) {
   const currentIndex = STEPS.indexOf(currentStep);
 
   return (
-    <nav aria-label="Checkout steps" className="mb-8">
+    <nav aria-label="Checkout steps" className="mb-10">
       <ol className="flex items-center">
         {STEPS.map((step, index) => {
           const isCompleted = index < currentIndex;
@@ -52,30 +55,34 @@ function StepIndicator({ currentStep, t }) {
               <div className="flex items-center gap-2">
                 <div
                   className={clsx(
-                    'flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium transition-colors',
-                    isCompleted &&
-                      'border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900',
+                    'flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors',
+                    isCompleted && 'border-transparent text-white',
                     isCurrent &&
-                      'border-gray-900 bg-white text-gray-900 dark:border-white dark:bg-gray-950 dark:text-white',
+                      'border-stone-900 bg-white text-stone-900 shadow-sm',
                     !isCompleted &&
                       !isCurrent &&
-                      'border-gray-300 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-950 dark:text-gray-500'
+                      'border-stone-200 bg-white text-stone-400'
                   )}
+                  style={
+                    isCompleted
+                      ? { background: GREEN, borderColor: GREEN }
+                      : undefined
+                  }
                 >
                   {isCompleted ? (
-                    <CheckIcon className="h-4 w-4" />
+                    <CheckIcon className="h-4 w-4 text-white" />
                   ) : (
                     <span>{index + 1}</span>
                   )}
                 </div>
                 <span
                   className={clsx(
-                    'hidden sm:block text-sm font-medium',
+                    'hidden text-sm font-medium sm:block',
                     isCurrent
-                      ? 'text-gray-900 dark:text-white'
+                      ? 'text-stone-900'
                       : isCompleted
-                        ? 'text-gray-700 dark:text-gray-300'
-                        : 'text-gray-400 dark:text-gray-500'
+                        ? 'text-stone-700'
+                        : 'text-stone-400'
                   )}
                 >
                   {stepLabels[index]}
@@ -85,10 +92,11 @@ function StepIndicator({ currentStep, t }) {
                 <div
                   className={clsx(
                     'mx-3 h-px flex-1',
-                    index < currentIndex
-                      ? 'bg-gray-900 dark:bg-white'
-                      : 'bg-gray-200 dark:bg-gray-700'
+                    index < currentIndex ? 'bg-stone-800' : 'bg-stone-200'
                   )}
+                  style={
+                    index < currentIndex ? { background: GREEN } : undefined
+                  }
                 />
               )}
             </li>
@@ -111,31 +119,29 @@ function OrderSummary({ cart, currency, locale, t }) {
   );
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-900">
-      <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
+    <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-md ring-1 ring-stone-200/60">
+      <h2 className="mb-4 font-serif text-lg font-semibold text-stone-900">
         {t('checkout.orderSummary')}
       </h2>
 
       {lines.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {t('checkout.emptyCart')}
-        </p>
+        <p className="text-sm text-stone-500">{t('checkout.emptyCart')}</p>
       ) : (
-        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+        <ul className="divide-y divide-stone-200">
           {lines.map((line) => (
             <li
               key={line.id}
               className="flex items-center justify-between gap-3 py-3"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                <p className="truncate text-sm font-medium text-stone-900">
                   {line.titleSnapshot}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-stone-500">
                   {t('checkout.qty')}: {line.quantity}
                 </p>
               </div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-semibold text-stone-900">
                 {formatPrice(
                   line.priceCentsSnapshot * line.quantity,
                   currency,
@@ -147,12 +153,12 @@ function OrderSummary({ cart, currency, locale, t }) {
         </ul>
       )}
 
-      <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+      <div className="mt-4 border-t border-stone-200 pt-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
+          <span className="text-sm text-stone-600">
             {t('checkout.subtotal')}
           </span>
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+          <span className="text-sm font-semibold text-stone-900">
             {formatPrice(subtotalCents, currency, locale)}
           </span>
         </div>
@@ -169,7 +175,7 @@ function FieldLabel({ htmlFor, children }) {
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      className="mb-1 block text-sm font-semibold text-stone-700"
     >
       {children}
     </label>
@@ -194,7 +200,7 @@ function TextInput({
       placeholder={placeholder}
       required={required}
       autoComplete={autoComplete}
-      className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm focus:border-gray-900 focus:ring-1 focus:ring-gray-900 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500 dark:focus:border-white dark:focus:ring-white"
+      className="block w-full rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-900 placeholder-stone-400 shadow-sm focus:border-stone-700 focus:ring-2 focus:ring-stone-200 focus:outline-none"
     />
   );
 }
@@ -204,7 +210,11 @@ function SubmitButton({ children, disabled }) {
     <button
       type="submit"
       disabled={disabled}
-      className="w-full rounded-md bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-gray-700 focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 dark:focus:ring-white"
+      className="w-full rounded-full px-6 py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+      style={{
+        background: GREEN,
+        boxShadow: '0 12px 28px -12px rgba(47,74,58,.45)',
+      }}
     >
       {children}
     </button>
@@ -322,7 +332,7 @@ function AddressStep({ session, t, isSubmitting }) {
             defaultValue={addr.country ?? 'US'}
             required
             autoComplete="country"
-            className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:ring-1 focus:ring-gray-900 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
+            className="block w-full rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-900 shadow-sm focus:border-stone-700 focus:ring-2 focus:ring-stone-200 focus:outline-none"
           >
             {COUNTRIES.map((c) => (
               <option key={c.code} value={c.code}>
@@ -387,37 +397,35 @@ function ShippingStep({
     <div className="space-y-6">
       {/* Shipping address recap */}
       {addr.firstName && (
-        <div className="rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-          <p className="mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+        <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm ring-1 ring-stone-200/50">
+          <p className="mb-1 text-xs font-semibold tracking-wide text-stone-500 uppercase">
             {t('checkout.shippingTo')}
           </p>
-          <p className="text-sm text-gray-900 dark:text-white">
+          <p className="text-sm text-stone-900">
             {addr.firstName} {addr.lastName}
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-stone-600">
             {addr.line1}
             {addr.line2 ? `, ${addr.line2}` : ''}
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-stone-600">
             {addr.city}
             {addr.state ? `, ${addr.state}` : ''} {addr.postalCode}
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {addr.country}
-          </p>
+          <p className="text-sm text-stone-600">{addr.country}</p>
         </div>
       )}
 
       <Form method="post" className="space-y-4">
         <fieldset>
-          <legend className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+          <legend className="mb-3 text-sm font-semibold text-stone-900">
             {t('checkout.shippingMethod')}
           </legend>
           <div className="space-y-2">
             {options.map((option) => (
               <label
                 key={option.id}
-                className="flex cursor-pointer items-center justify-between rounded-md border border-gray-200 p-4 transition-colors hover:border-gray-400 has-[:checked]:border-gray-900 has-[:checked]:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-500 dark:has-[:checked]:border-white dark:has-[:checked]:bg-gray-800"
+                className="flex cursor-pointer items-center justify-between rounded-xl border border-stone-200 bg-white p-4 shadow-sm transition-colors hover:border-stone-400 has-[:checked]:border-stone-900 has-[:checked]:bg-stone-50"
               >
                 <div className="flex items-center gap-3">
                   <input
@@ -429,13 +437,13 @@ function ShippingStep({
                       (!session?.shippingOptionId &&
                         option.id === options[0]?.id)
                     }
-                    className="h-4 w-4 border-gray-300 text-gray-900 focus:ring-gray-900 dark:border-gray-600 dark:text-white dark:focus:ring-white"
+                    className="h-4 w-4 border-stone-300 text-stone-900 focus:ring-stone-500"
                   />
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  <span className="text-sm font-medium text-stone-900">
                     {option.name}
                   </span>
                 </div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-sm text-stone-600">
                   {option.priceCents === 0
                     ? t('checkout.free')
                     : formatPrice(option.priceCents, currency, locale)}
@@ -483,18 +491,18 @@ function PaymentStep({
 
   return (
     <Form method="post" className="space-y-6">
-      <div className="rounded-md border border-gray-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
+      <div className="rounded-xl border border-stone-200 bg-blue-50 p-4">
         <p className="text-sm text-blue-800 dark:text-blue-200">
           {t('checkout.redirectNotice')}
         </p>
       </div>
 
-      <div className="rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+      <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm ring-1 ring-stone-200/50">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-semibold text-stone-700">
             {t('checkout.orderTotal')}
           </span>
-          <span className="text-base font-bold text-gray-900 dark:text-white">
+          <span className="text-base font-bold text-stone-900">
             {formatPrice(subtotalCents, currency, locale)}
           </span>
         </div>
@@ -549,36 +557,32 @@ function ReviewStep({
   return (
     <div className="space-y-6">
       {/* Address recap */}
-      <div className="rounded-md border border-gray-200 p-4 dark:border-gray-700">
-        <h3 className="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+      <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm ring-1 ring-stone-200/40">
+        <h3 className="mb-2 text-xs font-semibold tracking-wide text-stone-500 uppercase">
           {t('checkout.steps.address')}
         </h3>
-        <p className="text-sm text-gray-900 dark:text-white">
+        <p className="text-sm text-stone-900">
           {addr.firstName} {addr.lastName}
         </p>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-stone-600">
           {addr.line1}
           {addr.line2 ? `, ${addr.line2}` : ''}
         </p>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-stone-600">
           {addr.city}
           {addr.state ? `, ${addr.state}` : ''} {addr.postalCode}
         </p>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          {addr.country}
-        </p>
+        <p className="text-sm text-stone-600">{addr.country}</p>
       </div>
 
       {/* Shipping method */}
-      <div className="rounded-md border border-gray-200 p-4 dark:border-gray-700">
-        <h3 className="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+      <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm ring-1 ring-stone-200/40">
+        <h3 className="mb-2 text-xs font-semibold tracking-wide text-stone-500 uppercase">
           {t('checkout.steps.shipping')}
         </h3>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-900 dark:text-white">
-            {shippingLabel}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-stone-900">{shippingLabel}</p>
+          <p className="text-sm text-stone-600">
             {shippingCents === 0
               ? t('checkout.free')
               : formatPrice(shippingCents, currency, locale)}
@@ -587,33 +591,33 @@ function ReviewStep({
       </div>
 
       {/* Payment */}
-      <div className="rounded-md border border-gray-200 p-4 dark:border-gray-700">
-        <h3 className="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+      <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm ring-1 ring-stone-200/40">
+        <h3 className="mb-2 text-xs font-semibold tracking-wide text-stone-500 uppercase">
           {t('checkout.steps.payment')}
         </h3>
-        <p className="text-sm text-gray-900 dark:text-white">{paymentLabel}</p>
+        <p className="text-sm text-stone-900">{paymentLabel}</p>
       </div>
 
       {/* Line items */}
       <div>
-        <h3 className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+        <h3 className="mb-3 text-xs font-semibold tracking-wide text-stone-500 uppercase">
           {t('checkout.items')}
         </h3>
-        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+        <ul className="divide-y divide-stone-200">
           {lines.map((line) => (
             <li
               key={line.id}
               className="flex items-center justify-between py-3"
             >
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className="text-sm font-medium text-stone-900">
                   {line.titleSnapshot}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-stone-500">
                   {t('checkout.qty')}: {line.quantity}
                 </p>
               </div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-stone-900">
                 {formatPrice(
                   line.priceCentsSnapshot * line.quantity,
                   currency,
@@ -626,12 +630,12 @@ function ReviewStep({
       </div>
 
       {/* Totals */}
-      <div className="space-y-2 rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+      <div className="space-y-2 rounded-xl border border-stone-200 bg-white p-4 shadow-sm ring-1 ring-stone-200/50">
+        <div className="flex justify-between text-sm text-stone-600">
           <span>{t('checkout.subtotal')}</span>
           <span>{formatPrice(subtotalCents, currency, locale)}</span>
         </div>
-        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex justify-between text-sm text-stone-600">
           <span>{t('checkout.shipping')}</span>
           <span>
             {shippingCents === 0
@@ -639,7 +643,7 @@ function ReviewStep({
               : formatPrice(shippingCents, currency, locale)}
           </span>
         </div>
-        <div className="flex justify-between border-t border-gray-200 pt-2 text-sm font-bold text-gray-900 dark:border-gray-700 dark:text-white">
+        <div className="flex justify-between border-t border-stone-200 pt-2 text-sm font-bold text-stone-900">
           <span>{t('checkout.total')}</span>
           <span>{formatPrice(totalCents, currency, locale)}</span>
         </div>
@@ -725,12 +729,20 @@ export default function CheckoutLayout({
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <StorefrontShell>
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         {/* Page title */}
-        <h1 className="mb-8 text-2xl font-bold text-gray-900 dark:text-white">
-          {t('checkout.title')}
-        </h1>
+        <div className="mb-10 border-b border-stone-200 pb-8">
+          <div
+            className="text-[11px] font-semibold tracking-[0.22em] uppercase"
+            style={{ color: GREEN }}
+          >
+            Secure checkout
+          </div>
+          <h1 className="mt-2 font-serif text-4xl tracking-tight text-stone-900 md:text-5xl">
+            {t('checkout.title')}
+          </h1>
+        </div>
 
         {/* Step indicator */}
         <StepIndicator currentStep={currentStep} t={t} />
@@ -739,7 +751,7 @@ export default function CheckoutLayout({
           {/* Main content */}
           <div className="lg:col-span-7">
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 className="font-serif text-xl font-semibold text-stone-900">
                 {t(`checkout.steps.${currentStep}`)}
               </h2>
             </div>
@@ -751,7 +763,7 @@ export default function CheckoutLayout({
               <div className="mt-6">
                 <Link
                   to={backHref}
-                  className="text-sm text-gray-500 underline-offset-2 hover:text-gray-900 hover:underline dark:text-gray-400 dark:hover:text-white"
+                  className="text-sm font-medium text-stone-600 underline-offset-4 hover:text-stone-900 hover:underline"
                 >
                   {t('checkout.back')}
                 </Link>
@@ -761,7 +773,7 @@ export default function CheckoutLayout({
               <div className="mt-4">
                 <Link
                   to={backHref}
-                  className="text-sm text-gray-500 underline-offset-2 hover:text-gray-900 hover:underline dark:text-gray-400 dark:hover:text-white"
+                  className="text-sm font-medium text-stone-600 underline-offset-4 hover:text-stone-900 hover:underline"
                 >
                   {t('checkout.back')}
                 </Link>
@@ -771,7 +783,7 @@ export default function CheckoutLayout({
 
           {/* Order summary sidebar */}
           <div className="mt-10 lg:col-span-5 lg:mt-0">
-            <div className="lg:sticky lg:top-8">
+            <div className="lg:sticky lg:top-28">
               <OrderSummary
                 cart={cart}
                 currency={effectiveCurrency}
@@ -782,6 +794,6 @@ export default function CheckoutLayout({
           </div>
         </div>
       </div>
-    </div>
+    </StorefrontShell>
   );
 }

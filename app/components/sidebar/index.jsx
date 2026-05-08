@@ -23,7 +23,7 @@ import useTheme from '#/hooks/use-theme';
 import Logo from '#/components/ui/logo';
 
 const NAV_ITEMS = [
-  { name: 'Dashboard', href: '/dashboard', Icon: ChartBarIcon },
+  { name: 'Account', href: '/account', Icon: ChartBarIcon },
   { name: 'Settings', href: '/settings', Icon: Cog6ToothIcon },
 ];
 
@@ -101,7 +101,7 @@ function SidebarUserMenu() {
         {/* Logout */}
         <MenuItem>
           <Link
-            to="/logout"
+            to="/account/logout"
             className="group dark:text-dark-300 dark:*:data-[slot=icon]:text-dark-500 col-span-full grid cursor-default grid-cols-[auto_1fr_1.5rem_0.5rem_auto] items-center rounded-lg px-3.5 py-2.5 text-left text-base/6 text-zinc-950 forced-color-adjust-none focus:outline-hidden data-disabled:opacity-50 data-focus:bg-blue-500 data-focus:text-white *:data-[slot=avatar]:mr-2.5 *:data-[slot=avatar]:-ml-1 *:data-[slot=avatar]:size-6 *:data-[slot=icon]:col-start-1 *:data-[slot=icon]:row-start-1 *:data-[slot=icon]:mr-2.5 *:data-[slot=icon]:-ml-0.5 *:data-[slot=icon]:size-5 *:data-[slot=icon]:text-zinc-500 data-focus:*:data-[slot=icon]:text-white supports-[grid-template-columns:subgrid]:grid-cols-subgrid sm:px-3 sm:py-1.5 sm:text-sm/6 sm:*:data-[slot=avatar]:mr-2 sm:*:data-[slot=avatar]:size-5 sm:*:data-[slot=icon]:mr-2 sm:*:data-[slot=icon]:size-4 dark:data-focus:*:data-[slot=icon]:text-white forced-colors:text-[CanvasText] forced-colors:data-focus:bg-[Highlight] forced-colors:data-focus:text-[HighlightText] forced-colors:data-focus:*:data-[slot=icon]:text-[HighlightText]"
           >
             <ArrowRightStartOnRectangleIcon className="h-5 w-5" />
@@ -125,7 +125,7 @@ function SidebarHeader({ onClose }) {
     <div className="dark:border-dark-700/50 flex items-center justify-between border-b border-gray-100 px-4 py-4 md:border-gray-200">
       <div className="flex items-center">
         <a
-          href="/dashboard"
+          href="/account"
           className="flex items-center gap-2 px-1.5 text-slate-800 dark:text-white"
         >
           <Logo alt="CursorStack Logo" className="-m-1 h-8 w-auto" />

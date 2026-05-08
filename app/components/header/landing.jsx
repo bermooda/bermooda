@@ -60,14 +60,14 @@ export default function LandingHeader() {
           <div className="hidden items-center space-x-2 md:flex">
             <ThemeToggle />
             <Link
-              to="/login"
+              to="/account/login"
               prefetch="intent"
               className="dark:text-dark-400 px-2 text-gray-600 hover:text-gray-900 dark:hover:text-white"
             >
               Log in
             </Link>
             <Link
-              to="/signup"
+              to="/account/register"
               prefetch="intent"
               className="accent-gradient glow-accent-sm rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
             >
@@ -160,7 +160,7 @@ export default function LandingHeader() {
                 </Link>
                 <div className="dark:border-dark-700/50 mt-4 border-t border-gray-100 pt-6">
                   <Link
-                    to="/login"
+                    to="/account/login"
                     prefetch="intent"
                     className="dark:bg-dark-800 dark:text-dark-300 dark:hover:bg-dark-700 block w-full rounded-md bg-white px-3 py-2 text-center text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:hover:text-white"
                     onClick={() => setIsMenuOpen(false)}
@@ -168,7 +168,7 @@ export default function LandingHeader() {
                     Log in
                   </Link>
                   <Link
-                    to="/signup"
+                    to="/account/register"
                     prefetch="intent"
                     className="accent-gradient mt-3 block w-full rounded-md bg-indigo-600 px-3 py-2 text-center text-base font-medium text-white hover:bg-indigo-500"
                     onClick={() => setIsMenuOpen(false)}

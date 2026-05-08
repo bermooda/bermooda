@@ -56,25 +56,9 @@ export default [
   ]),
 
   // ---------------------------------------------------------------------------
-  // Admin auth (staff login — outside storefront layout)
-  // ---------------------------------------------------------------------------
-
-  route('login', 'routes/login.jsx'),
-  route('logout', 'routes/logout.jsx'),
-  route('verify-2fa', 'routes/verify-2fa.jsx'),
-  route('forgot-password', 'routes/password/forgot.jsx'),
-  route('reset-password', 'routes/password/reset.jsx'),
-
-  ...prefix('signup', [
-    index('routes/signup/index.jsx'),
-    route('verify-email', 'routes/signup/verify-email.jsx'),
-  ]),
-
-  // ---------------------------------------------------------------------------
   // Better Auth API handlers
   // ---------------------------------------------------------------------------
 
-  route('auth/*', 'routes/auth/all.jsx'),
   route('admin/auth/*', 'routes/auth/admin.jsx'),
   route('account/auth/*', 'routes/auth/customer.jsx'),
 
@@ -140,9 +124,8 @@ export default [
  * Routes that should be indexed by search engines (SEO)
  */
 export const INDEXED_ROUTES = [
-  'login',
-  'signup',
-  'forgot-password',
+  'account/login',
+  'account/register',
   'sitemap.xml',
   '',
   'products',

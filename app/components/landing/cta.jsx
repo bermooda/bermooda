@@ -17,7 +17,7 @@ export default function CTA() {
           </p>
           <div className="mt-10">
             <Link
-              to="/signup"
+              to="/account/register"
               className="dark:text-dark-900 rounded-md bg-white px-6 py-3 text-base font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-white dark:bg-white/95 dark:hover:bg-white"
             >
               Get CursorStack

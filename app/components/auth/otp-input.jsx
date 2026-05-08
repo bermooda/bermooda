@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 /**
  * OTP Input Component
  * 6-digit OTP input grid with auto-focus, paste handling, and keyboard navigation
- * Extracted from verify-2fa page
+ * OTP input for admin two-factor verification
  *
  * @param {Object} props Component props
  * @param {string[]} props.value Array of 6 digit strings
