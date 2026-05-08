@@ -55,6 +55,10 @@ export default [
     route('apps/:pluginId/*', 'routes/storefront/apps/$pluginId.jsx'),
   ]),
 
+  // Locale + currency cookie API endpoints (POST-redirect pattern)
+  route('api/set-locale', 'routes/storefront/api/set-locale.jsx'),
+  route('api/set-currency', 'routes/storefront/api/set-currency.jsx'),
+
   // ---------------------------------------------------------------------------
   // Better Auth API handlers
   // ---------------------------------------------------------------------------
@@ -67,16 +71,6 @@ export default [
   // ---------------------------------------------------------------------------
 
   route('webhooks/:provider', 'routes/webhooks/$provider.jsx'),
-
-  // Locale + currency cookie API endpoints (POST-redirect pattern)
-  route('api/set-locale', 'routes/storefront/api/set-locale.jsx'),
-  route('api/set-currency', 'routes/storefront/api/set-currency.jsx'),
-
-  // Healthcheck for deployments
-  route('health', 'routes/health.jsx'),
-
-  // Sitemap
-  route('sitemap.xml', 'routes/sitemap.jsx'),
 
   // Admin panel
   ...prefix('admin', [
@@ -115,6 +109,12 @@ export default [
       route('settings', 'routes/admin/settings/index.jsx'),
     ]),
   ]),
+
+  // Healthcheck for deployments
+  route('health', 'routes/health.jsx'),
+
+  // Sitemap
+  route('sitemap.xml', 'routes/sitemap.jsx'),
 
   // 404 catch-all — must be last
   route('*', 'routes/404.jsx'),
