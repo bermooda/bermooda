@@ -127,7 +127,7 @@ const technologies = [
 
 /**
  * Technologies section component
- * Displays a grid of tools and libraries included in CursorStack
+ * Displays a grid of tools and libraries included in bermooda
  */
 export default function Technologies() {
   return (
@@ -141,8 +141,8 @@ export default function Technologies() {
             Powered by the Latest Tools & Libraries
           </h2>
           <p className="dark:text-dark-400 mt-4 text-lg text-gray-600">
-            Everything you need to build a modern web application, all
-            pre-configured and ready to go.
+            Commerce-ready defaults—payments, auth, email, and data—wired for
+            your storefront and admin.
           </p>
         </div>
         <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">

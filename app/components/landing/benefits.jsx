@@ -1,17 +1,17 @@
 // Benefits data
 const benefits = [
-  'Complete authentication system with social login options',
-  'Database setup with Prisma ORM and migrations',
-  'Payment processing with Stripe',
-  'Email sending capabilities with ready-to-use templates',
-  'Responsive UI components built with Tailwind CSS',
-  'Modern React practices with hooks and functional components',
-  'Production-ready deployment configuration',
+  'Storefront and merchant admin in one deployable app',
+  'Catalog, cart, and orders with Prisma and SQLite (or your database)',
+  'Stripe Checkout for payments',
+  'Transactional email with Resend and ready-to-use templates',
+  'Responsive UI with Tailwind CSS',
+  'Server-side rendering with React Router 7',
+  'Docker- and Fly.io-friendly deployment patterns',
 ];
 
 /**
  * Benefits section component
- * Displays the key benefits and features of CursorStack
+ * Displays the key benefits and features of bermooda
  */
 export default function Benefits() {
   return (
@@ -20,13 +20,13 @@ export default function Benefits() {
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-2 lg:gap-8">
           <div className="flex flex-col justify-center">
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
-              Launch Your Startup Faster
+              Run Your Shop From One Codebase
             </h2>
             <p className="dark:text-dark-400 mt-6 text-lg text-gray-600">
-              CursorStack provides everything you need to get your web
-              application up and running quickly. With pre-built authentication,
-              database integration, payment processing, and more, you can focus
-              on building your unique features instead of reinventing the wheel.
+              bermooda gives you a storefront, customer accounts, checkout, and
+              back-office tools without stitching together a dozen services.
+              Focus on products and customers while the stack handles commerce
+              fundamentals out of the box.
             </p>
             <ul className="mt-8 space-y-4">
               {benefits.map((benefit, index) => (

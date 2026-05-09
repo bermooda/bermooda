@@ -1,12 +1,12 @@
 const config = {
-  appName: 'CursorStack',
+  appName: 'bermooda',
   // A short description of your app for SEO tags (can be changed per route)
   appDescription:
-    'The React Router boilerplate with all you need to build your SaaS, AI tool, or any other web app.',
+    'Open-source ecommerce platform: storefront and admin on React Router 7, Prisma, and Stripe.',
   baseUrl:
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:3000'
-      : 'https://cursorstack.fly.dev',
+      : 'https://bermooda.fly.dev',
   auth: {
     adminCookiePrefix: 'bermooda_admin_',
     customerCookiePrefix: 'bermooda_customer_',
@@ -33,12 +33,12 @@ const config = {
         // If you have an anchor price (i.e. $29) that you want to display crossed out, put it here. Otherwise, leave it empty
         priceAnchor: 249,
         features: [
-          'React Router 7 boilerplate',
-          'Authentication system',
-          'Database integration with Prisma',
+          'Storefront and merchant admin',
+          'Catalog, cart, and orders',
+          'Prisma database integration',
           'Email templates and sending',
-          'Responsive UI components',
-          'Basic Stripe integration',
+          'Responsive Tailwind UI',
+          'Stripe Checkout integration',
           '30 days of support',
         ],
       },
@@ -68,7 +68,7 @@ const config = {
   },
   resend: {
     // Email 'from' used when sending magic login links
-    fromNoReply: `CursorStack <noreply@mail.sturmfrei.com.au>`,
+    fromNoReply: `bermooda <noreply@mail.sturmfrei.com.au>`,
   },
 };
 
