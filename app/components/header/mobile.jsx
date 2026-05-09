@@ -11,8 +11,8 @@ export default function MobileHeader() {
           href="/account"
           className="-m-1.5 flex items-center gap-2 p-1.5 text-slate-800 dark:text-white"
         >
-          <Logo alt="CursorStack Logo" className="-m-1 h-8 w-auto" />
-          <h2 className="text-lg font-bold">CursorStack</h2>
+          <Logo alt="bermooda" className="-m-1 h-8 w-auto" />
+          <h2 className="text-lg font-bold">bermooda</h2>
         </a>
       </div>
 
