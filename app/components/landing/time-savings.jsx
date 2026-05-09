@@ -20,7 +20,7 @@ const timeSavings = [
 
 /**
  * Time Savings section component
- * Displays development hours saved with CursorStack
+ * Displays development hours saved by shipping with bermooda
  */
 export default function TimeSavings() {
   return (

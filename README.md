@@ -1,15 +1,15 @@
-# CursorStack
+# bermooda
 
-A modern, production-ready template for building full-stack React applications using React Router.
+**bermooda** is an open-source ecommerce platform built as a single deployable service. One React Router 7 app with server-side rendering powers both the customer storefront and the merchant admin—catalog, cart, checkout, orders, customer accounts, and staff tools—backed by Prisma (SQLite locally), Stripe for payments, and Resend for email. It is designed so you can own your stack and extend the commerce engine in `app/core/*` without stitching together many separate products.
 
 ## Features
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+- Storefront and back office in one codebase
+- Server-side rendering, loaders, and actions with React Router 7
+- Hot Module Replacement (HMR) in development
+- Prisma ORM and SQLite for local development; migrate or point at PostgreSQL for production
+- Tailwind CSS for styling
+- Stripe, authentication, and transactional email wired for real shops (configure via `.env`)
 
 ## Getting Started
 
@@ -47,13 +47,13 @@ To build and run using Docker:
 
 ```bash
 # For npm
-docker build -t cursor-stack .
+docker build -t bermooda .
 
 # Run the container
-docker run -p 3000:3000 cursor-stack
+docker run -p 3000:3000 bermooda
 
 # Run the container without LiteFS
-docker run -p 8081:8081 -p 8080:8080 --env-file .env -e DATABASE_URL=file:/app/sqlite.db cursor-stack npm run start
+docker run -p 8081:8081 -p 8080:8080 --env-file .env -e DATABASE_URL=file:/app/sqlite.db bermooda npm run start
 ```
 
 ### Deploying to Fly.io
@@ -171,7 +171,7 @@ Prior to your first deployment, you'll need to do a few things:
 
 9. Commit!
 
-CursorStack comes with a GitHub Action that handles automatically
+bermooda comes with a GitHub Action that handles automatically
 deploying your app to production and staging environments.
 
 Now that everything is set up you can commit and push your changes to your
@@ -195,7 +195,7 @@ Make sure to deploy the output of `npm run build`
 
 ## Styling
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+This project uses [Tailwind CSS](https://tailwindcss.com/) for a practical default. You can use whatever CSS approach you prefer for themes and custom storefronts.
 
 ## Google OAuth Setup
 

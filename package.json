@@ -1,13 +1,13 @@
 {
-  "name": "cursor-stack",
+  "name": "bermooda",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "react-router build",
     "dev": "op run --env-file=.env -- react-router dev --port 3000 --host",
     "start": "react-router-serve ./build/server/index.js",
-    "docker:build": "docker build -t cursor-stack .",
-    "docker:run": "docker run -p 8081:8081 -p 8080:8080 --env-file .env -e DATABASE_URL=file:/app/sqlite.db cursor-stack npm run start",
+    "docker:build": "docker build -t bermooda .",
+    "docker:run": "docker run -p 8081:8081 -p 8080:8080 --env-file .env -e DATABASE_URL=file:/app/sqlite.db bermooda npm run start",
     "setup": "prisma generate && prisma migrate deploy",
     "prisma:migrate": "prisma migrate dev",
     "prisma:reset": "prisma migrate reset",

@@ -1,4 +1,4 @@
-app = "cursorstack"
+app = "bermooda"
 primary_region = "syd"
 kill_signal = "SIGINT"
 kill_timeout = 5

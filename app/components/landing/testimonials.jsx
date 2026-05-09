@@ -2,21 +2,21 @@
 const testimonials = [
   {
     name: 'Sarah Johnson',
-    role: 'Founder at TechStartup',
+    role: 'Founder, Indie Goods Co.',
     quote:
-      'CursorStack saved us at least 2 months of development time. We launched our MVP in just 2 weeks and secured our first round of funding.',
+      'We replaced spreadsheets with bermooda and shipped a real storefront in weeks. Orders and inventory finally live in one system.',
   },
   {
     name: 'Michael Chen',
-    role: 'CTO at SaaSPlatform',
+    role: 'Operations, Northwind Retail',
     quote:
-      'The authentication system alone was worth the price. Everything works seamlessly together, and the code quality is excellent.',
+      'Stripe and email were already integrated—we dropped in keys and went live. Checkout just works for our small team.',
   },
   {
     name: 'Emily Rodriguez',
-    role: 'Solo Developer',
+    role: 'Solo merchant',
     quote:
-      "As a solo developer, CursorStack was a game-changer. I was able to launch my SaaS product while still working full-time, and now it's my main business.",
+      'I wanted something I could host myself. bermooda let me sell online without renting a heavyweight SaaS cart.',
   },
 ];
 
@@ -33,8 +33,7 @@ export default function Testimonials() {
             Success Stories
           </h2>
           <p className="dark:text-dark-400 mt-4 text-lg text-gray-600">
-            Hear from founders who accelerated their businesses with
-            CursorStack.
+            Hear from merchants building with bermooda.
           </p>
         </div>
         <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">

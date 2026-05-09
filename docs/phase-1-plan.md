@@ -2,7 +2,7 @@
 
 ## Context
 
-Build **bermooda**, an open-source ecommerce shop on top of the existing CursorStack template (React Router 7 SSR + Prisma 7/SQLite + better-auth + Tailwind 4 + LiteQuu + Resend + Pino + Fly.io/LiteFS, with manually configured Tigris/S3-compatible storage). Single app serves both the storefront (themed) and admin back office. Designed for extensibility: third-party developers author **themes** (folder-based React components) and **plugins** (folder-based, hook-based, JSON storage). Public REST API is reserved at `/api/*` but deferred to a later phase. v1 adds multi-currency + i18n and a Vitest test suite.
+Build **bermooda**, an open-source ecommerce shop using React Router 7 SSR + Prisma 7/SQLite + better-auth + Tailwind 4 + LiteQuu + Resend + Pino + Fly.io/LiteFS, with manually configured Tigris/S3-compatible storage. Single app serves both the storefront (themed) and admin back office. Designed for extensibility: third-party developers author **themes** (folder-based React components) and **plugins** (folder-based, hook-based, JSON storage). Public REST API is reserved at `/api/*` but deferred to a later phase. v1 adds multi-currency + i18n and a Vitest test suite.
 
 **Tenancy:** single shop per install. **Admin/staff and customers are separate user models** (no shared accounts; isolated sessions). All keep-it-simple defaults: Stripe Checkout for v1 payment, flat-rate shipping, simple-percent tax — all pluggable via the provider API. **Default currency `USD`**, also-enabled-by-default `EUR` and `AUD`. **Locale is cookie-driven, never in URLs** — every storefront URL is locale-agnostic and the active locale comes from the `locale` cookie.
 
@@ -10,7 +10,7 @@ Build **bermooda**, an open-source ecommerce shop on top of the existing CursorS
 
 ## Repo verification constraints
 
-These are implementation constraints verified against the current CursorStack repo and must be handled before or during Phase 1:
+These are implementation constraints verified against this repository and must be handled before or during Phase 1:
 
 - **Routes are static in [app/routes.js](../app/routes.js).** Route filenames are not auto-discovered. Theme/plugin route contribution must be implemented through static dispatcher routes or build-time route generation, not by changing React Router routes at runtime.
 - **`app/core/*` is the new canonical ecommerce domain layer.** Rewrite the repo's agent rules and docs that currently point domain workflows at `app/services` so future work consistently uses `app/core/*` for shop engine code. Keep `app/libs/*` for low-level infrastructure clients.
