@@ -1,15 +1,15 @@
 ---
 name: admin-onboarding
-overview: Add a first-admin setup route that is available only while the shop has no admin, creates the initial admin securely, then permanently sends future visits back to admin login. The UI will reuse the existing admin/auth visual language while keeping the mutation server-side and guarded against duplicate setup.
+overview: Use `/admin` as the only public entry for first-time setup and sign-in. When no admin user exists, the same URL shows onboarding; when at least one admin exists, it shows the login flow. After setup, onboarding is permanently disabled; authenticated visits to `/admin` still redirect to the dashboard.
 todos:
   - id: core-workflow
     content: Create tested server workflow for onboarding availability, validation, and first-admin creation
     status: pending
-  - id: route-ui
-    content: Add `/admin/onboarding` route with public loader/action and admin-styled setup form
+  - id: route-structure
+    content: Unify `/admin` under public layout with loader branching (onboarding vs login) and remove separate onboarding URL
     status: pending
   - id: redirects
-    content: Disable onboarding after setup and redirect to admin login with optional success message
+    content: After setup redirect to `/admin` with success signal; block onboarding when setup is complete or admins exist; keep auth redirect to dashboard
     status: pending
   - id: validate
     content: Run focused server tests and lint/format checks
@@ -21,37 +21,42 @@ isProject: false
 
 ## Approach
 
-- Add `/admin/onboarding` under the existing public admin route layout in [`/Users/cvgellhorn/dev/bermooda/app/routes.js`](/Users/cvgellhorn/dev/bermooda/app/routes.js), because no admin session exists yet.
-- Use a small server-only workflow in [`/Users/cvgellhorn/dev/bermooda/app/core/admin-onboarding/index.server.js`](/Users/cvgellhorn/dev/bermooda/app/core/admin-onboarding/index.server.js) rather than placing business logic in the route.
-- Implement the selected security model: the page is public only while no admin exists. The loader redirects to `/admin/login` once setup is unavailable, and the action repeats the check inside the write path before creating anything.
-- Add a persistent setup flag using the existing `Setting` model key, so successful onboarding disables the route even if that initial admin is later removed. Existing seeded/admin users also disable the loader through the `User.role === 'admin'` check.
+- **Single URL:** First-time setup and admin sign-in both happen at **`/admin`**. Do not add or use `/admin/onboarding` (or any other path for onboarding).
+- **Loader-driven UI:** The `/admin` route loader decides what unauthenticated visitors see:
+  1. **At least one admin user exists** (and onboarding is not “re-opened” by a bug) → render the **login** experience (reuse the same form, validation, and Better Auth behavior as today’s `/admin/login`, ideally via a shared component so logic stays DRY).
+  2. **No admin user exists** → render **onboarding** (create first admin: name, email, password, confirm).
+  3. **Session already has an authenticated admin** → **redirect to `/admin/dashboard`** (preserve today’s “land on dashboard” behavior for logged-in users).
+- **Route tree:** Today `index('routes/admin/index.jsx')` sits under the authenticated admin layout and only redirects to the dashboard. **Move** that responsibility so `/admin` is handled under the **public** admin layout (`routes/admin/public/_layout.jsx`), where unauthenticated loaders are allowed. Remove the duplicate index from the authenticated layout (or leave only paths like `/admin/dashboard` under auth) so `/admin` is not registered twice.
+- **Domain logic:** Keep create-first-admin rules in [`app/core/admin-onboarding/index.server.js`](app/core/admin-onboarding/index.server.js) (count admins / setup flag, validate input, bcrypt credential, mark setup complete). Do not put business rules only in the route file.
+- **Security model:** While **no** admin exists, `/admin` is publicly reachable for onboarding. The **action** that creates the first admin must re-check availability on every POST (no admin + setup not completed) to limit races. Once complete, loaders must never show onboarding again (admin row check **and** persistent `Setting` key as in the original plan, so deleting the last admin does not silently re-expose setup unless you explicitly decide otherwise).
 
 ## Alternatives Considered
 
-- Env setup token: strongest protection for empty production databases, but you chose not to require it.
-- Localhost-only setup: safer for local installs, but not suitable for first setup on hosted deployments.
-- Public-until-created: simplest operationally; the residual risk is that whoever reaches an empty deployment first can claim it. The implementation will reduce race risk but cannot authenticate intent without a secret.
+- **Separate `/admin/onboarding` URL:** Rejected — you want one canonical `/admin` entry.
+- **Env setup token:** Strongest for empty production DBs; not required per product choice.
+- **Localhost-only setup:** Safer locally; poor fit for hosted first deploy.
+- **Public-until-created:** Operational simplicity; first visitor can claim the shop — mitigate with action-side double-check, not a separate URL.
 
 ## Files To Change
 
-- [`/Users/cvgellhorn/dev/bermooda/app/routes.js`](/Users/cvgellhorn/dev/bermooda/app/routes.js): register `route('onboarding', 'routes/admin/onboarding.jsx')` in the public admin layout.
-- [`/Users/cvgellhorn/dev/bermooda/app/routes/admin/onboarding.jsx`](/Users/cvgellhorn/dev/bermooda/app/routes/admin/onboarding.jsx): new loader/action/component for the setup form.
-- [`/Users/cvgellhorn/dev/bermooda/app/core/admin-onboarding/index.server.js`](/Users/cvgellhorn/dev/bermooda/app/core/admin-onboarding/index.server.js): count existing admins, validate input, create the first admin and credential account with bcrypt, and mark setup complete.
-- [`/Users/cvgellhorn/dev/bermooda/app/core/admin-onboarding/index.test.server.js`](/Users/cvgellhorn/dev/bermooda/app/core/admin-onboarding/index.test.server.js): focused server tests for availability, validation, and duplicate prevention.
-- Optionally [`/Users/cvgellhorn/dev/bermooda/app/routes/admin/login.jsx`](/Users/cvgellhorn/dev/bermooda/app/routes/admin/login.jsx): show a short success message when redirected from onboarding.
+- [`app/routes.js`](app/routes.js): Register **`index`** for `/admin` inside the **public** admin layout; **remove** the authenticated-layout index that only redirects (so `/admin` resolves once, publicly).
+- [`app/routes/admin/index.jsx`](app/routes/admin/index.jsx) (or a split module if cleaner): Public loader that branches authenticated → redirect, no admin → onboarding data, else → login; **action** only for onboarding POST (delegate login to existing `/admin/login` **or** accept POST on `/admin` for login if you collapse routes — prefer reusing `login.jsx` action via shared helper to avoid duplication).
+- [`app/routes/admin/login.jsx`](app/routes/admin/login.jsx): Optionally thin to a wrapper or redirect **`/admin/login` → `/admin`** for bookmarks and external links, **or** keep both URLs sharing one form component (implementation choice: one URL is canonical per your spec).
+- [`app/core/admin-onboarding/index.server.js`](app/core/admin-onboarding/index.server.js): Availability, validation, first admin creation, setup flag.
+- [`app/core/admin-onboarding/index.test.server.js`](app/core/admin-onboarding/index.test.server.js): Tests for availability, validation, duplicates.
+- **Auth layout / middleware:** Ensure `/admin` public index is excluded from “must be logged in” middleware while `/admin/dashboard` and siblings stay protected.
 
 ## Implementation Details
 
-- The onboarding form will collect `name`, `email`, `password`, and `confirmPassword`.
-- Validation will normalize email to lowercase, require a valid-looking email, require a password of at least 12 characters, and require matching confirmation.
-- The created user will be `role: 'admin'` and `emailVerified: true` so the first owner can immediately sign in through the existing `/admin/login` flow.
-- The credential account will follow the seeded-admin pattern with `providerId: 'credential'`, `accountId: normalizedEmail`, and a bcrypt hash.
-- On success, redirect to `/admin/login?onboarded=1`; all later visits to `/admin/onboarding` redirect to `/admin/login`.
-- The UI will use `AuthLayout`, `ErrorAlert`, and `ButtonSubmit`, plus the same dark mesh, indigo/accent focus states, labels, and spacing already used by the admin login/manage area.
+- Onboarding form fields: `name`, `email`, `password`, `confirmPassword`.
+- Validation: normalized lowercase email, sensible email shape, password min length (e.g. 12), matching confirmation.
+- Created user: `role: 'admin'`, `emailVerified: true`, credential account with `providerId: 'credential'`, `accountId: normalizedEmail`, bcrypt hash (same pattern as seeded admin).
+- **Success:** Redirect to **`/admin?onboarded=1`** (or equivalent) so the **login** UI appears on the same URL with a short success message — not to a separate onboarding path.
+- **Failure / completed setup:** If someone hits `/admin` with no session but onboarding is unavailable, show **login** only; POST onboarding attempts return a clear error or redirect without creating users.
+- **UI:** Reuse `AuthLayout`, `ErrorAlert`, `ButtonSubmit`, and the same visual language as [`app/routes/admin/login.jsx`](app/routes/admin/login.jsx) for both branches so onboarding and login feel like one admin surface.
 
 ## Validation
 
-- Add unit/server tests for the core workflow with mocked Prisma and bcrypt.
-- Add route-level tests or direct loader/action tests where practical: no admin renders, existing admin redirects, valid action creates and redirects, race/duplicate state redirects without creating.
-- Run targeted tests: `npm run test -- --project server app/core/admin-onboarding/index.test.server.js` plus any route test added.
-- Run `npm run lint` or `npm run fmt:check` for touched files, noting this repo may have pre-existing oxfmt warnings.
+- Server tests for core workflow with mocked Prisma/bcrypt: no admin → can create; admin exists → cannot create; setup flag set → cannot create.
+- Route/loader tests where practical: authenticated GET `/admin` → redirect dashboard; unauthenticated + zero admins → onboarding; unauthenticated + admins → login presentation (or redirect target).
+- Commands: `npm run test -- --project server app/core/admin-onboarding/index.test.server.js` and `npm run lint` / format check as in repo conventions.
