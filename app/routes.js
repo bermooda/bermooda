@@ -76,6 +76,7 @@ export default [
   ...prefix('admin', [
     // Public admin routes (no auth required)
     layout('routes/admin/public/_layout.jsx', [
+      index('routes/admin/index.jsx'), // /admin → login or onboarding
       route('login', 'routes/admin/login.jsx'),
       route('forgot-password', 'routes/admin/forgot-password.jsx'),
       route('reset-password', 'routes/admin/reset-password.jsx'),
@@ -84,7 +85,6 @@ export default [
     ]),
     // Authenticated admin routes
     layout('routes/admin/_layout.jsx', [
-      index('routes/admin/index.jsx'), // /admin → redirect to /admin/dashboard
       route('dashboard', 'routes/admin/dashboard.jsx'),
       // Products (P5-3)
       route('products', 'routes/admin/products/index.jsx'),
