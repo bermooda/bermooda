@@ -1,12 +1,344 @@
-import { redirect } from 'react-router';
+import { useState } from 'react';
+import {
+  data,
+  Form,
+  Link,
+  redirect,
+  useActionData,
+  useLoaderData,
+  useSearchParams,
+} from 'react-router';
 
-/**
- * /admin index — redirects immediately to /admin/dashboard
- */
-export function loader() {
-  return redirect('/admin/dashboard', 302);
+import config from '#/config';
+import logger from '#/utils/logger.server';
+import { adminAuthClient } from '#/libs/auth/admin-client';
+import { adminAuth } from '#/libs/auth/admin.server';
+import AuthLayout from '#/components/auth/auth-layout';
+import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
+import { ButtonSubmit } from '#/components/ui/button';
+
+import {
+  createFirstAdmin,
+  isOnboardingAvailable,
+} from '#/core/admin-onboarding/index.server';
+
+export const handle = {
+  htmlClass: 'h-full bg-white',
+  bodyClass: 'h-full',
+};
+
+export function meta() {
+  return [
+    { title: 'Admin' },
+    { name: 'description', content: 'Admin panel entry' },
+    { name: 'robots', content: 'noindex, nofollow' },
+  ];
 }
 
+// ---------------------------------------------------------------------------
+// Loader — branches: authenticated → dashboard, no admins → onboarding, else → login
+// ---------------------------------------------------------------------------
+
+export async function loader({ request }) {
+  const session = await adminAuth.api.getSession({ headers: request.headers });
+  if (session?.user) {
+    return redirect('/admin/dashboard', 302);
+  }
+
+  const onboardingAvailable = await isOnboardingAvailable();
+  return { mode: onboardingAvailable ? 'onboarding' : 'login' };
+}
+
+// ---------------------------------------------------------------------------
+// Action — handles onboarding form POST only
+// ---------------------------------------------------------------------------
+
+export async function action({ request }) {
+  const formData = await request.formData();
+  const intent = formData.get('_intent');
+
+  if (intent !== 'onboard') {
+    return data({ error: 'Invalid request.' }, { status: 400 });
+  }
+
+  const name = String(formData.get('name') ?? '');
+  const email = String(formData.get('email') ?? '');
+  const password = String(formData.get('password') ?? '');
+  const confirmPassword = String(formData.get('confirmPassword') ?? '');
+
+  try {
+    await createFirstAdmin({ name, email, password, confirmPassword });
+    return redirect('/admin?onboarded=1', 302);
+  } catch (error) {
+    if (error instanceof Response) throw error;
+
+    if (error.code === 'ONBOARDING_UNAVAILABLE') {
+      return data(
+        { error: 'Setup is already complete. Please sign in.' },
+        { status: 409 }
+      );
+    }
+
+    if (error.code === 'VALIDATION_ERROR') {
+      return data(
+        { fieldErrors: error.errors, fields: { name, email } },
+        { status: 422 }
+      );
+    }
+
+    logger.error({ err: error }, 'Admin onboarding action error');
+    return data(
+      { error: 'Something went wrong. Please try again.' },
+      { status: 500 }
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Login form (client-side Better Auth SDK)
+// ---------------------------------------------------------------------------
+
+function LoginForm({ onboarded }) {
+  const [searchParams] = useSearchParams();
+  const rawReturnTo = searchParams.get('returnTo') || '';
+  const returnTo = rawReturnTo.startsWith('/admin')
+    ? rawReturnTo
+    : config.auth.adminCallbackUrl;
+  const urlError = searchParams.get('error');
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(urlError || '');
+
+  const onEmailSignIn = async (event) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setErrorMessage('');
+
+    const { error } = await adminAuthClient.signIn.email({
+      email,
+      password,
+      callbackURL: returnTo,
+    });
+
+    if (error) {
+      setErrorMessage(error?.message || 'Invalid email or password');
+    }
+
+    setIsLoading(false);
+  };
+
+  return (
+    <AuthLayout title="Admin sign in">
+      {onboarded && (
+        <SuccessAlert message="Admin account created. Sign in to continue." />
+      )}
+      <ErrorAlert message={errorMessage} />
+
+      <form onSubmit={onEmailSignIn} className="space-y-6">
+        <div>
+          <label
+            htmlFor="email"
+            className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+          >
+            Email address
+          </label>
+          <div className="mt-2">
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="password"
+              className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+            >
+              Password
+            </label>
+            <div className="text-sm">
+              <Link
+                to="/admin/forgot-password"
+                prefetch="intent"
+                className="dark:text-accent-fuchsia dark:hover:text-accent-violet font-semibold text-indigo-600 hover:text-indigo-500"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          </div>
+          <div className="mt-2">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+
+        <div>
+          <ButtonSubmit className="w-full" disabled={isLoading}>
+            {isLoading ? 'Signing in...' : 'Sign in'}
+          </ButtonSubmit>
+        </div>
+      </form>
+    </AuthLayout>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Onboarding form (server action)
+// ---------------------------------------------------------------------------
+
+function OnboardingForm() {
+  const actionData = useActionData();
+  const fieldErrors = actionData?.fieldErrors ?? {};
+  const fields = actionData?.fields ?? {};
+
+  return (
+    <AuthLayout
+      title="Set up your admin account"
+      subtitle="Create the first administrator to get started."
+    >
+      <ErrorAlert message={actionData?.error} />
+
+      <Form method="post" className="space-y-6">
+        <input type="hidden" name="_intent" value="onboard" />
+
+        <div>
+          <label
+            htmlFor="name"
+            className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+          >
+            Full name
+          </label>
+          <div className="mt-2">
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              defaultValue={fields.name ?? ''}
+              required
+              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+            />
+            {fieldErrors.name && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {fieldErrors.name}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="ob-email"
+            className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+          >
+            Email address
+          </label>
+          <div className="mt-2">
+            <input
+              id="ob-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              defaultValue={fields.email ?? ''}
+              required
+              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+            />
+            {fieldErrors.email && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {fieldErrors.email}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="ob-password"
+            className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+          >
+            Password
+          </label>
+          <div className="mt-2">
+            <input
+              id="ob-password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+            />
+            {fieldErrors.password && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {fieldErrors.password}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="ob-confirm-password"
+            className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+          >
+            Confirm password
+          </label>
+          <div className="mt-2">
+            <input
+              id="ob-confirm-password"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+            />
+            {fieldErrors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {fieldErrors.confirmPassword}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <ButtonSubmit className="w-full">Create admin account</ButtonSubmit>
+        </div>
+      </Form>
+    </AuthLayout>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Route component
+// ---------------------------------------------------------------------------
+
 export default function AdminIndexRoute() {
-  return null;
+  const { mode } = useLoaderData();
+  const [searchParams] = useSearchParams();
+  const onboarded = searchParams.get('onboarded') === '1';
+
+  if (mode === 'onboarding') {
+    return <OnboardingForm />;
+  }
+
+  return <LoginForm onboarded={onboarded} />;
 }
