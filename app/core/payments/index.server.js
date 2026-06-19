@@ -67,6 +67,23 @@ export function listProviders() {
 }
 
 // ---------------------------------------------------------------------------
+// listProvidersWithDetails — return { id, name }[] for UI consumption
+// ---------------------------------------------------------------------------
+
+/**
+ * List all registered providers with id and name for UI display.
+ * Reads `provider.name` if the provider exposes it, falls back to the id.
+ *
+ * @returns {{ id: string, name: string }[]}
+ */
+export function listProvidersWithDetails() {
+  return Array.from(_registry.entries()).map(([id, provider]) => ({
+    id,
+    name: provider.name ?? id,
+  }));
+}
+
+// ---------------------------------------------------------------------------
 // Convenience helpers
 // ---------------------------------------------------------------------------
 

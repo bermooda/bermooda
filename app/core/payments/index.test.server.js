@@ -29,19 +29,21 @@ vi.mock('#/utils/logger.server', () => ({
 }));
 
 vi.mock('stripe', () => {
-  const MockStripe = vi.fn().mockImplementation(() => ({
-    checkout: {
-      sessions: {
-        create: mockSessionCreate,
+  const MockStripe = vi.fn().mockImplementation(function () {
+    return {
+      checkout: {
+        sessions: {
+          create: mockSessionCreate,
+        },
       },
-    },
-    refunds: {
-      create: mockRefundsCreate,
-    },
-    webhooks: {
-      constructEvent: mockConstructEvent,
-    },
-  }));
+      refunds: {
+        create: mockRefundsCreate,
+      },
+      webhooks: {
+        constructEvent: mockConstructEvent,
+      },
+    };
+  });
   return { default: MockStripe };
 });
 

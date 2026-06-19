@@ -154,7 +154,7 @@ describe('flatRateProvider.getQuotes', () => {
     expect(result[0]).toMatchObject({
       id: 'flat_rate:domestic',
       providerId: 'flat_rate',
-      label: 'Domestic Shipping',
+      name: 'Domestic Shipping',
       priceCents: 1500,
       estimatedDays: 5,
     });
@@ -200,7 +200,7 @@ describe('flatRateProvider.getQuotes', () => {
     expect(result[0]).toEqual({
       id: 'flat_rate:default',
       providerId: 'flat_rate',
-      label: 'Standard Shipping',
+      name: 'Standard Shipping',
       priceCents: 0,
       estimatedDays: null,
     });
@@ -229,7 +229,7 @@ describe('flatRateProvider.getQuotes', () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
       id: 'flat_rate:local',
-      label: 'Local Delivery',
+      name: 'Local Delivery',
       priceCents: 500,
       estimatedDays: 2,
     });
@@ -249,7 +249,7 @@ describe('flatRateProvider.getQuotes', () => {
     expect(result[0]).toMatchObject({
       id: 'flat_rate:international',
       providerId: 'flat_rate',
-      label: 'International Shipping',
+      name: 'International Shipping',
       priceCents: 3000,
       estimatedDays: 14,
     });
