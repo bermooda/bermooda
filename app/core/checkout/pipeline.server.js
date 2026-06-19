@@ -62,7 +62,11 @@ export async function getCheckoutSession(sessionId) {
     where: { id: sessionId },
     include: {
       cart: {
-        include: { lines: true },
+        include: {
+          lines: {
+            include: { variant: { include: { taxClass: true } } },
+          },
+        },
       },
     },
   });
@@ -104,8 +108,14 @@ export async function advanceStep(sessionId, stepData = {}) {
       updateData = {
         shippingAddressJson: stepData.shippingAddressJson,
         billingAddressJson: stepData.billingAddressJson ?? null,
-        // Store guest email when provided (logged-in users already have it set)
         ...(stepData.email ? { email: stepData.email } : {}),
+        ...(stepData.vatId !== undefined ? { vatId: stepData.vatId } : {}),
+        ...(stepData.taxExempt !== undefined
+          ? { taxExempt: stepData.taxExempt }
+          : {}),
+        ...(stepData.couponCode !== undefined
+          ? { couponCode: stepData.couponCode }
+          : {}),
         step: nextStep(step),
       };
       break;
@@ -152,7 +162,11 @@ export async function advanceStep(sessionId, stepData = {}) {
       data: updateData,
       include: {
         cart: {
-          include: { lines: true },
+          include: {
+            lines: {
+              include: { variant: { include: { taxClass: true } } },
+            },
+          },
         },
       },
     });
@@ -169,9 +183,12 @@ export async function advanceStep(sessionId, stepData = {}) {
 
   const totals = await computeTotals({
     cart: updatedSession.cart,
+    cartId: updatedSession.cartId,
     shippingAddress,
     couponCode: updatedSession.couponCode ?? undefined,
     shippingOptionId: shippingOption?.id ?? undefined,
+    taxExempt: updatedSession.taxExempt ?? false,
+    vatId: updatedSession.vatId ?? undefined,
   });
 
   return { ...updatedSession, totals };

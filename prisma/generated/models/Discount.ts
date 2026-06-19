@@ -29,27 +29,40 @@ export type AggregateDiscount = {
 export type DiscountAvgAggregateOutputType = {
   value: number | null
   minSubtotalCents: number | null
+  minQuantity: number | null
   maxUsesCount: number | null
   usedCount: number | null
+  priority: number | null
 }
 
 export type DiscountSumAggregateOutputType = {
   value: number | null
   minSubtotalCents: number | null
+  minQuantity: number | null
   maxUsesCount: number | null
   usedCount: number | null
+  priority: number | null
 }
 
 export type DiscountMinAggregateOutputType = {
   id: string | null
   code: string | null
+  title: string | null
   type: string | null
   value: number | null
+  appliesTo: string | null
   minSubtotalCents: number | null
+  minQuantity: number | null
   maxUsesCount: number | null
   usedCount: number | null
   currency: string | null
+  startsAt: Date | null
   expiresAt: Date | null
+  automatic: boolean | null
+  stackable: boolean | null
+  priority: number | null
+  customerGroupId: string | null
+  rulesJson: string | null
   active: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -58,13 +71,22 @@ export type DiscountMinAggregateOutputType = {
 export type DiscountMaxAggregateOutputType = {
   id: string | null
   code: string | null
+  title: string | null
   type: string | null
   value: number | null
+  appliesTo: string | null
   minSubtotalCents: number | null
+  minQuantity: number | null
   maxUsesCount: number | null
   usedCount: number | null
   currency: string | null
+  startsAt: Date | null
   expiresAt: Date | null
+  automatic: boolean | null
+  stackable: boolean | null
+  priority: number | null
+  customerGroupId: string | null
+  rulesJson: string | null
   active: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -73,13 +95,22 @@ export type DiscountMaxAggregateOutputType = {
 export type DiscountCountAggregateOutputType = {
   id: number
   code: number
+  title: number
   type: number
   value: number
+  appliesTo: number
   minSubtotalCents: number
+  minQuantity: number
   maxUsesCount: number
   usedCount: number
   currency: number
+  startsAt: number
   expiresAt: number
+  automatic: number
+  stackable: number
+  priority: number
+  customerGroupId: number
+  rulesJson: number
   active: number
   createdAt: number
   updatedAt: number
@@ -90,27 +121,40 @@ export type DiscountCountAggregateOutputType = {
 export type DiscountAvgAggregateInputType = {
   value?: true
   minSubtotalCents?: true
+  minQuantity?: true
   maxUsesCount?: true
   usedCount?: true
+  priority?: true
 }
 
 export type DiscountSumAggregateInputType = {
   value?: true
   minSubtotalCents?: true
+  minQuantity?: true
   maxUsesCount?: true
   usedCount?: true
+  priority?: true
 }
 
 export type DiscountMinAggregateInputType = {
   id?: true
   code?: true
+  title?: true
   type?: true
   value?: true
+  appliesTo?: true
   minSubtotalCents?: true
+  minQuantity?: true
   maxUsesCount?: true
   usedCount?: true
   currency?: true
+  startsAt?: true
   expiresAt?: true
+  automatic?: true
+  stackable?: true
+  priority?: true
+  customerGroupId?: true
+  rulesJson?: true
   active?: true
   createdAt?: true
   updatedAt?: true
@@ -119,13 +163,22 @@ export type DiscountMinAggregateInputType = {
 export type DiscountMaxAggregateInputType = {
   id?: true
   code?: true
+  title?: true
   type?: true
   value?: true
+  appliesTo?: true
   minSubtotalCents?: true
+  minQuantity?: true
   maxUsesCount?: true
   usedCount?: true
   currency?: true
+  startsAt?: true
   expiresAt?: true
+  automatic?: true
+  stackable?: true
+  priority?: true
+  customerGroupId?: true
+  rulesJson?: true
   active?: true
   createdAt?: true
   updatedAt?: true
@@ -134,13 +187,22 @@ export type DiscountMaxAggregateInputType = {
 export type DiscountCountAggregateInputType = {
   id?: true
   code?: true
+  title?: true
   type?: true
   value?: true
+  appliesTo?: true
   minSubtotalCents?: true
+  minQuantity?: true
   maxUsesCount?: true
   usedCount?: true
   currency?: true
+  startsAt?: true
   expiresAt?: true
+  automatic?: true
+  stackable?: true
+  priority?: true
+  customerGroupId?: true
+  rulesJson?: true
   active?: true
   createdAt?: true
   updatedAt?: true
@@ -236,13 +298,22 @@ export type DiscountGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 export type DiscountGroupByOutputType = {
   id: string
   code: string
+  title: string | null
   type: string
   value: number
+  appliesTo: string
   minSubtotalCents: number | null
+  minQuantity: number | null
   maxUsesCount: number | null
   usedCount: number
   currency: string | null
+  startsAt: Date | null
   expiresAt: Date | null
+  automatic: boolean
+  stackable: boolean
+  priority: number
+  customerGroupId: string | null
+  rulesJson: string | null
   active: boolean
   createdAt: Date
   updatedAt: Date
@@ -274,31 +345,53 @@ export type DiscountWhereInput = {
   NOT?: Prisma.DiscountWhereInput | Prisma.DiscountWhereInput[]
   id?: Prisma.StringFilter<"Discount"> | string
   code?: Prisma.StringFilter<"Discount"> | string
+  title?: Prisma.StringNullableFilter<"Discount"> | string | null
   type?: Prisma.StringFilter<"Discount"> | string
   value?: Prisma.IntFilter<"Discount"> | number
+  appliesTo?: Prisma.StringFilter<"Discount"> | string
   minSubtotalCents?: Prisma.IntNullableFilter<"Discount"> | number | null
+  minQuantity?: Prisma.IntNullableFilter<"Discount"> | number | null
   maxUsesCount?: Prisma.IntNullableFilter<"Discount"> | number | null
   usedCount?: Prisma.IntFilter<"Discount"> | number
   currency?: Prisma.StringNullableFilter<"Discount"> | string | null
+  startsAt?: Prisma.DateTimeNullableFilter<"Discount"> | Date | string | null
   expiresAt?: Prisma.DateTimeNullableFilter<"Discount"> | Date | string | null
+  automatic?: Prisma.BoolFilter<"Discount"> | boolean
+  stackable?: Prisma.BoolFilter<"Discount"> | boolean
+  priority?: Prisma.IntFilter<"Discount"> | number
+  customerGroupId?: Prisma.StringNullableFilter<"Discount"> | string | null
+  rulesJson?: Prisma.StringNullableFilter<"Discount"> | string | null
   active?: Prisma.BoolFilter<"Discount"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Discount"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Discount"> | Date | string
+  cartDiscounts?: Prisma.CartDiscountListRelationFilter
+  orderDiscounts?: Prisma.OrderDiscountListRelationFilter
 }
 
 export type DiscountOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   code?: Prisma.SortOrder
+  title?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   value?: Prisma.SortOrder
+  appliesTo?: Prisma.SortOrder
   minSubtotalCents?: Prisma.SortOrderInput | Prisma.SortOrder
+  minQuantity?: Prisma.SortOrderInput | Prisma.SortOrder
   maxUsesCount?: Prisma.SortOrderInput | Prisma.SortOrder
   usedCount?: Prisma.SortOrder
   currency?: Prisma.SortOrderInput | Prisma.SortOrder
+  startsAt?: Prisma.SortOrderInput | Prisma.SortOrder
   expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  automatic?: Prisma.SortOrder
+  stackable?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  customerGroupId?: Prisma.SortOrderInput | Prisma.SortOrder
+  rulesJson?: Prisma.SortOrderInput | Prisma.SortOrder
   active?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  cartDiscounts?: Prisma.CartDiscountOrderByRelationAggregateInput
+  orderDiscounts?: Prisma.OrderDiscountOrderByRelationAggregateInput
 }
 
 export type DiscountWhereUniqueInput = Prisma.AtLeast<{
@@ -307,28 +400,48 @@ export type DiscountWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.DiscountWhereInput | Prisma.DiscountWhereInput[]
   OR?: Prisma.DiscountWhereInput[]
   NOT?: Prisma.DiscountWhereInput | Prisma.DiscountWhereInput[]
+  title?: Prisma.StringNullableFilter<"Discount"> | string | null
   type?: Prisma.StringFilter<"Discount"> | string
   value?: Prisma.IntFilter<"Discount"> | number
+  appliesTo?: Prisma.StringFilter<"Discount"> | string
   minSubtotalCents?: Prisma.IntNullableFilter<"Discount"> | number | null
+  minQuantity?: Prisma.IntNullableFilter<"Discount"> | number | null
   maxUsesCount?: Prisma.IntNullableFilter<"Discount"> | number | null
   usedCount?: Prisma.IntFilter<"Discount"> | number
   currency?: Prisma.StringNullableFilter<"Discount"> | string | null
+  startsAt?: Prisma.DateTimeNullableFilter<"Discount"> | Date | string | null
   expiresAt?: Prisma.DateTimeNullableFilter<"Discount"> | Date | string | null
+  automatic?: Prisma.BoolFilter<"Discount"> | boolean
+  stackable?: Prisma.BoolFilter<"Discount"> | boolean
+  priority?: Prisma.IntFilter<"Discount"> | number
+  customerGroupId?: Prisma.StringNullableFilter<"Discount"> | string | null
+  rulesJson?: Prisma.StringNullableFilter<"Discount"> | string | null
   active?: Prisma.BoolFilter<"Discount"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Discount"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Discount"> | Date | string
+  cartDiscounts?: Prisma.CartDiscountListRelationFilter
+  orderDiscounts?: Prisma.OrderDiscountListRelationFilter
 }, "id" | "code">
 
 export type DiscountOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   code?: Prisma.SortOrder
+  title?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   value?: Prisma.SortOrder
+  appliesTo?: Prisma.SortOrder
   minSubtotalCents?: Prisma.SortOrderInput | Prisma.SortOrder
+  minQuantity?: Prisma.SortOrderInput | Prisma.SortOrder
   maxUsesCount?: Prisma.SortOrderInput | Prisma.SortOrder
   usedCount?: Prisma.SortOrder
   currency?: Prisma.SortOrderInput | Prisma.SortOrder
+  startsAt?: Prisma.SortOrderInput | Prisma.SortOrder
   expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  automatic?: Prisma.SortOrder
+  stackable?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  customerGroupId?: Prisma.SortOrderInput | Prisma.SortOrder
+  rulesJson?: Prisma.SortOrderInput | Prisma.SortOrder
   active?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -345,13 +458,22 @@ export type DiscountScalarWhereWithAggregatesInput = {
   NOT?: Prisma.DiscountScalarWhereWithAggregatesInput | Prisma.DiscountScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Discount"> | string
   code?: Prisma.StringWithAggregatesFilter<"Discount"> | string
+  title?: Prisma.StringNullableWithAggregatesFilter<"Discount"> | string | null
   type?: Prisma.StringWithAggregatesFilter<"Discount"> | string
   value?: Prisma.IntWithAggregatesFilter<"Discount"> | number
+  appliesTo?: Prisma.StringWithAggregatesFilter<"Discount"> | string
   minSubtotalCents?: Prisma.IntNullableWithAggregatesFilter<"Discount"> | number | null
+  minQuantity?: Prisma.IntNullableWithAggregatesFilter<"Discount"> | number | null
   maxUsesCount?: Prisma.IntNullableWithAggregatesFilter<"Discount"> | number | null
   usedCount?: Prisma.IntWithAggregatesFilter<"Discount"> | number
   currency?: Prisma.StringNullableWithAggregatesFilter<"Discount"> | string | null
+  startsAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Discount"> | Date | string | null
   expiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Discount"> | Date | string | null
+  automatic?: Prisma.BoolWithAggregatesFilter<"Discount"> | boolean
+  stackable?: Prisma.BoolWithAggregatesFilter<"Discount"> | boolean
+  priority?: Prisma.IntWithAggregatesFilter<"Discount"> | number
+  customerGroupId?: Prisma.StringNullableWithAggregatesFilter<"Discount"> | string | null
+  rulesJson?: Prisma.StringNullableWithAggregatesFilter<"Discount"> | string | null
   active?: Prisma.BoolWithAggregatesFilter<"Discount"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Discount"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Discount"> | Date | string
@@ -360,73 +482,126 @@ export type DiscountScalarWhereWithAggregatesInput = {
 export type DiscountCreateInput = {
   id?: string
   code: string
+  title?: string | null
   type: string
   value: number
+  appliesTo?: string
   minSubtotalCents?: number | null
+  minQuantity?: number | null
   maxUsesCount?: number | null
   usedCount?: number
   currency?: string | null
+  startsAt?: Date | string | null
   expiresAt?: Date | string | null
+  automatic?: boolean
+  stackable?: boolean
+  priority?: number
+  customerGroupId?: string | null
+  rulesJson?: string | null
   active?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  cartDiscounts?: Prisma.CartDiscountCreateNestedManyWithoutDiscountInput
+  orderDiscounts?: Prisma.OrderDiscountCreateNestedManyWithoutDiscountInput
 }
 
 export type DiscountUncheckedCreateInput = {
   id?: string
   code: string
+  title?: string | null
   type: string
   value: number
+  appliesTo?: string
   minSubtotalCents?: number | null
+  minQuantity?: number | null
   maxUsesCount?: number | null
   usedCount?: number
   currency?: string | null
+  startsAt?: Date | string | null
   expiresAt?: Date | string | null
+  automatic?: boolean
+  stackable?: boolean
+  priority?: number
+  customerGroupId?: string | null
+  rulesJson?: string | null
   active?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  cartDiscounts?: Prisma.CartDiscountUncheckedCreateNestedManyWithoutDiscountInput
+  orderDiscounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutDiscountInput
 }
 
 export type DiscountUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
   value?: Prisma.IntFieldUpdateOperationsInput | number
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   minSubtotalCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  minQuantity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxUsesCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   usedCount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  automatic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stackable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
+  customerGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rulesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cartDiscounts?: Prisma.CartDiscountUpdateManyWithoutDiscountNestedInput
+  orderDiscounts?: Prisma.OrderDiscountUpdateManyWithoutDiscountNestedInput
 }
 
 export type DiscountUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
   value?: Prisma.IntFieldUpdateOperationsInput | number
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   minSubtotalCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  minQuantity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxUsesCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   usedCount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  automatic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stackable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
+  customerGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rulesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cartDiscounts?: Prisma.CartDiscountUncheckedUpdateManyWithoutDiscountNestedInput
+  orderDiscounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutDiscountNestedInput
 }
 
 export type DiscountCreateManyInput = {
   id?: string
   code: string
+  title?: string | null
   type: string
   value: number
+  appliesTo?: string
   minSubtotalCents?: number | null
+  minQuantity?: number | null
   maxUsesCount?: number | null
   usedCount?: number
   currency?: string | null
+  startsAt?: Date | string | null
   expiresAt?: Date | string | null
+  automatic?: boolean
+  stackable?: boolean
+  priority?: number
+  customerGroupId?: string | null
+  rulesJson?: string | null
   active?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -435,13 +610,22 @@ export type DiscountCreateManyInput = {
 export type DiscountUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
   value?: Prisma.IntFieldUpdateOperationsInput | number
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   minSubtotalCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  minQuantity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxUsesCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   usedCount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  automatic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stackable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
+  customerGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rulesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -450,13 +634,22 @@ export type DiscountUpdateManyMutationInput = {
 export type DiscountUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
   value?: Prisma.IntFieldUpdateOperationsInput | number
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
   minSubtotalCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  minQuantity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   maxUsesCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   usedCount?: Prisma.IntFieldUpdateOperationsInput | number
   currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  automatic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stackable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
+  customerGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rulesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -465,13 +658,22 @@ export type DiscountUncheckedUpdateManyInput = {
 export type DiscountCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   code?: Prisma.SortOrder
+  title?: Prisma.SortOrder
   type?: Prisma.SortOrder
   value?: Prisma.SortOrder
+  appliesTo?: Prisma.SortOrder
   minSubtotalCents?: Prisma.SortOrder
+  minQuantity?: Prisma.SortOrder
   maxUsesCount?: Prisma.SortOrder
   usedCount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  startsAt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
+  automatic?: Prisma.SortOrder
+  stackable?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  customerGroupId?: Prisma.SortOrder
+  rulesJson?: Prisma.SortOrder
   active?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -480,20 +682,31 @@ export type DiscountCountOrderByAggregateInput = {
 export type DiscountAvgOrderByAggregateInput = {
   value?: Prisma.SortOrder
   minSubtotalCents?: Prisma.SortOrder
+  minQuantity?: Prisma.SortOrder
   maxUsesCount?: Prisma.SortOrder
   usedCount?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
 }
 
 export type DiscountMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   code?: Prisma.SortOrder
+  title?: Prisma.SortOrder
   type?: Prisma.SortOrder
   value?: Prisma.SortOrder
+  appliesTo?: Prisma.SortOrder
   minSubtotalCents?: Prisma.SortOrder
+  minQuantity?: Prisma.SortOrder
   maxUsesCount?: Prisma.SortOrder
   usedCount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  startsAt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
+  automatic?: Prisma.SortOrder
+  stackable?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  customerGroupId?: Prisma.SortOrder
+  rulesJson?: Prisma.SortOrder
   active?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -502,13 +715,22 @@ export type DiscountMaxOrderByAggregateInput = {
 export type DiscountMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   code?: Prisma.SortOrder
+  title?: Prisma.SortOrder
   type?: Prisma.SortOrder
   value?: Prisma.SortOrder
+  appliesTo?: Prisma.SortOrder
   minSubtotalCents?: Prisma.SortOrder
+  minQuantity?: Prisma.SortOrder
   maxUsesCount?: Prisma.SortOrder
   usedCount?: Prisma.SortOrder
   currency?: Prisma.SortOrder
+  startsAt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
+  automatic?: Prisma.SortOrder
+  stackable?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  customerGroupId?: Prisma.SortOrder
+  rulesJson?: Prisma.SortOrder
   active?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -517,37 +739,363 @@ export type DiscountMinOrderByAggregateInput = {
 export type DiscountSumOrderByAggregateInput = {
   value?: Prisma.SortOrder
   minSubtotalCents?: Prisma.SortOrder
+  minQuantity?: Prisma.SortOrder
   maxUsesCount?: Prisma.SortOrder
   usedCount?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
 }
 
+export type DiscountScalarRelationFilter = {
+  is?: Prisma.DiscountWhereInput
+  isNot?: Prisma.DiscountWhereInput
+}
+
+export type DiscountCreateNestedOneWithoutCartDiscountsInput = {
+  create?: Prisma.XOR<Prisma.DiscountCreateWithoutCartDiscountsInput, Prisma.DiscountUncheckedCreateWithoutCartDiscountsInput>
+  connectOrCreate?: Prisma.DiscountCreateOrConnectWithoutCartDiscountsInput
+  connect?: Prisma.DiscountWhereUniqueInput
+}
+
+export type DiscountUpdateOneRequiredWithoutCartDiscountsNestedInput = {
+  create?: Prisma.XOR<Prisma.DiscountCreateWithoutCartDiscountsInput, Prisma.DiscountUncheckedCreateWithoutCartDiscountsInput>
+  connectOrCreate?: Prisma.DiscountCreateOrConnectWithoutCartDiscountsInput
+  upsert?: Prisma.DiscountUpsertWithoutCartDiscountsInput
+  connect?: Prisma.DiscountWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DiscountUpdateToOneWithWhereWithoutCartDiscountsInput, Prisma.DiscountUpdateWithoutCartDiscountsInput>, Prisma.DiscountUncheckedUpdateWithoutCartDiscountsInput>
+}
+
+export type DiscountCreateNestedOneWithoutOrderDiscountsInput = {
+  create?: Prisma.XOR<Prisma.DiscountCreateWithoutOrderDiscountsInput, Prisma.DiscountUncheckedCreateWithoutOrderDiscountsInput>
+  connectOrCreate?: Prisma.DiscountCreateOrConnectWithoutOrderDiscountsInput
+  connect?: Prisma.DiscountWhereUniqueInput
+}
+
+export type DiscountUpdateOneRequiredWithoutOrderDiscountsNestedInput = {
+  create?: Prisma.XOR<Prisma.DiscountCreateWithoutOrderDiscountsInput, Prisma.DiscountUncheckedCreateWithoutOrderDiscountsInput>
+  connectOrCreate?: Prisma.DiscountCreateOrConnectWithoutOrderDiscountsInput
+  upsert?: Prisma.DiscountUpsertWithoutOrderDiscountsInput
+  connect?: Prisma.DiscountWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DiscountUpdateToOneWithWhereWithoutOrderDiscountsInput, Prisma.DiscountUpdateWithoutOrderDiscountsInput>, Prisma.DiscountUncheckedUpdateWithoutOrderDiscountsInput>
+}
+
+export type DiscountCreateWithoutCartDiscountsInput = {
+  id?: string
+  code: string
+  title?: string | null
+  type: string
+  value: number
+  appliesTo?: string
+  minSubtotalCents?: number | null
+  minQuantity?: number | null
+  maxUsesCount?: number | null
+  usedCount?: number
+  currency?: string | null
+  startsAt?: Date | string | null
+  expiresAt?: Date | string | null
+  automatic?: boolean
+  stackable?: boolean
+  priority?: number
+  customerGroupId?: string | null
+  rulesJson?: string | null
+  active?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  orderDiscounts?: Prisma.OrderDiscountCreateNestedManyWithoutDiscountInput
+}
+
+export type DiscountUncheckedCreateWithoutCartDiscountsInput = {
+  id?: string
+  code: string
+  title?: string | null
+  type: string
+  value: number
+  appliesTo?: string
+  minSubtotalCents?: number | null
+  minQuantity?: number | null
+  maxUsesCount?: number | null
+  usedCount?: number
+  currency?: string | null
+  startsAt?: Date | string | null
+  expiresAt?: Date | string | null
+  automatic?: boolean
+  stackable?: boolean
+  priority?: number
+  customerGroupId?: string | null
+  rulesJson?: string | null
+  active?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  orderDiscounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutDiscountInput
+}
+
+export type DiscountCreateOrConnectWithoutCartDiscountsInput = {
+  where: Prisma.DiscountWhereUniqueInput
+  create: Prisma.XOR<Prisma.DiscountCreateWithoutCartDiscountsInput, Prisma.DiscountUncheckedCreateWithoutCartDiscountsInput>
+}
+
+export type DiscountUpsertWithoutCartDiscountsInput = {
+  update: Prisma.XOR<Prisma.DiscountUpdateWithoutCartDiscountsInput, Prisma.DiscountUncheckedUpdateWithoutCartDiscountsInput>
+  create: Prisma.XOR<Prisma.DiscountCreateWithoutCartDiscountsInput, Prisma.DiscountUncheckedCreateWithoutCartDiscountsInput>
+  where?: Prisma.DiscountWhereInput
+}
+
+export type DiscountUpdateToOneWithWhereWithoutCartDiscountsInput = {
+  where?: Prisma.DiscountWhereInput
+  data: Prisma.XOR<Prisma.DiscountUpdateWithoutCartDiscountsInput, Prisma.DiscountUncheckedUpdateWithoutCartDiscountsInput>
+}
+
+export type DiscountUpdateWithoutCartDiscountsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.IntFieldUpdateOperationsInput | number
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
+  minSubtotalCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  minQuantity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxUsesCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  usedCount?: Prisma.IntFieldUpdateOperationsInput | number
+  currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  automatic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stackable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
+  customerGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rulesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  orderDiscounts?: Prisma.OrderDiscountUpdateManyWithoutDiscountNestedInput
+}
+
+export type DiscountUncheckedUpdateWithoutCartDiscountsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.IntFieldUpdateOperationsInput | number
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
+  minSubtotalCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  minQuantity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxUsesCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  usedCount?: Prisma.IntFieldUpdateOperationsInput | number
+  currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  automatic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stackable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
+  customerGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rulesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  orderDiscounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutDiscountNestedInput
+}
+
+export type DiscountCreateWithoutOrderDiscountsInput = {
+  id?: string
+  code: string
+  title?: string | null
+  type: string
+  value: number
+  appliesTo?: string
+  minSubtotalCents?: number | null
+  minQuantity?: number | null
+  maxUsesCount?: number | null
+  usedCount?: number
+  currency?: string | null
+  startsAt?: Date | string | null
+  expiresAt?: Date | string | null
+  automatic?: boolean
+  stackable?: boolean
+  priority?: number
+  customerGroupId?: string | null
+  rulesJson?: string | null
+  active?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  cartDiscounts?: Prisma.CartDiscountCreateNestedManyWithoutDiscountInput
+}
+
+export type DiscountUncheckedCreateWithoutOrderDiscountsInput = {
+  id?: string
+  code: string
+  title?: string | null
+  type: string
+  value: number
+  appliesTo?: string
+  minSubtotalCents?: number | null
+  minQuantity?: number | null
+  maxUsesCount?: number | null
+  usedCount?: number
+  currency?: string | null
+  startsAt?: Date | string | null
+  expiresAt?: Date | string | null
+  automatic?: boolean
+  stackable?: boolean
+  priority?: number
+  customerGroupId?: string | null
+  rulesJson?: string | null
+  active?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  cartDiscounts?: Prisma.CartDiscountUncheckedCreateNestedManyWithoutDiscountInput
+}
+
+export type DiscountCreateOrConnectWithoutOrderDiscountsInput = {
+  where: Prisma.DiscountWhereUniqueInput
+  create: Prisma.XOR<Prisma.DiscountCreateWithoutOrderDiscountsInput, Prisma.DiscountUncheckedCreateWithoutOrderDiscountsInput>
+}
+
+export type DiscountUpsertWithoutOrderDiscountsInput = {
+  update: Prisma.XOR<Prisma.DiscountUpdateWithoutOrderDiscountsInput, Prisma.DiscountUncheckedUpdateWithoutOrderDiscountsInput>
+  create: Prisma.XOR<Prisma.DiscountCreateWithoutOrderDiscountsInput, Prisma.DiscountUncheckedCreateWithoutOrderDiscountsInput>
+  where?: Prisma.DiscountWhereInput
+}
+
+export type DiscountUpdateToOneWithWhereWithoutOrderDiscountsInput = {
+  where?: Prisma.DiscountWhereInput
+  data: Prisma.XOR<Prisma.DiscountUpdateWithoutOrderDiscountsInput, Prisma.DiscountUncheckedUpdateWithoutOrderDiscountsInput>
+}
+
+export type DiscountUpdateWithoutOrderDiscountsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.IntFieldUpdateOperationsInput | number
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
+  minSubtotalCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  minQuantity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxUsesCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  usedCount?: Prisma.IntFieldUpdateOperationsInput | number
+  currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  automatic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stackable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
+  customerGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rulesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cartDiscounts?: Prisma.CartDiscountUpdateManyWithoutDiscountNestedInput
+}
+
+export type DiscountUncheckedUpdateWithoutOrderDiscountsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  value?: Prisma.IntFieldUpdateOperationsInput | number
+  appliesTo?: Prisma.StringFieldUpdateOperationsInput | string
+  minSubtotalCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  minQuantity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxUsesCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  usedCount?: Prisma.IntFieldUpdateOperationsInput | number
+  currency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  automatic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stackable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
+  customerGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rulesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cartDiscounts?: Prisma.CartDiscountUncheckedUpdateManyWithoutDiscountNestedInput
+}
+
+
+/**
+ * Count Type DiscountCountOutputType
+ */
+
+export type DiscountCountOutputType = {
+  cartDiscounts: number
+  orderDiscounts: number
+}
+
+export type DiscountCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  cartDiscounts?: boolean | DiscountCountOutputTypeCountCartDiscountsArgs
+  orderDiscounts?: boolean | DiscountCountOutputTypeCountOrderDiscountsArgs
+}
+
+/**
+ * DiscountCountOutputType without action
+ */
+export type DiscountCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DiscountCountOutputType
+   */
+  select?: Prisma.DiscountCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * DiscountCountOutputType without action
+ */
+export type DiscountCountOutputTypeCountCartDiscountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CartDiscountWhereInput
+}
+
+/**
+ * DiscountCountOutputType without action
+ */
+export type DiscountCountOutputTypeCountOrderDiscountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OrderDiscountWhereInput
+}
 
 
 export type DiscountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   code?: boolean
+  title?: boolean
   type?: boolean
   value?: boolean
+  appliesTo?: boolean
   minSubtotalCents?: boolean
+  minQuantity?: boolean
   maxUsesCount?: boolean
   usedCount?: boolean
   currency?: boolean
+  startsAt?: boolean
   expiresAt?: boolean
+  automatic?: boolean
+  stackable?: boolean
+  priority?: boolean
+  customerGroupId?: boolean
+  rulesJson?: boolean
   active?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  cartDiscounts?: boolean | Prisma.Discount$cartDiscountsArgs<ExtArgs>
+  orderDiscounts?: boolean | Prisma.Discount$orderDiscountsArgs<ExtArgs>
+  _count?: boolean | Prisma.DiscountCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["discount"]>
 
 export type DiscountSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   code?: boolean
+  title?: boolean
   type?: boolean
   value?: boolean
+  appliesTo?: boolean
   minSubtotalCents?: boolean
+  minQuantity?: boolean
   maxUsesCount?: boolean
   usedCount?: boolean
   currency?: boolean
+  startsAt?: boolean
   expiresAt?: boolean
+  automatic?: boolean
+  stackable?: boolean
+  priority?: boolean
+  customerGroupId?: boolean
+  rulesJson?: boolean
   active?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -556,13 +1104,22 @@ export type DiscountSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type DiscountSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   code?: boolean
+  title?: boolean
   type?: boolean
   value?: boolean
+  appliesTo?: boolean
   minSubtotalCents?: boolean
+  minQuantity?: boolean
   maxUsesCount?: boolean
   usedCount?: boolean
   currency?: boolean
+  startsAt?: boolean
   expiresAt?: boolean
+  automatic?: boolean
+  stackable?: boolean
+  priority?: boolean
+  customerGroupId?: boolean
+  rulesJson?: boolean
   active?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -571,33 +1128,61 @@ export type DiscountSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type DiscountSelectScalar = {
   id?: boolean
   code?: boolean
+  title?: boolean
   type?: boolean
   value?: boolean
+  appliesTo?: boolean
   minSubtotalCents?: boolean
+  minQuantity?: boolean
   maxUsesCount?: boolean
   usedCount?: boolean
   currency?: boolean
+  startsAt?: boolean
   expiresAt?: boolean
+  automatic?: boolean
+  stackable?: boolean
+  priority?: boolean
+  customerGroupId?: boolean
+  rulesJson?: boolean
   active?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type DiscountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "type" | "value" | "minSubtotalCents" | "maxUsesCount" | "usedCount" | "currency" | "expiresAt" | "active" | "createdAt" | "updatedAt", ExtArgs["result"]["discount"]>
+export type DiscountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "title" | "type" | "value" | "appliesTo" | "minSubtotalCents" | "minQuantity" | "maxUsesCount" | "usedCount" | "currency" | "startsAt" | "expiresAt" | "automatic" | "stackable" | "priority" | "customerGroupId" | "rulesJson" | "active" | "createdAt" | "updatedAt", ExtArgs["result"]["discount"]>
+export type DiscountInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  cartDiscounts?: boolean | Prisma.Discount$cartDiscountsArgs<ExtArgs>
+  orderDiscounts?: boolean | Prisma.Discount$orderDiscountsArgs<ExtArgs>
+  _count?: boolean | Prisma.DiscountCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type DiscountIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type DiscountIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $DiscountPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Discount"
-  objects: {}
+  objects: {
+    cartDiscounts: Prisma.$CartDiscountPayload<ExtArgs>[]
+    orderDiscounts: Prisma.$OrderDiscountPayload<ExtArgs>[]
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     code: string
+    title: string | null
     type: string
     value: number
+    appliesTo: string
     minSubtotalCents: number | null
+    minQuantity: number | null
     maxUsesCount: number | null
     usedCount: number
     currency: string | null
+    startsAt: Date | null
     expiresAt: Date | null
+    automatic: boolean
+    stackable: boolean
+    priority: number
+    customerGroupId: string | null
+    rulesJson: string | null
     active: boolean
     createdAt: Date
     updatedAt: Date
@@ -995,6 +1580,8 @@ readonly fields: DiscountFieldRefs;
  */
 export interface Prisma__DiscountClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  cartDiscounts<T extends Prisma.Discount$cartDiscountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Discount$cartDiscountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CartDiscountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  orderDiscounts<T extends Prisma.Discount$orderDiscountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Discount$orderDiscountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderDiscountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1026,13 +1613,22 @@ export interface Prisma__DiscountClient<T, Null = never, ExtArgs extends runtime
 export interface DiscountFieldRefs {
   readonly id: Prisma.FieldRef<"Discount", 'String'>
   readonly code: Prisma.FieldRef<"Discount", 'String'>
+  readonly title: Prisma.FieldRef<"Discount", 'String'>
   readonly type: Prisma.FieldRef<"Discount", 'String'>
   readonly value: Prisma.FieldRef<"Discount", 'Int'>
+  readonly appliesTo: Prisma.FieldRef<"Discount", 'String'>
   readonly minSubtotalCents: Prisma.FieldRef<"Discount", 'Int'>
+  readonly minQuantity: Prisma.FieldRef<"Discount", 'Int'>
   readonly maxUsesCount: Prisma.FieldRef<"Discount", 'Int'>
   readonly usedCount: Prisma.FieldRef<"Discount", 'Int'>
   readonly currency: Prisma.FieldRef<"Discount", 'String'>
+  readonly startsAt: Prisma.FieldRef<"Discount", 'DateTime'>
   readonly expiresAt: Prisma.FieldRef<"Discount", 'DateTime'>
+  readonly automatic: Prisma.FieldRef<"Discount", 'Boolean'>
+  readonly stackable: Prisma.FieldRef<"Discount", 'Boolean'>
+  readonly priority: Prisma.FieldRef<"Discount", 'Int'>
+  readonly customerGroupId: Prisma.FieldRef<"Discount", 'String'>
+  readonly rulesJson: Prisma.FieldRef<"Discount", 'String'>
   readonly active: Prisma.FieldRef<"Discount", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Discount", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Discount", 'DateTime'>
@@ -1053,6 +1649,10 @@ export type DiscountFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   omit?: Prisma.DiscountOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscountInclude<ExtArgs> | null
+  /**
    * Filter, which Discount to fetch.
    */
   where: Prisma.DiscountWhereUniqueInput
@@ -1071,6 +1671,10 @@ export type DiscountFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensio
    */
   omit?: Prisma.DiscountOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscountInclude<ExtArgs> | null
+  /**
    * Filter, which Discount to fetch.
    */
   where: Prisma.DiscountWhereUniqueInput
@@ -1088,6 +1692,10 @@ export type DiscountFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the Discount
    */
   omit?: Prisma.DiscountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscountInclude<ExtArgs> | null
   /**
    * Filter, which Discount to fetch.
    */
@@ -1137,6 +1745,10 @@ export type DiscountFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.DiscountOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscountInclude<ExtArgs> | null
+  /**
    * Filter, which Discount to fetch.
    */
   where?: Prisma.DiscountWhereInput
@@ -1184,6 +1796,10 @@ export type DiscountFindManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Omit specific fields from the Discount
    */
   omit?: Prisma.DiscountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscountInclude<ExtArgs> | null
   /**
    * Filter, which Discounts to fetch.
    */
@@ -1233,6 +1849,10 @@ export type DiscountCreateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   omit?: Prisma.DiscountOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscountInclude<ExtArgs> | null
+  /**
    * The data needed to create a Discount.
    */
   data: Prisma.XOR<Prisma.DiscountCreateInput, Prisma.DiscountUncheckedCreateInput>
@@ -1278,6 +1898,10 @@ export type DiscountUpdateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Omit specific fields from the Discount
    */
   omit?: Prisma.DiscountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscountInclude<ExtArgs> | null
   /**
    * The data needed to update a Discount.
    */
@@ -1345,6 +1969,10 @@ export type DiscountUpsertArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   omit?: Prisma.DiscountOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscountInclude<ExtArgs> | null
+  /**
    * The filter to search for the Discount to update in case it exists.
    */
   where: Prisma.DiscountWhereUniqueInput
@@ -1371,6 +1999,10 @@ export type DiscountDeleteArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   omit?: Prisma.DiscountOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscountInclude<ExtArgs> | null
+  /**
    * Filter which Discount to delete.
    */
   where: Prisma.DiscountWhereUniqueInput
@@ -1391,6 +2023,54 @@ export type DiscountDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
+ * Discount.cartDiscounts
+ */
+export type Discount$cartDiscountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CartDiscount
+   */
+  select?: Prisma.CartDiscountSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CartDiscount
+   */
+  omit?: Prisma.CartDiscountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CartDiscountInclude<ExtArgs> | null
+  where?: Prisma.CartDiscountWhereInput
+  orderBy?: Prisma.CartDiscountOrderByWithRelationInput | Prisma.CartDiscountOrderByWithRelationInput[]
+  cursor?: Prisma.CartDiscountWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CartDiscountScalarFieldEnum | Prisma.CartDiscountScalarFieldEnum[]
+}
+
+/**
+ * Discount.orderDiscounts
+ */
+export type Discount$orderDiscountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OrderDiscount
+   */
+  select?: Prisma.OrderDiscountSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OrderDiscount
+   */
+  omit?: Prisma.OrderDiscountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OrderDiscountInclude<ExtArgs> | null
+  where?: Prisma.OrderDiscountWhereInput
+  orderBy?: Prisma.OrderDiscountOrderByWithRelationInput | Prisma.OrderDiscountOrderByWithRelationInput[]
+  cursor?: Prisma.OrderDiscountWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OrderDiscountScalarFieldEnum | Prisma.OrderDiscountScalarFieldEnum[]
+}
+
+/**
  * Discount without action
  */
 export type DiscountDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1402,4 +2082,8 @@ export type DiscountDefaultArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Omit specific fields from the Discount
    */
   omit?: Prisma.DiscountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscountInclude<ExtArgs> | null
 }

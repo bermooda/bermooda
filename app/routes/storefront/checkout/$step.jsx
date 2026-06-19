@@ -3,6 +3,7 @@ import { useLoaderData } from 'react-router';
 
 import logger from '#/utils/logger.server';
 
+import { validateAddress } from '#/core/address-validation/index.server';
 import { getCart } from '#/core/cart/index.server';
 import {
   advanceStep,
@@ -14,9 +15,11 @@ import { getRequestLocale } from '#/core/i18n/index.server';
 import { placeOrder } from '#/core/orders/index.server';
 import {
   createCheckoutSession as createPaymentSession,
+  getProvider as getPaymentProvider,
   listProvidersWithDetails,
 } from '#/core/payments/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
+import { computeTotals } from '#/core/checkout/totals.server';
 import CheckoutLayout from '#/themes/default/components/checkout-layout';
 
 const VALID_STEPS = ['address', 'shipping', 'payment', 'review'];
@@ -81,7 +84,7 @@ export async function loader({ request, params }) {
   let session = sessionId ? await getCheckoutSession(sessionId) : null;
 
   if (!session) {
-    session = await createCheckoutSession({ cartId: cart.id, currency });
+    session = await createCheckoutSession(cart.id);
     sessionId = session.id;
   }
 
@@ -100,12 +103,24 @@ export async function loader({ request, params }) {
   // Shipping quotes: needed on shipping step and review step (for recap)
   const needsQuotes = step === 'shipping' || step === 'review';
 
-  const [shippingQuotes, paymentProviders] = await Promise.all([
+  const [shippingQuotes, paymentProviders, totals] = await Promise.all([
     needsQuotes && shippingAddress
       ? getAllQuotes({ cart, shippingAddress })
       : Promise.resolve([]),
-    // Return { id, name }[] objects so the UI doesn't need to transform
     Promise.resolve(listProvidersWithDetails()),
+    step === 'review' || step === 'payment'
+      ? computeTotals({
+          cart,
+          cartId: cart.id,
+          shippingAddress,
+          couponCode: session.couponCode ?? undefined,
+          shippingOptionId: session.shippingOptionJson
+            ? JSON.parse(session.shippingOptionJson)?.id
+            : undefined,
+          taxExempt: session.taxExempt ?? false,
+          vatId: session.vatId ?? undefined,
+        })
+      : Promise.resolve(null),
   ]);
 
   const headers = new Headers();
@@ -121,6 +136,7 @@ export async function loader({ request, params }) {
       cart,
       shippingQuotes,
       paymentProviders,
+      totals,
       locale,
       currency,
     },
@@ -160,6 +176,11 @@ export async function action({ request, params }) {
     const origin = new URL(request.url).origin;
     const providerId = order.paymentProvider ?? 'stripe';
 
+    // Manual/offline payment — no redirect; order stays pending_payment
+    if (providerId === 'manual') {
+      return redirect(`${origin}/thank-you/${order.orderNumber}`);
+    }
+
     try {
       const paymentSession = await createPaymentSession(providerId, {
         cart: cartSnapshot,
@@ -167,6 +188,11 @@ export async function action({ request, params }) {
         successUrl: `${origin}/thank-you/${order.orderNumber}`,
         cancelUrl: `${origin}/checkout/review`,
       });
+
+      const provider = getPaymentProvider(providerId);
+      if (provider.requiresRedirect === false || paymentSession.manual) {
+        return redirect(`${origin}/thank-you/${order.orderNumber}`);
+      }
 
       return redirect(paymentSession.url);
     } catch (err) {
@@ -198,10 +224,24 @@ export async function action({ request, params }) {
       phone: rawData.phone || null,
     };
 
+    let normalizedAddr = addr;
+    try {
+      const validation = await validateAddress(addr);
+      if (!validation.valid) {
+        return { error: 'Please check your shipping address.' };
+      }
+      normalizedAddr = validation.normalized ?? addr;
+    } catch (err) {
+      logger.warn({ err }, 'Address validation failed — continuing with raw address');
+    }
+
     stepData = {
-      shippingAddressJson: JSON.stringify(addr),
+      shippingAddressJson: JSON.stringify(normalizedAddr),
       billingAddressJson: rawData.billingAddressJson ?? null,
       email: rawData.email || null,
+      vatId: rawData.vatId?.toString().trim() || null,
+      taxExempt: rawData.taxExempt === 'on' || rawData.taxExempt === 'true',
+      couponCode: rawData.couponCode?.toString().trim().toUpperCase() || null,
     };
   } else if (step === 'shipping') {
     // Look up the full shipping option so we can persist it as JSON

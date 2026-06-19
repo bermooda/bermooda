@@ -4,7 +4,7 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
-import { validateDiscount } from '#/core/discounts/index.server';
+import { resolvePromotions, persistOrderDiscounts } from '#/core/discounts/index.server';
 import { emit } from '#/core/events/index.server';
 import {
   decrementInventory,
@@ -18,6 +18,7 @@ import { computeActiveTax } from '#/core/tax/index.server';
 
 const VALID_ORDER_STATUSES = new Set([
   'pending',
+  'pending_payment',
   'confirmed',
   'paid',
   'fulfilled',
@@ -60,7 +61,7 @@ export async function placeOrder(
         cart: {
           include: {
             lines: {
-              include: { variant: true },
+              include: { variant: { include: { taxClass: true } } },
             },
           },
         },
@@ -82,27 +83,28 @@ export async function placeOrder(
     // 2. Compute order number
     const orderNumber = 'ORD-' + Date.now();
 
-    // 3. Re-compute totals from cart lines
+    // 3. Re-compute totals via promotions engine + tax classes
     const subtotalCents = lines.reduce(
       (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
       0
     );
 
-    let discountCents = 0;
-    if (session.couponCode) {
-      // Validate discount without side effects, then atomically increment usedCount
-      const discountResult = await validateDiscount(session.couponCode, {
-        subtotalCents,
-        currency: cart.currency,
-      });
-      discountCents = discountResult.discountCents;
+    const shippingAddress = session.shippingAddressJson
+      ? JSON.parse(session.shippingAddressJson)
+      : null;
 
-      // Atomically increment usedCount inside the transaction
-      await tx.discount.update({
-        where: { code: session.couponCode },
-        data: { usedCount: { increment: 1 } },
-      });
-    }
+    let discountCents = 0;
+    let appliedDiscounts = [];
+    let freeShipping = false;
+
+    const promo = await resolvePromotions({
+      cart,
+      cartId,
+      couponCode: session.couponCode ?? undefined,
+    });
+    discountCents = promo.discountCents;
+    appliedDiscounts = promo.applied;
+    freeShipping = promo.freeShipping;
 
     // Parse shipping option for shippingCents
     let shippingCents = 0;
@@ -114,22 +116,28 @@ export async function placeOrder(
         // malformed JSON — treat as zero
       }
     }
+    if (freeShipping) shippingCents = 0;
 
-    // W0-2: Compute real tax from the session's shipping address + provider.
-    // Uses the active tax provider (default: simple_percent). Reads settings
-    // from the DB (read-only, safe to call inside the transaction context).
+    // W3: tax with per-line tax classes + VAT/GST exemption
     let taxCents = 0;
-    const shippingAddress = session.shippingAddressJson
-      ? JSON.parse(session.shippingAddressJson)
-      : null;
+    const taxExempt = session.taxExempt ?? false;
 
-    if (shippingAddress) {
+    if (shippingAddress && !taxExempt) {
       try {
+        const taxLines = lines.map((line) => ({
+          priceCents: line.priceCentsSnapshot,
+          quantity: line.quantity,
+          taxClassId: line.variant?.taxClassId ?? null,
+          taxClassRate: line.variant?.taxClass?.rate ?? null,
+        }));
+
         const taxResult = await computeActiveTax({
           subtotalCents: subtotalCents - discountCents,
           shippingCents,
           shippingAddress,
           currency: cart.currency,
+          lines: taxLines,
+          vatId: session.vatId ?? undefined,
         });
         taxCents = Math.round(taxResult.taxCents);
       } catch (err) {
@@ -141,6 +149,11 @@ export async function placeOrder(
     }
 
     const totalCents = subtotalCents - discountCents + shippingCents + taxCents;
+
+    const effectiveProvider =
+      paymentProvider ?? session.paymentProvider ?? null;
+    const initialStatus =
+      effectiveProvider === 'manual' ? 'pending_payment' : 'pending';
 
     // 4. Decrement inventory (pass tx so it's part of the same transaction)
     const inventoryItems = lines
@@ -157,7 +170,7 @@ export async function placeOrder(
         orderNumber,
         customerId: session.customerId ?? null,
         email: session.email ?? '',
-        status: 'pending',
+        status: initialStatus,
         currency: cart.currency,
         subtotalCents,
         shippingCents,
@@ -166,11 +179,18 @@ export async function placeOrder(
         totalCents,
         shippingAddressJson: session.shippingAddressJson ?? '{}',
         billingAddressJson: session.billingAddressJson ?? null,
-        paymentProvider: paymentProvider ?? session.paymentProvider ?? null,
+        paymentProvider: effectiveProvider,
         paymentIntentId: paymentIntentId ?? null,
-        couponCode: session.couponCode ?? null,
+        couponCode: promo.primaryCode ?? session.couponCode ?? null,
+        vatId: session.vatId ?? null,
+        taxExempt: session.taxExempt ?? false,
       },
     });
+
+    // Persist stacked discounts on the order
+    if (appliedDiscounts.length > 0) {
+      await persistOrderDiscounts(order.id, appliedDiscounts, tx);
+    }
 
     // 6. Create OrderLine rows from cart lines
     for (const line of lines) {

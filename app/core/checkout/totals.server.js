@@ -1,7 +1,7 @@
 // app/core/checkout/totals.server.js
-// Totals engine: compute subtotal, discount, shipping, tax, and total for a cart+checkout state.
+// Totals engine: subtotal, multi-discount, shipping, tax-class-aware tax, total.
 
-import { validateDiscount } from '#/core/discounts/index.server';
+import { resolvePromotions } from '#/core/discounts/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
 
@@ -12,66 +12,99 @@ import { computeActiveTax } from '#/core/tax/index.server';
 /**
  * Compute full totals for a cart + checkout state.
  *
- * @param {{ cart: object, shippingAddress?: object, couponCode?: string, shippingOptionId?: string }} params
+ * @param {{
+ *   cart: object,
+ *   cartId?: string,
+ *   shippingAddress?: object,
+ *   couponCode?: string,
+ *   couponCodes?: string[],
+ *   shippingOptionId?: string,
+ *   taxExempt?: boolean,
+ *   vatId?: string,
+ *   customerGroupId?: string,
+ * }} params
  * @returns {Promise<{
  *   subtotalCents: number,
  *   discountCents: number,
  *   shippingCents: number,
  *   taxCents: number,
  *   totalCents: number,
- *   shippingOption: object|null
+ *   shippingOption: object|null,
+ *   appliedDiscounts: object[],
+ *   freeShipping: boolean,
+ *   primaryCouponCode: string|null
  * }>}
  */
 export async function computeTotals({
   cart,
+  cartId,
   shippingAddress,
   couponCode,
+  couponCodes,
   shippingOptionId,
+  taxExempt = false,
+  vatId,
+  customerGroupId,
 }) {
-  // 1. Subtotal
   const lines = cart?.lines ?? [];
   const subtotalCents = lines.reduce(
     (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
     0
   );
 
-  // 2. Discount — validate without incrementing usedCount
+  // 1. Promotions — automatic + stacked coupon codes
   let discountCents = 0;
-  if (couponCode) {
-    try {
-      const result = await validateDiscount(couponCode, {
-        subtotalCents,
-        currency: cart?.currency ?? 'USD',
-      });
-      discountCents = result.discountCents;
-    } catch {
-      // Invalid/expired/unknown coupon — treat as no discount
-      discountCents = 0;
-    }
+  let freeShipping = false;
+  let appliedDiscounts = [];
+  let primaryCouponCode = null;
+
+  try {
+    const promo = await resolvePromotions({
+      cart,
+      cartId,
+      couponCode,
+      couponCodes,
+      customerGroupId,
+    });
+    discountCents = promo.discountCents;
+    freeShipping = promo.freeShipping;
+    appliedDiscounts = promo.applied;
+    primaryCouponCode = promo.primaryCode;
+  } catch {
+    discountCents = 0;
   }
 
-  // 3. Shipping + Tax — both require a shippingAddress
+  // 2. Shipping + tax — require shippingAddress
   let shippingCents = 0;
   let taxCents = 0;
   let shippingOption = null;
 
   if (shippingAddress) {
-    // Shipping
     const quotes = await getAllQuotes({ cart, shippingAddress });
     if (shippingOptionId) {
       shippingOption = quotes.find((q) => q.id === shippingOptionId) ?? null;
     }
     shippingCents = shippingOption ? shippingOption.priceCents : 0;
+    if (freeShipping) shippingCents = 0;
 
-    // Tax — base is subtotal minus discount
-    const taxBase = subtotalCents - discountCents;
-    const taxResult = await computeActiveTax({
-      subtotalCents: taxBase,
-      shippingCents,
-      shippingAddress,
-      currency: cart?.currency ?? 'USD',
-    });
-    taxCents = Math.round(taxResult.taxCents);
+    if (!taxExempt) {
+      const taxLines = lines.map((line) => ({
+        priceCents: line.priceCentsSnapshot,
+        quantity: line.quantity,
+        taxClassId: line.variant?.taxClassId ?? null,
+        taxClassRate: line.variant?.taxClass?.rate ?? null,
+      }));
+
+      const taxResult = await computeActiveTax({
+        subtotalCents: subtotalCents - discountCents,
+        shippingCents,
+        shippingAddress,
+        currency: cart?.currency ?? 'USD',
+        lines: taxLines,
+        vatId,
+      });
+      taxCents = Math.round(taxResult.taxCents);
+    }
   }
 
   const totalCents = subtotalCents - discountCents + shippingCents + taxCents;
@@ -83,5 +116,8 @@ export async function computeTotals({
     taxCents,
     totalCents,
     shippingOption,
+    appliedDiscounts,
+    freeShipping,
+    primaryCouponCode,
   };
 }

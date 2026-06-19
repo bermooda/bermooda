@@ -26,6 +26,8 @@ const log = logger.child({ provider: 'stripe' });
  */
 export const stripeProvider = {
   name: 'Stripe',
+  requiresRedirect: true,
+  supportsPaymentElement: true,
 
   /**
    * Create a Stripe Checkout session using dynamic price_data for each cart line.
@@ -166,5 +168,64 @@ export const stripeProvider = {
     );
 
     return { refundId: refund.id, status: refund.status };
+  },
+
+  /**
+   * Create a PaymentIntent for Stripe Payment Element / saved methods.
+   * Optional express checkout (Apple Pay / Google Pay) via automatic_payment_methods.
+   *
+   * @param {{ cart: object, orderId?: string, customerId?: string, savePaymentMethod?: boolean }} params
+   * @returns {Promise<{ clientSecret: string, paymentIntentId: string }>}
+   */
+  async createPaymentIntent({
+    cart,
+    orderId,
+    customerId,
+    savePaymentMethod = false,
+  }) {
+    const amount = (cart?.lines ?? []).reduce(
+      (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
+      0
+    );
+
+    const intentParams = {
+      amount,
+      currency: (cart?.currency ?? 'USD').toLowerCase(),
+      automatic_payment_methods: { enabled: true },
+      metadata: orderId ? { orderId } : {},
+    };
+
+    if (customerId) {
+      intentParams.customer = customerId;
+      if (savePaymentMethod) {
+        intentParams.setup_future_usage = 'off_session';
+      }
+    }
+
+    const intent = await stripe.paymentIntents.create(intentParams);
+
+    log.info(
+      { intentId: intent.id, orderId },
+      'Stripe PaymentIntent created'
+    );
+
+    return {
+      clientSecret: intent.client_secret,
+      paymentIntentId: intent.id,
+    };
+  },
+
+  /**
+   * List saved payment methods for a Stripe customer.
+   *
+   * @param {string} stripeCustomerId
+   * @returns {Promise<object[]>}
+   */
+  async listSavedPaymentMethods(stripeCustomerId) {
+    const methods = await stripe.paymentMethods.list({
+      customer: stripeCustomerId,
+      type: 'card',
+    });
+    return methods.data;
   },
 };

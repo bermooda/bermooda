@@ -22,7 +22,7 @@ vi.mock('#/core/cart/index.server', () => ({
 }));
 
 vi.mock('#/core/discounts/index.server', () => ({
-  validateDiscount: vi.fn(),
+  resolvePromotions: vi.fn(),
 }));
 
 vi.mock('#/core/shipping/index.server', () => ({
@@ -46,7 +46,7 @@ import {
   abandonCheckoutSession,
 } from '#/core/checkout/pipeline.server';
 import { computeTotals } from '#/core/checkout/totals.server';
-import { validateDiscount } from '#/core/discounts/index.server';
+import { resolvePromotions } from '#/core/discounts/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
 
@@ -86,6 +86,12 @@ beforeEach(() => {
   // Safe defaults
   getAllQuotes.mockResolvedValue([]);
   computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
+  resolvePromotions.mockResolvedValue({
+    applied: [],
+    discountCents: 0,
+    freeShipping: false,
+    primaryCode: null,
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -141,18 +147,22 @@ describe('computeTotals — no shippingAddress', () => {
 // ---------------------------------------------------------------------------
 
 describe('computeTotals — with coupon code', () => {
-  it('applies discountCents from validateDiscount result', async () => {
-    const cart = makeCart(); // subtotal = 2500
-    validateDiscount.mockResolvedValue({ discountCents: 250 });
+  it('applies discountCents from resolvePromotions result', async () => {
+    const cart = makeCart();
+    resolvePromotions.mockResolvedValue({
+      applied: [{ code: 'SAVE10', discountCents: 250 }],
+      discountCents: 250,
+      freeShipping: false,
+      primaryCode: 'SAVE10',
+    });
 
     const result = await computeTotals({ cart, couponCode: 'SAVE10' });
 
-    expect(validateDiscount).toHaveBeenCalledWith('SAVE10', {
-      subtotalCents: 2500,
-      currency: 'USD',
-    });
+    expect(resolvePromotions).toHaveBeenCalledWith(
+      expect.objectContaining({ couponCode: 'SAVE10' })
+    );
     expect(result.discountCents).toBe(250);
-    expect(result.totalCents).toBe(2500 - 250); // no shipping or tax (no address)
+    expect(result.totalCents).toBe(2500 - 250);
   });
 
   it('uses discountCents=0 when couponCode is not provided', async () => {
@@ -160,13 +170,12 @@ describe('computeTotals — with coupon code', () => {
 
     const result = await computeTotals({ cart });
 
-    expect(validateDiscount).not.toHaveBeenCalled();
     expect(result.discountCents).toBe(0);
   });
 
-  it('silently sets discountCents=0 when validateDiscount throws', async () => {
+  it('silently sets discountCents=0 when resolvePromotions throws', async () => {
     const cart = makeCart();
-    validateDiscount.mockRejectedValue(new Error('DISCOUNT_EXPIRED'));
+    resolvePromotions.mockRejectedValue(new Error('DISCOUNT_EXPIRED'));
 
     const result = await computeTotals({ cart, couponCode: 'BADCODE' });
 
@@ -229,7 +238,12 @@ describe('computeTotals — totalCents formula', () => {
   it('totalCents = subtotal - discount + shipping + tax', async () => {
     const cart = makeCart(); // subtotal=2500
     const address = { country: 'AU' };
-    validateDiscount.mockResolvedValue({ discountCents: 250 });
+    resolvePromotions.mockResolvedValue({
+      applied: [{ code: 'SAVE10', discountCents: 250 }],
+      discountCents: 250,
+      freeShipping: false,
+      primaryCode: 'SAVE10',
+    });
     getAllQuotes.mockResolvedValue([{ id: 'opt_1', priceCents: 1500 }]);
     computeActiveTax.mockResolvedValue({ taxCents: 225, rate: 0.1 });
 

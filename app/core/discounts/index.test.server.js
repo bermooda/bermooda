@@ -6,10 +6,12 @@ vi.mock('#/libs/prisma.server', () => ({
   default: {
     discount: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
-      findMany: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
@@ -392,19 +394,22 @@ describe('deleteDiscount', () => {
 // ---------------------------------------------------------------------------
 
 describe('listDiscounts', () => {
-  it('returns all discounts with no filter', async () => {
+  it('returns discounts and total with no filter', async () => {
     prisma.discount.findMany.mockResolvedValue([makeDiscount()]);
+    prisma.discount.count.mockResolvedValue(1);
 
     const result = await listDiscounts();
 
     expect(prisma.discount.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: {} })
     );
-    expect(result).toHaveLength(1);
+    expect(result.discounts).toHaveLength(1);
+    expect(result.total).toBe(1);
   });
 
   it('filters by active when provided', async () => {
     prisma.discount.findMany.mockResolvedValue([]);
+    prisma.discount.count.mockResolvedValue(0);
 
     await listDiscounts({ active: true });
 
@@ -415,6 +420,7 @@ describe('listDiscounts', () => {
 
   it('applies pagination via page and limit', async () => {
     prisma.discount.findMany.mockResolvedValue([]);
+    prisma.discount.count.mockResolvedValue(0);
 
     await listDiscounts({ page: 3, limit: 5 });
 

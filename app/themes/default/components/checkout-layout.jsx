@@ -354,6 +354,26 @@ function AddressStep({ session, t, isSubmitting }) {
         />
       </div>
 
+      <div>
+        <FieldLabel htmlFor="vatId">VAT / GST ID (optional)</FieldLabel>
+        <TextInput
+          id="vatId"
+          name="vatId"
+          defaultValue={session?.vatId ?? ''}
+          placeholder="e.g. GB123456789"
+        />
+      </div>
+
+      <div>
+        <FieldLabel htmlFor="couponCode">Promo code (optional)</FieldLabel>
+        <TextInput
+          id="couponCode"
+          name="couponCode"
+          defaultValue={session?.couponCode ?? ''}
+          placeholder="SAVE10"
+        />
+      </div>
+
       <input type="hidden" name="_action" value="address" />
 
       <div className="pt-2">
@@ -472,30 +492,54 @@ function ShippingStep({
 // ---------------------------------------------------------------------------
 
 function PaymentStep({
-  session: _session,
+  session,
   cart,
   paymentProviders,
+  totals,
   currency,
   locale,
   t,
   isSubmitting,
 }) {
-  const firstProvider = paymentProviders?.[0];
-  const providerId = firstProvider?.id ?? 'stripe';
+  const defaultProvider =
+    session?.paymentProvider ?? paymentProviders?.[0]?.id ?? 'stripe';
 
-  const lines = cart?.lines ?? [];
-  const subtotalCents = lines.reduce(
+  const displayTotal = totals?.totalCents ?? cart?.lines?.reduce(
     (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
     0
   );
 
   return (
     <Form method="post" className="space-y-6">
-      <div className="rounded-xl border border-stone-200 bg-blue-50 p-4">
-        <p className="text-sm text-blue-800 dark:text-blue-200">
-          {t('checkout.redirectNotice')}
-        </p>
-      </div>
+      <fieldset>
+        <legend className="mb-3 text-sm font-semibold text-stone-900">
+          Payment method
+        </legend>
+        <div className="space-y-2">
+          {(paymentProviders ?? []).map((provider) => (
+            <label
+              key={provider.id}
+              className="flex cursor-pointer items-center justify-between rounded-xl border border-stone-200 bg-white p-4 shadow-sm transition-colors hover:border-stone-400 has-[:checked]:border-stone-900 has-[:checked]:bg-stone-50"
+            >
+              <div className="flex items-center gap-3">
+                <input
+                  type="radio"
+                  name="paymentProvider"
+                  value={provider.id}
+                  defaultChecked={provider.id === defaultProvider}
+                  className="h-4 w-4 border-stone-300 text-stone-900 focus:ring-stone-500"
+                />
+                <span className="text-sm font-medium text-stone-900">
+                  {provider.name}
+                </span>
+              </div>
+              {provider.supportsPaymentElement && (
+                <span className="text-xs text-stone-500">Cards · Apple Pay</span>
+              )}
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm ring-1 ring-stone-200/50">
         <div className="flex items-center justify-between">
@@ -503,12 +547,11 @@ function PaymentStep({
             {t('checkout.orderTotal')}
           </span>
           <span className="text-base font-bold text-stone-900">
-            {formatPrice(subtotalCents, currency, locale)}
+            {formatPrice(displayTotal, currency, locale)}
           </span>
         </div>
       </div>
 
-      <input type="hidden" name="paymentProvider" value={providerId} />
       <input type="hidden" name="_action" value="payment" />
 
       <SubmitButton disabled={isSubmitting}>
@@ -527,6 +570,7 @@ function ReviewStep({
   cart,
   shippingQuotes,
   paymentProviders,
+  totals,
   currency,
   locale,
   t,
@@ -535,18 +579,22 @@ function ReviewStep({
   const addr = session?.shippingAddress ?? {};
   const lines = cart?.lines ?? [];
 
-  // shippingQuotes is a flat array of ShippingOption objects from getAllQuotes
   const selectedOption = (shippingQuotes ?? []).find(
     (o) => o.id === session?.shippingOptionId
   );
   const shippingLabel = selectedOption?.name ?? t('checkout.standardShipping');
-  const shippingCents = selectedOption?.priceCents ?? 0;
+  const shippingCents = totals?.shippingCents ?? selectedOption?.priceCents ?? 0;
 
-  const subtotalCents = lines.reduce(
-    (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-    0
-  );
-  const totalCents = subtotalCents + shippingCents;
+  const subtotalCents =
+    totals?.subtotalCents ??
+    lines.reduce(
+      (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
+      0
+    );
+  const discountCents = totals?.discountCents ?? 0;
+  const taxCents = totals?.taxCents ?? 0;
+  const totalCents =
+    totals?.totalCents ?? subtotalCents - discountCents + shippingCents + taxCents;
 
   const selectedProvider = paymentProviders?.find(
     (p) => p.id === session?.paymentProvider
@@ -635,6 +683,12 @@ function ReviewStep({
           <span>{t('checkout.subtotal')}</span>
           <span>{formatPrice(subtotalCents, currency, locale)}</span>
         </div>
+        {discountCents > 0 && (
+          <div className="flex justify-between text-sm text-green-700">
+            <span>Discount</span>
+            <span>-{formatPrice(discountCents, currency, locale)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm text-stone-600">
           <span>{t('checkout.shipping')}</span>
           <span>
@@ -643,6 +697,12 @@ function ReviewStep({
               : formatPrice(shippingCents, currency, locale)}
           </span>
         </div>
+        {taxCents > 0 && (
+          <div className="flex justify-between text-sm text-stone-600">
+            <span>Tax</span>
+            <span>{formatPrice(taxCents, currency, locale)}</span>
+          </div>
+        )}
         <div className="flex justify-between border-t border-stone-200 pt-2 text-sm font-bold text-stone-900">
           <span>{t('checkout.total')}</span>
           <span>{formatPrice(totalCents, currency, locale)}</span>
@@ -669,6 +729,7 @@ export default function CheckoutLayout({
   cart,
   shippingQuotes,
   paymentProviders,
+  totals,
   locale,
   currency,
 }) {
@@ -704,6 +765,7 @@ export default function CheckoutLayout({
             session={session}
             cart={cart}
             paymentProviders={paymentProviders}
+            totals={totals}
             currency={effectiveCurrency}
             locale={effectiveLocale}
             t={t}
@@ -717,6 +779,7 @@ export default function CheckoutLayout({
             cart={cart}
             shippingQuotes={shippingQuotes}
             paymentProviders={paymentProviders}
+            totals={totals}
             currency={effectiveCurrency}
             locale={effectiveLocale}
             t={t}

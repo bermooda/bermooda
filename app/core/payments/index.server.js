@@ -80,6 +80,8 @@ export function listProvidersWithDetails() {
   return Array.from(_registry.entries()).map(([id, provider]) => ({
     id,
     name: provider.name ?? id,
+    requiresRedirect: provider.requiresRedirect !== false,
+    supportsPaymentElement: provider.supportsPaymentElement === true,
   }));
 }
 

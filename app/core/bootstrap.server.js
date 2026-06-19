@@ -13,15 +13,19 @@
 import logger from '#/utils/logger.server';
 
 import { on } from '#/core/events/index.server';
+import { registerProvider as registerAddressValidation } from '#/core/address-validation/index.server';
+import { noopProvider } from '#/core/address-validation/index.server';
 import { registerPaymentEventHandlers } from '#/core/orders/index.server';
 import { registerProvider as registerPayment } from '#/core/payments/index.server';
+import { manualProvider } from '#/core/payments/manual.server';
+import { paypalProvider } from '#/core/payments/paypal.server';
 import { stripeProvider } from '#/core/payments/stripe.server';
 import { dbProvider as dbSearchProvider } from '#/core/search/index.server';
 import { registerProvider as registerSearch } from '#/core/search/index.server';
 import { registerProvider as registerShipping } from '#/core/shipping/index.server';
 import { flatRateProvider } from '#/core/shipping/index.server';
 import { registerProvider as registerTax } from '#/core/tax/index.server';
-import { simplePercentProvider } from '#/core/tax/index.server';
+import { simplePercentProvider, automaticTaxProvider } from '#/core/tax/index.server';
 import { registerTheme } from '#/core/themes/index.server';
 import { registerWebhookSubscribers } from '#/core/webhooks/index.server';
 // W2: load webhook delivery worker (registers enqueuer) + subscriber registration
@@ -41,12 +45,18 @@ export function registerBuiltins() {
 
   // Payment providers
   registerPayment('stripe', stripeProvider);
+  registerPayment('paypal', paypalProvider);
+  registerPayment('manual', manualProvider);
+
+  // Address validation — built-in no-op; Google/Loqate via plugin
+  registerAddressValidation('noop', noopProvider);
 
   // Shipping providers
   registerShipping('flat_rate', flatRateProvider);
 
   // Tax providers
   registerTax('simple_percent', simplePercentProvider);
+  registerTax('automatic', automaticTaxProvider);
 
   // Search providers — W1: built-in DB provider (SQLite LIKE; Postgres ilike via W8)
   registerSearch('db', dbSearchProvider);
