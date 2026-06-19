@@ -6,7 +6,11 @@ import prisma from '#/libs/prisma.server';
 
 import { validateDiscount } from '#/core/discounts/index.server';
 import { emit } from '#/core/events/index.server';
-import { decrementInventory } from '#/core/inventory/index.server';
+import {
+  decrementInventory,
+  incrementInventory,
+} from '#/core/inventory/index.server';
+import { computeActiveTax } from '#/core/tax/index.server';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -15,6 +19,8 @@ import { decrementInventory } from '#/core/inventory/index.server';
 const VALID_ORDER_STATUSES = new Set([
   'pending',
   'confirmed',
+  'paid',
+  'fulfilled',
   'cancelled',
   'refunded',
 ]);
@@ -26,6 +32,9 @@ const VALID_REFUND_STATUSES = new Set(['pending', 'succeeded', 'failed']);
 
 /**
  * Transactionally place an order from a CheckoutSession at the 'review' step.
+ *
+ * Tax is recomputed from the session's shippingAddressJson + the checkout
+ * totals engine (W0-2 fix — replaces the previous taxCents = 0 stub).
  *
  * All DB writes occur in a single $transaction. After commit:
  * - Inventory is decremented
@@ -106,10 +115,30 @@ export async function placeOrder(
       }
     }
 
-    // Tax is not re-computed inside the transaction (requires external service).
-    // Use 0 for taxCents — the full tax computation happens at the review step.
-    // To persist tax, callers should include it in session data (future phase).
-    const taxCents = 0;
+    // W0-2: Compute real tax from the session's shipping address + provider.
+    // Uses the active tax provider (default: simple_percent). Reads settings
+    // from the DB (read-only, safe to call inside the transaction context).
+    let taxCents = 0;
+    const shippingAddress = session.shippingAddressJson
+      ? JSON.parse(session.shippingAddressJson)
+      : null;
+
+    if (shippingAddress) {
+      try {
+        const taxResult = await computeActiveTax({
+          subtotalCents: subtotalCents - discountCents,
+          shippingCents,
+          shippingAddress,
+          currency: cart.currency,
+        });
+        taxCents = Math.round(taxResult.taxCents);
+      } catch (err) {
+        logger.warn(
+          { err },
+          'Tax computation failed during placeOrder — using 0'
+        );
+      }
+    }
 
     const totalCents = subtotalCents - discountCents + shippingCents + taxCents;
 
@@ -137,7 +166,7 @@ export async function placeOrder(
         totalCents,
         shippingAddressJson: session.shippingAddressJson ?? '{}',
         billingAddressJson: session.billingAddressJson ?? null,
-        paymentProvider: paymentProvider ?? null,
+        paymentProvider: paymentProvider ?? session.paymentProvider ?? null,
         paymentIntentId: paymentIntentId ?? null,
         couponCode: session.couponCode ?? null,
       },
@@ -268,6 +297,42 @@ export async function updateOrderStatus(id, status) {
 }
 
 // ---------------------------------------------------------------------------
+// cancelOrder
+// ---------------------------------------------------------------------------
+
+/**
+ * Cancel an order: restore inventory for all lines, then mark cancelled.
+ * Emits 'order.cancelled'.
+ *
+ * @param {string} orderId
+ * @returns {Promise<object>} updated Order
+ */
+export async function cancelOrder(orderId) {
+  const order = await getOrder(orderId);
+
+  if (!order) {
+    throw new Error('ORDER_NOT_FOUND');
+  }
+
+  // Restore inventory for all tracked order lines (W0-5)
+  const inventoryItems = (order.lines ?? [])
+    .filter((line) => line.variantId != null)
+    .map((line) => ({ variantId: line.variantId, quantity: line.quantity }));
+
+  if (inventoryItems.length > 0) {
+    await incrementInventory(inventoryItems);
+  }
+
+  const updated = await updateOrderStatus(orderId, 'cancelled');
+
+  await emit('order.cancelled', { orderId, orderNumber: order.orderNumber });
+
+  logger.info({ orderId, orderNumber: order.orderNumber }, 'order cancelled');
+
+  return updated;
+}
+
+// ---------------------------------------------------------------------------
 // addShipment
 // ---------------------------------------------------------------------------
 
@@ -353,7 +418,10 @@ export async function markDelivered(shipmentId) {
 // ---------------------------------------------------------------------------
 
 /**
- * Create a Refund record for an order.
+ * Create a Refund record for an order and restore inventory for all order
+ * lines (W0-5). For partial refunds the full inventory is still restored here;
+ * fine-grained per-line return logic arrives in W4 (Returns/RMA).
+ *
  * @param {string} orderId
  * @param {{ amountCents: number, reason?: string, providerRefundId?: string }} data
  * @returns {Promise<object>} created Refund
@@ -370,6 +438,23 @@ export async function createRefund(
       providerRefundId: providerRefundId ?? null,
     },
   });
+
+  // W0-5: Restore inventory for all order lines on refund.
+  // Full per-line granularity is handled in W4; for now restore everything.
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { lines: true },
+  });
+
+  if (order) {
+    const inventoryItems = (order.lines ?? [])
+      .filter((line) => line.variantId != null)
+      .map((line) => ({ variantId: line.variantId, quantity: line.quantity }));
+
+    if (inventoryItems.length > 0) {
+      await incrementInventory(inventoryItems);
+    }
+  }
 
   await emit('payment.refunded', { refundId: refund.id, orderId, amountCents });
 
@@ -394,5 +479,57 @@ export async function updateRefundStatus(refundId, status) {
   return prisma.refund.update({
     where: { id: refundId },
     data: { status },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// registerPaymentEventHandlers
+// ---------------------------------------------------------------------------
+
+/**
+ * Register domain-event subscribers for payment lifecycle events.
+ * Called once from bootstrap.server.js.
+ *
+ * W0-4:
+ *   payment.succeeded → mark order 'confirmed' + emit order.confirmed
+ *   payment.failed    → cancel order (restores inventory) + mark 'cancelled'
+ *
+ * @param {{ on: Function }} events
+ */
+export function registerPaymentEventHandlers({ on }) {
+  on('payment.succeeded', async (payload) => {
+    if (!payload.orderId) return;
+    try {
+      await updateOrderStatus(payload.orderId, 'confirmed');
+      await emit('order.confirmed', {
+        orderId: payload.orderId,
+        orderNumber: payload.orderNumber,
+      });
+      logger.info(
+        { orderId: payload.orderId },
+        'payment.succeeded → order confirmed'
+      );
+    } catch (err) {
+      logger.error(
+        { err, orderId: payload.orderId },
+        'Failed to confirm order on payment.succeeded'
+      );
+    }
+  });
+
+  on('payment.failed', async (payload) => {
+    if (!payload.orderId) return;
+    try {
+      await cancelOrder(payload.orderId);
+      logger.info(
+        { orderId: payload.orderId },
+        'payment.failed → order cancelled'
+      );
+    } catch (err) {
+      logger.error(
+        { err, orderId: payload.orderId },
+        'Failed to cancel order on payment.failed'
+      );
+    }
   });
 }

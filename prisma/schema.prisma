@@ -378,6 +378,7 @@ model CheckoutSession {
   billingAddressJson  String?
   shippingOptionJson  String?
   paymentIntentId     String?
+  paymentProvider     String?
   couponCode          String?
   expiresAt           DateTime?
   createdAt           DateTime  @default(now())

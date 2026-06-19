@@ -412,6 +412,7 @@ export const CheckoutSessionScalarFieldEnum = {
   billingAddressJson: 'billingAddressJson',
   shippingOptionJson: 'shippingOptionJson',
   paymentIntentId: 'paymentIntentId',
+  paymentProvider: 'paymentProvider',
   couponCode: 'couponCode',
   expiresAt: 'expiresAt',
   createdAt: 'createdAt',

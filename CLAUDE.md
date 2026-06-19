@@ -100,12 +100,12 @@ Reference: https://reactrouter.com/home
 
 **File layout** — do **not** use React Router filename dot routing (avoid `account.orders.jsx`). Prefer nested directories.
 
-| Rule | Example |
-|------|---------|
-| Nested paths are directories | `storefront/account/orders.jsx`, not `storefront/account.orders.jsx` |
-| Only layout files use a leading `_` | `storefront/_layout.jsx`, `storefront/account/_layout.jsx` |
-| Index routes are plain `index.jsx` | `storefront/account/index.jsx` (never `_index.jsx`) |
-| Dynamic segments stay in the filename | `webhooks/$provider.jsx` |
+| Rule                                    | Example                                                                                                                                        |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nested paths are directories            | `storefront/account/orders.jsx`, not `storefront/account.orders.jsx`                                                                           |
+| Only layout files use a leading `_`     | `storefront/_layout.jsx`, `storefront/account/_layout.jsx`                                                                                     |
+| Index routes are plain `index.jsx`      | `storefront/account/index.jsx` (never `_index.jsx`)                                                                                            |
+| Dynamic segments stay in the filename   | `webhooks/$provider.jsx`                                                                                                                       |
 | No `.server` in route or test filenames | `webhooks/$provider.jsx` and `webhooks/$provider.test.jsx` — not `$provider.server.jsx`. Put server-only helpers in `#/libs/*.server` instead. |
 
 Configure explicit URLs in [app/routes.js](app/routes.js) to match this tree.

@@ -18,19 +18,24 @@ const log = logger.child({ provider: 'stripe' });
  * Stripe payment provider adapter.
  *
  * Implements the payment provider interface:
- *   createCheckoutSession({ cart, successUrl, cancelUrl })
+ *   name
+ *   createCheckoutSession({ cart, orderId?, successUrl, cancelUrl })
  *   verifyWebhook(request)
  *   handleWebhookEvent(event)
  *   createRefund({ paymentIntentId, amountCents, reason })
  */
 export const stripeProvider = {
+  name: 'Stripe',
+
   /**
    * Create a Stripe Checkout session using dynamic price_data for each cart line.
+   * Pass orderId to include it in Stripe metadata so the webhook can reconcile
+   * the payment to the correct order (W0-3).
    *
-   * @param {{ cart: Object, successUrl: string, cancelUrl: string }} params
+   * @param {{ cart: Object, orderId?: string, successUrl: string, cancelUrl: string }} params
    * @returns {Promise<Stripe.Checkout.Session>}
    */
-  async createCheckoutSession({ cart, successUrl, cancelUrl }) {
+  async createCheckoutSession({ cart, orderId, successUrl, cancelUrl }) {
     const line_items = cart.lines.map((line) => ({
       price_data: {
         currency: cart.currency.toLowerCase(),
@@ -47,9 +52,13 @@ export const stripeProvider = {
       line_items,
       success_url: successUrl,
       cancel_url: cancelUrl,
+      ...(orderId ? { metadata: { orderId } } : {}),
     });
 
-    log.info({ sessionId: session.id }, 'Stripe checkout session created');
+    log.info(
+      { sessionId: session.id, orderId },
+      'Stripe checkout session created'
+    );
 
     return session;
   },
@@ -88,6 +97,9 @@ export const stripeProvider = {
    * Handle a verified Stripe webhook event.
    * Returns a normalised payload describing what happened.
    *
+   * For checkout.session.completed, the orderId is in session.metadata.orderId
+   * (set by createCheckoutSession above — W0-3).
+   *
    * @param {Stripe.Event} event
    * @returns {Promise<{ type: string, orderId?: string, amount?: number }>}
    */
@@ -116,6 +128,15 @@ export const stripeProvider = {
           type: 'payment.succeeded',
           orderId: session.metadata?.orderId,
           amount: session.amount_total,
+        };
+      }
+
+      case 'checkout.session.expired': {
+        const session = event.data.object;
+        log.info({ sessionId: session.id }, 'checkout.session.expired');
+        return {
+          type: 'payment.failed',
+          orderId: session.metadata?.orderId,
         };
       }
 

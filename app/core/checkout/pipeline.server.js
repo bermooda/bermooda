@@ -77,6 +77,12 @@ export async function getCheckoutSession(sessionId) {
  * Validates step-specific data, persists it, re-computes totals,
  * and returns the updated session with a `totals` property attached.
  *
+ * Expected stepData per step:
+ *   address  → { shippingAddressJson, billingAddressJson?, email? }
+ *   shipping → { shippingOptionId, shippingOptionJson? }
+ *   payment  → { paymentProvider }
+ *   review   → (no-op — caller handles order placement)
+ *
  * @param {string} sessionId
  * @param {object} stepData
  * @returns {Promise<object>} updated session with `totals`
@@ -98,6 +104,8 @@ export async function advanceStep(sessionId, stepData = {}) {
       updateData = {
         shippingAddressJson: stepData.shippingAddressJson,
         billingAddressJson: stepData.billingAddressJson ?? null,
+        // Store guest email when provided (logged-in users already have it set)
+        ...(stepData.email ? { email: stepData.email } : {}),
         step: nextStep(step),
       };
       break;
@@ -115,18 +123,20 @@ export async function advanceStep(sessionId, stepData = {}) {
     }
 
     case 'payment': {
-      if (!stepData.paymentIntentId) {
-        throw new Error('MISSING_PAYMENT_INTENT');
+      if (!stepData.paymentProvider) {
+        throw new Error('MISSING_PAYMENT_PROVIDER');
       }
       updateData = {
-        paymentIntentId: stepData.paymentIntentId,
+        paymentProvider: stepData.paymentProvider,
         step: nextStep(step),
       };
       break;
     }
 
     case 'review': {
-      // Already at final step — return session as-is (with totals)
+      // The review step is handled separately in the route action (placeOrder +
+      // provider redirect). advanceStep is a no-op here; callers should not
+      // call advanceStep at the review step.
       break;
     }
 

@@ -48,10 +48,15 @@ vi.mock('#/core/events/index.server', () => ({
 
 vi.mock('#/core/inventory/index.server', () => ({
   decrementInventory: vi.fn(),
+  incrementInventory: vi.fn(),
 }));
 
 vi.mock('#/core/discounts/index.server', () => ({
   validateDiscount: vi.fn(),
+}));
+
+vi.mock('#/core/tax/index.server', () => ({
+  computeActiveTax: vi.fn(),
 }));
 
 vi.mock('#/utils/logger.server', () => ({
@@ -70,18 +75,24 @@ import prisma from '#/libs/prisma.server';
 
 import { validateDiscount } from '#/core/discounts/index.server';
 import { emit } from '#/core/events/index.server';
-import { decrementInventory } from '#/core/inventory/index.server';
+import {
+  decrementInventory,
+  incrementInventory,
+} from '#/core/inventory/index.server';
 import {
   placeOrder,
   getOrder,
   listOrders,
   updateOrderStatus,
+  cancelOrder,
   addShipment,
   markShipped,
   markDelivered,
   createRefund,
   updateRefundStatus,
+  registerPaymentEventHandlers,
 } from '#/core/orders/index.server';
+import { computeActiveTax } from '#/core/tax/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -151,6 +162,9 @@ function setupTransaction(capturedTx = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Safe defaults for new dependencies
+  computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
+  incrementInventory.mockResolvedValue(undefined);
 });
 
 // ---------------------------------------------------------------------------
@@ -554,5 +568,270 @@ describe('updateRefundStatus', () => {
       'INVALID_REFUND_STATUS'
     );
     expect(prisma.refund.update).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// placeOrder — W0-2: tax is computed from shipping address, not hardcoded to 0
+// ---------------------------------------------------------------------------
+
+describe('placeOrder — tax computation (W0-2)', () => {
+  it('calls computeActiveTax with session shipping address and stores taxCents', async () => {
+    const session = makeCheckoutSession({
+      shippingAddressJson: '{"country":"AU"}',
+      shippingOptionJson: '{"id":"flat","priceCents":500}',
+    });
+    const order = makeOrder({
+      subtotalCents: 2000,
+      shippingCents: 500,
+      taxCents: 200,
+      totalCents: 2700,
+    });
+    const capturedTx = {};
+
+    setupTransaction(capturedTx);
+    prisma.checkoutSession.findUnique.mockResolvedValue(session);
+    prisma.order.create.mockResolvedValue(order);
+    prisma.orderLine.create.mockResolvedValue({});
+    prisma.cartLine.deleteMany.mockResolvedValue({});
+    prisma.cart.update.mockResolvedValue({});
+    prisma.checkoutSession.update.mockResolvedValue({});
+    decrementInventory.mockResolvedValue(undefined);
+    emit.mockResolvedValue(undefined);
+    computeActiveTax.mockResolvedValue({ taxCents: 200, rate: 0.1 });
+
+    await placeOrder('sess_1', {});
+
+    expect(computeActiveTax).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shippingAddress: { country: 'AU' },
+        shippingCents: 500,
+        currency: 'USD',
+      })
+    );
+
+    // Order should be created with the computed taxCents
+    expect(prisma.order.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ taxCents: 200 }),
+      })
+    );
+  });
+
+  it('uses taxCents=0 when shippingAddress is absent', async () => {
+    const session = makeCheckoutSession({
+      shippingAddressJson: null,
+      shippingOptionJson: null,
+    });
+    const order = makeOrder({ taxCents: 0 });
+    setupTransaction();
+    prisma.checkoutSession.findUnique.mockResolvedValue(session);
+    prisma.order.create.mockResolvedValue(order);
+    prisma.orderLine.create.mockResolvedValue({});
+    prisma.cartLine.deleteMany.mockResolvedValue({});
+    prisma.cart.update.mockResolvedValue({});
+    prisma.checkoutSession.update.mockResolvedValue({});
+    decrementInventory.mockResolvedValue(undefined);
+    emit.mockResolvedValue(undefined);
+
+    await placeOrder('sess_1', {});
+
+    expect(computeActiveTax).not.toHaveBeenCalled();
+    expect(prisma.order.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ taxCents: 0 }),
+      })
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// updateOrderStatus — W0-4: paid and fulfilled are now valid
+// ---------------------------------------------------------------------------
+
+describe('updateOrderStatus — extended valid statuses (W0-4)', () => {
+  it.each([
+    'pending',
+    'confirmed',
+    'paid',
+    'fulfilled',
+    'cancelled',
+    'refunded',
+  ])('accepts valid status: %s', async (status) => {
+    prisma.order.update.mockResolvedValue(makeOrder({ status }));
+    await expect(updateOrderStatus('order_1', status)).resolves.not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createRefund — W0-5: restores inventory after refund
+// ---------------------------------------------------------------------------
+
+describe('createRefund — inventory restore (W0-5)', () => {
+  it('calls incrementInventory with order lines after creating refund', async () => {
+    const refund = {
+      id: 'ref_1',
+      orderId: 'order_1',
+      amountCents: 500,
+      status: 'pending',
+    };
+    const order = {
+      id: 'order_1',
+      lines: [
+        { id: 'line_1', variantId: 'var_1', quantity: 2 },
+        { id: 'line_2', variantId: 'var_2', quantity: 1 },
+      ],
+    };
+
+    prisma.refund.create.mockResolvedValue(refund);
+    prisma.order.findUnique.mockResolvedValue(order);
+    emit.mockResolvedValue(undefined);
+
+    await createRefund('order_1', { amountCents: 500 });
+
+    expect(incrementInventory).toHaveBeenCalledWith([
+      { variantId: 'var_1', quantity: 2 },
+      { variantId: 'var_2', quantity: 1 },
+    ]);
+  });
+
+  it('skips incrementInventory when order has no lines with variantId', async () => {
+    const refund = {
+      id: 'ref_1',
+      orderId: 'order_1',
+      amountCents: 500,
+      status: 'pending',
+    };
+    const order = {
+      id: 'order_1',
+      lines: [{ id: 'line_1', variantId: null, quantity: 1 }],
+    };
+
+    prisma.refund.create.mockResolvedValue(refund);
+    prisma.order.findUnique.mockResolvedValue(order);
+    emit.mockResolvedValue(undefined);
+
+    await createRefund('order_1', { amountCents: 500 });
+
+    expect(incrementInventory).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cancelOrder — W0-5: restores inventory + sets status to cancelled
+// ---------------------------------------------------------------------------
+
+describe('cancelOrder (W0-5)', () => {
+  it('restores inventory and marks order cancelled', async () => {
+    const order = {
+      id: 'order_1',
+      orderNumber: 'ORD-123',
+      status: 'pending',
+      lines: [{ id: 'line_1', variantId: 'var_1', quantity: 3 }],
+      shipments: [],
+      refunds: [],
+    };
+
+    prisma.order.findUnique.mockResolvedValue(order);
+    prisma.order.update.mockResolvedValue({ ...order, status: 'cancelled' });
+    emit.mockResolvedValue(undefined);
+
+    await cancelOrder('order_1');
+
+    expect(incrementInventory).toHaveBeenCalledWith([
+      { variantId: 'var_1', quantity: 3 },
+    ]);
+    expect(prisma.order.update).toHaveBeenCalledWith({
+      where: { id: 'order_1' },
+      data: { status: 'cancelled' },
+    });
+    expect(emit).toHaveBeenCalledWith(
+      'order.cancelled',
+      expect.objectContaining({
+        orderId: 'order_1',
+      })
+    );
+  });
+
+  it('throws ORDER_NOT_FOUND when order does not exist', async () => {
+    prisma.order.findUnique.mockResolvedValue(null);
+
+    await expect(cancelOrder('nonexistent')).rejects.toThrow('ORDER_NOT_FOUND');
+    expect(incrementInventory).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// registerPaymentEventHandlers — W0-4: event subscribers
+// ---------------------------------------------------------------------------
+
+describe('registerPaymentEventHandlers (W0-4)', () => {
+  it('registers a payment.succeeded handler that confirms the order', async () => {
+    const handlers = {};
+    const on = vi.fn((event, handler) => {
+      handlers[event] = handler;
+    });
+
+    registerPaymentEventHandlers({ on });
+
+    expect(on).toHaveBeenCalledWith('payment.succeeded', expect.any(Function));
+    expect(on).toHaveBeenCalledWith('payment.failed', expect.any(Function));
+
+    // Simulate payment.succeeded event
+    prisma.order.update.mockResolvedValue(makeOrder({ status: 'confirmed' }));
+    emit.mockResolvedValue(undefined);
+
+    await handlers['payment.succeeded']({ orderId: 'order_1' });
+
+    expect(prisma.order.update).toHaveBeenCalledWith({
+      where: { id: 'order_1' },
+      data: { status: 'confirmed' },
+    });
+    expect(emit).toHaveBeenCalledWith(
+      'order.confirmed',
+      expect.objectContaining({ orderId: 'order_1' })
+    );
+  });
+
+  it('payment.succeeded handler is a no-op when orderId is missing', async () => {
+    const handlers = {};
+    const on = vi.fn((event, handler) => {
+      handlers[event] = handler;
+    });
+
+    registerPaymentEventHandlers({ on });
+
+    await handlers['payment.succeeded']({});
+
+    expect(prisma.order.update).not.toHaveBeenCalled();
+  });
+
+  it('payment.failed handler cancels the order (restores inventory)', async () => {
+    const order = {
+      id: 'order_1',
+      orderNumber: 'ORD-123',
+      status: 'pending',
+      lines: [{ id: 'line_1', variantId: 'var_1', quantity: 1 }],
+      shipments: [],
+      refunds: [],
+    };
+
+    const handlers = {};
+    const on = vi.fn((event, handler) => {
+      handlers[event] = handler;
+    });
+    registerPaymentEventHandlers({ on });
+
+    prisma.order.findUnique.mockResolvedValue(order);
+    prisma.order.update.mockResolvedValue({ ...order, status: 'cancelled' });
+    emit.mockResolvedValue(undefined);
+
+    await handlers['payment.failed']({ orderId: 'order_1' });
+
+    expect(incrementInventory).toHaveBeenCalled();
+    expect(prisma.order.update).toHaveBeenCalledWith({
+      where: { id: 'order_1' },
+      data: { status: 'cancelled' },
+    });
   });
 });

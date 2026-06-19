@@ -1,15 +1,21 @@
 import { redirect } from 'react-router';
 import { useLoaderData } from 'react-router';
 
+import logger from '#/utils/logger.server';
+
 import { getCart } from '#/core/cart/index.server';
 import {
+  advanceStep,
   createCheckoutSession,
   getCheckoutSession,
-  advanceStep,
 } from '#/core/checkout/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
-import { listProviders } from '#/core/payments/index.server';
+import { placeOrder } from '#/core/orders/index.server';
+import {
+  createCheckoutSession as createPaymentSession,
+  listProvidersWithDetails,
+} from '#/core/payments/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import CheckoutLayout from '#/themes/default/components/checkout-layout';
 
@@ -25,6 +31,34 @@ function getCheckoutSessionId(request) {
   const cookie = request.headers.get('cookie') ?? '';
   const match = cookie.match(/(?:^|;\s*)checkout_session=([^;]+)/);
   return match ? decodeURIComponent(match[1].trim()) : null;
+}
+
+/**
+ * Parse JSON session fields into their object forms so theme components
+ * can access them without knowing the raw field names.
+ */
+function normaliseSession(session) {
+  if (!session) return session;
+
+  const shippingAddress = session.shippingAddressJson
+    ? JSON.parse(session.shippingAddressJson)
+    : null;
+
+  const billingAddress = session.billingAddressJson
+    ? JSON.parse(session.billingAddressJson)
+    : null;
+
+  const shippingOption = session.shippingOptionJson
+    ? JSON.parse(session.shippingOptionJson)
+    : null;
+
+  return {
+    ...session,
+    shippingAddress,
+    billingAddress,
+    shippingOption,
+    shippingOptionId: shippingOption?.id ?? null,
+  };
 }
 
 export async function loader({ request, params }) {
@@ -58,17 +92,20 @@ export async function loader({ request, params }) {
     return redirect(`/checkout/${session.step ?? 'address'}`);
   }
 
-  // Shipping quotes need cart + address; only available on shipping step+
-  const shippingAddress =
-    typeof session.shippingAddress === 'string'
-      ? JSON.parse(session.shippingAddress)
-      : (session.shippingAddress ?? null);
+  // Parse the shipping address from the session for quote fetching
+  const shippingAddress = session.shippingAddressJson
+    ? JSON.parse(session.shippingAddressJson)
+    : null;
+
+  // Shipping quotes: needed on shipping step and review step (for recap)
+  const needsQuotes = step === 'shipping' || step === 'review';
 
   const [shippingQuotes, paymentProviders] = await Promise.all([
-    step === 'shipping' && shippingAddress
+    needsQuotes && shippingAddress
       ? getAllQuotes({ cart, shippingAddress })
       : Promise.resolve([]),
-    listProviders(),
+    // Return { id, name }[] objects so the UI doesn't need to transform
+    Promise.resolve(listProvidersWithDetails()),
   ]);
 
   const headers = new Headers();
@@ -80,7 +117,7 @@ export async function loader({ request, params }) {
   return Response.json(
     {
       step,
-      session,
+      session: normaliseSession(session),
       cart,
       shippingQuotes,
       paymentProviders,
@@ -98,7 +135,112 @@ export async function action({ request, params }) {
 
   if (!sessionId) return redirect('/cart');
 
-  const stepData = Object.fromEntries(formData);
+  const rawData = Object.fromEntries(formData);
+
+  // ── Review step: place the order then redirect to the payment provider ────
+  if (step === 'review') {
+    // Fetch the session (with cart lines) before placeOrder clears the cart
+    const session = await getCheckoutSession(sessionId);
+    if (!session) return redirect('/cart');
+
+    // Keep a reference to the cart so we can build the Stripe line items even
+    // after placeOrder() deletes the cart lines.
+    const cartSnapshot = session.cart;
+
+    let order;
+    try {
+      order = await placeOrder(sessionId, {
+        paymentProvider: session.paymentProvider ?? 'stripe',
+      });
+    } catch (err) {
+      logger.error({ err }, 'placeOrder failed at review step');
+      return { error: err.message };
+    }
+
+    const origin = new URL(request.url).origin;
+    const providerId = order.paymentProvider ?? 'stripe';
+
+    try {
+      const paymentSession = await createPaymentSession(providerId, {
+        cart: cartSnapshot,
+        orderId: order.id,
+        successUrl: `${origin}/thank-you/${order.orderNumber}`,
+        cancelUrl: `${origin}/checkout/review`,
+      });
+
+      return redirect(paymentSession.url);
+    } catch (err) {
+      logger.error(
+        { err, orderId: order.id },
+        'Payment session creation failed'
+      );
+      // Order is placed but payment session failed — surface the error so the
+      // operator can manually process. Admin can cancel the order if needed.
+      return {
+        error: 'Payment session creation failed. Please contact support.',
+      };
+    }
+  }
+
+  // ── Address step: serialize individual form fields into JSON ──────────────
+  let stepData;
+
+  if (step === 'address') {
+    const addr = {
+      firstName: rawData.firstName ?? '',
+      lastName: rawData.lastName ?? '',
+      line1: rawData.line1 ?? '',
+      line2: rawData.line2 || null,
+      city: rawData.city ?? '',
+      state: rawData.state || null,
+      postalCode: rawData.postalCode || null,
+      country: rawData.country ?? '',
+      phone: rawData.phone || null,
+    };
+
+    stepData = {
+      shippingAddressJson: JSON.stringify(addr),
+      billingAddressJson: rawData.billingAddressJson ?? null,
+      email: rawData.email || null,
+    };
+  } else if (step === 'shipping') {
+    // Look up the full shipping option so we can persist it as JSON
+    const session = await getCheckoutSession(sessionId);
+    const cartForQuotes = session?.cart ?? null;
+    const shippingAddr = session?.shippingAddressJson
+      ? JSON.parse(session.shippingAddressJson)
+      : null;
+
+    let shippingOptionJson = null;
+    if (cartForQuotes && shippingAddr && rawData.shippingOptionId) {
+      try {
+        const quotes = await getAllQuotes({
+          cart: cartForQuotes,
+          shippingAddress: shippingAddr,
+        });
+        const selected = quotes.find((q) => q.id === rawData.shippingOptionId);
+        if (selected) {
+          shippingOptionJson = JSON.stringify(selected);
+        }
+      } catch (err) {
+        logger.error(
+          { err },
+          'Failed to fetch shipping quotes during shipping step'
+        );
+      }
+    }
+
+    stepData = {
+      shippingOptionId: rawData.shippingOptionId,
+      shippingOptionJson,
+    };
+  } else if (step === 'payment') {
+    stepData = {
+      paymentProvider: rawData.paymentProvider ?? 'stripe',
+    };
+  } else {
+    stepData = rawData;
+  }
 
   try {
     await advanceStep(sessionId, stepData);
@@ -111,7 +253,7 @@ export async function action({ request, params }) {
 
   return nextStep
     ? redirect(`/checkout/${nextStep}`)
-    : redirect('/checkout/review');
+    : redirect(`/checkout/${step}`);
 }
 
 export function meta({ data }) {

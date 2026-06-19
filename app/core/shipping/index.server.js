@@ -154,7 +154,7 @@ export const flatRateProvider = {
         {
           id: 'flat_rate:default',
           providerId: 'flat_rate',
-          label: 'Standard Shipping',
+          name: 'Standard Shipping',
           priceCents: 0,
           estimatedDays: null,
         },
@@ -164,7 +164,7 @@ export const flatRateProvider = {
     return matchingZones.map((zone) => ({
       id: `flat_rate:${zone.id}`,
       providerId: 'flat_rate',
-      label: zone.label,
+      name: zone.label,
       priceCents: subtotal >= zone.freeOverCents ? 0 : zone.rateCents,
       estimatedDays: zone.estimatedDays ?? null,
     }));

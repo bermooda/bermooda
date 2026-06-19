@@ -360,7 +360,7 @@ describe('advanceStep — validation errors', () => {
     expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
   });
 
-  it('throws MISSING_PAYMENT_INTENT when paymentIntentId is absent on payment step', async () => {
+  it('throws MISSING_PAYMENT_PROVIDER when paymentProvider is absent on payment step', async () => {
     const session = makeSession({
       step: 'payment',
       shippingAddressJson: '{"country":"AU"}',
@@ -369,7 +369,7 @@ describe('advanceStep — validation errors', () => {
     prisma.checkoutSession.findUnique.mockResolvedValue(session);
 
     await expect(advanceStep('sess_1', {})).rejects.toThrow(
-      'MISSING_PAYMENT_INTENT'
+      'MISSING_PAYMENT_PROVIDER'
     );
     expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
   });
