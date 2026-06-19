@@ -178,6 +178,16 @@ export type Translation = Prisma.TranslationModel
  */
 export type Slug = Prisma.SlugModel
 /**
+ * Model ProductAttribute
+ * 
+ */
+export type ProductAttribute = Prisma.ProductAttributeModel
+/**
+ * Model ProductAttributeValue
+ * 
+ */
+export type ProductAttributeValue = Prisma.ProductAttributeValueModel
+/**
  * Model WebhookEvent
  * 
  */

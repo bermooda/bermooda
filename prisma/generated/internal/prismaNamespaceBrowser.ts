@@ -83,6 +83,8 @@ export const ModelName = {
   Setting: 'Setting',
   Translation: 'Translation',
   Slug: 'Slug',
+  ProductAttribute: 'ProductAttribute',
+  ProductAttributeValue: 'ProductAttributeValue',
   WebhookEvent: 'WebhookEvent'
 } as const
 
@@ -559,6 +561,30 @@ export const SlugScalarFieldEnum = {
 } as const
 
 export type SlugScalarFieldEnum = (typeof SlugScalarFieldEnum)[keyof typeof SlugScalarFieldEnum]
+
+
+export const ProductAttributeScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  name: 'name',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductAttributeScalarFieldEnum = (typeof ProductAttributeScalarFieldEnum)[keyof typeof ProductAttributeScalarFieldEnum]
+
+
+export const ProductAttributeValueScalarFieldEnum = {
+  id: 'id',
+  attributeId: 'attributeId',
+  value: 'value',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductAttributeValueScalarFieldEnum = (typeof ProductAttributeValueScalarFieldEnum)[keyof typeof ProductAttributeValueScalarFieldEnum]
 
 
 export const WebhookEventScalarFieldEnum = {

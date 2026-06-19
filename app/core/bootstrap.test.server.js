@@ -16,6 +16,10 @@ vi.mock('#/core/tax/index.server', () => ({
   registerProvider: vi.fn(),
   simplePercentProvider: { name: 'Simple Percent' },
 }));
+vi.mock('#/core/search/index.server', () => ({
+  registerProvider: vi.fn(),
+  dbProvider: { name: 'Database' },
+}));
 vi.mock('#/core/themes/index.server', () => ({ registerTheme: vi.fn() }));
 vi.mock('#/themes/default/manifest', () => ({ default: { id: 'default' } }));
 vi.mock('#/utils/logger.server', () => ({
@@ -28,6 +32,7 @@ describe('bootstrap.server', () => {
   let registerPayment;
   let registerShipping;
   let registerTax;
+  let registerSearch;
   let registerTheme;
   let registerPaymentEventHandlers;
 
@@ -38,6 +43,7 @@ describe('bootstrap.server', () => {
     const payments = await import('#/core/payments/index.server');
     const shipping = await import('#/core/shipping/index.server');
     const tax = await import('#/core/tax/index.server');
+    const search = await import('#/core/search/index.server');
     const themes = await import('#/core/themes/index.server');
     const orders = await import('#/core/orders/index.server');
 
@@ -46,6 +52,7 @@ describe('bootstrap.server', () => {
     registerPayment = payments.registerProvider;
     registerShipping = shipping.registerProvider;
     registerTax = tax.registerProvider;
+    registerSearch = search.registerProvider;
     registerTheme = themes.registerTheme;
     registerPaymentEventHandlers = orders.registerPaymentEventHandlers;
   });
@@ -62,6 +69,7 @@ describe('bootstrap.server', () => {
       'simple_percent',
       expect.any(Object)
     );
+    expect(registerSearch).toHaveBeenCalledWith('db', expect.any(Object));
     expect(registerTheme).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'default' })
     );

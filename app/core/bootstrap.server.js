@@ -16,6 +16,8 @@ import { on } from '#/core/events/index.server';
 import { registerPaymentEventHandlers } from '#/core/orders/index.server';
 import { registerProvider as registerPayment } from '#/core/payments/index.server';
 import { stripeProvider } from '#/core/payments/stripe.server';
+import { dbProvider as dbSearchProvider } from '#/core/search/index.server';
+import { registerProvider as registerSearch } from '#/core/search/index.server';
 import { registerProvider as registerShipping } from '#/core/shipping/index.server';
 import { flatRateProvider } from '#/core/shipping/index.server';
 import { registerProvider as registerTax } from '#/core/tax/index.server';
@@ -42,6 +44,9 @@ export function registerBuiltins() {
 
   // Tax providers
   registerTax('simple_percent', simplePercentProvider);
+
+  // Search providers — W1: built-in DB provider (SQLite LIKE; Postgres ilike via W8)
+  registerSearch('db', dbSearchProvider);
 
   // Default storefront theme
   // W0-6 decision: themes are import-based. Routes import directly from
