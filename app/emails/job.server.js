@@ -1,11 +1,17 @@
 import logger from '#/utils/logger.server';
 import { handleError } from '#/libs/error.server';
 import queue, { createThrottledJob } from '#/libs/queue.server';
+import prisma from '#/libs/prisma.server';
+import config from '#/config';
 import {
   sendPasswordResetEmail,
   sendTwoFactorOtpEmail,
   sendVerificationEmail,
   sendOrderConfirmationEmail,
+  sendOrderShippedEmail,
+  sendOrderDeliveredEmail,
+  sendOrderRefundedEmail,
+  sendReturnReceivedEmail,
   sendCustomerWelcomeEmail,
   sendAbandonedCartEmail,
 } from '#/emails/index.server';
@@ -116,11 +122,31 @@ export const queueTwoFactorOtp = createThrottledJob(
 // ─── Shop email jobs ──────────────────────────────────────────────────────────
 
 const orderConfirmationJob = queue.createJob('order_confirmation_email');
+const orderShippedJob = queue.createJob('order_shipped_email');
+const orderDeliveredJob = queue.createJob('order_delivered_email');
+const orderRefundedJob = queue.createJob('order_refunded_email');
+const returnReceivedJob = queue.createJob('return_received_email');
 const customerWelcomeJob = queue.createJob('customer_welcome_email');
 const abandonedCartJob = queue.createJob('abandoned_cart_email');
 
 orderConfirmationJob.process(async (taskData) => {
   await sendOrderConfirmationEmail(taskData);
+});
+
+orderShippedJob.process(async (taskData) => {
+  await sendOrderShippedEmail(taskData);
+});
+
+orderDeliveredJob.process(async (taskData) => {
+  await sendOrderDeliveredEmail(taskData);
+});
+
+orderRefundedJob.process(async (taskData) => {
+  await sendOrderRefundedEmail(taskData);
+});
+
+returnReceivedJob.process(async (taskData) => {
+  await sendReturnReceivedEmail(taskData);
 });
 
 customerWelcomeJob.process(async (taskData) => {
@@ -135,6 +161,34 @@ orderConfirmationJob.on('failed', async (event) => {
   handleError(event.error, {
     message: 'Order confirmation email job failed',
     source: 'queue.server orderConfirmationJob',
+  });
+});
+
+orderShippedJob.on('failed', async (event) => {
+  handleError(event.error, {
+    message: 'Order shipped email job failed',
+    source: 'queue.server orderShippedJob',
+  });
+});
+
+orderDeliveredJob.on('failed', async (event) => {
+  handleError(event.error, {
+    message: 'Order delivered email job failed',
+    source: 'queue.server orderDeliveredJob',
+  });
+});
+
+orderRefundedJob.on('failed', async (event) => {
+  handleError(event.error, {
+    message: 'Order refunded email job failed',
+    source: 'queue.server orderRefundedJob',
+  });
+});
+
+returnReceivedJob.on('failed', async (event) => {
+  handleError(event.error, {
+    message: 'Return received email job failed',
+    source: 'queue.server returnReceivedJob',
   });
 });
 
@@ -163,6 +217,26 @@ export function queueOrderConfirmation(payload) {
     'Queueing order confirmation email'
   );
   orderConfirmationJob.add(payload);
+}
+
+export function queueOrderShipped(payload) {
+  logger.info({ orderId: payload.orderId }, 'Queueing order shipped email');
+  orderShippedJob.add(payload);
+}
+
+export function queueOrderDelivered(payload) {
+  logger.info({ orderId: payload.orderId }, 'Queueing order delivered email');
+  orderDeliveredJob.add(payload);
+}
+
+export function queueOrderRefunded(payload) {
+  logger.info({ orderId: payload.orderId }, 'Queueing order refunded email');
+  orderRefundedJob.add(payload);
+}
+
+export function queueReturnReceived(payload) {
+  logger.info({ returnId: payload.returnId }, 'Queueing return received email');
+  returnReceivedJob.add(payload);
 }
 
 /**
@@ -216,3 +290,84 @@ on('customer.registered', (payload) => {
     payload.locale ?? 'en'
   );
 });
+
+// W4: lifecycle emails for fulfillment and returns
+on('shipment.shipped', async (payload) => {
+  const order = await loadOrderEmailContext(payload.orderId);
+  if (!order?.email) return;
+  queueOrderShipped({
+    email: order.email,
+    locale: order.locale ?? 'en',
+    orderNumber: order.orderNumber,
+    orderUrl: order.orderUrl,
+    carrier: payload.carrier,
+    trackingNumber: payload.trackingNumber,
+    trackingUrl: payload.trackingUrl,
+    orderId: payload.orderId,
+  });
+});
+
+on('shipment.delivered', async (payload) => {
+  const order = await loadOrderEmailContext(payload.orderId);
+  if (!order?.email) return;
+  queueOrderDelivered({
+    email: order.email,
+    locale: order.locale ?? 'en',
+    orderNumber: order.orderNumber,
+    orderUrl: order.orderUrl,
+    orderId: payload.orderId,
+  });
+});
+
+on('payment.refunded', async (payload) => {
+  const order = await loadOrderEmailContext(payload.orderId);
+  if (!order?.email) return;
+  queueOrderRefunded({
+    email: order.email,
+    locale: order.locale ?? 'en',
+    orderNumber: order.orderNumber,
+    orderUrl: order.orderUrl,
+    amountCents: payload.amountCents ?? 0,
+    currency: order.currency ?? 'USD',
+    orderId: payload.orderId,
+  });
+});
+
+on('return.received', async (payload) => {
+  const order = await loadOrderEmailContext(payload.orderId);
+  if (!order?.email) return;
+  queueReturnReceived({
+    email: order.email,
+    locale: order.locale ?? 'en',
+    orderNumber: order.orderNumber,
+    orderUrl: order.orderUrl,
+    returnId: payload.returnId,
+  });
+});
+
+/**
+ * Load minimal order context for lifecycle emails.
+ * @param {string} orderId
+ */
+async function loadOrderEmailContext(orderId) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: {
+      id: true,
+      orderNumber: true,
+      email: true,
+      currency: true,
+      customer: { select: { preferredLocale: true } },
+    },
+  });
+
+  if (!order) return null;
+
+  return {
+    email: order.email,
+    orderNumber: order.orderNumber,
+    currency: order.currency,
+    locale: order.customer?.preferredLocale ?? 'en',
+    orderUrl: `${config.baseUrl}/account/orders/${order.id}`,
+  };
+}

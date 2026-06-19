@@ -77,6 +77,7 @@ export const ModelName = {
   Order: 'Order',
   OrderLine: 'OrderLine',
   Shipment: 'Shipment',
+  ShipmentLine: 'ShipmentLine',
   Refund: 'Refund',
   Discount: 'Discount',
   PluginData: 'PluginData',
@@ -92,6 +93,9 @@ export const ModelName = {
   TaxClass: 'TaxClass',
   CartDiscount: 'CartDiscount',
   OrderDiscount: 'OrderDiscount',
+  Return: 'Return',
+  ReturnLine: 'ReturnLine',
+  StoreCreditLedger: 'StoreCreditLedger',
   AuditLog: 'AuditLog',
   ScheduledExport: 'ScheduledExport',
   ExportRun: 'ExportRun'
@@ -472,6 +476,8 @@ export const OrderLineScalarFieldEnum = {
   title: 'title',
   sku: 'sku',
   quantity: 'quantity',
+  fulfilledQuantity: 'fulfilledQuantity',
+  returnedQuantity: 'returnedQuantity',
   priceCents: 'priceCents',
   totalCents: 'totalCents',
   createdAt: 'createdAt'
@@ -494,6 +500,17 @@ export const ShipmentScalarFieldEnum = {
 } as const
 
 export type ShipmentScalarFieldEnum = (typeof ShipmentScalarFieldEnum)[keyof typeof ShipmentScalarFieldEnum]
+
+
+export const ShipmentLineScalarFieldEnum = {
+  id: 'id',
+  shipmentId: 'shipmentId',
+  orderLineId: 'orderLineId',
+  quantity: 'quantity',
+  createdAt: 'createdAt'
+} as const
+
+export type ShipmentLineScalarFieldEnum = (typeof ShipmentLineScalarFieldEnum)[keyof typeof ShipmentLineScalarFieldEnum]
 
 
 export const RefundScalarFieldEnum = {
@@ -708,6 +725,48 @@ export const OrderDiscountScalarFieldEnum = {
 } as const
 
 export type OrderDiscountScalarFieldEnum = (typeof OrderDiscountScalarFieldEnum)[keyof typeof OrderDiscountScalarFieldEnum]
+
+
+export const ReturnScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  customerId: 'customerId',
+  status: 'status',
+  reason: 'reason',
+  resolution: 'resolution',
+  storeCreditCents: 'storeCreditCents',
+  exchangeOrderId: 'exchangeOrderId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ReturnScalarFieldEnum = (typeof ReturnScalarFieldEnum)[keyof typeof ReturnScalarFieldEnum]
+
+
+export const ReturnLineScalarFieldEnum = {
+  id: 'id',
+  returnId: 'returnId',
+  orderLineId: 'orderLineId',
+  quantity: 'quantity',
+  restocked: 'restocked',
+  createdAt: 'createdAt'
+} as const
+
+export type ReturnLineScalarFieldEnum = (typeof ReturnLineScalarFieldEnum)[keyof typeof ReturnLineScalarFieldEnum]
+
+
+export const StoreCreditLedgerScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  amountCents: 'amountCents',
+  balanceAfterCents: 'balanceAfterCents',
+  reason: 'reason',
+  referenceType: 'referenceType',
+  referenceId: 'referenceId',
+  createdAt: 'createdAt'
+} as const
+
+export type StoreCreditLedgerScalarFieldEnum = (typeof StoreCreditLedgerScalarFieldEnum)[keyof typeof StoreCreditLedgerScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {

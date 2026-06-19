@@ -468,7 +468,11 @@ describe('getOrder', () => {
 
     expect(prisma.order.findFirst).toHaveBeenCalledWith({
       where: { id: 'order_1', customerId: 'cust_1' },
-      include: { lines: true },
+      include: {
+        lines: true,
+        shipments: { include: { lines: true } },
+        returns: { include: { lines: true } },
+      },
     });
     expect(result).toEqual(order);
   });

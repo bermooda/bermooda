@@ -13,6 +13,9 @@ import {
 
 import prisma from '#/libs/prisma.server';
 
+// Server-only core calls are dynamically imported in `action` to avoid a
+// circular bundle graph (returns → orders) in this route module.
+
 // ---------------------------------------------------------------------------
 // Loader
 // ---------------------------------------------------------------------------
@@ -24,8 +27,15 @@ export async function loader({ params }) {
     where: { id },
     include: {
       lines: { orderBy: { createdAt: 'asc' } },
-      shipments: { orderBy: { createdAt: 'asc' } },
+      shipments: {
+        orderBy: { createdAt: 'asc' },
+        include: { lines: { include: { orderLine: true } } },
+      },
       refunds: { orderBy: { createdAt: 'asc' } },
+      returns: {
+        orderBy: { createdAt: 'asc' },
+        include: { lines: { include: { orderLine: true } } },
+      },
       customer: { select: { email: true, name: true } },
     },
   });
@@ -57,6 +67,8 @@ export async function loader({ params }) {
         title: l.title,
         sku: l.sku ?? null,
         quantity: l.quantity,
+        fulfilledQuantity: l.fulfilledQuantity ?? 0,
+        returnedQuantity: l.returnedQuantity ?? 0,
         priceCents: l.priceCents,
         totalCents: l.totalCents,
       })),
@@ -77,6 +89,21 @@ export async function loader({ params }) {
         status: r.status,
         createdAt: r.createdAt.toISOString(),
       })),
+      returns: order.returns.map((ret) => ({
+        id: ret.id,
+        status: ret.status,
+        reason: ret.reason ?? null,
+        resolution: ret.resolution ?? null,
+        storeCreditCents: ret.storeCreditCents ?? null,
+        createdAt: ret.createdAt.toISOString(),
+        lines: ret.lines.map((l) => ({
+          id: l.id,
+          orderLineId: l.orderLineId,
+          title: l.orderLine?.title ?? '',
+          quantity: l.quantity,
+          restocked: l.restocked,
+        })),
+      })),
     },
   };
 }
@@ -89,6 +116,24 @@ export async function action({ request, params }) {
   const { id } = params;
   const formData = await request.formData();
   const intent = formData.get('intent');
+
+  const needsOrdersCore = [
+    'add-shipment',
+    'mark-delivered',
+    'add-refund',
+  ].includes(intent);
+  const needsReturnsCore = [
+    'approve-return',
+    'receive-return',
+    'complete-return',
+  ].includes(intent);
+
+  const ordersCore = needsOrdersCore
+    ? await import('#/core/orders/index.server')
+    : null;
+  const returnsCore = needsReturnsCore
+    ? await import('#/core/returns/index.server')
+    : null;
 
   if (intent === 'update-status') {
     const newStatus = formData.get('status');
@@ -123,32 +168,88 @@ export async function action({ request, params }) {
       formData.get('trackingNumber')?.toString().trim() || null;
     const trackingUrl = formData.get('trackingUrl')?.toString().trim() || null;
 
-    await prisma.shipment.create({
-      data: {
-        orderId: id,
-        status: 'shipped',
+    const lines = [];
+    for (const [key, value] of formData.entries()) {
+      if (key.startsWith('ship-qty-')) {
+        const orderLineId = key.slice(9);
+        const quantity = parseInt(String(value), 10);
+        if (quantity > 0) {
+          lines.push({ orderLineId, quantity });
+        }
+      }
+    }
+
+    try {
+      const shipment = await ordersCore.addShipment(id, {
         carrier,
         trackingNumber,
         trackingUrl,
-        shippedAt: new Date(),
-      },
-    });
-    return { ok: true, intent };
+        lines: lines.length > 0 ? lines : undefined,
+      });
+      await ordersCore.markShipped(shipment.id, {
+        carrier,
+        trackingNumber,
+        trackingUrl,
+      });
+      return { ok: true, intent };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  }
+
+  if (intent === 'mark-delivered') {
+    const shipmentId = formData.get('shipmentId')?.toString();
+    if (!shipmentId) return { ok: false, error: 'Missing shipmentId' };
+    try {
+      await ordersCore.markDelivered(shipmentId);
+      return { ok: true, intent };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
   }
 
   if (intent === 'add-refund') {
     const amountCents = parseInt(formData.get('amountCents') ?? '0', 10);
     const reason = formData.get('reason')?.toString().trim() || null;
 
-    await prisma.refund.create({
-      data: {
-        orderId: id,
-        amountCents,
-        reason,
-        status: 'pending',
-      },
-    });
-    return { ok: true, intent };
+    try {
+      await ordersCore.createRefund(id, { amountCents, reason });
+      return { ok: true, intent };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  }
+
+  if (intent === 'approve-return') {
+    const returnId = formData.get('returnId')?.toString();
+    const resolution = formData.get('resolution')?.toString() || 'refund';
+    try {
+      await returnsCore.approveReturn(returnId, { resolution });
+      return { ok: true, intent };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  }
+
+  if (intent === 'receive-return') {
+    const returnId = formData.get('returnId')?.toString();
+    try {
+      await returnsCore.receiveReturn(returnId);
+      return { ok: true, intent };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  }
+
+  if (intent === 'complete-return') {
+    const returnId = formData.get('returnId')?.toString();
+    const resolution = formData.get('resolution')?.toString() || undefined;
+    try {
+      await returnsCore.completeReturn(returnId, { resolution });
+      return { ok: true, intent };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
   }
 
   if (intent === 'update-notes') {
@@ -302,6 +403,12 @@ export default function AdminOrderRoute() {
             Order {order.orderNumber}
           </h1>
           <StatusBadge status={order.status} />
+          <a
+            href={`/admin/orders/${order.id}/documents`}
+            className="text-sm text-indigo-600 hover:underline dark:text-indigo-400"
+          >
+            Download Invoice
+          </a>
           <span className="text-sm text-gray-500 dark:text-zinc-400">
             {new Date(order.createdAt).toLocaleDateString('en-US', {
               month: 'long',
@@ -363,6 +470,12 @@ export default function AdminOrderRoute() {
                 <th className="px-3 py-2 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Qty
                 </th>
+                <th className="px-3 py-2 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
+                  Fulfilled
+                </th>
+                <th className="px-3 py-2 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
+                  Returned
+                </th>
                 <th className="px-3 py-2 text-right text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
                   Unit Price
                 </th>
@@ -383,6 +496,12 @@ export default function AdminOrderRoute() {
                   <td className="px-3 py-2 text-center text-sm text-gray-700 dark:text-zinc-300">
                     {line.quantity}
                   </td>
+                  <td className="px-3 py-2 text-center text-sm text-gray-700 dark:text-zinc-300">
+                    {line.fulfilledQuantity}
+                  </td>
+                  <td className="px-3 py-2 text-center text-sm text-gray-700 dark:text-zinc-300">
+                    {line.returnedQuantity}
+                  </td>
                   <td className="px-3 py-2 text-right text-sm text-gray-700 dark:text-zinc-300">
                     {formatCents(line.priceCents, order.currency)}
                   </td>
@@ -395,7 +514,7 @@ export default function AdminOrderRoute() {
             <tfoot className="border-t border-gray-200 dark:border-zinc-700">
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={6}
                   className="px-3 py-2 text-right text-sm text-gray-500 dark:text-zinc-400"
                 >
                   Subtotal
@@ -407,7 +526,7 @@ export default function AdminOrderRoute() {
               {order.shippingCents > 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={6}
                     className="px-3 py-2 text-right text-sm text-gray-500 dark:text-zinc-400"
                   >
                     Shipping
@@ -420,7 +539,7 @@ export default function AdminOrderRoute() {
               {order.taxCents > 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={6}
                     className="px-3 py-2 text-right text-sm text-gray-500 dark:text-zinc-400"
                   >
                     Tax
@@ -433,7 +552,7 @@ export default function AdminOrderRoute() {
               {order.discountCents > 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={6}
                     className="px-3 py-2 text-right text-sm text-gray-500 dark:text-zinc-400"
                   >
                     Discount
@@ -445,7 +564,7 @@ export default function AdminOrderRoute() {
               )}
               <tr className="border-t border-gray-200 dark:border-zinc-700">
                 <td
-                  colSpan={4}
+                  colSpan={6}
                   className="px-3 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white"
                 >
                   Total
@@ -574,6 +693,38 @@ export default function AdminOrderRoute() {
           </div>
         )}
 
+        {/* Partial fulfillment quantities */}
+        {order.lines.some(
+          (l) => l.fulfilledQuantity < l.quantity - l.returnedQuantity
+        ) && (
+          <div className="mb-4 space-y-2">
+            <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">
+              Ship quantities (partial fulfillment)
+            </p>
+            {order.lines
+              .filter(
+                (l) => l.fulfilledQuantity < l.quantity - l.returnedQuantity
+              )
+              .map((line) => (
+                <div key={line.id} className="flex items-center gap-3 text-sm">
+                  <span className="flex-1 text-gray-700 dark:text-zinc-300">
+                    {line.title}
+                  </span>
+                  <input
+                    type="number"
+                    name={`ship-qty-${line.id}`}
+                    min={0}
+                    max={line.quantity - line.fulfilledQuantity - line.returnedQuantity}
+                    defaultValue={
+                      line.quantity - line.fulfilledQuantity - line.returnedQuantity
+                    }
+                    className="w-20 rounded-md border-0 bg-white px-2 py-1 text-sm shadow-sm ring-1 ring-gray-300 ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                  />
+                </div>
+              ))}
+          </div>
+        )}
+
         {/* Mark Shipped form */}
         <Form method="post" className="space-y-3">
           <input type="hidden" name="intent" value="add-shipment" />
@@ -623,6 +774,105 @@ export default function AdminOrderRoute() {
             Mark Shipped
           </button>
         </Form>
+      </SectionCard>
+
+      {/* Returns */}
+      <SectionCard title="Returns">
+        {order.returns.length > 0 && (
+          <div className="mb-4 space-y-4">
+            {order.returns.map((ret) => (
+              <div
+                key={ret.id}
+                className="rounded-md border border-gray-200 p-4 dark:border-zinc-700"
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="font-mono text-xs text-gray-500">
+                    {ret.id.slice(-8)}
+                  </span>
+                  <span className="text-sm capitalize text-gray-700 dark:text-zinc-300">
+                    {ret.status}
+                    {ret.resolution ? ` (${ret.resolution})` : ''}
+                  </span>
+                </div>
+                {ret.reason && (
+                  <p className="mb-2 text-sm text-gray-600 dark:text-zinc-400">
+                    {ret.reason}
+                  </p>
+                )}
+                <ul className="mb-3 text-sm text-gray-700 dark:text-zinc-300">
+                  {ret.lines.map((l) => (
+                    <li key={l.id}>
+                      {l.title} × {l.quantity}
+                      {l.restocked ? ' (restocked)' : ''}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex flex-wrap gap-2">
+                  {ret.status === 'requested' && (
+                    <Form method="post" className="inline">
+                      <input type="hidden" name="intent" value="approve-return" />
+                      <input type="hidden" name="returnId" value={ret.id} />
+                      <input type="hidden" name="resolution" value="refund" />
+                      <button
+                        type="submit"
+                        className="rounded-md bg-indigo-600 px-2 py-1 text-xs font-semibold text-white"
+                      >
+                        Approve (Refund)
+                      </button>
+                    </Form>
+                  )}
+                  {ret.status === 'approved' && (
+                    <Form method="post" className="inline">
+                      <input type="hidden" name="intent" value="receive-return" />
+                      <input type="hidden" name="returnId" value={ret.id} />
+                      <button
+                        type="submit"
+                        className="rounded-md bg-indigo-600 px-2 py-1 text-xs font-semibold text-white"
+                      >
+                        Mark Received
+                      </button>
+                    </Form>
+                  )}
+                  {ret.status === 'received' && (
+                    <>
+                      <Form method="post" className="inline">
+                        <input type="hidden" name="intent" value="complete-return" />
+                        <input type="hidden" name="returnId" value={ret.id} />
+                        <input type="hidden" name="resolution" value="refund" />
+                        <button
+                          type="submit"
+                          className="rounded-md bg-red-600 px-2 py-1 text-xs font-semibold text-white"
+                        >
+                          Issue Refund
+                        </button>
+                      </Form>
+                      <Form method="post" className="inline">
+                        <input type="hidden" name="intent" value="complete-return" />
+                        <input type="hidden" name="returnId" value={ret.id} />
+                        <input
+                          type="hidden"
+                          name="resolution"
+                          value="store_credit"
+                        />
+                        <button
+                          type="submit"
+                          className="rounded-md bg-green-600 px-2 py-1 text-xs font-semibold text-white"
+                        >
+                          Issue Store Credit
+                        </button>
+                      </Form>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {order.returns.length === 0 && (
+          <p className="text-sm text-gray-500 dark:text-zinc-400">
+            No returns for this order.
+          </p>
+        )}
       </SectionCard>
 
       {/* Refunds */}
