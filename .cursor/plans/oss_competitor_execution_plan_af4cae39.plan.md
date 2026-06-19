@@ -13,7 +13,7 @@ todos:
     status: completed
   - id: p1-w3
     content: 'Phase 1 (parallel, needs W0): W3 payment breadth (PayPal + manual/offline + saved methods + address validation) and promotions engine (CartDiscount/OrderDiscount stacking/automatic) + tax classes. Owns the totals-engine refactor. Unblocks W4 and W7.'
-    status: pending
+    status: completed
   - id: p1-w6
     content: 'Phase 1 (parallel, needs W0): W6 reporting/analytics + CSV/scheduled exports + AuditLog (subscribes to mutations) + GDPR export/erasure.'
     status: pending

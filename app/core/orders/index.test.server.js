@@ -52,7 +52,8 @@ vi.mock('#/core/inventory/index.server', () => ({
 }));
 
 vi.mock('#/core/discounts/index.server', () => ({
-  validateDiscount: vi.fn(),
+  resolvePromotions: vi.fn(),
+  persistOrderDiscounts: vi.fn(),
 }));
 
 vi.mock('#/core/tax/index.server', () => ({
@@ -73,7 +74,7 @@ vi.mock('#/utils/logger.server', () => ({
 
 import prisma from '#/libs/prisma.server';
 
-import { validateDiscount } from '#/core/discounts/index.server';
+import { resolvePromotions, persistOrderDiscounts } from '#/core/discounts/index.server';
 import { emit } from '#/core/events/index.server';
 import {
   decrementInventory,
@@ -162,9 +163,15 @@ function setupTransaction(capturedTx = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Safe defaults for new dependencies
   computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
   incrementInventory.mockResolvedValue(undefined);
+  resolvePromotions.mockResolvedValue({
+    applied: [],
+    discountCents: 0,
+    freeShipping: false,
+    primaryCode: null,
+  });
+  persistOrderDiscounts.mockResolvedValue(undefined);
 });
 
 // ---------------------------------------------------------------------------
@@ -273,12 +280,20 @@ describe('placeOrder', () => {
     expect(emit).not.toHaveBeenCalled();
   });
 
-  it('increments discount usedCount inside the transaction when couponCode is present', async () => {
+  it('persists order discounts inside the transaction when promotions apply', async () => {
     const session = makeCheckoutSession({ couponCode: 'SAVE10' });
     const order = makeOrder();
-    const capturedTx = {};
+    const applied = [
+      {
+        discountId: 'disc_1',
+        code: 'SAVE10',
+        type: 'percent',
+        value: 10,
+        discountCents: 200,
+      },
+    ];
 
-    setupTransaction(capturedTx);
+    setupTransaction();
 
     prisma.checkoutSession.findUnique.mockResolvedValue(session);
     prisma.order.create.mockResolvedValue(order);
@@ -286,24 +301,25 @@ describe('placeOrder', () => {
     prisma.cartLine.deleteMany.mockResolvedValue({});
     prisma.cart.update.mockResolvedValue({});
     prisma.checkoutSession.update.mockResolvedValue({});
-    prisma.discount.update.mockResolvedValue({});
-    validateDiscount.mockResolvedValue({ discountCents: 200 });
+    resolvePromotions.mockResolvedValue({
+      applied,
+      discountCents: 200,
+      freeShipping: false,
+      primaryCode: 'SAVE10',
+    });
     decrementInventory.mockResolvedValue(undefined);
     emit.mockResolvedValue(undefined);
 
     await placeOrder('sess_1', {});
 
-    expect(validateDiscount).toHaveBeenCalledWith(
-      'SAVE10',
-      expect.objectContaining({
-        subtotalCents: expect.any(Number),
-        currency: 'USD',
-      })
+    expect(resolvePromotions).toHaveBeenCalledWith(
+      expect.objectContaining({ couponCode: 'SAVE10' })
     );
-    expect(prisma.discount.update).toHaveBeenCalledWith({
-      where: { code: 'SAVE10' },
-      data: { usedCount: { increment: 1 } },
-    });
+    expect(persistOrderDiscounts).toHaveBeenCalledWith(
+      order.id,
+      applied,
+      expect.any(Object)
+    );
   });
 
   it('creates order with correct subtotal from cart line snapshots', async () => {

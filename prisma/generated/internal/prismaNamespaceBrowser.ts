@@ -88,7 +88,10 @@ export const ModelName = {
   WebhookEvent: 'WebhookEvent',
   ApiKey: 'ApiKey',
   WebhookSubscription: 'WebhookSubscription',
-  WebhookDelivery: 'WebhookDelivery'
+  WebhookDelivery: 'WebhookDelivery',
+  TaxClass: 'TaxClass',
+  CartDiscount: 'CartDiscount',
+  OrderDiscount: 'OrderDiscount'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -286,6 +289,7 @@ export const ProductVariantScalarFieldEnum = {
   sku: 'sku',
   inventoryCount: 'inventoryCount',
   inventoryTracked: 'inventoryTracked',
+  taxClassId: 'taxClassId',
   position: 'position',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -419,6 +423,8 @@ export const CheckoutSessionScalarFieldEnum = {
   paymentIntentId: 'paymentIntentId',
   paymentProvider: 'paymentProvider',
   couponCode: 'couponCode',
+  vatId: 'vatId',
+  taxExempt: 'taxExempt',
   expiresAt: 'expiresAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -444,6 +450,8 @@ export const OrderScalarFieldEnum = {
   paymentProvider: 'paymentProvider',
   paymentIntentId: 'paymentIntentId',
   couponCode: 'couponCode',
+  vatId: 'vatId',
+  taxExempt: 'taxExempt',
   notes: 'notes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -500,13 +508,22 @@ export type RefundScalarFieldEnum = (typeof RefundScalarFieldEnum)[keyof typeof 
 export const DiscountScalarFieldEnum = {
   id: 'id',
   code: 'code',
+  title: 'title',
   type: 'type',
   value: 'value',
+  appliesTo: 'appliesTo',
   minSubtotalCents: 'minSubtotalCents',
+  minQuantity: 'minQuantity',
   maxUsesCount: 'maxUsesCount',
   usedCount: 'usedCount',
   currency: 'currency',
+  startsAt: 'startsAt',
   expiresAt: 'expiresAt',
+  automatic: 'automatic',
+  stackable: 'stackable',
+  priority: 'priority',
+  customerGroupId: 'customerGroupId',
+  rulesJson: 'rulesJson',
   active: 'active',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -648,6 +665,44 @@ export const WebhookDeliveryScalarFieldEnum = {
 } as const
 
 export type WebhookDeliveryScalarFieldEnum = (typeof WebhookDeliveryScalarFieldEnum)[keyof typeof WebhookDeliveryScalarFieldEnum]
+
+
+export const TaxClassScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  code: 'code',
+  rate: 'rate',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TaxClassScalarFieldEnum = (typeof TaxClassScalarFieldEnum)[keyof typeof TaxClassScalarFieldEnum]
+
+
+export const CartDiscountScalarFieldEnum = {
+  id: 'id',
+  cartId: 'cartId',
+  discountId: 'discountId',
+  code: 'code',
+  discountCents: 'discountCents',
+  createdAt: 'createdAt'
+} as const
+
+export type CartDiscountScalarFieldEnum = (typeof CartDiscountScalarFieldEnum)[keyof typeof CartDiscountScalarFieldEnum]
+
+
+export const OrderDiscountScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  discountId: 'discountId',
+  code: 'code',
+  type: 'type',
+  value: 'value',
+  discountCents: 'discountCents',
+  createdAt: 'createdAt'
+} as const
+
+export type OrderDiscountScalarFieldEnum = (typeof OrderDiscountScalarFieldEnum)[keyof typeof OrderDiscountScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -223,17 +223,20 @@ model ProductVariant {
   sku              String?
   inventoryCount   Int      @default(0)
   inventoryTracked Boolean  @default(true)
+  taxClassId       String?
   position         Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   product    Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  taxClass   TaxClass?      @relation(fields: [taxClassId], references: [id])
   prices     VariantPrice[]
   cartLines  CartLine[]
   orderLines OrderLine[]
 
   @@index([productId])
   @@index([sku])
+  @@index([taxClassId])
 }
 
 model VariantPrice {
@@ -346,9 +349,10 @@ model Cart {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  customer  Customer?         @relation(fields: [customerId], references: [id])
-  lines     CartLine[]
-  checkouts CheckoutSession[]
+  customer   Customer?      @relation(fields: [customerId], references: [id])
+  lines      CartLine[]
+  checkouts  CheckoutSession[]
+  discounts  CartDiscount[]
 
   @@index([customerId])
   @@index([token])
@@ -382,6 +386,8 @@ model CheckoutSession {
   paymentIntentId     String?
   paymentProvider     String?
   couponCode          String?
+  vatId               String?
+  taxExempt           Boolean   @default(false)
   expiresAt           DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
@@ -410,14 +416,17 @@ model Order {
   paymentProvider     String?
   paymentIntentId     String?
   couponCode          String?
+  vatId               String?
+  taxExempt           Boolean  @default(false)
   notes               String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  customer  Customer?   @relation(fields: [customerId], references: [id])
-  lines     OrderLine[]
-  shipments Shipment[]
-  refunds   Refund[]
+  customer   Customer?       @relation(fields: [customerId], references: [id])
+  lines      OrderLine[]
+  shipments  Shipment[]
+  refunds    Refund[]
+  discounts  OrderDiscount[]
 
   @@index([customerId])
   @@index([orderNumber])
@@ -478,16 +487,31 @@ model Refund {
 model Discount {
   id               String    @id @default(cuid())
   code             String    @unique
+  title            String?
   type             String
   value            Int
+  appliesTo        String    @default("order")
   minSubtotalCents Int?
+  minQuantity      Int?
   maxUsesCount     Int?
   usedCount        Int       @default(0)
   currency         String?
+  startsAt         DateTime?
   expiresAt        DateTime?
+  automatic        Boolean   @default(false)
+  stackable        Boolean   @default(false)
+  priority         Int       @default(0)
+  customerGroupId  String?
+  rulesJson        String?
   active           Boolean   @default(true)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+
+  cartDiscounts  CartDiscount[]
+  orderDiscounts OrderDiscount[]
+
+  @@index([automatic, active])
+  @@index([customerGroupId])
 }
 
 model PluginData {
@@ -629,4 +653,50 @@ model WebhookDelivery {
   @@index([subscriptionId])
   @@index([status])
   @@index([event])
+}
+
+// ─── W3: Payments breadth + promotions engine + tax classes ────────────────
+
+model TaxClass {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  rate      Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  variants ProductVariant[]
+}
+
+model CartDiscount {
+  id            String   @id @default(cuid())
+  cartId        String
+  discountId    String
+  code          String?
+  discountCents Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  cart     Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  discount Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, discountId])
+  @@index([cartId])
+  @@index([discountId])
+}
+
+model OrderDiscount {
+  id            String   @id @default(cuid())
+  orderId       String
+  discountId    String
+  code          String?
+  type          String
+  value         Int
+  discountCents Int
+  createdAt     DateTime @default(now())
+
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  discount Discount @relation(fields: [discountId], references: [id])
+
+  @@index([orderId])
+  @@index([discountId])
 }

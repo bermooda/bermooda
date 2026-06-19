@@ -5,9 +5,23 @@ vi.mock('#/core/orders/index.server', () => ({
   registerPaymentEventHandlers: vi.fn(),
 }));
 vi.mock('#/core/payments/index.server', () => ({ registerProvider: vi.fn() }));
+vi.mock('#/core/address-validation/index.server', () => ({
+  registerProvider: vi.fn(),
+  noopProvider: { name: 'No-op' },
+}));
+vi.mock('#/core/payments/manual.server', () => ({
+  manualProvider: { name: 'Manual' },
+}));
+vi.mock('#/core/payments/paypal.server', () => ({
+  paypalProvider: { name: 'PayPal' },
+}));
 vi.mock('#/core/payments/stripe.server', () => ({
   stripeProvider: { name: 'Stripe' },
 }));
+vi.mock('#/core/webhooks/index.server', () => ({
+  registerWebhookSubscribers: vi.fn(),
+}));
+vi.mock('#/core/webhooks/job.server', () => ({}));
 vi.mock('#/core/shipping/index.server', () => ({
   registerProvider: vi.fn(),
   flatRateProvider: { name: 'Flat Rate' },
@@ -15,6 +29,7 @@ vi.mock('#/core/shipping/index.server', () => ({
 vi.mock('#/core/tax/index.server', () => ({
   registerProvider: vi.fn(),
   simplePercentProvider: { name: 'Simple Percent' },
+  automaticTaxProvider: { name: 'Automatic Tax' },
 }));
 vi.mock('#/core/search/index.server', () => ({
   registerProvider: vi.fn(),
@@ -61,6 +76,8 @@ describe('bootstrap.server', () => {
     registerBuiltins();
 
     expect(registerPayment).toHaveBeenCalledWith('stripe', expect.any(Object));
+    expect(registerPayment).toHaveBeenCalledWith('paypal', expect.any(Object));
+    expect(registerPayment).toHaveBeenCalledWith('manual', expect.any(Object));
     expect(registerShipping).toHaveBeenCalledWith(
       'flat_rate',
       expect.any(Object)
@@ -69,6 +86,7 @@ describe('bootstrap.server', () => {
       'simple_percent',
       expect.any(Object)
     );
+    expect(registerTax).toHaveBeenCalledWith('automatic', expect.any(Object));
     expect(registerSearch).toHaveBeenCalledWith('db', expect.any(Object));
     expect(registerTheme).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'default' })
@@ -80,7 +98,7 @@ describe('bootstrap.server', () => {
     registerBuiltins();
     registerBuiltins();
 
-    expect(registerPayment).toHaveBeenCalledOnce();
+    expect(registerPayment).toHaveBeenCalledTimes(3);
     expect(registerPaymentEventHandlers).toHaveBeenCalledOnce();
   });
 
@@ -89,7 +107,7 @@ describe('bootstrap.server', () => {
     __resetBootstrap();
     registerBuiltins();
 
-    expect(registerPayment).toHaveBeenCalledTimes(2);
+    expect(registerPayment).toHaveBeenCalledTimes(6);
     expect(registerPaymentEventHandlers).toHaveBeenCalledTimes(2);
   });
 });

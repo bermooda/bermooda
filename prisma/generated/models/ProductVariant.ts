@@ -42,6 +42,7 @@ export type ProductVariantMinAggregateOutputType = {
   sku: string | null
   inventoryCount: number | null
   inventoryTracked: boolean | null
+  taxClassId: string | null
   position: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -53,6 +54,7 @@ export type ProductVariantMaxAggregateOutputType = {
   sku: string | null
   inventoryCount: number | null
   inventoryTracked: boolean | null
+  taxClassId: string | null
   position: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -64,6 +66,7 @@ export type ProductVariantCountAggregateOutputType = {
   sku: number
   inventoryCount: number
   inventoryTracked: number
+  taxClassId: number
   position: number
   createdAt: number
   updatedAt: number
@@ -87,6 +90,7 @@ export type ProductVariantMinAggregateInputType = {
   sku?: true
   inventoryCount?: true
   inventoryTracked?: true
+  taxClassId?: true
   position?: true
   createdAt?: true
   updatedAt?: true
@@ -98,6 +102,7 @@ export type ProductVariantMaxAggregateInputType = {
   sku?: true
   inventoryCount?: true
   inventoryTracked?: true
+  taxClassId?: true
   position?: true
   createdAt?: true
   updatedAt?: true
@@ -109,6 +114,7 @@ export type ProductVariantCountAggregateInputType = {
   sku?: true
   inventoryCount?: true
   inventoryTracked?: true
+  taxClassId?: true
   position?: true
   createdAt?: true
   updatedAt?: true
@@ -207,6 +213,7 @@ export type ProductVariantGroupByOutputType = {
   sku: string | null
   inventoryCount: number
   inventoryTracked: boolean
+  taxClassId: string | null
   position: number
   createdAt: Date
   updatedAt: Date
@@ -241,10 +248,12 @@ export type ProductVariantWhereInput = {
   sku?: Prisma.StringNullableFilter<"ProductVariant"> | string | null
   inventoryCount?: Prisma.IntFilter<"ProductVariant"> | number
   inventoryTracked?: Prisma.BoolFilter<"ProductVariant"> | boolean
+  taxClassId?: Prisma.StringNullableFilter<"ProductVariant"> | string | null
   position?: Prisma.IntFilter<"ProductVariant"> | number
   createdAt?: Prisma.DateTimeFilter<"ProductVariant"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ProductVariant"> | Date | string
   product?: Prisma.XOR<Prisma.ProductScalarRelationFilter, Prisma.ProductWhereInput>
+  taxClass?: Prisma.XOR<Prisma.TaxClassNullableScalarRelationFilter, Prisma.TaxClassWhereInput> | null
   prices?: Prisma.VariantPriceListRelationFilter
   cartLines?: Prisma.CartLineListRelationFilter
   orderLines?: Prisma.OrderLineListRelationFilter
@@ -256,10 +265,12 @@ export type ProductVariantOrderByWithRelationInput = {
   sku?: Prisma.SortOrderInput | Prisma.SortOrder
   inventoryCount?: Prisma.SortOrder
   inventoryTracked?: Prisma.SortOrder
+  taxClassId?: Prisma.SortOrderInput | Prisma.SortOrder
   position?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   product?: Prisma.ProductOrderByWithRelationInput
+  taxClass?: Prisma.TaxClassOrderByWithRelationInput
   prices?: Prisma.VariantPriceOrderByRelationAggregateInput
   cartLines?: Prisma.CartLineOrderByRelationAggregateInput
   orderLines?: Prisma.OrderLineOrderByRelationAggregateInput
@@ -274,10 +285,12 @@ export type ProductVariantWhereUniqueInput = Prisma.AtLeast<{
   sku?: Prisma.StringNullableFilter<"ProductVariant"> | string | null
   inventoryCount?: Prisma.IntFilter<"ProductVariant"> | number
   inventoryTracked?: Prisma.BoolFilter<"ProductVariant"> | boolean
+  taxClassId?: Prisma.StringNullableFilter<"ProductVariant"> | string | null
   position?: Prisma.IntFilter<"ProductVariant"> | number
   createdAt?: Prisma.DateTimeFilter<"ProductVariant"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ProductVariant"> | Date | string
   product?: Prisma.XOR<Prisma.ProductScalarRelationFilter, Prisma.ProductWhereInput>
+  taxClass?: Prisma.XOR<Prisma.TaxClassNullableScalarRelationFilter, Prisma.TaxClassWhereInput> | null
   prices?: Prisma.VariantPriceListRelationFilter
   cartLines?: Prisma.CartLineListRelationFilter
   orderLines?: Prisma.OrderLineListRelationFilter
@@ -289,6 +302,7 @@ export type ProductVariantOrderByWithAggregationInput = {
   sku?: Prisma.SortOrderInput | Prisma.SortOrder
   inventoryCount?: Prisma.SortOrder
   inventoryTracked?: Prisma.SortOrder
+  taxClassId?: Prisma.SortOrderInput | Prisma.SortOrder
   position?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -308,6 +322,7 @@ export type ProductVariantScalarWhereWithAggregatesInput = {
   sku?: Prisma.StringNullableWithAggregatesFilter<"ProductVariant"> | string | null
   inventoryCount?: Prisma.IntWithAggregatesFilter<"ProductVariant"> | number
   inventoryTracked?: Prisma.BoolWithAggregatesFilter<"ProductVariant"> | boolean
+  taxClassId?: Prisma.StringNullableWithAggregatesFilter<"ProductVariant"> | string | null
   position?: Prisma.IntWithAggregatesFilter<"ProductVariant"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ProductVariant"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ProductVariant"> | Date | string
@@ -322,6 +337,7 @@ export type ProductVariantCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   product: Prisma.ProductCreateNestedOneWithoutVariantsInput
+  taxClass?: Prisma.TaxClassCreateNestedOneWithoutVariantsInput
   prices?: Prisma.VariantPriceCreateNestedManyWithoutVariantInput
   cartLines?: Prisma.CartLineCreateNestedManyWithoutVariantInput
   orderLines?: Prisma.OrderLineCreateNestedManyWithoutVariantInput
@@ -333,6 +349,7 @@ export type ProductVariantUncheckedCreateInput = {
   sku?: string | null
   inventoryCount?: number
   inventoryTracked?: boolean
+  taxClassId?: string | null
   position?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -350,6 +367,7 @@ export type ProductVariantUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   product?: Prisma.ProductUpdateOneRequiredWithoutVariantsNestedInput
+  taxClass?: Prisma.TaxClassUpdateOneWithoutVariantsNestedInput
   prices?: Prisma.VariantPriceUpdateManyWithoutVariantNestedInput
   cartLines?: Prisma.CartLineUpdateManyWithoutVariantNestedInput
   orderLines?: Prisma.OrderLineUpdateManyWithoutVariantNestedInput
@@ -361,6 +379,7 @@ export type ProductVariantUncheckedUpdateInput = {
   sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
   inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  taxClassId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -375,6 +394,7 @@ export type ProductVariantCreateManyInput = {
   sku?: string | null
   inventoryCount?: number
   inventoryTracked?: boolean
+  taxClassId?: string | null
   position?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -396,6 +416,7 @@ export type ProductVariantUncheckedUpdateManyInput = {
   sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
   inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  taxClassId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -417,6 +438,7 @@ export type ProductVariantCountOrderByAggregateInput = {
   sku?: Prisma.SortOrder
   inventoryCount?: Prisma.SortOrder
   inventoryTracked?: Prisma.SortOrder
+  taxClassId?: Prisma.SortOrder
   position?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -433,6 +455,7 @@ export type ProductVariantMaxOrderByAggregateInput = {
   sku?: Prisma.SortOrder
   inventoryCount?: Prisma.SortOrder
   inventoryTracked?: Prisma.SortOrder
+  taxClassId?: Prisma.SortOrder
   position?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -444,6 +467,7 @@ export type ProductVariantMinOrderByAggregateInput = {
   sku?: Prisma.SortOrder
   inventoryCount?: Prisma.SortOrder
   inventoryTracked?: Prisma.SortOrder
+  taxClassId?: Prisma.SortOrder
   position?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -552,6 +576,48 @@ export type ProductVariantUpdateOneWithoutOrderLinesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProductVariantUpdateToOneWithWhereWithoutOrderLinesInput, Prisma.ProductVariantUpdateWithoutOrderLinesInput>, Prisma.ProductVariantUncheckedUpdateWithoutOrderLinesInput>
 }
 
+export type ProductVariantCreateNestedManyWithoutTaxClassInput = {
+  create?: Prisma.XOR<Prisma.ProductVariantCreateWithoutTaxClassInput, Prisma.ProductVariantUncheckedCreateWithoutTaxClassInput> | Prisma.ProductVariantCreateWithoutTaxClassInput[] | Prisma.ProductVariantUncheckedCreateWithoutTaxClassInput[]
+  connectOrCreate?: Prisma.ProductVariantCreateOrConnectWithoutTaxClassInput | Prisma.ProductVariantCreateOrConnectWithoutTaxClassInput[]
+  createMany?: Prisma.ProductVariantCreateManyTaxClassInputEnvelope
+  connect?: Prisma.ProductVariantWhereUniqueInput | Prisma.ProductVariantWhereUniqueInput[]
+}
+
+export type ProductVariantUncheckedCreateNestedManyWithoutTaxClassInput = {
+  create?: Prisma.XOR<Prisma.ProductVariantCreateWithoutTaxClassInput, Prisma.ProductVariantUncheckedCreateWithoutTaxClassInput> | Prisma.ProductVariantCreateWithoutTaxClassInput[] | Prisma.ProductVariantUncheckedCreateWithoutTaxClassInput[]
+  connectOrCreate?: Prisma.ProductVariantCreateOrConnectWithoutTaxClassInput | Prisma.ProductVariantCreateOrConnectWithoutTaxClassInput[]
+  createMany?: Prisma.ProductVariantCreateManyTaxClassInputEnvelope
+  connect?: Prisma.ProductVariantWhereUniqueInput | Prisma.ProductVariantWhereUniqueInput[]
+}
+
+export type ProductVariantUpdateManyWithoutTaxClassNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductVariantCreateWithoutTaxClassInput, Prisma.ProductVariantUncheckedCreateWithoutTaxClassInput> | Prisma.ProductVariantCreateWithoutTaxClassInput[] | Prisma.ProductVariantUncheckedCreateWithoutTaxClassInput[]
+  connectOrCreate?: Prisma.ProductVariantCreateOrConnectWithoutTaxClassInput | Prisma.ProductVariantCreateOrConnectWithoutTaxClassInput[]
+  upsert?: Prisma.ProductVariantUpsertWithWhereUniqueWithoutTaxClassInput | Prisma.ProductVariantUpsertWithWhereUniqueWithoutTaxClassInput[]
+  createMany?: Prisma.ProductVariantCreateManyTaxClassInputEnvelope
+  set?: Prisma.ProductVariantWhereUniqueInput | Prisma.ProductVariantWhereUniqueInput[]
+  disconnect?: Prisma.ProductVariantWhereUniqueInput | Prisma.ProductVariantWhereUniqueInput[]
+  delete?: Prisma.ProductVariantWhereUniqueInput | Prisma.ProductVariantWhereUniqueInput[]
+  connect?: Prisma.ProductVariantWhereUniqueInput | Prisma.ProductVariantWhereUniqueInput[]
+  update?: Prisma.ProductVariantUpdateWithWhereUniqueWithoutTaxClassInput | Prisma.ProductVariantUpdateWithWhereUniqueWithoutTaxClassInput[]
+  updateMany?: Prisma.ProductVariantUpdateManyWithWhereWithoutTaxClassInput | Prisma.ProductVariantUpdateManyWithWhereWithoutTaxClassInput[]
+  deleteMany?: Prisma.ProductVariantScalarWhereInput | Prisma.ProductVariantScalarWhereInput[]
+}
+
+export type ProductVariantUncheckedUpdateManyWithoutTaxClassNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductVariantCreateWithoutTaxClassInput, Prisma.ProductVariantUncheckedCreateWithoutTaxClassInput> | Prisma.ProductVariantCreateWithoutTaxClassInput[] | Prisma.ProductVariantUncheckedCreateWithoutTaxClassInput[]
+  connectOrCreate?: Prisma.ProductVariantCreateOrConnectWithoutTaxClassInput | Prisma.ProductVariantCreateOrConnectWithoutTaxClassInput[]
+  upsert?: Prisma.ProductVariantUpsertWithWhereUniqueWithoutTaxClassInput | Prisma.ProductVariantUpsertWithWhereUniqueWithoutTaxClassInput[]
+  createMany?: Prisma.ProductVariantCreateManyTaxClassInputEnvelope
+  set?: Prisma.ProductVariantWhereUniqueInput | Prisma.ProductVariantWhereUniqueInput[]
+  disconnect?: Prisma.ProductVariantWhereUniqueInput | Prisma.ProductVariantWhereUniqueInput[]
+  delete?: Prisma.ProductVariantWhereUniqueInput | Prisma.ProductVariantWhereUniqueInput[]
+  connect?: Prisma.ProductVariantWhereUniqueInput | Prisma.ProductVariantWhereUniqueInput[]
+  update?: Prisma.ProductVariantUpdateWithWhereUniqueWithoutTaxClassInput | Prisma.ProductVariantUpdateWithWhereUniqueWithoutTaxClassInput[]
+  updateMany?: Prisma.ProductVariantUpdateManyWithWhereWithoutTaxClassInput | Prisma.ProductVariantUpdateManyWithWhereWithoutTaxClassInput[]
+  deleteMany?: Prisma.ProductVariantScalarWhereInput | Prisma.ProductVariantScalarWhereInput[]
+}
+
 export type ProductVariantCreateWithoutProductInput = {
   id?: string
   sku?: string | null
@@ -560,6 +626,7 @@ export type ProductVariantCreateWithoutProductInput = {
   position?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  taxClass?: Prisma.TaxClassCreateNestedOneWithoutVariantsInput
   prices?: Prisma.VariantPriceCreateNestedManyWithoutVariantInput
   cartLines?: Prisma.CartLineCreateNestedManyWithoutVariantInput
   orderLines?: Prisma.OrderLineCreateNestedManyWithoutVariantInput
@@ -570,6 +637,7 @@ export type ProductVariantUncheckedCreateWithoutProductInput = {
   sku?: string | null
   inventoryCount?: number
   inventoryTracked?: boolean
+  taxClassId?: string | null
   position?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -612,6 +680,7 @@ export type ProductVariantScalarWhereInput = {
   sku?: Prisma.StringNullableFilter<"ProductVariant"> | string | null
   inventoryCount?: Prisma.IntFilter<"ProductVariant"> | number
   inventoryTracked?: Prisma.BoolFilter<"ProductVariant"> | boolean
+  taxClassId?: Prisma.StringNullableFilter<"ProductVariant"> | string | null
   position?: Prisma.IntFilter<"ProductVariant"> | number
   createdAt?: Prisma.DateTimeFilter<"ProductVariant"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ProductVariant"> | Date | string
@@ -626,6 +695,7 @@ export type ProductVariantCreateWithoutPricesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   product: Prisma.ProductCreateNestedOneWithoutVariantsInput
+  taxClass?: Prisma.TaxClassCreateNestedOneWithoutVariantsInput
   cartLines?: Prisma.CartLineCreateNestedManyWithoutVariantInput
   orderLines?: Prisma.OrderLineCreateNestedManyWithoutVariantInput
 }
@@ -636,6 +706,7 @@ export type ProductVariantUncheckedCreateWithoutPricesInput = {
   sku?: string | null
   inventoryCount?: number
   inventoryTracked?: boolean
+  taxClassId?: string | null
   position?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -668,6 +739,7 @@ export type ProductVariantUpdateWithoutPricesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   product?: Prisma.ProductUpdateOneRequiredWithoutVariantsNestedInput
+  taxClass?: Prisma.TaxClassUpdateOneWithoutVariantsNestedInput
   cartLines?: Prisma.CartLineUpdateManyWithoutVariantNestedInput
   orderLines?: Prisma.OrderLineUpdateManyWithoutVariantNestedInput
 }
@@ -678,6 +750,7 @@ export type ProductVariantUncheckedUpdateWithoutPricesInput = {
   sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
   inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  taxClassId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -694,6 +767,7 @@ export type ProductVariantCreateWithoutCartLinesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   product: Prisma.ProductCreateNestedOneWithoutVariantsInput
+  taxClass?: Prisma.TaxClassCreateNestedOneWithoutVariantsInput
   prices?: Prisma.VariantPriceCreateNestedManyWithoutVariantInput
   orderLines?: Prisma.OrderLineCreateNestedManyWithoutVariantInput
 }
@@ -704,6 +778,7 @@ export type ProductVariantUncheckedCreateWithoutCartLinesInput = {
   sku?: string | null
   inventoryCount?: number
   inventoryTracked?: boolean
+  taxClassId?: string | null
   position?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -736,6 +811,7 @@ export type ProductVariantUpdateWithoutCartLinesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   product?: Prisma.ProductUpdateOneRequiredWithoutVariantsNestedInput
+  taxClass?: Prisma.TaxClassUpdateOneWithoutVariantsNestedInput
   prices?: Prisma.VariantPriceUpdateManyWithoutVariantNestedInput
   orderLines?: Prisma.OrderLineUpdateManyWithoutVariantNestedInput
 }
@@ -746,6 +822,7 @@ export type ProductVariantUncheckedUpdateWithoutCartLinesInput = {
   sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
   inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  taxClassId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -762,6 +839,7 @@ export type ProductVariantCreateWithoutOrderLinesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   product: Prisma.ProductCreateNestedOneWithoutVariantsInput
+  taxClass?: Prisma.TaxClassCreateNestedOneWithoutVariantsInput
   prices?: Prisma.VariantPriceCreateNestedManyWithoutVariantInput
   cartLines?: Prisma.CartLineCreateNestedManyWithoutVariantInput
 }
@@ -772,6 +850,7 @@ export type ProductVariantUncheckedCreateWithoutOrderLinesInput = {
   sku?: string | null
   inventoryCount?: number
   inventoryTracked?: boolean
+  taxClassId?: string | null
   position?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -804,6 +883,7 @@ export type ProductVariantUpdateWithoutOrderLinesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   product?: Prisma.ProductUpdateOneRequiredWithoutVariantsNestedInput
+  taxClass?: Prisma.TaxClassUpdateOneWithoutVariantsNestedInput
   prices?: Prisma.VariantPriceUpdateManyWithoutVariantNestedInput
   cartLines?: Prisma.CartLineUpdateManyWithoutVariantNestedInput
 }
@@ -814,6 +894,7 @@ export type ProductVariantUncheckedUpdateWithoutOrderLinesInput = {
   sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
   inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  taxClassId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -821,11 +902,65 @@ export type ProductVariantUncheckedUpdateWithoutOrderLinesInput = {
   cartLines?: Prisma.CartLineUncheckedUpdateManyWithoutVariantNestedInput
 }
 
+export type ProductVariantCreateWithoutTaxClassInput = {
+  id?: string
+  sku?: string | null
+  inventoryCount?: number
+  inventoryTracked?: boolean
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  product: Prisma.ProductCreateNestedOneWithoutVariantsInput
+  prices?: Prisma.VariantPriceCreateNestedManyWithoutVariantInput
+  cartLines?: Prisma.CartLineCreateNestedManyWithoutVariantInput
+  orderLines?: Prisma.OrderLineCreateNestedManyWithoutVariantInput
+}
+
+export type ProductVariantUncheckedCreateWithoutTaxClassInput = {
+  id?: string
+  productId: string
+  sku?: string | null
+  inventoryCount?: number
+  inventoryTracked?: boolean
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  prices?: Prisma.VariantPriceUncheckedCreateNestedManyWithoutVariantInput
+  cartLines?: Prisma.CartLineUncheckedCreateNestedManyWithoutVariantInput
+  orderLines?: Prisma.OrderLineUncheckedCreateNestedManyWithoutVariantInput
+}
+
+export type ProductVariantCreateOrConnectWithoutTaxClassInput = {
+  where: Prisma.ProductVariantWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProductVariantCreateWithoutTaxClassInput, Prisma.ProductVariantUncheckedCreateWithoutTaxClassInput>
+}
+
+export type ProductVariantCreateManyTaxClassInputEnvelope = {
+  data: Prisma.ProductVariantCreateManyTaxClassInput | Prisma.ProductVariantCreateManyTaxClassInput[]
+}
+
+export type ProductVariantUpsertWithWhereUniqueWithoutTaxClassInput = {
+  where: Prisma.ProductVariantWhereUniqueInput
+  update: Prisma.XOR<Prisma.ProductVariantUpdateWithoutTaxClassInput, Prisma.ProductVariantUncheckedUpdateWithoutTaxClassInput>
+  create: Prisma.XOR<Prisma.ProductVariantCreateWithoutTaxClassInput, Prisma.ProductVariantUncheckedCreateWithoutTaxClassInput>
+}
+
+export type ProductVariantUpdateWithWhereUniqueWithoutTaxClassInput = {
+  where: Prisma.ProductVariantWhereUniqueInput
+  data: Prisma.XOR<Prisma.ProductVariantUpdateWithoutTaxClassInput, Prisma.ProductVariantUncheckedUpdateWithoutTaxClassInput>
+}
+
+export type ProductVariantUpdateManyWithWhereWithoutTaxClassInput = {
+  where: Prisma.ProductVariantScalarWhereInput
+  data: Prisma.XOR<Prisma.ProductVariantUpdateManyMutationInput, Prisma.ProductVariantUncheckedUpdateManyWithoutTaxClassInput>
+}
+
 export type ProductVariantCreateManyProductInput = {
   id?: string
   sku?: string | null
   inventoryCount?: number
   inventoryTracked?: boolean
+  taxClassId?: string | null
   position?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -839,6 +974,7 @@ export type ProductVariantUpdateWithoutProductInput = {
   position?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  taxClass?: Prisma.TaxClassUpdateOneWithoutVariantsNestedInput
   prices?: Prisma.VariantPriceUpdateManyWithoutVariantNestedInput
   cartLines?: Prisma.CartLineUpdateManyWithoutVariantNestedInput
   orderLines?: Prisma.OrderLineUpdateManyWithoutVariantNestedInput
@@ -846,6 +982,57 @@ export type ProductVariantUpdateWithoutProductInput = {
 
 export type ProductVariantUncheckedUpdateWithoutProductInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
+  inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  taxClassId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  prices?: Prisma.VariantPriceUncheckedUpdateManyWithoutVariantNestedInput
+  cartLines?: Prisma.CartLineUncheckedUpdateManyWithoutVariantNestedInput
+  orderLines?: Prisma.OrderLineUncheckedUpdateManyWithoutVariantNestedInput
+}
+
+export type ProductVariantUncheckedUpdateManyWithoutProductInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
+  inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  taxClassId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ProductVariantCreateManyTaxClassInput = {
+  id?: string
+  productId: string
+  sku?: string | null
+  inventoryCount?: number
+  inventoryTracked?: boolean
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ProductVariantUpdateWithoutTaxClassInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
+  inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  product?: Prisma.ProductUpdateOneRequiredWithoutVariantsNestedInput
+  prices?: Prisma.VariantPriceUpdateManyWithoutVariantNestedInput
+  cartLines?: Prisma.CartLineUpdateManyWithoutVariantNestedInput
+  orderLines?: Prisma.OrderLineUpdateManyWithoutVariantNestedInput
+}
+
+export type ProductVariantUncheckedUpdateWithoutTaxClassInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productId?: Prisma.StringFieldUpdateOperationsInput | string
   sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
   inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -857,8 +1044,9 @@ export type ProductVariantUncheckedUpdateWithoutProductInput = {
   orderLines?: Prisma.OrderLineUncheckedUpdateManyWithoutVariantNestedInput
 }
 
-export type ProductVariantUncheckedUpdateManyWithoutProductInput = {
+export type ProductVariantUncheckedUpdateManyWithoutTaxClassInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  productId?: Prisma.StringFieldUpdateOperationsInput | string
   sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
   inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -922,10 +1110,12 @@ export type ProductVariantSelect<ExtArgs extends runtime.Types.Extensions.Intern
   sku?: boolean
   inventoryCount?: boolean
   inventoryTracked?: boolean
+  taxClassId?: boolean
   position?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
+  taxClass?: boolean | Prisma.ProductVariant$taxClassArgs<ExtArgs>
   prices?: boolean | Prisma.ProductVariant$pricesArgs<ExtArgs>
   cartLines?: boolean | Prisma.ProductVariant$cartLinesArgs<ExtArgs>
   orderLines?: boolean | Prisma.ProductVariant$orderLinesArgs<ExtArgs>
@@ -938,10 +1128,12 @@ export type ProductVariantSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   sku?: boolean
   inventoryCount?: boolean
   inventoryTracked?: boolean
+  taxClassId?: boolean
   position?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
+  taxClass?: boolean | Prisma.ProductVariant$taxClassArgs<ExtArgs>
 }, ExtArgs["result"]["productVariant"]>
 
 export type ProductVariantSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -950,10 +1142,12 @@ export type ProductVariantSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   sku?: boolean
   inventoryCount?: boolean
   inventoryTracked?: boolean
+  taxClassId?: boolean
   position?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
+  taxClass?: boolean | Prisma.ProductVariant$taxClassArgs<ExtArgs>
 }, ExtArgs["result"]["productVariant"]>
 
 export type ProductVariantSelectScalar = {
@@ -962,14 +1156,16 @@ export type ProductVariantSelectScalar = {
   sku?: boolean
   inventoryCount?: boolean
   inventoryTracked?: boolean
+  taxClassId?: boolean
   position?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ProductVariantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "sku" | "inventoryCount" | "inventoryTracked" | "position" | "createdAt" | "updatedAt", ExtArgs["result"]["productVariant"]>
+export type ProductVariantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "sku" | "inventoryCount" | "inventoryTracked" | "taxClassId" | "position" | "createdAt" | "updatedAt", ExtArgs["result"]["productVariant"]>
 export type ProductVariantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
+  taxClass?: boolean | Prisma.ProductVariant$taxClassArgs<ExtArgs>
   prices?: boolean | Prisma.ProductVariant$pricesArgs<ExtArgs>
   cartLines?: boolean | Prisma.ProductVariant$cartLinesArgs<ExtArgs>
   orderLines?: boolean | Prisma.ProductVariant$orderLinesArgs<ExtArgs>
@@ -977,15 +1173,18 @@ export type ProductVariantInclude<ExtArgs extends runtime.Types.Extensions.Inter
 }
 export type ProductVariantIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
+  taxClass?: boolean | Prisma.ProductVariant$taxClassArgs<ExtArgs>
 }
 export type ProductVariantIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
+  taxClass?: boolean | Prisma.ProductVariant$taxClassArgs<ExtArgs>
 }
 
 export type $ProductVariantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ProductVariant"
   objects: {
     product: Prisma.$ProductPayload<ExtArgs>
+    taxClass: Prisma.$TaxClassPayload<ExtArgs> | null
     prices: Prisma.$VariantPricePayload<ExtArgs>[]
     cartLines: Prisma.$CartLinePayload<ExtArgs>[]
     orderLines: Prisma.$OrderLinePayload<ExtArgs>[]
@@ -996,6 +1195,7 @@ export type $ProductVariantPayload<ExtArgs extends runtime.Types.Extensions.Inte
     sku: string | null
     inventoryCount: number
     inventoryTracked: boolean
+    taxClassId: string | null
     position: number
     createdAt: Date
     updatedAt: Date
@@ -1394,6 +1594,7 @@ readonly fields: ProductVariantFieldRefs;
 export interface Prisma__ProductVariantClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   product<T extends Prisma.ProductDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductDefaultArgs<ExtArgs>>): Prisma.Prisma__ProductClient<runtime.Types.Result.GetResult<Prisma.$ProductPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  taxClass<T extends Prisma.ProductVariant$taxClassArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductVariant$taxClassArgs<ExtArgs>>): Prisma.Prisma__TaxClassClient<runtime.Types.Result.GetResult<Prisma.$TaxClassPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   prices<T extends Prisma.ProductVariant$pricesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductVariant$pricesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VariantPricePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   cartLines<T extends Prisma.ProductVariant$cartLinesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductVariant$cartLinesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CartLinePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   orderLines<T extends Prisma.ProductVariant$orderLinesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductVariant$orderLinesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderLinePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1431,6 +1632,7 @@ export interface ProductVariantFieldRefs {
   readonly sku: Prisma.FieldRef<"ProductVariant", 'String'>
   readonly inventoryCount: Prisma.FieldRef<"ProductVariant", 'Int'>
   readonly inventoryTracked: Prisma.FieldRef<"ProductVariant", 'Boolean'>
+  readonly taxClassId: Prisma.FieldRef<"ProductVariant", 'String'>
   readonly position: Prisma.FieldRef<"ProductVariant", 'Int'>
   readonly createdAt: Prisma.FieldRef<"ProductVariant", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ProductVariant", 'DateTime'>
@@ -1830,6 +2032,25 @@ export type ProductVariantDeleteManyArgs<ExtArgs extends runtime.Types.Extension
    * Limit how many ProductVariants to delete.
    */
   limit?: number
+}
+
+/**
+ * ProductVariant.taxClass
+ */
+export type ProductVariant$taxClassArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TaxClass
+   */
+  select?: Prisma.TaxClassSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TaxClass
+   */
+  omit?: Prisma.TaxClassOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TaxClassInclude<ExtArgs> | null
+  where?: Prisma.TaxClassWhereInput
 }
 
 /**
