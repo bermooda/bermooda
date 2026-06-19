@@ -1,0 +1,179 @@
+// app/core/api-keys/index.test.server.js
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// ---------------------------------------------------------------------------
+// Mock prisma — must be hoisted before other imports
+// ---------------------------------------------------------------------------
+
+vi.mock('#/libs/prisma.server', () => {
+  const apiKey = {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  };
+  return { default: { apiKey } };
+});
+
+import prisma from '#/libs/prisma.server';
+
+import {
+  createApiKey,
+  validateApiKey,
+  listApiKeys,
+  revokeApiKey,
+} from './index.server';
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function makeRecord(overrides = {}) {
+  return {
+    id: 'key-1',
+    label: 'Test key',
+    keyHash: 'fakehash',
+    scopes: '["admin"]',
+    lastUsedAt: null,
+    expiresAt: null,
+    createdAt: new Date('2026-01-01T00:00:00Z'),
+    updatedAt: new Date('2026-01-01T00:00:00Z'),
+    ...overrides,
+  };
+}
+
+// ---------------------------------------------------------------------------
+
+describe('createApiKey', () => {
+  it('returns a raw key and a serialized record without keyHash', async () => {
+    const record = makeRecord();
+    prisma.apiKey.create.mockResolvedValue(record);
+
+    const { key, record: serialized } = await createApiKey({
+      label: 'Test key',
+      scopes: ['admin'],
+    });
+
+    expect(key).toMatch(/^berm_/);
+    expect(key.length).toBeGreaterThan(10);
+    expect(serialized.keyHash).toBeUndefined();
+    expect(serialized.label).toBe('Test key');
+    expect(serialized.scopes).toEqual(['admin']);
+    expect(prisma.apiKey.create).toHaveBeenCalledOnce();
+  });
+
+  it('throws LABEL_REQUIRED when label is empty', async () => {
+    await expect(
+      createApiKey({ label: '', scopes: ['admin'] })
+    ).rejects.toMatchObject({
+      code: 'LABEL_REQUIRED',
+    });
+    expect(prisma.apiKey.create).not.toHaveBeenCalled();
+  });
+
+  it('throws SCOPES_REQUIRED when scopes is empty', async () => {
+    await expect(
+      createApiKey({ label: 'x', scopes: [] })
+    ).rejects.toMatchObject({
+      code: 'SCOPES_REQUIRED',
+    });
+    expect(prisma.apiKey.create).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('validateApiKey', () => {
+  it('returns the serialized record for a valid key', async () => {
+    const record = makeRecord();
+    prisma.apiKey.findUnique.mockResolvedValue(record);
+    prisma.apiKey.update.mockResolvedValue(record);
+
+    const result = await validateApiKey('berm_validkey', ['admin']);
+
+    expect(result.label).toBe('Test key');
+    expect(result.scopes).toEqual(['admin']);
+    expect(result.keyHash).toBeUndefined();
+    expect(prisma.apiKey.findUnique).toHaveBeenCalledOnce();
+  });
+
+  it('throws KEY_REQUIRED when key is empty', async () => {
+    await expect(validateApiKey('')).rejects.toMatchObject({
+      code: 'KEY_REQUIRED',
+      status: 401,
+    });
+    expect(prisma.apiKey.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('throws KEY_INVALID for an unknown key', async () => {
+    prisma.apiKey.findUnique.mockResolvedValue(null);
+    await expect(validateApiKey('berm_notreal')).rejects.toMatchObject({
+      code: 'KEY_INVALID',
+      status: 401,
+    });
+  });
+
+  it('throws INSUFFICIENT_SCOPE when scope not satisfied', async () => {
+    const record = makeRecord({ scopes: '["storefront"]' });
+    prisma.apiKey.findUnique.mockResolvedValue(record);
+    await expect(validateApiKey('berm_key', ['admin'])).rejects.toMatchObject({
+      code: 'INSUFFICIENT_SCOPE',
+      status: 403,
+    });
+  });
+
+  it('accepts when required scopes are a subset of key scopes', async () => {
+    const record = makeRecord({ scopes: '["admin","storefront"]' });
+    prisma.apiKey.findUnique.mockResolvedValue(record);
+    prisma.apiKey.update.mockResolvedValue(record);
+
+    const result = await validateApiKey('berm_key', ['admin']);
+    expect(result.scopes).toContain('admin');
+  });
+
+  it('throws KEY_EXPIRED for an expired key', async () => {
+    const past = new Date(Date.now() - 1000);
+    const record = makeRecord({ expiresAt: past });
+    prisma.apiKey.findUnique.mockResolvedValue(record);
+    await expect(validateApiKey('berm_key')).rejects.toMatchObject({
+      code: 'KEY_EXPIRED',
+      status: 401,
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('listApiKeys', () => {
+  it('returns all keys with scopes parsed and keyHash removed', async () => {
+    prisma.apiKey.findMany.mockResolvedValue([
+      makeRecord({ id: '1', label: 'A', scopes: '["admin"]' }),
+      makeRecord({ id: '2', label: 'B', scopes: '["storefront"]' }),
+    ]);
+
+    const keys = await listApiKeys();
+    expect(keys).toHaveLength(2);
+    for (const k of keys) {
+      expect(k.keyHash).toBeUndefined();
+      expect(Array.isArray(k.scopes)).toBe(true);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('revokeApiKey', () => {
+  it('calls prisma.apiKey.delete', async () => {
+    prisma.apiKey.delete.mockResolvedValue({});
+    await revokeApiKey('key-1');
+    expect(prisma.apiKey.delete).toHaveBeenCalledWith({
+      where: { id: 'key-1' },
+    });
+  });
+});

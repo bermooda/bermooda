@@ -581,3 +581,52 @@ model WebhookEvent {
   @@unique([provider, eventId])
   @@index([provider])
 }
+
+// ─── W2: Public API + outbound webhooks ──────────────────────────────────────
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  label      String
+  keyHash    String    @unique
+  scopes     String    @default("[]")
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([keyHash])
+}
+
+model WebhookSubscription {
+  id        String   @id @default(cuid())
+  label     String?
+  url       String
+  events    String
+  secret    String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveries WebhookDelivery[]
+}
+
+model WebhookDelivery {
+  id             String    @id @default(cuid())
+  subscriptionId String
+  event          String
+  payload        String
+  status         String    @default("pending")
+  attempts       Int       @default(0)
+  lastAttemptAt  DateTime?
+  responseStatus Int?
+  responseBody   String?
+  error          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  subscription WebhookSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([event])
+}

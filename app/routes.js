@@ -63,6 +63,55 @@ export default [
   route('api/set-currency', 'routes/storefront/api/set-currency.jsx'),
 
   // ---------------------------------------------------------------------------
+  // W2: Storefront public REST API (/api/v1/*) — no API key required for catalog
+  // ---------------------------------------------------------------------------
+  ...prefix('api/v1', [
+    route('catalog', 'routes/api/v1/catalog.jsx'),
+    route('catalog/:id', 'routes/api/v1/catalog/$id.jsx'),
+    route('categories', 'routes/api/v1/categories.jsx'),
+    route('search', 'routes/api/v1/search.jsx'),
+    route('cart', 'routes/api/v1/cart.jsx'),
+    route('cart/:token', 'routes/api/v1/cart/$token.jsx'),
+    route('cart/:token/lines', 'routes/api/v1/cart/$token/lines.jsx'),
+    route(
+      'cart/:token/lines/:lineId',
+      'routes/api/v1/cart/$token/lines/$lineId.jsx'
+    ),
+    route('checkout', 'routes/api/v1/checkout.jsx'),
+    route('checkout/:id', 'routes/api/v1/checkout/$id.jsx'),
+    route('checkout/:id/advance', 'routes/api/v1/checkout/$id/advance.jsx'),
+  ]),
+
+  // ---------------------------------------------------------------------------
+  // W2: Admin REST API (/api/admin/v1/*) — requires admin-scoped API key
+  // ---------------------------------------------------------------------------
+  ...prefix('api/admin/v1', [
+    route('products', 'routes/api/admin/v1/products.jsx'),
+    route('products/:id', 'routes/api/admin/v1/products/$id.jsx'),
+    route('orders', 'routes/api/admin/v1/orders.jsx'),
+    route('orders/:id', 'routes/api/admin/v1/orders/$id.jsx'),
+    route('orders/:id/refunds', 'routes/api/admin/v1/orders/$id/refunds.jsx'),
+    route(
+      'orders/:id/shipments',
+      'routes/api/admin/v1/orders/$id/shipments.jsx'
+    ),
+    route('customers', 'routes/api/admin/v1/customers.jsx'),
+    route('customers/:id', 'routes/api/admin/v1/customers/$id.jsx'),
+    route('discounts', 'routes/api/admin/v1/discounts.jsx'),
+    route('discounts/:id', 'routes/api/admin/v1/discounts/$id.jsx'),
+    route('api-keys', 'routes/api/admin/v1/api-keys.jsx'),
+    route('api-keys/:id', 'routes/api/admin/v1/api-keys/$id.jsx'),
+    route(
+      'webhook-subscriptions',
+      'routes/api/admin/v1/webhook-subscriptions.jsx'
+    ),
+    route(
+      'webhook-subscriptions/:id',
+      'routes/api/admin/v1/webhook-subscriptions/$id.jsx'
+    ),
+  ]),
+
+  // ---------------------------------------------------------------------------
   // Better Auth API handlers
   // ---------------------------------------------------------------------------
 
@@ -108,6 +157,8 @@ export default [
       // Plugins (P5-9)
       route('plugins', 'routes/admin/plugins/index.jsx'),
       route('plugins/:pluginId/*', 'routes/admin/plugins/$pluginId.jsx'),
+      // API settings (W2)
+      route('api-settings', 'routes/admin/api-settings.jsx'),
       // Settings (P5-10)
       route('settings', 'routes/admin/settings/index.jsx'),
     ]),

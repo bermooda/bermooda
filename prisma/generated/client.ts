@@ -216,3 +216,18 @@ export type ProductAttributeValue = Prisma.ProductAttributeValueModel
  * 
  */
 export type WebhookEvent = Prisma.WebhookEventModel
+/**
+ * Model ApiKey
+ * 
+ */
+export type ApiKey = Prisma.ApiKeyModel
+/**
+ * Model WebhookSubscription
+ * 
+ */
+export type WebhookSubscription = Prisma.WebhookSubscriptionModel
+/**
+ * Model WebhookDelivery
+ * 
+ */
+export type WebhookDelivery = Prisma.WebhookDeliveryModel

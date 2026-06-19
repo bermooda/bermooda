@@ -10,6 +10,7 @@ import {
   ArrowRightStartOnRectangleIcon,
   Bars3Icon,
   ChartBarIcon,
+  CodeBracketIcon,
   Cog6ToothIcon,
   CubeIcon,
   GlobeAltIcon,
@@ -72,6 +73,7 @@ const NAV_ITEMS = [
   { name: 'Discounts', href: '/admin/discounts', Icon: ReceiptPercentIcon },
   { name: 'Themes', href: '/admin/themes', Icon: PaintBrushIcon },
   { name: 'Plugins', href: '/admin/plugins', Icon: PuzzlePieceIcon },
+  { name: 'API', href: '/admin/api-settings', Icon: CodeBracketIcon },
   { name: 'Settings', href: '/admin/settings', Icon: Cog6ToothIcon },
 ];
 
