@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: p1-w2
     content: 'Phase 1 (parallel, needs W0): W2 public API (REST /api/v1 + /api/admin/v1 thin over core) + ApiKey scopes + outbound webhooks (WebhookSubscription/Delivery worker) + docs/api.md. Buildable now; public GA gated on W8.'
-    status: pending
+    status: completed
   - id: p1-w3
     content: 'Phase 1 (parallel, needs W0): W3 payment breadth (PayPal + manual/offline + saved methods + address validation) and promotions engine (CartDiscount/OrderDiscount stacking/automatic) + tax classes. Owns the totals-engine refactor. Unblocks W4 and W7.'
     status: pending

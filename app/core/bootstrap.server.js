@@ -23,6 +23,9 @@ import { flatRateProvider } from '#/core/shipping/index.server';
 import { registerProvider as registerTax } from '#/core/tax/index.server';
 import { simplePercentProvider } from '#/core/tax/index.server';
 import { registerTheme } from '#/core/themes/index.server';
+import { registerWebhookSubscribers } from '#/core/webhooks/index.server';
+// W2: load webhook delivery worker (registers enqueuer) + subscriber registration
+import '#/core/webhooks/job.server';
 import defaultThemeManifest from '#/themes/default/manifest';
 
 let _bootstrapped = false;
@@ -60,6 +63,9 @@ export function registerBuiltins() {
   // W0-4: payment events → order status transitions
   // W0-5: payment.refunded → inventory restoration (see orders module)
   registerPaymentEventHandlers({ on });
+
+  // W2: fan out domain events to outbound webhook subscriptions
+  registerWebhookSubscribers({ on });
 
   logger.info('Bootstrap complete: built-in providers + theme registered');
 }
