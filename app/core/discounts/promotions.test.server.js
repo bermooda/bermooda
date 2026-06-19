@@ -199,7 +199,10 @@ describe('resolvePromotions', () => {
       .mockResolvedValueOnce([]);
 
     const result = await resolvePromotions({
-      cart: { currency: 'USD', lines: [{ priceCentsSnapshot: 500, quantity: 1 }] },
+      cart: {
+        currency: 'USD',
+        lines: [{ priceCentsSnapshot: 500, quantity: 1 }],
+      },
     });
 
     expect(result.freeShipping).toBe(true);

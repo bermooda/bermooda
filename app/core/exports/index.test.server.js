@@ -28,6 +28,7 @@ vi.mock('#/libs/prisma.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
+
 import {
   buildCsv,
   csvCell,
@@ -48,7 +49,13 @@ describe('exports', () => {
   });
 
   it('buildCsv produces header + rows', () => {
-    const csv = buildCsv(['a', 'b'], [[1, 2], [3, 4]]);
+    const csv = buildCsv(
+      ['a', 'b'],
+      [
+        [1, 2],
+        [3, 4],
+      ]
+    );
     expect(csv).toBe('a,b\n1,2\n3,4');
   });
 

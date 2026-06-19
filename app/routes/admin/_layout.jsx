@@ -77,7 +77,11 @@ const NAV_ITEMS = [
   { name: 'Themes', href: '/admin/themes', Icon: PaintBrushIcon },
   { name: 'Plugins', href: '/admin/plugins', Icon: PuzzlePieceIcon },
   { name: 'API', href: '/admin/api-settings', Icon: CodeBracketIcon },
-  { name: 'Audit Log', href: '/admin/audit-log', Icon: ClipboardDocumentListIcon },
+  {
+    name: 'Audit Log',
+    href: '/admin/audit-log',
+    Icon: ClipboardDocumentListIcon,
+  },
   { name: 'Settings', href: '/admin/settings', Icon: Cog6ToothIcon },
 ];
 

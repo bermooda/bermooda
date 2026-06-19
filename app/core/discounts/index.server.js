@@ -50,10 +50,7 @@ function validateDiscountConstraints(
     throw new Error('DISCOUNT_MIN_SUBTOTAL_NOT_MET');
   }
 
-  if (
-    discount.minQuantity !== null &&
-    totalQuantity < discount.minQuantity
-  ) {
+  if (discount.minQuantity !== null && totalQuantity < discount.minQuantity) {
     throw new Error('DISCOUNT_MIN_QUANTITY_NOT_MET');
   }
 

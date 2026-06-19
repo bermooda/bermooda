@@ -2,6 +2,7 @@
 // CSV data exports and scheduled export management.
 
 import prisma from '#/libs/prisma.server';
+
 import { parseDateRange } from '#/core/reporting/index.server';
 
 export const EXPORT_TYPES = ['orders', 'products', 'customers', 'inventory'];
@@ -202,7 +203,13 @@ export async function exportInventoryCsv() {
       : [];
   const titleByProduct = new Map(titles.map((t) => [t.entityId, t.value]));
 
-  const headers = ['variant_id', 'product_id', 'title', 'sku', 'inventory_count'];
+  const headers = [
+    'variant_id',
+    'product_id',
+    'title',
+    'sku',
+    'inventory_count',
+  ];
   const rows = variants.map((v) => [
     v.id,
     v.productId,

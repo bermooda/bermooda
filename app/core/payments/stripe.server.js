@@ -204,10 +204,7 @@ export const stripeProvider = {
 
     const intent = await stripe.paymentIntents.create(intentParams);
 
-    log.info(
-      { intentId: intent.id, orderId },
-      'Stripe PaymentIntent created'
-    );
+    log.info({ intentId: intent.id, orderId }, 'Stripe PaymentIntent created');
 
     return {
       clientSecret: intent.client_secret,

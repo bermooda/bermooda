@@ -504,10 +504,12 @@ function PaymentStep({
   const defaultProvider =
     session?.paymentProvider ?? paymentProviders?.[0]?.id ?? 'stripe';
 
-  const displayTotal = totals?.totalCents ?? cart?.lines?.reduce(
-    (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-    0
-  );
+  const displayTotal =
+    totals?.totalCents ??
+    cart?.lines?.reduce(
+      (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
+      0
+    );
 
   return (
     <Form method="post" className="space-y-6">
@@ -534,7 +536,9 @@ function PaymentStep({
                 </span>
               </div>
               {provider.supportsPaymentElement && (
-                <span className="text-xs text-stone-500">Cards · Apple Pay</span>
+                <span className="text-xs text-stone-500">
+                  Cards · Apple Pay
+                </span>
               )}
             </label>
           ))}
@@ -583,7 +587,8 @@ function ReviewStep({
     (o) => o.id === session?.shippingOptionId
   );
   const shippingLabel = selectedOption?.name ?? t('checkout.standardShipping');
-  const shippingCents = totals?.shippingCents ?? selectedOption?.priceCents ?? 0;
+  const shippingCents =
+    totals?.shippingCents ?? selectedOption?.priceCents ?? 0;
 
   const subtotalCents =
     totals?.subtotalCents ??
@@ -594,7 +599,8 @@ function ReviewStep({
   const discountCents = totals?.discountCents ?? 0;
   const taxCents = totals?.taxCents ?? 0;
   const totalCents =
-    totals?.totalCents ?? subtotalCents - discountCents + shippingCents + taxCents;
+    totals?.totalCents ??
+    subtotalCents - discountCents + shippingCents + taxCents;
 
   const selectedProvider = paymentProviders?.find(
     (p) => p.id === session?.paymentProvider

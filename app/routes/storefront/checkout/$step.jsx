@@ -10,6 +10,7 @@ import {
   createCheckoutSession,
   getCheckoutSession,
 } from '#/core/checkout/index.server';
+import { computeTotals } from '#/core/checkout/totals.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { placeOrder } from '#/core/orders/index.server';
@@ -19,7 +20,6 @@ import {
   listProvidersWithDetails,
 } from '#/core/payments/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
-import { computeTotals } from '#/core/checkout/totals.server';
 import CheckoutLayout from '#/themes/default/components/checkout-layout';
 
 const VALID_STEPS = ['address', 'shipping', 'payment', 'review'];
@@ -232,7 +232,10 @@ export async function action({ request, params }) {
       }
       normalizedAddr = validation.normalized ?? addr;
     } catch (err) {
-      logger.warn({ err }, 'Address validation failed — continuing with raw address');
+      logger.warn(
+        { err },
+        'Address validation failed — continuing with raw address'
+      );
     }
 
     stepData = {

@@ -29,7 +29,7 @@ async function getAccessToken() {
   const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
     method: 'POST',
     headers: {
-      Authorization: `Basic ${credentials}`,
+      'Authorization': `Basic ${credentials}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: 'grant_type=client_credentials',
@@ -79,7 +79,7 @@ export const paypalProvider = {
     const response = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -101,14 +101,20 @@ export const paypalProvider = {
 
     if (!response.ok) {
       const body = await response.text();
-      log.error({ status: response.status, body }, 'PayPal order creation failed');
+      log.error(
+        { status: response.status, body },
+        'PayPal order creation failed'
+      );
       throw new Error('PAYPAL_ORDER_FAILED');
     }
 
     const order = await response.json();
     const approveLink = (order.links ?? []).find((l) => l.rel === 'approve');
 
-    log.info({ orderId: order.id, bermoodaOrderId: orderId }, 'PayPal order created');
+    log.info(
+      { orderId: order.id, bermoodaOrderId: orderId },
+      'PayPal order created'
+    );
 
     return {
       id: order.id,
@@ -133,7 +139,10 @@ export const paypalProvider = {
       throw new Error('Invalid PayPal webhook payload');
     }
 
-    log.info({ eventId: event.id, type: event.event_type }, 'PayPal webhook received');
+    log.info(
+      { eventId: event.id, type: event.event_type },
+      'PayPal webhook received'
+    );
     return { event, rawBody };
   },
 
@@ -161,8 +170,7 @@ export const paypalProvider = {
       case 'PAYMENT.CAPTURE.DENIED': {
         const resource = event.resource ?? {};
         const orderId =
-          resource.custom_id ??
-          resource.purchase_units?.[0]?.custom_id;
+          resource.custom_id ?? resource.purchase_units?.[0]?.custom_id;
         return { type: 'payment.failed', orderId };
       }
 
@@ -186,7 +194,7 @@ export const paypalProvider = {
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
