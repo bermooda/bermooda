@@ -1,10 +1,11 @@
 // app/routes/admin/reports/index.jsx
 // Sales analytics dashboard with date-range filters and export controls.
 
-import { Form, Link, useLoaderData, useSearchParams } from 'react-router';
+import { Form, Link, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
-import { getDashboardReport } from '#/core/reporting/index.server';
+
+import { recordAdminAudit } from '#/core/audit/index.server';
 import {
   EXPORT_SCHEDULES,
   EXPORT_TYPES,
@@ -13,7 +14,7 @@ import {
   deleteScheduledExport,
   queueScheduledExport,
 } from '#/core/exports/index.server';
-import { recordAdminAudit } from '#/core/audit/index.server';
+import { getDashboardReport } from '#/core/reporting/index.server';
 
 export function meta() {
   return [
@@ -65,7 +66,10 @@ export async function action({ request }) {
       formData.get('recipientEmail')?.toString().trim() || null;
 
     if (!label || !exportType || !schedule) {
-      return { ok: false, error: 'Label, export type, and schedule are required.' };
+      return {
+        ok: false,
+        error: 'Label, export type, and schedule are required.',
+      };
     }
 
     try {
@@ -144,7 +148,6 @@ function MetricCard({ label, value, sub }) {
 export default function AdminReportsRoute() {
   const { report, scheduledExports, filters, exportTypes, exportSchedules } =
     useLoaderData();
-  const [searchParams] = useSearchParams();
   const { overview, salesOverTime, salesByProduct, salesByCategory } = report;
 
   const exportQuery = new URLSearchParams();
@@ -287,7 +290,10 @@ export default function AdminReportsRoute() {
           })}
         </div>
 
-        <Form method="post" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Form
+          method="post"
+          className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        >
           <input type="hidden" name="intent" value="create-scheduled-export" />
           <input
             type="text"
@@ -358,7 +364,7 @@ export default function AdminReportsRoute() {
                     <td className="px-3 py-2 text-sm text-gray-600 dark:text-zinc-300">
                       {exp.exportType}
                     </td>
-                    <td className="px-3 py-2 text-sm capitalize text-gray-600 dark:text-zinc-300">
+                    <td className="px-3 py-2 text-sm text-gray-600 capitalize dark:text-zinc-300">
                       {exp.schedule}
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">

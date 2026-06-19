@@ -74,7 +74,10 @@ vi.mock('#/utils/logger.server', () => ({
 
 import prisma from '#/libs/prisma.server';
 
-import { resolvePromotions, persistOrderDiscounts } from '#/core/discounts/index.server';
+import {
+  resolvePromotions,
+  persistOrderDiscounts,
+} from '#/core/discounts/index.server';
 import { emit } from '#/core/events/index.server';
 import {
   decrementInventory,

@@ -12,9 +12,7 @@ const PAID_STATUSES = ['paid', 'fulfilled', 'refunded'];
  * @returns {{ start: Date, end: Date }}
  */
 export function parseDateRange({ startDate, endDate } = {}) {
-  const end = endDate
-    ? new Date(`${endDate}T23:59:59.999Z`)
-    : new Date();
+  const end = endDate ? new Date(`${endDate}T23:59:59.999Z`) : new Date();
   const start = startDate
     ? new Date(`${startDate}T00:00:00.000Z`)
     : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);

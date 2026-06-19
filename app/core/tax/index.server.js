@@ -1,8 +1,9 @@
 // app/core/tax/index.server.js
 // Tax provider registry + built-in simple-percent adapter.
 
-import { get as settingsGet } from '#/core/settings/index.server';
 import prisma from '#/libs/prisma.server';
+
+import { get as settingsGet } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
 // Default tax config (used when 'tax.config' setting is absent)
@@ -136,8 +137,6 @@ export async function computeActiveTax({
     const lineTax = await computeLineTax({
       lines,
       shippingAddress,
-      currency,
-      providerId,
     });
     const shippingTax = await computeTax(providerId, {
       subtotalCents: 0,
@@ -166,7 +165,7 @@ export async function computeActiveTax({
  * Compute tax per cart/order line using tax class rates.
  * Falls back to the active provider's region rate when tax class rate is 0.
  */
-async function computeLineTax({ lines, shippingAddress, currency, providerId }) {
+async function computeLineTax({ lines, shippingAddress }) {
   const config = (await settingsGet('tax.config')) ?? DEFAULT_TAX_CONFIG;
   const regionRate = resolveRegionRate(config, shippingAddress);
 
@@ -197,9 +196,7 @@ function resolveRegionRate(config, shippingAddress) {
     if (exact) return exact.rate;
   }
 
-  const countryOnly = regions.find(
-    (r) => r.country === country && !r.state
-  );
+  const countryOnly = regions.find((r) => r.country === country && !r.state);
   return countryOnly?.rate ?? 0;
 }
 
@@ -218,7 +215,7 @@ export const simplePercentProvider = {
    */
   async compute({ subtotalCents, shippingCents, shippingAddress, vatId }) {
     const config = (await settingsGet('tax.config')) ?? DEFAULT_TAX_CONFIG;
-    const { mode, regions } = config;
+    const { mode } = config;
 
     // VAT/GST ID present — zero-rated B2B (simplified; plugins can override)
     if (vatId && vatId.trim().length > 0) {

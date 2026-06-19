@@ -4,12 +4,16 @@
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
+
 import { listAuditLogs } from '#/core/audit/index.server';
 
 export function meta() {
   return [
     { title: 'Audit Log — Admin' },
-    { name: 'description', content: 'Admin mutation and system event audit trail' },
+    {
+      name: 'description',
+      content: 'Admin mutation and system event audit trail',
+    },
   ];
 }
 
@@ -82,13 +86,7 @@ export default function AdminAuditLogRoute() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
             <thead>
               <tr>
-                {[
-                  'When',
-                  'Actor',
-                  'Action',
-                  'Entity',
-                  'Details',
-                ].map((col) => (
+                {['When', 'Actor', 'Action', 'Entity', 'Details'].map((col) => (
                   <th
                     key={col}
                     className="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-zinc-400"

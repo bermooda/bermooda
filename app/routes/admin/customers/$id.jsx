@@ -10,8 +10,9 @@ import {
   useNavigation,
 } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import { authenticate } from '#/libs/auth/admin.server';
+import prisma from '#/libs/prisma.server';
+
 import { recordAdminAudit } from '#/core/audit/index.server';
 import {
   exportCustomerData,
@@ -532,7 +533,7 @@ export default function AdminCustomerRoute() {
                   onClick={(e) => {
                     if (
                       !confirm(
-                        'Permanently erase this customer\'s personal data? Orders will be anonymized but preserved.'
+                        "Permanently erase this customer's personal data? Orders will be anonymized but preserved."
                       )
                     ) {
                       e.preventDefault();

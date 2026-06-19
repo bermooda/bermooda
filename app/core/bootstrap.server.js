@@ -12,9 +12,10 @@
 
 import logger from '#/utils/logger.server';
 
-import { on } from '#/core/events/index.server';
 import { registerProvider as registerAddressValidation } from '#/core/address-validation/index.server';
 import { noopProvider } from '#/core/address-validation/index.server';
+import { registerAuditSubscribers } from '#/core/audit/index.server';
+import { on } from '#/core/events/index.server';
 import { registerPaymentEventHandlers } from '#/core/orders/index.server';
 import { registerProvider as registerPayment } from '#/core/payments/index.server';
 import { manualProvider } from '#/core/payments/manual.server';
@@ -25,10 +26,12 @@ import { registerProvider as registerSearch } from '#/core/search/index.server';
 import { registerProvider as registerShipping } from '#/core/shipping/index.server';
 import { flatRateProvider } from '#/core/shipping/index.server';
 import { registerProvider as registerTax } from '#/core/tax/index.server';
-import { simplePercentProvider, automaticTaxProvider } from '#/core/tax/index.server';
+import {
+  simplePercentProvider,
+  automaticTaxProvider,
+} from '#/core/tax/index.server';
 import { registerTheme } from '#/core/themes/index.server';
 import { registerWebhookSubscribers } from '#/core/webhooks/index.server';
-import { registerAuditSubscribers } from '#/core/audit/index.server';
 // W2: load webhook delivery worker (registers enqueuer) + subscriber registration
 import '#/core/webhooks/job.server';
 // W6: scheduled export worker
