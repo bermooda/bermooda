@@ -31,6 +31,8 @@ export type CustomerMinAggregateOutputType = {
   name: string | null
   phone: string | null
   preferredLocale: string | null
+  consentJson: string | null
+  erasedAt: Date | null
   twoFactorEnabled: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -43,6 +45,8 @@ export type CustomerMaxAggregateOutputType = {
   name: string | null
   phone: string | null
   preferredLocale: string | null
+  consentJson: string | null
+  erasedAt: Date | null
   twoFactorEnabled: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -55,6 +59,8 @@ export type CustomerCountAggregateOutputType = {
   name: number
   phone: number
   preferredLocale: number
+  consentJson: number
+  erasedAt: number
   twoFactorEnabled: number
   createdAt: number
   updatedAt: number
@@ -69,6 +75,8 @@ export type CustomerMinAggregateInputType = {
   name?: true
   phone?: true
   preferredLocale?: true
+  consentJson?: true
+  erasedAt?: true
   twoFactorEnabled?: true
   createdAt?: true
   updatedAt?: true
@@ -81,6 +89,8 @@ export type CustomerMaxAggregateInputType = {
   name?: true
   phone?: true
   preferredLocale?: true
+  consentJson?: true
+  erasedAt?: true
   twoFactorEnabled?: true
   createdAt?: true
   updatedAt?: true
@@ -93,6 +103,8 @@ export type CustomerCountAggregateInputType = {
   name?: true
   phone?: true
   preferredLocale?: true
+  consentJson?: true
+  erasedAt?: true
   twoFactorEnabled?: true
   createdAt?: true
   updatedAt?: true
@@ -178,6 +190,8 @@ export type CustomerGroupByOutputType = {
   name: string | null
   phone: string | null
   preferredLocale: string | null
+  consentJson: string | null
+  erasedAt: Date | null
   twoFactorEnabled: boolean
   createdAt: Date
   updatedAt: Date
@@ -211,6 +225,8 @@ export type CustomerWhereInput = {
   name?: Prisma.StringNullableFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableFilter<"Customer"> | string | null
   preferredLocale?: Prisma.StringNullableFilter<"Customer"> | string | null
+  consentJson?: Prisma.StringNullableFilter<"Customer"> | string | null
+  erasedAt?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
   twoFactorEnabled?: Prisma.BoolFilter<"Customer"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
@@ -230,6 +246,8 @@ export type CustomerOrderByWithRelationInput = {
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   preferredLocale?: Prisma.SortOrderInput | Prisma.SortOrder
+  consentJson?: Prisma.SortOrderInput | Prisma.SortOrder
+  erasedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   twoFactorEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -252,6 +270,8 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringNullableFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableFilter<"Customer"> | string | null
   preferredLocale?: Prisma.StringNullableFilter<"Customer"> | string | null
+  consentJson?: Prisma.StringNullableFilter<"Customer"> | string | null
+  erasedAt?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
   twoFactorEnabled?: Prisma.BoolFilter<"Customer"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
@@ -271,6 +291,8 @@ export type CustomerOrderByWithAggregationInput = {
   name?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   preferredLocale?: Prisma.SortOrderInput | Prisma.SortOrder
+  consentJson?: Prisma.SortOrderInput | Prisma.SortOrder
+  erasedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   twoFactorEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -289,6 +311,8 @@ export type CustomerScalarWhereWithAggregatesInput = {
   name?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   preferredLocale?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  consentJson?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  erasedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Customer"> | Date | string | null
   twoFactorEnabled?: Prisma.BoolWithAggregatesFilter<"Customer"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Customer"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Customer"> | Date | string
@@ -301,6 +325,8 @@ export type CustomerCreateInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -320,6 +346,8 @@ export type CustomerUncheckedCreateInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -339,6 +367,8 @@ export type CustomerUpdateInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -358,6 +388,8 @@ export type CustomerUncheckedUpdateInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -377,6 +409,8 @@ export type CustomerCreateManyInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -389,6 +423,8 @@ export type CustomerUpdateManyMutationInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -401,6 +437,8 @@ export type CustomerUncheckedUpdateManyInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -413,6 +451,8 @@ export type CustomerCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   preferredLocale?: Prisma.SortOrder
+  consentJson?: Prisma.SortOrder
+  erasedAt?: Prisma.SortOrder
   twoFactorEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -425,6 +465,8 @@ export type CustomerMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   preferredLocale?: Prisma.SortOrder
+  consentJson?: Prisma.SortOrder
+  erasedAt?: Prisma.SortOrder
   twoFactorEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -437,6 +479,8 @@ export type CustomerMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   preferredLocale?: Prisma.SortOrder
+  consentJson?: Prisma.SortOrder
+  erasedAt?: Prisma.SortOrder
   twoFactorEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -563,6 +607,8 @@ export type CustomerCreateWithoutSessionsInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -581,6 +627,8 @@ export type CustomerUncheckedCreateWithoutSessionsInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -615,6 +663,8 @@ export type CustomerUpdateWithoutSessionsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -633,6 +683,8 @@ export type CustomerUncheckedUpdateWithoutSessionsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -651,6 +703,8 @@ export type CustomerCreateWithoutAccountsInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -669,6 +723,8 @@ export type CustomerUncheckedCreateWithoutAccountsInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -703,6 +759,8 @@ export type CustomerUpdateWithoutAccountsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -721,6 +779,8 @@ export type CustomerUncheckedUpdateWithoutAccountsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -739,6 +799,8 @@ export type CustomerCreateWithoutTwoFactorInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -757,6 +819,8 @@ export type CustomerUncheckedCreateWithoutTwoFactorInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -791,6 +855,8 @@ export type CustomerUpdateWithoutTwoFactorInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -809,6 +875,8 @@ export type CustomerUncheckedUpdateWithoutTwoFactorInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -827,6 +895,8 @@ export type CustomerCreateWithoutAddressesInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -845,6 +915,8 @@ export type CustomerUncheckedCreateWithoutAddressesInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -879,6 +951,8 @@ export type CustomerUpdateWithoutAddressesInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -897,6 +971,8 @@ export type CustomerUncheckedUpdateWithoutAddressesInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -915,6 +991,8 @@ export type CustomerCreateWithoutCartsInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -933,6 +1011,8 @@ export type CustomerUncheckedCreateWithoutCartsInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -967,6 +1047,8 @@ export type CustomerUpdateWithoutCartsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -985,6 +1067,8 @@ export type CustomerUncheckedUpdateWithoutCartsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1003,6 +1087,8 @@ export type CustomerCreateWithoutCheckoutsInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1021,6 +1107,8 @@ export type CustomerUncheckedCreateWithoutCheckoutsInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1055,6 +1143,8 @@ export type CustomerUpdateWithoutCheckoutsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1073,6 +1163,8 @@ export type CustomerUncheckedUpdateWithoutCheckoutsInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1091,6 +1183,8 @@ export type CustomerCreateWithoutOrdersInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1109,6 +1203,8 @@ export type CustomerUncheckedCreateWithoutOrdersInput = {
   name?: string | null
   phone?: string | null
   preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
   twoFactorEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1143,6 +1239,8 @@ export type CustomerUpdateWithoutOrdersInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1161,6 +1259,8 @@ export type CustomerUncheckedUpdateWithoutOrdersInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1255,6 +1355,8 @@ export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   name?: boolean
   phone?: boolean
   preferredLocale?: boolean
+  consentJson?: boolean
+  erasedAt?: boolean
   twoFactorEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1275,6 +1377,8 @@ export type CustomerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   name?: boolean
   phone?: boolean
   preferredLocale?: boolean
+  consentJson?: boolean
+  erasedAt?: boolean
   twoFactorEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1287,6 +1391,8 @@ export type CustomerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   name?: boolean
   phone?: boolean
   preferredLocale?: boolean
+  consentJson?: boolean
+  erasedAt?: boolean
   twoFactorEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1299,12 +1405,14 @@ export type CustomerSelectScalar = {
   name?: boolean
   phone?: boolean
   preferredLocale?: boolean
+  consentJson?: boolean
+  erasedAt?: boolean
   twoFactorEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "emailVerified" | "name" | "phone" | "preferredLocale" | "twoFactorEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
+export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "emailVerified" | "name" | "phone" | "preferredLocale" | "consentJson" | "erasedAt" | "twoFactorEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
 export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | Prisma.Customer$sessionsArgs<ExtArgs>
   accounts?: boolean | Prisma.Customer$accountsArgs<ExtArgs>
@@ -1336,6 +1444,8 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     name: string | null
     phone: string | null
     preferredLocale: string | null
+    consentJson: string | null
+    erasedAt: Date | null
     twoFactorEnabled: boolean
     createdAt: Date
     updatedAt: Date
@@ -1775,6 +1885,8 @@ export interface CustomerFieldRefs {
   readonly name: Prisma.FieldRef<"Customer", 'String'>
   readonly phone: Prisma.FieldRef<"Customer", 'String'>
   readonly preferredLocale: Prisma.FieldRef<"Customer", 'String'>
+  readonly consentJson: Prisma.FieldRef<"Customer", 'String'>
+  readonly erasedAt: Prisma.FieldRef<"Customer", 'DateTime'>
   readonly twoFactorEnabled: Prisma.FieldRef<"Customer", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Customer", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Customer", 'DateTime'>

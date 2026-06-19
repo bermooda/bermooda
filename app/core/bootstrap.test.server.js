@@ -21,7 +21,11 @@ vi.mock('#/core/payments/stripe.server', () => ({
 vi.mock('#/core/webhooks/index.server', () => ({
   registerWebhookSubscribers: vi.fn(),
 }));
+vi.mock('#/core/audit/index.server', () => ({
+  registerAuditSubscribers: vi.fn(),
+}));
 vi.mock('#/core/webhooks/job.server', () => ({}));
+vi.mock('#/core/exports/job.server', () => ({}));
 vi.mock('#/core/shipping/index.server', () => ({
   registerProvider: vi.fn(),
   flatRateProvider: { name: 'Flat Rate' },
@@ -50,6 +54,7 @@ describe('bootstrap.server', () => {
   let registerSearch;
   let registerTheme;
   let registerPaymentEventHandlers;
+  let registerAuditSubscribers;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -61,6 +66,7 @@ describe('bootstrap.server', () => {
     const search = await import('#/core/search/index.server');
     const themes = await import('#/core/themes/index.server');
     const orders = await import('#/core/orders/index.server');
+    const audit = await import('#/core/audit/index.server');
 
     registerBuiltins = bootstrap.registerBuiltins;
     __resetBootstrap = bootstrap.__resetBootstrap;
@@ -70,6 +76,7 @@ describe('bootstrap.server', () => {
     registerSearch = search.registerProvider;
     registerTheme = themes.registerTheme;
     registerPaymentEventHandlers = orders.registerPaymentEventHandlers;
+    registerAuditSubscribers = audit.registerAuditSubscribers;
   });
 
   it('registers all built-in providers and event handlers on first call', () => {
@@ -92,6 +99,7 @@ describe('bootstrap.server', () => {
       expect.objectContaining({ id: 'default' })
     );
     expect(registerPaymentEventHandlers).toHaveBeenCalledOnce();
+    expect(registerAuditSubscribers).toHaveBeenCalledOnce();
   });
 
   it('is idempotent — second call is a no-op', () => {

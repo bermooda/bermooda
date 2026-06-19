@@ -28,8 +28,11 @@ import { registerProvider as registerTax } from '#/core/tax/index.server';
 import { simplePercentProvider, automaticTaxProvider } from '#/core/tax/index.server';
 import { registerTheme } from '#/core/themes/index.server';
 import { registerWebhookSubscribers } from '#/core/webhooks/index.server';
+import { registerAuditSubscribers } from '#/core/audit/index.server';
 // W2: load webhook delivery worker (registers enqueuer) + subscriber registration
 import '#/core/webhooks/job.server';
+// W6: scheduled export worker
+import '#/core/exports/job.server';
 import defaultThemeManifest from '#/themes/default/manifest';
 
 let _bootstrapped = false;
@@ -76,6 +79,9 @@ export function registerBuiltins() {
 
   // W2: fan out domain events to outbound webhook subscriptions
   registerWebhookSubscribers({ on });
+
+  // W6: audit log subscribes to domain events
+  registerAuditSubscribers({ on });
 
   logger.info('Bootstrap complete: built-in providers + theme registered');
 }

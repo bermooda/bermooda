@@ -10,6 +10,8 @@ import {
   ArrowRightStartOnRectangleIcon,
   Bars3Icon,
   ChartBarIcon,
+  ClipboardDocumentListIcon,
+  DocumentChartBarIcon,
   CodeBracketIcon,
   Cog6ToothIcon,
   CubeIcon,
@@ -66,6 +68,7 @@ export async function loader({ request }) {
 
 const NAV_ITEMS = [
   { name: 'Dashboard', href: '/admin/dashboard', Icon: ChartBarIcon },
+  { name: 'Reports', href: '/admin/reports', Icon: DocumentChartBarIcon },
   { name: 'Products', href: '/admin/products', Icon: CubeIcon },
   { name: 'Categories', href: '/admin/categories', Icon: TagIcon },
   { name: 'Orders', href: '/admin/orders', Icon: ShoppingBagIcon },
@@ -74,6 +77,7 @@ const NAV_ITEMS = [
   { name: 'Themes', href: '/admin/themes', Icon: PaintBrushIcon },
   { name: 'Plugins', href: '/admin/plugins', Icon: PuzzlePieceIcon },
   { name: 'API', href: '/admin/api-settings', Icon: CodeBracketIcon },
+  { name: 'Audit Log', href: '/admin/audit-log', Icon: ClipboardDocumentListIcon },
   { name: 'Settings', href: '/admin/settings', Icon: Cog6ToothIcon },
 ];
 
