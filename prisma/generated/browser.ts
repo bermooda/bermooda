@@ -148,6 +148,11 @@ export type OrderLine = Prisma.OrderLineModel
  */
 export type Shipment = Prisma.ShipmentModel
 /**
+ * Model ShipmentLine
+ * 
+ */
+export type ShipmentLine = Prisma.ShipmentLineModel
+/**
  * Model Refund
  * 
  */
@@ -222,6 +227,21 @@ export type CartDiscount = Prisma.CartDiscountModel
  * 
  */
 export type OrderDiscount = Prisma.OrderDiscountModel
+/**
+ * Model Return
+ * 
+ */
+export type Return = Prisma.ReturnModel
+/**
+ * Model ReturnLine
+ * 
+ */
+export type ReturnLine = Prisma.ReturnLineModel
+/**
+ * Model StoreCreditLedger
+ * 
+ */
+export type StoreCreditLedger = Prisma.StoreCreditLedgerModel
 /**
  * Model AuditLog
  * 

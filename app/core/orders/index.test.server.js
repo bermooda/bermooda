@@ -18,8 +18,17 @@ vi.mock('#/libs/prisma.server', () => ({
       findMany: vi.fn(),
       update: vi.fn(),
     },
+    shipment: {
+      create: vi.fn(),
+      update: vi.fn(),
+      findUnique: vi.fn(),
+    },
+    shipmentLine: {
+      create: vi.fn(),
+    },
     orderLine: {
       create: vi.fn(),
+      update: vi.fn(),
     },
     cartLine: {
       deleteMany: vi.fn(),
@@ -28,10 +37,6 @@ vi.mock('#/libs/prisma.server', () => ({
       update: vi.fn(),
     },
     discount: {
-      update: vi.fn(),
-    },
-    shipment: {
-      create: vi.fn(),
       update: vi.fn(),
     },
     refund: {
@@ -95,6 +100,7 @@ import {
   createRefund,
   updateRefundStatus,
   registerPaymentEventHandlers,
+  deriveFulfillmentStatus,
 } from '#/core/orders/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
 
@@ -369,8 +375,11 @@ describe('getOrder', () => {
       where: { id: 'order_1' },
       include: {
         lines: true,
-        shipments: true,
+        shipments: {
+          include: { lines: { include: { orderLine: true } } },
+        },
         refunds: true,
+        returns: { include: { lines: true } },
       },
     });
     expect(result).toEqual(order);
@@ -441,7 +450,16 @@ describe('updateOrderStatus', () => {
 describe('addShipment', () => {
   it('emits shipment.created after creating the shipment', async () => {
     const shipment = { id: 'ship_1', orderId: 'order_1', status: 'pending' };
+    prisma.order.findUnique.mockResolvedValue({
+      id: 'order_1',
+      lines: [{ id: 'line_1', quantity: 1, fulfilledQuantity: 0 }],
+    });
+    prisma.$transaction.mockImplementation(async (fn) => fn(prisma));
     prisma.shipment.create.mockResolvedValue(shipment);
+    prisma.shipment.findUnique.mockResolvedValue({
+      ...shipment,
+      lines: [],
+    });
     emit.mockResolvedValue(undefined);
 
     await addShipment('order_1', { carrier: 'USPS', trackingNumber: 'TRK123' });
@@ -471,8 +489,21 @@ describe('markShipped', () => {
       orderId: 'order_1',
       status: 'shipped',
       shippedAt: new Date(),
+      lines: [],
+      order: {
+        id: 'order_1',
+        lines: [
+          { id: 'line_1', quantity: 1, fulfilledQuantity: 0 },
+        ],
+      },
     };
-    prisma.shipment.update.mockResolvedValue(shipment);
+    prisma.shipment.findUnique.mockResolvedValue(shipment);
+    prisma.$transaction.mockImplementation(async (fn) => fn(prisma));
+    prisma.shipment.update.mockResolvedValue({
+      ...shipment,
+      carrier: 'FedEx',
+      trackingNumber: 'TRK456',
+    });
     emit.mockResolvedValue(undefined);
 
     await markShipped('ship_1', { carrier: 'FedEx', trackingNumber: 'TRK456' });
@@ -852,5 +883,25 @@ describe('registerPaymentEventHandlers (W0-4)', () => {
       where: { id: 'order_1' },
       data: { status: 'cancelled' },
     });
+  });
+});
+
+describe('deriveFulfillmentStatus', () => {
+  it('returns unfulfilled when nothing shipped', () => {
+    expect(
+      deriveFulfillmentStatus([{ quantity: 2, fulfilledQuantity: 0 }])
+    ).toBe('unfulfilled');
+  });
+
+  it('returns partial when partially shipped', () => {
+    expect(
+      deriveFulfillmentStatus([{ quantity: 2, fulfilledQuantity: 1 }])
+    ).toBe('partial');
+  });
+
+  it('returns fulfilled when all shipped', () => {
+    expect(
+      deriveFulfillmentStatus([{ quantity: 2, fulfilledQuantity: 2 }])
+    ).toBe('fulfilled');
   });
 });

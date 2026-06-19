@@ -262,8 +262,9 @@ export async function getOrder(id) {
     where: { id },
     include: {
       lines: true,
-      shipments: true,
+      shipments: { include: { lines: { include: { orderLine: true } } } },
       refunds: true,
+      returns: { include: { lines: true } },
     },
   });
 }
@@ -356,28 +357,131 @@ export async function cancelOrder(orderId) {
 }
 
 // ---------------------------------------------------------------------------
+// Fulfillment helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Derive fulfillment status from order line quantities.
+ * @param {Array<{ quantity: number, fulfilledQuantity: number }>} lines
+ * @returns {'unfulfilled'|'partial'|'fulfilled'}
+ */
+export function deriveFulfillmentStatus(lines) {
+  if (!lines?.length) return 'unfulfilled';
+
+  const totalQty = lines.reduce((sum, l) => sum + l.quantity, 0);
+  const fulfilledQty = lines.reduce((sum, l) => sum + (l.fulfilledQuantity ?? 0), 0);
+
+  if (fulfilledQty === 0) return 'unfulfilled';
+  if (fulfilledQty >= totalQty) return 'fulfilled';
+  return 'partial';
+}
+
+/**
+ * Sync order status from fulfillment state.
+ * @param {string} orderId
+ * @param {import('@prisma/client').Prisma.TransactionClient} [tx]
+ */
+export async function syncOrderFulfillmentStatus(orderId, tx) {
+  const client = tx ?? prisma;
+  const order = await client.order.findUnique({
+    where: { id: orderId },
+    include: { lines: true },
+  });
+
+  if (!order) return;
+
+  const fulfillment = deriveFulfillmentStatus(order.lines);
+
+  if (fulfillment === 'fulfilled' && ['paid', 'confirmed'].includes(order.status)) {
+    await client.order.update({
+      where: { id: orderId },
+      data: { status: 'fulfilled' },
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
 // addShipment
 // ---------------------------------------------------------------------------
 
 /**
- * Create a Shipment record for an order.
+ * Create a Shipment record for an order with optional per-line quantities.
  * @param {string} orderId
- * @param {{ carrier?: string, trackingNumber?: string, trackingUrl?: string }} data
+ * @param {{
+ *   carrier?: string,
+ *   trackingNumber?: string,
+ *   trackingUrl?: string,
+ *   lines?: Array<{ orderLineId: string, quantity: number }>,
+ * }} data
  * @returns {Promise<object>} created Shipment
  */
 export async function addShipment(orderId, data = {}) {
-  const shipment = await prisma.shipment.create({
-    data: {
-      orderId,
-      carrier: data.carrier ?? null,
-      trackingNumber: data.trackingNumber ?? null,
-      trackingUrl: data.trackingUrl ?? null,
-    },
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { lines: true },
+  });
+
+  if (!order) {
+    throw new Error('ORDER_NOT_FOUND');
+  }
+
+  const shipmentLines = data.lines ?? [];
+
+  if (shipmentLines.length > 0) {
+    validateShipmentLines(order.lines, shipmentLines);
+  }
+
+  const shipment = await prisma.$transaction(async (tx) => {
+    const created = await tx.shipment.create({
+      data: {
+        orderId,
+        carrier: data.carrier ?? null,
+        trackingNumber: data.trackingNumber ?? null,
+        trackingUrl: data.trackingUrl ?? null,
+      },
+    });
+
+    for (const line of shipmentLines) {
+      await tx.shipmentLine.create({
+        data: {
+          shipmentId: created.id,
+          orderLineId: line.orderLineId,
+          quantity: line.quantity,
+        },
+      });
+    }
+
+    return tx.shipment.findUnique({
+      where: { id: created.id },
+      include: { lines: { include: { orderLine: true } } },
+    });
   });
 
   await emit('shipment.created', { shipmentId: shipment.id, orderId });
 
   return shipment;
+}
+
+/**
+ * @param {object[]} orderLines
+ * @param {Array<{ orderLineId: string, quantity: number }>} requestedLines
+ */
+function validateShipmentLines(orderLines, requestedLines) {
+  const lineMap = new Map(orderLines.map((l) => [l.id, l]));
+
+  for (const req of requestedLines) {
+    const orderLine = lineMap.get(req.orderLineId);
+    if (!orderLine) {
+      throw new Error('INVALID_ORDER_LINE');
+    }
+
+    const remaining =
+      orderLine.quantity - (orderLine.fulfilledQuantity ?? 0);
+
+    if (req.quantity <= 0 || req.quantity > remaining) {
+      throw new Error('INVALID_SHIPMENT_QUANTITY');
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -394,6 +498,15 @@ export async function markShipped(
   shipmentId,
   { carrier, trackingNumber, trackingUrl } = {}
 ) {
+  const shipment = await prisma.shipment.findUnique({
+    where: { id: shipmentId },
+    include: { lines: true, order: { include: { lines: true } } },
+  });
+
+  if (!shipment) {
+    throw new Error('SHIPMENT_NOT_FOUND');
+  }
+
   const updateData = {
     status: 'shipped',
     shippedAt: new Date(),
@@ -403,14 +516,56 @@ export async function markShipped(
   if (trackingNumber !== undefined) updateData.trackingNumber = trackingNumber;
   if (trackingUrl !== undefined) updateData.trackingUrl = trackingUrl;
 
-  const shipment = await prisma.shipment.update({
-    where: { id: shipmentId },
-    data: updateData,
+  const updated = await prisma.$transaction(async (tx) => {
+    const result = await tx.shipment.update({
+      where: { id: shipmentId },
+      data: updateData,
+      include: { lines: true },
+    });
+
+    const linesToFulfill =
+      result.lines.length > 0
+        ? result.lines
+        : shipment.order.lines.map((ol) => ({
+            orderLineId: ol.id,
+            quantity: ol.quantity - (ol.fulfilledQuantity ?? 0),
+          }));
+
+    for (const line of linesToFulfill) {
+      if (line.quantity <= 0) continue;
+
+      await tx.orderLine.update({
+        where: { id: line.orderLineId },
+        data: {
+          fulfilledQuantity: { increment: line.quantity },
+        },
+      });
+
+      if (result.lines.length === 0) {
+        await tx.shipmentLine.create({
+          data: {
+            shipmentId,
+            orderLineId: line.orderLineId,
+            quantity: line.quantity,
+          },
+        });
+      }
+    }
+
+    await syncOrderFulfillmentStatus(shipment.orderId, tx);
+
+    return result;
   });
 
-  await emit('shipment.shipped', { shipmentId, orderId: shipment.orderId });
+  await emit('shipment.shipped', {
+    shipmentId,
+    orderId: shipment.orderId,
+    carrier: updated.carrier,
+    trackingNumber: updated.trackingNumber,
+    trackingUrl: updated.trackingUrl,
+  });
 
-  return shipment;
+  return updated;
 }
 
 // ---------------------------------------------------------------------------
@@ -441,17 +596,20 @@ export async function markDelivered(shipmentId) {
 // ---------------------------------------------------------------------------
 
 /**
- * Create a Refund record for an order and restore inventory for all order
- * lines (W0-5). For partial refunds the full inventory is still restored here;
- * fine-grained per-line return logic arrives in W4 (Returns/RMA).
+ * Create a Refund record for an order.
  *
  * @param {string} orderId
- * @param {{ amountCents: number, reason?: string, providerRefundId?: string }} data
+ * @param {{
+ *   amountCents: number,
+ *   reason?: string,
+ *   providerRefundId?: string,
+ *   restoreInventory?: boolean,
+ * }} data
  * @returns {Promise<object>} created Refund
  */
 export async function createRefund(
   orderId,
-  { amountCents, reason, providerRefundId } = {}
+  { amountCents, reason, providerRefundId, restoreInventory = true } = {}
 ) {
   const refund = await prisma.refund.create({
     data: {
@@ -462,20 +620,23 @@ export async function createRefund(
     },
   });
 
-  // W0-5: Restore inventory for all order lines on refund.
-  // Full per-line granularity is handled in W4; for now restore everything.
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: { lines: true },
-  });
+  if (restoreInventory) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { lines: true },
+    });
 
-  if (order) {
-    const inventoryItems = (order.lines ?? [])
-      .filter((line) => line.variantId != null)
-      .map((line) => ({ variantId: line.variantId, quantity: line.quantity }));
+    if (order) {
+      const inventoryItems = (order.lines ?? [])
+        .filter((line) => line.variantId != null)
+        .map((line) => ({
+          variantId: line.variantId,
+          quantity: line.quantity,
+        }));
 
-    if (inventoryItems.length > 0) {
-      await incrementInventory(inventoryItems);
+      if (inventoryItems.length > 0) {
+        await incrementInventory(inventoryItems);
+      }
     }
   }
 
