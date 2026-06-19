@@ -91,7 +91,10 @@ export const ModelName = {
   WebhookDelivery: 'WebhookDelivery',
   TaxClass: 'TaxClass',
   CartDiscount: 'CartDiscount',
-  OrderDiscount: 'OrderDiscount'
+  OrderDiscount: 'OrderDiscount',
+  AuditLog: 'AuditLog',
+  ScheduledExport: 'ScheduledExport',
+  ExportRun: 'ExportRun'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -186,6 +189,8 @@ export const CustomerScalarFieldEnum = {
   name: 'name',
   phone: 'phone',
   preferredLocale: 'preferredLocale',
+  consentJson: 'consentJson',
+  erasedAt: 'erasedAt',
   twoFactorEnabled: 'twoFactorEnabled',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -703,6 +708,53 @@ export const OrderDiscountScalarFieldEnum = {
 } as const
 
 export type OrderDiscountScalarFieldEnum = (typeof OrderDiscountScalarFieldEnum)[keyof typeof OrderDiscountScalarFieldEnum]
+
+
+export const AuditLogScalarFieldEnum = {
+  id: 'id',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  actorEmail: 'actorEmail',
+  action: 'action',
+  entityType: 'entityType',
+  entityId: 'entityId',
+  diffJson: 'diffJson',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt'
+} as const
+
+export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const ScheduledExportScalarFieldEnum = {
+  id: 'id',
+  label: 'label',
+  exportType: 'exportType',
+  filtersJson: 'filtersJson',
+  schedule: 'schedule',
+  recipientEmail: 'recipientEmail',
+  lastRunAt: 'lastRunAt',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ScheduledExportScalarFieldEnum = (typeof ScheduledExportScalarFieldEnum)[keyof typeof ScheduledExportScalarFieldEnum]
+
+
+export const ExportRunScalarFieldEnum = {
+  id: 'id',
+  scheduledExportId: 'scheduledExportId',
+  exportType: 'exportType',
+  status: 'status',
+  rowCount: 'rowCount',
+  fileContent: 'fileContent',
+  error: 'error',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt'
+} as const
+
+export type ExportRunScalarFieldEnum = (typeof ExportRunScalarFieldEnum)[keyof typeof ExportRunScalarFieldEnum]
 
 
 export const SortOrder = {

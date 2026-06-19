@@ -424,7 +424,10 @@ export const ModelName = {
   WebhookDelivery: 'WebhookDelivery',
   TaxClass: 'TaxClass',
   CartDiscount: 'CartDiscount',
-  OrderDiscount: 'OrderDiscount'
+  OrderDiscount: 'OrderDiscount',
+  AuditLog: 'AuditLog',
+  ScheduledExport: 'ScheduledExport',
+  ExportRun: 'ExportRun'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -440,7 +443,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "twoFactor" | "customer" | "customerSession" | "customerAccount" | "customerVerification" | "customerTwoFactor" | "address" | "product" | "productVariant" | "variantPrice" | "productOption" | "productOptionValue" | "category" | "productCategory" | "media" | "productMedia" | "cart" | "cartLine" | "checkoutSession" | "order" | "orderLine" | "shipment" | "refund" | "discount" | "pluginData" | "setting" | "translation" | "slug" | "productAttribute" | "productAttributeValue" | "webhookEvent" | "apiKey" | "webhookSubscription" | "webhookDelivery" | "taxClass" | "cartDiscount" | "orderDiscount"
+    modelProps: "user" | "session" | "account" | "verification" | "twoFactor" | "customer" | "customerSession" | "customerAccount" | "customerVerification" | "customerTwoFactor" | "address" | "product" | "productVariant" | "variantPrice" | "productOption" | "productOptionValue" | "category" | "productCategory" | "media" | "productMedia" | "cart" | "cartLine" | "checkoutSession" | "order" | "orderLine" | "shipment" | "refund" | "discount" | "pluginData" | "setting" | "translation" | "slug" | "productAttribute" | "productAttributeValue" | "webhookEvent" | "apiKey" | "webhookSubscription" | "webhookDelivery" | "taxClass" | "cartDiscount" | "orderDiscount" | "auditLog" | "scheduledExport" | "exportRun"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3478,6 +3481,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AuditLog: {
+      payload: Prisma.$AuditLogPayload<ExtArgs>
+      fields: Prisma.AuditLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AuditLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AuditLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        findFirst: {
+          args: Prisma.AuditLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AuditLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        findMany: {
+          args: Prisma.AuditLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>[]
+        }
+        create: {
+          args: Prisma.AuditLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        createMany: {
+          args: Prisma.AuditLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AuditLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>[]
+        }
+        delete: {
+          args: Prisma.AuditLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        update: {
+          args: Prisma.AuditLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.AuditLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AuditLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AuditLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.AuditLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        aggregate: {
+          args: Prisma.AuditLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAuditLog>
+        }
+        groupBy: {
+          args: Prisma.AuditLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AuditLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AuditLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AuditLogCountAggregateOutputType> | number
+        }
+      }
+    }
+    ScheduledExport: {
+      payload: Prisma.$ScheduledExportPayload<ExtArgs>
+      fields: Prisma.ScheduledExportFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ScheduledExportFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ScheduledExportPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ScheduledExportFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ScheduledExportPayload>
+        }
+        findFirst: {
+          args: Prisma.ScheduledExportFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ScheduledExportPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ScheduledExportFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ScheduledExportPayload>
+        }
+        findMany: {
+          args: Prisma.ScheduledExportFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ScheduledExportPayload>[]
+        }
+        create: {
+          args: Prisma.ScheduledExportCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ScheduledExportPayload>
+        }
+        createMany: {
+          args: Prisma.ScheduledExportCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ScheduledExportCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ScheduledExportPayload>[]
+        }
+        delete: {
+          args: Prisma.ScheduledExportDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ScheduledExportPayload>
+        }
+        update: {
+          args: Prisma.ScheduledExportUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ScheduledExportPayload>
+        }
+        deleteMany: {
+          args: Prisma.ScheduledExportDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ScheduledExportUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ScheduledExportUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ScheduledExportPayload>[]
+        }
+        upsert: {
+          args: Prisma.ScheduledExportUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ScheduledExportPayload>
+        }
+        aggregate: {
+          args: Prisma.ScheduledExportAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateScheduledExport>
+        }
+        groupBy: {
+          args: Prisma.ScheduledExportGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ScheduledExportGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ScheduledExportCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ScheduledExportCountAggregateOutputType> | number
+        }
+      }
+    }
+    ExportRun: {
+      payload: Prisma.$ExportRunPayload<ExtArgs>
+      fields: Prisma.ExportRunFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ExportRunFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportRunPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ExportRunFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportRunPayload>
+        }
+        findFirst: {
+          args: Prisma.ExportRunFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportRunPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ExportRunFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportRunPayload>
+        }
+        findMany: {
+          args: Prisma.ExportRunFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportRunPayload>[]
+        }
+        create: {
+          args: Prisma.ExportRunCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportRunPayload>
+        }
+        createMany: {
+          args: Prisma.ExportRunCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ExportRunCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportRunPayload>[]
+        }
+        delete: {
+          args: Prisma.ExportRunDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportRunPayload>
+        }
+        update: {
+          args: Prisma.ExportRunUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportRunPayload>
+        }
+        deleteMany: {
+          args: Prisma.ExportRunDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ExportRunUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ExportRunUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportRunPayload>[]
+        }
+        upsert: {
+          args: Prisma.ExportRunUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportRunPayload>
+        }
+        aggregate: {
+          args: Prisma.ExportRunAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateExportRun>
+        }
+        groupBy: {
+          args: Prisma.ExportRunGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExportRunGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ExportRunCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExportRunCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -3593,6 +3818,8 @@ export const CustomerScalarFieldEnum = {
   name: 'name',
   phone: 'phone',
   preferredLocale: 'preferredLocale',
+  consentJson: 'consentJson',
+  erasedAt: 'erasedAt',
   twoFactorEnabled: 'twoFactorEnabled',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -4112,6 +4339,53 @@ export const OrderDiscountScalarFieldEnum = {
 export type OrderDiscountScalarFieldEnum = (typeof OrderDiscountScalarFieldEnum)[keyof typeof OrderDiscountScalarFieldEnum]
 
 
+export const AuditLogScalarFieldEnum = {
+  id: 'id',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  actorEmail: 'actorEmail',
+  action: 'action',
+  entityType: 'entityType',
+  entityId: 'entityId',
+  diffJson: 'diffJson',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt'
+} as const
+
+export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const ScheduledExportScalarFieldEnum = {
+  id: 'id',
+  label: 'label',
+  exportType: 'exportType',
+  filtersJson: 'filtersJson',
+  schedule: 'schedule',
+  recipientEmail: 'recipientEmail',
+  lastRunAt: 'lastRunAt',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ScheduledExportScalarFieldEnum = (typeof ScheduledExportScalarFieldEnum)[keyof typeof ScheduledExportScalarFieldEnum]
+
+
+export const ExportRunScalarFieldEnum = {
+  id: 'id',
+  scheduledExportId: 'scheduledExportId',
+  exportType: 'exportType',
+  status: 'status',
+  rowCount: 'rowCount',
+  fileContent: 'fileContent',
+  error: 'error',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt'
+} as const
+
+export type ExportRunScalarFieldEnum = (typeof ExportRunScalarFieldEnum)[keyof typeof ExportRunScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -4326,6 +4600,9 @@ export type GlobalOmitConfig = {
   taxClass?: Prisma.TaxClassOmit
   cartDiscount?: Prisma.CartDiscountOmit
   orderDiscount?: Prisma.OrderDiscountOmit
+  auditLog?: Prisma.AuditLogOmit
+  scheduledExport?: Prisma.ScheduledExportOmit
+  exportRun?: Prisma.ExportRunOmit
 }
 
 /* Types for Logging */

@@ -222,3 +222,18 @@ export type CartDiscount = Prisma.CartDiscountModel
  * 
  */
 export type OrderDiscount = Prisma.OrderDiscountModel
+/**
+ * Model AuditLog
+ * 
+ */
+export type AuditLog = Prisma.AuditLogModel
+/**
+ * Model ScheduledExport
+ * 
+ */
+export type ScheduledExport = Prisma.ScheduledExportModel
+/**
+ * Model ExportRun
+ * 
+ */
+export type ExportRun = Prisma.ExportRunModel

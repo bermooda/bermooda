@@ -16,7 +16,7 @@ todos:
     status: completed
   - id: p1-w6
     content: 'Phase 1 (parallel, needs W0): W6 reporting/analytics + CSV/scheduled exports + AuditLog (subscribes to mutations) + GDPR export/erasure.'
-    status: pending
+    status: completed
   - id: p2-w4
     content: 'Phase 2 (parallel, needs W3): W4 returns/RMA + exchanges/store-credit ledger + partial fulfillment + PDF packing slips/invoices + lifecycle emails. Publish store-credit ledger interface early for W7.'
     status: pending

@@ -138,6 +138,9 @@ export default [
     // Authenticated admin routes
     layout('routes/admin/_layout.jsx', [
       route('dashboard', 'routes/admin/dashboard.jsx'),
+      route('reports', 'routes/admin/reports/index.jsx'),
+      route('reports/export', 'routes/admin/reports/export.jsx'),
+      route('audit-log', 'routes/admin/audit-log.jsx'),
       // Products (P5-3)
       route('products', 'routes/admin/products/index.jsx'),
       route('products/new', 'routes/admin/products/new.jsx'),

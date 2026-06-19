@@ -98,15 +98,17 @@ model TwoFactor {
 // ─── Customer auth ───────────────────────────────────────────────────────────
 
 model Customer {
-  id               String   @id @default(cuid())
-  email            String   @unique
-  emailVerified    Boolean  @default(false)
+  id               String    @id @default(cuid())
+  email            String    @unique
+  emailVerified    Boolean   @default(false)
   name             String?
   phone            String?
   preferredLocale  String?
-  twoFactorEnabled Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  consentJson      String?
+  erasedAt         DateTime?
+  twoFactorEnabled Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   sessions  CustomerSession[]
   accounts  CustomerAccount[]
@@ -699,4 +701,57 @@ model OrderDiscount {
 
   @@index([orderId])
   @@index([discountId])
+}
+
+// ─── W6: Reporting, audit, compliance ────────────────────────────────────────
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorType    String
+  actorId      String?
+  actorEmail   String?
+  action       String
+  entityType   String?
+  entityId     String?
+  diffJson     String?
+  metadataJson String?
+  createdAt    DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model ScheduledExport {
+  id             String    @id @default(cuid())
+  label          String
+  exportType     String
+  filtersJson    String?
+  schedule       String
+  recipientEmail String?
+  lastRunAt      DateTime?
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  runs ExportRun[]
+}
+
+model ExportRun {
+  id                String    @id @default(cuid())
+  scheduledExportId String?
+  exportType        String
+  status            String    @default("pending")
+  rowCount          Int       @default(0)
+  fileContent       String?
+  error             String?
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+
+  scheduledExport ScheduledExport? @relation(fields: [scheduledExportId], references: [id], onDelete: SetNull)
+
+  @@index([scheduledExportId])
+  @@index([status])
+  @@index([createdAt])
 }

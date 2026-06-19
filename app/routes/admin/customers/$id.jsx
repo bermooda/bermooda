@@ -11,6 +11,14 @@ import {
 } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import { authenticate } from '#/libs/auth/admin.server';
+import { recordAdminAudit } from '#/core/audit/index.server';
+import {
+  exportCustomerData,
+  eraseCustomer,
+  updateCustomerConsent,
+  parseConsent,
+} from '#/core/gdpr/index.server';
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -21,7 +29,15 @@ export async function loader({ params }) {
 
   const customer = await prisma.customer.findUniqueOrThrow({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      phone: true,
+      preferredLocale: true,
+      consentJson: true,
+      erasedAt: true,
+      createdAt: true,
       addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
       orders: {
         orderBy: { createdAt: 'desc' },
@@ -68,6 +84,8 @@ export async function loader({ params }) {
         totalCents: o.totalCents,
         createdAt: o.createdAt.toISOString(),
       })),
+      consent: parseConsent(customer.consentJson),
+      erasedAt: customer.erasedAt?.toISOString() ?? null,
     },
   };
 }
@@ -77,6 +95,7 @@ export async function loader({ params }) {
 // ---------------------------------------------------------------------------
 
 export async function action({ request, params }) {
+  const { user } = await authenticate(request);
   const { id } = params;
   const formData = await request.formData();
   const intent = formData.get('intent');
@@ -87,9 +106,22 @@ export async function action({ request, params }) {
     const preferredLocale =
       formData.get('preferredLocale')?.toString().trim() || null;
 
+    const before = await prisma.customer.findUnique({
+      where: { id },
+      select: { name: true, phone: true, preferredLocale: true },
+    });
+
     await prisma.customer.update({
       where: { id },
       data: { name, phone, preferredLocale },
+    });
+
+    await recordAdminAudit({
+      user,
+      action: 'customer.updated',
+      entityType: 'customer',
+      entityId: id,
+      diff: { before, after: { name, phone, preferredLocale } },
     });
 
     return { ok: true, intent };
@@ -110,6 +142,14 @@ export async function action({ request, params }) {
       }),
     ]);
 
+    await recordAdminAudit({
+      user,
+      action: 'customer.address.default_set',
+      entityType: 'address',
+      entityId: addressId,
+      metadata: { customerId: id },
+    });
+
     return { ok: true, intent };
   }
 
@@ -119,7 +159,61 @@ export async function action({ request, params }) {
 
     await prisma.address.delete({ where: { id: addressId, customerId: id } });
 
+    await recordAdminAudit({
+      user,
+      action: 'customer.address.deleted',
+      entityType: 'address',
+      entityId: addressId,
+      metadata: { customerId: id },
+    });
+
     return { ok: true, intent };
+  }
+
+  if (intent === 'update-consent') {
+    const analytics = formData.get('analytics') === 'on';
+    const marketing = formData.get('marketing') === 'on';
+    await updateCustomerConsent(id, { analytics, marketing });
+    await recordAdminAudit({
+      user,
+      action: 'customer.consent.updated',
+      entityType: 'customer',
+      entityId: id,
+      metadata: { analytics, marketing },
+    });
+    return { ok: true, intent };
+  }
+
+  if (intent === 'export-data') {
+    const data = await exportCustomerData(id);
+    await recordAdminAudit({
+      user,
+      action: 'customer.data_exported',
+      entityType: 'customer',
+      entityId: id,
+    });
+    return new Response(JSON.stringify(data, null, 2), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Disposition': `attachment; filename="customer-${id}-export.json"`,
+      },
+    });
+  }
+
+  if (intent === 'erase-customer') {
+    try {
+      const result = await eraseCustomer(id);
+      await recordAdminAudit({
+        user,
+        action: 'customer.erased',
+        entityType: 'customer',
+        entityId: id,
+        metadata: { anonymizedEmail: result.anonymizedEmail },
+      });
+      return { ok: true, intent, erased: true };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
   }
 
   return { ok: false, error: 'Unknown intent.' };
@@ -377,6 +471,79 @@ export default function AdminCustomerRoute() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </SectionCard>
+
+      {/* GDPR & Privacy */}
+      <SectionCard title="GDPR & Privacy">
+        {customer.erasedAt ? (
+          <p className="text-sm text-amber-700 dark:text-amber-400">
+            This customer was erased on{' '}
+            {new Date(customer.erasedAt).toLocaleString('en')}. Personal data
+            has been anonymized; order history is preserved.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            <Form method="post" className="flex flex-wrap gap-4">
+              <input type="hidden" name="intent" value="update-consent" />
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-zinc-300">
+                <input
+                  type="checkbox"
+                  name="analytics"
+                  defaultChecked={customer.consent.analytics}
+                  className="rounded border-gray-300"
+                />
+                Analytics consent
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-zinc-300">
+                <input
+                  type="checkbox"
+                  name="marketing"
+                  defaultChecked={customer.consent.marketing}
+                  className="rounded border-gray-300"
+                />
+                Marketing consent
+              </label>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+              >
+                Save consent
+              </button>
+            </Form>
+
+            <div className="flex flex-wrap gap-3 border-t border-gray-200 pt-4 dark:border-zinc-700">
+              <Form method="post">
+                <input type="hidden" name="intent" value="export-data" />
+                <button
+                  type="submit"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-indigo-700 ring-1 ring-indigo-300 hover:bg-indigo-50 dark:text-indigo-400 dark:ring-indigo-700 dark:hover:bg-indigo-900/20"
+                >
+                  Export customer data (JSON)
+                </button>
+              </Form>
+              <Form method="post">
+                <input type="hidden" name="intent" value="erase-customer" />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  onClick={(e) => {
+                    if (
+                      !confirm(
+                        'Permanently erase this customer\'s personal data? Orders will be anonymized but preserved.'
+                      )
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
+                  className="rounded-md px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-red-300 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:ring-red-700 dark:hover:bg-red-900/20"
+                >
+                  Erase personal data
+                </button>
+              </Form>
+            </div>
           </div>
         )}
       </SectionCard>
