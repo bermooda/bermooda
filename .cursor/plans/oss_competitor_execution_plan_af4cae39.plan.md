@@ -7,7 +7,7 @@ todos:
     status: completed
   - id: p1-w1
     content: 'Phase 1 (parallel, needs W0): W1 storefront search — search provider registry + built-in DB provider, /search route, faceted filtering/sorting, ProductAttribute schema, theme search box. Unblocks W5.'
-    status: pending
+    status: completed
   - id: p1-w2
     content: 'Phase 1 (parallel, needs W0): W2 public API (REST /api/v1 + /api/admin/v1 thin over core) + ApiKey scopes + outbound webhooks (WebhookSubscription/Delivery worker) + docs/api.md. Buildable now; public GA gated on W8.'
     status: pending

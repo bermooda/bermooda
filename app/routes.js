@@ -19,6 +19,9 @@ export default [
     route('products/:slug', 'routes/storefront/products/$slug.jsx'),
     route('categories/:slug', 'routes/storefront/categories/$slug.jsx'),
 
+    // Search
+    route('search', 'routes/storefront/search.jsx'),
+
     // Cart
     route('cart', 'routes/storefront/cart.jsx'),
 

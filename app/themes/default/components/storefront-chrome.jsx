@@ -3,7 +3,7 @@ import {
   ShoppingCartIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
-import { Link, useRouteLoaderData } from 'react-router';
+import { Form, Link, useRouteLoaderData } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
 import CurrencySwitcher from '#/themes/default/components/currency-switcher';
@@ -37,14 +37,19 @@ export function StorefrontSubHeader() {
   return (
     <div className="border-b border-stone-200 bg-[#fbf7ef]">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
-        <div className="flex flex-1 items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-2 focus-within:border-stone-700 focus-within:ring-2 focus-within:ring-stone-200 sm:max-w-md">
+        <Form
+          method="get"
+          action="/search"
+          className="flex flex-1 items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-2 focus-within:border-stone-700 focus-within:ring-2 focus-within:ring-stone-200 sm:max-w-md"
+        >
           <MagnifyingGlassIcon className="h-4 w-4 shrink-0 text-stone-400" />
           <input
             type="search"
+            name="q"
             placeholder="Search the shop"
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-stone-400"
           />
-        </div>
+        </Form>
         <div className="flex items-center gap-5 text-xs tracking-wide text-stone-600 uppercase">
           <Link to="/" className="hover:text-stone-900">
             Gift Guide
