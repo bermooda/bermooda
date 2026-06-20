@@ -1,0 +1,34 @@
+---
+description: Require lint and build to pass before opening or updating a pull request
+alwaysApply: true
+---
+
+# PR preflight (required)
+
+Before **creating** or **updating** a pull request, run the full preflight below in the repo root. Do not open or update a PR until every step passes.
+
+## Required commands (in order)
+
+1. **Lint** — `npm run lint`
+   - Runs `oxlint` and `oxfmt --check`.
+   - If `oxfmt --check` fails, run `npm run fmt`, then re-run `npm run lint`.
+   - Fix any oxlint warnings/errors before proceeding (CI treats a non-zero exit as failure).
+
+2. **Build** — `npm run build`
+   - Must complete with exit code 0.
+
+3. **Tests** (when code changed) — `npm run test`, or a targeted subset for the touched area when the full suite is unnecessary.
+
+## Workflow
+
+- Run preflight **after** implementation is done and **before** the PR create/update tool call.
+- If lint or build fails, fix the issue, re-run preflight, then commit, push, and only then create/update the PR.
+- Include preflight results in the PR summary when relevant (e.g. "lint + build green").
+
+## Common fixes
+
+| Failure | Fix |
+| -------- | ----- |
+| `oxfmt --check` | `npm run fmt` |
+| Unused variable (oxlint) | Remove, prefix with `_`, or use the value |
+| Missing export / build error | Fix imports/exports; re-run `npm run build` |
