@@ -239,6 +239,7 @@ export type CustomerWhereInput = {
   orders?: Prisma.OrderListRelationFilter
   returns?: Prisma.ReturnListRelationFilter
   storeCreditLedger?: Prisma.StoreCreditLedgerListRelationFilter
+  reviews?: Prisma.ReviewListRelationFilter
 }
 
 export type CustomerOrderByWithRelationInput = {
@@ -262,6 +263,7 @@ export type CustomerOrderByWithRelationInput = {
   orders?: Prisma.OrderOrderByRelationAggregateInput
   returns?: Prisma.ReturnOrderByRelationAggregateInput
   storeCreditLedger?: Prisma.StoreCreditLedgerOrderByRelationAggregateInput
+  reviews?: Prisma.ReviewOrderByRelationAggregateInput
 }
 
 export type CustomerWhereUniqueInput = Prisma.AtLeast<{
@@ -288,6 +290,7 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   orders?: Prisma.OrderListRelationFilter
   returns?: Prisma.ReturnListRelationFilter
   storeCreditLedger?: Prisma.StoreCreditLedgerListRelationFilter
+  reviews?: Prisma.ReviewListRelationFilter
 }, "id" | "email">
 
 export type CustomerOrderByWithAggregationInput = {
@@ -345,6 +348,7 @@ export type CustomerCreateInput = {
   orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateInput = {
@@ -368,6 +372,7 @@ export type CustomerUncheckedCreateInput = {
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUpdateInput = {
@@ -391,6 +396,7 @@ export type CustomerUpdateInput = {
   orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateInput = {
@@ -414,6 +420,7 @@ export type CustomerUncheckedUpdateInput = {
   orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateManyInput = {
@@ -644,6 +651,20 @@ export type CustomerUpdateOneRequiredWithoutStoreCreditLedgerNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CustomerUpdateToOneWithWhereWithoutStoreCreditLedgerInput, Prisma.CustomerUpdateWithoutStoreCreditLedgerInput>, Prisma.CustomerUncheckedUpdateWithoutStoreCreditLedgerInput>
 }
 
+export type CustomerCreateNestedOneWithoutReviewsInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutReviewsInput, Prisma.CustomerUncheckedCreateWithoutReviewsInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutReviewsInput
+  connect?: Prisma.CustomerWhereUniqueInput
+}
+
+export type CustomerUpdateOneRequiredWithoutReviewsNestedInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutReviewsInput, Prisma.CustomerUncheckedCreateWithoutReviewsInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutReviewsInput
+  upsert?: Prisma.CustomerUpsertWithoutReviewsInput
+  connect?: Prisma.CustomerWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CustomerUpdateToOneWithWhereWithoutReviewsInput, Prisma.CustomerUpdateWithoutReviewsInput>, Prisma.CustomerUncheckedUpdateWithoutReviewsInput>
+}
+
 export type CustomerCreateWithoutSessionsInput = {
   id?: string
   email: string
@@ -664,6 +685,7 @@ export type CustomerCreateWithoutSessionsInput = {
   orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutSessionsInput = {
@@ -686,6 +708,7 @@ export type CustomerUncheckedCreateWithoutSessionsInput = {
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutSessionsInput = {
@@ -724,6 +747,7 @@ export type CustomerUpdateWithoutSessionsInput = {
   orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutSessionsInput = {
@@ -746,6 +770,7 @@ export type CustomerUncheckedUpdateWithoutSessionsInput = {
   orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutAccountsInput = {
@@ -768,6 +793,7 @@ export type CustomerCreateWithoutAccountsInput = {
   orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutAccountsInput = {
@@ -790,6 +816,7 @@ export type CustomerUncheckedCreateWithoutAccountsInput = {
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutAccountsInput = {
@@ -828,6 +855,7 @@ export type CustomerUpdateWithoutAccountsInput = {
   orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutAccountsInput = {
@@ -850,6 +878,7 @@ export type CustomerUncheckedUpdateWithoutAccountsInput = {
   orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutTwoFactorInput = {
@@ -872,6 +901,7 @@ export type CustomerCreateWithoutTwoFactorInput = {
   orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutTwoFactorInput = {
@@ -894,6 +924,7 @@ export type CustomerUncheckedCreateWithoutTwoFactorInput = {
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutTwoFactorInput = {
@@ -932,6 +963,7 @@ export type CustomerUpdateWithoutTwoFactorInput = {
   orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutTwoFactorInput = {
@@ -954,6 +986,7 @@ export type CustomerUncheckedUpdateWithoutTwoFactorInput = {
   orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutAddressesInput = {
@@ -976,6 +1009,7 @@ export type CustomerCreateWithoutAddressesInput = {
   orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutAddressesInput = {
@@ -998,6 +1032,7 @@ export type CustomerUncheckedCreateWithoutAddressesInput = {
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutAddressesInput = {
@@ -1036,6 +1071,7 @@ export type CustomerUpdateWithoutAddressesInput = {
   orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutAddressesInput = {
@@ -1058,6 +1094,7 @@ export type CustomerUncheckedUpdateWithoutAddressesInput = {
   orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutCartsInput = {
@@ -1080,6 +1117,7 @@ export type CustomerCreateWithoutCartsInput = {
   orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutCartsInput = {
@@ -1102,6 +1140,7 @@ export type CustomerUncheckedCreateWithoutCartsInput = {
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutCartsInput = {
@@ -1140,6 +1179,7 @@ export type CustomerUpdateWithoutCartsInput = {
   orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutCartsInput = {
@@ -1162,6 +1202,7 @@ export type CustomerUncheckedUpdateWithoutCartsInput = {
   orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutCheckoutsInput = {
@@ -1184,6 +1225,7 @@ export type CustomerCreateWithoutCheckoutsInput = {
   orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutCheckoutsInput = {
@@ -1206,6 +1248,7 @@ export type CustomerUncheckedCreateWithoutCheckoutsInput = {
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutCheckoutsInput = {
@@ -1244,6 +1287,7 @@ export type CustomerUpdateWithoutCheckoutsInput = {
   orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutCheckoutsInput = {
@@ -1266,6 +1310,7 @@ export type CustomerUncheckedUpdateWithoutCheckoutsInput = {
   orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutOrdersInput = {
@@ -1288,6 +1333,7 @@ export type CustomerCreateWithoutOrdersInput = {
   checkouts?: Prisma.CheckoutSessionCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutOrdersInput = {
@@ -1310,6 +1356,7 @@ export type CustomerUncheckedCreateWithoutOrdersInput = {
   checkouts?: Prisma.CheckoutSessionUncheckedCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutOrdersInput = {
@@ -1348,6 +1395,7 @@ export type CustomerUpdateWithoutOrdersInput = {
   checkouts?: Prisma.CheckoutSessionUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutOrdersInput = {
@@ -1370,6 +1418,7 @@ export type CustomerUncheckedUpdateWithoutOrdersInput = {
   checkouts?: Prisma.CheckoutSessionUncheckedUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutReturnsInput = {
@@ -1392,6 +1441,7 @@ export type CustomerCreateWithoutReturnsInput = {
   checkouts?: Prisma.CheckoutSessionCreateNestedManyWithoutCustomerInput
   orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutReturnsInput = {
@@ -1414,6 +1464,7 @@ export type CustomerUncheckedCreateWithoutReturnsInput = {
   checkouts?: Prisma.CheckoutSessionUncheckedCreateNestedManyWithoutCustomerInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutReturnsInput = {
@@ -1452,6 +1503,7 @@ export type CustomerUpdateWithoutReturnsInput = {
   checkouts?: Prisma.CheckoutSessionUpdateManyWithoutCustomerNestedInput
   orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutReturnsInput = {
@@ -1474,6 +1526,7 @@ export type CustomerUncheckedUpdateWithoutReturnsInput = {
   checkouts?: Prisma.CheckoutSessionUncheckedUpdateManyWithoutCustomerNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
   storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutStoreCreditLedgerInput = {
@@ -1496,6 +1549,7 @@ export type CustomerCreateWithoutStoreCreditLedgerInput = {
   checkouts?: Prisma.CheckoutSessionCreateNestedManyWithoutCustomerInput
   orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutStoreCreditLedgerInput = {
@@ -1518,6 +1572,7 @@ export type CustomerUncheckedCreateWithoutStoreCreditLedgerInput = {
   checkouts?: Prisma.CheckoutSessionUncheckedCreateNestedManyWithoutCustomerInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutStoreCreditLedgerInput = {
@@ -1556,6 +1611,7 @@ export type CustomerUpdateWithoutStoreCreditLedgerInput = {
   checkouts?: Prisma.CheckoutSessionUpdateManyWithoutCustomerNestedInput
   orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutStoreCreditLedgerInput = {
@@ -1578,6 +1634,115 @@ export type CustomerUncheckedUpdateWithoutStoreCreditLedgerInput = {
   checkouts?: Prisma.CheckoutSessionUncheckedUpdateManyWithoutCustomerNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+}
+
+export type CustomerCreateWithoutReviewsInput = {
+  id?: string
+  email: string
+  emailVerified?: boolean
+  name?: string | null
+  phone?: string | null
+  preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
+  twoFactorEnabled?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.CustomerSessionCreateNestedManyWithoutCustomerInput
+  accounts?: Prisma.CustomerAccountCreateNestedManyWithoutCustomerInput
+  twoFactor?: Prisma.CustomerTwoFactorCreateNestedOneWithoutCustomerInput
+  addresses?: Prisma.AddressCreateNestedManyWithoutCustomerInput
+  carts?: Prisma.CartCreateNestedManyWithoutCustomerInput
+  checkouts?: Prisma.CheckoutSessionCreateNestedManyWithoutCustomerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+}
+
+export type CustomerUncheckedCreateWithoutReviewsInput = {
+  id?: string
+  email: string
+  emailVerified?: boolean
+  name?: string | null
+  phone?: string | null
+  preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
+  twoFactorEnabled?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.CustomerSessionUncheckedCreateNestedManyWithoutCustomerInput
+  accounts?: Prisma.CustomerAccountUncheckedCreateNestedManyWithoutCustomerInput
+  twoFactor?: Prisma.CustomerTwoFactorUncheckedCreateNestedOneWithoutCustomerInput
+  addresses?: Prisma.AddressUncheckedCreateNestedManyWithoutCustomerInput
+  carts?: Prisma.CartUncheckedCreateNestedManyWithoutCustomerInput
+  checkouts?: Prisma.CheckoutSessionUncheckedCreateNestedManyWithoutCustomerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+}
+
+export type CustomerCreateOrConnectWithoutReviewsInput = {
+  where: Prisma.CustomerWhereUniqueInput
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutReviewsInput, Prisma.CustomerUncheckedCreateWithoutReviewsInput>
+}
+
+export type CustomerUpsertWithoutReviewsInput = {
+  update: Prisma.XOR<Prisma.CustomerUpdateWithoutReviewsInput, Prisma.CustomerUncheckedUpdateWithoutReviewsInput>
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutReviewsInput, Prisma.CustomerUncheckedCreateWithoutReviewsInput>
+  where?: Prisma.CustomerWhereInput
+}
+
+export type CustomerUpdateToOneWithWhereWithoutReviewsInput = {
+  where?: Prisma.CustomerWhereInput
+  data: Prisma.XOR<Prisma.CustomerUpdateWithoutReviewsInput, Prisma.CustomerUncheckedUpdateWithoutReviewsInput>
+}
+
+export type CustomerUpdateWithoutReviewsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.CustomerSessionUpdateManyWithoutCustomerNestedInput
+  accounts?: Prisma.CustomerAccountUpdateManyWithoutCustomerNestedInput
+  twoFactor?: Prisma.CustomerTwoFactorUpdateOneWithoutCustomerNestedInput
+  addresses?: Prisma.AddressUpdateManyWithoutCustomerNestedInput
+  carts?: Prisma.CartUpdateManyWithoutCustomerNestedInput
+  checkouts?: Prisma.CheckoutSessionUpdateManyWithoutCustomerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+}
+
+export type CustomerUncheckedUpdateWithoutReviewsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.CustomerSessionUncheckedUpdateManyWithoutCustomerNestedInput
+  accounts?: Prisma.CustomerAccountUncheckedUpdateManyWithoutCustomerNestedInput
+  twoFactor?: Prisma.CustomerTwoFactorUncheckedUpdateOneWithoutCustomerNestedInput
+  addresses?: Prisma.AddressUncheckedUpdateManyWithoutCustomerNestedInput
+  carts?: Prisma.CartUncheckedUpdateManyWithoutCustomerNestedInput
+  checkouts?: Prisma.CheckoutSessionUncheckedUpdateManyWithoutCustomerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 
@@ -1594,6 +1759,7 @@ export type CustomerCountOutputType = {
   orders: number
   returns: number
   storeCreditLedger: number
+  reviews: number
 }
 
 export type CustomerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1605,6 +1771,7 @@ export type CustomerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   orders?: boolean | CustomerCountOutputTypeCountOrdersArgs
   returns?: boolean | CustomerCountOutputTypeCountReturnsArgs
   storeCreditLedger?: boolean | CustomerCountOutputTypeCountStoreCreditLedgerArgs
+  reviews?: boolean | CustomerCountOutputTypeCountReviewsArgs
 }
 
 /**
@@ -1673,6 +1840,13 @@ export type CustomerCountOutputTypeCountStoreCreditLedgerArgs<ExtArgs extends ru
   where?: Prisma.StoreCreditLedgerWhereInput
 }
 
+/**
+ * CustomerCountOutputType without action
+ */
+export type CustomerCountOutputTypeCountReviewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReviewWhereInput
+}
+
 
 export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1695,6 +1869,7 @@ export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   orders?: boolean | Prisma.Customer$ordersArgs<ExtArgs>
   returns?: boolean | Prisma.Customer$returnsArgs<ExtArgs>
   storeCreditLedger?: boolean | Prisma.Customer$storeCreditLedgerArgs<ExtArgs>
+  reviews?: boolean | Prisma.Customer$reviewsArgs<ExtArgs>
   _count?: boolean | Prisma.CustomerCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["customer"]>
 
@@ -1751,6 +1926,7 @@ export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   orders?: boolean | Prisma.Customer$ordersArgs<ExtArgs>
   returns?: boolean | Prisma.Customer$returnsArgs<ExtArgs>
   storeCreditLedger?: boolean | Prisma.Customer$storeCreditLedgerArgs<ExtArgs>
+  reviews?: boolean | Prisma.Customer$reviewsArgs<ExtArgs>
   _count?: boolean | Prisma.CustomerCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CustomerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1768,6 +1944,7 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     orders: Prisma.$OrderPayload<ExtArgs>[]
     returns: Prisma.$ReturnPayload<ExtArgs>[]
     storeCreditLedger: Prisma.$StoreCreditLedgerPayload<ExtArgs>[]
+    reviews: Prisma.$ReviewPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2184,6 +2361,7 @@ export interface Prisma__CustomerClient<T, Null = never, ExtArgs extends runtime
   orders<T extends Prisma.Customer$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   returns<T extends Prisma.Customer$returnsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$returnsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReturnPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   storeCreditLedger<T extends Prisma.Customer$storeCreditLedgerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$storeCreditLedgerArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoreCreditLedgerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reviews<T extends Prisma.Customer$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2823,6 +3001,30 @@ export type Customer$storeCreditLedgerArgs<ExtArgs extends runtime.Types.Extensi
   take?: number
   skip?: number
   distinct?: Prisma.StoreCreditLedgerScalarFieldEnum | Prisma.StoreCreditLedgerScalarFieldEnum[]
+}
+
+/**
+ * Customer.reviews
+ */
+export type Customer$reviewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Review
+   */
+  select?: Prisma.ReviewSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Review
+   */
+  omit?: Prisma.ReviewOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReviewInclude<ExtArgs> | null
+  where?: Prisma.ReviewWhereInput
+  orderBy?: Prisma.ReviewOrderByWithRelationInput | Prisma.ReviewOrderByWithRelationInput[]
+  cursor?: Prisma.ReviewWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReviewScalarFieldEnum | Prisma.ReviewScalarFieldEnum[]
 }
 
 /**
