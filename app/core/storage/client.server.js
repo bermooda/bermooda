@@ -16,22 +16,24 @@ function isConfigured() {
   return Boolean(ENDPOINT && BUCKET && ACCESS_KEY && SECRET_KEY);
 }
 
-export async function putObject(key, body, contentType) {
+export async function putObject(key, body, contentType, options = {}) {
   if (!isConfigured()) {
     throw new Error(
       'Storage is not configured. Set STORAGE_* environment variables.'
     );
   }
-  // Minimal S3-compatible PUT using fetch
+  const headers = {
+    'Content-Type': contentType,
+    'x-amz-acl': 'public-read',
+  };
+  if (options.cacheControl) {
+    headers['Cache-Control'] = options.cacheControl;
+  }
+
   const url = `${ENDPOINT}/${BUCKET}/${key}`;
   const response = await fetch(url, {
     method: 'PUT',
-    headers: {
-      'Content-Type': contentType,
-      // Note: production deployments should use proper AWS Signature V4 signing.
-      // Tigris on Fly.io supports pre-signed URLs generated via the AWS SDK.
-      'x-amz-acl': 'public-read',
-    },
+    headers,
     body,
   });
   if (!response.ok) {

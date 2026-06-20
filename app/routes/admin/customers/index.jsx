@@ -17,6 +17,7 @@ import {
   useSearchParams,
 } from 'react-router';
 
+import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
 
 // ---------------------------------------------------------------------------
@@ -33,10 +34,7 @@ export async function loader({ request }) {
 
   const where = q
     ? {
-        OR: [
-          { email: { contains: q, mode: 'insensitive' } },
-          { name: { contains: q, mode: 'insensitive' } },
-        ],
+        OR: [{ email: containsFilter(q) }, { name: containsFilter(q) }],
       }
     : {};
 

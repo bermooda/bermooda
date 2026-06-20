@@ -3,6 +3,7 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import { enforceRateLimit } from '#/libs/rate-limit.server';
 
 import { emit } from '#/core/events/index.server';
 import { getProvider } from '#/core/payments/index.server';
@@ -23,6 +24,8 @@ import { getProvider } from '#/core/payments/index.server';
  * @returns {Promise<Response>}
  */
 export async function action({ request, params }) {
+  enforceRateLimit(request, 'webhooks');
+
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

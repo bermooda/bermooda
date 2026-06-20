@@ -23,6 +23,7 @@
 //   }
 
 import logger from '#/utils/logger.server';
+import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
 
 // ---------------------------------------------------------------------------
@@ -158,7 +159,7 @@ async function hydrateProducts(rawProducts, locale) {
  * query string. Returns null when the query is blank (= no text filter).
  *
  * SQLite: `contains` is case-insensitive for ASCII by default.
- * Postgres (W8 migration): add `mode: 'insensitive'` to each filter object.
+ * Postgres: uses `mode: 'insensitive'` via containsFilter().
  *
  * @param {string} query
  * @param {string|undefined} locale
@@ -173,12 +174,12 @@ async function getTextMatchIds(query, locale) {
       where: {
         entityType: 'product',
         ...(locale ? { locale } : {}),
-        value: { contains: q },
+        value: containsFilter(q),
       },
       select: { entityId: true },
     }),
     prisma.productVariant.findMany({
-      where: { sku: { contains: q } },
+      where: { sku: containsFilter(q) },
       select: { productId: true },
     }),
   ]);

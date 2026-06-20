@@ -1,6 +1,7 @@
 // app/core/catalog/index.server.js
 // Catalog service: product/variant/category CRUD, slug resolution, translations, media.
 
+import { getCachedResult, invalidateCachePrefix } from '#/utils/cache.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
@@ -16,6 +17,14 @@ function toTranslationMap(rows) {
 // Merge translation fields into a base object when translations exist.
 function withTranslations(base, translationMap) {
   return { ...base, ...translationMap };
+}
+
+function catalogCacheKey(prefix, params) {
+  return `${prefix}:${JSON.stringify(params)}`;
+}
+
+function invalidateCatalogCache() {
+  invalidateCachePrefix('catalog:');
 }
 
 // ---------------------------------------------------------------------------
@@ -90,61 +99,73 @@ export async function listProducts({
   limit = 20,
   published,
 } = {}) {
-  const where = {};
-  if (published === true) where.publishedAt = { not: null };
-  if (published === false) where.publishedAt = null;
-  if (categoryId) where.categories = { some: { categoryId } };
-
-  const skip = (page - 1) * limit;
-
-  const [rawProducts, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
-      include: {
-        variants: {
-          orderBy: { position: 'asc' },
-          take: 1,
-          include: {
-            prices: currency ? { where: { currency } } : true,
-          },
-        },
-        media: {
-          orderBy: { position: 'asc' },
-          take: 1,
-          include: { media: true },
-        },
-      },
+  return getCachedResult(
+    catalogCacheKey('catalog:products', {
+      locale,
+      currency,
+      categoryId,
+      page,
+      limit,
+      published,
     }),
-    prisma.product.count({ where }),
-  ]);
+    async () => {
+      const where = {};
+      if (published === true) where.publishedAt = { not: null };
+      if (published === false) where.publishedAt = null;
+      if (categoryId) where.categories = { some: { categoryId } };
 
-  if (!locale) return { products: rawProducts, total };
+      const skip = (page - 1) * limit;
 
-  // Attach translations and slugs per product.
-  const products = await Promise.all(
-    rawProducts.map(async (product) => {
-      const [translations, slugRow] = await Promise.all([
-        getTranslations('product', product.id, locale),
-        prisma.slug.findFirst({
-          where: {
-            entityType: 'product',
-            entityId: product.id,
-            locale,
-            canonical: true,
+      const [rawProducts, total] = await Promise.all([
+        prisma.product.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
+          include: {
+            variants: {
+              orderBy: { position: 'asc' },
+              take: 1,
+              include: {
+                prices: currency ? { where: { currency } } : true,
+              },
+            },
+            media: {
+              orderBy: { position: 'asc' },
+              take: 1,
+              include: { media: true },
+            },
           },
         }),
+        prisma.product.count({ where }),
       ]);
-      return withTranslations(
-        { ...product, slug: slugRow?.slug ?? null },
-        translations
-      );
-    })
-  );
 
-  return { products, total };
+      if (!locale) return { products: rawProducts, total };
+
+      const products = await Promise.all(
+        rawProducts.map(async (product) => {
+          const [translations, slugRow] = await Promise.all([
+            getTranslations('product', product.id, locale),
+            prisma.slug.findFirst({
+              where: {
+                entityType: 'product',
+                entityId: product.id,
+                locale,
+                canonical: true,
+              },
+            }),
+          ]);
+          return withTranslations(
+            { ...product, slug: slugRow?.slug ?? null },
+            translations
+          );
+        })
+      );
+
+      return { products, total };
+    },
+    5 * 60 * 1000
+  );
 }
 
 export async function getProduct(id, { locale, currency } = {}) {
@@ -221,6 +242,7 @@ export async function createProduct(data) {
   }
 
   logger.info({ productId: product.id }, 'product created');
+  invalidateCatalogCache();
   return product;
 }
 
@@ -239,26 +261,32 @@ export async function updateProduct(id, data) {
     await setTranslation('product', id, locale, 'description', description);
   }
 
+  invalidateCatalogCache();
   return product;
 }
 
 export async function deleteProduct(id) {
   await prisma.product.delete({ where: { id } });
+  invalidateCatalogCache();
   logger.info({ productId: id }, 'product deleted');
 }
 
 export async function publishProduct(id) {
-  return prisma.product.update({
+  const product = await prisma.product.update({
     where: { id },
     data: { publishedAt: new Date() },
   });
+  invalidateCatalogCache();
+  return product;
 }
 
 export async function unpublishProduct(id) {
-  return prisma.product.update({
+  const product = await prisma.product.update({
     where: { id },
     data: { publishedAt: null },
   });
+  invalidateCatalogCache();
+  return product;
 }
 
 // ---------------------------------------------------------------------------
@@ -289,6 +317,7 @@ export async function createVariant(productId, data) {
     );
   }
 
+  invalidateCatalogCache();
   return variant;
 }
 
@@ -312,11 +341,13 @@ export async function updateVariant(variantId, data) {
     );
   }
 
+  invalidateCatalogCache();
   return variant;
 }
 
 export async function deleteVariant(variantId) {
   await prisma.productVariant.delete({ where: { id: variantId } });
+  invalidateCatalogCache();
 }
 
 // ---------------------------------------------------------------------------
@@ -324,69 +355,75 @@ export async function deleteVariant(variantId) {
 // ---------------------------------------------------------------------------
 
 export async function listCategories({ locale } = {}) {
-  const categories = await prisma.category.findMany({
-    where: { parentId: null },
-    orderBy: { position: 'asc' },
-    include: {
-      children: {
+  return getCachedResult(
+    catalogCacheKey('catalog:categories', { locale }),
+    async () => {
+      const categories = await prisma.category.findMany({
+        where: { parentId: null },
         orderBy: { position: 'asc' },
-      },
+        include: {
+          children: {
+            orderBy: { position: 'asc' },
+          },
+        },
+      });
+
+      if (!locale) return categories;
+
+      // Collect all category IDs (parents + children) so we can batch-fetch
+      // translations and slugs in just two queries per tier.
+      const parentIds = categories.map((c) => c.id);
+      const childIds = categories.flatMap((c) => c.children.map((ch) => ch.id));
+      const allIds = [...parentIds, ...childIds];
+
+      const [allTranslationRows, allSlugRows] = await Promise.all([
+        prisma.translation.findMany({
+          where: { entityType: 'category', entityId: { in: allIds }, locale },
+        }),
+        prisma.slug.findMany({
+          where: {
+            entityType: 'category',
+            entityId: { in: allIds },
+            locale,
+            canonical: true,
+          },
+        }),
+      ]);
+
+      // Index by entityId for O(1) lookup.
+      const translationsByEntity = {};
+      for (const row of allTranslationRows) {
+        (translationsByEntity[row.entityId] ??= []).push(row);
+      }
+      const slugByEntity = Object.fromEntries(
+        allSlugRows.map((r) => [r.entityId, r.slug])
+      );
+
+      return categories.map((cat) => {
+        const translatedChildren = cat.children.map((child) => {
+          const childTranslations = toTranslationMap(
+            translationsByEntity[child.id] ?? []
+          );
+          return withTranslations(
+            { ...child, slug: slugByEntity[child.id] ?? null },
+            childTranslations
+          );
+        });
+        const catTranslations = toTranslationMap(
+          translationsByEntity[cat.id] ?? []
+        );
+        return withTranslations(
+          {
+            ...cat,
+            slug: slugByEntity[cat.id] ?? null,
+            children: translatedChildren,
+          },
+          catTranslations
+        );
+      });
     },
-  });
-
-  if (!locale) return categories;
-
-  // Collect all category IDs (parents + children) so we can batch-fetch
-  // translations and slugs in just two queries per tier.
-  const parentIds = categories.map((c) => c.id);
-  const childIds = categories.flatMap((c) => c.children.map((ch) => ch.id));
-  const allIds = [...parentIds, ...childIds];
-
-  const [allTranslationRows, allSlugRows] = await Promise.all([
-    prisma.translation.findMany({
-      where: { entityType: 'category', entityId: { in: allIds }, locale },
-    }),
-    prisma.slug.findMany({
-      where: {
-        entityType: 'category',
-        entityId: { in: allIds },
-        locale,
-        canonical: true,
-      },
-    }),
-  ]);
-
-  // Index by entityId for O(1) lookup.
-  const translationsByEntity = {};
-  for (const row of allTranslationRows) {
-    (translationsByEntity[row.entityId] ??= []).push(row);
-  }
-  const slugByEntity = Object.fromEntries(
-    allSlugRows.map((r) => [r.entityId, r.slug])
+    5 * 60 * 1000
   );
-
-  return categories.map((cat) => {
-    const translatedChildren = cat.children.map((child) => {
-      const childTranslations = toTranslationMap(
-        translationsByEntity[child.id] ?? []
-      );
-      return withTranslations(
-        { ...child, slug: slugByEntity[child.id] ?? null },
-        childTranslations
-      );
-    });
-    const catTranslations = toTranslationMap(
-      translationsByEntity[cat.id] ?? []
-    );
-    return withTranslations(
-      {
-        ...cat,
-        slug: slugByEntity[cat.id] ?? null,
-        children: translatedChildren,
-      },
-      catTranslations
-    );
-  });
 }
 
 export async function getCategory(id, { locale } = {}) {
@@ -436,6 +473,7 @@ export async function createCategory(data) {
   }
 
   logger.info({ categoryId: category.id }, 'category created');
+  invalidateCatalogCache();
   return category;
 }
 
@@ -454,11 +492,13 @@ export async function updateCategory(id, data) {
     await setSlug('category', id, locale, slugValue);
   }
 
+  invalidateCatalogCache();
   return category;
 }
 
 export async function deleteCategory(id) {
   await prisma.category.delete({ where: { id } });
+  invalidateCatalogCache();
 }
 
 // ---------------------------------------------------------------------------
