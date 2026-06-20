@@ -49,16 +49,16 @@ This is the **next pending chunk** on [oss_competitor_execution_plan_af4cae39.pl
 
 Re-confirm these findings still hold before writing code:
 
-| Finding | Expected state | Where to verify |
-| --- | --- | --- |
-| No `Page` model | Absent from schema | `prisma/schema.prisma` |
-| No menu builder | Hardcoded nav links | `app/themes/default/components/storefront-chrome.jsx` (Gift Guide, Trade Program, Stores → `/`) |
-| No reviews | `fakeReviews()` placeholder | `app/themes/default/components/home-page.jsx` |
-| Basic meta only | Title = entity title, no JSON-LD | `app/routes/storefront/products/$slug.jsx`, `categories/$slug.jsx` |
-| Static sitemap | `INDEXED_ROUTES` only, no DB entities | `app/routes/sitemap.jsx`, `app/routes.js` |
-| Translation/Slug ready for `page` | Infrastructure exists; `page` entityType unused | `Translation`, `Slug` models; phase-1-plan reserved `page` |
-| W1 search done | `/search` route + search box | `app/routes/storefront/search.jsx`, `storefront-chrome.jsx` |
-| W0-6 theme decision | Import-based; manifest lists components | `app/core/bootstrap.server.js`, `app/themes/default/manifest.js` |
+| Finding                           | Expected state                                  | Where to verify                                                                                 |
+| --------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| No `Page` model                   | Absent from schema                              | `prisma/schema.prisma`                                                                          |
+| No menu builder                   | Hardcoded nav links                             | `app/themes/default/components/storefront-chrome.jsx` (Gift Guide, Trade Program, Stores → `/`) |
+| No reviews                        | `fakeReviews()` placeholder                     | `app/themes/default/components/home-page.jsx`                                                   |
+| Basic meta only                   | Title = entity title, no JSON-LD                | `app/routes/storefront/products/$slug.jsx`, `categories/$slug.jsx`                              |
+| Static sitemap                    | `INDEXED_ROUTES` only, no DB entities           | `app/routes/sitemap.jsx`, `app/routes.js`                                                       |
+| Translation/Slug ready for `page` | Infrastructure exists; `page` entityType unused | `Translation`, `Slug` models; phase-1-plan reserved `page`                                      |
+| W1 search done                    | `/search` route + search box                    | `app/routes/storefront/search.jsx`, `storefront-chrome.jsx`                                     |
+| W0-6 theme decision               | Import-based; manifest lists components         | `app/core/bootstrap.server.js`, `app/themes/default/manifest.js`                                |
 
 ---
 
@@ -93,11 +93,11 @@ The catch-all `route('*', 'routes/404.jsx')` stays **last** at the root level. T
 
 **New theme components required:**
 
-| Component | Purpose |
-| --- | --- |
-| `PagePage` | Renders CMS page body + title |
-| `ProductReviews` | Review list + submit form (embedded in ProductPage) |
-| Update `StorefrontShell` / nav | Consume menu data from loader |
+| Component                      | Purpose                                             |
+| ------------------------------ | --------------------------------------------------- |
+| `PagePage`                     | Renders CMS page body + title                       |
+| `ProductReviews`               | Review list + submit form (embedded in ProductPage) |
+| Update `StorefrontShell` / nav | Consume menu data from loader                       |
 
 ### 3. Locale + SEO (interim)
 
@@ -207,12 +207,12 @@ model Review {
 
 **Translation fields (via existing `Translation` table, not new columns):**
 
-| entityType | fields |
-| --- | --- |
-| `page` | `title`, `body`, `metaTitle`, `metaDescription` |
-| `menu_item` | `label` (optional — use if label differs per locale) |
-| `product` | add `metaTitle`, `metaDescription` (extend admin product editor) |
-| `category` | add `metaTitle`, `metaDescription` (extend admin category editor) |
+| entityType  | fields                                                            |
+| ----------- | ----------------------------------------------------------------- |
+| `page`      | `title`, `body`, `metaTitle`, `metaDescription`                   |
+| `menu_item` | `label` (optional — use if label differs per locale)              |
+| `product`   | add `metaTitle`, `metaDescription` (extend admin product editor)  |
+| `category`  | add `metaTitle`, `metaDescription` (extend admin category editor) |
 
 **Slug rows:** `entityType: 'page'` via existing `setSlug()`.
 
@@ -251,15 +251,15 @@ W5-4 should land **after** pages and products are renderable so sitemap/JSON-LD 
 
 Mirror catalog patterns (`app/core/catalog/index.server.js`):
 
-| Function | Responsibility |
-| --- | --- |
-| `listPages({ status, page, limit })` | Admin list with pagination |
-| `getPage(id, { locale })` | Full page + translations + slug for locale |
-| `getPageBySlug(slug, { locale })` | Slug → page; enforce `status === 'published'` for storefront |
-| `createPage({ translations, slug, type })` | Create draft page + slug + translations |
-| `updatePage(id, { translations, slug, type, status })` | Update; set `publishedAt` when first published |
-| `deletePage(id)` | Cascade delete translations + slugs |
-| `listPublishedPages({ locale })` | For sitemap |
+| Function                                               | Responsibility                                               |
+| ------------------------------------------------------ | ------------------------------------------------------------ |
+| `listPages({ status, page, limit })`                   | Admin list with pagination                                   |
+| `getPage(id, { locale })`                              | Full page + translations + slug for locale                   |
+| `getPageBySlug(slug, { locale })`                      | Slug → page; enforce `status === 'published'` for storefront |
+| `createPage({ translations, slug, type })`             | Create draft page + slug + translations                      |
+| `updatePage(id, { translations, slug, type, status })` | Update; set `publishedAt` when first published               |
+| `deletePage(id)`                                       | Cascade delete translations + slugs                          |
+| `listPublishedPages({ locale })`                       | For sitemap                                                  |
 
 Reuse from catalog core: `setTranslation`, `getTranslations`, `setSlug`, `resolveSlug` (import, don't duplicate).
 
@@ -270,10 +270,10 @@ Reuse from catalog core: `setTranslation`, `getTranslations`, `setSlug`, `resolv
 
 ### Admin routes
 
-| Route | Module |
-| --- | --- |
-| `/admin/pages` | `app/routes/admin/pages/index.jsx` — list, filter by status |
-| `/admin/pages/new` | `app/routes/admin/pages/new.jsx` |
+| Route              | Module                                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------------------- |
+| `/admin/pages`     | `app/routes/admin/pages/index.jsx` — list, filter by status                                           |
+| `/admin/pages/new` | `app/routes/admin/pages/new.jsx`                                                                      |
 | `/admin/pages/:id` | `app/routes/admin/pages/$id.jsx` — edit with locale tabs (copy pattern from `admin/products/$id.jsx`) |
 
 **Admin nav:** Add "Pages" item to `NAV_ITEMS` in `app/routes/admin/_layout.jsx` (icon: `DocumentTextIcon`).
@@ -310,11 +310,11 @@ Add sample pages in `prisma/seed.js`: `about`, `shipping-policy` — wired to su
 
 ### Core extensions in `app/core/content/index.server.js`
 
-| Function | Responsibility |
-| --- | --- |
-| `listMenus()` | All menus with item counts |
-| `getMenuByHandle(handle, { locale })` | Resolved tree with labels, resolved URLs |
-| `upsertMenu(handle, { title, items })` | Replace item tree (admin save) |
+| Function                               | Responsibility                                                     |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| `listMenus()`                          | All menus with item counts                                         |
+| `getMenuByHandle(handle, { locale })`  | Resolved tree with labels, resolved URLs                           |
+| `upsertMenu(handle, { title, items })` | Replace item tree (admin save)                                     |
 | `resolveMenuItemUrl(item, { locale })` | page → `/{slug}`, category → `/categories/{slug}`, else `item.url` |
 
 **Tree serialization for admin:** Flat list with `parentId` + `position` (same pattern as categories admin).
@@ -357,14 +357,14 @@ Pass via outlet context or have each page use `useRouteLoaderData('routes/storef
 
 ### Core: `app/core/reviews/index.server.js`
 
-| Function | Responsibility |
-| --- | --- |
-| `listReviewsForProduct(productId, { status, page, limit })` | Storefront: approved only; admin: all |
-| `getReviewSummary(productId)` | `{ averageRating, count }` from approved reviews |
+| Function                                                       | Responsibility                                                      |
+| -------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `listReviewsForProduct(productId, { status, page, limit })`    | Storefront: approved only; admin: all                               |
+| `getReviewSummary(productId)`                                  | `{ averageRating, count }` from approved reviews                    |
 | `createReview({ productId, customerId, rating, title, body })` | Validate 1–5; check duplicate; set verifiedPurchase; status=pending |
-| `moderateReview(id, { status })` | Admin approve/reject |
-| `deleteReview(id)` | Admin |
-| `hasVerifiedPurchase(customerId, productId)` | Query orders |
+| `moderateReview(id, { status })`                               | Admin approve/reject                                                |
+| `deleteReview(id)`                                             | Admin                                                               |
+| `hasVerifiedPurchase(customerId, productId)`                   | Query orders                                                        |
 
 **Event:** Emit `review.submitted`, `review.approved` (add to webhook events list if public API consumers need it — stretch goal).
 
@@ -402,27 +402,27 @@ Remove `fakeReviews()` from `home-page.jsx`; use real aggregates from catalog/se
 
 Centralize SEO logic so routes stay thin:
 
-| Export | Purpose |
-| --- | --- |
-| `buildMeta({ entityType, entity, locale, request })` | Returns React Router `meta()` descriptor array |
-| `buildCanonicalUrl(request, path)` | Absolute URL via `getDomainUrl` |
-| `buildAlternateLinks({ entityType, entityId, request })` | hreflang links from all slug rows |
-| `buildProductJsonLd(product, { locale, currency, request })` | Schema.org Product + Offer |
-| `buildBreadcrumbJsonLd(items, request)` | BreadcrumbList |
-| `buildOrganizationJsonLd(request)` | From `shopName` setting + site URL |
-| `serializeJsonLd(data)` | Safe `<script type="application/ld+json">` string |
+| Export                                                       | Purpose                                           |
+| ------------------------------------------------------------ | ------------------------------------------------- |
+| `buildMeta({ entityType, entity, locale, request })`         | Returns React Router `meta()` descriptor array    |
+| `buildCanonicalUrl(request, path)`                           | Absolute URL via `getDomainUrl`                   |
+| `buildAlternateLinks({ entityType, entityId, request })`     | hreflang links from all slug rows                 |
+| `buildProductJsonLd(product, { locale, currency, request })` | Schema.org Product + Offer                        |
+| `buildBreadcrumbJsonLd(items, request)`                      | BreadcrumbList                                    |
+| `buildOrganizationJsonLd(request)`                           | From `shopName` setting + site URL                |
+| `serializeJsonLd(data)`                                      | Safe `<script type="application/ld+json">` string |
 
 ### Route meta upgrades
 
 Update `meta()` exports in:
 
-| Route | JSON-LD |
-| --- | --- |
-| `storefront/index.jsx` | Organization + WebSite (with SearchAction pointing to `/search?q=`) |
-| `storefront/products/$slug.jsx` | Product + Offer + BreadcrumbList |
-| `storefront/categories/$slug.jsx` | CollectionPage or ItemList (minimal) + BreadcrumbList |
-| `storefront/pages/$slug.jsx` | WebPage + BreadcrumbList |
-| `storefront/search.jsx` | keep `noindex` |
+| Route                             | JSON-LD                                                             |
+| --------------------------------- | ------------------------------------------------------------------- |
+| `storefront/index.jsx`            | Organization + WebSite (with SearchAction pointing to `/search?q=`) |
+| `storefront/products/$slug.jsx`   | Product + Offer + BreadcrumbList                                    |
+| `storefront/categories/$slug.jsx` | CollectionPage or ItemList (minimal) + BreadcrumbList               |
+| `storefront/pages/$slug.jsx`      | WebPage + BreadcrumbList                                            |
+| `storefront/search.jsx`           | keep `noindex`                                                      |
 
 **Product/category admin:** Add meta title + meta description fields to existing editors; store as translations.
 
@@ -462,16 +462,16 @@ Verify `/admin/*`, `/account/*` (except login/register), `/checkout/*`, `/cart` 
 
 ## Shared surfaces & coordination
 
-| Surface | W5 touch | Conflict risk |
-| --- | --- | --- |
-| `prisma/schema.prisma` | New section only | Low — no concurrent Phase 2 chunk should edit same models |
-| `app/routes.js` | Append admin + storefront routes | Low — append-only |
-| `app/core/catalog/index.server.js` | Optional: `attachReviewSummaries`, meta translation fields | Medium — read-only extension preferred |
-| `app/core/bootstrap.server.js` | No registration needed unless event subscribers added | None |
-| `app/core/webhooks/index.server.js` | Optional: add review events | Low |
-| `app/core/audit/index.server.js` | Optional: page/review events | Low |
-| Default theme | New components + nav consumption | None — W5 owns theme content UI |
-| `docs/api.md` | Optional: document review/page admin API if added | Stretch |
+| Surface                             | W5 touch                                                   | Conflict risk                                             |
+| ----------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------- |
+| `prisma/schema.prisma`              | New section only                                           | Low — no concurrent Phase 2 chunk should edit same models |
+| `app/routes.js`                     | Append admin + storefront routes                           | Low — append-only                                         |
+| `app/core/catalog/index.server.js`  | Optional: `attachReviewSummaries`, meta translation fields | Medium — read-only extension preferred                    |
+| `app/core/bootstrap.server.js`      | No registration needed unless event subscribers added      | None                                                      |
+| `app/core/webhooks/index.server.js` | Optional: add review events                                | Low                                                       |
+| `app/core/audit/index.server.js`    | Optional: page/review events                               | Low                                                       |
+| Default theme                       | New components + nav consumption                           | None — W5 owns theme content UI                           |
+| `docs/api.md`                       | Optional: document review/page admin API if added          | Stretch                                                   |
 
 **Do not edit:** `Order`/`OrderLine`, `Discount`, inventory seam, totals engine.
 
@@ -479,13 +479,13 @@ Verify `/admin/*`, `/account/*` (except login/register), `/checkout/*`, `/cart` 
 
 ## Testing plan (80% core coverage)
 
-| Module | Test file | Key cases |
-| --- | --- | --- |
-| `app/core/content/index.server.js` | `index.test.server.js` | CRUD, publish sets publishedAt, slug uniqueness, getPageBySlug rejects draft |
+| Module                             | Test file              | Key cases                                                                             |
+| ---------------------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
+| `app/core/content/index.server.js` | `index.test.server.js` | CRUD, publish sets publishedAt, slug uniqueness, getPageBySlug rejects draft          |
 | `app/core/reviews/index.server.js` | `index.test.server.js` | create, duplicate rejected, verifiedPurchase true/false, summary averages, moderation |
-| `app/core/seo/index.server.js` | `index.test.server.js` | canonical URL, JSON-LD shape, alternate links |
-| Storefront page route | `pages/$slug.test.jsx` | 404 unpublished, 200 published |
-| Sitemap route | `sitemap.test.jsx` | includes product + page URLs |
+| `app/core/seo/index.server.js`     | `index.test.server.js` | canonical URL, JSON-LD shape, alternate links                                         |
+| Storefront page route              | `pages/$slug.test.jsx` | 404 unpublished, 200 published                                                        |
+| Sitemap route                      | `sitemap.test.jsx`     | includes product + page URLs                                                          |
 
 Use existing test factories pattern (`app/test/factories/`).
 
@@ -518,14 +518,14 @@ PR checklist (from execution plan):
 
 ## Risks & mitigations
 
-| Risk | Mitigation |
-| --- | --- |
+| Risk                                 | Mitigation                                                                             |
+| ------------------------------------ | -------------------------------------------------------------------------------------- |
 | `:slug` route shadows reserved paths | Denylist in loader; register route only inside storefront layout after prefixed routes |
-| Cookie locale hurts hreflang | Document limitation; canonical to default locale; plan URL-prefix locales later |
-| MenuItem URL resolution complexity | Strict priority: pageId → categoryId → url field |
-| Review spam | One review per customer per product; pending moderation default |
-| Sitemap size on large catalogs | Paginate sitemap or cap with `<lastmod>` only; document limit (future: sitemap index) |
-| HTML injection in page body | Escape on render for v1; sanitize if rich text added later |
+| Cookie locale hurts hreflang         | Document limitation; canonical to default locale; plan URL-prefix locales later        |
+| MenuItem URL resolution complexity   | Strict priority: pageId → categoryId → url field                                       |
+| Review spam                          | One review per customer per product; pending moderation default                        |
+| Sitemap size on large catalogs       | Paginate sitemap or cap with `<lastmod>` only; document limit (future: sitemap index)  |
+| HTML injection in page body          | Escape on render for v1; sanitize if rich text added later                             |
 
 ---
 
