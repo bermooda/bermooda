@@ -2,7 +2,11 @@
 
 import { Form, useLoaderData } from 'react-router';
 
-import { generateGiftCardCode, issueGiftCard, listGiftCards } from '#/core/gift-cards/index.server';
+import {
+  generateGiftCardCode,
+  issueGiftCard,
+  listGiftCards,
+} from '#/core/gift-cards/index.server';
 
 export async function loader() {
   const { giftCards, total } = await listGiftCards({ limit: 100 });
@@ -14,12 +18,14 @@ export async function action({ request }) {
   const intent = formData.get('intent');
 
   if (intent === 'issue') {
-    const code = formData.get('code')?.toString().trim() || generateGiftCardCode();
+    const code =
+      formData.get('code')?.toString().trim() || generateGiftCardCode();
     const balanceCents = parseInt(
       formData.get('balanceCents')?.toString() ?? '0',
       10
     );
-    const currency = formData.get('currency')?.toString().trim().toUpperCase() || 'USD';
+    const currency =
+      formData.get('currency')?.toString().trim().toUpperCase() || 'USD';
 
     if (!balanceCents || balanceCents <= 0) {
       return { ok: false, error: 'Balance must be greater than zero.' };

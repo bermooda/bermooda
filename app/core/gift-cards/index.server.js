@@ -56,7 +56,10 @@ export async function issueGiftCard({
     },
   });
 
-  logger.info({ giftCardId: giftCard.id, code: giftCard.code }, 'Gift card issued');
+  logger.info(
+    { giftCardId: giftCard.id, code: giftCard.code },
+    'Gift card issued'
+  );
   return giftCard;
 }
 
@@ -78,11 +81,7 @@ export async function resolveGiftCardRedemption(code, currency, maxCents) {
  * Redeem gift card balance against an order.
  * @param {import('@prisma/client').Prisma.TransactionClient} tx
  */
-export async function redeemGiftCard(
-  giftCardId,
-  { amountCents, orderId },
-  tx
-) {
+export async function redeemGiftCard(giftCardId, { amountCents, orderId }, tx) {
   if (!amountCents || amountCents <= 0) {
     throw new Error('INVALID_GIFT_CARD_REDEMPTION');
   }

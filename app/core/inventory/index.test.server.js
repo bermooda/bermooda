@@ -25,17 +25,16 @@ import prisma from '#/libs/prisma.server';
 
 import { emit } from '#/core/events/index.server';
 import {
-  decrementLocationLevels,
-  getTotalAvailableQuantity,
-  incrementLocationLevels,
-} from '#/core/inventory/locations.server';
-
-import {
   checkAvailability,
   decrementInventory,
   getInventoryCount,
   incrementInventory,
 } from '#/core/inventory/index.server';
+import {
+  decrementLocationLevels,
+  getTotalAvailableQuantity,
+  incrementLocationLevels,
+} from '#/core/inventory/locations.server';
 
 function makeTxClient() {
   return {
@@ -94,11 +93,7 @@ describe('decrementInventory', () => {
 
     await decrementInventory([{ variantId: 'v-ok', quantity: 3 }], txClient);
 
-    expect(decrementLocationLevels).toHaveBeenCalledWith(
-      txClient,
-      'v-ok',
-      3
-    );
+    expect(decrementLocationLevels).toHaveBeenCalledWith(txClient, 'v-ok', 3);
   });
 });
 
@@ -113,7 +108,10 @@ describe('incrementInventory', () => {
       newTotal: 4,
     });
 
-    await incrementInventory([{ variantId: 'v-tracked', quantity: 4 }], txClient);
+    await incrementInventory(
+      [{ variantId: 'v-tracked', quantity: 4 }],
+      txClient
+    );
 
     expect(incrementLocationLevels).toHaveBeenCalledWith(
       txClient,

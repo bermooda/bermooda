@@ -3,14 +3,9 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-
 import { sendBackInStockEmail } from '#/emails/index.server';
 
-export async function subscribeBackInStock({
-  variantId,
-  email,
-  customerId,
-}) {
+export async function subscribeBackInStock({ variantId, email, customerId }) {
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) {
     throw new Error('EMAIL_REQUIRED');

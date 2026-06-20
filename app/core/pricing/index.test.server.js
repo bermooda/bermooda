@@ -12,7 +12,10 @@ vi.mock('#/libs/prisma.server', () => ({
 
 import prisma from '#/libs/prisma.server';
 
-import { getCustomerGroupIds, resolveVariantPrice } from '#/core/pricing/index.server';
+import {
+  getCustomerGroupIds,
+  resolveVariantPrice,
+} from '#/core/pricing/index.server';
 
 beforeEach(() => {
   vi.clearAllMocks();

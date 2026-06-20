@@ -38,8 +38,6 @@ vi.mock('#/core/pricing/index.server', () => ({
 
 import prisma from '#/libs/prisma.server';
 
-import { resolveVariantPrice } from '#/core/pricing/index.server';
-
 import {
   createCart,
   addLine,
@@ -50,6 +48,7 @@ import {
   lockCart,
   unlockCart,
 } from '#/core/cart/index.server';
+import { resolveVariantPrice } from '#/core/pricing/index.server';
 
 beforeEach(() => {
   vi.clearAllMocks();
