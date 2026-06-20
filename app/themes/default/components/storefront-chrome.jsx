@@ -33,7 +33,44 @@ export function StorefrontPromoBar() {
   );
 }
 
-export function StorefrontSubHeader() {
+function MenuLinks({ items, className }) {
+  if (!items?.length) return null;
+
+  return (
+    <div className={className}>
+      {items.map((item) => {
+        const linkProps = item.openInNew
+          ? { target: '_blank', rel: 'noopener noreferrer' }
+          : {};
+        const isExternal = item.url?.startsWith('http');
+        if (isExternal) {
+          return (
+            <a
+              key={item.id}
+              href={item.url}
+              className="hover:text-stone-900"
+              {...linkProps}
+            >
+              {item.label}
+            </a>
+          );
+        }
+        return (
+          <Link
+            key={item.id}
+            to={item.url || '/'}
+            className="hover:text-stone-900"
+            {...linkProps}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+export function StorefrontSubHeader({ items = [] }) {
   return (
     <div className="border-b border-stone-200 bg-[#fbf7ef]">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
@@ -50,17 +87,10 @@ export function StorefrontSubHeader() {
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-stone-400"
           />
         </Form>
-        <div className="flex items-center gap-5 text-xs tracking-wide text-stone-600 uppercase">
-          <Link to="/" className="hover:text-stone-900">
-            Gift Guide
-          </Link>
-          <Link to="/" className="hover:text-stone-900">
-            Trade Program
-          </Link>
-          <Link to="/" className="hover:text-stone-900">
-            Stores
-          </Link>
-        </div>
+        <MenuLinks
+          items={items}
+          className="flex items-center gap-5 text-xs tracking-wide text-stone-600 uppercase"
+        />
       </div>
     </div>
   );
@@ -71,6 +101,7 @@ function StorefrontMainNav({
   currency,
   availableLocales,
   availableCurrencies,
+  menuItems = [],
 }) {
   const t = useT();
 
@@ -84,12 +115,27 @@ function StorefrontMainNav({
           bermooda
         </Link>
         <nav className="hidden items-center gap-6 md:flex">
-          <Link
-            to="/"
-            className="text-sm font-medium text-stone-600 transition-colors hover:text-stone-900"
-          >
-            {t('nav.home')}
-          </Link>
+          {menuItems.length > 0 ? (
+            menuItems.map((item) => (
+              <Link
+                key={item.id}
+                to={item.url || '/'}
+                className="text-sm font-medium text-stone-600 transition-colors hover:text-stone-900"
+                {...(item.openInNew
+                  ? { target: '_blank', rel: 'noopener noreferrer' }
+                  : {})}
+              >
+                {item.label}
+              </Link>
+            ))
+          ) : (
+            <Link
+              to="/"
+              className="text-sm font-medium text-stone-600 transition-colors hover:text-stone-900"
+            >
+              {t('nav.home')}
+            </Link>
+          )}
         </nav>
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-2 text-stone-700">
@@ -121,7 +167,7 @@ function StorefrontMainNav({
   );
 }
 
-export function StorefrontFooter() {
+export function StorefrontFooter({ items = [] }) {
   const year = new Date().getFullYear();
 
   return (
@@ -131,17 +177,24 @@ export function StorefrontFooter() {
           <p className="text-center text-sm text-stone-500">
             &copy; {year} bermooda. All rights reserved.
           </p>
-          <div className="flex gap-6 text-xs font-semibold tracking-wide text-stone-600 uppercase">
-            <Link to="/" className="hover:text-stone-900">
-              Shipping
-            </Link>
-            <Link to="/" className="hover:text-stone-900">
-              Returns
-            </Link>
-            <Link to="/account/login" className="hover:text-stone-900">
-              Account
-            </Link>
-          </div>
+          {items.length > 0 ? (
+            <MenuLinks
+              items={items}
+              className="flex gap-6 text-xs font-semibold tracking-wide text-stone-600 uppercase"
+            />
+          ) : (
+            <div className="flex gap-6 text-xs font-semibold tracking-wide text-stone-600 uppercase">
+              <Link to="/" className="hover:text-stone-900">
+                Shipping
+              </Link>
+              <Link to="/" className="hover:text-stone-900">
+                Returns
+              </Link>
+              <Link to="/account/login" className="hover:text-stone-900">
+                Account
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </footer>
@@ -158,19 +211,21 @@ export default function StorefrontShell({ children }) {
   const currency = layoutData?.currency ?? 'USD';
   const availableLocales = layoutData?.availableLocales ?? ['en'];
   const availableCurrencies = layoutData?.availableCurrencies ?? ['USD'];
+  const menus = layoutData?.menus ?? { main: [], footer: [], subHeader: [] };
 
   return (
     <div className="flex min-h-screen flex-col bg-[#fbf7ef] font-sans text-stone-800 antialiased">
       <StorefrontPromoBar />
-      <StorefrontSubHeader />
+      <StorefrontSubHeader items={menus.subHeader} />
       <StorefrontMainNav
         locale={locale}
         currency={currency}
         availableLocales={availableLocales}
         availableCurrencies={availableCurrencies}
+        menuItems={menus.main}
       />
       <main className="flex-1">{children}</main>
-      <StorefrontFooter />
+      <StorefrontFooter items={menus.footer} />
     </div>
   );
 }

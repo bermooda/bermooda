@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { useState } from 'react';
-import { Link, useFetcher } from 'react-router';
+import { Link, Form, useFetcher } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
 import { formatPrice, Slot } from '#/core/index';
@@ -38,7 +38,17 @@ function categoryTitle(entry) {
   return entry?.title ?? entry?.category?.title ?? '';
 }
 
-export default function ProductPage({ product, locale, currency }) {
+export default function ProductPage({
+  product,
+  locale,
+  currency,
+  reviews,
+  reviewSummary,
+  reviewTotal,
+  reviewPage,
+  customer,
+  reviewActionData,
+}) {
   const t = useT();
   const fetcher = useFetcher();
 
@@ -288,9 +298,176 @@ export default function ProductPage({ product, locale, currency }) {
 
             {/* Slot: after description */}
             <Slot name="product.afterDescription" />
+
+            {/* Reviews */}
+            <ProductReviewsSection
+              reviews={reviews}
+              reviewSummary={reviewSummary}
+              reviewTotal={reviewTotal}
+              reviewPage={reviewPage}
+              customer={customer}
+              productSlug={product.slug}
+              reviewActionData={reviewActionData}
+            />
           </div>
         </div>
       </div>
     </StorefrontShell>
+  );
+}
+
+function StarDisplay({ rating }) {
+  const full = Math.floor(rating);
+  return (
+    <span className="text-[#c2913a]">
+      {'★'.repeat(full)}
+      {'☆'.repeat(5 - full)}
+    </span>
+  );
+}
+
+function ProductReviewsSection({
+  reviews = [],
+  reviewSummary = { averageRating: 0, count: 0 },
+  reviewTotal = 0,
+  reviewPage = 1,
+  customer,
+  productSlug,
+  reviewActionData,
+}) {
+  return (
+    <div className="border-t border-stone-200 pt-8">
+      <h2 className="mb-4 text-[11px] font-semibold tracking-[0.22em] text-stone-500 uppercase">
+        Customer Reviews
+      </h2>
+
+      {reviewSummary.count > 0 ? (
+        <p className="mb-6 text-sm text-stone-600">
+          <StarDisplay rating={reviewSummary.averageRating} />{' '}
+          {reviewSummary.averageRating.toFixed(1)} · {reviewSummary.count}{' '}
+          reviews
+        </p>
+      ) : (
+        <p className="mb-6 text-sm text-stone-500">No reviews yet.</p>
+      )}
+
+      {reviews.length > 0 && (
+        <ul className="mb-8 space-y-4">
+          {reviews.map((review) => (
+            <li
+              key={review.id}
+              className="rounded-lg border border-stone-200 bg-white p-4"
+            >
+              <div className="flex items-center gap-2 text-sm">
+                <StarDisplay rating={review.rating} />
+                {review.verifiedPurchase && (
+                  <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-800">
+                    Verified purchase
+                  </span>
+                )}
+              </div>
+              {review.title && (
+                <p className="mt-1 font-medium text-stone-900">
+                  {review.title}
+                </p>
+              )}
+              <p className="mt-1 text-sm text-stone-600">{review.body}</p>
+              <p className="mt-2 text-xs text-stone-400">
+                {review.customer?.name || 'Customer'}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {customer ? (
+        <Form
+          method="post"
+          className="space-y-3 rounded-lg border border-stone-200 bg-white p-4"
+        >
+          <input type="hidden" name="intent" value="review" />
+          <p className="text-sm font-semibold text-stone-800">Write a review</p>
+          {reviewActionData?.reviewError && (
+            <p className="text-sm text-red-600">
+              {reviewActionData.reviewError}
+            </p>
+          )}
+          {reviewActionData?.reviewOk && (
+            <p className="text-sm text-green-600">
+              Thanks! Your review is pending moderation.
+            </p>
+          )}
+          <div>
+            <label className="text-xs text-stone-500">Rating</label>
+            <select
+              name="rating"
+              required
+              className="mt-1 block w-full max-w-xs rounded-md border border-stone-300 px-3 py-2 text-sm"
+            >
+              {[5, 4, 3, 2, 1].map((n) => (
+                <option key={n} value={n}>
+                  {n} stars
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-stone-500">Title (optional)</label>
+            <input
+              name="title"
+              type="text"
+              className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-stone-500">Review</label>
+            <textarea
+              name="body"
+              required
+              rows={3}
+              className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            className="rounded-full px-4 py-2 text-sm font-semibold text-white"
+            style={{ background: GREEN }}
+          >
+            Submit review
+          </button>
+        </Form>
+      ) : (
+        <p className="text-sm text-stone-600">
+          <Link
+            to="/account/login"
+            className="font-medium text-stone-900 underline"
+          >
+            Sign in
+          </Link>{' '}
+          to leave a review.
+        </p>
+      )}
+
+      {reviewTotal > 5 && (
+        <div className="mt-4 flex gap-2 text-sm">
+          {reviewPage > 1 && (
+            <Link
+              to={`?reviewPage=${reviewPage - 1}`}
+              className="text-stone-600 underline"
+            >
+              Previous
+            </Link>
+          )}
+          {reviewPage * 5 < reviewTotal && (
+            <Link
+              to={`?reviewPage=${reviewPage + 1}`}
+              className="text-stone-600 underline"
+            >
+              More reviews
+            </Link>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

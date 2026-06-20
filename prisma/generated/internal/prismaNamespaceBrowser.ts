@@ -96,6 +96,10 @@ export const ModelName = {
   Return: 'Return',
   ReturnLine: 'ReturnLine',
   StoreCreditLedger: 'StoreCreditLedger',
+  Page: 'Page',
+  Menu: 'Menu',
+  MenuItem: 'MenuItem',
+  Review: 'Review',
   AuditLog: 'AuditLog',
   ScheduledExport: 'ScheduledExport',
   ExportRun: 'ExportRun'
@@ -767,6 +771,63 @@ export const StoreCreditLedgerScalarFieldEnum = {
 } as const
 
 export type StoreCreditLedgerScalarFieldEnum = (typeof StoreCreditLedgerScalarFieldEnum)[keyof typeof StoreCreditLedgerScalarFieldEnum]
+
+
+export const PageScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  status: 'status',
+  publishedAt: 'publishedAt',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PageScalarFieldEnum = (typeof PageScalarFieldEnum)[keyof typeof PageScalarFieldEnum]
+
+
+export const MenuScalarFieldEnum = {
+  id: 'id',
+  handle: 'handle',
+  title: 'title',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MenuScalarFieldEnum = (typeof MenuScalarFieldEnum)[keyof typeof MenuScalarFieldEnum]
+
+
+export const MenuItemScalarFieldEnum = {
+  id: 'id',
+  menuId: 'menuId',
+  parentId: 'parentId',
+  label: 'label',
+  url: 'url',
+  pageId: 'pageId',
+  categoryId: 'categoryId',
+  position: 'position',
+  openInNew: 'openInNew',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MenuItemScalarFieldEnum = (typeof MenuItemScalarFieldEnum)[keyof typeof MenuItemScalarFieldEnum]
+
+
+export const ReviewScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  customerId: 'customerId',
+  rating: 'rating',
+  title: 'title',
+  body: 'body',
+  status: 'status',
+  verifiedPurchase: 'verifiedPurchase',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof ReviewScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {

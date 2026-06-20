@@ -60,6 +60,9 @@ export default [
 
     // Plugin storefront dispatcher — static route, descriptor resolved at request time
     route('apps/:pluginId/*', 'routes/storefront/apps/$pluginId.jsx'),
+
+    // CMS pages — catch-all slug route (after reserved prefixes)
+    route(':slug', 'routes/storefront/pages/$slug.jsx'),
   ]),
 
   // Locale + currency cookie API endpoints (POST-redirect pattern)
@@ -161,6 +164,12 @@ export default [
       route('products/:id', 'routes/admin/products/$id.jsx'),
       // Categories (P5-4)
       route('categories', 'routes/admin/categories/index.jsx'),
+      // Content (W5)
+      route('pages', 'routes/admin/pages/index.jsx'),
+      route('pages/new', 'routes/admin/pages/new.jsx'),
+      route('pages/:id', 'routes/admin/pages/$id.jsx'),
+      route('menus', 'routes/admin/menus/index.jsx'),
+      route('reviews', 'routes/admin/reviews/index.jsx'),
       // Orders (P5-5)
       route('orders', 'routes/admin/orders/index.jsx'),
       route('orders/:id', 'routes/admin/orders/$id.jsx'),
@@ -200,6 +209,4 @@ export const INDEXED_ROUTES = [
   'account/register',
   'sitemap.xml',
   '',
-  'products',
-  'categories',
 ];
