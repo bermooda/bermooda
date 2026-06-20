@@ -3,6 +3,7 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import queue from '#/libs/queue.server';
 
 import { emit, off, on } from '#/core/events/index.server';
 import {
@@ -28,6 +29,7 @@ const VALID_PROVIDER_TYPES = ['payment', 'shipping', 'tax'];
  * @property {string} [description]
  * @property {Object} [hooks]
  * @property {Object} [providers]
+ * @property {Object} [blocks]
  * @property {string} [adminRoutes]
  */
 
@@ -160,10 +162,16 @@ function buildCtx(pluginId) {
     },
   };
 
-  // Queue stub — real queue wired in later phase.
-  const queue = {
-    enqueue: async (job, data) =>
-      pluginLogger.info({ job, data }, 'queue stub'),
+  // Queue — exposes LiteQuu job creation to plugins.
+  const pluginQueue = {
+    add: (jobName, data) => {
+      const job = queue.createJob(jobName);
+      job.add(data);
+      pluginLogger.info({ jobName }, 'Plugin queued job');
+    },
+    enqueue: (jobName, data) => {
+      pluginQueue.add(jobName, data);
+    },
   };
 
   // i18n stub — real translation wired in P3-7.
@@ -174,7 +182,7 @@ function buildCtx(pluginId) {
     settings,
     plugin,
     logger: pluginLogger,
-    queue,
+    queue: pluginQueue,
     emit,
     t,
   };
@@ -271,7 +279,73 @@ export function register(manifest) {
 }
 
 // ---------------------------------------------------------------------------
-// loadPlugins — stable export (Phase 5/7 will wire real discovery)
+// Discovery + slot blocks
+// ---------------------------------------------------------------------------
+
+const pluginModules = import.meta.glob('#/plugins/*/index.server.js', {
+  eager: true,
+});
+
+/**
+ * Register all bundled plugins from app/plugins/*.
+ */
+export function discoverPlugins() {
+  for (const mod of Object.values(pluginModules)) {
+    const manifest = mod.pluginManifest ?? mod.default;
+    if (manifest?.id) {
+      register(manifest);
+    }
+  }
+}
+
+/**
+ * Enable plugins persisted in settings (called during async bootstrap).
+ */
+export async function enablePersistedPlugins() {
+  const enabledRaw = await settingsGet('enabledPlugins');
+  const enabled = Array.isArray(enabledRaw) ? enabledRaw : [];
+  for (const pluginId of enabled) {
+    if (!registry.has(pluginId)) continue;
+    try {
+      await enable(pluginId);
+    } catch (err) {
+      logger.warn({ err, pluginId }, 'Failed to enable plugin at startup');
+    }
+  }
+}
+
+/**
+ * Return storefront slot blocks contributed by enabled plugins.
+ *
+ * @param {string} slotName
+ * @returns {Promise<Array<{ pluginId: string, component: unknown }>>}
+ */
+export async function getPluginBlocksForSlot(slotName) {
+  const pluginOrderRaw = await settingsGet('pluginOrder');
+  const pluginOrder = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
+  const enabledRaw = await settingsGet('enabledPlugins');
+  const enabled = new Set(Array.isArray(enabledRaw) ? enabledRaw : []);
+
+  const orderedIds =
+    pluginOrder.length > 0
+      ? pluginOrder
+      : Array.from(registry.keys()).filter((id) => enabled.has(id));
+
+  const blocks = [];
+  for (const pluginId of orderedIds) {
+    if (!enabled.has(pluginId)) continue;
+    const entry = registry.get(pluginId);
+    const component = entry?.manifest?.blocks?.[slotName];
+    if (component) {
+      blocks.push({ pluginId, component });
+    }
+  }
+
+  return blocks;
+}
+
+// ---------------------------------------------------------------------------
+// loadPlugins — stable export
 // ---------------------------------------------------------------------------
 
 /**

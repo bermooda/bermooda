@@ -27,6 +27,13 @@ vi.mock('#/core/audit/index.server', () => ({
 vi.mock('#/core/back-in-stock/index.server', () => ({
   registerBackInStockSubscribers: vi.fn(),
 }));
+vi.mock('#/core/plugins/index.server', () => ({
+  discoverPlugins: vi.fn(),
+  enablePersistedPlugins: vi.fn(),
+}));
+vi.mock('#/core/rbac/index.server', () => ({
+  seedRolePermissions: vi.fn(),
+}));
 vi.mock('#/core/webhooks/job.server', () => ({}));
 vi.mock('#/core/exports/job.server', () => ({}));
 vi.mock('#/core/shipping/index.server', () => ({

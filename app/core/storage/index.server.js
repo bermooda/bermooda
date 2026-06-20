@@ -4,6 +4,8 @@
 // Re-exports the low-level primitives and adds uploadMedia() for
 // handling Web API File objects from browser form uploads.
 
+import sharp from 'sharp';
+
 import logger from '#/utils/logger.server';
 
 import * as client from '#/core/storage/client.server';
@@ -11,6 +13,9 @@ import * as client from '#/core/storage/client.server';
 export const putObject = client.putObject;
 export const getObjectUrl = client.getObjectUrl;
 export const deleteObject = client.deleteObject;
+
+const IMAGE_MIME_PREFIX = 'image/';
+const RESPONSIVE_WIDTHS = [640, 1280];
 
 // ---------------------------------------------------------------------------
 // Private helpers
@@ -21,10 +26,8 @@ function randomSuffix() {
 }
 
 function getExtension(filename, mimeType) {
-  // Try filename extension first
   const fromName = filename.split('.').pop()?.toLowerCase();
   if (fromName && fromName !== filename.toLowerCase()) return fromName;
-  // Fall back to MIME type
   const mimeMap = {
     'image/jpeg': 'jpg',
     'image/png': 'png',
@@ -37,6 +40,50 @@ function getExtension(filename, mimeType) {
   return mimeMap[mimeType] ?? 'bin';
 }
 
+function isOptimizableImage(mimeType) {
+  return mimeType.startsWith(IMAGE_MIME_PREFIX) && mimeType !== 'image/svg+xml';
+}
+
+function cacheControlForMime(mimeType) {
+  if (mimeType.startsWith(IMAGE_MIME_PREFIX)) {
+    return 'public, max-age=31536000, immutable';
+  }
+  return 'public, max-age=86400';
+}
+
+async function generateResponsiveVariants(buffer, baseKey) {
+  const image = sharp(buffer);
+  const metadata = await image.metadata();
+  const variants = {};
+
+  for (const width of RESPONSIVE_WIDTHS) {
+    if (metadata.width && metadata.width <= width) continue;
+
+    const variantKey = baseKey.replace(/(\.[^.]+)?$/, `-${width}w.webp`);
+    const resized = await sharp(buffer)
+      .resize({ width, withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+
+    const url = await client.putObject(variantKey, resized, 'image/webp', {
+      cacheControl: cacheControlForMime('image/webp'),
+    });
+
+    variants[String(width)] = {
+      url,
+      storageKey: variantKey,
+      width,
+      mimeType: 'image/webp',
+    };
+  }
+
+  return {
+    width: metadata.width ?? null,
+    height: metadata.height ?? null,
+    variants,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // uploadMedia
 // ---------------------------------------------------------------------------
@@ -45,7 +92,7 @@ function getExtension(filename, mimeType) {
  * Upload a Web API File object to storage and return metadata.
  *
  * @param {File} file - Web API File object from a browser upload.
- * @returns {Promise<{ url: string, storageKey: string, mimeType: string, width: null, height: null }>}
+ * @returns {Promise<{ url: string, storageKey: string, mimeType: string, width: number|null, height: number|null, variantsJson: string|null }>}
  */
 export async function uploadMedia(file) {
   const ext = getExtension(file.name ?? '', file.type);
@@ -56,17 +103,69 @@ export async function uploadMedia(file) {
     'uploadMedia: uploading file'
   );
 
-  const buffer = await file.arrayBuffer();
-  const url = await client.putObject(storageKey, buffer, file.type);
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const url = await client.putObject(storageKey, buffer, file.type, {
+    cacheControl: cacheControlForMime(file.type),
+  });
 
-  // Image dimension detection skipped — no sharp/probe-image-size installed.
-  // width and height will be populated by a future enhancement.
+  let width = null;
+  let height = null;
+  let variantsJson = null;
+
+  if (isOptimizableImage(file.type)) {
+    try {
+      const result = await generateResponsiveVariants(buffer, storageKey);
+      width = result.width;
+      height = result.height;
+      if (Object.keys(result.variants).length > 0) {
+        variantsJson = JSON.stringify(result.variants);
+      }
+    } catch (err) {
+      logger.warn(
+        { err, storageKey },
+        'uploadMedia: image optimization failed'
+      );
+    }
+  }
 
   return {
     url,
     storageKey,
     mimeType: file.type,
-    width: null,
-    height: null,
+    width,
+    height,
+    variantsJson,
   };
+}
+
+/**
+ * Parse stored responsive variant metadata.
+ *
+ * @param {string|null|undefined} variantsJson
+ */
+export function parseMediaVariants(variantsJson) {
+  if (!variantsJson) return {};
+  try {
+    return JSON.parse(variantsJson);
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Pick the best variant URL for a target width.
+ *
+ * @param {{ url: string, variantsJson?: string|null }} media
+ * @param {number} targetWidth
+ */
+export function resolveMediaUrl(media, targetWidth = 640) {
+  const variants = parseMediaVariants(media.variantsJson);
+  const widths = Object.keys(variants)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const match = widths.find((width) => width >= targetWidth) ?? widths.at(-1);
+  if (match && variants[String(match)]?.url) {
+    return variants[String(match)].url;
+  }
+  return media.url;
 }

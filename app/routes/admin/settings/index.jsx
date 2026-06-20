@@ -13,8 +13,10 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { useFetcher, useLoaderData } from 'react-router';
 
+import { authenticate } from '#/libs/auth/admin.server';
 import prisma from '#/libs/prisma.server';
 
+import { hasPermission } from '#/core/rbac/index.server';
 import { get, set } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
@@ -189,6 +191,11 @@ export async function action({ request }) {
 
   // ── Invite Admin ───────────────────────────────────────────────────────────
   if (intent === 'invite-admin') {
+    const session = await authenticate(request);
+    if (!(await hasPermission(session.user.role, 'settings:manage'))) {
+      return { ok: false, error: 'Forbidden', intent };
+    }
+
     const email = formData.get('email')?.toString().trim() ?? '';
     const name = formData.get('name')?.toString().trim() ?? '';
     if (!email) return { ok: false, error: 'Email is required.', intent };
@@ -224,6 +231,11 @@ export async function action({ request }) {
 
   // ── Change Role ────────────────────────────────────────────────────────────
   if (intent === 'change-role') {
+    const session = await authenticate(request);
+    if (!(await hasPermission(session.user.role, 'settings:manage'))) {
+      return { ok: false, error: 'Forbidden', intent };
+    }
+
     const userId = formData.get('userId')?.toString();
     const newRole = formData.get('role')?.toString();
     if (!userId || !newRole)

@@ -329,15 +329,16 @@ model ProductCategory {
 }
 
 model Media {
-  id         String   @id @default(cuid())
-  storageKey String
-  url        String
-  mimeType   String
-  width      Int?
-  height     Int?
-  altText    String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String   @id @default(cuid())
+  storageKey   String
+  url          String
+  mimeType     String
+  width        Int?
+  height       Int?
+  variantsJson String?
+  altText      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   productMedia ProductMedia[]
 }
@@ -1114,4 +1115,16 @@ model BundleItem {
 
   @@unique([bundleProductId, componentVariantId])
   @@index([bundleProductId])
+}
+
+// ─── W8: Platform hardening ───────────────────────────────────────────────────
+
+model RolePermission {
+  id       String @id @default(cuid())
+  role     Role
+  resource String
+  action   String
+
+  @@unique([role, resource, action])
+  @@index([role])
 }

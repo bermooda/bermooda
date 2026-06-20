@@ -22,6 +22,11 @@ import { registerProvider as registerPayment } from '#/core/payments/index.serve
 import { manualProvider } from '#/core/payments/manual.server';
 import { paypalProvider } from '#/core/payments/paypal.server';
 import { stripeProvider } from '#/core/payments/stripe.server';
+import {
+  discoverPlugins,
+  enablePersistedPlugins,
+} from '#/core/plugins/index.server';
+import { seedRolePermissions } from '#/core/rbac/index.server';
 import { dbProvider as dbSearchProvider } from '#/core/search/index.server';
 import { registerProvider as registerSearch } from '#/core/search/index.server';
 import { registerProvider as registerShipping } from '#/core/shipping/index.server';
@@ -90,7 +95,24 @@ export function registerBuiltins() {
   // W7: back-in-stock notifications on inventory restock
   registerBackInStockSubscribers({ on });
 
+  // W8: discover bundled plugins (async enable + RBAC seed deferred)
+  discoverPlugins();
+
   logger.info('Bootstrap complete: built-in providers + theme registered');
+}
+
+/**
+ * Async bootstrap tasks that require DB access. Safe to fire-and-forget at
+ * process start — failures are logged but do not block request handling.
+ */
+export async function initializeAsync() {
+  try {
+    await seedRolePermissions();
+    await enablePersistedPlugins();
+    logger.info('Async bootstrap complete: RBAC seeded, plugins enabled');
+  } catch (err) {
+    logger.error({ err }, 'Async bootstrap failed');
+  }
 }
 
 // Exported for testing only.
