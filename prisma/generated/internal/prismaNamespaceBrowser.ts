@@ -116,7 +116,18 @@ export const ModelName = {
   BackInStockSubscription: 'BackInStockSubscription',
   DigitalAsset: 'DigitalAsset',
   BundleItem: 'BundleItem',
-  RolePermission: 'RolePermission'
+  RolePermission: 'RolePermission',
+  LoyaltyTransaction: 'LoyaltyTransaction',
+  ReferralCode: 'ReferralCode',
+  Referral: 'Referral',
+  MarketingSegment: 'MarketingSegment',
+  MarketingCampaign: 'MarketingCampaign',
+  CampaignDelivery: 'CampaignDelivery',
+  AbandonedCartSequence: 'AbandonedCartSequence',
+  AbandonedCartSend: 'AbandonedCartSend',
+  SalesChannel: 'SalesChannel',
+  ChannelProduct: 'ChannelProduct',
+  ChannelPriceOverride: 'ChannelPriceOverride'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -415,6 +426,7 @@ export type ProductMediaScalarFieldEnum = (typeof ProductMediaScalarFieldEnum)[k
 export const CartScalarFieldEnum = {
   id: 'id',
   customerId: 'customerId',
+  salesChannelId: 'salesChannelId',
   token: 'token',
   currency: 'currency',
   lockedAt: 'lockedAt',
@@ -444,6 +456,7 @@ export const CheckoutSessionScalarFieldEnum = {
   id: 'id',
   cartId: 'cartId',
   customerId: 'customerId',
+  salesChannelId: 'salesChannelId',
   email: 'email',
   step: 'step',
   shippingAddressJson: 'shippingAddressJson',
@@ -454,6 +467,7 @@ export const CheckoutSessionScalarFieldEnum = {
   couponCode: 'couponCode',
   giftCardCode: 'giftCardCode',
   storeCreditCents: 'storeCreditCents',
+  loyaltyPointsCents: 'loyaltyPointsCents',
   vatId: 'vatId',
   taxExempt: 'taxExempt',
   expiresAt: 'expiresAt',
@@ -468,6 +482,7 @@ export const OrderScalarFieldEnum = {
   id: 'id',
   orderNumber: 'orderNumber',
   customerId: 'customerId',
+  salesChannelId: 'salesChannelId',
   email: 'email',
   status: 'status',
   currency: 'currency',
@@ -477,6 +492,7 @@ export const OrderScalarFieldEnum = {
   discountCents: 'discountCents',
   storeCreditCents: 'storeCreditCents',
   giftCardCents: 'giftCardCents',
+  loyaltyPointsCents: 'loyaltyPointsCents',
   totalCents: 'totalCents',
   shippingAddressJson: 'shippingAddressJson',
   billingAddressJson: 'billingAddressJson',
@@ -1067,6 +1083,147 @@ export const RolePermissionScalarFieldEnum = {
 } as const
 
 export type RolePermissionScalarFieldEnum = (typeof RolePermissionScalarFieldEnum)[keyof typeof RolePermissionScalarFieldEnum]
+
+
+export const LoyaltyTransactionScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  points: 'points',
+  balanceAfter: 'balanceAfter',
+  reason: 'reason',
+  referenceType: 'referenceType',
+  referenceId: 'referenceId',
+  createdAt: 'createdAt'
+} as const
+
+export type LoyaltyTransactionScalarFieldEnum = (typeof LoyaltyTransactionScalarFieldEnum)[keyof typeof LoyaltyTransactionScalarFieldEnum]
+
+
+export const ReferralCodeScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  code: 'code',
+  createdAt: 'createdAt'
+} as const
+
+export type ReferralCodeScalarFieldEnum = (typeof ReferralCodeScalarFieldEnum)[keyof typeof ReferralCodeScalarFieldEnum]
+
+
+export const ReferralScalarFieldEnum = {
+  id: 'id',
+  referralCodeId: 'referralCodeId',
+  referredCustomerId: 'referredCustomerId',
+  firstOrderId: 'firstOrderId',
+  rewardGrantedAt: 'rewardGrantedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type ReferralScalarFieldEnum = (typeof ReferralScalarFieldEnum)[keyof typeof ReferralScalarFieldEnum]
+
+
+export const MarketingSegmentScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  rulesJson: 'rulesJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MarketingSegmentScalarFieldEnum = (typeof MarketingSegmentScalarFieldEnum)[keyof typeof MarketingSegmentScalarFieldEnum]
+
+
+export const MarketingCampaignScalarFieldEnum = {
+  id: 'id',
+  segmentId: 'segmentId',
+  name: 'name',
+  subject: 'subject',
+  bodyHtml: 'bodyHtml',
+  status: 'status',
+  scheduledAt: 'scheduledAt',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MarketingCampaignScalarFieldEnum = (typeof MarketingCampaignScalarFieldEnum)[keyof typeof MarketingCampaignScalarFieldEnum]
+
+
+export const CampaignDeliveryScalarFieldEnum = {
+  id: 'id',
+  campaignId: 'campaignId',
+  customerId: 'customerId',
+  email: 'email',
+  status: 'status',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt'
+} as const
+
+export type CampaignDeliveryScalarFieldEnum = (typeof CampaignDeliveryScalarFieldEnum)[keyof typeof CampaignDeliveryScalarFieldEnum]
+
+
+export const AbandonedCartSequenceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  stepNumber: 'stepNumber',
+  delayMinutes: 'delayMinutes',
+  subject: 'subject',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AbandonedCartSequenceScalarFieldEnum = (typeof AbandonedCartSequenceScalarFieldEnum)[keyof typeof AbandonedCartSequenceScalarFieldEnum]
+
+
+export const AbandonedCartSendScalarFieldEnum = {
+  id: 'id',
+  cartId: 'cartId',
+  sequenceId: 'sequenceId',
+  email: 'email',
+  sentAt: 'sentAt'
+} as const
+
+export type AbandonedCartSendScalarFieldEnum = (typeof AbandonedCartSendScalarFieldEnum)[keyof typeof AbandonedCartSendScalarFieldEnum]
+
+
+export const SalesChannelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  handle: 'handle',
+  domain: 'domain',
+  isDefault: 'isDefault',
+  currency: 'currency',
+  locale: 'locale',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SalesChannelScalarFieldEnum = (typeof SalesChannelScalarFieldEnum)[keyof typeof SalesChannelScalarFieldEnum]
+
+
+export const ChannelProductScalarFieldEnum = {
+  id: 'id',
+  channelId: 'channelId',
+  productId: 'productId',
+  published: 'published',
+  createdAt: 'createdAt'
+} as const
+
+export type ChannelProductScalarFieldEnum = (typeof ChannelProductScalarFieldEnum)[keyof typeof ChannelProductScalarFieldEnum]
+
+
+export const ChannelPriceOverrideScalarFieldEnum = {
+  id: 'id',
+  channelId: 'channelId',
+  variantId: 'variantId',
+  currency: 'currency',
+  priceCents: 'priceCents',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChannelPriceOverrideScalarFieldEnum = (typeof ChannelPriceOverrideScalarFieldEnum)[keyof typeof ChannelPriceOverrideScalarFieldEnum]
 
 
 export const SortOrder = {

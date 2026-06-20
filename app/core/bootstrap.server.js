@@ -16,7 +16,10 @@ import { registerProvider as registerAddressValidation } from '#/core/address-va
 import { noopProvider } from '#/core/address-validation/index.server';
 import { registerAuditSubscribers } from '#/core/audit/index.server';
 import { registerBackInStockSubscribers } from '#/core/back-in-stock/index.server';
+import { seedDefaultChannel } from '#/core/channels/index.server';
 import { on } from '#/core/events/index.server';
+import { registerLoyaltySubscribers } from '#/core/loyalty/index.server';
+import { seedDefaultAbandonedCartSequences } from '#/core/marketing/index.server';
 import { registerPaymentEventHandlers } from '#/core/orders/index.server';
 import { registerProvider as registerPayment } from '#/core/payments/index.server';
 import { manualProvider } from '#/core/payments/manual.server';
@@ -42,6 +45,8 @@ import { registerWebhookSubscribers } from '#/core/webhooks/index.server';
 import '#/core/webhooks/job.server';
 // W6: scheduled export worker
 import '#/core/exports/job.server';
+// W9: marketing automation worker
+import '#/core/marketing/job.server';
 import defaultThemeManifest from '#/themes/default/manifest';
 
 let _bootstrapped = false;
@@ -95,6 +100,9 @@ export function registerBuiltins() {
   // W7: back-in-stock notifications on inventory restock
   registerBackInStockSubscribers({ on });
 
+  // W9: loyalty points + referral rewards on order confirmation
+  registerLoyaltySubscribers({ on });
+
   // W8: discover bundled plugins (async enable + RBAC seed deferred)
   discoverPlugins();
 
@@ -109,6 +117,8 @@ export async function initializeAsync() {
   try {
     await seedRolePermissions();
     await enablePersistedPlugins();
+    await seedDefaultChannel();
+    await seedDefaultAbandonedCartSequences();
     logger.info('Async bootstrap complete: RBAC seeded, plugins enabled');
   } catch (err) {
     logger.error({ err }, 'Async bootstrap failed');

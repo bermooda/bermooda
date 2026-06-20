@@ -232,6 +232,7 @@ export type ProductWhereInput = {
   reviews?: Prisma.ReviewListRelationFilter
   digitalAssets?: Prisma.DigitalAssetListRelationFilter
   bundleItems?: Prisma.BundleItemListRelationFilter
+  channelProducts?: Prisma.ChannelProductListRelationFilter
 }
 
 export type ProductOrderByWithRelationInput = {
@@ -249,6 +250,7 @@ export type ProductOrderByWithRelationInput = {
   reviews?: Prisma.ReviewOrderByRelationAggregateInput
   digitalAssets?: Prisma.DigitalAssetOrderByRelationAggregateInput
   bundleItems?: Prisma.BundleItemOrderByRelationAggregateInput
+  channelProducts?: Prisma.ChannelProductOrderByRelationAggregateInput
 }
 
 export type ProductWhereUniqueInput = Prisma.AtLeast<{
@@ -269,6 +271,7 @@ export type ProductWhereUniqueInput = Prisma.AtLeast<{
   reviews?: Prisma.ReviewListRelationFilter
   digitalAssets?: Prisma.DigitalAssetListRelationFilter
   bundleItems?: Prisma.BundleItemListRelationFilter
+  channelProducts?: Prisma.ChannelProductListRelationFilter
 }, "id">
 
 export type ProductOrderByWithAggregationInput = {
@@ -312,6 +315,7 @@ export type ProductCreateInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
 }
 
 export type ProductUncheckedCreateInput = {
@@ -329,6 +333,7 @@ export type ProductUncheckedCreateInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type ProductUpdateInput = {
@@ -346,6 +351,7 @@ export type ProductUpdateInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
 }
 
 export type ProductUncheckedUpdateInput = {
@@ -363,6 +369,7 @@ export type ProductUncheckedUpdateInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
 }
 
 export type ProductCreateManyInput = {
@@ -552,6 +559,20 @@ export type ProductUpdateOneRequiredWithoutBundleItemsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProductUpdateToOneWithWhereWithoutBundleItemsInput, Prisma.ProductUpdateWithoutBundleItemsInput>, Prisma.ProductUncheckedUpdateWithoutBundleItemsInput>
 }
 
+export type ProductCreateNestedOneWithoutChannelProductsInput = {
+  create?: Prisma.XOR<Prisma.ProductCreateWithoutChannelProductsInput, Prisma.ProductUncheckedCreateWithoutChannelProductsInput>
+  connectOrCreate?: Prisma.ProductCreateOrConnectWithoutChannelProductsInput
+  connect?: Prisma.ProductWhereUniqueInput
+}
+
+export type ProductUpdateOneRequiredWithoutChannelProductsNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductCreateWithoutChannelProductsInput, Prisma.ProductUncheckedCreateWithoutChannelProductsInput>
+  connectOrCreate?: Prisma.ProductCreateOrConnectWithoutChannelProductsInput
+  upsert?: Prisma.ProductUpsertWithoutChannelProductsInput
+  connect?: Prisma.ProductWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProductUpdateToOneWithWhereWithoutChannelProductsInput, Prisma.ProductUpdateWithoutChannelProductsInput>, Prisma.ProductUncheckedUpdateWithoutChannelProductsInput>
+}
+
 export type ProductCreateWithoutVariantsInput = {
   id?: string
   productType?: string
@@ -566,6 +587,7 @@ export type ProductCreateWithoutVariantsInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
 }
 
 export type ProductUncheckedCreateWithoutVariantsInput = {
@@ -582,6 +604,7 @@ export type ProductUncheckedCreateWithoutVariantsInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type ProductCreateOrConnectWithoutVariantsInput = {
@@ -614,6 +637,7 @@ export type ProductUpdateWithoutVariantsInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutVariantsInput = {
@@ -630,6 +654,7 @@ export type ProductUncheckedUpdateWithoutVariantsInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
 }
 
 export type ProductCreateWithoutOptionsInput = {
@@ -646,6 +671,7 @@ export type ProductCreateWithoutOptionsInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
 }
 
 export type ProductUncheckedCreateWithoutOptionsInput = {
@@ -662,6 +688,7 @@ export type ProductUncheckedCreateWithoutOptionsInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type ProductCreateOrConnectWithoutOptionsInput = {
@@ -694,6 +721,7 @@ export type ProductUpdateWithoutOptionsInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutOptionsInput = {
@@ -710,6 +738,7 @@ export type ProductUncheckedUpdateWithoutOptionsInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
 }
 
 export type ProductCreateWithoutCategoriesInput = {
@@ -726,6 +755,7 @@ export type ProductCreateWithoutCategoriesInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
 }
 
 export type ProductUncheckedCreateWithoutCategoriesInput = {
@@ -742,6 +772,7 @@ export type ProductUncheckedCreateWithoutCategoriesInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type ProductCreateOrConnectWithoutCategoriesInput = {
@@ -774,6 +805,7 @@ export type ProductUpdateWithoutCategoriesInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutCategoriesInput = {
@@ -790,6 +822,7 @@ export type ProductUncheckedUpdateWithoutCategoriesInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
 }
 
 export type ProductCreateWithoutMediaInput = {
@@ -806,6 +839,7 @@ export type ProductCreateWithoutMediaInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
 }
 
 export type ProductUncheckedCreateWithoutMediaInput = {
@@ -822,6 +856,7 @@ export type ProductUncheckedCreateWithoutMediaInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type ProductCreateOrConnectWithoutMediaInput = {
@@ -854,6 +889,7 @@ export type ProductUpdateWithoutMediaInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutMediaInput = {
@@ -870,6 +906,7 @@ export type ProductUncheckedUpdateWithoutMediaInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
 }
 
 export type ProductCreateWithoutAttributesInput = {
@@ -886,6 +923,7 @@ export type ProductCreateWithoutAttributesInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
 }
 
 export type ProductUncheckedCreateWithoutAttributesInput = {
@@ -902,6 +940,7 @@ export type ProductUncheckedCreateWithoutAttributesInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type ProductCreateOrConnectWithoutAttributesInput = {
@@ -934,6 +973,7 @@ export type ProductUpdateWithoutAttributesInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutAttributesInput = {
@@ -950,6 +990,7 @@ export type ProductUncheckedUpdateWithoutAttributesInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
 }
 
 export type ProductCreateWithoutReviewsInput = {
@@ -966,6 +1007,7 @@ export type ProductCreateWithoutReviewsInput = {
   attributes?: Prisma.ProductAttributeCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
 }
 
 export type ProductUncheckedCreateWithoutReviewsInput = {
@@ -982,6 +1024,7 @@ export type ProductUncheckedCreateWithoutReviewsInput = {
   attributes?: Prisma.ProductAttributeUncheckedCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type ProductCreateOrConnectWithoutReviewsInput = {
@@ -1014,6 +1057,7 @@ export type ProductUpdateWithoutReviewsInput = {
   attributes?: Prisma.ProductAttributeUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutReviewsInput = {
@@ -1030,6 +1074,7 @@ export type ProductUncheckedUpdateWithoutReviewsInput = {
   attributes?: Prisma.ProductAttributeUncheckedUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
 }
 
 export type ProductCreateWithoutDigitalAssetsInput = {
@@ -1046,6 +1091,7 @@ export type ProductCreateWithoutDigitalAssetsInput = {
   attributes?: Prisma.ProductAttributeCreateNestedManyWithoutProductInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
 }
 
 export type ProductUncheckedCreateWithoutDigitalAssetsInput = {
@@ -1062,6 +1108,7 @@ export type ProductUncheckedCreateWithoutDigitalAssetsInput = {
   attributes?: Prisma.ProductAttributeUncheckedCreateNestedManyWithoutProductInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type ProductCreateOrConnectWithoutDigitalAssetsInput = {
@@ -1094,6 +1141,7 @@ export type ProductUpdateWithoutDigitalAssetsInput = {
   attributes?: Prisma.ProductAttributeUpdateManyWithoutProductNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutDigitalAssetsInput = {
@@ -1110,6 +1158,7 @@ export type ProductUncheckedUpdateWithoutDigitalAssetsInput = {
   attributes?: Prisma.ProductAttributeUncheckedUpdateManyWithoutProductNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
 }
 
 export type ProductCreateWithoutBundleItemsInput = {
@@ -1126,6 +1175,7 @@ export type ProductCreateWithoutBundleItemsInput = {
   attributes?: Prisma.ProductAttributeCreateNestedManyWithoutProductInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
 }
 
 export type ProductUncheckedCreateWithoutBundleItemsInput = {
@@ -1142,6 +1192,7 @@ export type ProductUncheckedCreateWithoutBundleItemsInput = {
   attributes?: Prisma.ProductAttributeUncheckedCreateNestedManyWithoutProductInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
 }
 
 export type ProductCreateOrConnectWithoutBundleItemsInput = {
@@ -1174,6 +1225,7 @@ export type ProductUpdateWithoutBundleItemsInput = {
   attributes?: Prisma.ProductAttributeUpdateManyWithoutProductNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutBundleItemsInput = {
@@ -1190,6 +1242,91 @@ export type ProductUncheckedUpdateWithoutBundleItemsInput = {
   attributes?: Prisma.ProductAttributeUncheckedUpdateManyWithoutProductNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+}
+
+export type ProductCreateWithoutChannelProductsInput = {
+  id?: string
+  productType?: string
+  publishedAt?: Date | string | null
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.ProductVariantCreateNestedManyWithoutProductInput
+  categories?: Prisma.ProductCategoryCreateNestedManyWithoutProductInput
+  media?: Prisma.ProductMediaCreateNestedManyWithoutProductInput
+  options?: Prisma.ProductOptionCreateNestedManyWithoutProductInput
+  attributes?: Prisma.ProductAttributeCreateNestedManyWithoutProductInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
+  digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
+  bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+}
+
+export type ProductUncheckedCreateWithoutChannelProductsInput = {
+  id?: string
+  productType?: string
+  publishedAt?: Date | string | null
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.ProductVariantUncheckedCreateNestedManyWithoutProductInput
+  categories?: Prisma.ProductCategoryUncheckedCreateNestedManyWithoutProductInput
+  media?: Prisma.ProductMediaUncheckedCreateNestedManyWithoutProductInput
+  options?: Prisma.ProductOptionUncheckedCreateNestedManyWithoutProductInput
+  attributes?: Prisma.ProductAttributeUncheckedCreateNestedManyWithoutProductInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
+  digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
+  bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+}
+
+export type ProductCreateOrConnectWithoutChannelProductsInput = {
+  where: Prisma.ProductWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProductCreateWithoutChannelProductsInput, Prisma.ProductUncheckedCreateWithoutChannelProductsInput>
+}
+
+export type ProductUpsertWithoutChannelProductsInput = {
+  update: Prisma.XOR<Prisma.ProductUpdateWithoutChannelProductsInput, Prisma.ProductUncheckedUpdateWithoutChannelProductsInput>
+  create: Prisma.XOR<Prisma.ProductCreateWithoutChannelProductsInput, Prisma.ProductUncheckedCreateWithoutChannelProductsInput>
+  where?: Prisma.ProductWhereInput
+}
+
+export type ProductUpdateToOneWithWhereWithoutChannelProductsInput = {
+  where?: Prisma.ProductWhereInput
+  data: Prisma.XOR<Prisma.ProductUpdateWithoutChannelProductsInput, Prisma.ProductUncheckedUpdateWithoutChannelProductsInput>
+}
+
+export type ProductUpdateWithoutChannelProductsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productType?: Prisma.StringFieldUpdateOperationsInput | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.ProductVariantUpdateManyWithoutProductNestedInput
+  categories?: Prisma.ProductCategoryUpdateManyWithoutProductNestedInput
+  media?: Prisma.ProductMediaUpdateManyWithoutProductNestedInput
+  options?: Prisma.ProductOptionUpdateManyWithoutProductNestedInput
+  attributes?: Prisma.ProductAttributeUpdateManyWithoutProductNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
+  digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
+  bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+}
+
+export type ProductUncheckedUpdateWithoutChannelProductsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productType?: Prisma.StringFieldUpdateOperationsInput | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.ProductVariantUncheckedUpdateManyWithoutProductNestedInput
+  categories?: Prisma.ProductCategoryUncheckedUpdateManyWithoutProductNestedInput
+  media?: Prisma.ProductMediaUncheckedUpdateManyWithoutProductNestedInput
+  options?: Prisma.ProductOptionUncheckedUpdateManyWithoutProductNestedInput
+  attributes?: Prisma.ProductAttributeUncheckedUpdateManyWithoutProductNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
+  digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
+  bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
 }
 
 
@@ -1206,6 +1343,7 @@ export type ProductCountOutputType = {
   reviews: number
   digitalAssets: number
   bundleItems: number
+  channelProducts: number
 }
 
 export type ProductCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1217,6 +1355,7 @@ export type ProductCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   reviews?: boolean | ProductCountOutputTypeCountReviewsArgs
   digitalAssets?: boolean | ProductCountOutputTypeCountDigitalAssetsArgs
   bundleItems?: boolean | ProductCountOutputTypeCountBundleItemsArgs
+  channelProducts?: boolean | ProductCountOutputTypeCountChannelProductsArgs
 }
 
 /**
@@ -1285,6 +1424,13 @@ export type ProductCountOutputTypeCountBundleItemsArgs<ExtArgs extends runtime.T
   where?: Prisma.BundleItemWhereInput
 }
 
+/**
+ * ProductCountOutputType without action
+ */
+export type ProductCountOutputTypeCountChannelProductsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ChannelProductWhereInput
+}
+
 
 export type ProductSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1301,6 +1447,7 @@ export type ProductSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   reviews?: boolean | Prisma.Product$reviewsArgs<ExtArgs>
   digitalAssets?: boolean | Prisma.Product$digitalAssetsArgs<ExtArgs>
   bundleItems?: boolean | Prisma.Product$bundleItemsArgs<ExtArgs>
+  channelProducts?: boolean | Prisma.Product$channelProductsArgs<ExtArgs>
   _count?: boolean | Prisma.ProductCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["product"]>
 
@@ -1341,6 +1488,7 @@ export type ProductInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   reviews?: boolean | Prisma.Product$reviewsArgs<ExtArgs>
   digitalAssets?: boolean | Prisma.Product$digitalAssetsArgs<ExtArgs>
   bundleItems?: boolean | Prisma.Product$bundleItemsArgs<ExtArgs>
+  channelProducts?: boolean | Prisma.Product$channelProductsArgs<ExtArgs>
   _count?: boolean | Prisma.ProductCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProductIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1357,6 +1505,7 @@ export type $ProductPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     reviews: Prisma.$ReviewPayload<ExtArgs>[]
     digitalAssets: Prisma.$DigitalAssetPayload<ExtArgs>[]
     bundleItems: Prisma.$BundleItemPayload<ExtArgs>[]
+    channelProducts: Prisma.$ChannelProductPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1767,6 +1916,7 @@ export interface Prisma__ProductClient<T, Null = never, ExtArgs extends runtime.
   reviews<T extends Prisma.Product$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Product$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   digitalAssets<T extends Prisma.Product$digitalAssetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Product$digitalAssetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DigitalAssetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bundleItems<T extends Prisma.Product$bundleItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Product$bundleItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BundleItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  channelProducts<T extends Prisma.Product$channelProductsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Product$channelProductsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChannelProductPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2382,6 +2532,30 @@ export type Product$bundleItemsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.BundleItemScalarFieldEnum | Prisma.BundleItemScalarFieldEnum[]
+}
+
+/**
+ * Product.channelProducts
+ */
+export type Product$channelProductsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ChannelProduct
+   */
+  select?: Prisma.ChannelProductSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ChannelProduct
+   */
+  omit?: Prisma.ChannelProductOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ChannelProductInclude<ExtArgs> | null
+  where?: Prisma.ChannelProductWhereInput
+  orderBy?: Prisma.ChannelProductOrderByWithRelationInput | Prisma.ChannelProductOrderByWithRelationInput[]
+  cursor?: Prisma.ChannelProductWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ChannelProductScalarFieldEnum | Prisma.ChannelProductScalarFieldEnum[]
 }
 
 /**
