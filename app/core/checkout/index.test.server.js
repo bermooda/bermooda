@@ -33,6 +33,15 @@ vi.mock('#/core/tax/index.server', () => ({
   computeActiveTax: vi.fn(),
 }));
 
+vi.mock('#/core/pricing/index.server', () => ({
+  getCustomerGroupIds: vi.fn(),
+  resolveVariantPrice: vi.fn(),
+}));
+
+vi.mock('#/core/gift-cards/index.server', () => ({
+  resolveGiftCardRedemption: vi.fn(),
+}));
+
 // ---------------------------------------------------------------------------
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
@@ -47,6 +56,7 @@ import {
 } from '#/core/checkout/pipeline.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { resolvePromotions } from '#/core/discounts/index.server';
+import { resolveVariantPrice } from '#/core/pricing/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
 
@@ -86,6 +96,7 @@ beforeEach(() => {
   // Safe defaults
   getAllQuotes.mockResolvedValue([]);
   computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
+  resolveVariantPrice.mockResolvedValue(null);
   resolvePromotions.mockResolvedValue({
     applied: [],
     discountCents: 0,

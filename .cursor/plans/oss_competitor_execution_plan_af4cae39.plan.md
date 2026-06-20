@@ -22,10 +22,10 @@ todos:
     status: completed
   - id: p2-w5
     content: 'Phase 2 (parallel, needs W1): W5 CMS pages + navigation/menu builder + product reviews/ratings + richer SEO (per-entity meta, JSON-LD, sitemap). Depends on W0-6 theme decision.'
-    status: pending
+    status: completed
   - id: p2-w7
     content: 'Phase 2 (parallel, needs W3; gift cards need W4 ledger): W7 multi-location inventory (migrate inventoryCount, keep increment/decrement seam) + customer groups/B2B price lists + gift cards + wishlists/back-in-stock + digital/bundles.'
-    status: pending
+    status: completed
   - id: p2-w8
     content: 'Phase 2 (parallel, needs W2): W8 Postgres-first (env-driven datasource) + granular RBAC + rate limiting + image optimization/CDN + plugin/theme runtime completion + caching. Must land before W2 public GA.'
     status: pending

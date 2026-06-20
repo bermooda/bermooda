@@ -2,7 +2,13 @@
 // Totals engine: subtotal, multi-discount, shipping, tax-class-aware tax, total.
 
 import { resolvePromotions } from '#/core/discounts/index.server';
+import { resolveGiftCardRedemption } from '#/core/gift-cards/index.server';
+import {
+  getCustomerGroupIds,
+  resolveVariantPrice,
+} from '#/core/pricing/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
+import { getStoreCreditBalance } from '#/core/store-credit/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
 
 // ---------------------------------------------------------------------------
@@ -21,18 +27,25 @@ import { computeActiveTax } from '#/core/tax/index.server';
  *   shippingOptionId?: string,
  *   taxExempt?: boolean,
  *   vatId?: string,
+ *   customerId?: string,
  *   customerGroupId?: string,
+ *   giftCardCode?: string,
+ *   storeCreditCents?: number,
  * }} params
  * @returns {Promise<{
  *   subtotalCents: number,
  *   discountCents: number,
  *   shippingCents: number,
  *   taxCents: number,
+ *   storeCreditCents: number,
+ *   giftCardCents: number,
  *   totalCents: number,
  *   shippingOption: object|null,
  *   appliedDiscounts: object[],
  *   freeShipping: boolean,
- *   primaryCouponCode: string|null
+ *   primaryCouponCode: string|null,
+ *   giftCardId: string|null,
+ *   customerGroupIds: string[],
  * }>}
  */
 export async function computeTotals({
@@ -44,15 +57,38 @@ export async function computeTotals({
   shippingOptionId,
   taxExempt = false,
   vatId,
+  customerId,
   customerGroupId,
+  giftCardCode,
+  storeCreditCents: requestedStoreCreditCents = 0,
 }) {
-  const lines = cart?.lines ?? [];
+  const currency = cart?.currency ?? 'USD';
+  const customerGroupIds = customerGroupId
+    ? [customerGroupId]
+    : customerId
+      ? await getCustomerGroupIds(customerId)
+      : [];
+
+  const pricedLines = await Promise.all(
+    (cart?.lines ?? []).map(async (line) => {
+      const resolved = await resolveVariantPrice({
+        variantId: line.variantId,
+        currency,
+        quantity: line.quantity,
+        customerGroupIds,
+      });
+      const priceCentsSnapshot =
+        resolved?.priceCents ?? line.priceCentsSnapshot;
+      return { ...line, priceCentsSnapshot };
+    })
+  );
+
+  const lines = pricedLines;
   const subtotalCents = lines.reduce(
     (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
     0
   );
 
-  // 1. Promotions — automatic + stacked coupon codes
   let discountCents = 0;
   let freeShipping = false;
   let appliedDiscounts = [];
@@ -60,11 +96,11 @@ export async function computeTotals({
 
   try {
     const promo = await resolvePromotions({
-      cart,
+      cart: { ...cart, lines },
       cartId,
       couponCode,
       couponCodes,
-      customerGroupId,
+      customerGroupId: customerGroupIds[0] ?? null,
     });
     discountCents = promo.discountCents;
     freeShipping = promo.freeShipping;
@@ -74,13 +110,15 @@ export async function computeTotals({
     discountCents = 0;
   }
 
-  // 2. Shipping + tax — require shippingAddress
   let shippingCents = 0;
   let taxCents = 0;
   let shippingOption = null;
 
   if (shippingAddress) {
-    const quotes = await getAllQuotes({ cart, shippingAddress });
+    const quotes = await getAllQuotes({
+      cart: { ...cart, lines },
+      shippingAddress,
+    });
     if (shippingOptionId) {
       shippingOption = quotes.find((q) => q.id === shippingOptionId) ?? null;
     }
@@ -99,7 +137,7 @@ export async function computeTotals({
         subtotalCents: subtotalCents - discountCents,
         shippingCents,
         shippingAddress,
-        currency: cart?.currency ?? 'USD',
+        currency,
         lines: taxLines,
         vatId,
       });
@@ -107,17 +145,54 @@ export async function computeTotals({
     }
   }
 
-  const totalCents = subtotalCents - discountCents + shippingCents + taxCents;
+  const preTenderTotal =
+    subtotalCents - discountCents + shippingCents + taxCents;
+  let remaining = preTenderTotal;
+
+  let storeCreditCents = 0;
+  if (customerId && requestedStoreCreditCents > 0) {
+    const balance = await getStoreCreditBalance(customerId);
+    storeCreditCents = Math.min(
+      balance,
+      requestedStoreCreditCents,
+      Math.max(0, remaining)
+    );
+    remaining -= storeCreditCents;
+  }
+
+  let giftCardCents = 0;
+  let giftCardId = null;
+  if (giftCardCode && remaining > 0) {
+    try {
+      const redemption = await resolveGiftCardRedemption(
+        giftCardCode,
+        currency,
+        remaining
+      );
+      giftCardCents = redemption.amountCents;
+      giftCardId = redemption.giftCard.id;
+      remaining -= giftCardCents;
+    } catch {
+      giftCardCents = 0;
+      giftCardId = null;
+    }
+  }
+
+  const totalCents = Math.max(0, remaining);
 
   return {
     subtotalCents,
     discountCents,
     shippingCents,
     taxCents,
+    storeCreditCents,
+    giftCardCents,
     totalCents,
     shippingOption,
     appliedDiscounts,
     freeShipping,
     primaryCouponCode,
+    giftCardId,
+    customerGroupIds,
   };
 }

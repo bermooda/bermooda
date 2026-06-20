@@ -31,6 +31,11 @@ vi.mock('#/utils/logger.server', () => ({
   default: { info: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock('#/core/pricing/index.server', () => ({
+  getCustomerGroupIds: vi.fn(),
+  resolveVariantPrice: vi.fn(),
+}));
+
 import prisma from '#/libs/prisma.server';
 
 import {
@@ -43,9 +48,11 @@ import {
   lockCart,
   unlockCart,
 } from '#/core/cart/index.server';
+import { resolveVariantPrice } from '#/core/pricing/index.server';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  resolveVariantPrice.mockResolvedValue({ priceCents: 1000, source: 'base' });
 });
 
 // ---------------------------------------------------------------------------
@@ -123,7 +130,7 @@ describe('addLine — CURRENCY_MISMATCH', () => {
 describe('addLine — PRICE_NOT_FOUND', () => {
   it('throws PRICE_NOT_FOUND when no VariantPrice row exists', async () => {
     prisma.cart.findUnique.mockResolvedValue({ id: 'cart_1', currency: 'USD' });
-    prisma.variantPrice.findUnique.mockResolvedValue(null);
+    resolveVariantPrice.mockResolvedValue(null);
 
     await expect(
       addLine('cart_1', 'variant_1', 1, { currency: 'USD', locale: 'en' })
@@ -138,7 +145,7 @@ describe('addLine — PRICE_NOT_FOUND', () => {
 describe('addLine — upsert', () => {
   it('increments quantity when a line already exists for the same variantId', async () => {
     prisma.cart.findUnique.mockResolvedValue({ id: 'cart_1', currency: 'USD' });
-    prisma.variantPrice.findUnique.mockResolvedValue({ priceCents: 1000 });
+    resolveVariantPrice.mockResolvedValue({ priceCents: 1000, source: 'base' });
     prisma.translation.findUnique.mockResolvedValue(null);
     prisma.cartLine.findFirst.mockResolvedValue({
       id: 'line_1',
@@ -158,7 +165,7 @@ describe('addLine — upsert', () => {
 
   it('creates a new line when no existing line for this variantId', async () => {
     prisma.cart.findUnique.mockResolvedValue({ id: 'cart_1', currency: 'USD' });
-    prisma.variantPrice.findUnique.mockResolvedValue({ priceCents: 2500 });
+    resolveVariantPrice.mockResolvedValue({ priceCents: 2500, source: 'base' });
     prisma.translation.findUnique.mockResolvedValue({ value: 'Blue T-Shirt' });
     prisma.cartLine.findFirst.mockResolvedValue(null);
     prisma.cartLine.create.mockResolvedValue({ id: 'line_2', quantity: 1 });
@@ -178,7 +185,7 @@ describe('addLine — upsert', () => {
 
   it('falls back to variantId as titleSnapshot when no translation found', async () => {
     prisma.cart.findUnique.mockResolvedValue({ id: 'cart_1', currency: 'USD' });
-    prisma.variantPrice.findUnique.mockResolvedValue({ priceCents: 999 });
+    resolveVariantPrice.mockResolvedValue({ priceCents: 999, source: 'base' });
     prisma.translation.findUnique.mockResolvedValue(null);
     prisma.cartLine.findFirst.mockResolvedValue(null);
     prisma.cartLine.create.mockResolvedValue({ id: 'line_3', quantity: 1 });
