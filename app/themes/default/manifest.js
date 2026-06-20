@@ -15,6 +15,7 @@ import Layout from '#/themes/default/components/layout';
 import LocaleSwitcher from '#/themes/default/components/locale-switcher';
 import LoginPage from '#/themes/default/components/login-page';
 import NotFoundPage from '#/themes/default/components/not-found-page';
+import PagePage from '#/themes/default/components/page-page';
 import ProductCard from '#/themes/default/components/product-card';
 import ProductGrid from '#/themes/default/components/product-grid';
 import ProductPage from '#/themes/default/components/product-page';
@@ -30,6 +31,7 @@ export default {
     Layout,
     HomePage,
     ProductPage,
+    PagePage,
     CategoryPage,
     CartPage,
     CheckoutLayout,

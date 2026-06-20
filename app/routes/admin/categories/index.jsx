@@ -161,25 +161,34 @@ export async function action({ request }) {
     for (const locale of locales) {
       const title = formData.get(`title[${locale}]`)?.toString() ?? '';
       const slugValue = formData.get(`slug[${locale}]`)?.toString().trim();
+      const metaTitle = formData.get(`metaTitle[${locale}]`)?.toString() ?? '';
+      const metaDescription =
+        formData.get(`metaDescription[${locale}]`)?.toString() ?? '';
 
-      await prisma.translation.upsert({
-        where: {
-          entityType_entityId_locale_field: {
+      for (const [field, value] of [
+        ['title', title],
+        ['metaTitle', metaTitle],
+        ['metaDescription', metaDescription],
+      ]) {
+        await prisma.translation.upsert({
+          where: {
+            entityType_entityId_locale_field: {
+              entityType: 'category',
+              entityId: id,
+              locale,
+              field,
+            },
+          },
+          update: { value },
+          create: {
             entityType: 'category',
             entityId: id,
             locale,
-            field: 'title',
+            field,
+            value,
           },
-        },
-        update: { value: title },
-        create: {
-          entityType: 'category',
-          entityId: id,
-          locale,
-          field: 'title',
-          value: title,
-        },
-      });
+        });
+      }
 
       if (slugValue) {
         try {
@@ -377,6 +386,30 @@ function InlineEditForm({ category, locales, onClose }) {
                 name={`slug[${locale}]`}
                 defaultValue={category.slugs[locale] ?? ''}
                 placeholder="url-slug"
+                className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
+                Meta title ({locale})
+              </label>
+              <input
+                type="text"
+                name={`metaTitle[${locale}]`}
+                defaultValue={category.translations[locale]?.metaTitle ?? ''}
+                className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
+                Meta description ({locale})
+              </label>
+              <textarea
+                name={`metaDescription[${locale}]`}
+                rows={2}
+                defaultValue={
+                  category.translations[locale]?.metaDescription ?? ''
+                }
                 className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
             </div>

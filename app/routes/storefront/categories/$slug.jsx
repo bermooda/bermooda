@@ -1,8 +1,15 @@
 import { useLoaderData } from 'react-router';
 
+import { JsonLd } from '#/components/seo/json-ld';
+
 import { getCategoryBySlug, listProducts } from '#/core/catalog/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
+import { attachReviewSummaries } from '#/core/reviews/index.server';
+import {
+  buildBreadcrumbJsonLd,
+  buildCategoryMeta,
+} from '#/core/seo/index.server';
 import CategoryPage from '#/themes/default/components/category-page';
 
 export async function loader({ request, params }) {
@@ -16,7 +23,7 @@ export async function loader({ request, params }) {
 
   const url = new URL(request.url);
   const page = Number(url.searchParams.get('page') ?? 1);
-  const { products, total } = await listProducts({
+  const { products: rawProducts, total } = await listProducts({
     locale,
     currency,
     categoryId: category.id,
@@ -25,15 +32,40 @@ export async function loader({ request, params }) {
     published: true,
   });
 
-  return { category, products, total, page, locale, currency };
+  const products = await attachReviewSummaries(rawProducts);
+  const path = `/categories/${params.slug}`;
+  const breadcrumb = buildBreadcrumbJsonLd(
+    [
+      { name: 'Home', url: '/' },
+      { name: category.title, url: path },
+    ],
+    request
+  );
+
+  return {
+    category,
+    products,
+    total,
+    page,
+    locale,
+    currency,
+    path,
+    jsonLd: breadcrumb,
+    metaTags: await buildCategoryMeta({ category, request, path }),
+  };
 }
 
 export function meta({ data }) {
-  const title = data?.category?.title ?? 'Category';
-  return [{ title }, { name: 'description', content: title }];
+  if (!data?.metaTags) return [{ title: 'Category not found' }];
+  return data.metaTags;
 }
 
 export default function CategoryRoute() {
   const data = useLoaderData();
-  return <CategoryPage {...data} />;
+  return (
+    <>
+      <JsonLd data={data.jsonLd} />
+      <CategoryPage {...data} />
+    </>
+  );
 }

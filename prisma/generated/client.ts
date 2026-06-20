@@ -267,6 +267,26 @@ export type ReturnLine = Prisma.ReturnLineModel
  */
 export type StoreCreditLedger = Prisma.StoreCreditLedgerModel
 /**
+ * Model Page
+ * 
+ */
+export type Page = Prisma.PageModel
+/**
+ * Model Menu
+ * 
+ */
+export type Menu = Prisma.MenuModel
+/**
+ * Model MenuItem
+ * 
+ */
+export type MenuItem = Prisma.MenuItemModel
+/**
+ * Model Review
+ * 
+ */
+export type Review = Prisma.ReviewModel
+/**
  * Model AuditLog
  * 
  */

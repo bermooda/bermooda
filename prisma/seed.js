@@ -455,6 +455,124 @@ async function main() {
   console.log(
     `Seeded ${products.length} demo products (${legacyDemo.id} retained).`
   );
+
+  // W5: CMS pages and navigation menus
+  const aboutPage = await prisma.page.upsert({
+    where: { id: 'seed-page-about' },
+    create: {
+      id: 'seed-page-about',
+      status: 'published',
+      publishedAt: new Date(),
+      position: 0,
+    },
+    update: { status: 'published', publishedAt: new Date() },
+  });
+  await upsertSlug('page', aboutPage.id, 'about');
+  await upsertTranslation('page', aboutPage.id, 'title', 'About Us');
+  await upsertTranslation(
+    'page',
+    aboutPage.id,
+    'body',
+    'Bermooda is a curated home and lifestyle shop. We source thoughtful goods for everyday living.'
+  );
+
+  const shippingPage = await prisma.page.upsert({
+    where: { id: 'seed-page-shipping' },
+    create: {
+      id: 'seed-page-shipping',
+      status: 'published',
+      publishedAt: new Date(),
+      position: 1,
+    },
+    update: { status: 'published', publishedAt: new Date() },
+  });
+  await upsertSlug('page', shippingPage.id, 'shipping-policy');
+  await upsertTranslation('page', shippingPage.id, 'title', 'Shipping Policy');
+  await upsertTranslation(
+    'page',
+    shippingPage.id,
+    'body',
+    'Orders ship within 2 business days. Free shipping on orders over $75.'
+  );
+
+  const subHeaderMenu = await prisma.menu.upsert({
+    where: { handle: 'sub-header' },
+    create: { handle: 'sub-header', title: 'Sub header' },
+    update: { title: 'Sub header' },
+  });
+  await prisma.menuItem.deleteMany({ where: { menuId: subHeaderMenu.id } });
+  await prisma.menuItem.createMany({
+    data: [
+      {
+        menuId: subHeaderMenu.id,
+        label: 'Gift Guide',
+        pageId: aboutPage.id,
+        position: 0,
+      },
+      {
+        menuId: subHeaderMenu.id,
+        label: 'Trade Program',
+        url: '/about',
+        position: 1,
+      },
+      {
+        menuId: subHeaderMenu.id,
+        label: 'Stores',
+        pageId: shippingPage.id,
+        position: 2,
+      },
+    ],
+  });
+
+  const footerMenu = await prisma.menu.upsert({
+    where: { handle: 'footer' },
+    create: { handle: 'footer', title: 'Footer' },
+    update: { title: 'Footer' },
+  });
+  await prisma.menuItem.deleteMany({ where: { menuId: footerMenu.id } });
+  await prisma.menuItem.createMany({
+    data: [
+      {
+        menuId: footerMenu.id,
+        label: 'Shipping',
+        pageId: shippingPage.id,
+        position: 0,
+      },
+      {
+        menuId: footerMenu.id,
+        label: 'About',
+        pageId: aboutPage.id,
+        position: 1,
+      },
+      {
+        menuId: footerMenu.id,
+        label: 'Account',
+        url: '/account/login',
+        position: 2,
+      },
+    ],
+  });
+
+  const mainMenu = await prisma.menu.upsert({
+    where: { handle: 'main' },
+    create: { handle: 'main', title: 'Main' },
+    update: { title: 'Main' },
+  });
+  await prisma.menuItem.deleteMany({ where: { menuId: mainMenu.id } });
+  await prisma.menuItem.createMany({
+    data: [
+      { menuId: mainMenu.id, label: 'Home', url: '/', position: 0 },
+      {
+        menuId: mainMenu.id,
+        label: 'About',
+        pageId: aboutPage.id,
+        position: 1,
+      },
+    ],
+  });
+
+  console.log('W5 CMS pages and menus seeded.');
+
   console.log('Seed complete.');
 }
 
