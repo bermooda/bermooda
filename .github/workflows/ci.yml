@@ -30,3 +30,37 @@ jobs:
       - run: npm run build
     env:
       DATABASE_URL: file:./sqlite.db
+
+  test-postgres:
+    name: Test (Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bermooda_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bermooda_test
+      DATABASE_PROVIDER: postgresql
+      QUEUE_DATABASE_PATH: ./prisma/queue-test.db
+      BETTER_AUTH_SECRET: ci-test-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: node scripts/sync-prisma-provider.js
+      - run: npx prisma db push
+      - run: npx prisma generate
+      - run: npm run test

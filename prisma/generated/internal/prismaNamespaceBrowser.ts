@@ -115,7 +115,8 @@ export const ModelName = {
   WishlistItem: 'WishlistItem',
   BackInStockSubscription: 'BackInStockSubscription',
   DigitalAsset: 'DigitalAsset',
-  BundleItem: 'BundleItem'
+  BundleItem: 'BundleItem',
+  RolePermission: 'RolePermission'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -391,6 +392,7 @@ export const MediaScalarFieldEnum = {
   mimeType: 'mimeType',
   width: 'width',
   height: 'height',
+  variantsJson: 'variantsJson',
   altText: 'altText',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1055,6 +1057,16 @@ export const BundleItemScalarFieldEnum = {
 } as const
 
 export type BundleItemScalarFieldEnum = (typeof BundleItemScalarFieldEnum)[keyof typeof BundleItemScalarFieldEnum]
+
+
+export const RolePermissionScalarFieldEnum = {
+  id: 'id',
+  role: 'role',
+  resource: 'resource',
+  action: 'action'
+} as const
+
+export type RolePermissionScalarFieldEnum = (typeof RolePermissionScalarFieldEnum)[keyof typeof RolePermissionScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -73,60 +73,67 @@ export default [
   // ---------------------------------------------------------------------------
   // W2: Storefront public REST API (/api/v1/*) — no API key required for catalog
   // ---------------------------------------------------------------------------
-  ...prefix('api/v1', [
-    route('catalog', 'routes/api/v1/catalog.jsx'),
-    route('catalog/:id', 'routes/api/v1/catalog/$id.jsx'),
-    route('categories', 'routes/api/v1/categories.jsx'),
-    route('search', 'routes/api/v1/search.jsx'),
-    route('cart', 'routes/api/v1/cart.jsx'),
-    route('cart/:token', 'routes/api/v1/cart/$token.jsx'),
-    route('cart/:token/lines', 'routes/api/v1/cart/$token/lines.jsx'),
-    route(
-      'cart/:token/lines/:lineId',
-      'routes/api/v1/cart/$token/lines/$lineId.jsx'
-    ),
-    route('checkout', 'routes/api/v1/checkout.jsx'),
-    route('checkout/:id', 'routes/api/v1/checkout/$id.jsx'),
-    route('checkout/:id/advance', 'routes/api/v1/checkout/$id/advance.jsx'),
+  layout('routes/api/v1/_layout.jsx', [
+    ...prefix('api/v1', [
+      route('catalog', 'routes/api/v1/catalog.jsx'),
+      route('catalog/:id', 'routes/api/v1/catalog/$id.jsx'),
+      route('categories', 'routes/api/v1/categories.jsx'),
+      route('search', 'routes/api/v1/search.jsx'),
+      route('cart', 'routes/api/v1/cart.jsx'),
+      route('cart/:token', 'routes/api/v1/cart/$token.jsx'),
+      route('cart/:token/lines', 'routes/api/v1/cart/$token/lines.jsx'),
+      route(
+        'cart/:token/lines/:lineId',
+        'routes/api/v1/cart/$token/lines/$lineId.jsx'
+      ),
+      route('checkout', 'routes/api/v1/checkout.jsx'),
+      route('checkout/:id', 'routes/api/v1/checkout/$id.jsx'),
+      route('checkout/:id/advance', 'routes/api/v1/checkout/$id/advance.jsx'),
+    ]),
   ]),
 
   // ---------------------------------------------------------------------------
   // W2: Admin REST API (/api/admin/v1/*) — requires admin-scoped API key
   // ---------------------------------------------------------------------------
-  ...prefix('api/admin/v1', [
-    route('products', 'routes/api/admin/v1/products.jsx'),
-    route('products/:id', 'routes/api/admin/v1/products/$id.jsx'),
-    route('orders', 'routes/api/admin/v1/orders.jsx'),
-    route('orders/:id', 'routes/api/admin/v1/orders/$id.jsx'),
-    route('orders/:id/refunds', 'routes/api/admin/v1/orders/$id/refunds.jsx'),
-    route('orders/:id/returns', 'routes/api/admin/v1/orders/$id/returns.jsx'),
-    route(
-      'orders/:id/shipments',
-      'routes/api/admin/v1/orders/$id/shipments.jsx'
-    ),
-    route(
-      'orders/:id/documents/invoice',
-      'routes/api/admin/v1/orders/$id/documents/invoice.jsx'
-    ),
-    route(
-      'shipments/:id/documents/packing-slip',
-      'routes/api/admin/v1/shipments/$id/documents/packing-slip.jsx'
-    ),
-    route('returns/:id/:action', 'routes/api/admin/v1/returns/$id/$action.jsx'),
-    route('customers', 'routes/api/admin/v1/customers.jsx'),
-    route('customers/:id', 'routes/api/admin/v1/customers/$id.jsx'),
-    route('discounts', 'routes/api/admin/v1/discounts.jsx'),
-    route('discounts/:id', 'routes/api/admin/v1/discounts/$id.jsx'),
-    route('api-keys', 'routes/api/admin/v1/api-keys.jsx'),
-    route('api-keys/:id', 'routes/api/admin/v1/api-keys/$id.jsx'),
-    route(
-      'webhook-subscriptions',
-      'routes/api/admin/v1/webhook-subscriptions.jsx'
-    ),
-    route(
-      'webhook-subscriptions/:id',
-      'routes/api/admin/v1/webhook-subscriptions/$id.jsx'
-    ),
+  layout('routes/api/admin/v1/_layout.jsx', [
+    ...prefix('api/admin/v1', [
+      route('products', 'routes/api/admin/v1/products.jsx'),
+      route('products/:id', 'routes/api/admin/v1/products/$id.jsx'),
+      route('orders', 'routes/api/admin/v1/orders.jsx'),
+      route('orders/:id', 'routes/api/admin/v1/orders/$id.jsx'),
+      route('orders/:id/refunds', 'routes/api/admin/v1/orders/$id/refunds.jsx'),
+      route('orders/:id/returns', 'routes/api/admin/v1/orders/$id/returns.jsx'),
+      route(
+        'orders/:id/shipments',
+        'routes/api/admin/v1/orders/$id/shipments.jsx'
+      ),
+      route(
+        'orders/:id/documents/invoice',
+        'routes/api/admin/v1/orders/$id/documents/invoice.jsx'
+      ),
+      route(
+        'shipments/:id/documents/packing-slip',
+        'routes/api/admin/v1/shipments/$id/documents/packing-slip.jsx'
+      ),
+      route(
+        'returns/:id/:action',
+        'routes/api/admin/v1/returns/$id/$action.jsx'
+      ),
+      route('customers', 'routes/api/admin/v1/customers.jsx'),
+      route('customers/:id', 'routes/api/admin/v1/customers/$id.jsx'),
+      route('discounts', 'routes/api/admin/v1/discounts.jsx'),
+      route('discounts/:id', 'routes/api/admin/v1/discounts/$id.jsx'),
+      route('api-keys', 'routes/api/admin/v1/api-keys.jsx'),
+      route('api-keys/:id', 'routes/api/admin/v1/api-keys/$id.jsx'),
+      route(
+        'webhook-subscriptions',
+        'routes/api/admin/v1/webhook-subscriptions.jsx'
+      ),
+      route(
+        'webhook-subscriptions/:id',
+        'routes/api/admin/v1/webhook-subscriptions/$id.jsx'
+      ),
+    ]),
   ]),
 
   // ---------------------------------------------------------------------------

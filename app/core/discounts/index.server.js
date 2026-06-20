@@ -1,6 +1,7 @@
 // app/core/discounts/index.server.js
 // Promotions engine: validation, stacking, automatic discounts, CRUD.
 
+import { equalsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
 
 // ---------------------------------------------------------------------------
@@ -302,7 +303,7 @@ export async function applyCouponToCart(cartId, code) {
   if (!cart) throw new Error('CART_NOT_FOUND');
 
   const discount = await prisma.discount.findFirst({
-    where: { code: { equals: code, mode: 'insensitive' } },
+    where: { code: equalsFilter(code) },
   });
   if (!discount) throw new Error('DISCOUNT_NOT_FOUND');
 
@@ -394,7 +395,7 @@ export async function persistOrderDiscounts(orderId, applied, tx) {
 
 export async function applyDiscount(code, { subtotalCents, currency }) {
   const discount = await prisma.discount.findFirst({
-    where: { code: { equals: code, mode: 'insensitive' } },
+    where: { code: equalsFilter(code) },
   });
 
   if (!discount) {
@@ -424,7 +425,7 @@ export async function applyDiscount(code, { subtotalCents, currency }) {
 
 export async function validateDiscount(code, { subtotalCents, currency }) {
   const discount = await prisma.discount.findFirst({
-    where: { code: { equals: code, mode: 'insensitive' } },
+    where: { code: equalsFilter(code) },
   });
 
   if (!discount) {
@@ -444,7 +445,7 @@ export async function validateDiscount(code, { subtotalCents, currency }) {
 
 export async function getDiscount(codeOrId) {
   const byCode = await prisma.discount.findFirst({
-    where: { code: { equals: codeOrId, mode: 'insensitive' } },
+    where: { code: equalsFilter(codeOrId) },
   });
   if (byCode) return byCode;
 

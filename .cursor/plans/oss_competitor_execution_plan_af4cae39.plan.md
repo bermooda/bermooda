@@ -28,7 +28,7 @@ todos:
     status: completed
   - id: p2-w8
     content: 'Phase 2 (parallel, needs W2): W8 Postgres-first (env-driven datasource) + granular RBAC + rate limiting + image optimization/CDN + plugin/theme runtime completion + caching. Must land before W2 public GA.'
-    status: pending
+    status: completed
   - id: p3-w9
     content: 'Phase 3 (needs W4+W5+W7+W8): W9 differentiators — loyalty/referrals, marketing automation, multi-store/sales channels. Sub-items parallelizable.'
     status: pending

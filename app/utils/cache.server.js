@@ -23,4 +23,26 @@ export async function getCachedResult(key, refreshCallback, ttl = DEFAULT_TTL) {
   return result;
 }
 
+/**
+ * Invalidate a single cache key.
+ *
+ * @param {string} key
+ */
+export function invalidateCacheKey(key) {
+  cache.delete(key);
+}
+
+/**
+ * Invalidate all keys with the given prefix.
+ *
+ * @param {string} prefix
+ */
+export function invalidateCachePrefix(prefix) {
+  for (const key of cache.keys()) {
+    if (key.startsWith(prefix)) {
+      cache.delete(key);
+    }
+  }
+}
+
 export default cache;

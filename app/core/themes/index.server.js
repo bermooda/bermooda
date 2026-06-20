@@ -5,6 +5,8 @@ import { getCachedResult } from '#/utils/cache.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
+import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -166,25 +168,8 @@ export async function getStorefrontComponent(name) {
  * @param {string} _slotName
  * @returns {Promise<Array<{ pluginId: string, component: unknown }>>}
  */
-export async function getSlotBlocks(_slotName) {
-  // Read (and cache) the plugin order from the DB for future use.
-  await getCachedResult(
-    'setting:pluginOrder',
-    async () => {
-      const row = await prisma.setting.findUnique({
-        where: { key: 'pluginOrder' },
-      });
-      try {
-        return row?.value ? JSON.parse(row.value) : [];
-      } catch {
-        return [];
-      }
-    },
-    5 * 60 * 1000
-  );
-
-  // No plugins with blocks are enabled yet — real logic arrives in Phase 5.
-  return [];
+export async function getSlotBlocks(slotName) {
+  return getPluginBlocksForSlot(slotName);
 }
 
 // ---------------------------------------------------------------------------
