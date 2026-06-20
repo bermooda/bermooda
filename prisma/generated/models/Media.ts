@@ -43,6 +43,7 @@ export type MediaMinAggregateOutputType = {
   mimeType: string | null
   width: number | null
   height: number | null
+  variantsJson: string | null
   altText: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -55,6 +56,7 @@ export type MediaMaxAggregateOutputType = {
   mimeType: string | null
   width: number | null
   height: number | null
+  variantsJson: string | null
   altText: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -67,6 +69,7 @@ export type MediaCountAggregateOutputType = {
   mimeType: number
   width: number
   height: number
+  variantsJson: number
   altText: number
   createdAt: number
   updatedAt: number
@@ -91,6 +94,7 @@ export type MediaMinAggregateInputType = {
   mimeType?: true
   width?: true
   height?: true
+  variantsJson?: true
   altText?: true
   createdAt?: true
   updatedAt?: true
@@ -103,6 +107,7 @@ export type MediaMaxAggregateInputType = {
   mimeType?: true
   width?: true
   height?: true
+  variantsJson?: true
   altText?: true
   createdAt?: true
   updatedAt?: true
@@ -115,6 +120,7 @@ export type MediaCountAggregateInputType = {
   mimeType?: true
   width?: true
   height?: true
+  variantsJson?: true
   altText?: true
   createdAt?: true
   updatedAt?: true
@@ -214,6 +220,7 @@ export type MediaGroupByOutputType = {
   mimeType: string
   width: number | null
   height: number | null
+  variantsJson: string | null
   altText: string | null
   createdAt: Date
   updatedAt: Date
@@ -249,6 +256,7 @@ export type MediaWhereInput = {
   mimeType?: Prisma.StringFilter<"Media"> | string
   width?: Prisma.IntNullableFilter<"Media"> | number | null
   height?: Prisma.IntNullableFilter<"Media"> | number | null
+  variantsJson?: Prisma.StringNullableFilter<"Media"> | string | null
   altText?: Prisma.StringNullableFilter<"Media"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Media"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Media"> | Date | string
@@ -262,6 +270,7 @@ export type MediaOrderByWithRelationInput = {
   mimeType?: Prisma.SortOrder
   width?: Prisma.SortOrderInput | Prisma.SortOrder
   height?: Prisma.SortOrderInput | Prisma.SortOrder
+  variantsJson?: Prisma.SortOrderInput | Prisma.SortOrder
   altText?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -278,6 +287,7 @@ export type MediaWhereUniqueInput = Prisma.AtLeast<{
   mimeType?: Prisma.StringFilter<"Media"> | string
   width?: Prisma.IntNullableFilter<"Media"> | number | null
   height?: Prisma.IntNullableFilter<"Media"> | number | null
+  variantsJson?: Prisma.StringNullableFilter<"Media"> | string | null
   altText?: Prisma.StringNullableFilter<"Media"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Media"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Media"> | Date | string
@@ -291,6 +301,7 @@ export type MediaOrderByWithAggregationInput = {
   mimeType?: Prisma.SortOrder
   width?: Prisma.SortOrderInput | Prisma.SortOrder
   height?: Prisma.SortOrderInput | Prisma.SortOrder
+  variantsJson?: Prisma.SortOrderInput | Prisma.SortOrder
   altText?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -311,6 +322,7 @@ export type MediaScalarWhereWithAggregatesInput = {
   mimeType?: Prisma.StringWithAggregatesFilter<"Media"> | string
   width?: Prisma.IntNullableWithAggregatesFilter<"Media"> | number | null
   height?: Prisma.IntNullableWithAggregatesFilter<"Media"> | number | null
+  variantsJson?: Prisma.StringNullableWithAggregatesFilter<"Media"> | string | null
   altText?: Prisma.StringNullableWithAggregatesFilter<"Media"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Media"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Media"> | Date | string
@@ -323,6 +335,7 @@ export type MediaCreateInput = {
   mimeType: string
   width?: number | null
   height?: number | null
+  variantsJson?: string | null
   altText?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -336,6 +349,7 @@ export type MediaUncheckedCreateInput = {
   mimeType: string
   width?: number | null
   height?: number | null
+  variantsJson?: string | null
   altText?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -349,6 +363,7 @@ export type MediaUpdateInput = {
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  variantsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   altText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -362,6 +377,7 @@ export type MediaUncheckedUpdateInput = {
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  variantsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   altText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -375,6 +391,7 @@ export type MediaCreateManyInput = {
   mimeType: string
   width?: number | null
   height?: number | null
+  variantsJson?: string | null
   altText?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -387,6 +404,7 @@ export type MediaUpdateManyMutationInput = {
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  variantsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   altText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -399,6 +417,7 @@ export type MediaUncheckedUpdateManyInput = {
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  variantsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   altText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -411,6 +430,7 @@ export type MediaCountOrderByAggregateInput = {
   mimeType?: Prisma.SortOrder
   width?: Prisma.SortOrder
   height?: Prisma.SortOrder
+  variantsJson?: Prisma.SortOrder
   altText?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -428,6 +448,7 @@ export type MediaMaxOrderByAggregateInput = {
   mimeType?: Prisma.SortOrder
   width?: Prisma.SortOrder
   height?: Prisma.SortOrder
+  variantsJson?: Prisma.SortOrder
   altText?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -440,6 +461,7 @@ export type MediaMinOrderByAggregateInput = {
   mimeType?: Prisma.SortOrder
   width?: Prisma.SortOrder
   height?: Prisma.SortOrder
+  variantsJson?: Prisma.SortOrder
   altText?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -476,6 +498,7 @@ export type MediaCreateWithoutProductMediaInput = {
   mimeType: string
   width?: number | null
   height?: number | null
+  variantsJson?: string | null
   altText?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -488,6 +511,7 @@ export type MediaUncheckedCreateWithoutProductMediaInput = {
   mimeType: string
   width?: number | null
   height?: number | null
+  variantsJson?: string | null
   altText?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -516,6 +540,7 @@ export type MediaUpdateWithoutProductMediaInput = {
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  variantsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   altText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -528,6 +553,7 @@ export type MediaUncheckedUpdateWithoutProductMediaInput = {
   mimeType?: Prisma.StringFieldUpdateOperationsInput | string
   width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  variantsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   altText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -571,6 +597,7 @@ export type MediaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   mimeType?: boolean
   width?: boolean
   height?: boolean
+  variantsJson?: boolean
   altText?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -585,6 +612,7 @@ export type MediaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   mimeType?: boolean
   width?: boolean
   height?: boolean
+  variantsJson?: boolean
   altText?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -597,6 +625,7 @@ export type MediaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   mimeType?: boolean
   width?: boolean
   height?: boolean
+  variantsJson?: boolean
   altText?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -609,12 +638,13 @@ export type MediaSelectScalar = {
   mimeType?: boolean
   width?: boolean
   height?: boolean
+  variantsJson?: boolean
   altText?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type MediaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "storageKey" | "url" | "mimeType" | "width" | "height" | "altText" | "createdAt" | "updatedAt", ExtArgs["result"]["media"]>
+export type MediaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "storageKey" | "url" | "mimeType" | "width" | "height" | "variantsJson" | "altText" | "createdAt" | "updatedAt", ExtArgs["result"]["media"]>
 export type MediaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   productMedia?: boolean | Prisma.Media$productMediaArgs<ExtArgs>
   _count?: boolean | Prisma.MediaCountOutputTypeDefaultArgs<ExtArgs>
@@ -634,6 +664,7 @@ export type $MediaPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     mimeType: string
     width: number | null
     height: number | null
+    variantsJson: string | null
     altText: string | null
     createdAt: Date
     updatedAt: Date
@@ -1067,6 +1098,7 @@ export interface MediaFieldRefs {
   readonly mimeType: Prisma.FieldRef<"Media", 'String'>
   readonly width: Prisma.FieldRef<"Media", 'Int'>
   readonly height: Prisma.FieldRef<"Media", 'Int'>
+  readonly variantsJson: Prisma.FieldRef<"Media", 'String'>
   readonly altText: Prisma.FieldRef<"Media", 'String'>
   readonly createdAt: Prisma.FieldRef<"Media", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Media", 'DateTime'>

@@ -8,13 +8,17 @@ import { twoFactor } from 'better-auth/plugins';
 import { createContext, redirect } from 'react-router';
 
 import config from '#/config';
+import { getBetterAuthProvider } from '#/utils/database.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import { enforceRateLimit } from '#/libs/rate-limit.server';
 import {
   queuePasswordResetEmail,
   queueTwoFactorOtp,
   queueVerifyEmail,
 } from '#/emails/job.server';
+
+import { requirePermission } from '#/core/rbac/index.server';
 
 const IS_DEV = process.env.NODE_ENV === 'development';
 const ADMIN_AUTH_BASE_URL = config.baseUrl + config.auth.adminBasePath;
@@ -63,7 +67,7 @@ export const adminAuth = betterAuth({
   appName: config.appName,
 
   database: prismaAdapter(prisma, {
-    provider: 'sqlite',
+    provider: getBetterAuthProvider(),
   }),
 
   secret: process.env.BETTER_AUTH_SECRET,
@@ -173,6 +177,7 @@ export const adminAuthContext = createContext();
  * @param {import('react-router').RouterContextProvider} context.context - The context Set
  */
 export async function adminAuthMiddleware({ request, context }) {
+  enforceRateLimit(request, 'auth');
   const { user } = await authenticate(request);
 
   if (!user) {
@@ -184,6 +189,7 @@ export async function adminAuthMiddleware({ request, context }) {
     id: user.id,
     email: user.email,
     name: user.name,
+    role: user.role,
     emailVerified: user.emailVerified,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -221,6 +227,23 @@ export async function authenticate(request) {
 
     logger.error({ err: error }, 'Admin authentication error');
     throw redirect('/admin/login', 302);
+  }
+}
+
+/**
+ * Assert the authenticated admin user has a granular permission.
+ *
+ * @param {{ user: object }} session
+ * @param {string} permission
+ */
+export async function requireAdminPermission(session, permission) {
+  try {
+    await requirePermission(session.user, permission);
+  } catch (err) {
+    throw Response.json(
+      { error: err.message, code: err.code ?? 'FORBIDDEN' },
+      { status: err.status ?? 403 }
+    );
   }
 }
 

@@ -1,5 +1,9 @@
 import { PrismaClient } from '#prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
+
+import { getDatabaseProvider } from '#/utils/database.server';
 
 /**
  * Re-export Prisma model types
@@ -11,17 +15,21 @@ import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
  */
 
 /**
- * Create Prisma client with SQLite adapter
+ * Create Prisma client with the adapter matching DATABASE_URL / DATABASE_PROVIDER.
  * @see https://pris.ly/d/prisma7-client-config
  */
 function createPrismaClient() {
   const databaseUrl = process.env.DATABASE_URL;
+  const provider = getDatabaseProvider();
 
-  const adapter = new PrismaBetterSqlite3({
-    url: databaseUrl,
+  if (provider === 'postgresql') {
+    const pool = new pg.Pool({ connectionString: databaseUrl });
+    return new PrismaClient({ adapter: new PrismaPg(pool) });
+  }
+
+  return new PrismaClient({
+    adapter: new PrismaBetterSqlite3({ url: databaseUrl }),
   });
-
-  return new PrismaClient({ adapter });
 }
 
 /** @type {PrismaClient} */

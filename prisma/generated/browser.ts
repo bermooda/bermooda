@@ -342,3 +342,8 @@ export type DigitalAsset = Prisma.DigitalAssetModel
  * 
  */
 export type BundleItem = Prisma.BundleItemModel
+/**
+ * Model RolePermission
+ * 
+ */
+export type RolePermission = Prisma.RolePermissionModel

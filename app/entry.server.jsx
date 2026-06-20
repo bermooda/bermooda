@@ -13,10 +13,11 @@ import { isbot } from 'isbot';
 import { renderToPipeableStream } from 'react-dom/server';
 import { ServerRouter } from 'react-router';
 
-import { registerBuiltins } from '#/core/bootstrap.server';
+import { registerBuiltins, initializeAsync } from '#/core/bootstrap.server';
 
 // Register providers + event subscribers once at process start.
 registerBuiltins();
+void initializeAsync();
 
 const ABORT_DELAY = 5000;
 

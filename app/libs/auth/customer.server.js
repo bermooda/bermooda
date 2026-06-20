@@ -7,6 +7,7 @@ import { createAuthMiddleware } from 'better-auth/api';
 import { createContext, redirect } from 'react-router';
 
 import config from '#/config';
+import { getBetterAuthProvider } from '#/utils/database.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { queuePasswordResetEmail, queueVerifyEmail } from '#/emails/job.server';
@@ -68,7 +69,7 @@ export const customerAuth = betterAuth({
   appName: config.appName,
 
   database: prismaAdapter(prisma, {
-    provider: 'sqlite',
+    provider: getBetterAuthProvider(),
   }),
 
   secret: process.env.BETTER_AUTH_SECRET,
