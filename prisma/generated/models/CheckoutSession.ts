@@ -20,8 +20,18 @@ export type CheckoutSessionModel = runtime.Types.Result.DefaultSelection<Prisma.
 
 export type AggregateCheckoutSession = {
   _count: CheckoutSessionCountAggregateOutputType | null
+  _avg: CheckoutSessionAvgAggregateOutputType | null
+  _sum: CheckoutSessionSumAggregateOutputType | null
   _min: CheckoutSessionMinAggregateOutputType | null
   _max: CheckoutSessionMaxAggregateOutputType | null
+}
+
+export type CheckoutSessionAvgAggregateOutputType = {
+  storeCreditCents: number | null
+}
+
+export type CheckoutSessionSumAggregateOutputType = {
+  storeCreditCents: number | null
 }
 
 export type CheckoutSessionMinAggregateOutputType = {
@@ -36,6 +46,8 @@ export type CheckoutSessionMinAggregateOutputType = {
   paymentIntentId: string | null
   paymentProvider: string | null
   couponCode: string | null
+  giftCardCode: string | null
+  storeCreditCents: number | null
   vatId: string | null
   taxExempt: boolean | null
   expiresAt: Date | null
@@ -55,6 +67,8 @@ export type CheckoutSessionMaxAggregateOutputType = {
   paymentIntentId: string | null
   paymentProvider: string | null
   couponCode: string | null
+  giftCardCode: string | null
+  storeCreditCents: number | null
   vatId: string | null
   taxExempt: boolean | null
   expiresAt: Date | null
@@ -74,6 +88,8 @@ export type CheckoutSessionCountAggregateOutputType = {
   paymentIntentId: number
   paymentProvider: number
   couponCode: number
+  giftCardCode: number
+  storeCreditCents: number
   vatId: number
   taxExempt: number
   expiresAt: number
@@ -82,6 +98,14 @@ export type CheckoutSessionCountAggregateOutputType = {
   _all: number
 }
 
+
+export type CheckoutSessionAvgAggregateInputType = {
+  storeCreditCents?: true
+}
+
+export type CheckoutSessionSumAggregateInputType = {
+  storeCreditCents?: true
+}
 
 export type CheckoutSessionMinAggregateInputType = {
   id?: true
@@ -95,6 +119,8 @@ export type CheckoutSessionMinAggregateInputType = {
   paymentIntentId?: true
   paymentProvider?: true
   couponCode?: true
+  giftCardCode?: true
+  storeCreditCents?: true
   vatId?: true
   taxExempt?: true
   expiresAt?: true
@@ -114,6 +140,8 @@ export type CheckoutSessionMaxAggregateInputType = {
   paymentIntentId?: true
   paymentProvider?: true
   couponCode?: true
+  giftCardCode?: true
+  storeCreditCents?: true
   vatId?: true
   taxExempt?: true
   expiresAt?: true
@@ -133,6 +161,8 @@ export type CheckoutSessionCountAggregateInputType = {
   paymentIntentId?: true
   paymentProvider?: true
   couponCode?: true
+  giftCardCode?: true
+  storeCreditCents?: true
   vatId?: true
   taxExempt?: true
   expiresAt?: true
@@ -179,6 +209,18 @@ export type CheckoutSessionAggregateArgs<ExtArgs extends runtime.Types.Extension
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: CheckoutSessionAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: CheckoutSessionSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: CheckoutSessionMinAggregateInputType
@@ -209,6 +251,8 @@ export type CheckoutSessionGroupByArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   _count?: CheckoutSessionCountAggregateInputType | true
+  _avg?: CheckoutSessionAvgAggregateInputType
+  _sum?: CheckoutSessionSumAggregateInputType
   _min?: CheckoutSessionMinAggregateInputType
   _max?: CheckoutSessionMaxAggregateInputType
 }
@@ -225,12 +269,16 @@ export type CheckoutSessionGroupByOutputType = {
   paymentIntentId: string | null
   paymentProvider: string | null
   couponCode: string | null
+  giftCardCode: string | null
+  storeCreditCents: number
   vatId: string | null
   taxExempt: boolean
   expiresAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: CheckoutSessionCountAggregateOutputType | null
+  _avg: CheckoutSessionAvgAggregateOutputType | null
+  _sum: CheckoutSessionSumAggregateOutputType | null
   _min: CheckoutSessionMinAggregateOutputType | null
   _max: CheckoutSessionMaxAggregateOutputType | null
 }
@@ -265,6 +313,8 @@ export type CheckoutSessionWhereInput = {
   paymentIntentId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   paymentProvider?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   couponCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
+  giftCardCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
+  storeCreditCents?: Prisma.IntFilter<"CheckoutSession"> | number
   vatId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   taxExempt?: Prisma.BoolFilter<"CheckoutSession"> | boolean
   expiresAt?: Prisma.DateTimeNullableFilter<"CheckoutSession"> | Date | string | null
@@ -286,6 +336,8 @@ export type CheckoutSessionOrderByWithRelationInput = {
   paymentIntentId?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentProvider?: Prisma.SortOrderInput | Prisma.SortOrder
   couponCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  giftCardCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
   vatId?: Prisma.SortOrderInput | Prisma.SortOrder
   taxExempt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -310,6 +362,8 @@ export type CheckoutSessionWhereUniqueInput = Prisma.AtLeast<{
   paymentIntentId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   paymentProvider?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   couponCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
+  giftCardCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
+  storeCreditCents?: Prisma.IntFilter<"CheckoutSession"> | number
   vatId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   taxExempt?: Prisma.BoolFilter<"CheckoutSession"> | boolean
   expiresAt?: Prisma.DateTimeNullableFilter<"CheckoutSession"> | Date | string | null
@@ -331,14 +385,18 @@ export type CheckoutSessionOrderByWithAggregationInput = {
   paymentIntentId?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentProvider?: Prisma.SortOrderInput | Prisma.SortOrder
   couponCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  giftCardCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
   vatId?: Prisma.SortOrderInput | Prisma.SortOrder
   taxExempt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.CheckoutSessionCountOrderByAggregateInput
+  _avg?: Prisma.CheckoutSessionAvgOrderByAggregateInput
   _max?: Prisma.CheckoutSessionMaxOrderByAggregateInput
   _min?: Prisma.CheckoutSessionMinOrderByAggregateInput
+  _sum?: Prisma.CheckoutSessionSumOrderByAggregateInput
 }
 
 export type CheckoutSessionScalarWhereWithAggregatesInput = {
@@ -356,6 +414,8 @@ export type CheckoutSessionScalarWhereWithAggregatesInput = {
   paymentIntentId?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
   paymentProvider?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
   couponCode?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
+  giftCardCode?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
+  storeCreditCents?: Prisma.IntWithAggregatesFilter<"CheckoutSession"> | number
   vatId?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
   taxExempt?: Prisma.BoolWithAggregatesFilter<"CheckoutSession"> | boolean
   expiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CheckoutSession"> | Date | string | null
@@ -373,6 +433,8 @@ export type CheckoutSessionCreateInput = {
   paymentIntentId?: string | null
   paymentProvider?: string | null
   couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -394,6 +456,8 @@ export type CheckoutSessionUncheckedCreateInput = {
   paymentIntentId?: string | null
   paymentProvider?: string | null
   couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -411,6 +475,8 @@ export type CheckoutSessionUpdateInput = {
   paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -432,6 +498,8 @@ export type CheckoutSessionUncheckedUpdateInput = {
   paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -451,6 +519,8 @@ export type CheckoutSessionCreateManyInput = {
   paymentIntentId?: string | null
   paymentProvider?: string | null
   couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -468,6 +538,8 @@ export type CheckoutSessionUpdateManyMutationInput = {
   paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -487,6 +559,8 @@ export type CheckoutSessionUncheckedUpdateManyInput = {
   paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -516,11 +590,17 @@ export type CheckoutSessionCountOrderByAggregateInput = {
   paymentIntentId?: Prisma.SortOrder
   paymentProvider?: Prisma.SortOrder
   couponCode?: Prisma.SortOrder
+  giftCardCode?: Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
   vatId?: Prisma.SortOrder
   taxExempt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type CheckoutSessionAvgOrderByAggregateInput = {
+  storeCreditCents?: Prisma.SortOrder
 }
 
 export type CheckoutSessionMaxOrderByAggregateInput = {
@@ -535,6 +615,8 @@ export type CheckoutSessionMaxOrderByAggregateInput = {
   paymentIntentId?: Prisma.SortOrder
   paymentProvider?: Prisma.SortOrder
   couponCode?: Prisma.SortOrder
+  giftCardCode?: Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
   vatId?: Prisma.SortOrder
   taxExempt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -554,11 +636,17 @@ export type CheckoutSessionMinOrderByAggregateInput = {
   paymentIntentId?: Prisma.SortOrder
   paymentProvider?: Prisma.SortOrder
   couponCode?: Prisma.SortOrder
+  giftCardCode?: Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
   vatId?: Prisma.SortOrder
   taxExempt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type CheckoutSessionSumOrderByAggregateInput = {
+  storeCreditCents?: Prisma.SortOrder
 }
 
 export type CheckoutSessionCreateNestedManyWithoutCustomerInput = {
@@ -655,6 +743,8 @@ export type CheckoutSessionCreateWithoutCustomerInput = {
   paymentIntentId?: string | null
   paymentProvider?: string | null
   couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -674,6 +764,8 @@ export type CheckoutSessionUncheckedCreateWithoutCustomerInput = {
   paymentIntentId?: string | null
   paymentProvider?: string | null
   couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -721,6 +813,8 @@ export type CheckoutSessionScalarWhereInput = {
   paymentIntentId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   paymentProvider?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   couponCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
+  giftCardCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
+  storeCreditCents?: Prisma.IntFilter<"CheckoutSession"> | number
   vatId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   taxExempt?: Prisma.BoolFilter<"CheckoutSession"> | boolean
   expiresAt?: Prisma.DateTimeNullableFilter<"CheckoutSession"> | Date | string | null
@@ -738,6 +832,8 @@ export type CheckoutSessionCreateWithoutCartInput = {
   paymentIntentId?: string | null
   paymentProvider?: string | null
   couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -757,6 +853,8 @@ export type CheckoutSessionUncheckedCreateWithoutCartInput = {
   paymentIntentId?: string | null
   paymentProvider?: string | null
   couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -800,6 +898,8 @@ export type CheckoutSessionCreateManyCustomerInput = {
   paymentIntentId?: string | null
   paymentProvider?: string | null
   couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -817,6 +917,8 @@ export type CheckoutSessionUpdateWithoutCustomerInput = {
   paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -836,6 +938,8 @@ export type CheckoutSessionUncheckedUpdateWithoutCustomerInput = {
   paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -854,6 +958,8 @@ export type CheckoutSessionUncheckedUpdateManyWithoutCustomerInput = {
   paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -872,6 +978,8 @@ export type CheckoutSessionCreateManyCartInput = {
   paymentIntentId?: string | null
   paymentProvider?: string | null
   couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -889,6 +997,8 @@ export type CheckoutSessionUpdateWithoutCartInput = {
   paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -908,6 +1018,8 @@ export type CheckoutSessionUncheckedUpdateWithoutCartInput = {
   paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -926,6 +1038,8 @@ export type CheckoutSessionUncheckedUpdateManyWithoutCartInput = {
   paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -947,6 +1061,8 @@ export type CheckoutSessionSelect<ExtArgs extends runtime.Types.Extensions.Inter
   paymentIntentId?: boolean
   paymentProvider?: boolean
   couponCode?: boolean
+  giftCardCode?: boolean
+  storeCreditCents?: boolean
   vatId?: boolean
   taxExempt?: boolean
   expiresAt?: boolean
@@ -968,6 +1084,8 @@ export type CheckoutSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   paymentIntentId?: boolean
   paymentProvider?: boolean
   couponCode?: boolean
+  giftCardCode?: boolean
+  storeCreditCents?: boolean
   vatId?: boolean
   taxExempt?: boolean
   expiresAt?: boolean
@@ -989,6 +1107,8 @@ export type CheckoutSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   paymentIntentId?: boolean
   paymentProvider?: boolean
   couponCode?: boolean
+  giftCardCode?: boolean
+  storeCreditCents?: boolean
   vatId?: boolean
   taxExempt?: boolean
   expiresAt?: boolean
@@ -1010,6 +1130,8 @@ export type CheckoutSessionSelectScalar = {
   paymentIntentId?: boolean
   paymentProvider?: boolean
   couponCode?: boolean
+  giftCardCode?: boolean
+  storeCreditCents?: boolean
   vatId?: boolean
   taxExempt?: boolean
   expiresAt?: boolean
@@ -1017,7 +1139,7 @@ export type CheckoutSessionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CheckoutSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "cartId" | "customerId" | "email" | "step" | "shippingAddressJson" | "billingAddressJson" | "shippingOptionJson" | "paymentIntentId" | "paymentProvider" | "couponCode" | "vatId" | "taxExempt" | "expiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["checkoutSession"]>
+export type CheckoutSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "cartId" | "customerId" | "email" | "step" | "shippingAddressJson" | "billingAddressJson" | "shippingOptionJson" | "paymentIntentId" | "paymentProvider" | "couponCode" | "giftCardCode" | "storeCreditCents" | "vatId" | "taxExempt" | "expiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["checkoutSession"]>
 export type CheckoutSessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   cart?: boolean | Prisma.CartDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.CheckoutSession$customerArgs<ExtArgs>
@@ -1049,6 +1171,8 @@ export type $CheckoutSessionPayload<ExtArgs extends runtime.Types.Extensions.Int
     paymentIntentId: string | null
     paymentProvider: string | null
     couponCode: string | null
+    giftCardCode: string | null
+    storeCreditCents: number
     vatId: string | null
     taxExempt: boolean
     expiresAt: Date | null
@@ -1490,6 +1614,8 @@ export interface CheckoutSessionFieldRefs {
   readonly paymentIntentId: Prisma.FieldRef<"CheckoutSession", 'String'>
   readonly paymentProvider: Prisma.FieldRef<"CheckoutSession", 'String'>
   readonly couponCode: Prisma.FieldRef<"CheckoutSession", 'String'>
+  readonly giftCardCode: Prisma.FieldRef<"CheckoutSession", 'String'>
+  readonly storeCreditCents: Prisma.FieldRef<"CheckoutSession", 'Int'>
   readonly vatId: Prisma.FieldRef<"CheckoutSession", 'String'>
   readonly taxExempt: Prisma.FieldRef<"CheckoutSession", 'Boolean'>
   readonly expiresAt: Prisma.FieldRef<"CheckoutSession", 'DateTime'>

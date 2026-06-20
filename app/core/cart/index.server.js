@@ -6,6 +6,11 @@ import { randomUUID } from 'crypto';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
+import {
+  getCustomerGroupIds,
+  resolveVariantPrice,
+} from '#/core/pricing/index.server';
+
 // ---------------------------------------------------------------------------
 // createCart
 // ---------------------------------------------------------------------------
@@ -45,7 +50,7 @@ export async function addLine(
   cartId,
   variantId,
   quantity,
-  { currency, locale } = {}
+  { currency, locale, customerId } = {}
 ) {
   const cart = await prisma.cart.findUnique({ where: { id: cartId } });
 
@@ -54,11 +59,17 @@ export async function addLine(
     throw new Error('CURRENCY_MISMATCH');
   }
 
-  const priceRow = await prisma.variantPrice.findUnique({
-    where: { variantId_currency: { variantId, currency: cart.currency } },
+  const customerGroupIds = customerId
+    ? await getCustomerGroupIds(customerId)
+    : [];
+  const resolved = await resolveVariantPrice({
+    variantId,
+    currency: cart.currency,
+    quantity,
+    customerGroupIds,
   });
 
-  if (!priceRow) {
+  if (!resolved) {
     throw new Error('PRICE_NOT_FOUND');
   }
 
@@ -95,7 +106,7 @@ export async function addLine(
       cartId,
       variantId,
       quantity,
-      priceCentsSnapshot: priceRow.priceCents,
+      priceCentsSnapshot: resolved.priceCents,
       titleSnapshot,
     },
   });

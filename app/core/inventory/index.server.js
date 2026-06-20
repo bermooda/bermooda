@@ -3,6 +3,14 @@
 
 import prisma from '#/libs/prisma.server';
 
+import { emit } from '#/core/events/index.server';
+
+import {
+  decrementLocationLevels,
+  getTotalAvailableQuantity,
+  incrementLocationLevels,
+} from '#/core/inventory/locations.server';
+
 // ---------------------------------------------------------------------------
 // decrementInventory
 // ---------------------------------------------------------------------------
@@ -17,22 +25,17 @@ export async function decrementInventory(items, tx) {
   const run = async (client) => {
     const insufficient = [];
 
-    // Fetch all variants and check availability within the transaction.
     for (const { variantId, quantity } of items) {
       const variant = await client.productVariant.findUnique({
         where: { id: variantId },
-        select: { id: true, inventoryCount: true, inventoryTracked: true },
+        select: { id: true, inventoryTracked: true },
       });
 
-      // Skip untracked variants.
       if (!variant || !variant.inventoryTracked) continue;
 
-      if (variant.inventoryCount < quantity) {
-        insufficient.push({
-          variantId,
-          requested: quantity,
-          available: variant.inventoryCount,
-        });
+      const available = await getTotalAvailableQuantity(variantId, client);
+      if (available < quantity) {
+        insufficient.push({ variantId, requested: quantity, available });
       }
     }
 
@@ -42,7 +45,6 @@ export async function decrementInventory(items, tx) {
       throw err;
     }
 
-    // All items are available — decrement each tracked variant.
     for (const { variantId, quantity } of items) {
       const variant = await client.productVariant.findUnique({
         where: { id: variantId },
@@ -50,11 +52,7 @@ export async function decrementInventory(items, tx) {
       });
 
       if (!variant || !variant.inventoryTracked) continue;
-
-      await client.productVariant.update({
-        where: { id: variantId },
-        data: { inventoryCount: { decrement: quantity } },
-      });
+      await decrementLocationLevels(client, variantId, quantity);
     }
   };
 
@@ -76,6 +74,8 @@ export async function decrementInventory(items, tx) {
  */
 export async function incrementInventory(items, tx) {
   const run = async (client) => {
+    const restocked = [];
+
     for (const { variantId, quantity } of items) {
       const variant = await client.productVariant.findUnique({
         where: { id: variantId },
@@ -84,18 +84,25 @@ export async function incrementInventory(items, tx) {
 
       if (!variant || !variant.inventoryTracked) continue;
 
-      await client.productVariant.update({
-        where: { id: variantId },
-        data: { inventoryCount: { increment: quantity } },
-      });
+      const { previousTotal, newTotal } = await incrementLocationLevels(
+        client,
+        variantId,
+        quantity
+      );
+
+      if (previousTotal <= 0 && newTotal > 0) {
+        restocked.push(variantId);
+      }
     }
+
+    return restocked;
   };
 
-  if (tx) {
-    return run(tx);
-  }
+  const restocked = tx ? await run(tx) : await prisma.$transaction(run);
 
-  return prisma.$transaction(run);
+  for (const variantId of restocked) {
+    await emit('inventory.restocked', { variantId });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -113,18 +120,14 @@ export async function checkAvailability(items) {
   for (const { variantId, quantity } of items) {
     const variant = await prisma.productVariant.findUnique({
       where: { id: variantId },
-      select: { inventoryCount: true, inventoryTracked: true },
+      select: { inventoryTracked: true },
     });
 
-    // Untracked variants are always available.
     if (!variant || !variant.inventoryTracked) continue;
 
-    if (variant.inventoryCount < quantity) {
-      insufficient.push({
-        variantId,
-        requested: quantity,
-        available: variant.inventoryCount,
-      });
+    const available = await getTotalAvailableQuantity(variantId);
+    if (available < quantity) {
+      insufficient.push({ variantId, requested: quantity, available });
     }
   }
 
@@ -145,10 +148,16 @@ export async function checkAvailability(items) {
  * @returns {Promise<number>} inventoryCount, or 0 if not found
  */
 export async function getInventoryCount(variantId) {
-  const variant = await prisma.productVariant.findUnique({
-    where: { id: variantId },
-    select: { inventoryCount: true },
-  });
-
-  return variant?.inventoryCount ?? 0;
+  return getTotalAvailableQuantity(variantId);
 }
+
+// Re-export location helpers for admin routes.
+export {
+  ensureDefaultLocation,
+  ensureVariantInventoryLevel,
+  syncVariantInventoryCount,
+  getTotalAvailableQuantity,
+  listLocations,
+  listVariantInventoryLevels,
+  setInventoryLevelQuantity,
+} from '#/core/inventory/locations.server';

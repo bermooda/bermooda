@@ -56,6 +56,7 @@ export default [
       ),
       route('account/addresses', 'routes/storefront/account/addresses.jsx'),
       route('account/profile', 'routes/storefront/account/profile.jsx'),
+      route('account/wishlist', 'routes/storefront/account/wishlist.jsx'),
     ]),
 
     // Plugin storefront dispatcher — static route, descriptor resolved at request time
@@ -179,6 +180,10 @@ export default [
       route('customers/:id', 'routes/admin/customers/$id.jsx'),
       // Discounts (P5-7)
       route('discounts', 'routes/admin/discounts/index.jsx'),
+      route('inventory', 'routes/admin/inventory/index.jsx'),
+      route('customer-groups', 'routes/admin/customer-groups/index.jsx'),
+      route('price-lists', 'routes/admin/price-lists/index.jsx'),
+      route('gift-cards', 'routes/admin/gift-cards/index.jsx'),
       // Themes (P5-8)
       route('themes', 'routes/admin/themes/index.jsx'),
       // Plugins (P5-9)

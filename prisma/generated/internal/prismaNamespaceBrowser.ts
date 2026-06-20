@@ -102,7 +102,20 @@ export const ModelName = {
   Review: 'Review',
   AuditLog: 'AuditLog',
   ScheduledExport: 'ScheduledExport',
-  ExportRun: 'ExportRun'
+  ExportRun: 'ExportRun',
+  Location: 'Location',
+  InventoryLevel: 'InventoryLevel',
+  CustomerGroup: 'CustomerGroup',
+  CustomerGroupMember: 'CustomerGroupMember',
+  PriceList: 'PriceList',
+  PriceListEntry: 'PriceListEntry',
+  GiftCard: 'GiftCard',
+  GiftCardRedemption: 'GiftCardRedemption',
+  Wishlist: 'Wishlist',
+  WishlistItem: 'WishlistItem',
+  BackInStockSubscription: 'BackInStockSubscription',
+  DigitalAsset: 'DigitalAsset',
+  BundleItem: 'BundleItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -287,6 +300,7 @@ export type AddressScalarFieldEnum = (typeof AddressScalarFieldEnum)[keyof typeo
 
 export const ProductScalarFieldEnum = {
   id: 'id',
+  productType: 'productType',
   publishedAt: 'publishedAt',
   position: 'position',
   createdAt: 'createdAt',
@@ -436,6 +450,8 @@ export const CheckoutSessionScalarFieldEnum = {
   paymentIntentId: 'paymentIntentId',
   paymentProvider: 'paymentProvider',
   couponCode: 'couponCode',
+  giftCardCode: 'giftCardCode',
+  storeCreditCents: 'storeCreditCents',
   vatId: 'vatId',
   taxExempt: 'taxExempt',
   expiresAt: 'expiresAt',
@@ -457,6 +473,8 @@ export const OrderScalarFieldEnum = {
   shippingCents: 'shippingCents',
   taxCents: 'taxCents',
   discountCents: 'discountCents',
+  storeCreditCents: 'storeCreditCents',
+  giftCardCents: 'giftCardCents',
   totalCents: 'totalCents',
   shippingAddressJson: 'shippingAddressJson',
   billingAddressJson: 'billingAddressJson',
@@ -875,6 +893,168 @@ export const ExportRunScalarFieldEnum = {
 } as const
 
 export type ExportRunScalarFieldEnum = (typeof ExportRunScalarFieldEnum)[keyof typeof ExportRunScalarFieldEnum]
+
+
+export const LocationScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  code: 'code',
+  isDefault: 'isDefault',
+  addressJson: 'addressJson',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LocationScalarFieldEnum = (typeof LocationScalarFieldEnum)[keyof typeof LocationScalarFieldEnum]
+
+
+export const InventoryLevelScalarFieldEnum = {
+  id: 'id',
+  variantId: 'variantId',
+  locationId: 'locationId',
+  quantity: 'quantity',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InventoryLevelScalarFieldEnum = (typeof InventoryLevelScalarFieldEnum)[keyof typeof InventoryLevelScalarFieldEnum]
+
+
+export const CustomerGroupScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  handle: 'handle',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CustomerGroupScalarFieldEnum = (typeof CustomerGroupScalarFieldEnum)[keyof typeof CustomerGroupScalarFieldEnum]
+
+
+export const CustomerGroupMemberScalarFieldEnum = {
+  id: 'id',
+  customerGroupId: 'customerGroupId',
+  customerId: 'customerId',
+  createdAt: 'createdAt'
+} as const
+
+export type CustomerGroupMemberScalarFieldEnum = (typeof CustomerGroupMemberScalarFieldEnum)[keyof typeof CustomerGroupMemberScalarFieldEnum]
+
+
+export const PriceListScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  customerGroupId: 'customerGroupId',
+  currency: 'currency',
+  priority: 'priority',
+  active: 'active',
+  startsAt: 'startsAt',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PriceListScalarFieldEnum = (typeof PriceListScalarFieldEnum)[keyof typeof PriceListScalarFieldEnum]
+
+
+export const PriceListEntryScalarFieldEnum = {
+  id: 'id',
+  priceListId: 'priceListId',
+  variantId: 'variantId',
+  priceCents: 'priceCents',
+  minQuantity: 'minQuantity',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PriceListEntryScalarFieldEnum = (typeof PriceListEntryScalarFieldEnum)[keyof typeof PriceListEntryScalarFieldEnum]
+
+
+export const GiftCardScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  initialBalanceCents: 'initialBalanceCents',
+  balanceCents: 'balanceCents',
+  currency: 'currency',
+  customerId: 'customerId',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GiftCardScalarFieldEnum = (typeof GiftCardScalarFieldEnum)[keyof typeof GiftCardScalarFieldEnum]
+
+
+export const GiftCardRedemptionScalarFieldEnum = {
+  id: 'id',
+  giftCardId: 'giftCardId',
+  orderId: 'orderId',
+  amountCents: 'amountCents',
+  createdAt: 'createdAt'
+} as const
+
+export type GiftCardRedemptionScalarFieldEnum = (typeof GiftCardRedemptionScalarFieldEnum)[keyof typeof GiftCardRedemptionScalarFieldEnum]
+
+
+export const WishlistScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  name: 'name',
+  isDefault: 'isDefault',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WishlistScalarFieldEnum = (typeof WishlistScalarFieldEnum)[keyof typeof WishlistScalarFieldEnum]
+
+
+export const WishlistItemScalarFieldEnum = {
+  id: 'id',
+  wishlistId: 'wishlistId',
+  variantId: 'variantId',
+  createdAt: 'createdAt'
+} as const
+
+export type WishlistItemScalarFieldEnum = (typeof WishlistItemScalarFieldEnum)[keyof typeof WishlistItemScalarFieldEnum]
+
+
+export const BackInStockSubscriptionScalarFieldEnum = {
+  id: 'id',
+  variantId: 'variantId',
+  customerId: 'customerId',
+  email: 'email',
+  notifiedAt: 'notifiedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type BackInStockSubscriptionScalarFieldEnum = (typeof BackInStockSubscriptionScalarFieldEnum)[keyof typeof BackInStockSubscriptionScalarFieldEnum]
+
+
+export const DigitalAssetScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  fileName: 'fileName',
+  filePath: 'filePath',
+  fileSize: 'fileSize',
+  mimeType: 'mimeType',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DigitalAssetScalarFieldEnum = (typeof DigitalAssetScalarFieldEnum)[keyof typeof DigitalAssetScalarFieldEnum]
+
+
+export const BundleItemScalarFieldEnum = {
+  id: 'id',
+  bundleProductId: 'bundleProductId',
+  componentVariantId: 'componentVariantId',
+  quantity: 'quantity',
+  createdAt: 'createdAt'
+} as const
+
+export type BundleItemScalarFieldEnum = (typeof BundleItemScalarFieldEnum)[keyof typeof BundleItemScalarFieldEnum]
 
 
 export const SortOrder = {

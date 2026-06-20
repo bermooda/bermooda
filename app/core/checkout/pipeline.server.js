@@ -138,6 +138,12 @@ export async function advanceStep(sessionId, stepData = {}) {
       }
       updateData = {
         paymentProvider: stepData.paymentProvider,
+        ...(stepData.giftCardCode !== undefined
+          ? { giftCardCode: stepData.giftCardCode }
+          : {}),
+        ...(stepData.storeCreditCents !== undefined
+          ? { storeCreditCents: stepData.storeCreditCents }
+          : {}),
         step: nextStep(step),
       };
       break;
@@ -189,6 +195,9 @@ export async function advanceStep(sessionId, stepData = {}) {
     shippingOptionId: shippingOption?.id ?? undefined,
     taxExempt: updatedSession.taxExempt ?? false,
     vatId: updatedSession.vatId ?? undefined,
+    customerId: updatedSession.customerId ?? undefined,
+    giftCardCode: updatedSession.giftCardCode ?? undefined,
+    storeCreditCents: updatedSession.storeCreditCents ?? 0,
   });
 
   return { ...updatedSession, totals };

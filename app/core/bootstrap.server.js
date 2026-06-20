@@ -14,6 +14,7 @@ import logger from '#/utils/logger.server';
 
 import { registerProvider as registerAddressValidation } from '#/core/address-validation/index.server';
 import { noopProvider } from '#/core/address-validation/index.server';
+import { registerBackInStockSubscribers } from '#/core/back-in-stock/index.server';
 import { registerAuditSubscribers } from '#/core/audit/index.server';
 import { on } from '#/core/events/index.server';
 import { registerPaymentEventHandlers } from '#/core/orders/index.server';
@@ -85,6 +86,9 @@ export function registerBuiltins() {
 
   // W6: audit log subscribes to domain events
   registerAuditSubscribers({ on });
+
+  // W7: back-in-stock notifications on inventory restock
+  registerBackInStockSubscribers({ on });
 
   logger.info('Bootstrap complete: built-in providers + theme registered');
 }
