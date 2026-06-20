@@ -186,6 +186,10 @@ export async function listOrders(customerId, { page = 1, limit = 20 } = {}) {
 export async function getOrder(orderId, customerId) {
   return prisma.order.findFirst({
     where: { id: orderId, customerId },
-    include: { lines: true },
+    include: {
+      lines: true,
+      shipments: { include: { lines: true } },
+      returns: { include: { lines: true } },
+    },
   });
 }

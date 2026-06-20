@@ -10,12 +10,18 @@ export const WEBHOOK_EVENTS = [
   'order.created',
   'order.confirmed',
   'order.cancelled',
+  'order.returned',
   'shipment.created',
   'shipment.shipped',
   'shipment.delivered',
   'payment.succeeded',
   'payment.failed',
   'payment.refunded',
+  'return.requested',
+  'return.approved',
+  'return.received',
+  'return.completed',
+  'return.cancelled',
 ];
 
 // Enqueuer set by job.server.js to avoid a circular import.
