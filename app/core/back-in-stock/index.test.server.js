@@ -18,7 +18,6 @@ vi.mock('#/emails/index.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-
 import { sendBackInStockEmail } from '#/emails/index.server';
 
 import {
@@ -41,7 +40,9 @@ describe('back-in-stock', () => {
 
     expect(prisma.backInStockSubscription.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { variantId_email: { variantId: 'v1', email: 'shop@example.com' } },
+        where: {
+          variantId_email: { variantId: 'v1', email: 'shop@example.com' },
+        },
       })
     );
   });

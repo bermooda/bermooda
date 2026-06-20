@@ -3,6 +3,7 @@
 import { Form, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+
 import {
   createPriceList,
   listPriceLists,
@@ -30,8 +31,7 @@ export async function action({ request }) {
   if (intent === 'create-list') {
     const name = formData.get('name')?.toString().trim();
     const currency = formData.get('currency')?.toString().trim().toUpperCase();
-    const customerGroupId =
-      formData.get('customerGroupId')?.toString() || null;
+    const customerGroupId = formData.get('customerGroupId')?.toString() || null;
     const priority = parseInt(formData.get('priority')?.toString() ?? '0', 10);
 
     if (!name || !currency) {
@@ -51,7 +51,10 @@ export async function action({ request }) {
   if (intent === 'add-entry') {
     const priceListId = formData.get('priceListId')?.toString();
     const variantId = formData.get('variantId')?.toString();
-    const priceCents = parseInt(formData.get('priceCents')?.toString() ?? '0', 10);
+    const priceCents = parseInt(
+      formData.get('priceCents')?.toString() ?? '0',
+      10
+    );
     const minQuantity = parseInt(
       formData.get('minQuantity')?.toString() ?? '1',
       10

@@ -78,7 +78,11 @@ const NAV_ITEMS = [
   { name: 'Reviews', href: '/admin/reviews', Icon: StarIcon },
   { name: 'Orders', href: '/admin/orders', Icon: ShoppingBagIcon },
   { name: 'Customers', href: '/admin/customers', Icon: UserGroupIcon },
-  { name: 'Customer Groups', href: '/admin/customer-groups', Icon: UserGroupIcon },
+  {
+    name: 'Customer Groups',
+    href: '/admin/customer-groups',
+    Icon: UserGroupIcon,
+  },
   { name: 'Price Lists', href: '/admin/price-lists', Icon: TagIcon },
   { name: 'Inventory', href: '/admin/inventory', Icon: CubeIcon },
   { name: 'Gift Cards', href: '/admin/gift-cards', Icon: ReceiptPercentIcon },

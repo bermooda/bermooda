@@ -77,7 +77,8 @@ export async function computeTotals({
         quantity: line.quantity,
         customerGroupIds,
       });
-      const priceCentsSnapshot = resolved?.priceCents ?? line.priceCentsSnapshot;
+      const priceCentsSnapshot =
+        resolved?.priceCents ?? line.priceCentsSnapshot;
       return { ...line, priceCentsSnapshot };
     })
   );
@@ -114,7 +115,10 @@ export async function computeTotals({
   let shippingOption = null;
 
   if (shippingAddress) {
-    const quotes = await getAllQuotes({ cart: { ...cart, lines }, shippingAddress });
+    const quotes = await getAllQuotes({
+      cart: { ...cart, lines },
+      shippingAddress,
+    });
     if (shippingOptionId) {
       shippingOption = quotes.find((q) => q.id === shippingOptionId) ?? null;
     }

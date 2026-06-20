@@ -3,6 +3,7 @@
 import { Form, Link, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
+
 import {
   addToWishlist,
   listWishlistItems,
@@ -69,7 +70,10 @@ export default function AccountWishlistRoute() {
           {items.map((item) => {
             const price = item.variant.prices[0];
             return (
-              <li key={item.id} className="flex items-center justify-between py-4">
+              <li
+                key={item.id}
+                className="flex items-center justify-between py-4"
+              >
                 <div>
                   <p className="font-medium text-slate-900">
                     {item.variant.sku || item.variant.id}
@@ -82,7 +86,11 @@ export default function AccountWishlistRoute() {
                 </div>
                 <Form method="post">
                   <input type="hidden" name="intent" value="remove" />
-                  <input type="hidden" name="variantId" value={item.variantId} />
+                  <input
+                    type="hidden"
+                    name="variantId"
+                    value={item.variantId}
+                  />
                   <button
                     type="submit"
                     className="text-sm text-red-600 hover:underline"

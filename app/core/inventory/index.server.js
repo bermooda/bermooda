@@ -4,7 +4,6 @@
 import prisma from '#/libs/prisma.server';
 
 import { emit } from '#/core/events/index.server';
-
 import {
   decrementLocationLevels,
   getTotalAvailableQuantity,

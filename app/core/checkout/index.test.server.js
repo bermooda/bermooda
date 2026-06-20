@@ -56,9 +56,9 @@ import {
 } from '#/core/checkout/pipeline.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { resolvePromotions } from '#/core/discounts/index.server';
+import { resolveVariantPrice } from '#/core/pricing/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
-import { resolveVariantPrice } from '#/core/pricing/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers

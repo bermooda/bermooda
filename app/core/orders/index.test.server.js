@@ -96,6 +96,8 @@ vi.mock('#/utils/logger.server', () => ({
 
 import prisma from '#/libs/prisma.server';
 
+import { expandBundleInventoryItems } from '#/core/catalog/types.server';
+import { computeTotals } from '#/core/checkout/totals.server';
 import {
   resolvePromotions,
   persistOrderDiscounts,
@@ -119,8 +121,6 @@ import {
   registerPaymentEventHandlers,
   deriveFulfillmentStatus,
 } from '#/core/orders/index.server';
-import { computeTotals } from '#/core/checkout/totals.server';
-import { expandBundleInventoryItems } from '#/core/catalog/types.server';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -727,7 +727,9 @@ describe('placeOrder — tax computation (W0-2)', () => {
     prisma.checkoutSession.update.mockResolvedValue({});
     decrementInventory.mockResolvedValue(undefined);
     emit.mockResolvedValue(undefined);
-    computeTotals.mockResolvedValue(defaultTotals({ shippingCents: 0, taxCents: 0 }));
+    computeTotals.mockResolvedValue(
+      defaultTotals({ shippingCents: 0, taxCents: 0 })
+    );
 
     await placeOrder('sess_1', {});
 

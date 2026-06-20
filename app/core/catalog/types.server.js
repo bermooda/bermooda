@@ -76,7 +76,11 @@ export async function upsertDigitalAsset(productId, data) {
   });
 }
 
-export async function upsertBundleItem(bundleProductId, componentVariantId, quantity = 1) {
+export async function upsertBundleItem(
+  bundleProductId,
+  componentVariantId,
+  quantity = 1
+) {
   return prisma.bundleItem.upsert({
     where: {
       bundleProductId_componentVariantId: {
