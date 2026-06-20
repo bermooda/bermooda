@@ -116,7 +116,9 @@ model Customer {
   addresses Address[]
   carts     Cart[]
   checkouts CheckoutSession[]
-  orders    Order[]
+  orders           Order[]
+  returns          Return[]
+  storeCreditLedger StoreCreditLedger[]
 
   @@index([email])
 }
@@ -428,6 +430,7 @@ model Order {
   lines      OrderLine[]
   shipments  Shipment[]
   refunds    Refund[]
+  returns    Return[]
   discounts  OrderDiscount[]
 
   @@index([customerId])
@@ -436,18 +439,22 @@ model Order {
 }
 
 model OrderLine {
-  id         String   @id @default(cuid())
-  orderId    String
-  variantId  String?
-  title      String
-  sku        String?
-  quantity   Int
-  priceCents Int
-  totalCents Int
-  createdAt  DateTime @default(now())
+  id                String   @id @default(cuid())
+  orderId           String
+  variantId         String?
+  title             String
+  sku               String?
+  quantity          Int
+  fulfilledQuantity Int      @default(0)
+  returnedQuantity  Int      @default(0)
+  priceCents        Int
+  totalCents        Int
+  createdAt         DateTime @default(now())
 
-  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  variant ProductVariant? @relation(fields: [variantId], references: [id])
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant       ProductVariant? @relation(fields: [variantId], references: [id])
+  shipmentLines ShipmentLine[]
+  returnLines   ReturnLine[]
 
   @@index([orderId])
 }
@@ -464,9 +471,24 @@ model Shipment {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  lines ShipmentLine[]
 
   @@index([orderId])
+}
+
+model ShipmentLine {
+  id          String   @id @default(cuid())
+  shipmentId  String
+  orderLineId String
+  quantity    Int
+  createdAt   DateTime @default(now())
+
+  shipment  Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  orderLine OrderLine @relation(fields: [orderLineId], references: [id])
+
+  @@index([shipmentId])
+  @@index([orderLineId])
 }
 
 model Refund {
@@ -701,6 +723,60 @@ model OrderDiscount {
 
   @@index([orderId])
   @@index([discountId])
+}
+
+// ─── W4: Returns/RMA, fulfillment depth, documents ───────────────────────────
+
+model Return {
+  id               String   @id @default(cuid())
+  orderId          String
+  customerId       String?
+  status           String   @default("requested")
+  reason           String?
+  resolution       String?
+  storeCreditCents Int?
+  exchangeOrderId  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  order    Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer Customer?    @relation(fields: [customerId], references: [id])
+  lines    ReturnLine[]
+
+  @@index([orderId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model ReturnLine {
+  id          String   @id @default(cuid())
+  returnId    String
+  orderLineId String
+  quantity    Int
+  restocked   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  return    Return    @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  orderLine OrderLine @relation(fields: [orderLineId], references: [id])
+
+  @@index([returnId])
+  @@index([orderLineId])
+}
+
+model StoreCreditLedger {
+  id                String   @id @default(cuid())
+  customerId        String
+  amountCents       Int
+  balanceAfterCents Int
+  reason            String?
+  referenceType     String?
+  referenceId       String?
+  createdAt         DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([referenceType, referenceId])
 }
 
 // ─── W6: Reporting, audit, compliance ────────────────────────────────────────

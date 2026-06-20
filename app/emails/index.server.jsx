@@ -5,8 +5,12 @@ import logger from '#/utils/logger.server';
 import AbandonedCartEmail from '#/emails/shop/abandoned-cart';
 import CustomerWelcomeEmail from '#/emails/shop/customer-welcome';
 import OrderConfirmationEmail from '#/emails/shop/order-confirmation';
+import OrderDeliveredEmail from '#/emails/shop/order-delivered';
+import OrderRefundedEmail from '#/emails/shop/order-refunded';
+import OrderShippedEmail from '#/emails/shop/order-shipped';
 import PasswordResetAdminEmail from '#/emails/shop/password-reset-admin';
 import PasswordResetCustomerEmail from '#/emails/shop/password-reset-customer';
+import ReturnReceivedEmail from '#/emails/shop/return-received';
 import ResetPasswordTemplate from '#/emails/templates/reset-password.server';
 import TwoFactorOtpTemplate from '#/emails/templates/two-factor-otp.server';
 import VerifyEmailTemplate from '#/emails/templates/verify-email.server';
@@ -23,6 +27,10 @@ const SUBJECT_TWO_FACTOR_OTP = 'Your verification code';
 
 // Email subjects — shop
 const SUBJECT_ORDER_CONFIRMATION = 'Your order confirmation';
+const SUBJECT_ORDER_SHIPPED = 'Your order has shipped';
+const SUBJECT_ORDER_DELIVERED = 'Your order was delivered';
+const SUBJECT_ORDER_REFUNDED = 'Refund processed';
+const SUBJECT_RETURN_RECEIVED = 'Return received';
 const SUBJECT_PASSWORD_RESET_ADMIN = 'Reset your admin password';
 const SUBJECT_PASSWORD_RESET_CUSTOMER = 'Reset your password';
 const SUBJECT_CUSTOMER_WELCOME = `Welcome to ${config.appName}`;
@@ -162,6 +170,90 @@ export async function sendOrderConfirmationEmail({
     return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send order confirmation email');
+    throw error;
+  }
+}
+
+export async function sendOrderShippedEmail({
+  email,
+  locale = 'en',
+  ...props
+}) {
+  try {
+    const data = await resend.emails.send({
+      from: config.resend.fromNoReply,
+      to: email,
+      subject: SUBJECT_ORDER_SHIPPED,
+      react: <OrderShippedEmail locale={locale} {...props} />,
+    });
+
+    logger.info({ email }, 'Order shipped email sent successfully');
+    return { success: true, data };
+  } catch (error) {
+    logger.error(error, 'Failed to send order shipped email');
+    throw error;
+  }
+}
+
+export async function sendOrderDeliveredEmail({
+  email,
+  locale = 'en',
+  ...props
+}) {
+  try {
+    const data = await resend.emails.send({
+      from: config.resend.fromNoReply,
+      to: email,
+      subject: SUBJECT_ORDER_DELIVERED,
+      react: <OrderDeliveredEmail locale={locale} {...props} />,
+    });
+
+    logger.info({ email }, 'Order delivered email sent successfully');
+    return { success: true, data };
+  } catch (error) {
+    logger.error(error, 'Failed to send order delivered email');
+    throw error;
+  }
+}
+
+export async function sendOrderRefundedEmail({
+  email,
+  locale = 'en',
+  ...props
+}) {
+  try {
+    const data = await resend.emails.send({
+      from: config.resend.fromNoReply,
+      to: email,
+      subject: SUBJECT_ORDER_REFUNDED,
+      react: <OrderRefundedEmail locale={locale} {...props} />,
+    });
+
+    logger.info({ email }, 'Order refunded email sent successfully');
+    return { success: true, data };
+  } catch (error) {
+    logger.error(error, 'Failed to send order refunded email');
+    throw error;
+  }
+}
+
+export async function sendReturnReceivedEmail({
+  email,
+  locale = 'en',
+  ...props
+}) {
+  try {
+    const data = await resend.emails.send({
+      from: config.resend.fromNoReply,
+      to: email,
+      subject: SUBJECT_RETURN_RECEIVED,
+      react: <ReturnReceivedEmail locale={locale} {...props} />,
+    });
+
+    logger.info({ email }, 'Return received email sent successfully');
+    return { success: true, data };
+  } catch (error) {
+    logger.error(error, 'Failed to send return received email');
     throw error;
   }
 }

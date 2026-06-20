@@ -10,12 +10,18 @@ const ENTITY_TYPE_BY_EVENT = {
   'order.created': 'order',
   'order.confirmed': 'order',
   'order.cancelled': 'order',
+  'order.returned': 'order',
   'shipment.created': 'shipment',
   'shipment.shipped': 'shipment',
   'shipment.delivered': 'shipment',
   'payment.succeeded': 'payment',
   'payment.failed': 'payment',
   'payment.refunded': 'refund',
+  'return.requested': 'return',
+  'return.approved': 'return',
+  'return.received': 'return',
+  'return.completed': 'return',
+  'return.cancelled': 'return',
 };
 
 /**
@@ -29,6 +35,7 @@ function entityIdFromPayload(event, payload) {
   if (payload.orderId) return payload.orderId;
   if (payload.shipmentId) return payload.shipmentId;
   if (payload.refundId) return payload.refundId;
+  if (payload.returnId) return payload.returnId;
   if (payload.id) return payload.id;
   return undefined;
 }

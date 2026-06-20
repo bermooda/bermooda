@@ -72,6 +72,15 @@ export default function AccountOrderDetailPage({ order, locale, currency }) {
           : '—'}
       </p>
 
+      {['paid', 'fulfilled', 'confirmed'].includes(order.status) && (
+        <Link
+          to={`/account/orders/${order.id}/return`}
+          className="inline-block text-sm text-indigo-600 hover:underline"
+        >
+          Request a return
+        </Link>
+      )}
+
       {/* Line items */}
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-700">
         <div className="px-6 py-4 font-semibold text-zinc-900 dark:text-zinc-100">

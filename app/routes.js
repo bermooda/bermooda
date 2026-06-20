@@ -50,6 +50,10 @@ export default [
       route('account', 'routes/storefront/account/index.jsx'),
       route('account/orders', 'routes/storefront/account/orders.jsx'),
       route('account/orders/:id', 'routes/storefront/account/orders/$id.jsx'),
+      route(
+        'account/orders/:id/return',
+        'routes/storefront/account/orders/$id/return.jsx'
+      ),
       route('account/addresses', 'routes/storefront/account/addresses.jsx'),
       route('account/profile', 'routes/storefront/account/profile.jsx'),
     ]),
@@ -91,10 +95,20 @@ export default [
     route('orders', 'routes/api/admin/v1/orders.jsx'),
     route('orders/:id', 'routes/api/admin/v1/orders/$id.jsx'),
     route('orders/:id/refunds', 'routes/api/admin/v1/orders/$id/refunds.jsx'),
+    route('orders/:id/returns', 'routes/api/admin/v1/orders/$id/returns.jsx'),
     route(
       'orders/:id/shipments',
       'routes/api/admin/v1/orders/$id/shipments.jsx'
     ),
+    route(
+      'orders/:id/documents/invoice',
+      'routes/api/admin/v1/orders/$id/documents/invoice.jsx'
+    ),
+    route(
+      'shipments/:id/documents/packing-slip',
+      'routes/api/admin/v1/shipments/$id/documents/packing-slip.jsx'
+    ),
+    route('returns/:id/:action', 'routes/api/admin/v1/returns/$id/$action.jsx'),
     route('customers', 'routes/api/admin/v1/customers.jsx'),
     route('customers/:id', 'routes/api/admin/v1/customers/$id.jsx'),
     route('discounts', 'routes/api/admin/v1/discounts.jsx'),
@@ -150,6 +164,7 @@ export default [
       // Orders (P5-5)
       route('orders', 'routes/admin/orders/index.jsx'),
       route('orders/:id', 'routes/admin/orders/$id.jsx'),
+      route('orders/:id/documents', 'routes/admin/orders/$id/documents.jsx'),
       // Customers (P5-6)
       route('customers', 'routes/admin/customers/index.jsx'),
       route('customers/:id', 'routes/admin/customers/$id.jsx'),
