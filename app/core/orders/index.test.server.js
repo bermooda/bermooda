@@ -65,6 +65,23 @@ vi.mock('#/core/tax/index.server', () => ({
   computeActiveTax: vi.fn(),
 }));
 
+vi.mock('#/core/checkout/totals.server', () => ({
+  computeTotals: vi.fn(),
+}));
+
+vi.mock('#/core/catalog/types.server', () => ({
+  expandBundleInventoryItems: vi.fn(),
+}));
+
+vi.mock('#/core/store-credit/index.server', () => ({
+  redeemStoreCredit: vi.fn(),
+}));
+
+vi.mock('#/core/gift-cards/index.server', () => ({
+  redeemGiftCard: vi.fn(),
+  getGiftCardByCode: vi.fn(),
+}));
+
 vi.mock('#/utils/logger.server', () => ({
   default: {
     info: vi.fn(),
@@ -79,6 +96,8 @@ vi.mock('#/utils/logger.server', () => ({
 
 import prisma from '#/libs/prisma.server';
 
+import { expandBundleInventoryItems } from '#/core/catalog/types.server';
+import { computeTotals } from '#/core/checkout/totals.server';
 import {
   resolvePromotions,
   persistOrderDiscounts,
@@ -102,7 +121,6 @@ import {
   registerPaymentEventHandlers,
   deriveFulfillmentStatus,
 } from '#/core/orders/index.server';
-import { computeActiveTax } from '#/core/tax/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -133,6 +151,23 @@ function makeCheckoutSession(overrides = {}) {
         },
       ],
     },
+    ...overrides,
+  };
+}
+
+function defaultTotals(overrides = {}) {
+  return {
+    subtotalCents: 2000,
+    discountCents: 0,
+    shippingCents: 500,
+    taxCents: 0,
+    storeCreditCents: 0,
+    giftCardCents: 0,
+    totalCents: 2500,
+    appliedDiscounts: [],
+    primaryCouponCode: null,
+    giftCardId: null,
+    customerGroupIds: [],
     ...overrides,
   };
 }
@@ -172,7 +207,10 @@ function setupTransaction(capturedTx = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
+  computeTotals.mockResolvedValue(defaultTotals());
+  expandBundleInventoryItems.mockImplementation((items) =>
+    Promise.resolve(items)
+  );
   incrementInventory.mockResolvedValue(undefined);
   resolvePromotions.mockResolvedValue({
     applied: [],
@@ -316,12 +354,20 @@ describe('placeOrder', () => {
       freeShipping: false,
       primaryCode: 'SAVE10',
     });
+    computeTotals.mockResolvedValue(
+      defaultTotals({
+        discountCents: 200,
+        appliedDiscounts: applied,
+        primaryCouponCode: 'SAVE10',
+        totalCents: 2300,
+      })
+    );
     decrementInventory.mockResolvedValue(undefined);
     emit.mockResolvedValue(undefined);
 
     await placeOrder('sess_1', {});
 
-    expect(resolvePromotions).toHaveBeenCalledWith(
+    expect(computeTotals).toHaveBeenCalledWith(
       expect.objectContaining({ couponCode: 'SAVE10' })
     );
     expect(persistOrderDiscounts).toHaveBeenCalledWith(
@@ -624,7 +670,7 @@ describe('updateRefundStatus', () => {
 // ---------------------------------------------------------------------------
 
 describe('placeOrder — tax computation (W0-2)', () => {
-  it('calls computeActiveTax with session shipping address and stores taxCents', async () => {
+  it('uses totals from computeTotals including taxCents', async () => {
     const session = makeCheckoutSession({
       shippingAddressJson: '{"country":"AU"}',
       shippingOptionJson: '{"id":"flat","priceCents":500}',
@@ -646,19 +692,19 @@ describe('placeOrder — tax computation (W0-2)', () => {
     prisma.checkoutSession.update.mockResolvedValue({});
     decrementInventory.mockResolvedValue(undefined);
     emit.mockResolvedValue(undefined);
-    computeActiveTax.mockResolvedValue({ taxCents: 200, rate: 0.1 });
+    computeTotals.mockResolvedValue(
+      defaultTotals({ taxCents: 200, totalCents: 2700 })
+    );
 
     await placeOrder('sess_1', {});
 
-    expect(computeActiveTax).toHaveBeenCalledWith(
+    expect(computeTotals).toHaveBeenCalledWith(
       expect.objectContaining({
         shippingAddress: { country: 'AU' },
-        shippingCents: 500,
-        currency: 'USD',
+        customerId: 'cust_1',
       })
     );
 
-    // Order should be created with the computed taxCents
     expect(prisma.order.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ taxCents: 200 }),
@@ -681,10 +727,12 @@ describe('placeOrder — tax computation (W0-2)', () => {
     prisma.checkoutSession.update.mockResolvedValue({});
     decrementInventory.mockResolvedValue(undefined);
     emit.mockResolvedValue(undefined);
+    computeTotals.mockResolvedValue(
+      defaultTotals({ shippingCents: 0, taxCents: 0 })
+    );
 
     await placeOrder('sess_1', {});
 
-    expect(computeActiveTax).not.toHaveBeenCalled();
     expect(prisma.order.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ taxCents: 0 }),

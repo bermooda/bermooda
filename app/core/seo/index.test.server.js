@@ -20,7 +20,6 @@ import {
   buildMeta,
   serializeJsonLd,
 } from '#/core/seo/index.server';
-import { get } from '#/core/settings/index.server';
 
 const request = new Request('https://shop.example/products/foo');
 

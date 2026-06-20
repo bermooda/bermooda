@@ -4,16 +4,19 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
-import {
-  resolvePromotions,
-  persistOrderDiscounts,
-} from '#/core/discounts/index.server';
+import { expandBundleInventoryItems } from '#/core/catalog/types.server';
+import { computeTotals } from '#/core/checkout/totals.server';
+import { persistOrderDiscounts } from '#/core/discounts/index.server';
 import { emit } from '#/core/events/index.server';
+import {
+  getGiftCardByCode,
+  redeemGiftCard,
+} from '#/core/gift-cards/index.server';
 import {
   decrementInventory,
   incrementInventory,
 } from '#/core/inventory/index.server';
-import { computeActiveTax } from '#/core/tax/index.server';
+import { redeemStoreCredit } from '#/core/store-credit/index.server';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -83,91 +86,57 @@ export async function placeOrder(
     const cartId = cart.id;
     const lines = cart.lines ?? [];
 
-    // 2. Compute order number
     const orderNumber = 'ORD-' + Date.now();
-
-    // 3. Re-compute totals via promotions engine + tax classes
-    const subtotalCents = lines.reduce(
-      (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-      0
-    );
 
     const shippingAddress = session.shippingAddressJson
       ? JSON.parse(session.shippingAddressJson)
       : null;
 
-    let discountCents = 0;
-    let appliedDiscounts = [];
-    let freeShipping = false;
+    const shippingOption = session.shippingOptionJson
+      ? JSON.parse(session.shippingOptionJson)
+      : null;
 
-    const promo = await resolvePromotions({
+    const totals = await computeTotals({
       cart,
       cartId,
+      shippingAddress,
       couponCode: session.couponCode ?? undefined,
+      shippingOptionId: shippingOption?.id ?? undefined,
+      taxExempt: session.taxExempt ?? false,
+      vatId: session.vatId ?? undefined,
+      customerId: session.customerId ?? undefined,
+      giftCardCode: session.giftCardCode ?? undefined,
+      storeCreditCents: session.storeCreditCents ?? 0,
     });
-    discountCents = promo.discountCents;
-    appliedDiscounts = promo.applied;
-    freeShipping = promo.freeShipping;
 
-    // Parse shipping option for shippingCents
-    let shippingCents = 0;
-    if (session.shippingOptionJson) {
-      try {
-        const shippingOption = JSON.parse(session.shippingOptionJson);
-        shippingCents = shippingOption.priceCents ?? 0;
-      } catch {
-        // malformed JSON — treat as zero
-      }
-    }
-    if (freeShipping) shippingCents = 0;
-
-    // W3: tax with per-line tax classes + VAT/GST exemption
-    let taxCents = 0;
-    const taxExempt = session.taxExempt ?? false;
-
-    if (shippingAddress && !taxExempt) {
-      try {
-        const taxLines = lines.map((line) => ({
-          priceCents: line.priceCentsSnapshot,
-          quantity: line.quantity,
-          taxClassId: line.variant?.taxClassId ?? null,
-          taxClassRate: line.variant?.taxClass?.rate ?? null,
-        }));
-
-        const taxResult = await computeActiveTax({
-          subtotalCents: subtotalCents - discountCents,
-          shippingCents,
-          shippingAddress,
-          currency: cart.currency,
-          lines: taxLines,
-          vatId: session.vatId ?? undefined,
-        });
-        taxCents = Math.round(taxResult.taxCents);
-      } catch (err) {
-        logger.warn(
-          { err },
-          'Tax computation failed during placeOrder — using 0'
-        );
-      }
-    }
-
-    const totalCents = subtotalCents - discountCents + shippingCents + taxCents;
+    const {
+      subtotalCents,
+      discountCents,
+      shippingCents,
+      taxCents,
+      storeCreditCents,
+      giftCardCents,
+      totalCents,
+      appliedDiscounts,
+      primaryCouponCode,
+      giftCardId,
+    } = totals;
 
     const effectiveProvider =
       paymentProvider ?? session.paymentProvider ?? null;
     const initialStatus =
       effectiveProvider === 'manual' ? 'pending_payment' : 'pending';
 
-    // 4. Decrement inventory (pass tx so it's part of the same transaction)
-    const inventoryItems = lines
+    const rawInventoryItems = lines
       .filter((line) => line.variantId != null)
       .map((line) => ({ variantId: line.variantId, quantity: line.quantity }));
+
+    const inventoryItems = await expandBundleInventoryItems(rawInventoryItems);
 
     if (inventoryItems.length > 0) {
       await decrementInventory(inventoryItems, tx);
     }
 
-    // 5. Create Order row
     const order = await tx.order.create({
       data: {
         orderNumber,
@@ -179,20 +148,54 @@ export async function placeOrder(
         shippingCents,
         taxCents,
         discountCents,
+        storeCreditCents,
+        giftCardCents,
         totalCents,
         shippingAddressJson: session.shippingAddressJson ?? '{}',
         billingAddressJson: session.billingAddressJson ?? null,
         paymentProvider: effectiveProvider,
         paymentIntentId: paymentIntentId ?? null,
-        couponCode: promo.primaryCode ?? session.couponCode ?? null,
+        couponCode: primaryCouponCode ?? session.couponCode ?? null,
         vatId: session.vatId ?? null,
         taxExempt: session.taxExempt ?? false,
       },
     });
 
-    // Persist stacked discounts on the order
     if (appliedDiscounts.length > 0) {
       await persistOrderDiscounts(order.id, appliedDiscounts, tx);
+    }
+
+    if (storeCreditCents > 0 && session.customerId) {
+      await redeemStoreCredit(
+        session.customerId,
+        {
+          amountCents: storeCreditCents,
+          reason: 'Checkout redemption',
+          referenceType: 'order',
+          referenceId: order.id,
+        },
+        tx
+      );
+    }
+
+    if (giftCardCents > 0 && giftCardId) {
+      await redeemGiftCard(
+        giftCardId,
+        { amountCents: giftCardCents, orderId: order.id },
+        tx
+      );
+    } else if (session.giftCardCode && giftCardCents > 0) {
+      const giftCard = await getGiftCardByCode(
+        session.giftCardCode,
+        cart.currency
+      );
+      if (giftCard) {
+        await redeemGiftCard(
+          giftCard.id,
+          { amountCents: giftCardCents, orderId: order.id },
+          tx
+        );
+      }
     }
 
     // 6. Create OrderLine rows from cart lines

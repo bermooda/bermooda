@@ -31,6 +31,8 @@ export type OrderAvgAggregateOutputType = {
   shippingCents: number | null
   taxCents: number | null
   discountCents: number | null
+  storeCreditCents: number | null
+  giftCardCents: number | null
   totalCents: number | null
 }
 
@@ -39,6 +41,8 @@ export type OrderSumAggregateOutputType = {
   shippingCents: number | null
   taxCents: number | null
   discountCents: number | null
+  storeCreditCents: number | null
+  giftCardCents: number | null
   totalCents: number | null
 }
 
@@ -53,6 +57,8 @@ export type OrderMinAggregateOutputType = {
   shippingCents: number | null
   taxCents: number | null
   discountCents: number | null
+  storeCreditCents: number | null
+  giftCardCents: number | null
   totalCents: number | null
   shippingAddressJson: string | null
   billingAddressJson: string | null
@@ -77,6 +83,8 @@ export type OrderMaxAggregateOutputType = {
   shippingCents: number | null
   taxCents: number | null
   discountCents: number | null
+  storeCreditCents: number | null
+  giftCardCents: number | null
   totalCents: number | null
   shippingAddressJson: string | null
   billingAddressJson: string | null
@@ -101,6 +109,8 @@ export type OrderCountAggregateOutputType = {
   shippingCents: number
   taxCents: number
   discountCents: number
+  storeCreditCents: number
+  giftCardCents: number
   totalCents: number
   shippingAddressJson: number
   billingAddressJson: number
@@ -121,6 +131,8 @@ export type OrderAvgAggregateInputType = {
   shippingCents?: true
   taxCents?: true
   discountCents?: true
+  storeCreditCents?: true
+  giftCardCents?: true
   totalCents?: true
 }
 
@@ -129,6 +141,8 @@ export type OrderSumAggregateInputType = {
   shippingCents?: true
   taxCents?: true
   discountCents?: true
+  storeCreditCents?: true
+  giftCardCents?: true
   totalCents?: true
 }
 
@@ -143,6 +157,8 @@ export type OrderMinAggregateInputType = {
   shippingCents?: true
   taxCents?: true
   discountCents?: true
+  storeCreditCents?: true
+  giftCardCents?: true
   totalCents?: true
   shippingAddressJson?: true
   billingAddressJson?: true
@@ -167,6 +183,8 @@ export type OrderMaxAggregateInputType = {
   shippingCents?: true
   taxCents?: true
   discountCents?: true
+  storeCreditCents?: true
+  giftCardCents?: true
   totalCents?: true
   shippingAddressJson?: true
   billingAddressJson?: true
@@ -191,6 +209,8 @@ export type OrderCountAggregateInputType = {
   shippingCents?: true
   taxCents?: true
   discountCents?: true
+  storeCreditCents?: true
+  giftCardCents?: true
   totalCents?: true
   shippingAddressJson?: true
   billingAddressJson?: true
@@ -302,6 +322,8 @@ export type OrderGroupByOutputType = {
   shippingCents: number
   taxCents: number
   discountCents: number
+  storeCreditCents: number
+  giftCardCents: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson: string | null
@@ -349,6 +371,8 @@ export type OrderWhereInput = {
   shippingCents?: Prisma.IntFilter<"Order"> | number
   taxCents?: Prisma.IntFilter<"Order"> | number
   discountCents?: Prisma.IntFilter<"Order"> | number
+  storeCreditCents?: Prisma.IntFilter<"Order"> | number
+  giftCardCents?: Prisma.IntFilter<"Order"> | number
   totalCents?: Prisma.IntFilter<"Order"> | number
   shippingAddressJson?: Prisma.StringFilter<"Order"> | string
   billingAddressJson?: Prisma.StringNullableFilter<"Order"> | string | null
@@ -366,6 +390,7 @@ export type OrderWhereInput = {
   refunds?: Prisma.RefundListRelationFilter
   returns?: Prisma.ReturnListRelationFilter
   discounts?: Prisma.OrderDiscountListRelationFilter
+  giftCardRedemptions?: Prisma.GiftCardRedemptionListRelationFilter
 }
 
 export type OrderOrderByWithRelationInput = {
@@ -379,6 +404,8 @@ export type OrderOrderByWithRelationInput = {
   shippingCents?: Prisma.SortOrder
   taxCents?: Prisma.SortOrder
   discountCents?: Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
+  giftCardCents?: Prisma.SortOrder
   totalCents?: Prisma.SortOrder
   shippingAddressJson?: Prisma.SortOrder
   billingAddressJson?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -396,6 +423,7 @@ export type OrderOrderByWithRelationInput = {
   refunds?: Prisma.RefundOrderByRelationAggregateInput
   returns?: Prisma.ReturnOrderByRelationAggregateInput
   discounts?: Prisma.OrderDiscountOrderByRelationAggregateInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionOrderByRelationAggregateInput
 }
 
 export type OrderWhereUniqueInput = Prisma.AtLeast<{
@@ -412,6 +440,8 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   shippingCents?: Prisma.IntFilter<"Order"> | number
   taxCents?: Prisma.IntFilter<"Order"> | number
   discountCents?: Prisma.IntFilter<"Order"> | number
+  storeCreditCents?: Prisma.IntFilter<"Order"> | number
+  giftCardCents?: Prisma.IntFilter<"Order"> | number
   totalCents?: Prisma.IntFilter<"Order"> | number
   shippingAddressJson?: Prisma.StringFilter<"Order"> | string
   billingAddressJson?: Prisma.StringNullableFilter<"Order"> | string | null
@@ -429,6 +459,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   refunds?: Prisma.RefundListRelationFilter
   returns?: Prisma.ReturnListRelationFilter
   discounts?: Prisma.OrderDiscountListRelationFilter
+  giftCardRedemptions?: Prisma.GiftCardRedemptionListRelationFilter
 }, "id" | "orderNumber">
 
 export type OrderOrderByWithAggregationInput = {
@@ -442,6 +473,8 @@ export type OrderOrderByWithAggregationInput = {
   shippingCents?: Prisma.SortOrder
   taxCents?: Prisma.SortOrder
   discountCents?: Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
+  giftCardCents?: Prisma.SortOrder
   totalCents?: Prisma.SortOrder
   shippingAddressJson?: Prisma.SortOrder
   billingAddressJson?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -474,6 +507,8 @@ export type OrderScalarWhereWithAggregatesInput = {
   shippingCents?: Prisma.IntWithAggregatesFilter<"Order"> | number
   taxCents?: Prisma.IntWithAggregatesFilter<"Order"> | number
   discountCents?: Prisma.IntWithAggregatesFilter<"Order"> | number
+  storeCreditCents?: Prisma.IntWithAggregatesFilter<"Order"> | number
+  giftCardCents?: Prisma.IntWithAggregatesFilter<"Order"> | number
   totalCents?: Prisma.IntWithAggregatesFilter<"Order"> | number
   shippingAddressJson?: Prisma.StringWithAggregatesFilter<"Order"> | string
   billingAddressJson?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
@@ -497,6 +532,8 @@ export type OrderCreateInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -514,6 +551,7 @@ export type OrderCreateInput = {
   refunds?: Prisma.RefundCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateInput = {
@@ -527,6 +565,8 @@ export type OrderUncheckedCreateInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -543,6 +583,7 @@ export type OrderUncheckedCreateInput = {
   refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUpdateInput = {
@@ -555,6 +596,8 @@ export type OrderUpdateInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -572,6 +615,7 @@ export type OrderUpdateInput = {
   refunds?: Prisma.RefundUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateInput = {
@@ -585,6 +629,8 @@ export type OrderUncheckedUpdateInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -601,6 +647,7 @@ export type OrderUncheckedUpdateInput = {
   refunds?: Prisma.RefundUncheckedUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateManyInput = {
@@ -614,6 +661,8 @@ export type OrderCreateManyInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -637,6 +686,8 @@ export type OrderUpdateManyMutationInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -661,6 +712,8 @@ export type OrderUncheckedUpdateManyInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -695,6 +748,8 @@ export type OrderCountOrderByAggregateInput = {
   shippingCents?: Prisma.SortOrder
   taxCents?: Prisma.SortOrder
   discountCents?: Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
+  giftCardCents?: Prisma.SortOrder
   totalCents?: Prisma.SortOrder
   shippingAddressJson?: Prisma.SortOrder
   billingAddressJson?: Prisma.SortOrder
@@ -713,6 +768,8 @@ export type OrderAvgOrderByAggregateInput = {
   shippingCents?: Prisma.SortOrder
   taxCents?: Prisma.SortOrder
   discountCents?: Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
+  giftCardCents?: Prisma.SortOrder
   totalCents?: Prisma.SortOrder
 }
 
@@ -727,6 +784,8 @@ export type OrderMaxOrderByAggregateInput = {
   shippingCents?: Prisma.SortOrder
   taxCents?: Prisma.SortOrder
   discountCents?: Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
+  giftCardCents?: Prisma.SortOrder
   totalCents?: Prisma.SortOrder
   shippingAddressJson?: Prisma.SortOrder
   billingAddressJson?: Prisma.SortOrder
@@ -751,6 +810,8 @@ export type OrderMinOrderByAggregateInput = {
   shippingCents?: Prisma.SortOrder
   taxCents?: Prisma.SortOrder
   discountCents?: Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
+  giftCardCents?: Prisma.SortOrder
   totalCents?: Prisma.SortOrder
   shippingAddressJson?: Prisma.SortOrder
   billingAddressJson?: Prisma.SortOrder
@@ -769,12 +830,19 @@ export type OrderSumOrderByAggregateInput = {
   shippingCents?: Prisma.SortOrder
   taxCents?: Prisma.SortOrder
   discountCents?: Prisma.SortOrder
+  storeCreditCents?: Prisma.SortOrder
+  giftCardCents?: Prisma.SortOrder
   totalCents?: Prisma.SortOrder
 }
 
 export type OrderScalarRelationFilter = {
   is?: Prisma.OrderWhereInput
   isNot?: Prisma.OrderWhereInput
+}
+
+export type OrderNullableScalarRelationFilter = {
+  is?: Prisma.OrderWhereInput | null
+  isNot?: Prisma.OrderWhereInput | null
 }
 
 export type OrderCreateNestedManyWithoutCustomerInput = {
@@ -889,6 +957,22 @@ export type OrderUpdateOneRequiredWithoutReturnsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.OrderUpdateToOneWithWhereWithoutReturnsInput, Prisma.OrderUpdateWithoutReturnsInput>, Prisma.OrderUncheckedUpdateWithoutReturnsInput>
 }
 
+export type OrderCreateNestedOneWithoutGiftCardRedemptionsInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutGiftCardRedemptionsInput, Prisma.OrderUncheckedCreateWithoutGiftCardRedemptionsInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutGiftCardRedemptionsInput
+  connect?: Prisma.OrderWhereUniqueInput
+}
+
+export type OrderUpdateOneWithoutGiftCardRedemptionsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutGiftCardRedemptionsInput, Prisma.OrderUncheckedCreateWithoutGiftCardRedemptionsInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutGiftCardRedemptionsInput
+  upsert?: Prisma.OrderUpsertWithoutGiftCardRedemptionsInput
+  disconnect?: Prisma.OrderWhereInput | boolean
+  delete?: Prisma.OrderWhereInput | boolean
+  connect?: Prisma.OrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrderUpdateToOneWithWhereWithoutGiftCardRedemptionsInput, Prisma.OrderUpdateWithoutGiftCardRedemptionsInput>, Prisma.OrderUncheckedUpdateWithoutGiftCardRedemptionsInput>
+}
+
 export type OrderCreateWithoutCustomerInput = {
   id?: string
   orderNumber: string
@@ -899,6 +983,8 @@ export type OrderCreateWithoutCustomerInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -915,6 +1001,7 @@ export type OrderCreateWithoutCustomerInput = {
   refunds?: Prisma.RefundCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutCustomerInput = {
@@ -927,6 +1014,8 @@ export type OrderUncheckedCreateWithoutCustomerInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -943,6 +1032,7 @@ export type OrderUncheckedCreateWithoutCustomerInput = {
   refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutCustomerInput = {
@@ -984,6 +1074,8 @@ export type OrderScalarWhereInput = {
   shippingCents?: Prisma.IntFilter<"Order"> | number
   taxCents?: Prisma.IntFilter<"Order"> | number
   discountCents?: Prisma.IntFilter<"Order"> | number
+  storeCreditCents?: Prisma.IntFilter<"Order"> | number
+  giftCardCents?: Prisma.IntFilter<"Order"> | number
   totalCents?: Prisma.IntFilter<"Order"> | number
   shippingAddressJson?: Prisma.StringFilter<"Order"> | string
   billingAddressJson?: Prisma.StringNullableFilter<"Order"> | string | null
@@ -1007,6 +1099,8 @@ export type OrderCreateWithoutLinesInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -1023,6 +1117,7 @@ export type OrderCreateWithoutLinesInput = {
   refunds?: Prisma.RefundCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutLinesInput = {
@@ -1036,6 +1131,8 @@ export type OrderUncheckedCreateWithoutLinesInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -1051,6 +1148,7 @@ export type OrderUncheckedCreateWithoutLinesInput = {
   refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutLinesInput = {
@@ -1079,6 +1177,8 @@ export type OrderUpdateWithoutLinesInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1095,6 +1195,7 @@ export type OrderUpdateWithoutLinesInput = {
   refunds?: Prisma.RefundUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutLinesInput = {
@@ -1108,6 +1209,8 @@ export type OrderUncheckedUpdateWithoutLinesInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1123,6 +1226,7 @@ export type OrderUncheckedUpdateWithoutLinesInput = {
   refunds?: Prisma.RefundUncheckedUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutShipmentsInput = {
@@ -1135,6 +1239,8 @@ export type OrderCreateWithoutShipmentsInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -1151,6 +1257,7 @@ export type OrderCreateWithoutShipmentsInput = {
   refunds?: Prisma.RefundCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutShipmentsInput = {
@@ -1164,6 +1271,8 @@ export type OrderUncheckedCreateWithoutShipmentsInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -1179,6 +1288,7 @@ export type OrderUncheckedCreateWithoutShipmentsInput = {
   refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutShipmentsInput = {
@@ -1207,6 +1317,8 @@ export type OrderUpdateWithoutShipmentsInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1223,6 +1335,7 @@ export type OrderUpdateWithoutShipmentsInput = {
   refunds?: Prisma.RefundUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutShipmentsInput = {
@@ -1236,6 +1349,8 @@ export type OrderUncheckedUpdateWithoutShipmentsInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1251,6 +1366,7 @@ export type OrderUncheckedUpdateWithoutShipmentsInput = {
   refunds?: Prisma.RefundUncheckedUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutRefundsInput = {
@@ -1263,6 +1379,8 @@ export type OrderCreateWithoutRefundsInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -1279,6 +1397,7 @@ export type OrderCreateWithoutRefundsInput = {
   shipments?: Prisma.ShipmentCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutRefundsInput = {
@@ -1292,6 +1411,8 @@ export type OrderUncheckedCreateWithoutRefundsInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -1307,6 +1428,7 @@ export type OrderUncheckedCreateWithoutRefundsInput = {
   shipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutRefundsInput = {
@@ -1335,6 +1457,8 @@ export type OrderUpdateWithoutRefundsInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1351,6 +1475,7 @@ export type OrderUpdateWithoutRefundsInput = {
   shipments?: Prisma.ShipmentUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutRefundsInput = {
@@ -1364,6 +1489,8 @@ export type OrderUncheckedUpdateWithoutRefundsInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1379,6 +1506,7 @@ export type OrderUncheckedUpdateWithoutRefundsInput = {
   shipments?: Prisma.ShipmentUncheckedUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutDiscountsInput = {
@@ -1391,6 +1519,8 @@ export type OrderCreateWithoutDiscountsInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -1407,6 +1537,7 @@ export type OrderCreateWithoutDiscountsInput = {
   shipments?: Prisma.ShipmentCreateNestedManyWithoutOrderInput
   refunds?: Prisma.RefundCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutDiscountsInput = {
@@ -1420,6 +1551,8 @@ export type OrderUncheckedCreateWithoutDiscountsInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -1435,6 +1568,7 @@ export type OrderUncheckedCreateWithoutDiscountsInput = {
   shipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutOrderInput
   refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutDiscountsInput = {
@@ -1463,6 +1597,8 @@ export type OrderUpdateWithoutDiscountsInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1479,6 +1615,7 @@ export type OrderUpdateWithoutDiscountsInput = {
   shipments?: Prisma.ShipmentUpdateManyWithoutOrderNestedInput
   refunds?: Prisma.RefundUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutDiscountsInput = {
@@ -1492,6 +1629,8 @@ export type OrderUncheckedUpdateWithoutDiscountsInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1507,6 +1646,7 @@ export type OrderUncheckedUpdateWithoutDiscountsInput = {
   shipments?: Prisma.ShipmentUncheckedUpdateManyWithoutOrderNestedInput
   refunds?: Prisma.RefundUncheckedUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutReturnsInput = {
@@ -1519,6 +1659,8 @@ export type OrderCreateWithoutReturnsInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -1535,6 +1677,7 @@ export type OrderCreateWithoutReturnsInput = {
   shipments?: Prisma.ShipmentCreateNestedManyWithoutOrderInput
   refunds?: Prisma.RefundCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutReturnsInput = {
@@ -1548,6 +1691,8 @@ export type OrderUncheckedCreateWithoutReturnsInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -1563,6 +1708,7 @@ export type OrderUncheckedCreateWithoutReturnsInput = {
   shipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutOrderInput
   refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutReturnsInput = {
@@ -1591,6 +1737,8 @@ export type OrderUpdateWithoutReturnsInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1607,6 +1755,7 @@ export type OrderUpdateWithoutReturnsInput = {
   shipments?: Prisma.ShipmentUpdateManyWithoutOrderNestedInput
   refunds?: Prisma.RefundUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutReturnsInput = {
@@ -1620,6 +1769,8 @@ export type OrderUncheckedUpdateWithoutReturnsInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1635,6 +1786,147 @@ export type OrderUncheckedUpdateWithoutReturnsInput = {
   shipments?: Prisma.ShipmentUncheckedUpdateManyWithoutOrderNestedInput
   refunds?: Prisma.RefundUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderCreateWithoutGiftCardRedemptionsInput = {
+  id?: string
+  orderNumber: string
+  email: string
+  status?: string
+  currency: string
+  subtotalCents: number
+  shippingCents?: number
+  taxCents?: number
+  discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
+  totalCents: number
+  shippingAddressJson: string
+  billingAddressJson?: string | null
+  paymentProvider?: string | null
+  paymentIntentId?: string | null
+  couponCode?: string | null
+  vatId?: string | null
+  taxExempt?: boolean
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  customer?: Prisma.CustomerCreateNestedOneWithoutOrdersInput
+  lines?: Prisma.OrderLineCreateNestedManyWithoutOrderInput
+  shipments?: Prisma.ShipmentCreateNestedManyWithoutOrderInput
+  refunds?: Prisma.RefundCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
+  discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
+}
+
+export type OrderUncheckedCreateWithoutGiftCardRedemptionsInput = {
+  id?: string
+  orderNumber: string
+  customerId?: string | null
+  email: string
+  status?: string
+  currency: string
+  subtotalCents: number
+  shippingCents?: number
+  taxCents?: number
+  discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
+  totalCents: number
+  shippingAddressJson: string
+  billingAddressJson?: string | null
+  paymentProvider?: string | null
+  paymentIntentId?: string | null
+  couponCode?: string | null
+  vatId?: string | null
+  taxExempt?: boolean
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lines?: Prisma.OrderLineUncheckedCreateNestedManyWithoutOrderInput
+  shipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutOrderInput
+  refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
+  discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
+}
+
+export type OrderCreateOrConnectWithoutGiftCardRedemptionsInput = {
+  where: Prisma.OrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderCreateWithoutGiftCardRedemptionsInput, Prisma.OrderUncheckedCreateWithoutGiftCardRedemptionsInput>
+}
+
+export type OrderUpsertWithoutGiftCardRedemptionsInput = {
+  update: Prisma.XOR<Prisma.OrderUpdateWithoutGiftCardRedemptionsInput, Prisma.OrderUncheckedUpdateWithoutGiftCardRedemptionsInput>
+  create: Prisma.XOR<Prisma.OrderCreateWithoutGiftCardRedemptionsInput, Prisma.OrderUncheckedCreateWithoutGiftCardRedemptionsInput>
+  where?: Prisma.OrderWhereInput
+}
+
+export type OrderUpdateToOneWithWhereWithoutGiftCardRedemptionsInput = {
+  where?: Prisma.OrderWhereInput
+  data: Prisma.XOR<Prisma.OrderUpdateWithoutGiftCardRedemptionsInput, Prisma.OrderUncheckedUpdateWithoutGiftCardRedemptionsInput>
+}
+
+export type OrderUpdateWithoutGiftCardRedemptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  subtotalCents?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
+  taxCents?: Prisma.IntFieldUpdateOperationsInput | number
+  discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
+  totalCents?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
+  billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  customer?: Prisma.CustomerUpdateOneWithoutOrdersNestedInput
+  lines?: Prisma.OrderLineUpdateManyWithoutOrderNestedInput
+  shipments?: Prisma.ShipmentUpdateManyWithoutOrderNestedInput
+  refunds?: Prisma.RefundUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
+  discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderUncheckedUpdateWithoutGiftCardRedemptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  subtotalCents?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
+  taxCents?: Prisma.IntFieldUpdateOperationsInput | number
+  discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
+  totalCents?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
+  billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lines?: Prisma.OrderLineUncheckedUpdateManyWithoutOrderNestedInput
+  shipments?: Prisma.ShipmentUncheckedUpdateManyWithoutOrderNestedInput
+  refunds?: Prisma.RefundUncheckedUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
+  discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateManyCustomerInput = {
@@ -1647,6 +1939,8 @@ export type OrderCreateManyCustomerInput = {
   shippingCents?: number
   taxCents?: number
   discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
   totalCents: number
   shippingAddressJson: string
   billingAddressJson?: string | null
@@ -1670,6 +1964,8 @@ export type OrderUpdateWithoutCustomerInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1686,6 +1982,7 @@ export type OrderUpdateWithoutCustomerInput = {
   refunds?: Prisma.RefundUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutCustomerInput = {
@@ -1698,6 +1995,8 @@ export type OrderUncheckedUpdateWithoutCustomerInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1714,6 +2013,7 @@ export type OrderUncheckedUpdateWithoutCustomerInput = {
   refunds?: Prisma.RefundUncheckedUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateManyWithoutCustomerInput = {
@@ -1726,6 +2026,8 @@ export type OrderUncheckedUpdateManyWithoutCustomerInput = {
   shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
   taxCents?: Prisma.IntFieldUpdateOperationsInput | number
   discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
   totalCents?: Prisma.IntFieldUpdateOperationsInput | number
   shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
   billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1750,6 +2052,7 @@ export type OrderCountOutputType = {
   refunds: number
   returns: number
   discounts: number
+  giftCardRedemptions: number
 }
 
 export type OrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1758,6 +2061,7 @@ export type OrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
   refunds?: boolean | OrderCountOutputTypeCountRefundsArgs
   returns?: boolean | OrderCountOutputTypeCountReturnsArgs
   discounts?: boolean | OrderCountOutputTypeCountDiscountsArgs
+  giftCardRedemptions?: boolean | OrderCountOutputTypeCountGiftCardRedemptionsArgs
 }
 
 /**
@@ -1805,6 +2109,13 @@ export type OrderCountOutputTypeCountDiscountsArgs<ExtArgs extends runtime.Types
   where?: Prisma.OrderDiscountWhereInput
 }
 
+/**
+ * OrderCountOutputType without action
+ */
+export type OrderCountOutputTypeCountGiftCardRedemptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.GiftCardRedemptionWhereInput
+}
+
 
 export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1817,6 +2128,8 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   shippingCents?: boolean
   taxCents?: boolean
   discountCents?: boolean
+  storeCreditCents?: boolean
+  giftCardCents?: boolean
   totalCents?: boolean
   shippingAddressJson?: boolean
   billingAddressJson?: boolean
@@ -1834,6 +2147,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   refunds?: boolean | Prisma.Order$refundsArgs<ExtArgs>
   returns?: boolean | Prisma.Order$returnsArgs<ExtArgs>
   discounts?: boolean | Prisma.Order$discountsArgs<ExtArgs>
+  giftCardRedemptions?: boolean | Prisma.Order$giftCardRedemptionsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
@@ -1848,6 +2162,8 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   shippingCents?: boolean
   taxCents?: boolean
   discountCents?: boolean
+  storeCreditCents?: boolean
+  giftCardCents?: boolean
   totalCents?: boolean
   shippingAddressJson?: boolean
   billingAddressJson?: boolean
@@ -1873,6 +2189,8 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   shippingCents?: boolean
   taxCents?: boolean
   discountCents?: boolean
+  storeCreditCents?: boolean
+  giftCardCents?: boolean
   totalCents?: boolean
   shippingAddressJson?: boolean
   billingAddressJson?: boolean
@@ -1898,6 +2216,8 @@ export type OrderSelectScalar = {
   shippingCents?: boolean
   taxCents?: boolean
   discountCents?: boolean
+  storeCreditCents?: boolean
+  giftCardCents?: boolean
   totalCents?: boolean
   shippingAddressJson?: boolean
   billingAddressJson?: boolean
@@ -1911,7 +2231,7 @@ export type OrderSelectScalar = {
   updatedAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "customerId" | "email" | "status" | "currency" | "subtotalCents" | "shippingCents" | "taxCents" | "discountCents" | "totalCents" | "shippingAddressJson" | "billingAddressJson" | "paymentProvider" | "paymentIntentId" | "couponCode" | "vatId" | "taxExempt" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "customerId" | "email" | "status" | "currency" | "subtotalCents" | "shippingCents" | "taxCents" | "discountCents" | "storeCreditCents" | "giftCardCents" | "totalCents" | "shippingAddressJson" | "billingAddressJson" | "paymentProvider" | "paymentIntentId" | "couponCode" | "vatId" | "taxExempt" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.Order$customerArgs<ExtArgs>
   lines?: boolean | Prisma.Order$linesArgs<ExtArgs>
@@ -1919,6 +2239,7 @@ export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   refunds?: boolean | Prisma.Order$refundsArgs<ExtArgs>
   returns?: boolean | Prisma.Order$returnsArgs<ExtArgs>
   discounts?: boolean | Prisma.Order$discountsArgs<ExtArgs>
+  giftCardRedemptions?: boolean | Prisma.Order$giftCardRedemptionsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1937,6 +2258,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     refunds: Prisma.$RefundPayload<ExtArgs>[]
     returns: Prisma.$ReturnPayload<ExtArgs>[]
     discounts: Prisma.$OrderDiscountPayload<ExtArgs>[]
+    giftCardRedemptions: Prisma.$GiftCardRedemptionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1949,6 +2271,8 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     shippingCents: number
     taxCents: number
     discountCents: number
+    storeCreditCents: number
+    giftCardCents: number
     totalCents: number
     shippingAddressJson: string
     billingAddressJson: string | null
@@ -2360,6 +2684,7 @@ export interface Prisma__OrderClient<T, Null = never, ExtArgs extends runtime.Ty
   refunds<T extends Prisma.Order$refundsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$refundsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RefundPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   returns<T extends Prisma.Order$returnsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$returnsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReturnPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   discounts<T extends Prisma.Order$discountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$discountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderDiscountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  giftCardRedemptions<T extends Prisma.Order$giftCardRedemptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$giftCardRedemptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GiftCardRedemptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2399,6 +2724,8 @@ export interface OrderFieldRefs {
   readonly shippingCents: Prisma.FieldRef<"Order", 'Int'>
   readonly taxCents: Prisma.FieldRef<"Order", 'Int'>
   readonly discountCents: Prisma.FieldRef<"Order", 'Int'>
+  readonly storeCreditCents: Prisma.FieldRef<"Order", 'Int'>
+  readonly giftCardCents: Prisma.FieldRef<"Order", 'Int'>
   readonly totalCents: Prisma.FieldRef<"Order", 'Int'>
   readonly shippingAddressJson: Prisma.FieldRef<"Order", 'String'>
   readonly billingAddressJson: Prisma.FieldRef<"Order", 'String'>
@@ -2945,6 +3272,30 @@ export type Order$discountsArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.OrderDiscountScalarFieldEnum | Prisma.OrderDiscountScalarFieldEnum[]
+}
+
+/**
+ * Order.giftCardRedemptions
+ */
+export type Order$giftCardRedemptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the GiftCardRedemption
+   */
+  select?: Prisma.GiftCardRedemptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the GiftCardRedemption
+   */
+  omit?: Prisma.GiftCardRedemptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GiftCardRedemptionInclude<ExtArgs> | null
+  where?: Prisma.GiftCardRedemptionWhereInput
+  orderBy?: Prisma.GiftCardRedemptionOrderByWithRelationInput | Prisma.GiftCardRedemptionOrderByWithRelationInput[]
+  cursor?: Prisma.GiftCardRedemptionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.GiftCardRedemptionScalarFieldEnum | Prisma.GiftCardRedemptionScalarFieldEnum[]
 }
 
 /**

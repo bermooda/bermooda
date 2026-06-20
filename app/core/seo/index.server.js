@@ -151,7 +151,7 @@ export function buildWebSiteJsonLd(request) {
 
 export function buildProductJsonLd(
   product,
-  { locale, currency, request, reviewSummary }
+  { locale: _locale, currency, request, reviewSummary }
 ) {
   const variant = product.variants?.[0];
   const priceEntry =

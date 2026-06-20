@@ -332,7 +332,7 @@ function ProductReviewsSection({
   reviewTotal = 0,
   reviewPage = 1,
   customer,
-  productSlug,
+  productSlug: _productSlug,
   reviewActionData,
 }) {
   return (
