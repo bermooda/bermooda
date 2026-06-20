@@ -277,3 +277,68 @@ export type ScheduledExport = Prisma.ScheduledExportModel
  * 
  */
 export type ExportRun = Prisma.ExportRunModel
+/**
+ * Model Location
+ * 
+ */
+export type Location = Prisma.LocationModel
+/**
+ * Model InventoryLevel
+ * 
+ */
+export type InventoryLevel = Prisma.InventoryLevelModel
+/**
+ * Model CustomerGroup
+ * 
+ */
+export type CustomerGroup = Prisma.CustomerGroupModel
+/**
+ * Model CustomerGroupMember
+ * 
+ */
+export type CustomerGroupMember = Prisma.CustomerGroupMemberModel
+/**
+ * Model PriceList
+ * 
+ */
+export type PriceList = Prisma.PriceListModel
+/**
+ * Model PriceListEntry
+ * 
+ */
+export type PriceListEntry = Prisma.PriceListEntryModel
+/**
+ * Model GiftCard
+ * 
+ */
+export type GiftCard = Prisma.GiftCardModel
+/**
+ * Model GiftCardRedemption
+ * 
+ */
+export type GiftCardRedemption = Prisma.GiftCardRedemptionModel
+/**
+ * Model Wishlist
+ * 
+ */
+export type Wishlist = Prisma.WishlistModel
+/**
+ * Model WishlistItem
+ * 
+ */
+export type WishlistItem = Prisma.WishlistItemModel
+/**
+ * Model BackInStockSubscription
+ * 
+ */
+export type BackInStockSubscription = Prisma.BackInStockSubscriptionModel
+/**
+ * Model DigitalAsset
+ * 
+ */
+export type DigitalAsset = Prisma.DigitalAssetModel
+/**
+ * Model BundleItem
+ * 
+ */
+export type BundleItem = Prisma.BundleItemModel

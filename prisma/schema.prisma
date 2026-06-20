@@ -120,6 +120,10 @@ model Customer {
   returns          Return[]
   storeCreditLedger StoreCreditLedger[]
   reviews          Review[]
+  groupMemberships CustomerGroupMember[]
+  wishlists        Wishlist[]
+  backInStockSubscriptions BackInStockSubscription[]
+  giftCards        GiftCard[]
 
   @@index([email])
 }
@@ -210,17 +214,20 @@ model Address {
 
 model Product {
   id          String    @id @default(cuid())
+  productType String    @default("physical")
   publishedAt DateTime?
   position    Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  variants   ProductVariant[]
-  categories ProductCategory[]
-  media      ProductMedia[]
-  options    ProductOption[]
-  attributes ProductAttribute[]
-  reviews    Review[]
+  variants      ProductVariant[]
+  categories    ProductCategory[]
+  media         ProductMedia[]
+  options       ProductOption[]
+  attributes    ProductAttribute[]
+  reviews       Review[]
+  digitalAssets DigitalAsset[]
+  bundleItems   BundleItem[]     @relation("BundleProduct")
 }
 
 model ProductVariant {
@@ -234,11 +241,16 @@ model ProductVariant {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  product    Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  taxClass   TaxClass?      @relation(fields: [taxClassId], references: [id])
-  prices     VariantPrice[]
-  cartLines  CartLine[]
-  orderLines OrderLine[]
+  product                 Product                   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  taxClass                TaxClass?                 @relation(fields: [taxClassId], references: [id])
+  prices                  VariantPrice[]
+  cartLines               CartLine[]
+  orderLines              OrderLine[]
+  inventoryLevels         InventoryLevel[]
+  priceListEntries        PriceListEntry[]
+  wishlistItems           WishlistItem[]
+  backInStockSubscriptions BackInStockSubscription[]
+  bundleComponents        BundleItem[]
 
   @@index([productId])
   @@index([sku])
@@ -393,6 +405,8 @@ model CheckoutSession {
   paymentIntentId     String?
   paymentProvider     String?
   couponCode          String?
+  giftCardCode        String?
+  storeCreditCents    Int       @default(0)
   vatId               String?
   taxExempt           Boolean   @default(false)
   expiresAt           DateTime?
@@ -417,6 +431,8 @@ model Order {
   shippingCents       Int      @default(0)
   taxCents            Int      @default(0)
   discountCents       Int      @default(0)
+  storeCreditCents      Int      @default(0)
+  giftCardCents         Int      @default(0)
   totalCents          Int
   shippingAddressJson String
   billingAddressJson  String?
@@ -435,6 +451,7 @@ model Order {
   refunds    Refund[]
   returns    Return[]
   discounts  OrderDiscount[]
+  giftCardRedemptions GiftCardRedemption[]
 
   @@index([customerId])
   @@index([orderNumber])
@@ -903,4 +920,198 @@ model ExportRun {
   @@index([scheduledExportId])
   @@index([status])
   @@index([createdAt])
+}
+
+// ─── W7: Inventory depth, B2B, gift cards, wishlists ────────────────────────
+
+model Location {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  isDefault   Boolean  @default(false)
+  addressJson String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inventoryLevels InventoryLevel[]
+}
+
+model InventoryLevel {
+  id         String   @id @default(cuid())
+  variantId  String
+  locationId String
+  quantity   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  variant  ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  location Location       @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, locationId])
+  @@index([variantId])
+  @@index([locationId])
+}
+
+model CustomerGroup {
+  id        String   @id @default(cuid())
+  name      String
+  handle    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members    CustomerGroupMember[]
+  priceLists PriceList[]
+}
+
+model CustomerGroupMember {
+  id              String   @id @default(cuid())
+  customerGroupId String
+  customerId      String
+  createdAt       DateTime @default(now())
+
+  group    CustomerGroup @relation(fields: [customerGroupId], references: [id], onDelete: Cascade)
+  customer Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerGroupId, customerId])
+  @@index([customerId])
+}
+
+model PriceList {
+  id              String    @id @default(cuid())
+  name            String
+  customerGroupId String?
+  currency        String
+  priority        Int       @default(0)
+  active          Boolean   @default(true)
+  startsAt        DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  customerGroup CustomerGroup?   @relation(fields: [customerGroupId], references: [id], onDelete: SetNull)
+  entries       PriceListEntry[]
+
+  @@index([customerGroupId])
+  @@index([currency, active])
+}
+
+model PriceListEntry {
+  id          String   @id @default(cuid())
+  priceListId String
+  variantId   String
+  priceCents  Int
+  minQuantity Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  priceList PriceList      @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([priceListId, variantId, minQuantity])
+  @@index([variantId])
+}
+
+model GiftCard {
+  id                  String    @id @default(cuid())
+  code                String    @unique
+  initialBalanceCents Int
+  balanceCents        Int
+  currency            String    @default("USD")
+  customerId          String?
+  status              String    @default("active")
+  expiresAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  customer    Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  redemptions GiftCardRedemption[]
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model GiftCardRedemption {
+  id          String   @id @default(cuid())
+  giftCardId  String
+  orderId     String?
+  amountCents Int
+  createdAt   DateTime @default(now())
+
+  giftCard GiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+  order    Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([giftCardId])
+  @@index([orderId])
+}
+
+model Wishlist {
+  id         String   @id @default(cuid())
+  customerId String
+  name       String   @default("Default")
+  isDefault  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  customer Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items    WishlistItem[]
+
+  @@index([customerId])
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  wishlistId String
+  variantId  String
+  createdAt  DateTime @default(now())
+
+  wishlist Wishlist       @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  variant  ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([wishlistId, variantId])
+  @@index([wishlistId])
+}
+
+model BackInStockSubscription {
+  id         String    @id @default(cuid())
+  variantId  String
+  customerId String?
+  email      String
+  notifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  variant  ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  customer Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@unique([variantId, email])
+  @@index([variantId, notifiedAt])
+}
+
+model DigitalAsset {
+  id        String   @id @default(cuid())
+  productId String
+  fileName  String
+  filePath  String
+  fileSize  Int?
+  mimeType  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model BundleItem {
+  id                 String   @id @default(cuid())
+  bundleProductId    String
+  componentVariantId String
+  quantity           Int      @default(1)
+  createdAt          DateTime @default(now())
+
+  bundleProduct      Product        @relation("BundleProduct", fields: [bundleProductId], references: [id], onDelete: Cascade)
+  componentVariant   ProductVariant @relation(fields: [componentVariantId], references: [id], onDelete: Cascade)
+
+  @@unique([bundleProductId, componentVariantId])
+  @@index([bundleProductId])
 }

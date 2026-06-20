@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 import config from '#/config';
 import logger from '#/utils/logger.server';
 import AbandonedCartEmail from '#/emails/shop/abandoned-cart';
+import BackInStockEmail from '#/emails/shop/back-in-stock';
 import CustomerWelcomeEmail from '#/emails/shop/customer-welcome';
 import OrderConfirmationEmail from '#/emails/shop/order-confirmation';
 import OrderDeliveredEmail from '#/emails/shop/order-delivered';
@@ -35,6 +36,7 @@ const SUBJECT_PASSWORD_RESET_ADMIN = 'Reset your admin password';
 const SUBJECT_PASSWORD_RESET_CUSTOMER = 'Reset your password';
 const SUBJECT_CUSTOMER_WELCOME = `Welcome to ${config.appName}`;
 const SUBJECT_ABANDONED_CART = 'You left something behind';
+const SUBJECT_BACK_IN_STOCK = 'An item is back in stock';
 
 /**
  * Sends a welcome email to a newly registered user
@@ -359,6 +361,23 @@ export async function sendAbandonedCartEmail({
     return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send abandoned cart email');
+    throw error;
+  }
+}
+
+export async function sendBackInStockEmail({ to, variant }) {
+  try {
+    const data = await resend.emails.send({
+      from: config.resend.fromNoReply,
+      to,
+      subject: SUBJECT_BACK_IN_STOCK,
+      react: <BackInStockEmail variant={variant} />,
+    });
+
+    logger.info({ to }, 'Back-in-stock email sent successfully');
+    return { success: true, data };
+  } catch (error) {
+    logger.error(error, 'Failed to send back-in-stock email');
     throw error;
   }
 }

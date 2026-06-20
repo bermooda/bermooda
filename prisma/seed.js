@@ -573,6 +573,52 @@ async function main() {
 
   console.log('W5 CMS pages and menus seeded.');
 
+  // W7: default location + inventory levels from variant counts
+  const defaultLocation = await prisma.location.upsert({
+    where: { code: 'default' },
+    create: {
+      name: 'Default Warehouse',
+      code: 'default',
+      isDefault: true,
+      active: true,
+    },
+    update: { isDefault: true, active: true },
+  });
+
+  const variants = await prisma.productVariant.findMany({
+    select: { id: true, inventoryCount: true },
+  });
+  for (const variant of variants) {
+    await prisma.inventoryLevel.upsert({
+      where: {
+        variantId_locationId: {
+          variantId: variant.id,
+          locationId: defaultLocation.id,
+        },
+      },
+      create: {
+        variantId: variant.id,
+        locationId: defaultLocation.id,
+        quantity: variant.inventoryCount,
+      },
+      update: { quantity: variant.inventoryCount },
+    });
+  }
+
+  await prisma.giftCard.upsert({
+    where: { code: 'WELCOME25' },
+    create: {
+      code: 'WELCOME25',
+      initialBalanceCents: 2500,
+      balanceCents: 2500,
+      currency: 'USD',
+      status: 'active',
+    },
+    update: {},
+  });
+
+  console.log('W7 inventory, location, and sample gift card seeded.');
+
   console.log('Seed complete.');
 }
 

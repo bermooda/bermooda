@@ -24,6 +24,9 @@ vi.mock('#/core/webhooks/index.server', () => ({
 vi.mock('#/core/audit/index.server', () => ({
   registerAuditSubscribers: vi.fn(),
 }));
+vi.mock('#/core/back-in-stock/index.server', () => ({
+  registerBackInStockSubscribers: vi.fn(),
+}));
 vi.mock('#/core/webhooks/job.server', () => ({}));
 vi.mock('#/core/exports/job.server', () => ({}));
 vi.mock('#/core/shipping/index.server', () => ({
@@ -55,6 +58,7 @@ describe('bootstrap.server', () => {
   let registerTheme;
   let registerPaymentEventHandlers;
   let registerAuditSubscribers;
+  let registerBackInStockSubscribers;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -67,6 +71,7 @@ describe('bootstrap.server', () => {
     const themes = await import('#/core/themes/index.server');
     const orders = await import('#/core/orders/index.server');
     const audit = await import('#/core/audit/index.server');
+    const backInStock = await import('#/core/back-in-stock/index.server');
 
     registerBuiltins = bootstrap.registerBuiltins;
     __resetBootstrap = bootstrap.__resetBootstrap;
@@ -77,6 +82,7 @@ describe('bootstrap.server', () => {
     registerTheme = themes.registerTheme;
     registerPaymentEventHandlers = orders.registerPaymentEventHandlers;
     registerAuditSubscribers = audit.registerAuditSubscribers;
+    registerBackInStockSubscribers = backInStock.registerBackInStockSubscribers;
   });
 
   it('registers all built-in providers and event handlers on first call', () => {
@@ -100,6 +106,7 @@ describe('bootstrap.server', () => {
     );
     expect(registerPaymentEventHandlers).toHaveBeenCalledOnce();
     expect(registerAuditSubscribers).toHaveBeenCalledOnce();
+    expect(registerBackInStockSubscribers).toHaveBeenCalledOnce();
   });
 
   it('is idempotent — second call is a no-op', () => {
