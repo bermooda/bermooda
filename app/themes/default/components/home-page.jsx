@@ -34,22 +34,16 @@ function fmt(price, currency, locale) {
     : '—';
 }
 
-function hashSeed(str) {
-  let h = 0;
-  for (let i = 0; i < String(str).length; i++) {
-    h = (h * 31 + String(str).charCodeAt(i)) & 0xffffffff;
+function resolveRating(product) {
+  const summary = product.reviewSummary;
+  if (summary?.count > 0) {
+    return { rating: summary.averageRating, count: summary.count };
   }
-  return Math.abs(h);
-}
-
-function fakeRating(id) {
-  return Math.round(((hashSeed(id) % 12) / 10 + 3.8) * 10) / 10;
-}
-function fakeReviews(id) {
-  return (hashSeed(id) % 480) + 20;
+  return { rating: 0, count: 0 };
 }
 
 function StarRow({ rating, count }) {
+  if (count === 0) return null;
   const full = Math.floor(rating);
   return (
     <div className="flex items-center gap-1.5">
@@ -380,10 +374,7 @@ export default function HomePage({
                       <span className="text-base font-semibold text-stone-900">
                         {fmt(price, currency, locale)}
                       </span>
-                      <StarRow
-                        rating={fakeRating(p.id)}
-                        count={fakeReviews(p.id)}
-                      />
+                      <StarRow {...resolveRating(p)} />
                     </div>
                   </div>
                 </Link>
@@ -435,10 +426,7 @@ export default function HomePage({
                     <h3 className="line-clamp-2 font-serif text-base leading-snug text-stone-900">
                       {p.title}
                     </h3>
-                    <StarRow
-                      rating={fakeRating(p.id)}
-                      count={fakeReviews(p.id)}
-                    />
+                    <StarRow {...resolveRating(p)} />
                     <div className="mt-auto flex items-baseline justify-between gap-2 pt-2">
                       <span className="font-semibold">
                         {fmt(price, currency, locale)}

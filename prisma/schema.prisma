@@ -119,6 +119,7 @@ model Customer {
   orders           Order[]
   returns          Return[]
   storeCreditLedger StoreCreditLedger[]
+  reviews          Review[]
 
   @@index([email])
 }
@@ -219,6 +220,7 @@ model Product {
   media      ProductMedia[]
   options    ProductOption[]
   attributes ProductAttribute[]
+  reviews    Review[]
 }
 
 model ProductVariant {
@@ -293,8 +295,9 @@ model Category {
   updatedAt DateTime @updatedAt
 
   parent   Category?         @relation("CategoryTree", fields: [parentId], references: [id])
-  children Category[]        @relation("CategoryTree")
-  products ProductCategory[]
+  children  Category[]        @relation("CategoryTree")
+  products  ProductCategory[]
+  menuItems MenuItem[]
 
   @@index([parentId])
 }
@@ -777,6 +780,76 @@ model StoreCreditLedger {
 
   @@index([customerId])
   @@index([referenceType, referenceId])
+}
+
+// ─── W5: CMS, navigation, reviews ───────────────────────────────────────────
+
+model Page {
+  id          String    @id @default(cuid())
+  type        String    @default("page")
+  status      String    @default("draft")
+  publishedAt DateTime?
+  position    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  menuItems MenuItem[]
+
+  @@index([status])
+  @@index([publishedAt])
+}
+
+model Menu {
+  id        String   @id @default(cuid())
+  handle    String   @unique
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items MenuItem[]
+}
+
+model MenuItem {
+  id         String   @id @default(cuid())
+  menuId     String
+  parentId   String?
+  label      String
+  url        String?
+  pageId     String?
+  categoryId String?
+  position   Int      @default(0)
+  openInNew  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  menu     Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parent   MenuItem?  @relation("MenuTree", fields: [parentId], references: [id])
+  children MenuItem[] @relation("MenuTree")
+  page     Page?      @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  category Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([menuId])
+  @@index([parentId])
+}
+
+model Review {
+  id               String   @id @default(cuid())
+  productId        String
+  customerId       String
+  rating           Int
+  title            String?
+  body             String
+  status           String   @default("pending")
+  verifiedPurchase Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, customerId])
+  @@index([productId, status])
+  @@index([status])
 }
 
 // ─── W6: Reporting, audit, compliance ────────────────────────────────────────
