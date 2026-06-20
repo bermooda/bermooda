@@ -16,6 +16,7 @@ import {
   decrementInventory,
   incrementInventory,
 } from '#/core/inventory/index.server';
+import { redeemLoyaltyPoints } from '#/core/loyalty/index.server';
 import { redeemStoreCredit } from '#/core/store-credit/index.server';
 
 // ---------------------------------------------------------------------------
@@ -107,6 +108,8 @@ export async function placeOrder(
       customerId: session.customerId ?? undefined,
       giftCardCode: session.giftCardCode ?? undefined,
       storeCreditCents: session.storeCreditCents ?? 0,
+      loyaltyPointsCents: session.loyaltyPointsCents ?? 0,
+      salesChannelId: session.salesChannelId ?? undefined,
     });
 
     const {
@@ -116,6 +119,8 @@ export async function placeOrder(
       taxCents,
       storeCreditCents,
       giftCardCents,
+      loyaltyPointsCents,
+      loyaltyPointsRedeemed,
       totalCents,
       appliedDiscounts,
       primaryCouponCode,
@@ -150,6 +155,7 @@ export async function placeOrder(
         discountCents,
         storeCreditCents,
         giftCardCents,
+        loyaltyPointsCents,
         totalCents,
         shippingAddressJson: session.shippingAddressJson ?? '{}',
         billingAddressJson: session.billingAddressJson ?? null,
@@ -158,6 +164,7 @@ export async function placeOrder(
         couponCode: primaryCouponCode ?? session.couponCode ?? null,
         vatId: session.vatId ?? null,
         taxExempt: session.taxExempt ?? false,
+        salesChannelId: session.salesChannelId ?? null,
       },
     });
 
@@ -196,6 +203,23 @@ export async function placeOrder(
           tx
         );
       }
+    }
+
+    if (
+      loyaltyPointsCents > 0 &&
+      loyaltyPointsRedeemed > 0 &&
+      session.customerId
+    ) {
+      await redeemLoyaltyPoints(
+        session.customerId,
+        {
+          points: loyaltyPointsRedeemed,
+          reason: 'Checkout redemption',
+          referenceType: 'order',
+          referenceId: order.id,
+        },
+        tx
+      );
     }
 
     // 6. Create OrderLine rows from cart lines

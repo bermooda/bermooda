@@ -27,6 +27,9 @@ vi.mock('#/core/audit/index.server', () => ({
 vi.mock('#/core/back-in-stock/index.server', () => ({
   registerBackInStockSubscribers: vi.fn(),
 }));
+vi.mock('#/core/loyalty/index.server', () => ({
+  registerLoyaltySubscribers: vi.fn(),
+}));
 vi.mock('#/core/plugins/index.server', () => ({
   discoverPlugins: vi.fn(),
   enablePersistedPlugins: vi.fn(),
@@ -36,6 +39,7 @@ vi.mock('#/core/rbac/index.server', () => ({
 }));
 vi.mock('#/core/webhooks/job.server', () => ({}));
 vi.mock('#/core/exports/job.server', () => ({}));
+vi.mock('#/core/marketing/job.server', () => ({}));
 vi.mock('#/core/shipping/index.server', () => ({
   registerProvider: vi.fn(),
   flatRateProvider: { name: 'Flat Rate' },
@@ -66,6 +70,7 @@ describe('bootstrap.server', () => {
   let registerPaymentEventHandlers;
   let registerAuditSubscribers;
   let registerBackInStockSubscribers;
+  let registerLoyaltySubscribers;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -79,6 +84,7 @@ describe('bootstrap.server', () => {
     const orders = await import('#/core/orders/index.server');
     const audit = await import('#/core/audit/index.server');
     const backInStock = await import('#/core/back-in-stock/index.server');
+    const loyalty = await import('#/core/loyalty/index.server');
 
     registerBuiltins = bootstrap.registerBuiltins;
     __resetBootstrap = bootstrap.__resetBootstrap;
@@ -90,6 +96,7 @@ describe('bootstrap.server', () => {
     registerPaymentEventHandlers = orders.registerPaymentEventHandlers;
     registerAuditSubscribers = audit.registerAuditSubscribers;
     registerBackInStockSubscribers = backInStock.registerBackInStockSubscribers;
+    registerLoyaltySubscribers = loyalty.registerLoyaltySubscribers;
   });
 
   it('registers all built-in providers and event handlers on first call', () => {
@@ -114,6 +121,7 @@ describe('bootstrap.server', () => {
     expect(registerPaymentEventHandlers).toHaveBeenCalledOnce();
     expect(registerAuditSubscribers).toHaveBeenCalledOnce();
     expect(registerBackInStockSubscribers).toHaveBeenCalledOnce();
+    expect(registerLoyaltySubscribers).toHaveBeenCalledOnce();
   });
 
   it('is idempotent — second call is a no-op', () => {

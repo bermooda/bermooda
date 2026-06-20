@@ -347,3 +347,58 @@ export type BundleItem = Prisma.BundleItemModel
  * 
  */
 export type RolePermission = Prisma.RolePermissionModel
+/**
+ * Model LoyaltyTransaction
+ * 
+ */
+export type LoyaltyTransaction = Prisma.LoyaltyTransactionModel
+/**
+ * Model ReferralCode
+ * 
+ */
+export type ReferralCode = Prisma.ReferralCodeModel
+/**
+ * Model Referral
+ * 
+ */
+export type Referral = Prisma.ReferralModel
+/**
+ * Model MarketingSegment
+ * 
+ */
+export type MarketingSegment = Prisma.MarketingSegmentModel
+/**
+ * Model MarketingCampaign
+ * 
+ */
+export type MarketingCampaign = Prisma.MarketingCampaignModel
+/**
+ * Model CampaignDelivery
+ * 
+ */
+export type CampaignDelivery = Prisma.CampaignDeliveryModel
+/**
+ * Model AbandonedCartSequence
+ * 
+ */
+export type AbandonedCartSequence = Prisma.AbandonedCartSequenceModel
+/**
+ * Model AbandonedCartSend
+ * 
+ */
+export type AbandonedCartSend = Prisma.AbandonedCartSendModel
+/**
+ * Model SalesChannel
+ * 
+ */
+export type SalesChannel = Prisma.SalesChannelModel
+/**
+ * Model ChannelProduct
+ * 
+ */
+export type ChannelProduct = Prisma.ChannelProductModel
+/**
+ * Model ChannelPriceOverride
+ * 
+ */
+export type ChannelPriceOverride = Prisma.ChannelPriceOverrideModel
