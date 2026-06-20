@@ -714,9 +714,15 @@ export default function AdminOrderRoute() {
                     type="number"
                     name={`ship-qty-${line.id}`}
                     min={0}
-                    max={line.quantity - line.fulfilledQuantity - line.returnedQuantity}
+                    max={
+                      line.quantity -
+                      line.fulfilledQuantity -
+                      line.returnedQuantity
+                    }
                     defaultValue={
-                      line.quantity - line.fulfilledQuantity - line.returnedQuantity
+                      line.quantity -
+                      line.fulfilledQuantity -
+                      line.returnedQuantity
                     }
                     className="w-20 rounded-md border-0 bg-white px-2 py-1 text-sm shadow-sm ring-1 ring-gray-300 ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
                   />
@@ -789,7 +795,7 @@ export default function AdminOrderRoute() {
                   <span className="font-mono text-xs text-gray-500">
                     {ret.id.slice(-8)}
                   </span>
-                  <span className="text-sm capitalize text-gray-700 dark:text-zinc-300">
+                  <span className="text-sm text-gray-700 capitalize dark:text-zinc-300">
                     {ret.status}
                     {ret.resolution ? ` (${ret.resolution})` : ''}
                   </span>
@@ -810,7 +816,11 @@ export default function AdminOrderRoute() {
                 <div className="flex flex-wrap gap-2">
                   {ret.status === 'requested' && (
                     <Form method="post" className="inline">
-                      <input type="hidden" name="intent" value="approve-return" />
+                      <input
+                        type="hidden"
+                        name="intent"
+                        value="approve-return"
+                      />
                       <input type="hidden" name="returnId" value={ret.id} />
                       <input type="hidden" name="resolution" value="refund" />
                       <button
@@ -823,7 +833,11 @@ export default function AdminOrderRoute() {
                   )}
                   {ret.status === 'approved' && (
                     <Form method="post" className="inline">
-                      <input type="hidden" name="intent" value="receive-return" />
+                      <input
+                        type="hidden"
+                        name="intent"
+                        value="receive-return"
+                      />
                       <input type="hidden" name="returnId" value={ret.id} />
                       <button
                         type="submit"
@@ -836,7 +850,11 @@ export default function AdminOrderRoute() {
                   {ret.status === 'received' && (
                     <>
                       <Form method="post" className="inline">
-                        <input type="hidden" name="intent" value="complete-return" />
+                        <input
+                          type="hidden"
+                          name="intent"
+                          value="complete-return"
+                        />
                         <input type="hidden" name="returnId" value={ret.id} />
                         <input type="hidden" name="resolution" value="refund" />
                         <button
@@ -847,7 +865,11 @@ export default function AdminOrderRoute() {
                         </button>
                       </Form>
                       <Form method="post" className="inline">
-                        <input type="hidden" name="intent" value="complete-return" />
+                        <input
+                          type="hidden"
+                          name="intent"
+                          value="complete-return"
+                        />
                         <input type="hidden" name="returnId" value={ret.id} />
                         <input
                           type="hidden"

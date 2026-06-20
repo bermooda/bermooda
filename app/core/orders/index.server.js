@@ -369,7 +369,10 @@ export function deriveFulfillmentStatus(lines) {
   if (!lines?.length) return 'unfulfilled';
 
   const totalQty = lines.reduce((sum, l) => sum + l.quantity, 0);
-  const fulfilledQty = lines.reduce((sum, l) => sum + (l.fulfilledQuantity ?? 0), 0);
+  const fulfilledQty = lines.reduce(
+    (sum, l) => sum + (l.fulfilledQuantity ?? 0),
+    0
+  );
 
   if (fulfilledQty === 0) return 'unfulfilled';
   if (fulfilledQty >= totalQty) return 'fulfilled';
@@ -392,7 +395,10 @@ export async function syncOrderFulfillmentStatus(orderId, tx) {
 
   const fulfillment = deriveFulfillmentStatus(order.lines);
 
-  if (fulfillment === 'fulfilled' && ['paid', 'confirmed'].includes(order.status)) {
+  if (
+    fulfillment === 'fulfilled' &&
+    ['paid', 'confirmed'].includes(order.status)
+  ) {
     await client.order.update({
       where: { id: orderId },
       data: { status: 'fulfilled' },
@@ -475,8 +481,7 @@ function validateShipmentLines(orderLines, requestedLines) {
       throw new Error('INVALID_ORDER_LINE');
     }
 
-    const remaining =
-      orderLine.quantity - (orderLine.fulfilledQuantity ?? 0);
+    const remaining = orderLine.quantity - (orderLine.fulfilledQuantity ?? 0);
 
     if (req.quantity <= 0 || req.quantity > remaining) {
       throw new Error('INVALID_SHIPMENT_QUANTITY');

@@ -174,7 +174,11 @@ export async function sendOrderConfirmationEmail({
   }
 }
 
-export async function sendOrderShippedEmail({ email, locale = 'en', ...props }) {
+export async function sendOrderShippedEmail({
+  email,
+  locale = 'en',
+  ...props
+}) {
   try {
     const data = await resend.emails.send({
       from: config.resend.fromNoReply,

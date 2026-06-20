@@ -1,8 +1,8 @@
 // app/core/store-credit/index.server.js
 // Store-credit ledger — reusable by returns (W4) and gift cards (W7).
 
-import prisma from '#/libs/prisma.server';
 import logger from '#/utils/logger.server';
+import prisma from '#/libs/prisma.server';
 
 /**
  * Get the current store-credit balance for a customer (latest ledger entry).

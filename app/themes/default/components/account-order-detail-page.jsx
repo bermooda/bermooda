@@ -1,3 +1,4 @@
+import { ChevronLeftIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router';
 
 import { formatPrice } from '#/core/index';

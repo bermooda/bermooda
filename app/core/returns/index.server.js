@@ -35,10 +35,7 @@ const VALID_RESOLUTIONS = new Set(['refund', 'store_credit', 'exchange']);
  * }} params
  * @returns {Promise<object>}
  */
-export async function requestReturn(
-  orderId,
-  { customerId, reason, lines }
-) {
+export async function requestReturn(orderId, { customerId, reason, lines }) {
   if (!lines?.length) {
     throw new Error('RETURN_LINES_REQUIRED');
   }
@@ -221,16 +218,14 @@ export async function completeReturn(
     throw new Error('INVALID_RETURN_STATUS');
   }
 
-  const effectiveResolution =
-    resolution ?? returnRecord.resolution ?? 'refund';
+  const effectiveResolution = resolution ?? returnRecord.resolution ?? 'refund';
 
   if (!VALID_RESOLUTIONS.has(effectiveResolution)) {
     throw new Error('INVALID_RESOLUTION');
   }
 
   const creditAmount =
-    refundAmountCents ??
-    computeReturnAmountCents(returnRecord.lines);
+    refundAmountCents ?? computeReturnAmountCents(returnRecord.lines);
 
   if (effectiveResolution === 'refund') {
     await createRefund(returnRecord.orderId, {

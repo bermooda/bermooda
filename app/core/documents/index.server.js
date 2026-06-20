@@ -172,13 +172,15 @@ export async function generatePackingSlipPdf(shipmentId) {
           sku: sl.orderLine.sku,
           quantity: sl.quantity,
         }))
-      : (await prisma.orderLine.findMany({ where: { orderId: shipment.orderId } })).map(
-          (ol) => ({
-            title: ol.title,
-            sku: ol.sku,
-            quantity: ol.quantity,
+      : (
+          await prisma.orderLine.findMany({
+            where: { orderId: shipment.orderId },
           })
-        );
+        ).map((ol) => ({
+          title: ol.title,
+          sku: ol.sku,
+          quantity: ol.quantity,
+        }));
 
   for (const line of lines) {
     const sku = line.sku ? ` [${line.sku}]` : '';

@@ -36,7 +36,6 @@ import prisma from '#/libs/prisma.server';
 import { emit } from '#/core/events/index.server';
 import { incrementInventory } from '#/core/inventory/index.server';
 import { createRefund } from '#/core/orders/index.server';
-import { issueStoreCredit } from '#/core/store-credit/index.server';
 import {
   requestReturn,
   approveReturn,
@@ -44,6 +43,7 @@ import {
   completeReturn,
   cancelReturn,
 } from '#/core/returns/index.server';
+import { issueStoreCredit } from '#/core/store-credit/index.server';
 
 const ORDER = {
   id: 'order-1',

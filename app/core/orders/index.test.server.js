@@ -492,9 +492,7 @@ describe('markShipped', () => {
       lines: [],
       order: {
         id: 'order_1',
-        lines: [
-          { id: 'line_1', quantity: 1, fulfilledQuantity: 0 },
-        ],
+        lines: [{ id: 'line_1', quantity: 1, fulfilledQuantity: 0 }],
       },
     };
     prisma.shipment.findUnique.mockResolvedValue(shipment);
