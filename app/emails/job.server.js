@@ -1,8 +1,8 @@
+import config from '#/config';
 import logger from '#/utils/logger.server';
 import { handleError } from '#/libs/error.server';
-import queue, { createThrottledJob } from '#/libs/queue.server';
 import prisma from '#/libs/prisma.server';
-import config from '#/config';
+import queue, { createThrottledJob } from '#/libs/queue.server';
 import {
   sendPasswordResetEmail,
   sendTwoFactorOtpEmail,
