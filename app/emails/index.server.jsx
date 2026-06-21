@@ -381,3 +381,21 @@ export async function sendBackInStockEmail({ to, variant }) {
     throw error;
   }
 }
+
+export async function sendCampaignEmail({ to, subject, bodyHtml, name }) {
+  try {
+    const html = bodyHtml.replace(/\{\{name\}\}/g, name ?? 'there');
+    const data = await resend.emails.send({
+      from: config.resend.fromNoReply,
+      to,
+      subject,
+      html,
+    });
+
+    logger.info({ to, subject }, 'Campaign email sent successfully');
+    return { success: true, data };
+  } catch (error) {
+    logger.error(error, 'Failed to send campaign email');
+    throw error;
+  }
+}

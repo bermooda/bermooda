@@ -32,19 +32,43 @@ export async function getCustomerGroupIds(customerId) {
  *   currency: string,
  *   quantity?: number,
  *   customerGroupIds?: string[],
+ *   salesChannelId?: string,
  * }} params
- * @returns {Promise<{ priceCents: number, source: 'base'|'price_list', priceListId?: string }|null>}
+ * @returns {Promise<{ priceCents: number, source: 'base'|'price_list'|'channel', priceListId?: string, channelId?: string }|null>}
  */
 export async function resolveVariantPrice({
   variantId,
   currency,
   quantity = 1,
   customerGroupIds = [],
+  salesChannelId,
 }) {
   const base = await prisma.variantPrice.findUnique({
     where: { variantId_currency: { variantId, currency } },
   });
   if (!base) return null;
+
+  let bestPrice = base.priceCents;
+  let bestSource = 'base';
+  let bestPriceListId;
+  let bestChannelId;
+
+  if (salesChannelId) {
+    const channelOverride = await prisma.channelPriceOverride.findUnique({
+      where: {
+        channelId_variantId_currency: {
+          channelId: salesChannelId,
+          variantId,
+          currency,
+        },
+      },
+    });
+    if (channelOverride) {
+      bestPrice = channelOverride.priceCents;
+      bestSource = 'channel';
+      bestChannelId = salesChannelId;
+    }
+  }
 
   const now = new Date();
   const priceLists = await prisma.priceList.findMany({
@@ -71,10 +95,6 @@ export async function resolveVariantPrice({
     },
   });
 
-  let bestPrice = base.priceCents;
-  let bestSource = 'base';
-  let bestPriceListId;
-
   for (const priceList of priceLists) {
     if (!isPriceListActive(priceList, now)) continue;
     const entry = priceList.entries[0];
@@ -90,6 +110,7 @@ export async function resolveVariantPrice({
     priceCents: bestPrice,
     source: bestSource,
     priceListId: bestPriceListId,
+    channelId: bestChannelId,
   };
 }
 

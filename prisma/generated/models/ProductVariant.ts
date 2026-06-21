@@ -262,6 +262,7 @@ export type ProductVariantWhereInput = {
   wishlistItems?: Prisma.WishlistItemListRelationFilter
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionListRelationFilter
   bundleComponents?: Prisma.BundleItemListRelationFilter
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideListRelationFilter
 }
 
 export type ProductVariantOrderByWithRelationInput = {
@@ -284,6 +285,7 @@ export type ProductVariantOrderByWithRelationInput = {
   wishlistItems?: Prisma.WishlistItemOrderByRelationAggregateInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionOrderByRelationAggregateInput
   bundleComponents?: Prisma.BundleItemOrderByRelationAggregateInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideOrderByRelationAggregateInput
 }
 
 export type ProductVariantWhereUniqueInput = Prisma.AtLeast<{
@@ -309,6 +311,7 @@ export type ProductVariantWhereUniqueInput = Prisma.AtLeast<{
   wishlistItems?: Prisma.WishlistItemListRelationFilter
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionListRelationFilter
   bundleComponents?: Prisma.BundleItemListRelationFilter
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideListRelationFilter
 }, "id">
 
 export type ProductVariantOrderByWithAggregationInput = {
@@ -361,6 +364,7 @@ export type ProductVariantCreateInput = {
   wishlistItems?: Prisma.WishlistItemCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUncheckedCreateInput = {
@@ -381,6 +385,7 @@ export type ProductVariantUncheckedCreateInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemUncheckedCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUpdateInput = {
@@ -401,6 +406,7 @@ export type ProductVariantUpdateInput = {
   wishlistItems?: Prisma.WishlistItemUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateInput = {
@@ -421,6 +427,7 @@ export type ProductVariantUncheckedUpdateInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUncheckedUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantCreateManyInput = {
@@ -723,6 +730,20 @@ export type ProductVariantUpdateOneRequiredWithoutBundleComponentsNestedInput = 
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProductVariantUpdateToOneWithWhereWithoutBundleComponentsInput, Prisma.ProductVariantUpdateWithoutBundleComponentsInput>, Prisma.ProductVariantUncheckedUpdateWithoutBundleComponentsInput>
 }
 
+export type ProductVariantCreateNestedOneWithoutChannelPriceOverridesInput = {
+  create?: Prisma.XOR<Prisma.ProductVariantCreateWithoutChannelPriceOverridesInput, Prisma.ProductVariantUncheckedCreateWithoutChannelPriceOverridesInput>
+  connectOrCreate?: Prisma.ProductVariantCreateOrConnectWithoutChannelPriceOverridesInput
+  connect?: Prisma.ProductVariantWhereUniqueInput
+}
+
+export type ProductVariantUpdateOneRequiredWithoutChannelPriceOverridesNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductVariantCreateWithoutChannelPriceOverridesInput, Prisma.ProductVariantUncheckedCreateWithoutChannelPriceOverridesInput>
+  connectOrCreate?: Prisma.ProductVariantCreateOrConnectWithoutChannelPriceOverridesInput
+  upsert?: Prisma.ProductVariantUpsertWithoutChannelPriceOverridesInput
+  connect?: Prisma.ProductVariantWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProductVariantUpdateToOneWithWhereWithoutChannelPriceOverridesInput, Prisma.ProductVariantUpdateWithoutChannelPriceOverridesInput>, Prisma.ProductVariantUncheckedUpdateWithoutChannelPriceOverridesInput>
+}
+
 export type ProductVariantCreateWithoutProductInput = {
   id?: string
   sku?: string | null
@@ -740,6 +761,7 @@ export type ProductVariantCreateWithoutProductInput = {
   wishlistItems?: Prisma.WishlistItemCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUncheckedCreateWithoutProductInput = {
@@ -759,6 +781,7 @@ export type ProductVariantUncheckedCreateWithoutProductInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemUncheckedCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantCreateOrConnectWithoutProductInput = {
@@ -818,6 +841,7 @@ export type ProductVariantCreateWithoutPricesInput = {
   wishlistItems?: Prisma.WishlistItemCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUncheckedCreateWithoutPricesInput = {
@@ -837,6 +861,7 @@ export type ProductVariantUncheckedCreateWithoutPricesInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemUncheckedCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantCreateOrConnectWithoutPricesInput = {
@@ -872,6 +897,7 @@ export type ProductVariantUpdateWithoutPricesInput = {
   wishlistItems?: Prisma.WishlistItemUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateWithoutPricesInput = {
@@ -891,6 +917,7 @@ export type ProductVariantUncheckedUpdateWithoutPricesInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUncheckedUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantCreateWithoutCartLinesInput = {
@@ -910,6 +937,7 @@ export type ProductVariantCreateWithoutCartLinesInput = {
   wishlistItems?: Prisma.WishlistItemCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUncheckedCreateWithoutCartLinesInput = {
@@ -929,6 +957,7 @@ export type ProductVariantUncheckedCreateWithoutCartLinesInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemUncheckedCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantCreateOrConnectWithoutCartLinesInput = {
@@ -964,6 +993,7 @@ export type ProductVariantUpdateWithoutCartLinesInput = {
   wishlistItems?: Prisma.WishlistItemUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateWithoutCartLinesInput = {
@@ -983,6 +1013,7 @@ export type ProductVariantUncheckedUpdateWithoutCartLinesInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUncheckedUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantCreateWithoutOrderLinesInput = {
@@ -1002,6 +1033,7 @@ export type ProductVariantCreateWithoutOrderLinesInput = {
   wishlistItems?: Prisma.WishlistItemCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUncheckedCreateWithoutOrderLinesInput = {
@@ -1021,6 +1053,7 @@ export type ProductVariantUncheckedCreateWithoutOrderLinesInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemUncheckedCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantCreateOrConnectWithoutOrderLinesInput = {
@@ -1056,6 +1089,7 @@ export type ProductVariantUpdateWithoutOrderLinesInput = {
   wishlistItems?: Prisma.WishlistItemUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateWithoutOrderLinesInput = {
@@ -1075,6 +1109,7 @@ export type ProductVariantUncheckedUpdateWithoutOrderLinesInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUncheckedUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantCreateWithoutTaxClassInput = {
@@ -1094,6 +1129,7 @@ export type ProductVariantCreateWithoutTaxClassInput = {
   wishlistItems?: Prisma.WishlistItemCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUncheckedCreateWithoutTaxClassInput = {
@@ -1113,6 +1149,7 @@ export type ProductVariantUncheckedCreateWithoutTaxClassInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemUncheckedCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantCreateOrConnectWithoutTaxClassInput = {
@@ -1157,6 +1194,7 @@ export type ProductVariantCreateWithoutInventoryLevelsInput = {
   wishlistItems?: Prisma.WishlistItemCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUncheckedCreateWithoutInventoryLevelsInput = {
@@ -1176,6 +1214,7 @@ export type ProductVariantUncheckedCreateWithoutInventoryLevelsInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemUncheckedCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantCreateOrConnectWithoutInventoryLevelsInput = {
@@ -1211,6 +1250,7 @@ export type ProductVariantUpdateWithoutInventoryLevelsInput = {
   wishlistItems?: Prisma.WishlistItemUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateWithoutInventoryLevelsInput = {
@@ -1230,6 +1270,7 @@ export type ProductVariantUncheckedUpdateWithoutInventoryLevelsInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUncheckedUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantCreateWithoutPriceListEntriesInput = {
@@ -1249,6 +1290,7 @@ export type ProductVariantCreateWithoutPriceListEntriesInput = {
   wishlistItems?: Prisma.WishlistItemCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUncheckedCreateWithoutPriceListEntriesInput = {
@@ -1268,6 +1310,7 @@ export type ProductVariantUncheckedCreateWithoutPriceListEntriesInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemUncheckedCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantCreateOrConnectWithoutPriceListEntriesInput = {
@@ -1303,6 +1346,7 @@ export type ProductVariantUpdateWithoutPriceListEntriesInput = {
   wishlistItems?: Prisma.WishlistItemUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateWithoutPriceListEntriesInput = {
@@ -1322,6 +1366,7 @@ export type ProductVariantUncheckedUpdateWithoutPriceListEntriesInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUncheckedUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantCreateWithoutWishlistItemsInput = {
@@ -1341,6 +1386,7 @@ export type ProductVariantCreateWithoutWishlistItemsInput = {
   priceListEntries?: Prisma.PriceListEntryCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUncheckedCreateWithoutWishlistItemsInput = {
@@ -1360,6 +1406,7 @@ export type ProductVariantUncheckedCreateWithoutWishlistItemsInput = {
   priceListEntries?: Prisma.PriceListEntryUncheckedCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemUncheckedCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantCreateOrConnectWithoutWishlistItemsInput = {
@@ -1395,6 +1442,7 @@ export type ProductVariantUpdateWithoutWishlistItemsInput = {
   priceListEntries?: Prisma.PriceListEntryUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateWithoutWishlistItemsInput = {
@@ -1414,6 +1462,7 @@ export type ProductVariantUncheckedUpdateWithoutWishlistItemsInput = {
   priceListEntries?: Prisma.PriceListEntryUncheckedUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUncheckedUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantCreateWithoutBackInStockSubscriptionsInput = {
@@ -1433,6 +1482,7 @@ export type ProductVariantCreateWithoutBackInStockSubscriptionsInput = {
   priceListEntries?: Prisma.PriceListEntryCreateNestedManyWithoutVariantInput
   wishlistItems?: Prisma.WishlistItemCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUncheckedCreateWithoutBackInStockSubscriptionsInput = {
@@ -1452,6 +1502,7 @@ export type ProductVariantUncheckedCreateWithoutBackInStockSubscriptionsInput = 
   priceListEntries?: Prisma.PriceListEntryUncheckedCreateNestedManyWithoutVariantInput
   wishlistItems?: Prisma.WishlistItemUncheckedCreateNestedManyWithoutVariantInput
   bundleComponents?: Prisma.BundleItemUncheckedCreateNestedManyWithoutComponentVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantCreateOrConnectWithoutBackInStockSubscriptionsInput = {
@@ -1487,6 +1538,7 @@ export type ProductVariantUpdateWithoutBackInStockSubscriptionsInput = {
   priceListEntries?: Prisma.PriceListEntryUpdateManyWithoutVariantNestedInput
   wishlistItems?: Prisma.WishlistItemUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateWithoutBackInStockSubscriptionsInput = {
@@ -1506,6 +1558,7 @@ export type ProductVariantUncheckedUpdateWithoutBackInStockSubscriptionsInput = 
   priceListEntries?: Prisma.PriceListEntryUncheckedUpdateManyWithoutVariantNestedInput
   wishlistItems?: Prisma.WishlistItemUncheckedUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUncheckedUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantCreateWithoutBundleComponentsInput = {
@@ -1525,6 +1578,7 @@ export type ProductVariantCreateWithoutBundleComponentsInput = {
   priceListEntries?: Prisma.PriceListEntryCreateNestedManyWithoutVariantInput
   wishlistItems?: Prisma.WishlistItemCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantUncheckedCreateWithoutBundleComponentsInput = {
@@ -1544,6 +1598,7 @@ export type ProductVariantUncheckedCreateWithoutBundleComponentsInput = {
   priceListEntries?: Prisma.PriceListEntryUncheckedCreateNestedManyWithoutVariantInput
   wishlistItems?: Prisma.WishlistItemUncheckedCreateNestedManyWithoutVariantInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutVariantInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedCreateNestedManyWithoutVariantInput
 }
 
 export type ProductVariantCreateOrConnectWithoutBundleComponentsInput = {
@@ -1579,6 +1634,7 @@ export type ProductVariantUpdateWithoutBundleComponentsInput = {
   priceListEntries?: Prisma.PriceListEntryUpdateManyWithoutVariantNestedInput
   wishlistItems?: Prisma.WishlistItemUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateWithoutBundleComponentsInput = {
@@ -1598,6 +1654,103 @@ export type ProductVariantUncheckedUpdateWithoutBundleComponentsInput = {
   priceListEntries?: Prisma.PriceListEntryUncheckedUpdateManyWithoutVariantNestedInput
   wishlistItems?: Prisma.WishlistItemUncheckedUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedUpdateManyWithoutVariantNestedInput
+}
+
+export type ProductVariantCreateWithoutChannelPriceOverridesInput = {
+  id?: string
+  sku?: string | null
+  inventoryCount?: number
+  inventoryTracked?: boolean
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  product: Prisma.ProductCreateNestedOneWithoutVariantsInput
+  taxClass?: Prisma.TaxClassCreateNestedOneWithoutVariantsInput
+  prices?: Prisma.VariantPriceCreateNestedManyWithoutVariantInput
+  cartLines?: Prisma.CartLineCreateNestedManyWithoutVariantInput
+  orderLines?: Prisma.OrderLineCreateNestedManyWithoutVariantInput
+  inventoryLevels?: Prisma.InventoryLevelCreateNestedManyWithoutVariantInput
+  priceListEntries?: Prisma.PriceListEntryCreateNestedManyWithoutVariantInput
+  wishlistItems?: Prisma.WishlistItemCreateNestedManyWithoutVariantInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutVariantInput
+  bundleComponents?: Prisma.BundleItemCreateNestedManyWithoutComponentVariantInput
+}
+
+export type ProductVariantUncheckedCreateWithoutChannelPriceOverridesInput = {
+  id?: string
+  productId: string
+  sku?: string | null
+  inventoryCount?: number
+  inventoryTracked?: boolean
+  taxClassId?: string | null
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  prices?: Prisma.VariantPriceUncheckedCreateNestedManyWithoutVariantInput
+  cartLines?: Prisma.CartLineUncheckedCreateNestedManyWithoutVariantInput
+  orderLines?: Prisma.OrderLineUncheckedCreateNestedManyWithoutVariantInput
+  inventoryLevels?: Prisma.InventoryLevelUncheckedCreateNestedManyWithoutVariantInput
+  priceListEntries?: Prisma.PriceListEntryUncheckedCreateNestedManyWithoutVariantInput
+  wishlistItems?: Prisma.WishlistItemUncheckedCreateNestedManyWithoutVariantInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutVariantInput
+  bundleComponents?: Prisma.BundleItemUncheckedCreateNestedManyWithoutComponentVariantInput
+}
+
+export type ProductVariantCreateOrConnectWithoutChannelPriceOverridesInput = {
+  where: Prisma.ProductVariantWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProductVariantCreateWithoutChannelPriceOverridesInput, Prisma.ProductVariantUncheckedCreateWithoutChannelPriceOverridesInput>
+}
+
+export type ProductVariantUpsertWithoutChannelPriceOverridesInput = {
+  update: Prisma.XOR<Prisma.ProductVariantUpdateWithoutChannelPriceOverridesInput, Prisma.ProductVariantUncheckedUpdateWithoutChannelPriceOverridesInput>
+  create: Prisma.XOR<Prisma.ProductVariantCreateWithoutChannelPriceOverridesInput, Prisma.ProductVariantUncheckedCreateWithoutChannelPriceOverridesInput>
+  where?: Prisma.ProductVariantWhereInput
+}
+
+export type ProductVariantUpdateToOneWithWhereWithoutChannelPriceOverridesInput = {
+  where?: Prisma.ProductVariantWhereInput
+  data: Prisma.XOR<Prisma.ProductVariantUpdateWithoutChannelPriceOverridesInput, Prisma.ProductVariantUncheckedUpdateWithoutChannelPriceOverridesInput>
+}
+
+export type ProductVariantUpdateWithoutChannelPriceOverridesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
+  inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  product?: Prisma.ProductUpdateOneRequiredWithoutVariantsNestedInput
+  taxClass?: Prisma.TaxClassUpdateOneWithoutVariantsNestedInput
+  prices?: Prisma.VariantPriceUpdateManyWithoutVariantNestedInput
+  cartLines?: Prisma.CartLineUpdateManyWithoutVariantNestedInput
+  orderLines?: Prisma.OrderLineUpdateManyWithoutVariantNestedInput
+  inventoryLevels?: Prisma.InventoryLevelUpdateManyWithoutVariantNestedInput
+  priceListEntries?: Prisma.PriceListEntryUpdateManyWithoutVariantNestedInput
+  wishlistItems?: Prisma.WishlistItemUpdateManyWithoutVariantNestedInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutVariantNestedInput
+  bundleComponents?: Prisma.BundleItemUpdateManyWithoutComponentVariantNestedInput
+}
+
+export type ProductVariantUncheckedUpdateWithoutChannelPriceOverridesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productId?: Prisma.StringFieldUpdateOperationsInput | string
+  sku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inventoryCount?: Prisma.IntFieldUpdateOperationsInput | number
+  inventoryTracked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  taxClassId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  prices?: Prisma.VariantPriceUncheckedUpdateManyWithoutVariantNestedInput
+  cartLines?: Prisma.CartLineUncheckedUpdateManyWithoutVariantNestedInput
+  orderLines?: Prisma.OrderLineUncheckedUpdateManyWithoutVariantNestedInput
+  inventoryLevels?: Prisma.InventoryLevelUncheckedUpdateManyWithoutVariantNestedInput
+  priceListEntries?: Prisma.PriceListEntryUncheckedUpdateManyWithoutVariantNestedInput
+  wishlistItems?: Prisma.WishlistItemUncheckedUpdateManyWithoutVariantNestedInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutVariantNestedInput
+  bundleComponents?: Prisma.BundleItemUncheckedUpdateManyWithoutComponentVariantNestedInput
 }
 
 export type ProductVariantCreateManyProductInput = {
@@ -1628,6 +1781,7 @@ export type ProductVariantUpdateWithoutProductInput = {
   wishlistItems?: Prisma.WishlistItemUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateWithoutProductInput = {
@@ -1647,6 +1801,7 @@ export type ProductVariantUncheckedUpdateWithoutProductInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUncheckedUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateManyWithoutProductInput = {
@@ -1688,6 +1843,7 @@ export type ProductVariantUpdateWithoutTaxClassInput = {
   wishlistItems?: Prisma.WishlistItemUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateWithoutTaxClassInput = {
@@ -1707,6 +1863,7 @@ export type ProductVariantUncheckedUpdateWithoutTaxClassInput = {
   wishlistItems?: Prisma.WishlistItemUncheckedUpdateManyWithoutVariantNestedInput
   backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutVariantNestedInput
   bundleComponents?: Prisma.BundleItemUncheckedUpdateManyWithoutComponentVariantNestedInput
+  channelPriceOverrides?: Prisma.ChannelPriceOverrideUncheckedUpdateManyWithoutVariantNestedInput
 }
 
 export type ProductVariantUncheckedUpdateManyWithoutTaxClassInput = {
@@ -1734,6 +1891,7 @@ export type ProductVariantCountOutputType = {
   wishlistItems: number
   backInStockSubscriptions: number
   bundleComponents: number
+  channelPriceOverrides: number
 }
 
 export type ProductVariantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1745,6 +1903,7 @@ export type ProductVariantCountOutputTypeSelect<ExtArgs extends runtime.Types.Ex
   wishlistItems?: boolean | ProductVariantCountOutputTypeCountWishlistItemsArgs
   backInStockSubscriptions?: boolean | ProductVariantCountOutputTypeCountBackInStockSubscriptionsArgs
   bundleComponents?: boolean | ProductVariantCountOutputTypeCountBundleComponentsArgs
+  channelPriceOverrides?: boolean | ProductVariantCountOutputTypeCountChannelPriceOverridesArgs
 }
 
 /**
@@ -1813,6 +1972,13 @@ export type ProductVariantCountOutputTypeCountBundleComponentsArgs<ExtArgs exten
   where?: Prisma.BundleItemWhereInput
 }
 
+/**
+ * ProductVariantCountOutputType without action
+ */
+export type ProductVariantCountOutputTypeCountChannelPriceOverridesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ChannelPriceOverrideWhereInput
+}
+
 
 export type ProductVariantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1834,6 +2000,7 @@ export type ProductVariantSelect<ExtArgs extends runtime.Types.Extensions.Intern
   wishlistItems?: boolean | Prisma.ProductVariant$wishlistItemsArgs<ExtArgs>
   backInStockSubscriptions?: boolean | Prisma.ProductVariant$backInStockSubscriptionsArgs<ExtArgs>
   bundleComponents?: boolean | Prisma.ProductVariant$bundleComponentsArgs<ExtArgs>
+  channelPriceOverrides?: boolean | Prisma.ProductVariant$channelPriceOverridesArgs<ExtArgs>
   _count?: boolean | Prisma.ProductVariantCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["productVariant"]>
 
@@ -1889,6 +2056,7 @@ export type ProductVariantInclude<ExtArgs extends runtime.Types.Extensions.Inter
   wishlistItems?: boolean | Prisma.ProductVariant$wishlistItemsArgs<ExtArgs>
   backInStockSubscriptions?: boolean | Prisma.ProductVariant$backInStockSubscriptionsArgs<ExtArgs>
   bundleComponents?: boolean | Prisma.ProductVariant$bundleComponentsArgs<ExtArgs>
+  channelPriceOverrides?: boolean | Prisma.ProductVariant$channelPriceOverridesArgs<ExtArgs>
   _count?: boolean | Prisma.ProductVariantCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProductVariantIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1913,6 +2081,7 @@ export type $ProductVariantPayload<ExtArgs extends runtime.Types.Extensions.Inte
     wishlistItems: Prisma.$WishlistItemPayload<ExtArgs>[]
     backInStockSubscriptions: Prisma.$BackInStockSubscriptionPayload<ExtArgs>[]
     bundleComponents: Prisma.$BundleItemPayload<ExtArgs>[]
+    channelPriceOverrides: Prisma.$ChannelPriceOverridePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2328,6 +2497,7 @@ export interface Prisma__ProductVariantClient<T, Null = never, ExtArgs extends r
   wishlistItems<T extends Prisma.ProductVariant$wishlistItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductVariant$wishlistItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WishlistItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   backInStockSubscriptions<T extends Prisma.ProductVariant$backInStockSubscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductVariant$backInStockSubscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BackInStockSubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bundleComponents<T extends Prisma.ProductVariant$bundleComponentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductVariant$bundleComponentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BundleItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  channelPriceOverrides<T extends Prisma.ProductVariant$channelPriceOverridesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductVariant$channelPriceOverridesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChannelPriceOverridePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2973,6 +3143,30 @@ export type ProductVariant$bundleComponentsArgs<ExtArgs extends runtime.Types.Ex
   take?: number
   skip?: number
   distinct?: Prisma.BundleItemScalarFieldEnum | Prisma.BundleItemScalarFieldEnum[]
+}
+
+/**
+ * ProductVariant.channelPriceOverrides
+ */
+export type ProductVariant$channelPriceOverridesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ChannelPriceOverride
+   */
+  select?: Prisma.ChannelPriceOverrideSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ChannelPriceOverride
+   */
+  omit?: Prisma.ChannelPriceOverrideOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ChannelPriceOverrideInclude<ExtArgs> | null
+  where?: Prisma.ChannelPriceOverrideWhereInput
+  orderBy?: Prisma.ChannelPriceOverrideOrderByWithRelationInput | Prisma.ChannelPriceOverrideOrderByWithRelationInput[]
+  cursor?: Prisma.ChannelPriceOverrideWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ChannelPriceOverrideScalarFieldEnum | Prisma.ChannelPriceOverrideScalarFieldEnum[]
 }
 
 /**

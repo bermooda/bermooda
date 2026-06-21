@@ -28,16 +28,19 @@ export type AggregateCheckoutSession = {
 
 export type CheckoutSessionAvgAggregateOutputType = {
   storeCreditCents: number | null
+  loyaltyPointsCents: number | null
 }
 
 export type CheckoutSessionSumAggregateOutputType = {
   storeCreditCents: number | null
+  loyaltyPointsCents: number | null
 }
 
 export type CheckoutSessionMinAggregateOutputType = {
   id: string | null
   cartId: string | null
   customerId: string | null
+  salesChannelId: string | null
   email: string | null
   step: string | null
   shippingAddressJson: string | null
@@ -48,6 +51,7 @@ export type CheckoutSessionMinAggregateOutputType = {
   couponCode: string | null
   giftCardCode: string | null
   storeCreditCents: number | null
+  loyaltyPointsCents: number | null
   vatId: string | null
   taxExempt: boolean | null
   expiresAt: Date | null
@@ -59,6 +63,7 @@ export type CheckoutSessionMaxAggregateOutputType = {
   id: string | null
   cartId: string | null
   customerId: string | null
+  salesChannelId: string | null
   email: string | null
   step: string | null
   shippingAddressJson: string | null
@@ -69,6 +74,7 @@ export type CheckoutSessionMaxAggregateOutputType = {
   couponCode: string | null
   giftCardCode: string | null
   storeCreditCents: number | null
+  loyaltyPointsCents: number | null
   vatId: string | null
   taxExempt: boolean | null
   expiresAt: Date | null
@@ -80,6 +86,7 @@ export type CheckoutSessionCountAggregateOutputType = {
   id: number
   cartId: number
   customerId: number
+  salesChannelId: number
   email: number
   step: number
   shippingAddressJson: number
@@ -90,6 +97,7 @@ export type CheckoutSessionCountAggregateOutputType = {
   couponCode: number
   giftCardCode: number
   storeCreditCents: number
+  loyaltyPointsCents: number
   vatId: number
   taxExempt: number
   expiresAt: number
@@ -101,16 +109,19 @@ export type CheckoutSessionCountAggregateOutputType = {
 
 export type CheckoutSessionAvgAggregateInputType = {
   storeCreditCents?: true
+  loyaltyPointsCents?: true
 }
 
 export type CheckoutSessionSumAggregateInputType = {
   storeCreditCents?: true
+  loyaltyPointsCents?: true
 }
 
 export type CheckoutSessionMinAggregateInputType = {
   id?: true
   cartId?: true
   customerId?: true
+  salesChannelId?: true
   email?: true
   step?: true
   shippingAddressJson?: true
@@ -121,6 +132,7 @@ export type CheckoutSessionMinAggregateInputType = {
   couponCode?: true
   giftCardCode?: true
   storeCreditCents?: true
+  loyaltyPointsCents?: true
   vatId?: true
   taxExempt?: true
   expiresAt?: true
@@ -132,6 +144,7 @@ export type CheckoutSessionMaxAggregateInputType = {
   id?: true
   cartId?: true
   customerId?: true
+  salesChannelId?: true
   email?: true
   step?: true
   shippingAddressJson?: true
@@ -142,6 +155,7 @@ export type CheckoutSessionMaxAggregateInputType = {
   couponCode?: true
   giftCardCode?: true
   storeCreditCents?: true
+  loyaltyPointsCents?: true
   vatId?: true
   taxExempt?: true
   expiresAt?: true
@@ -153,6 +167,7 @@ export type CheckoutSessionCountAggregateInputType = {
   id?: true
   cartId?: true
   customerId?: true
+  salesChannelId?: true
   email?: true
   step?: true
   shippingAddressJson?: true
@@ -163,6 +178,7 @@ export type CheckoutSessionCountAggregateInputType = {
   couponCode?: true
   giftCardCode?: true
   storeCreditCents?: true
+  loyaltyPointsCents?: true
   vatId?: true
   taxExempt?: true
   expiresAt?: true
@@ -261,6 +277,7 @@ export type CheckoutSessionGroupByOutputType = {
   id: string
   cartId: string
   customerId: string | null
+  salesChannelId: string | null
   email: string | null
   step: string
   shippingAddressJson: string | null
@@ -271,6 +288,7 @@ export type CheckoutSessionGroupByOutputType = {
   couponCode: string | null
   giftCardCode: string | null
   storeCreditCents: number
+  loyaltyPointsCents: number
   vatId: string | null
   taxExempt: boolean
   expiresAt: Date | null
@@ -305,6 +323,7 @@ export type CheckoutSessionWhereInput = {
   id?: Prisma.StringFilter<"CheckoutSession"> | string
   cartId?: Prisma.StringFilter<"CheckoutSession"> | string
   customerId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
+  salesChannelId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   email?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   step?: Prisma.StringFilter<"CheckoutSession"> | string
   shippingAddressJson?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
@@ -315,6 +334,7 @@ export type CheckoutSessionWhereInput = {
   couponCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   giftCardCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   storeCreditCents?: Prisma.IntFilter<"CheckoutSession"> | number
+  loyaltyPointsCents?: Prisma.IntFilter<"CheckoutSession"> | number
   vatId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   taxExempt?: Prisma.BoolFilter<"CheckoutSession"> | boolean
   expiresAt?: Prisma.DateTimeNullableFilter<"CheckoutSession"> | Date | string | null
@@ -322,12 +342,14 @@ export type CheckoutSessionWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"CheckoutSession"> | Date | string
   cart?: Prisma.XOR<Prisma.CartScalarRelationFilter, Prisma.CartWhereInput>
   customer?: Prisma.XOR<Prisma.CustomerNullableScalarRelationFilter, Prisma.CustomerWhereInput> | null
+  salesChannel?: Prisma.XOR<Prisma.SalesChannelNullableScalarRelationFilter, Prisma.SalesChannelWhereInput> | null
 }
 
 export type CheckoutSessionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   cartId?: Prisma.SortOrder
   customerId?: Prisma.SortOrderInput | Prisma.SortOrder
+  salesChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
   step?: Prisma.SortOrder
   shippingAddressJson?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -338,6 +360,7 @@ export type CheckoutSessionOrderByWithRelationInput = {
   couponCode?: Prisma.SortOrderInput | Prisma.SortOrder
   giftCardCode?: Prisma.SortOrderInput | Prisma.SortOrder
   storeCreditCents?: Prisma.SortOrder
+  loyaltyPointsCents?: Prisma.SortOrder
   vatId?: Prisma.SortOrderInput | Prisma.SortOrder
   taxExempt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -345,6 +368,7 @@ export type CheckoutSessionOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   cart?: Prisma.CartOrderByWithRelationInput
   customer?: Prisma.CustomerOrderByWithRelationInput
+  salesChannel?: Prisma.SalesChannelOrderByWithRelationInput
 }
 
 export type CheckoutSessionWhereUniqueInput = Prisma.AtLeast<{
@@ -354,6 +378,7 @@ export type CheckoutSessionWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.CheckoutSessionWhereInput | Prisma.CheckoutSessionWhereInput[]
   cartId?: Prisma.StringFilter<"CheckoutSession"> | string
   customerId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
+  salesChannelId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   email?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   step?: Prisma.StringFilter<"CheckoutSession"> | string
   shippingAddressJson?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
@@ -364,6 +389,7 @@ export type CheckoutSessionWhereUniqueInput = Prisma.AtLeast<{
   couponCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   giftCardCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   storeCreditCents?: Prisma.IntFilter<"CheckoutSession"> | number
+  loyaltyPointsCents?: Prisma.IntFilter<"CheckoutSession"> | number
   vatId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   taxExempt?: Prisma.BoolFilter<"CheckoutSession"> | boolean
   expiresAt?: Prisma.DateTimeNullableFilter<"CheckoutSession"> | Date | string | null
@@ -371,12 +397,14 @@ export type CheckoutSessionWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"CheckoutSession"> | Date | string
   cart?: Prisma.XOR<Prisma.CartScalarRelationFilter, Prisma.CartWhereInput>
   customer?: Prisma.XOR<Prisma.CustomerNullableScalarRelationFilter, Prisma.CustomerWhereInput> | null
+  salesChannel?: Prisma.XOR<Prisma.SalesChannelNullableScalarRelationFilter, Prisma.SalesChannelWhereInput> | null
 }, "id">
 
 export type CheckoutSessionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   cartId?: Prisma.SortOrder
   customerId?: Prisma.SortOrderInput | Prisma.SortOrder
+  salesChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
   step?: Prisma.SortOrder
   shippingAddressJson?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -387,6 +415,7 @@ export type CheckoutSessionOrderByWithAggregationInput = {
   couponCode?: Prisma.SortOrderInput | Prisma.SortOrder
   giftCardCode?: Prisma.SortOrderInput | Prisma.SortOrder
   storeCreditCents?: Prisma.SortOrder
+  loyaltyPointsCents?: Prisma.SortOrder
   vatId?: Prisma.SortOrderInput | Prisma.SortOrder
   taxExempt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -406,6 +435,7 @@ export type CheckoutSessionScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"CheckoutSession"> | string
   cartId?: Prisma.StringWithAggregatesFilter<"CheckoutSession"> | string
   customerId?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
+  salesChannelId?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
   email?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
   step?: Prisma.StringWithAggregatesFilter<"CheckoutSession"> | string
   shippingAddressJson?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
@@ -416,6 +446,7 @@ export type CheckoutSessionScalarWhereWithAggregatesInput = {
   couponCode?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
   giftCardCode?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
   storeCreditCents?: Prisma.IntWithAggregatesFilter<"CheckoutSession"> | number
+  loyaltyPointsCents?: Prisma.IntWithAggregatesFilter<"CheckoutSession"> | number
   vatId?: Prisma.StringNullableWithAggregatesFilter<"CheckoutSession"> | string | null
   taxExempt?: Prisma.BoolWithAggregatesFilter<"CheckoutSession"> | boolean
   expiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CheckoutSession"> | Date | string | null
@@ -435,6 +466,7 @@ export type CheckoutSessionCreateInput = {
   couponCode?: string | null
   giftCardCode?: string | null
   storeCreditCents?: number
+  loyaltyPointsCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -442,12 +474,14 @@ export type CheckoutSessionCreateInput = {
   updatedAt?: Date | string
   cart: Prisma.CartCreateNestedOneWithoutCheckoutsInput
   customer?: Prisma.CustomerCreateNestedOneWithoutCheckoutsInput
+  salesChannel?: Prisma.SalesChannelCreateNestedOneWithoutCheckoutsInput
 }
 
 export type CheckoutSessionUncheckedCreateInput = {
   id?: string
   cartId: string
   customerId?: string | null
+  salesChannelId?: string | null
   email?: string | null
   step?: string
   shippingAddressJson?: string | null
@@ -458,6 +492,7 @@ export type CheckoutSessionUncheckedCreateInput = {
   couponCode?: string | null
   giftCardCode?: string | null
   storeCreditCents?: number
+  loyaltyPointsCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -477,6 +512,7 @@ export type CheckoutSessionUpdateInput = {
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -484,12 +520,14 @@ export type CheckoutSessionUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   cart?: Prisma.CartUpdateOneRequiredWithoutCheckoutsNestedInput
   customer?: Prisma.CustomerUpdateOneWithoutCheckoutsNestedInput
+  salesChannel?: Prisma.SalesChannelUpdateOneWithoutCheckoutsNestedInput
 }
 
 export type CheckoutSessionUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   cartId?: Prisma.StringFieldUpdateOperationsInput | string
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  salesChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.StringFieldUpdateOperationsInput | string
   shippingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -500,6 +538,7 @@ export type CheckoutSessionUncheckedUpdateInput = {
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -511,6 +550,7 @@ export type CheckoutSessionCreateManyInput = {
   id?: string
   cartId: string
   customerId?: string | null
+  salesChannelId?: string | null
   email?: string | null
   step?: string
   shippingAddressJson?: string | null
@@ -521,6 +561,7 @@ export type CheckoutSessionCreateManyInput = {
   couponCode?: string | null
   giftCardCode?: string | null
   storeCreditCents?: number
+  loyaltyPointsCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -540,6 +581,7 @@ export type CheckoutSessionUpdateManyMutationInput = {
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -551,6 +593,7 @@ export type CheckoutSessionUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   cartId?: Prisma.StringFieldUpdateOperationsInput | string
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  salesChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.StringFieldUpdateOperationsInput | string
   shippingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -561,6 +604,7 @@ export type CheckoutSessionUncheckedUpdateManyInput = {
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -582,6 +626,7 @@ export type CheckoutSessionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   cartId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  salesChannelId?: Prisma.SortOrder
   email?: Prisma.SortOrder
   step?: Prisma.SortOrder
   shippingAddressJson?: Prisma.SortOrder
@@ -592,6 +637,7 @@ export type CheckoutSessionCountOrderByAggregateInput = {
   couponCode?: Prisma.SortOrder
   giftCardCode?: Prisma.SortOrder
   storeCreditCents?: Prisma.SortOrder
+  loyaltyPointsCents?: Prisma.SortOrder
   vatId?: Prisma.SortOrder
   taxExempt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -601,12 +647,14 @@ export type CheckoutSessionCountOrderByAggregateInput = {
 
 export type CheckoutSessionAvgOrderByAggregateInput = {
   storeCreditCents?: Prisma.SortOrder
+  loyaltyPointsCents?: Prisma.SortOrder
 }
 
 export type CheckoutSessionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   cartId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  salesChannelId?: Prisma.SortOrder
   email?: Prisma.SortOrder
   step?: Prisma.SortOrder
   shippingAddressJson?: Prisma.SortOrder
@@ -617,6 +665,7 @@ export type CheckoutSessionMaxOrderByAggregateInput = {
   couponCode?: Prisma.SortOrder
   giftCardCode?: Prisma.SortOrder
   storeCreditCents?: Prisma.SortOrder
+  loyaltyPointsCents?: Prisma.SortOrder
   vatId?: Prisma.SortOrder
   taxExempt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -628,6 +677,7 @@ export type CheckoutSessionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   cartId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  salesChannelId?: Prisma.SortOrder
   email?: Prisma.SortOrder
   step?: Prisma.SortOrder
   shippingAddressJson?: Prisma.SortOrder
@@ -638,6 +688,7 @@ export type CheckoutSessionMinOrderByAggregateInput = {
   couponCode?: Prisma.SortOrder
   giftCardCode?: Prisma.SortOrder
   storeCreditCents?: Prisma.SortOrder
+  loyaltyPointsCents?: Prisma.SortOrder
   vatId?: Prisma.SortOrder
   taxExempt?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
@@ -647,6 +698,7 @@ export type CheckoutSessionMinOrderByAggregateInput = {
 
 export type CheckoutSessionSumOrderByAggregateInput = {
   storeCreditCents?: Prisma.SortOrder
+  loyaltyPointsCents?: Prisma.SortOrder
 }
 
 export type CheckoutSessionCreateNestedManyWithoutCustomerInput = {
@@ -733,6 +785,48 @@ export type CheckoutSessionUncheckedUpdateManyWithoutCartNestedInput = {
   deleteMany?: Prisma.CheckoutSessionScalarWhereInput | Prisma.CheckoutSessionScalarWhereInput[]
 }
 
+export type CheckoutSessionCreateNestedManyWithoutSalesChannelInput = {
+  create?: Prisma.XOR<Prisma.CheckoutSessionCreateWithoutSalesChannelInput, Prisma.CheckoutSessionUncheckedCreateWithoutSalesChannelInput> | Prisma.CheckoutSessionCreateWithoutSalesChannelInput[] | Prisma.CheckoutSessionUncheckedCreateWithoutSalesChannelInput[]
+  connectOrCreate?: Prisma.CheckoutSessionCreateOrConnectWithoutSalesChannelInput | Prisma.CheckoutSessionCreateOrConnectWithoutSalesChannelInput[]
+  createMany?: Prisma.CheckoutSessionCreateManySalesChannelInputEnvelope
+  connect?: Prisma.CheckoutSessionWhereUniqueInput | Prisma.CheckoutSessionWhereUniqueInput[]
+}
+
+export type CheckoutSessionUncheckedCreateNestedManyWithoutSalesChannelInput = {
+  create?: Prisma.XOR<Prisma.CheckoutSessionCreateWithoutSalesChannelInput, Prisma.CheckoutSessionUncheckedCreateWithoutSalesChannelInput> | Prisma.CheckoutSessionCreateWithoutSalesChannelInput[] | Prisma.CheckoutSessionUncheckedCreateWithoutSalesChannelInput[]
+  connectOrCreate?: Prisma.CheckoutSessionCreateOrConnectWithoutSalesChannelInput | Prisma.CheckoutSessionCreateOrConnectWithoutSalesChannelInput[]
+  createMany?: Prisma.CheckoutSessionCreateManySalesChannelInputEnvelope
+  connect?: Prisma.CheckoutSessionWhereUniqueInput | Prisma.CheckoutSessionWhereUniqueInput[]
+}
+
+export type CheckoutSessionUpdateManyWithoutSalesChannelNestedInput = {
+  create?: Prisma.XOR<Prisma.CheckoutSessionCreateWithoutSalesChannelInput, Prisma.CheckoutSessionUncheckedCreateWithoutSalesChannelInput> | Prisma.CheckoutSessionCreateWithoutSalesChannelInput[] | Prisma.CheckoutSessionUncheckedCreateWithoutSalesChannelInput[]
+  connectOrCreate?: Prisma.CheckoutSessionCreateOrConnectWithoutSalesChannelInput | Prisma.CheckoutSessionCreateOrConnectWithoutSalesChannelInput[]
+  upsert?: Prisma.CheckoutSessionUpsertWithWhereUniqueWithoutSalesChannelInput | Prisma.CheckoutSessionUpsertWithWhereUniqueWithoutSalesChannelInput[]
+  createMany?: Prisma.CheckoutSessionCreateManySalesChannelInputEnvelope
+  set?: Prisma.CheckoutSessionWhereUniqueInput | Prisma.CheckoutSessionWhereUniqueInput[]
+  disconnect?: Prisma.CheckoutSessionWhereUniqueInput | Prisma.CheckoutSessionWhereUniqueInput[]
+  delete?: Prisma.CheckoutSessionWhereUniqueInput | Prisma.CheckoutSessionWhereUniqueInput[]
+  connect?: Prisma.CheckoutSessionWhereUniqueInput | Prisma.CheckoutSessionWhereUniqueInput[]
+  update?: Prisma.CheckoutSessionUpdateWithWhereUniqueWithoutSalesChannelInput | Prisma.CheckoutSessionUpdateWithWhereUniqueWithoutSalesChannelInput[]
+  updateMany?: Prisma.CheckoutSessionUpdateManyWithWhereWithoutSalesChannelInput | Prisma.CheckoutSessionUpdateManyWithWhereWithoutSalesChannelInput[]
+  deleteMany?: Prisma.CheckoutSessionScalarWhereInput | Prisma.CheckoutSessionScalarWhereInput[]
+}
+
+export type CheckoutSessionUncheckedUpdateManyWithoutSalesChannelNestedInput = {
+  create?: Prisma.XOR<Prisma.CheckoutSessionCreateWithoutSalesChannelInput, Prisma.CheckoutSessionUncheckedCreateWithoutSalesChannelInput> | Prisma.CheckoutSessionCreateWithoutSalesChannelInput[] | Prisma.CheckoutSessionUncheckedCreateWithoutSalesChannelInput[]
+  connectOrCreate?: Prisma.CheckoutSessionCreateOrConnectWithoutSalesChannelInput | Prisma.CheckoutSessionCreateOrConnectWithoutSalesChannelInput[]
+  upsert?: Prisma.CheckoutSessionUpsertWithWhereUniqueWithoutSalesChannelInput | Prisma.CheckoutSessionUpsertWithWhereUniqueWithoutSalesChannelInput[]
+  createMany?: Prisma.CheckoutSessionCreateManySalesChannelInputEnvelope
+  set?: Prisma.CheckoutSessionWhereUniqueInput | Prisma.CheckoutSessionWhereUniqueInput[]
+  disconnect?: Prisma.CheckoutSessionWhereUniqueInput | Prisma.CheckoutSessionWhereUniqueInput[]
+  delete?: Prisma.CheckoutSessionWhereUniqueInput | Prisma.CheckoutSessionWhereUniqueInput[]
+  connect?: Prisma.CheckoutSessionWhereUniqueInput | Prisma.CheckoutSessionWhereUniqueInput[]
+  update?: Prisma.CheckoutSessionUpdateWithWhereUniqueWithoutSalesChannelInput | Prisma.CheckoutSessionUpdateWithWhereUniqueWithoutSalesChannelInput[]
+  updateMany?: Prisma.CheckoutSessionUpdateManyWithWhereWithoutSalesChannelInput | Prisma.CheckoutSessionUpdateManyWithWhereWithoutSalesChannelInput[]
+  deleteMany?: Prisma.CheckoutSessionScalarWhereInput | Prisma.CheckoutSessionScalarWhereInput[]
+}
+
 export type CheckoutSessionCreateWithoutCustomerInput = {
   id?: string
   email?: string | null
@@ -745,17 +839,20 @@ export type CheckoutSessionCreateWithoutCustomerInput = {
   couponCode?: string | null
   giftCardCode?: string | null
   storeCreditCents?: number
+  loyaltyPointsCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   cart: Prisma.CartCreateNestedOneWithoutCheckoutsInput
+  salesChannel?: Prisma.SalesChannelCreateNestedOneWithoutCheckoutsInput
 }
 
 export type CheckoutSessionUncheckedCreateWithoutCustomerInput = {
   id?: string
   cartId: string
+  salesChannelId?: string | null
   email?: string | null
   step?: string
   shippingAddressJson?: string | null
@@ -766,6 +863,7 @@ export type CheckoutSessionUncheckedCreateWithoutCustomerInput = {
   couponCode?: string | null
   giftCardCode?: string | null
   storeCreditCents?: number
+  loyaltyPointsCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -805,6 +903,7 @@ export type CheckoutSessionScalarWhereInput = {
   id?: Prisma.StringFilter<"CheckoutSession"> | string
   cartId?: Prisma.StringFilter<"CheckoutSession"> | string
   customerId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
+  salesChannelId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   email?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   step?: Prisma.StringFilter<"CheckoutSession"> | string
   shippingAddressJson?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
@@ -815,6 +914,7 @@ export type CheckoutSessionScalarWhereInput = {
   couponCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   giftCardCode?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   storeCreditCents?: Prisma.IntFilter<"CheckoutSession"> | number
+  loyaltyPointsCents?: Prisma.IntFilter<"CheckoutSession"> | number
   vatId?: Prisma.StringNullableFilter<"CheckoutSession"> | string | null
   taxExempt?: Prisma.BoolFilter<"CheckoutSession"> | boolean
   expiresAt?: Prisma.DateTimeNullableFilter<"CheckoutSession"> | Date | string | null
@@ -834,17 +934,20 @@ export type CheckoutSessionCreateWithoutCartInput = {
   couponCode?: string | null
   giftCardCode?: string | null
   storeCreditCents?: number
+  loyaltyPointsCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   customer?: Prisma.CustomerCreateNestedOneWithoutCheckoutsInput
+  salesChannel?: Prisma.SalesChannelCreateNestedOneWithoutCheckoutsInput
 }
 
 export type CheckoutSessionUncheckedCreateWithoutCartInput = {
   id?: string
   customerId?: string | null
+  salesChannelId?: string | null
   email?: string | null
   step?: string
   shippingAddressJson?: string | null
@@ -855,6 +958,7 @@ export type CheckoutSessionUncheckedCreateWithoutCartInput = {
   couponCode?: string | null
   giftCardCode?: string | null
   storeCreditCents?: number
+  loyaltyPointsCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -887,9 +991,8 @@ export type CheckoutSessionUpdateManyWithWhereWithoutCartInput = {
   data: Prisma.XOR<Prisma.CheckoutSessionUpdateManyMutationInput, Prisma.CheckoutSessionUncheckedUpdateManyWithoutCartInput>
 }
 
-export type CheckoutSessionCreateManyCustomerInput = {
+export type CheckoutSessionCreateWithoutSalesChannelInput = {
   id?: string
-  cartId: string
   email?: string | null
   step?: string
   shippingAddressJson?: string | null
@@ -900,6 +1003,78 @@ export type CheckoutSessionCreateManyCustomerInput = {
   couponCode?: string | null
   giftCardCode?: string | null
   storeCreditCents?: number
+  loyaltyPointsCents?: number
+  vatId?: string | null
+  taxExempt?: boolean
+  expiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  cart: Prisma.CartCreateNestedOneWithoutCheckoutsInput
+  customer?: Prisma.CustomerCreateNestedOneWithoutCheckoutsInput
+}
+
+export type CheckoutSessionUncheckedCreateWithoutSalesChannelInput = {
+  id?: string
+  cartId: string
+  customerId?: string | null
+  email?: string | null
+  step?: string
+  shippingAddressJson?: string | null
+  billingAddressJson?: string | null
+  shippingOptionJson?: string | null
+  paymentIntentId?: string | null
+  paymentProvider?: string | null
+  couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
+  loyaltyPointsCents?: number
+  vatId?: string | null
+  taxExempt?: boolean
+  expiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type CheckoutSessionCreateOrConnectWithoutSalesChannelInput = {
+  where: Prisma.CheckoutSessionWhereUniqueInput
+  create: Prisma.XOR<Prisma.CheckoutSessionCreateWithoutSalesChannelInput, Prisma.CheckoutSessionUncheckedCreateWithoutSalesChannelInput>
+}
+
+export type CheckoutSessionCreateManySalesChannelInputEnvelope = {
+  data: Prisma.CheckoutSessionCreateManySalesChannelInput | Prisma.CheckoutSessionCreateManySalesChannelInput[]
+}
+
+export type CheckoutSessionUpsertWithWhereUniqueWithoutSalesChannelInput = {
+  where: Prisma.CheckoutSessionWhereUniqueInput
+  update: Prisma.XOR<Prisma.CheckoutSessionUpdateWithoutSalesChannelInput, Prisma.CheckoutSessionUncheckedUpdateWithoutSalesChannelInput>
+  create: Prisma.XOR<Prisma.CheckoutSessionCreateWithoutSalesChannelInput, Prisma.CheckoutSessionUncheckedCreateWithoutSalesChannelInput>
+}
+
+export type CheckoutSessionUpdateWithWhereUniqueWithoutSalesChannelInput = {
+  where: Prisma.CheckoutSessionWhereUniqueInput
+  data: Prisma.XOR<Prisma.CheckoutSessionUpdateWithoutSalesChannelInput, Prisma.CheckoutSessionUncheckedUpdateWithoutSalesChannelInput>
+}
+
+export type CheckoutSessionUpdateManyWithWhereWithoutSalesChannelInput = {
+  where: Prisma.CheckoutSessionScalarWhereInput
+  data: Prisma.XOR<Prisma.CheckoutSessionUpdateManyMutationInput, Prisma.CheckoutSessionUncheckedUpdateManyWithoutSalesChannelInput>
+}
+
+export type CheckoutSessionCreateManyCustomerInput = {
+  id?: string
+  cartId: string
+  salesChannelId?: string | null
+  email?: string | null
+  step?: string
+  shippingAddressJson?: string | null
+  billingAddressJson?: string | null
+  shippingOptionJson?: string | null
+  paymentIntentId?: string | null
+  paymentProvider?: string | null
+  couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
+  loyaltyPointsCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -919,17 +1094,20 @@ export type CheckoutSessionUpdateWithoutCustomerInput = {
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   cart?: Prisma.CartUpdateOneRequiredWithoutCheckoutsNestedInput
+  salesChannel?: Prisma.SalesChannelUpdateOneWithoutCheckoutsNestedInput
 }
 
 export type CheckoutSessionUncheckedUpdateWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   cartId?: Prisma.StringFieldUpdateOperationsInput | string
+  salesChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.StringFieldUpdateOperationsInput | string
   shippingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -940,6 +1118,7 @@ export type CheckoutSessionUncheckedUpdateWithoutCustomerInput = {
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -950,6 +1129,7 @@ export type CheckoutSessionUncheckedUpdateWithoutCustomerInput = {
 export type CheckoutSessionUncheckedUpdateManyWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   cartId?: Prisma.StringFieldUpdateOperationsInput | string
+  salesChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.StringFieldUpdateOperationsInput | string
   shippingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -960,6 +1140,7 @@ export type CheckoutSessionUncheckedUpdateManyWithoutCustomerInput = {
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -970,6 +1151,7 @@ export type CheckoutSessionUncheckedUpdateManyWithoutCustomerInput = {
 export type CheckoutSessionCreateManyCartInput = {
   id?: string
   customerId?: string | null
+  salesChannelId?: string | null
   email?: string | null
   step?: string
   shippingAddressJson?: string | null
@@ -980,6 +1162,7 @@ export type CheckoutSessionCreateManyCartInput = {
   couponCode?: string | null
   giftCardCode?: string | null
   storeCreditCents?: number
+  loyaltyPointsCents?: number
   vatId?: string | null
   taxExempt?: boolean
   expiresAt?: Date | string | null
@@ -999,17 +1182,20 @@ export type CheckoutSessionUpdateWithoutCartInput = {
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customer?: Prisma.CustomerUpdateOneWithoutCheckoutsNestedInput
+  salesChannel?: Prisma.SalesChannelUpdateOneWithoutCheckoutsNestedInput
 }
 
 export type CheckoutSessionUncheckedUpdateWithoutCartInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  salesChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.StringFieldUpdateOperationsInput | string
   shippingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1020,6 +1206,7 @@ export type CheckoutSessionUncheckedUpdateWithoutCartInput = {
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1030,6 +1217,7 @@ export type CheckoutSessionUncheckedUpdateWithoutCartInput = {
 export type CheckoutSessionUncheckedUpdateManyWithoutCartInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  salesChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   step?: Prisma.StringFieldUpdateOperationsInput | string
   shippingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1040,6 +1228,95 @@ export type CheckoutSessionUncheckedUpdateManyWithoutCartInput = {
   couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
+  vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type CheckoutSessionCreateManySalesChannelInput = {
+  id?: string
+  cartId: string
+  customerId?: string | null
+  email?: string | null
+  step?: string
+  shippingAddressJson?: string | null
+  billingAddressJson?: string | null
+  shippingOptionJson?: string | null
+  paymentIntentId?: string | null
+  paymentProvider?: string | null
+  couponCode?: string | null
+  giftCardCode?: string | null
+  storeCreditCents?: number
+  loyaltyPointsCents?: number
+  vatId?: string | null
+  taxExempt?: boolean
+  expiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type CheckoutSessionUpdateWithoutSalesChannelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  step?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingOptionJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
+  vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cart?: Prisma.CartUpdateOneRequiredWithoutCheckoutsNestedInput
+  customer?: Prisma.CustomerUpdateOneWithoutCheckoutsNestedInput
+}
+
+export type CheckoutSessionUncheckedUpdateWithoutSalesChannelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  cartId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  step?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingOptionJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
+  vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type CheckoutSessionUncheckedUpdateManyWithoutSalesChannelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  cartId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  step?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingOptionJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  giftCardCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
   vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1053,6 +1330,7 @@ export type CheckoutSessionSelect<ExtArgs extends runtime.Types.Extensions.Inter
   id?: boolean
   cartId?: boolean
   customerId?: boolean
+  salesChannelId?: boolean
   email?: boolean
   step?: boolean
   shippingAddressJson?: boolean
@@ -1063,6 +1341,7 @@ export type CheckoutSessionSelect<ExtArgs extends runtime.Types.Extensions.Inter
   couponCode?: boolean
   giftCardCode?: boolean
   storeCreditCents?: boolean
+  loyaltyPointsCents?: boolean
   vatId?: boolean
   taxExempt?: boolean
   expiresAt?: boolean
@@ -1070,12 +1349,14 @@ export type CheckoutSessionSelect<ExtArgs extends runtime.Types.Extensions.Inter
   updatedAt?: boolean
   cart?: boolean | Prisma.CartDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.CheckoutSession$customerArgs<ExtArgs>
+  salesChannel?: boolean | Prisma.CheckoutSession$salesChannelArgs<ExtArgs>
 }, ExtArgs["result"]["checkoutSession"]>
 
 export type CheckoutSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   cartId?: boolean
   customerId?: boolean
+  salesChannelId?: boolean
   email?: boolean
   step?: boolean
   shippingAddressJson?: boolean
@@ -1086,6 +1367,7 @@ export type CheckoutSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   couponCode?: boolean
   giftCardCode?: boolean
   storeCreditCents?: boolean
+  loyaltyPointsCents?: boolean
   vatId?: boolean
   taxExempt?: boolean
   expiresAt?: boolean
@@ -1093,12 +1375,14 @@ export type CheckoutSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   updatedAt?: boolean
   cart?: boolean | Prisma.CartDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.CheckoutSession$customerArgs<ExtArgs>
+  salesChannel?: boolean | Prisma.CheckoutSession$salesChannelArgs<ExtArgs>
 }, ExtArgs["result"]["checkoutSession"]>
 
 export type CheckoutSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   cartId?: boolean
   customerId?: boolean
+  salesChannelId?: boolean
   email?: boolean
   step?: boolean
   shippingAddressJson?: boolean
@@ -1109,6 +1393,7 @@ export type CheckoutSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   couponCode?: boolean
   giftCardCode?: boolean
   storeCreditCents?: boolean
+  loyaltyPointsCents?: boolean
   vatId?: boolean
   taxExempt?: boolean
   expiresAt?: boolean
@@ -1116,12 +1401,14 @@ export type CheckoutSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   updatedAt?: boolean
   cart?: boolean | Prisma.CartDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.CheckoutSession$customerArgs<ExtArgs>
+  salesChannel?: boolean | Prisma.CheckoutSession$salesChannelArgs<ExtArgs>
 }, ExtArgs["result"]["checkoutSession"]>
 
 export type CheckoutSessionSelectScalar = {
   id?: boolean
   cartId?: boolean
   customerId?: boolean
+  salesChannelId?: boolean
   email?: boolean
   step?: boolean
   shippingAddressJson?: boolean
@@ -1132,6 +1419,7 @@ export type CheckoutSessionSelectScalar = {
   couponCode?: boolean
   giftCardCode?: boolean
   storeCreditCents?: boolean
+  loyaltyPointsCents?: boolean
   vatId?: boolean
   taxExempt?: boolean
   expiresAt?: boolean
@@ -1139,18 +1427,21 @@ export type CheckoutSessionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CheckoutSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "cartId" | "customerId" | "email" | "step" | "shippingAddressJson" | "billingAddressJson" | "shippingOptionJson" | "paymentIntentId" | "paymentProvider" | "couponCode" | "giftCardCode" | "storeCreditCents" | "vatId" | "taxExempt" | "expiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["checkoutSession"]>
+export type CheckoutSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "cartId" | "customerId" | "salesChannelId" | "email" | "step" | "shippingAddressJson" | "billingAddressJson" | "shippingOptionJson" | "paymentIntentId" | "paymentProvider" | "couponCode" | "giftCardCode" | "storeCreditCents" | "loyaltyPointsCents" | "vatId" | "taxExempt" | "expiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["checkoutSession"]>
 export type CheckoutSessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   cart?: boolean | Prisma.CartDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.CheckoutSession$customerArgs<ExtArgs>
+  salesChannel?: boolean | Prisma.CheckoutSession$salesChannelArgs<ExtArgs>
 }
 export type CheckoutSessionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   cart?: boolean | Prisma.CartDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.CheckoutSession$customerArgs<ExtArgs>
+  salesChannel?: boolean | Prisma.CheckoutSession$salesChannelArgs<ExtArgs>
 }
 export type CheckoutSessionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   cart?: boolean | Prisma.CartDefaultArgs<ExtArgs>
   customer?: boolean | Prisma.CheckoutSession$customerArgs<ExtArgs>
+  salesChannel?: boolean | Prisma.CheckoutSession$salesChannelArgs<ExtArgs>
 }
 
 export type $CheckoutSessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1158,11 +1449,13 @@ export type $CheckoutSessionPayload<ExtArgs extends runtime.Types.Extensions.Int
   objects: {
     cart: Prisma.$CartPayload<ExtArgs>
     customer: Prisma.$CustomerPayload<ExtArgs> | null
+    salesChannel: Prisma.$SalesChannelPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     cartId: string
     customerId: string | null
+    salesChannelId: string | null
     email: string | null
     step: string
     shippingAddressJson: string | null
@@ -1173,6 +1466,7 @@ export type $CheckoutSessionPayload<ExtArgs extends runtime.Types.Extensions.Int
     couponCode: string | null
     giftCardCode: string | null
     storeCreditCents: number
+    loyaltyPointsCents: number
     vatId: string | null
     taxExempt: boolean
     expiresAt: Date | null
@@ -1574,6 +1868,7 @@ export interface Prisma__CheckoutSessionClient<T, Null = never, ExtArgs extends 
   readonly [Symbol.toStringTag]: "PrismaPromise"
   cart<T extends Prisma.CartDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CartDefaultArgs<ExtArgs>>): Prisma.Prisma__CartClient<runtime.Types.Result.GetResult<Prisma.$CartPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   customer<T extends Prisma.CheckoutSession$customerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CheckoutSession$customerArgs<ExtArgs>>): Prisma.Prisma__CustomerClient<runtime.Types.Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  salesChannel<T extends Prisma.CheckoutSession$salesChannelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CheckoutSession$salesChannelArgs<ExtArgs>>): Prisma.Prisma__SalesChannelClient<runtime.Types.Result.GetResult<Prisma.$SalesChannelPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1606,6 +1901,7 @@ export interface CheckoutSessionFieldRefs {
   readonly id: Prisma.FieldRef<"CheckoutSession", 'String'>
   readonly cartId: Prisma.FieldRef<"CheckoutSession", 'String'>
   readonly customerId: Prisma.FieldRef<"CheckoutSession", 'String'>
+  readonly salesChannelId: Prisma.FieldRef<"CheckoutSession", 'String'>
   readonly email: Prisma.FieldRef<"CheckoutSession", 'String'>
   readonly step: Prisma.FieldRef<"CheckoutSession", 'String'>
   readonly shippingAddressJson: Prisma.FieldRef<"CheckoutSession", 'String'>
@@ -1616,6 +1912,7 @@ export interface CheckoutSessionFieldRefs {
   readonly couponCode: Prisma.FieldRef<"CheckoutSession", 'String'>
   readonly giftCardCode: Prisma.FieldRef<"CheckoutSession", 'String'>
   readonly storeCreditCents: Prisma.FieldRef<"CheckoutSession", 'Int'>
+  readonly loyaltyPointsCents: Prisma.FieldRef<"CheckoutSession", 'Int'>
   readonly vatId: Prisma.FieldRef<"CheckoutSession", 'String'>
   readonly taxExempt: Prisma.FieldRef<"CheckoutSession", 'Boolean'>
   readonly expiresAt: Prisma.FieldRef<"CheckoutSession", 'DateTime'>
@@ -2036,6 +2333,25 @@ export type CheckoutSession$customerArgs<ExtArgs extends runtime.Types.Extension
    */
   include?: Prisma.CustomerInclude<ExtArgs> | null
   where?: Prisma.CustomerWhereInput
+}
+
+/**
+ * CheckoutSession.salesChannel
+ */
+export type CheckoutSession$salesChannelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SalesChannel
+   */
+  select?: Prisma.SalesChannelSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SalesChannel
+   */
+  omit?: Prisma.SalesChannelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SalesChannelInclude<ExtArgs> | null
+  where?: Prisma.SalesChannelWhereInput
 }
 
 /**

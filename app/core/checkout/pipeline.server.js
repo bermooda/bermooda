@@ -144,6 +144,9 @@ export async function advanceStep(sessionId, stepData = {}) {
         ...(stepData.storeCreditCents !== undefined
           ? { storeCreditCents: stepData.storeCreditCents }
           : {}),
+        ...(stepData.loyaltyPointsCents !== undefined
+          ? { loyaltyPointsCents: stepData.loyaltyPointsCents }
+          : {}),
         step: nextStep(step),
       };
       break;
@@ -198,6 +201,8 @@ export async function advanceStep(sessionId, stepData = {}) {
     customerId: updatedSession.customerId ?? undefined,
     giftCardCode: updatedSession.giftCardCode ?? undefined,
     storeCreditCents: updatedSession.storeCreditCents ?? 0,
+    loyaltyPointsCents: updatedSession.loyaltyPointsCents ?? 0,
+    salesChannelId: updatedSession.salesChannelId ?? undefined,
   });
 
   return { ...updatedSession, totals };
