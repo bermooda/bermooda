@@ -4,6 +4,16 @@
 
 bermooda is an ecommerce platform built with React Router 7 (SSR), Prisma 7 with SQLite, and Vite 8. It is a single-service monolith — no Docker, no external database server needed for development.
 
+### Cloud Agent environment
+
+The checked-in [`.cursor/environment.json`](.cursor/environment.json) configures the Cloud Agent install step. On each agent startup, Cursor runs [`.cursor/cloud-agent-install.sh`](.cursor/cloud-agent-install.sh), which:
+
+1. Copies [`.env.example`](.env.example) to `.env` when `.env` is missing (Prisma requires `DATABASE_URL` at setup time).
+2. Runs `npm install --legacy-peer-deps`.
+3. Runs `npm run setup` (Prisma generate + migrate deploy).
+
+The install script is idempotent and safe to run repeatedly. To reset the local database, delete `prisma/dev.db` and re-run `npm run setup`.
+
 **Architecture layers:**
 
 - `app/libs/*` = infrastructure (auth, db clients, queue, SDK wrappers)
