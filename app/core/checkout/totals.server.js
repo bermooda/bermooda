@@ -3,6 +3,7 @@
 
 import { resolvePromotions } from '#/core/discounts/index.server';
 import { resolveGiftCardRedemption } from '#/core/gift-cards/index.server';
+import { resolveLoyaltyRedemption } from '#/core/loyalty/index.server';
 import {
   getCustomerGroupIds,
   resolveVariantPrice,
@@ -31,6 +32,8 @@ import { computeActiveTax } from '#/core/tax/index.server';
  *   customerGroupId?: string,
  *   giftCardCode?: string,
  *   storeCreditCents?: number,
+ *   loyaltyPointsCents?: number,
+ *   salesChannelId?: string,
  * }} params
  * @returns {Promise<{
  *   subtotalCents: number,
@@ -39,6 +42,7 @@ import { computeActiveTax } from '#/core/tax/index.server';
  *   taxCents: number,
  *   storeCreditCents: number,
  *   giftCardCents: number,
+ *   loyaltyPointsCents: number,
  *   totalCents: number,
  *   shippingOption: object|null,
  *   appliedDiscounts: object[],
@@ -61,6 +65,8 @@ export async function computeTotals({
   customerGroupId,
   giftCardCode,
   storeCreditCents: requestedStoreCreditCents = 0,
+  loyaltyPointsCents: requestedLoyaltyPointsCents = 0,
+  salesChannelId,
 }) {
   const currency = cart?.currency ?? 'USD';
   const customerGroupIds = customerGroupId
@@ -76,6 +82,7 @@ export async function computeTotals({
         currency,
         quantity: line.quantity,
         customerGroupIds,
+        salesChannelId,
       });
       const priceCentsSnapshot =
         resolved?.priceCents ?? line.priceCentsSnapshot;
@@ -178,6 +185,19 @@ export async function computeTotals({
     }
   }
 
+  let loyaltyPointsCents = 0;
+  let loyaltyPointsRedeemed = 0;
+  if (customerId && requestedLoyaltyPointsCents > 0 && remaining > 0) {
+    const loyalty = await resolveLoyaltyRedemption(
+      customerId,
+      requestedLoyaltyPointsCents,
+      remaining
+    );
+    loyaltyPointsCents = loyalty.loyaltyPointsCents;
+    loyaltyPointsRedeemed = loyalty.pointsRedeemed;
+    remaining -= loyaltyPointsCents;
+  }
+
   const totalCents = Math.max(0, remaining);
 
   return {
@@ -187,6 +207,8 @@ export async function computeTotals({
     taxCents,
     storeCreditCents,
     giftCardCents,
+    loyaltyPointsCents,
+    loyaltyPointsRedeemed,
     totalCents,
     shippingOption,
     appliedDiscounts,

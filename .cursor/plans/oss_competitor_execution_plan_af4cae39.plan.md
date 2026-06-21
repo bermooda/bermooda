@@ -31,7 +31,7 @@ todos:
     status: completed
   - id: p3-w9
     content: 'Phase 3 (needs W4+W5+W7+W8): W9 differentiators — loyalty/referrals, marketing automation, multi-store/sales channels. Sub-items parallelizable.'
-    status: pending
+    status: completed
 isProject: false
 ---
 
