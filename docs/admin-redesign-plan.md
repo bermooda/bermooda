@@ -10,16 +10,16 @@ The plan is grounded in the current code: the admin shell lives in [`app/routes/
 
 ## 1. Design intent — what "Ghost-like" means
 
-Ghost's admin (including its 2026 "new admin shell") is built on one discipline: **restraint**. These principles are notably the *opposite* of bermooda's current violet/fuchsia gradient + glow + glassmorphism dark theme.
+Ghost's admin (including its 2026 "new admin shell") is built on one discipline: **restraint**. These principles are notably the _opposite_ of bermooda's current violet/fuchsia gradient + glow + glassmorphism dark theme.
 
-| Principle | Ghost | bermooda today |
-| --- | --- | --- |
-| Accent | **One** color, max saturation, only on interactive elements | Multi-accent (cyan/violet/fuchsia gradients) |
-| Surfaces | Flat neutral; base + one surface step | Gradients (`dark-gradient-*`), glass, glow |
-| Base | Near-white `#FAFAFA` / near-black `#111` | `bg-gray-50` / purple-tinted `oklch` `dark-950` |
-| Borders | Hairline, low-contrast | Mixed (`ring`, gradient borders) |
-| Typography | Inter, high-contrast text + muted secondary | Inter (keep) |
-| Color usage | Decoration-free; color = meaning | Decorative gradients everywhere |
+| Principle   | Ghost                                                       | bermooda today                                  |
+| ----------- | ----------------------------------------------------------- | ----------------------------------------------- |
+| Accent      | **One** color, max saturation, only on interactive elements | Multi-accent (cyan/violet/fuchsia gradients)    |
+| Surfaces    | Flat neutral; base + one surface step                       | Gradients (`dark-gradient-*`), glass, glow      |
+| Base        | Near-white `#FAFAFA` / near-black `#111`                    | `bg-gray-50` / purple-tinted `oklch` `dark-950` |
+| Borders     | Hairline, low-contrast                                      | Mixed (`ring`, gradient borders)                |
+| Typography  | Inter, high-contrast text + muted secondary                 | Inter (keep)                                    |
+| Color usage | Decoration-free; color = meaning                            | Decorative gradients everywhere                 |
 
 **Net direction:** strip decorative gradients/glow/mesh from the admin, introduce a single accent, flatten surfaces into a clean neutral two-tone system, and unify the inconsistent `gray-*` / `zinc-*` / `slate-*` / `dark-*` palettes behind semantic tokens that resolve in both themes.
 
@@ -68,15 +68,15 @@ Decision: default the accent to **Ghost-style green**. Easy to swap later since 
 
 Today nearly all admin UI is inlined in route files; there is no shared Card/Table/Input/Badge. Add a small primitive set (new folder `app/components/admin/`, lowercase-hyphen files, PascalCase exports). All are presentation-only per the component rules.
 
-| Component | File | Purpose |
-| --- | --- | --- |
-| `PageHeader` | `page-header.jsx` | Title + subtitle + actions row (Ghost-style page top) |
-| `Card` / `CardSection` | `card.jsx` | Neutral surface container with hairline border |
-| `Table` | `table.jsx` | Styled, responsive wrapper for the many native `<table>`s |
-| `Badge` | `badge.jsx` | Status pills (success/warn/danger/neutral) |
-| `Input`, `Select`, `Textarea`, `Field` | `form/*.jsx` | Form controls with a consistent accent focus ring |
-| `Button` | extend `app/components/ui/button.jsx` | Add `primary`/`secondary`/`ghost`/`danger` variants using the accent token (drop `accent-gradient`) |
-| `EmptyState` | `empty-state.jsx` | Consistent empty/zero-data states |
+| Component                              | File                                  | Purpose                                                                                             |
+| -------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `PageHeader`                           | `page-header.jsx`                     | Title + subtitle + actions row (Ghost-style page top)                                               |
+| `Card` / `CardSection`                 | `card.jsx`                            | Neutral surface container with hairline border                                                      |
+| `Table`                                | `table.jsx`                           | Styled, responsive wrapper for the many native `<table>`s                                           |
+| `Badge`                                | `badge.jsx`                           | Status pills (success/warn/danger/neutral)                                                          |
+| `Input`, `Select`, `Textarea`, `Field` | `form/*.jsx`                          | Form controls with a consistent accent focus ring                                                   |
+| `Button`                               | extend `app/components/ui/button.jsx` | Add `primary`/`secondary`/`ghost`/`danger` variants using the accent token (drop `accent-gradient`) |
+| `EmptyState`                           | `empty-state.jsx`                     | Consistent empty/zero-data states                                                                   |
 
 Route modules opt in over time.
 
@@ -89,13 +89,13 @@ Rework the chrome to match Ghost's new shell while keeping current behavior (aut
 - **Sidebar**
   - Flat neutral `surface` background (no `dark-gradient-subtle`), single hairline right border.
   - **Group the 22-item flat list** into Ghost-like sections to reduce overwhelm:
-    - *Overview* — Dashboard, Reports, Audit Log
-    - *Catalog* — Products, Categories, Inventory, Price Lists
-    - *Content* — Pages, Menus, Reviews
-    - *Sales* — Orders, Discounts, Gift Cards
-    - *Customers* — Customers, Customer Groups, Loyalty
-    - *Growth* — Marketing, Channels
-    - *Configuration* — Themes, Plugins, API, Settings
+    - _Overview_ — Dashboard, Reports, Audit Log
+    - _Catalog_ — Products, Categories, Inventory, Price Lists
+    - _Content_ — Pages, Menus, Reviews
+    - _Sales_ — Orders, Discounts, Gift Cards
+    - _Customers_ — Customers, Customer Groups, Loyalty
+    - _Growth_ — Marketing, Channels
+    - _Configuration_ — Themes, Plugins, API, Settings
   - Convert `NAV_ITEMS` into a grouped config array (in-file, optionally extracted to `nav-items.js`).
   - Active state: subtle `surface-2` fill + accent indicator/icon (single accent, not violet+fuchsia split).
 - **Topbar**
