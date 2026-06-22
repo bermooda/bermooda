@@ -299,14 +299,14 @@ export async function action({ request, params }) {
     : redirect(`/checkout/${step}`);
 }
 
-export function meta({ data }) {
+export function meta({ loaderData }) {
   const labels = {
     address: 'Shipping Address',
     shipping: 'Shipping Method',
     payment: 'Payment',
     review: 'Review Order',
   };
-  const title = labels[data?.step] ?? 'Checkout';
+  const title = labels[loaderData?.step] ?? 'Checkout';
   return [{ title }];
 }
 
