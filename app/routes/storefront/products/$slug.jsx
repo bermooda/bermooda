@@ -111,9 +111,9 @@ export async function action({ request, params }) {
   }
 }
 
-export function meta({ data }) {
-  if (!data?.metaTags) return [{ title: 'Product not found' }];
-  return data.metaTags;
+export function meta({ loaderData }) {
+  if (!loaderData?.metaTags) return [{ title: 'Product not found' }];
+  return loaderData.metaTags;
 }
 
 export default function ProductRoute() {
