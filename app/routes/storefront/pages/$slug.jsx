@@ -41,9 +41,9 @@ export async function loader({ request, params }) {
   };
 }
 
-export function meta({ data }) {
-  if (!data?.metaTags) return [{ title: 'Page not found' }];
-  return data.metaTags;
+export function meta({ loaderData }) {
+  if (!loaderData?.metaTags) return [{ title: 'Page not found' }];
+  return loaderData.metaTags;
 }
 
 export default function StorefrontPageRoute() {

@@ -58,8 +58,8 @@ export async function loader({ request }) {
   };
 }
 
-export function meta({ data }) {
-  const q = data?.query;
+export function meta({ loaderData }) {
+  const q = loaderData?.query;
   const title = q ? `Search results for "${q}"` : 'Search';
   return [{ title }, { name: 'robots', content: 'noindex' }];
 }

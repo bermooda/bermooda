@@ -26,8 +26,10 @@ export async function loader({ request, params }) {
   return Response.json({ order, locale, currency }, { headers });
 }
 
-export function meta({ data }) {
-  return [{ title: `Order ${data?.order?.orderNumber ?? ''} – Thank you!` }];
+export function meta({ loaderData }) {
+  return [
+    { title: `Order ${loaderData?.order?.orderNumber ?? ''} – Thank you!` },
+  ];
 }
 
 export default function ThankYouRoute() {
