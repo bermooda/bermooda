@@ -24,6 +24,46 @@
   --color-accent-violet: oklch(0.65 0.2 290);
   --color-accent-fuchsia: oklch(0.7 0.18 320);
   --color-accent-indigo: oklch(0.6 0.22 275);
+
+  /* ----------------------------------------------------------------- */
+  /* Semantic admin tokens (Ghost-inspired). Light values are the      */
+  /* defaults; the `.dark` block below overrides the same variables so  */
+  /* utilities like `bg-surface` / `text-text` resolve in both themes.  */
+  /* ----------------------------------------------------------------- */
+  --color-bg: oklch(0.99 0 0); /* page background  #FAFAFA */
+  --color-surface: oklch(1 0 0); /* cards, sidebar   #FFFFFF */
+  --color-surface-2: oklch(0.968 0 0); /* inset, hover     #F4F4F5 */
+  --color-border: oklch(0.92 0 0); /* hairline border  #E6E6E8 */
+  --color-text: oklch(0.21 0.01 270); /* primary text     #15171A */
+  --color-text-muted: oklch(0.52 0.01 270); /* secondary text   #6B7177 */
+
+  /* Single brand accent (Ghost-style green) shared across both themes */
+  --color-accent: oklch(0.72 0.17 152);
+  --color-accent-hover: oklch(0.66 0.17 152);
+  --color-accent-fg: oklch(1 0 0); /* text/icon on accent surfaces */
+
+  /* Semantic status colors (badges, alerts) */
+  --color-success: oklch(0.7 0.16 152);
+  --color-warn: oklch(0.78 0.15 75);
+  --color-danger: oklch(0.62 0.21 25);
+}
+
+/* Dark-mode overrides for the semantic admin tokens. */
+.dark {
+  --color-bg: oklch(0.18 0.005 270); /* #101114 */
+  --color-surface: oklch(0.21 0.006 270); /* #16181D */
+  --color-surface-2: oklch(0.25 0.006 270); /* #1E2026 */
+  --color-border: oklch(0.31 0.006 270); /* #2A2D34 */
+  --color-text: oklch(0.97 0.002 270); /* #F5F6F7 */
+  --color-text-muted: oklch(0.72 0.012 270); /* #9CA3AF */
+
+  --color-accent: oklch(0.74 0.17 152);
+  --color-accent-hover: oklch(0.79 0.16 152);
+  --color-accent-fg: oklch(0.18 0.02 152);
+
+  --color-success: oklch(0.74 0.16 152);
+  --color-warn: oklch(0.8 0.15 75);
+  --color-danger: oklch(0.68 0.19 25);
 }
 
 /* Dark mode gradient backgrounds - scoped to .dark */
