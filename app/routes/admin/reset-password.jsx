@@ -13,7 +13,7 @@ import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
 export const handle = {
-  htmlClass: 'h-full bg-white',
+  htmlClass: 'h-full bg-bg',
   bodyClass: 'h-full',
 };
 
@@ -113,7 +113,7 @@ export default function AdminResetPasswordRoute() {
           <Link
             to="/admin/login"
             prefetch="intent"
-            className="dark:text-accent-fuchsia dark:hover:text-accent-violet text-sm font-medium text-indigo-600 hover:text-indigo-500"
+            className="text-accent text-sm font-medium hover:opacity-80"
           >
             Go to login
           </Link>
@@ -133,7 +133,7 @@ export default function AdminResetPasswordRoute() {
           <Link
             to="/admin/forgot-password"
             prefetch="intent"
-            className="dark:text-accent-fuchsia dark:hover:text-accent-violet text-sm font-medium text-indigo-600 hover:text-indigo-500"
+            className="text-accent text-sm font-medium hover:opacity-80"
           >
             Request a new link
           </Link>
@@ -153,7 +153,7 @@ export default function AdminResetPasswordRoute() {
           <div>
             <label
               htmlFor="password"
-              className="dark:text-dark-300 block text-sm leading-6 font-medium text-gray-900"
+              className="text-text block text-sm leading-6 font-medium"
             >
               New Password
             </label>
@@ -164,7 +164,7 @@ export default function AdminResetPasswordRoute() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                className="bg-surface text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-1.5 text-base outline-none focus:ring-2 sm:text-sm/6"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -174,7 +174,7 @@ export default function AdminResetPasswordRoute() {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="dark:text-dark-300 block text-sm leading-6 font-medium text-gray-900"
+              className="text-text block text-sm leading-6 font-medium"
             >
               Confirm Password
             </label>
@@ -185,7 +185,7 @@ export default function AdminResetPasswordRoute() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                className="bg-surface text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-1.5 text-base outline-none focus:ring-2 sm:text-sm/6"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -193,7 +193,7 @@ export default function AdminResetPasswordRoute() {
           </div>
 
           {passwordError && (
-            <p className="text-sm text-red-600 dark:text-red-400">
+            <p className="text-danger text-sm">
               {passwordError}
             </p>
           )}

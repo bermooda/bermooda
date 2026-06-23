@@ -8,7 +8,7 @@ import { ErrorAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
 export const handle = {
-  htmlClass: 'h-full bg-white dark:bg-surface-950',
+  htmlClass: 'h-full',
   bodyClass: 'h-full',
 };
 
@@ -141,12 +141,9 @@ export default function AdminVerify2FARoute() {
             checked={trustDevice}
             onChange={(e) => setTrustDevice(e.target.checked)}
             disabled={isLoading}
-            className="dark:bg-surface-700 h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500 dark:border-white/10"
+            className="border-border text-accent focus:ring-accent/40 bg-surface h-4 w-4 rounded border"
           />
-          <label
-            htmlFor="trust-device"
-            className="ml-2 block text-sm text-gray-900 dark:text-white"
-          >
+          <label htmlFor="trust-device" className="text-text ml-2 block text-sm">
             Trust this device for 30 days
           </label>
         </div>
@@ -163,7 +160,7 @@ export default function AdminVerify2FARoute() {
           type="button"
           onClick={handleResend}
           disabled={resendCooldown > 0}
-          className="text-sm font-medium text-cyan-600 hover:text-cyan-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-cyan-400 dark:hover:text-cyan-300"
+          className="text-accent text-sm font-medium hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {resendCooldown > 0
             ? `Resend code in ${resendCooldown}s`
@@ -175,7 +172,7 @@ export default function AdminVerify2FARoute() {
         <Link
           to="/admin/login"
           prefetch="intent"
-          className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          className="text-text-muted hover:text-text text-sm font-medium"
         >
           Back to login
         </Link>
