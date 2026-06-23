@@ -15,22 +15,24 @@ import Logo from '#/components/ui/logo';
  */
 export default function AuthLayout({ title, subtitle, children }) {
   return (
-    <div className="dark-mesh-gradient flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+    <div className="bg-bg flex min-h-full flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Link to="/" prefetch="intent">
-          <Logo alt="Your Company" className="mx-auto h-16 w-auto" />
+          <Logo alt="Your Company" className="mx-auto h-14 w-auto" />
         </Link>
-        <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900 dark:text-white">
+        <h2 className="text-text mt-8 text-center text-2xl/9 font-bold tracking-tight">
           {title}
         </h2>
         {subtitle && (
-          <p className="dark:text-dark-500 mt-2 text-center text-sm text-gray-600">
-            {subtitle}
-          </p>
+          <p className="text-text-muted mt-2 text-center text-sm">{subtitle}</p>
         )}
       </div>
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">{children}</div>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="border-border bg-surface rounded-2xl border p-6 shadow-xs sm:p-8">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

@@ -68,37 +68,76 @@ export async function loader({ request }) {
 // Nav items
 // ------------------------------------------------------------------
 
-const NAV_ITEMS = [
-  { name: 'Dashboard', href: '/admin/dashboard', Icon: ChartBarIcon },
-  { name: 'Reports', href: '/admin/reports', Icon: DocumentChartBarIcon },
-  { name: 'Products', href: '/admin/products', Icon: CubeIcon },
-  { name: 'Categories', href: '/admin/categories', Icon: TagIcon },
-  { name: 'Pages', href: '/admin/pages', Icon: DocumentTextIcon },
-  { name: 'Menus', href: '/admin/menus', Icon: Bars3Icon },
-  { name: 'Reviews', href: '/admin/reviews', Icon: StarIcon },
-  { name: 'Orders', href: '/admin/orders', Icon: ShoppingBagIcon },
-  { name: 'Customers', href: '/admin/customers', Icon: UserGroupIcon },
+const NAV_GROUPS = [
   {
-    name: 'Customer Groups',
-    href: '/admin/customer-groups',
-    Icon: UserGroupIcon,
+    label: 'Overview',
+    items: [
+      { name: 'Dashboard', href: '/admin/dashboard', Icon: ChartBarIcon },
+      { name: 'Reports', href: '/admin/reports', Icon: DocumentChartBarIcon },
+      {
+        name: 'Audit Log',
+        href: '/admin/audit-log',
+        Icon: ClipboardDocumentListIcon,
+      },
+    ],
   },
-  { name: 'Price Lists', href: '/admin/price-lists', Icon: TagIcon },
-  { name: 'Inventory', href: '/admin/inventory', Icon: CubeIcon },
-  { name: 'Gift Cards', href: '/admin/gift-cards', Icon: ReceiptPercentIcon },
-  { name: 'Loyalty', href: '/admin/loyalty', Icon: StarIcon },
-  { name: 'Marketing', href: '/admin/marketing', Icon: ChartBarIcon },
-  { name: 'Channels', href: '/admin/channels', Icon: GlobeAltIcon },
-  { name: 'Discounts', href: '/admin/discounts', Icon: ReceiptPercentIcon },
-  { name: 'Themes', href: '/admin/themes', Icon: PaintBrushIcon },
-  { name: 'Plugins', href: '/admin/plugins', Icon: PuzzlePieceIcon },
-  { name: 'API', href: '/admin/api-settings', Icon: CodeBracketIcon },
   {
-    name: 'Audit Log',
-    href: '/admin/audit-log',
-    Icon: ClipboardDocumentListIcon,
+    label: 'Catalog',
+    items: [
+      { name: 'Products', href: '/admin/products', Icon: CubeIcon },
+      { name: 'Categories', href: '/admin/categories', Icon: TagIcon },
+      { name: 'Inventory', href: '/admin/inventory', Icon: CubeIcon },
+      { name: 'Price Lists', href: '/admin/price-lists', Icon: TagIcon },
+    ],
   },
-  { name: 'Settings', href: '/admin/settings', Icon: Cog6ToothIcon },
+  {
+    label: 'Content',
+    items: [
+      { name: 'Pages', href: '/admin/pages', Icon: DocumentTextIcon },
+      { name: 'Menus', href: '/admin/menus', Icon: Bars3Icon },
+      { name: 'Reviews', href: '/admin/reviews', Icon: StarIcon },
+    ],
+  },
+  {
+    label: 'Sales',
+    items: [
+      { name: 'Orders', href: '/admin/orders', Icon: ShoppingBagIcon },
+      { name: 'Discounts', href: '/admin/discounts', Icon: ReceiptPercentIcon },
+      {
+        name: 'Gift Cards',
+        href: '/admin/gift-cards',
+        Icon: ReceiptPercentIcon,
+      },
+    ],
+  },
+  {
+    label: 'Customers',
+    items: [
+      { name: 'Customers', href: '/admin/customers', Icon: UserGroupIcon },
+      {
+        name: 'Customer Groups',
+        href: '/admin/customer-groups',
+        Icon: UserGroupIcon,
+      },
+      { name: 'Loyalty', href: '/admin/loyalty', Icon: StarIcon },
+    ],
+  },
+  {
+    label: 'Growth',
+    items: [
+      { name: 'Marketing', href: '/admin/marketing', Icon: ChartBarIcon },
+      { name: 'Channels', href: '/admin/channels', Icon: GlobeAltIcon },
+    ],
+  },
+  {
+    label: 'Configuration',
+    items: [
+      { name: 'Themes', href: '/admin/themes', Icon: PaintBrushIcon },
+      { name: 'Plugins', href: '/admin/plugins', Icon: PuzzlePieceIcon },
+      { name: 'API', href: '/admin/api-settings', Icon: CodeBracketIcon },
+      { name: 'Settings', href: '/admin/settings', Icon: Cog6ToothIcon },
+    ],
+  },
 ];
 
 // ------------------------------------------------------------------
@@ -128,17 +167,18 @@ function NavLink({ item, onClick }) {
     <Link
       to={item.href}
       onClick={onClick}
-      className={`group flex items-center rounded-md px-2 py-2 text-sm font-medium ${
+      aria-current={active ? 'page' : undefined}
+      className={`group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
         active
-          ? 'dark:bg-accent-violet/20 dark:ring-accent-violet/30 bg-gray-200 text-gray-900 md:bg-white md:ring md:ring-gray-200 dark:text-white'
-          : 'dark:text-dark-400 dark:hover:bg-dark-700/50 dark:hover:text-dark-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+          ? 'bg-surface-2 text-text'
+          : 'text-text-muted hover:bg-surface-2/60 hover:text-text'
       }`}
     >
       <item.Icon
-        className={`mr-3 h-5 w-5 flex-shrink-0 ${
+        className={`h-5 w-5 flex-shrink-0 ${
           active
-            ? 'dark:text-accent-fuchsia text-gray-700'
-            : 'dark:text-dark-500 dark:group-hover:text-dark-400 text-gray-500 group-hover:text-gray-600'
+            ? 'text-accent'
+            : 'text-text-muted/80 group-hover:text-text'
         }`}
         aria-hidden="true"
       />
@@ -156,16 +196,16 @@ function AdminUserMenu() {
 
   return (
     <Menu>
-      <MenuButton className="dark:text-dark-300 dark:data-active:bg-dark-700/50 dark:data-hover:bg-dark-700/50 flex w-full cursor-default items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm font-medium text-zinc-950 data-active:bg-zinc-950/5 data-hover:bg-zinc-950/5">
+      <MenuButton className="text-text data-active:bg-surface-2 data-hover:bg-surface-2 flex w-full cursor-default items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm font-medium">
         <span className="flex min-w-0 items-center gap-3">
-          <span className="dark:outline-dark-600 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 outline -outline-offset-1 outline-black/10 dark:bg-zinc-800">
-            <UserIconSolid className="h-5 w-5 text-gray-500 dark:text-zinc-400" />
+          <span className="border-border bg-surface-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+            <UserIconSolid className="text-text-muted h-5 w-5" />
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-sm font-medium text-zinc-900 dark:text-white">
+            <span className="text-text block truncate text-sm font-medium">
               {user.name.split(' ')[0]}
             </span>
-            <span className="dark:text-dark-500 block truncate text-xs font-normal text-zinc-500">
+            <span className="text-text-muted block truncate text-xs font-normal">
               {user.email}
             </span>
           </span>
@@ -175,25 +215,25 @@ function AdminUserMenu() {
       <MenuItems
         transition
         anchor="top end"
-        className="dark-glass dark:ring-dark-700/50 isolate z-30 w-max min-w-56 overflow-y-auto rounded-xl bg-white/75 p-1 shadow-lg ring-1 ring-zinc-950/10 outline outline-transparent backdrop-blur-xl transition [--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] focus:outline-hidden data-leave:duration-100 data-leave:ease-in data-closed:data-leave:opacity-0 data-[anchor~=end]:[--anchor-offset:6px]"
+        className="border-border bg-surface isolate z-30 w-max min-w-56 overflow-y-auto rounded-xl border p-1 shadow-lg transition [--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] focus:outline-hidden data-leave:duration-100 data-leave:ease-in data-closed:data-leave:opacity-0 data-[anchor~=end]:[--anchor-offset:6px]"
       >
         {/* Theme Toggle */}
         <MenuItem>
           <button
             type="button"
             onClick={toggleTheme}
-            className="group col-span-full grid w-full cursor-default grid-cols-[auto_1fr] items-center rounded-lg px-3 py-1.5 text-left text-sm text-zinc-950 focus:outline-hidden data-focus:bg-blue-500 data-focus:text-white dark:text-white"
+            className="text-text data-focus:bg-accent data-focus:text-accent-fg group col-span-full grid w-full cursor-default grid-cols-[auto_1fr] items-center rounded-lg px-3 py-1.5 text-left text-sm focus:outline-hidden"
           >
             {isDark ? (
-              <SunIcon className="mr-2 h-4 w-4 text-zinc-500 data-focus:text-white" />
+              <SunIcon className="text-text-muted group-data-focus:text-accent-fg mr-2 h-4 w-4" />
             ) : (
-              <MoonIcon className="mr-2 h-4 w-4 text-zinc-500 data-focus:text-white" />
+              <MoonIcon className="text-text-muted group-data-focus:text-accent-fg mr-2 h-4 w-4" />
             )}
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </button>
         </MenuItem>
 
-        <hr className="-mx-[3px] my-1 block border-zinc-200 dark:border-white/10" />
+        <hr className="border-border -mx-[3px] my-1 block" />
 
         {/* View storefront */}
         <MenuItem>
@@ -201,22 +241,22 @@ function AdminUserMenu() {
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="col-span-full grid w-full cursor-default grid-cols-[auto_1fr] items-center rounded-lg px-3 py-1.5 text-left text-sm text-zinc-950 focus:outline-hidden data-focus:bg-blue-500 data-focus:text-white dark:text-white"
+            className="text-text data-focus:bg-accent data-focus:text-accent-fg group col-span-full grid w-full cursor-default grid-cols-[auto_1fr] items-center rounded-lg px-3 py-1.5 text-left text-sm focus:outline-hidden"
           >
-            <GlobeAltIcon className="mr-2 h-4 w-4 text-zinc-500" />
+            <GlobeAltIcon className="text-text-muted group-data-focus:text-accent-fg mr-2 h-4 w-4" />
             View storefront
           </a>
         </MenuItem>
 
-        <hr className="-mx-[3px] my-1 block border-zinc-200 dark:border-white/10" />
+        <hr className="border-border -mx-[3px] my-1 block" />
 
         {/* Logout */}
         <MenuItem>
           <Link
             to="/admin/logout"
-            className="col-span-full grid w-full cursor-default grid-cols-[auto_1fr] items-center rounded-lg px-3 py-1.5 text-left text-sm text-zinc-950 focus:outline-hidden data-focus:bg-blue-500 data-focus:text-white dark:text-white"
+            className="text-text data-focus:bg-accent data-focus:text-accent-fg group col-span-full grid w-full cursor-default grid-cols-[auto_1fr] items-center rounded-lg px-3 py-1.5 text-left text-sm focus:outline-hidden"
           >
-            <ArrowRightStartOnRectangleIcon className="mr-2 h-4 w-4 text-zinc-500" />
+            <ArrowRightStartOnRectangleIcon className="text-text-muted group-data-focus:text-accent-fg mr-2 h-4 w-4" />
             Logout
           </Link>
         </MenuItem>
@@ -232,10 +272,10 @@ function SidebarContent({ onClose }) {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="dark:border-dark-700/50 flex items-center justify-between border-b border-gray-100 px-4 py-4 md:border-gray-200">
+      <div className="border-border flex items-center justify-between border-b px-4 py-4">
         <Link
           to="/admin/dashboard"
-          className="flex items-center gap-2 px-1 text-slate-800 dark:text-white"
+          className="text-text flex items-center gap-2 px-1"
           onClick={onClose}
         >
           <Logo alt="Admin" className="-m-1 h-7 w-auto" />
@@ -244,7 +284,7 @@ function SidebarContent({ onClose }) {
 
         <button
           type="button"
-          className="dark:text-dark-500 dark:hover:text-dark-400 text-gray-500 hover:text-gray-600 md:hidden"
+          className="text-text-muted hover:text-text md:hidden"
           onClick={onClose}
         >
           <span className="sr-only">Close sidebar</span>
@@ -253,15 +293,22 @@ function SidebarContent({ onClose }) {
       </div>
 
       {/* Nav */}
-      <div className="flex h-full flex-col overflow-y-auto">
-        <nav className="space-y-1 px-2 py-4">
-          {NAV_ITEMS.map((item) => (
-            <NavLink key={item.name} item={item} onClick={onClose} />
+      <div className="flex h-full min-h-0 flex-col overflow-y-auto">
+        <nav className="flex-1 space-y-6 px-3 py-4">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label} className="space-y-1">
+              <p className="text-text-muted px-3 pb-1 text-xs font-semibold tracking-wider uppercase">
+                {group.label}
+              </p>
+              {group.items.map((item) => (
+                <NavLink key={item.name} item={item} onClick={onClose} />
+              ))}
+            </div>
           ))}
         </nav>
 
         {/* User menu at the bottom */}
-        <div className="dark:border-dark-700/50 mt-auto border-t border-zinc-950/5 p-4">
+        <div className="border-border mt-auto border-t p-3">
           <AdminUserMenu />
         </div>
       </div>
@@ -274,7 +321,7 @@ function SidebarContent({ onClose }) {
  */
 function DesktopSidebar() {
   return (
-    <div className="dark-gradient-subtle dark:ring-dark-700/50 fixed hidden h-full w-64 flex-col bg-white shadow-xs ring-1 ring-zinc-950/5 md:flex">
+    <div className="border-border bg-surface fixed hidden h-full w-64 flex-col border-r md:flex">
       <SidebarContent onClose={() => {}} />
     </div>
   );
@@ -289,7 +336,7 @@ function MobileSidebar({ isOpen, onClose }) {
       {/* Backdrop */}
       <TransitionChild>
         <div
-          className="fixed inset-0 z-10 bg-black/30 transition duration-300 data-closed:opacity-0"
+          className="fixed inset-0 z-10 bg-black/40 transition duration-300 data-closed:opacity-0"
           onClick={onClose}
         />
       </TransitionChild>
@@ -297,7 +344,7 @@ function MobileSidebar({ isOpen, onClose }) {
       {/* Drawer */}
       <TransitionChild>
         <div className="fixed inset-y-0 left-0 z-20 w-72 p-2 transition duration-300 data-closed:-translate-x-full">
-          <div className="dark-gradient-subtle dark:ring-dark-700/50 flex h-full flex-col rounded-lg bg-white shadow-xs ring-1 ring-zinc-950/5">
+          <div className="border-border bg-surface flex h-full flex-col overflow-hidden rounded-xl border shadow-lg">
             <SidebarContent onClose={onClose} />
           </div>
         </div>
@@ -324,7 +371,7 @@ function LocaleMenu() {
   return (
     <Menu>
       <MenuButton
-        className="dark:text-dark-400 dark:hover:bg-dark-700/50 rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:text-gray-200"
+        className="text-text-muted hover:bg-surface-2 hover:text-text rounded-md p-2"
         aria-label={t('admin.topbar.switchLocale')}
       >
         <GlobeAltIcon className="h-5 w-5" aria-hidden="true" />
@@ -332,7 +379,7 @@ function LocaleMenu() {
       <MenuItems
         transition
         anchor="bottom end"
-        className="dark-glass dark:ring-dark-700/50 isolate z-30 w-max min-w-40 overflow-y-auto rounded-xl bg-white/75 p-1 shadow-lg ring-1 ring-zinc-950/10 outline outline-transparent backdrop-blur-xl transition [--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] focus:outline-hidden data-leave:duration-100 data-leave:ease-in data-closed:data-leave:opacity-0"
+        className="border-border bg-surface isolate z-30 w-max min-w-40 overflow-y-auto rounded-xl border p-1 shadow-lg transition [--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] focus:outline-hidden data-leave:duration-100 data-leave:ease-in data-closed:data-leave:opacity-0"
       >
         {availableLocales.map((l) => (
           <MenuItem key={l}>
@@ -341,10 +388,10 @@ function LocaleMenu() {
               <input type="hidden" name="locale" value={l} />
               <button
                 type="submit"
-                className="grid w-full cursor-default grid-cols-[auto_1fr] items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm text-zinc-950 focus:outline-hidden data-focus:bg-blue-500 data-focus:text-white dark:text-white"
+                className="text-text data-focus:bg-accent data-focus:text-accent-fg group grid w-full cursor-default grid-cols-[auto_1fr] items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm focus:outline-hidden"
                 aria-current={l === locale ? 'true' : undefined}
               >
-                <span className="text-xs font-semibold text-zinc-500 uppercase data-focus:text-white dark:text-zinc-400">
+                <span className="text-text-muted group-data-focus:text-accent-fg text-xs font-semibold uppercase">
                   {l}
                 </span>
                 <span>
@@ -367,11 +414,11 @@ function Topbar({ onMenuOpen }) {
   const { isDark, toggleTheme } = useTheme();
 
   return (
-    <header className="dark:border-dark-700/50 dark:bg-dark-900/80 sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-gray-200 bg-white/80 px-4 backdrop-blur-sm md:px-6">
+    <header className="border-border bg-surface sticky top-0 z-10 flex h-14 items-center gap-3 border-b px-4 md:px-6">
       {/* Hamburger — mobile only */}
       <button
         type="button"
-        className="dark:text-dark-400 dark:hover:text-dark-300 -ml-1 rounded-md p-2 text-gray-500 hover:text-gray-700 focus:outline-none md:hidden"
+        className="text-text-muted hover:bg-surface-2 hover:text-text -ml-1 rounded-md p-2 focus:outline-none md:hidden"
         onClick={onMenuOpen}
         aria-label="Open sidebar"
       >
@@ -380,25 +427,25 @@ function Topbar({ onMenuOpen }) {
 
       {/* Search */}
       <div className="flex flex-1 items-center">
-        <div className="relative max-w-md flex-1">
-          <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <div className="relative w-full max-w-md">
+          <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <input
             type="search"
             placeholder="Search..."
-            className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 w-full rounded-md bg-gray-50 py-1.5 pr-3 pl-9 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 dark:bg-zinc-800"
+            className="bg-surface-2 text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 w-full rounded-md border py-1.5 pr-3 pl-9 text-sm outline-none focus:ring-2"
           />
         </div>
       </div>
 
       {/* Right-side actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <LocaleMenu />
 
         {/* Dark mode toggle */}
         <button
           type="button"
           onClick={toggleTheme}
-          className="dark:text-dark-400 dark:hover:bg-dark-700/50 dark:hover:text-accent-fuchsia rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          className="text-text-muted hover:bg-surface-2 hover:text-text rounded-md p-2"
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {isDark ? (
@@ -437,7 +484,7 @@ export default function AdminLayout() {
 
   return (
     <I18nContext.Provider value={{ t }}>
-      <div className="dark:bg-dark-950 flex h-full min-h-screen bg-gray-50">
+      <div className="bg-bg text-text flex h-full min-h-screen">
         {/* Sidebars */}
         <DesktopSidebar />
         <MobileSidebar
@@ -450,7 +497,9 @@ export default function AdminLayout() {
           <Topbar onMenuOpen={() => setMobileOpen(true)} />
 
           <main className="flex-1 overflow-auto p-4 md:p-6">
-            <Outlet />
+            <div className="mx-auto w-full max-w-7xl">
+              <Outlet />
+            </div>
           </main>
         </div>
       </div>

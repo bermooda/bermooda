@@ -23,7 +23,7 @@ import {
 } from '#/core/admin-onboarding/index.server';
 
 export const handle = {
-  htmlClass: 'h-full bg-white',
+  htmlClass: 'h-full bg-bg',
   bodyClass: 'h-full',
 };
 
@@ -140,7 +140,7 @@ function LoginForm({ onboarded }) {
         <div>
           <label
             htmlFor="email"
-            className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+            className="text-text block text-sm/6 font-medium"
           >
             Email address
           </label>
@@ -150,7 +150,7 @@ function LoginForm({ onboarded }) {
               name="email"
               type="email"
               autoComplete="email"
-              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+              className="bg-surface text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-1.5 text-base outline-none focus:ring-2 sm:text-sm/6"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -163,7 +163,7 @@ function LoginForm({ onboarded }) {
           <div className="flex items-center justify-between">
             <label
               htmlFor="password"
-              className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+              className="text-text block text-sm/6 font-medium"
             >
               Password
             </label>
@@ -171,7 +171,7 @@ function LoginForm({ onboarded }) {
               <Link
                 to="/admin/forgot-password"
                 prefetch="intent"
-                className="dark:text-accent-fuchsia dark:hover:text-accent-violet font-semibold text-indigo-600 hover:text-indigo-500"
+                className="text-accent font-semibold hover:opacity-80"
               >
                 Forgot password?
               </Link>
@@ -183,7 +183,7 @@ function LoginForm({ onboarded }) {
               name="password"
               type="password"
               autoComplete="current-password"
-              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+              className="bg-surface text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-1.5 text-base outline-none focus:ring-2 sm:text-sm/6"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -224,7 +224,7 @@ function OnboardingForm() {
         <div>
           <label
             htmlFor="name"
-            className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+            className="text-text block text-sm/6 font-medium"
           >
             Full name
           </label>
@@ -236,10 +236,10 @@ function OnboardingForm() {
               autoComplete="name"
               defaultValue={fields.name ?? ''}
               required
-              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+              className="bg-surface text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-1.5 text-base outline-none focus:ring-2 sm:text-sm/6"
             />
             {fieldErrors.name && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              <p className="text-danger mt-1 text-sm">
                 {fieldErrors.name}
               </p>
             )}
@@ -249,7 +249,7 @@ function OnboardingForm() {
         <div>
           <label
             htmlFor="ob-email"
-            className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+            className="text-text block text-sm/6 font-medium"
           >
             Email address
           </label>
@@ -261,10 +261,10 @@ function OnboardingForm() {
               autoComplete="email"
               defaultValue={fields.email ?? ''}
               required
-              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+              className="bg-surface text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-1.5 text-base outline-none focus:ring-2 sm:text-sm/6"
             />
             {fieldErrors.email && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              <p className="text-danger mt-1 text-sm">
                 {fieldErrors.email}
               </p>
             )}
@@ -274,7 +274,7 @@ function OnboardingForm() {
         <div>
           <label
             htmlFor="ob-password"
-            className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+            className="text-text block text-sm/6 font-medium"
           >
             Password
           </label>
@@ -285,10 +285,10 @@ function OnboardingForm() {
               type="password"
               autoComplete="new-password"
               required
-              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+              className="bg-surface text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-1.5 text-base outline-none focus:ring-2 sm:text-sm/6"
             />
             {fieldErrors.password && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              <p className="text-danger mt-1 text-sm">
                 {fieldErrors.password}
               </p>
             )}
@@ -298,7 +298,7 @@ function OnboardingForm() {
         <div>
           <label
             htmlFor="ob-confirm-password"
-            className="dark:text-dark-300 block text-sm/6 font-medium text-gray-900"
+            className="text-text block text-sm/6 font-medium"
           >
             Confirm password
           </label>
@@ -309,10 +309,10 @@ function OnboardingForm() {
               type="password"
               autoComplete="new-password"
               required
-              className="dark:bg-dark-800 dark:text-dark-300 dark:outline-dark-600 dark:placeholder:text-dark-500 dark:focus:outline-accent-violet block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+              className="bg-surface text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-1.5 text-base outline-none focus:ring-2 sm:text-sm/6"
             />
             {fieldErrors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              <p className="text-danger mt-1 text-sm">
                 {fieldErrors.confirmPassword}
               </p>
             )}
