@@ -9,13 +9,21 @@ import {
   TrashIcon,
   PlusIcon,
   XMarkIcon,
-  CheckIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useState, useEffect } from 'react';
 import { Form, useFetcher, useLoaderData, useNavigation } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
+import Textarea from '#/components/admin/form/textarea';
+import PageHeader from '#/components/admin/page-header';
+import { SuccessAlert } from '#/components/ui/alert';
+import Button, { ButtonSubmit } from '#/components/ui/button';
 
 import { get } from '#/core/settings/index.server';
 
@@ -291,7 +299,7 @@ export async function action({ request }) {
 
 function LocaleTabs({ locales, activeLocale, onSelect }) {
   return (
-    <div className="flex gap-1 border-b border-gray-200 dark:border-zinc-700">
+    <div className="border-border flex gap-1 border-b">
       {locales.map((locale) => (
         <button
           key={locale}
@@ -300,8 +308,8 @@ function LocaleTabs({ locales, activeLocale, onSelect }) {
           className={clsx(
             'rounded-t px-4 py-2 text-sm font-medium transition-colors',
             activeLocale === locale
-              ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200'
+              ? 'border-accent text-accent border-b-2'
+              : 'text-text-muted hover:text-text'
           )}
         >
           {locale.toUpperCase()}
@@ -323,26 +331,19 @@ function InlineEditForm({ category, locales, onClose }) {
     fetcher.data?.intent === 'save';
 
   return (
-    <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-zinc-600 dark:bg-zinc-800/60">
+    <div className="border-border bg-surface-2 rounded-lg border p-4">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-          Edit category
-        </span>
+        <span className="text-text text-sm font-semibold">Edit category</span>
         <button
           type="button"
           onClick={onClose}
-          className="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200"
+          className="text-text-muted hover:text-text rounded p-1"
         >
           <XMarkIcon className="h-4 w-4" />
         </button>
       </div>
 
-      {saved && (
-        <div className="mb-3 flex items-center gap-1.5 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
-          <CheckIcon className="h-4 w-4" />
-          Saved.
-        </div>
-      )}
+      {saved && <SuccessAlert message="Saved." />}
 
       <fetcher.Form method="post">
         <input type="hidden" name="intent" value="save" />
@@ -365,72 +366,46 @@ function InlineEditForm({ category, locales, onClose }) {
               locale !== activeLocale && 'hidden'
             )}
           >
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-                Title ({locale})
-              </label>
-              <input
+            <Field label={`Title (${locale})`} className="space-y-1">
+              <Input
                 type="text"
                 name={`title[${locale}]`}
                 defaultValue={category.translations[locale]?.title ?? ''}
                 placeholder="Category title"
-                className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-                Slug ({locale})
-              </label>
-              <input
+            </Field>
+            <Field label={`Slug (${locale})`} className="space-y-1">
+              <Input
                 type="text"
                 name={`slug[${locale}]`}
                 defaultValue={category.slugs[locale] ?? ''}
                 placeholder="url-slug"
-                className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-                Meta title ({locale})
-              </label>
-              <input
+            </Field>
+            <Field label={`Meta title (${locale})`} className="space-y-1">
+              <Input
                 type="text"
                 name={`metaTitle[${locale}]`}
                 defaultValue={category.translations[locale]?.metaTitle ?? ''}
-                className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-                Meta description ({locale})
-              </label>
-              <textarea
+            </Field>
+            <Field label={`Meta description (${locale})`} className="space-y-1">
+              <Textarea
                 name={`metaDescription[${locale}]`}
                 rows={2}
                 defaultValue={
                   category.translations[locale]?.metaDescription ?? ''
                 }
-                className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
               />
-            </div>
+            </Field>
           </div>
         ))}
 
         <div className="mt-4 flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
-          >
-            {isSaving ? 'Saving…' : 'Save'}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-sm text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-          >
+          <ButtonSubmit loading={isSaving}>Save</ButtonSubmit>
+          <Button variant="ghost" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </div>
       </fetcher.Form>
     </div>
@@ -456,27 +431,21 @@ function AddCategoryForm({ allForSelect }) {
 
   if (!open) {
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-      >
-        <PlusIcon className="h-4 w-4" />
+      <Button variant="primary" onClick={() => setOpen(true)}>
+        <PlusIcon className="mr-1.5 h-4 w-4" />
         Add Category
-      </button>
+      </Button>
     );
   }
 
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
+    <Card className="w-full sm:w-80">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-          New Category
-        </span>
+        <span className="text-text text-sm font-semibold">New Category</span>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded p-1 text-gray-400 hover:text-gray-600"
+          className="text-text-muted hover:text-text rounded p-1"
         >
           <XMarkIcon className="h-4 w-4" />
         </button>
@@ -485,67 +454,33 @@ function AddCategoryForm({ allForSelect }) {
       <fetcher.Form key={formKey} method="post" className="space-y-3">
         <input type="hidden" name="intent" value="create" />
 
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-            Name (EN)
-          </label>
-          <input
-            type="text"
-            name="title"
-            required
-            placeholder="e.g. Apparel"
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
-          />
-        </div>
+        <Field label="Name (EN)" className="space-y-1">
+          <Input type="text" name="title" required placeholder="e.g. Apparel" />
+        </Field>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-            Slug (EN)
-          </label>
-          <input
-            type="text"
-            name="slug"
-            placeholder="apparel"
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
-          />
-        </div>
+        <Field label="Slug (EN)" className="space-y-1">
+          <Input type="text" name="slug" placeholder="apparel" />
+        </Field>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-            Parent (optional)
-          </label>
-          <select
-            name="parentId"
-            defaultValue=""
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
-          >
+        <Field label="Parent (optional)" className="space-y-1">
+          <Select name="parentId" defaultValue="">
             <option value="">— None (root) —</option>
             {allForSelect.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.title}
               </option>
             ))}
-          </select>
-        </div>
+          </Select>
+        </Field>
 
         <div className="flex items-center gap-3 pt-1">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
-          >
-            {isSubmitting ? 'Creating…' : 'Create'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="text-sm text-gray-500 hover:text-gray-700 dark:text-zinc-400"
-          >
+          <ButtonSubmit loading={isSubmitting}>Create</ButtonSubmit>
+          <Button variant="ghost" onClick={() => setOpen(false)}>
             Cancel
-          </button>
+          </Button>
         </div>
       </fetcher.Form>
-    </div>
+    </Card>
   );
 }
 
@@ -565,63 +500,55 @@ export default function AdminCategoriesRoute() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Categories
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {tree.length} categor{tree.length !== 1 ? 'ies' : 'y'}
-          </p>
-        </div>
-        <AddCategoryForm allForSelect={allForSelect} />
-      </div>
+      <PageHeader
+        title="Categories"
+        subtitle={`${tree.length} categor${tree.length !== 1 ? 'ies' : 'y'}`}
+        actions={<AddCategoryForm allForSelect={allForSelect} />}
+        className="mb-6"
+      />
 
       {/* Tree table */}
-      <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
+      <Card padded={false} className="overflow-hidden">
         {tree.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-gray-400 dark:text-zinc-500">
+          <div className="text-text-muted px-4 py-10 text-center text-sm">
             No categories yet. Use the button above to create one.
           </div>
         ) : (
-          <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+          <div className="divide-border divide-y">
             {tree.map((cat) => (
               <div key={cat.id}>
                 {/* Row */}
                 <div
                   className={clsx(
-                    'flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50',
+                    'hover:bg-surface-2/50 flex items-center gap-3 px-4 py-3',
                     isReordering && 'opacity-60'
                   )}
                   style={{ paddingLeft: `${16 + cat.depth * 24}px` }}
                 >
                   {/* Depth indicator */}
                   {cat.depth > 0 && (
-                    <span className="mr-1 text-gray-300 select-none dark:text-zinc-600">
+                    <span className="text-text-muted mr-1 select-none">
                       {'└'}
                     </span>
                   )}
 
                   {/* Title */}
-                  <span className="flex-1 text-sm font-medium text-gray-900 dark:text-white">
+                  <span className="text-text flex-1 text-sm font-medium">
                     {cat.enTitle || (
-                      <span className="text-gray-400 italic dark:text-zinc-500">
-                        (untitled)
-                      </span>
+                      <span className="text-text-muted italic">(untitled)</span>
                     )}
                   </span>
 
                   {/* Position badge */}
-                  <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-500 dark:bg-zinc-800 dark:text-zinc-400">
+                  <span className="bg-surface-2 text-text-muted rounded px-1.5 py-0.5 font-mono text-xs">
                     pos {cat.position}
                   </span>
 
                   {/* Child count */}
                   {cat.childCount > 0 && (
-                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
+                    <Badge tone="accent">
                       {cat.childCount} child{cat.childCount !== 1 ? 'ren' : ''}
-                    </span>
+                    </Badge>
                   )}
 
                   {/* Reorder */}
@@ -632,7 +559,7 @@ export default function AdminCategoriesRoute() {
                       <button
                         type="submit"
                         title="Move up"
-                        className="rounded p-0.5 text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200"
+                        className="text-text-muted hover:text-text rounded p-0.5"
                       >
                         <ChevronUpIcon className="h-3.5 w-3.5" />
                       </button>
@@ -643,7 +570,7 @@ export default function AdminCategoriesRoute() {
                       <button
                         type="submit"
                         title="Move down"
-                        className="rounded p-0.5 text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200"
+                        className="text-text-muted hover:text-text rounded p-0.5"
                       >
                         <ChevronDownIcon className="h-3.5 w-3.5" />
                       </button>
@@ -660,8 +587,8 @@ export default function AdminCategoriesRoute() {
                     className={clsx(
                       'rounded p-1 transition-colors',
                       editingId === cat.id
-                        ? 'text-indigo-600 dark:text-indigo-400'
-                        : 'text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200'
+                        ? 'text-accent'
+                        : 'text-text-muted hover:text-text'
                     )}
                   >
                     <PencilSquareIcon className="h-4 w-4" />
@@ -687,7 +614,7 @@ export default function AdminCategoriesRoute() {
                     <button
                       type="submit"
                       title="Delete"
-                      className="rounded p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                      className="text-text-muted hover:text-danger rounded p-1"
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
@@ -708,7 +635,7 @@ export default function AdminCategoriesRoute() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

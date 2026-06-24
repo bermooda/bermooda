@@ -4,6 +4,13 @@
 import { Form, Link, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
+import Card from '#/components/admin/card';
+import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
+import PageHeader from '#/components/admin/page-header';
+import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import { ButtonSubmit } from '#/components/ui/button';
 
 import { recordAdminAudit } from '#/core/audit/index.server';
 import {
@@ -131,17 +138,13 @@ function formatCents(cents) {
 
 function MetricCard({ label, value, sub }) {
   return (
-    <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-5">
-      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-        {label}
-      </p>
-      <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+    <Card>
+      <p className="text-text-muted text-sm font-medium">{label}</p>
+      <p className="text-text mt-2 text-2xl font-semibold tracking-tight">
         {value}
       </p>
-      {sub && (
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{sub}</p>
-      )}
-    </div>
+      {sub && <p className="text-text-muted mt-1 text-xs">{sub}</p>}
+    </Card>
   );
 }
 
@@ -156,48 +159,35 @@ export default function AdminReportsRoute() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Reports
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Sales analytics, tax, discounts, and data exports.
-        </p>
-      </div>
+      <PageHeader
+        title="Reports"
+        subtitle="Sales analytics, tax, discounts, and data exports."
+      />
 
-      <Form
-        method="get"
-        className="dark:border-dark-700 dark:bg-dark-800 flex flex-wrap items-end gap-4 rounded-xl border border-gray-200 bg-white p-4"
-      >
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-            Start date
-          </label>
-          <input
-            type="date"
-            name="startDate"
-            defaultValue={filters.startDate}
-            className="rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-            End date
-          </label>
-          <input
-            type="date"
-            name="endDate"
-            defaultValue={filters.endDate}
-            className="rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
-          />
-        </div>
-        <button
-          type="submit"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+      <Card padded={false}>
+        <Form
+          method="get"
+          className="flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-end"
         >
-          Apply
-        </button>
-      </Form>
+          <Field label="Start date" htmlFor="startDate" className="space-y-1">
+            <Input
+              id="startDate"
+              type="date"
+              name="startDate"
+              defaultValue={filters.startDate}
+            />
+          </Field>
+          <Field label="End date" htmlFor="endDate" className="space-y-1">
+            <Input
+              id="endDate"
+              type="date"
+              name="endDate"
+              defaultValue={filters.endDate}
+            />
+          </Field>
+          <ButtonSubmit>Apply</ButtonSubmit>
+        </Form>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
@@ -267,11 +257,9 @@ export default function AdminReportsRoute() {
         />
       </div>
 
-      <section className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          CSV exports
-        </h2>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      <Card>
+        <h2 className="text-text text-lg font-semibold">CSV exports</h2>
+        <p className="text-text-muted mt-1 text-sm">
           Download data immediately or schedule recurring exports.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -282,7 +270,7 @@ export default function AdminReportsRoute() {
               <a
                 key={type}
                 href={`/admin/reports/export?${params.toString()}`}
-                className="rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-800 ring-1 ring-gray-300 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-600 dark:hover:bg-zinc-700"
+                className="border-border bg-surface text-text hover:bg-surface-2 rounded-md border px-3 py-2 text-sm font-medium shadow-xs"
               >
                 Export {type}
               </a>
@@ -295,178 +283,140 @@ export default function AdminReportsRoute() {
           className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
         >
           <input type="hidden" name="intent" value="create-scheduled-export" />
-          <input
+          <Input
             type="text"
             name="label"
             placeholder="Schedule label"
             required
-            className="rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
           />
-          <select
-            name="exportType"
-            required
-            className="rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
-          >
+          <Select name="exportType" required>
             {exportTypes.map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
             ))}
-          </select>
-          <select
-            name="schedule"
-            required
-            className="rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
-          >
+          </Select>
+          <Select name="schedule" required>
             {exportSchedules.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
             ))}
-          </select>
-          <input
+          </Select>
+          <Input
             type="email"
             name="recipientEmail"
             placeholder="Recipient email (optional)"
-            className="rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
           />
-          <button
-            type="submit"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 sm:col-span-2 lg:col-span-1"
-          >
+          <ButtonSubmit className="sm:col-span-2 lg:col-span-1">
             Schedule export
-          </button>
+          </ButtonSubmit>
         </Form>
 
         {scheduledExports.length > 0 && (
-          <div className="mt-6 overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-              <thead>
-                <tr>
-                  {['Label', 'Type', 'Schedule', 'Last run', 'Actions'].map(
-                    (col) => (
-                      <th
-                        key={col}
-                        className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400"
-                      >
-                        {col}
-                      </th>
-                    )
-                  )}
+          <Table className="mt-6">
+            <THead>
+              <tr>
+                {['Label', 'Type', 'Schedule', 'Last run', 'Actions'].map(
+                  (col) => (
+                    <Th key={col}>{col}</Th>
+                  )
+                )}
+              </tr>
+            </THead>
+            <TBody>
+              {scheduledExports.map((exp) => (
+                <tr key={exp.id}>
+                  <Td className="text-text font-medium">{exp.label}</Td>
+                  <Td>{exp.exportType}</Td>
+                  <Td className="capitalize">{exp.schedule}</Td>
+                  <Td>
+                    {exp.lastRunAt
+                      ? new Date(exp.lastRunAt).toLocaleString('en')
+                      : 'Never'}
+                  </Td>
+                  <Td>
+                    <div className="flex gap-3">
+                      <Form method="post" className="inline">
+                        <input
+                          type="hidden"
+                          name="intent"
+                          value="run-scheduled-export"
+                        />
+                        <input type="hidden" name="id" value={exp.id} />
+                        <button
+                          type="submit"
+                          className="text-accent text-xs font-medium hover:underline"
+                        >
+                          Run now
+                        </button>
+                      </Form>
+                      {exp.runs[0]?.status === 'completed' && (
+                        <Link
+                          to={`/admin/reports/export?runId=${exp.runs[0].id}`}
+                          className="text-text-muted hover:text-text text-xs font-medium hover:underline"
+                        >
+                          Download
+                        </Link>
+                      )}
+                      <Form method="post" className="inline">
+                        <input
+                          type="hidden"
+                          name="intent"
+                          value="delete-scheduled-export"
+                        />
+                        <input type="hidden" name="id" value={exp.id} />
+                        <button
+                          type="submit"
+                          className="text-danger text-xs font-medium hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </Form>
+                    </div>
+                  </Td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                {scheduledExports.map((exp) => (
-                  <tr key={exp.id}>
-                    <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">
-                      {exp.label}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-600 dark:text-zinc-300">
-                      {exp.exportType}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-600 capitalize dark:text-zinc-300">
-                      {exp.schedule}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">
-                      {exp.lastRunAt
-                        ? new Date(exp.lastRunAt).toLocaleString('en')
-                        : 'Never'}
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex gap-2">
-                        <Form method="post" className="inline">
-                          <input
-                            type="hidden"
-                            name="intent"
-                            value="run-scheduled-export"
-                          />
-                          <input type="hidden" name="id" value={exp.id} />
-                          <button
-                            type="submit"
-                            className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                          >
-                            Run now
-                          </button>
-                        </Form>
-                        {exp.runs[0]?.status === 'completed' && (
-                          <Link
-                            to={`/admin/reports/export?runId=${exp.runs[0].id}`}
-                            className="text-xs font-medium text-gray-600 hover:underline dark:text-zinc-300"
-                          >
-                            Download
-                          </Link>
-                        )}
-                        <Form method="post" className="inline">
-                          <input
-                            type="hidden"
-                            name="intent"
-                            value="delete-scheduled-export"
-                          />
-                          <input type="hidden" name="id" value={exp.id} />
-                          <button
-                            type="submit"
-                            className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
-                          >
-                            Delete
-                          </button>
-                        </Form>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </TBody>
+          </Table>
         )}
-      </section>
+      </Card>
     </div>
   );
 }
 
 function ReportTable({ title, headers, rows, empty }) {
   return (
-    <div className="dark:border-dark-700 dark:bg-dark-800 overflow-hidden rounded-xl border border-gray-200 bg-white">
-      <div className="border-b border-gray-200 px-4 py-3 dark:border-zinc-700">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-          {title}
-        </h2>
+    <Card padded={false}>
+      <div className="border-border border-b px-4 py-3">
+        <h2 className="text-text text-base font-semibold">{title}</h2>
       </div>
       {rows.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">
-          {empty}
-        </p>
+        <p className="text-text-muted px-4 py-6 text-sm">{empty}</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-            <thead>
+          <table className="divide-border min-w-full divide-y">
+            <THead>
               <tr>
                 {headers.map((h) => (
-                  <th
-                    key={h}
-                    className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400"
-                  >
-                    {h}
-                  </th>
+                  <Th key={h}>{h}</Th>
                 ))}
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+            </THead>
+            <TBody>
               {rows.map((row, i) => (
                 <tr key={i}>
                   {row.map((cell, j) => (
-                    <td
-                      key={j}
-                      className="px-3 py-2 text-sm text-gray-700 dark:text-zinc-300"
-                    >
+                    <Td key={j} className="text-text">
                       {cell}
-                    </td>
+                    </Td>
                   ))}
                 </tr>
               ))}
-            </tbody>
+            </TBody>
           </table>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
