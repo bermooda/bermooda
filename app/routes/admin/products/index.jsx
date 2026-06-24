@@ -3,10 +3,15 @@
 // category badges and a "New Product" button.
 
 import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
 import { Form, Link, useLoaderData, useSearchParams } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import { controlClasses } from '#/components/admin/form/input';
+import PageHeader from '#/components/admin/page-header';
+import Pagination from '#/components/admin/pagination';
+import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -117,25 +122,22 @@ export async function loader({ request }) {
 
 function StatusBadge({ published }) {
   return (
-    <span
-      className={clsx(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-        published
-          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-      )}
-    >
+    <Badge tone={published ? 'success' : 'neutral'}>
       {published ? 'Published' : 'Draft'}
-    </span>
+    </Badge>
   );
 }
 
 function CategoryBadge({ title }) {
-  return (
-    <span className="inline-flex items-center rounded bg-indigo-50 px-1.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-      {title}
-    </span>
-  );
+  return <Badge tone="accent">{title}</Badge>;
+}
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -156,152 +158,130 @@ export default function AdminProductsRoute() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Products
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {total} product{total !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <Link
-          to="/admin/products/new"
-          className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-        >
-          <PlusIcon className="h-4 w-4" />
-          New Product
-        </Link>
-      </div>
+      <PageHeader
+        title="Products"
+        subtitle={`${total} product${total !== 1 ? 's' : ''}`}
+        actions={
+          <Link
+            to="/admin/products/new"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
+            <PlusIcon className="h-4 w-4" />
+            New Product
+          </Link>
+        }
+        className="mb-6"
+      />
 
       {/* Search */}
       <Form method="get" className="mb-4">
         <div className="relative max-w-sm">
-          <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <input
             type="search"
             name="q"
             defaultValue={q}
             placeholder="Search by slug…"
-            className="w-full rounded-md border-0 bg-white py-2 pr-3 pl-9 text-sm text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-700 dark:placeholder:text-zinc-500"
+            className={`${controlClasses} pl-9`}
           />
         </div>
       </Form>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-          <thead>
-            <tr className="bg-gray-50 dark:bg-zinc-800">
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                ID
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                Slug
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                Status
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                Variants
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                Categories
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                Created
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-            {rows.length === 0 && (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="px-4 py-8 text-center text-sm text-gray-400 dark:text-zinc-500"
-                >
-                  No products found.
-                </td>
-              </tr>
+      {/* Table (md+) */}
+      <Table className="hidden md:block">
+        <THead>
+          <tr>
+            {['ID', 'Slug', 'Status', 'Variants', 'Categories', 'Created'].map(
+              (col) => (
+                <Th key={col}>{col}</Th>
+              )
             )}
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="hover:bg-gray-50 dark:hover:bg-zinc-800/60"
-              >
-                <td className="px-4 py-3">
+          </tr>
+        </THead>
+        <TBody>
+          {rows.length === 0 && (
+            <tr>
+              <Td colSpan={6} className="py-8 text-center">
+                No products found.
+              </Td>
+            </tr>
+          )}
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <Td>
+                <Link
+                  to={`/admin/products/${row.id}`}
+                  className="text-accent font-mono text-xs hover:underline"
+                >
+                  {row.idPrefix}…
+                </Link>
+              </Td>
+              <Td className="text-text">
+                {row.slug ? (
                   <Link
                     to={`/admin/products/${row.id}`}
-                    className="font-mono text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+                    className="hover:underline"
                   >
-                    {row.idPrefix}…
+                    {row.slug}
                   </Link>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-700 dark:text-zinc-300">
-                  {row.slug ? (
-                    <Link
-                      to={`/admin/products/${row.id}`}
-                      className="hover:underline"
-                    >
-                      {row.slug}
-                    </Link>
-                  ) : (
-                    <span className="text-gray-400 dark:text-zinc-500">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <StatusBadge published={row.published} />
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-700 dark:text-zinc-300">
-                  {row.variantCount}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1">
-                    {row.categories.map((c) => (
-                      <CategoryBadge key={c.id} title={c.title} />
-                    ))}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400">
-                  {new Date(row.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                ) : (
+                  '—'
+                )}
+              </Td>
+              <Td>
+                <StatusBadge published={row.published} />
+              </Td>
+              <Td className="text-text">{row.variantCount}</Td>
+              <Td>
+                <div className="flex flex-wrap gap-1">
+                  {row.categories.map((c) => (
+                    <CategoryBadge key={c.id} title={c.title} />
+                  ))}
+                </div>
+              </Td>
+              <Td>{formatDate(row.createdAt)}</Td>
+            </tr>
+          ))}
+        </TBody>
+      </Table>
+
+      {/* Card list (mobile) */}
+      <div className="space-y-3 md:hidden">
+        {rows.length === 0 ? (
+          <Card className="text-text-muted text-center text-sm">
+            No products found.
+          </Card>
+        ) : (
+          rows.map((row) => (
+            <Card key={row.id} className="space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <Link
+                  to={`/admin/products/${row.id}`}
+                  className="text-text min-w-0 truncate text-sm font-medium hover:underline"
+                >
+                  {row.slug ?? `${row.idPrefix}…`}
+                </Link>
+                <StatusBadge published={row.published} />
+              </div>
+              {row.categories.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {row.categories.map((c) => (
+                    <CategoryBadge key={c.id} title={c.title} />
+                  ))}
+                </div>
+              )}
+              <div className="text-text-muted flex items-center justify-between text-xs">
+                <span>
+                  {row.variantCount} variant{row.variantCount !== 1 ? 's' : ''}
+                </span>
+                <span>{formatDate(row.createdAt)}</span>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-gray-600 dark:text-zinc-400">
-          <span>
-            Page {page} of {totalPages}
-          </span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => goToPage(page - 1)}
-              className="rounded-md px-3 py-1.5 ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-40 dark:ring-zinc-700 dark:hover:bg-zinc-800"
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => goToPage(page + 1)}
-              className="rounded-md px-3 py-1.5 ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-40 dark:ring-zinc-700 dark:hover:bg-zinc-800"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
     </div>
   );
 }
