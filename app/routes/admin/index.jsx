@@ -239,9 +239,7 @@ function OnboardingForm() {
               className="bg-surface text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-1.5 text-base outline-none focus:ring-2 sm:text-sm/6"
             />
             {fieldErrors.name && (
-              <p className="text-danger mt-1 text-sm">
-                {fieldErrors.name}
-              </p>
+              <p className="text-danger mt-1 text-sm">{fieldErrors.name}</p>
             )}
           </div>
         </div>
@@ -264,9 +262,7 @@ function OnboardingForm() {
               className="bg-surface text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-1.5 text-base outline-none focus:ring-2 sm:text-sm/6"
             />
             {fieldErrors.email && (
-              <p className="text-danger mt-1 text-sm">
-                {fieldErrors.email}
-              </p>
+              <p className="text-danger mt-1 text-sm">{fieldErrors.email}</p>
             )}
           </div>
         </div>
@@ -288,9 +284,7 @@ function OnboardingForm() {
               className="bg-surface text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-1.5 text-base outline-none focus:ring-2 sm:text-sm/6"
             />
             {fieldErrors.password && (
-              <p className="text-danger mt-1 text-sm">
-                {fieldErrors.password}
-              </p>
+              <p className="text-danger mt-1 text-sm">{fieldErrors.password}</p>
             )}
           </div>
         </div>

@@ -143,7 +143,10 @@ export default function AdminVerify2FARoute() {
             disabled={isLoading}
             className="border-border text-accent focus:ring-accent/40 bg-surface h-4 w-4 rounded border"
           />
-          <label htmlFor="trust-device" className="text-text ml-2 block text-sm">
+          <label
+            htmlFor="trust-device"
+            className="text-text ml-2 block text-sm"
+          >
             Trust this device for 30 days
           </label>
         </div>
