@@ -1,6 +1,11 @@
+import clsx from 'clsx';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import PageHeader from '#/components/admin/page-header';
+import Pagination from '#/components/admin/pagination';
+import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 
 import { listPages } from '#/core/content/index.server';
 
@@ -69,128 +74,87 @@ export default function AdminPagesIndexRoute() {
     setSearchParams(params);
   }
 
+  function goToPage(p) {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', String(p));
+    setSearchParams(params);
+  }
+
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Pages
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage CMS pages for the storefront.
-          </p>
-        </div>
-        <Link
-          to="/admin/pages/new"
-          className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-        >
-          New Page
-        </Link>
-      </div>
+      <PageHeader
+        title="Pages"
+        subtitle="Manage CMS pages for the storefront."
+        actions={
+          <Link
+            to="/admin/pages/new"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
+            New Page
+          </Link>
+        }
+        className="mb-6"
+      />
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         {['all', 'draft', 'published'].map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => setStatus(s)}
-            className={`rounded-full px-3 py-1 text-sm font-medium capitalize ${
+            className={clsx(
+              'rounded-full px-3 py-1 text-sm font-medium capitalize transition-colors',
               status === s
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-zinc-300'
-            }`}
+                ? 'bg-accent text-accent-fg'
+                : 'bg-surface-2 text-text-muted hover:text-text'
+            )}
           >
             {s}
           </button>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-          <thead className="bg-gray-50 dark:bg-zinc-800/50">
+      <Table>
+        <THead>
+          <tr>
+            <Th>Title</Th>
+            <Th>Slug</Th>
+            <Th>Status</Th>
+            <Th className="text-right">Actions</Th>
+          </tr>
+        </THead>
+        <TBody>
+          {pages.length === 0 ? (
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                Title
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                Slug
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                Status
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                Actions
-              </th>
+              <Td colSpan={4} className="py-8 text-center">
+                No pages found.
+              </Td>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-            {pages.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="px-4 py-8 text-center text-sm text-gray-500"
-                >
-                  No pages found.
-                </td>
+          ) : (
+            pages.map((p) => (
+              <tr key={p.id}>
+                <Td className="text-text font-medium">{p.title}</Td>
+                <Td>{p.slug ?? '—'}</Td>
+                <Td>
+                  <Badge tone={p.status === 'published' ? 'success' : 'warn'}>
+                    {p.status}
+                  </Badge>
+                </Td>
+                <Td className="text-right">
+                  <Link
+                    to={`/admin/pages/${p.id}`}
+                    className="text-accent text-sm font-medium hover:underline"
+                  >
+                    Edit
+                  </Link>
+                </Td>
               </tr>
-            ) : (
-              pages.map((p) => (
-                <tr key={p.id}>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                    {p.title}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
-                    {p.slug ?? '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
-                        p.status === 'published'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {p.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      to={`/admin/pages/${p.id}`}
-                      className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                    >
-                      Edit
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+            ))
+          )}
+        </TBody>
+      </Table>
 
-      {totalPages > 1 && (
-        <div className="mt-4 flex justify-center gap-2">
-          {page > 1 && (
-            <Link
-              to={`?page=${page - 1}${status !== 'all' ? `&status=${status}` : ''}`}
-              className="text-sm text-indigo-600"
-            >
-              Previous
-            </Link>
-          )}
-          <span className="text-sm text-gray-500">
-            Page {page} of {totalPages}
-          </span>
-          {page < totalPages && (
-            <Link
-              to={`?page=${page + 1}${status !== 'all' ? `&status=${status}` : ''}`}
-              className="text-sm text-indigo-600"
-            >
-              Next
-            </Link>
-          )}
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
     </div>
   );
 }
