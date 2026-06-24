@@ -21,6 +21,12 @@ import {
 import { redirect } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import { controlClasses } from '#/components/admin/form/input';
+import { Th } from '#/components/admin/table';
+import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
+import Button, { ButtonSubmit } from '#/components/ui/button';
 
 import { get } from '#/core/settings/index.server';
 import { uploadMedia } from '#/core/storage/index.server';
@@ -484,7 +490,7 @@ export async function action({ request, params }) {
 /** Tab bar for switching locales */
 function LocaleTabs({ locales, activeLocale, onSelect }) {
   return (
-    <div className="flex gap-1 border-b border-gray-200 dark:border-zinc-700">
+    <div className="border-border flex gap-1 border-b">
       {locales.map((locale) => (
         <button
           key={locale}
@@ -493,8 +499,8 @@ function LocaleTabs({ locales, activeLocale, onSelect }) {
           className={clsx(
             'rounded-t px-4 py-2 text-sm font-medium transition-colors',
             activeLocale === locale
-              ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200'
+              ? 'border-accent text-accent border-b-2'
+              : 'text-text-muted hover:text-text'
           )}
         >
           {locale.toUpperCase()}
@@ -515,7 +521,7 @@ function LocaleEditor({ locale, translations, slugMap }) {
       <input type="hidden" name="locales[]" value={locale} />
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300">
+        <label className="text-text block text-sm font-medium">
           Slug ({locale})
         </label>
         <input
@@ -523,59 +529,57 @@ function LocaleEditor({ locale, translations, slugMap }) {
           name={`slug[${locale}]`}
           defaultValue={slug}
           placeholder="url-slug"
-          className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+          className={`${controlClasses} mt-1`}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300">
-          Title
-        </label>
+        <label className="text-text block text-sm font-medium">Title</label>
         <input
           type="text"
           name={`translation[${locale}][title]`}
           defaultValue={t.title ?? ''}
-          className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+          className={`${controlClasses} mt-1`}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300">
+        <label className="text-text block text-sm font-medium">
           Description
         </label>
         <textarea
           name={`translation[${locale}][description]`}
           defaultValue={t.description ?? ''}
           rows={4}
-          className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+          className={`${controlClasses} mt-1`}
         />
       </div>
 
-      <div className="rounded-lg bg-gray-50 p-4 dark:bg-zinc-800/50">
-        <p className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
+      <div className="bg-surface-2 rounded-lg p-4">
+        <p className="text-text-muted mb-3 text-xs font-semibold tracking-wide uppercase">
           SEO
         </p>
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300">
+            <label className="text-text block text-sm font-medium">
               SEO Title
             </label>
             <input
               type="text"
               name={`translation[${locale}][seoTitle]`}
               defaultValue={t.seoTitle ?? ''}
-              className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+              className={`${controlClasses} mt-1`}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300">
+            <label className="text-text block text-sm font-medium">
               SEO Description
             </label>
             <textarea
               name={`translation[${locale}][seoDescription]`}
               defaultValue={t.seoDescription ?? ''}
               rows={2}
-              className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+              className={`${controlClasses} mt-1`}
             />
           </div>
         </div>
@@ -651,10 +655,7 @@ function OptionsEditor({ initialOptions }) {
   return (
     <div className="space-y-4">
       {options.map((opt) => (
-        <div
-          key={opt.id}
-          className="rounded-lg border border-gray-200 p-4 dark:border-zinc-700"
-        >
+        <div key={opt.id} className="border-border rounded-lg border p-4">
           <input type="hidden" name={`option[${opt.id}][id]`} value={opt.id} />
           <div className="flex items-center gap-3">
             <input
@@ -663,12 +664,12 @@ function OptionsEditor({ initialOptions }) {
               value={opt.name}
               onChange={(e) => updateOptionName(opt.id, e.target.value)}
               placeholder="Option name (e.g. Size)"
-              className="flex-1 rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+              className={`${controlClasses} flex-1`}
             />
             <button
               type="button"
               onClick={() => removeOption(opt.id)}
-              className="rounded p-1 text-gray-400 hover:text-red-500"
+              className="text-text-muted hover:text-danger rounded p-1"
             >
               <TrashIcon className="h-4 w-4" />
             </button>
@@ -688,12 +689,12 @@ function OptionsEditor({ initialOptions }) {
                   value={val.value}
                   onChange={(e) => updateValue(opt.id, val.id, e.target.value)}
                   placeholder="Value"
-                  className="flex-1 rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                  className={`${controlClasses} flex-1`}
                 />
                 <button
                   type="button"
                   onClick={() => removeValue(opt.id, val.id)}
-                  className="rounded p-1 text-gray-400 hover:text-red-500"
+                  className="text-text-muted hover:text-danger rounded p-1"
                 >
                   <XMarkIcon className="h-4 w-4" />
                 </button>
@@ -702,7 +703,7 @@ function OptionsEditor({ initialOptions }) {
             <button
               type="button"
               onClick={() => addValue(opt.id)}
-              className="flex items-center gap-1 text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+              className="text-accent flex items-center gap-1 text-xs hover:underline"
             >
               <PlusIcon className="h-3 w-3" />
               Add value
@@ -714,7 +715,7 @@ function OptionsEditor({ initialOptions }) {
       <button
         type="button"
         onClick={addOption}
-        className="flex items-center gap-1.5 text-sm text-indigo-600 hover:underline dark:text-indigo-400"
+        className="text-accent flex items-center gap-1.5 text-sm hover:underline"
       >
         <PlusIcon className="h-4 w-4" />
         Add option
@@ -732,39 +733,31 @@ function VariantPriceGrid({ variants, currencies }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-zinc-700">
-        <thead>
-          <tr className="bg-gray-50 dark:bg-zinc-800">
-            <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-              SKU
-            </th>
-            <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-              Inventory
-            </th>
+      <table className="divide-border min-w-full divide-y text-sm">
+        <thead className="bg-surface-2/50">
+          <tr>
+            <Th>SKU</Th>
+            <Th>Inventory</Th>
             {currencies.map((cur) => (
-              <th
-                key={cur}
-                colSpan={2}
-                className="px-3 py-2 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400"
-              >
+              <Th key={cur} colSpan={2} className="text-center">
                 {cur}
-              </th>
+              </Th>
             ))}
           </tr>
-          <tr className="bg-gray-50 dark:bg-zinc-800">
+          <tr className="bg-surface-2/50">
             <th />
             <th />
             {currencies.map((cur) => (
               <>
                 <th
                   key={`${cur}-price`}
-                  className="px-3 py-1 text-left text-xs text-gray-400 dark:text-zinc-500"
+                  className="text-text-muted px-3 py-1 text-left text-xs"
                 >
                   Price
                 </th>
                 <th
                   key={`${cur}-compare`}
-                  className="px-3 py-1 text-left text-xs text-gray-400 dark:text-zinc-500"
+                  className="text-text-muted px-3 py-1 text-left text-xs"
                 >
                   Compare
                 </th>
@@ -772,19 +765,16 @@ function VariantPriceGrid({ variants, currencies }) {
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+        <tbody className="divide-border [&>tr:hover]:bg-surface-2/50 divide-y">
           {variants.map((variant) => (
-            <tr
-              key={variant.id}
-              className="hover:bg-gray-50 dark:hover:bg-zinc-800/40"
-            >
+            <tr key={variant.id}>
               <td className="px-3 py-2">
                 <input
                   type="text"
                   name={`variant[${variant.id}][sku]`}
                   defaultValue={variant.sku}
                   placeholder="SKU"
-                  className="w-24 rounded border-0 bg-white px-2 py-1 text-sm shadow-sm ring-1 ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                  className={`${controlClasses} w-24`}
                 />
               </td>
               <td className="px-3 py-2">
@@ -793,7 +783,7 @@ function VariantPriceGrid({ variants, currencies }) {
                   name={`variant[${variant.id}][inventoryCount]`}
                   defaultValue={variant.inventoryCount}
                   min={0}
-                  className="w-16 rounded border-0 bg-white px-2 py-1 text-sm shadow-sm ring-1 ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                  className={`${controlClasses} w-16`}
                 />
               </td>
               {currencies.map((cur) => {
@@ -813,7 +803,7 @@ function VariantPriceGrid({ variants, currencies }) {
                         min={0}
                         step="0.01"
                         placeholder="0.00"
-                        className="w-24 rounded border-0 bg-white px-2 py-1 text-sm shadow-sm ring-1 ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                        className={`${controlClasses} w-24`}
                       />
                     </td>
                     <td
@@ -831,7 +821,7 @@ function VariantPriceGrid({ variants, currencies }) {
                         min={0}
                         step="0.01"
                         placeholder="—"
-                        className="w-24 rounded border-0 bg-white px-2 py-1 text-sm shadow-sm ring-1 ring-gray-300 focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                        className={`${controlClasses} w-24`}
                       />
                     </td>
                   </>
@@ -842,7 +832,7 @@ function VariantPriceGrid({ variants, currencies }) {
         </tbody>
       </table>
       {variants.length === 0 && (
-        <p className="py-4 text-center text-sm text-gray-400 dark:text-zinc-500">
+        <p className="text-text-muted py-4 text-center text-sm">
           No variants yet.
         </p>
       )}
@@ -893,7 +883,7 @@ function MediaUploader({ productId: _productId, initialMedia }) {
         {media.map((item) => (
           <div
             key={item.mediaId}
-            className="group relative h-24 w-24 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-zinc-700 dark:bg-zinc-800"
+            className="group border-border bg-surface-2 relative h-24 w-24 overflow-hidden rounded-lg border"
           >
             <img
               src={item.url}
@@ -913,7 +903,7 @@ function MediaUploader({ productId: _productId, initialMedia }) {
         {/* Upload button */}
         <label
           className={clsx(
-            'flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition-colors hover:border-indigo-400 hover:text-indigo-400 dark:border-zinc-600 dark:hover:border-indigo-500',
+            'border-border text-text-muted hover:border-accent hover:text-accent flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors',
             isUploading && 'cursor-wait opacity-60'
           )}
         >
@@ -958,9 +948,7 @@ function CategoryPicker({ allCategories, selectedIds }) {
   return (
     <div className="max-h-48 space-y-2 overflow-y-auto">
       {allCategories.length === 0 && (
-        <p className="text-sm text-gray-400 dark:text-zinc-500">
-          No categories yet.
-        </p>
+        <p className="text-text-muted text-sm">No categories yet.</p>
       )}
       {allCategories.map((cat) => {
         const checked = selected.has(cat.id);
@@ -975,11 +963,9 @@ function CategoryPicker({ allCategories, selectedIds }) {
               value={cat.id}
               checked={checked}
               onChange={() => toggle(cat.id)}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800"
+              className="border-border text-accent focus:ring-accent bg-surface h-4 w-4 rounded"
             />
-            <span className="text-sm text-gray-700 dark:text-zinc-300">
-              {cat.title}
-            </span>
+            <span className="text-text text-sm">{cat.title}</span>
           </label>
         );
       })}
@@ -1015,17 +1001,17 @@ export default function AdminProductRoute() {
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <div className="mb-1 flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
+          <div className="text-text-muted mb-1 flex items-center gap-2 text-sm">
             <a href="/admin/products" className="hover:underline">
               Products
             </a>
             <span>/</span>
             <span className="font-mono text-xs">{product.id.slice(0, 8)}…</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-text text-2xl font-bold tracking-tight">
             Edit Product
           </h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-zinc-400">
+          <p className="text-text-muted mt-0.5 text-sm">
             Created{' '}
             {new Date(product.createdAt).toLocaleDateString('en-US', {
               month: 'long',
@@ -1037,16 +1023,9 @@ export default function AdminProductRoute() {
 
         {/* Publish toggle */}
         <div className="flex items-center gap-3">
-          <span
-            className={clsx(
-              'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
-              isPublished
-                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                : 'bg-gray-100 text-gray-600 dark:bg-zinc-700 dark:text-zinc-400'
-            )}
-          >
+          <Badge tone={isPublished ? 'success' : 'neutral'}>
             {isPublished ? 'Published' : 'Draft'}
-          </span>
+          </Badge>
           <Form method="post">
             <input type="hidden" name="intent" value="save" />
             <input
@@ -1058,42 +1037,29 @@ export default function AdminProductRoute() {
             {locales.map((l) => (
               <input key={l} type="hidden" name="locales[]" value={l} />
             ))}
-            <button
+            <Button
               type="submit"
-              className={clsx(
-                'rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
-                isPublished
-                  ? 'bg-white text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50 focus-visible:outline-gray-500 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-600'
-                  : 'bg-green-600 text-white hover:bg-green-500 focus-visible:outline-green-600'
-              )}
+              variant={isPublished ? 'secondary' : 'primary'}
             >
               {isPublished ? 'Unpublish' : 'Publish'}
-            </button>
+            </Button>
           </Form>
         </div>
       </div>
 
       {/* Notification */}
       {actionData?.ok && actionData?.intent === 'save' && (
-        <div className="mb-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400">
-          Product saved.
-        </div>
+        <SuccessAlert message="Product saved." />
       )}
-      {actionData?.error && (
-        <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {actionData.error}
-        </div>
-      )}
+      {actionData?.error && <ErrorAlert message={actionData.error} />}
 
       {/* Main save form */}
       <Form method="post" className="space-y-6">
         <input type="hidden" name="intent" value="save" />
 
         {/* Locale tabs */}
-        <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-          <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
-            Content
-          </h2>
+        <Card>
+          <h2 className="text-text mb-4 text-base font-semibold">Content</h2>
           <LocaleTabs
             locales={locales}
             activeLocale={activeLocale}
@@ -1111,19 +1077,17 @@ export default function AdminProductRoute() {
               />
             </div>
           ))}
-        </div>
+        </Card>
 
         {/* Options editor */}
-        <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-          <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
-            Options
-          </h2>
+        <Card>
+          <h2 className="text-text mb-4 text-base font-semibold">Options</h2>
           <OptionsEditor initialOptions={product.options} />
-        </div>
+        </Card>
 
         {/* Variants + price grid */}
-        <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-          <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
+        <Card>
+          <h2 className="text-text mb-4 text-base font-semibold">
             Variants &amp; Pricing
           </h2>
           {/* Hidden currencies markers */}
@@ -1134,28 +1098,22 @@ export default function AdminProductRoute() {
             variants={product.variants}
             currencies={currencies}
           />
-        </div>
+        </Card>
 
         {/* Category picker */}
-        <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-          <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
-            Categories
-          </h2>
+        <Card>
+          <h2 className="text-text mb-4 text-base font-semibold">Categories</h2>
           <CategoryPicker
             allCategories={allCategories}
             selectedIds={product.selectedCategoryIds}
           />
-        </div>
+        </Card>
 
         {/* Save button */}
         <div className="flex items-center gap-4">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60"
-          >
+          <ButtonSubmit disabled={isSaving}>
             {isSaving ? 'Saving…' : 'Save Product'}
-          </button>
+          </ButtonSubmit>
 
           {/* Delete */}
           <Form method="post">
@@ -1169,7 +1127,7 @@ export default function AdminProductRoute() {
                   e.preventDefault();
                 }
               }}
-              className="text-sm text-red-600 hover:underline dark:text-red-400"
+              className="text-danger text-sm hover:underline"
             >
               Delete product
             </button>
@@ -1178,12 +1136,10 @@ export default function AdminProductRoute() {
       </Form>
 
       {/* Media uploader (separate fetcher — not inside main form) */}
-      <div className="mt-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-        <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
-          Media
-        </h2>
+      <Card className="mt-6">
+        <h2 className="text-text mb-4 text-base font-semibold">Media</h2>
         <MediaUploader productId={product.id} initialMedia={product.media} />
-      </div>
+      </Card>
     </div>
   );
 }

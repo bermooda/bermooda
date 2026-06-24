@@ -2,7 +2,6 @@
 // Order detail — line items, payment info, address, shipments, refunds,
 // manual notes, and status transitions.
 
-import clsx from 'clsx';
 import {
   Form,
   Link,
@@ -12,6 +11,12 @@ import {
 } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import { controlClasses } from '#/components/admin/form/input';
+import { Td, Th } from '#/components/admin/table';
+import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
+import Button, { ButtonSubmit } from '#/components/ui/button';
 
 // Server-only core calls are dynamically imported in `action` to avoid a
 // circular bundle graph (returns → orders) in this route module.
@@ -268,30 +273,17 @@ export async function action({ request, params }) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const STATUS_CLASSES = {
-  pending:
-    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  pending_payment:
-    'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-  paid: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  fulfilled:
-    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  refunded: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+const STATUS_TONES = {
+  pending: 'warn',
+  pending_payment: 'warn',
+  paid: 'accent',
+  fulfilled: 'success',
+  cancelled: 'danger',
+  refunded: 'neutral',
 };
 
 function StatusBadge({ status }) {
-  return (
-    <span
-      className={clsx(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize',
-        STATUS_CLASSES[status] ??
-          'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-      )}
-    >
-      {status}
-    </span>
-  );
+  return <Badge tone={STATUS_TONES[status] ?? 'neutral'}>{status}</Badge>;
 }
 
 function formatCents(cents, currency = 'USD') {
@@ -304,14 +296,12 @@ function formatCents(cents, currency = 'USD') {
 
 function SectionCard({ title, children }) {
   return (
-    <div className="rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-      <div className="border-b border-gray-200 px-6 py-4 dark:border-zinc-700">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-          {title}
-        </h2>
+    <Card padded={false}>
+      <div className="border-border border-b px-4 py-4 sm:px-6">
+        <h2 className="text-text text-base font-semibold">{title}</h2>
       </div>
-      <div className="px-6 py-4">{children}</div>
-    </div>
+      <div className="p-4 sm:p-6">{children}</div>
+    </Card>
   );
 }
 
@@ -321,11 +311,7 @@ function AddressDisplay({ json, label }) {
   try {
     addr = JSON.parse(json);
   } catch {
-    return (
-      <p className="text-sm text-gray-500 dark:text-zinc-400">
-        {label}: (invalid JSON)
-      </p>
-    );
+    return <p className="text-text-muted text-sm">{label}: (invalid JSON)</p>;
   }
 
   const lines = [
@@ -341,11 +327,11 @@ function AddressDisplay({ json, label }) {
   return (
     <div>
       {label && (
-        <p className="mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
+        <p className="text-text-muted mb-1 text-xs font-semibold tracking-wide uppercase">
           {label}
         </p>
       )}
-      <address className="text-sm text-gray-700 not-italic dark:text-zinc-300">
+      <address className="text-text text-sm not-italic">
         {lines.map((line, i) => (
           <span key={i} className="block">
             {line}
@@ -391,7 +377,7 @@ export default function AdminOrderRoute() {
     <div className="mx-auto max-w-4xl space-y-6">
       {/* Breadcrumb + Header */}
       <div>
-        <div className="mb-1 flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
+        <div className="text-text-muted mb-1 flex items-center gap-2 text-sm">
           <Link to="/admin/orders" className="hover:underline">
             Orders
           </Link>
@@ -399,17 +385,17 @@ export default function AdminOrderRoute() {
           <span className="font-mono text-xs">{order.orderNumber}</span>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-text text-2xl font-bold tracking-tight">
             Order {order.orderNumber}
           </h1>
           <StatusBadge status={order.status} />
           <a
             href={`/admin/orders/${order.id}/documents`}
-            className="text-sm text-indigo-600 hover:underline dark:text-indigo-400"
+            className="text-accent text-sm hover:underline"
           >
             Download Invoice
           </a>
-          <span className="text-sm text-gray-500 dark:text-zinc-400">
+          <span className="text-text-muted text-sm">
             {new Date(order.createdAt).toLocaleDateString('en-US', {
               month: 'long',
               day: 'numeric',
@@ -420,16 +406,8 @@ export default function AdminOrderRoute() {
       </div>
 
       {/* Action feedback */}
-      {actionData?.ok && (
-        <div className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400">
-          Saved successfully.
-        </div>
-      )}
-      {actionData?.error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {actionData.error}
-        </div>
-      )}
+      {actionData?.ok && <SuccessAlert message="Saved successfully." />}
+      {actionData?.error && <ErrorAlert message={actionData.error} />}
 
       {/* Status transitions */}
       {transitions.length > 0 && (
@@ -438,18 +416,12 @@ export default function AdminOrderRoute() {
             <Form method="post" key={t.status}>
               <input type="hidden" name="intent" value="update-status" />
               <input type="hidden" name="status" value={t.status} />
-              <button
-                type="submit"
+              <ButtonSubmit
+                variant={t.danger ? 'danger' : 'primary'}
                 disabled={isSubmitting}
-                className={clsx(
-                  'rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60',
-                  t.danger
-                    ? 'bg-red-600 text-white hover:bg-red-500 focus-visible:outline-red-600'
-                    : 'bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:outline-indigo-600'
-                )}
               >
                 {t.label}
-              </button>
+              </ButtonSubmit>
             </Form>
           ))}
         </div>
@@ -458,120 +430,85 @@ export default function AdminOrderRoute() {
       {/* Line items */}
       <SectionCard title="Line Items">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-zinc-800">
-                <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Item
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  SKU
-                </th>
-                <th className="px-3 py-2 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Qty
-                </th>
-                <th className="px-3 py-2 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Fulfilled
-                </th>
-                <th className="px-3 py-2 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Returned
-                </th>
-                <th className="px-3 py-2 text-right text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Unit Price
-                </th>
-                <th className="px-3 py-2 text-right text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Total
-                </th>
+          <table className="divide-border min-w-full divide-y">
+            <thead className="bg-surface-2/50">
+              <tr>
+                <Th>Item</Th>
+                <Th>SKU</Th>
+                <Th className="text-center">Qty</Th>
+                <Th className="text-center">Fulfilled</Th>
+                <Th className="text-center">Returned</Th>
+                <Th className="text-right">Unit Price</Th>
+                <Th className="text-right">Total</Th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+            <tbody className="divide-border divide-y">
               {order.lines.map((line) => (
                 <tr key={line.id}>
-                  <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">
-                    {line.title}
-                  </td>
-                  <td className="px-3 py-2 font-mono text-xs text-gray-500 dark:text-zinc-400">
-                    {line.sku ?? '—'}
-                  </td>
-                  <td className="px-3 py-2 text-center text-sm text-gray-700 dark:text-zinc-300">
-                    {line.quantity}
-                  </td>
-                  <td className="px-3 py-2 text-center text-sm text-gray-700 dark:text-zinc-300">
+                  <Td className="text-text">{line.title}</Td>
+                  <Td className="font-mono text-xs">{line.sku ?? '—'}</Td>
+                  <Td className="text-text text-center">{line.quantity}</Td>
+                  <Td className="text-text text-center">
                     {line.fulfilledQuantity}
-                  </td>
-                  <td className="px-3 py-2 text-center text-sm text-gray-700 dark:text-zinc-300">
+                  </Td>
+                  <Td className="text-text text-center">
                     {line.returnedQuantity}
-                  </td>
-                  <td className="px-3 py-2 text-right text-sm text-gray-700 dark:text-zinc-300">
+                  </Td>
+                  <Td className="text-text text-right">
                     {formatCents(line.priceCents, order.currency)}
-                  </td>
-                  <td className="px-3 py-2 text-right text-sm font-medium text-gray-900 dark:text-white">
+                  </Td>
+                  <Td className="text-text text-right font-medium">
                     {formatCents(line.totalCents, order.currency)}
-                  </td>
+                  </Td>
                 </tr>
               ))}
             </tbody>
-            <tfoot className="border-t border-gray-200 dark:border-zinc-700">
+            <tfoot className="border-border border-t">
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-3 py-2 text-right text-sm text-gray-500 dark:text-zinc-400"
-                >
+                <Td colSpan={6} className="text-right">
                   Subtotal
-                </td>
-                <td className="px-3 py-2 text-right text-sm text-gray-700 dark:text-zinc-300">
+                </Td>
+                <Td className="text-text text-right">
                   {formatCents(order.subtotalCents, order.currency)}
-                </td>
+                </Td>
               </tr>
               {order.shippingCents > 0 && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-3 py-2 text-right text-sm text-gray-500 dark:text-zinc-400"
-                  >
+                  <Td colSpan={6} className="text-right">
                     Shipping
-                  </td>
-                  <td className="px-3 py-2 text-right text-sm text-gray-700 dark:text-zinc-300">
+                  </Td>
+                  <Td className="text-text text-right">
                     {formatCents(order.shippingCents, order.currency)}
-                  </td>
+                  </Td>
                 </tr>
               )}
               {order.taxCents > 0 && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-3 py-2 text-right text-sm text-gray-500 dark:text-zinc-400"
-                  >
+                  <Td colSpan={6} className="text-right">
                     Tax
-                  </td>
-                  <td className="px-3 py-2 text-right text-sm text-gray-700 dark:text-zinc-300">
+                  </Td>
+                  <Td className="text-text text-right">
                     {formatCents(order.taxCents, order.currency)}
-                  </td>
+                  </Td>
                 </tr>
               )}
               {order.discountCents > 0 && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-3 py-2 text-right text-sm text-gray-500 dark:text-zinc-400"
-                  >
+                  <Td colSpan={6} className="text-right">
                     Discount
-                  </td>
-                  <td className="px-3 py-2 text-right text-sm text-green-600 dark:text-green-400">
+                  </Td>
+                  <Td className="text-success text-right">
                     -{formatCents(order.discountCents, order.currency)}
-                  </td>
+                  </Td>
                 </tr>
               )}
-              <tr className="border-t border-gray-200 dark:border-zinc-700">
-                <td
-                  colSpan={6}
-                  className="px-3 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white"
-                >
+              <tr className="border-border border-t">
+                <Td colSpan={6} className="text-text text-right font-semibold">
                   Total
-                </td>
-                <td className="px-3 py-2 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                </Td>
+                <Td className="text-text text-right font-semibold">
                   {formatCents(order.totalCents, order.currency)}
-                </td>
+                </Td>
               </tr>
             </tfoot>
           </table>
@@ -584,34 +521,32 @@ export default function AdminOrderRoute() {
         <SectionCard title="Payment">
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-gray-500 dark:text-zinc-400">Provider</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">
+              <dt className="text-text-muted">Provider</dt>
+              <dd className="text-text font-medium">
                 {order.paymentProvider ?? '—'}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500 dark:text-zinc-400">Intent ID</dt>
-              <dd className="max-w-[180px] truncate font-mono text-xs text-gray-700 dark:text-zinc-300">
+              <dt className="text-text-muted">Intent ID</dt>
+              <dd className="text-text max-w-[180px] truncate font-mono text-xs">
                 {order.paymentIntentId ?? '—'}
               </dd>
             </div>
             {order.couponCode && (
               <div className="flex justify-between">
-                <dt className="text-gray-500 dark:text-zinc-400">Coupon</dt>
-                <dd className="font-mono text-xs text-gray-700 dark:text-zinc-300">
+                <dt className="text-text-muted">Coupon</dt>
+                <dd className="text-text font-mono text-xs">
                   {order.couponCode}
                 </dd>
               </div>
             )}
             <div className="flex justify-between">
-              <dt className="text-gray-500 dark:text-zinc-400">Currency</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">
-                {order.currency}
-              </dd>
+              <dt className="text-text-muted">Currency</dt>
+              <dd className="text-text font-medium">{order.currency}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500 dark:text-zinc-400">Customer</dt>
-              <dd className="text-gray-700 dark:text-zinc-300">
+              <dt className="text-text-muted">Customer</dt>
+              <dd className="text-text">
                 {order.customer?.name
                   ? `${order.customer.name} (${order.email})`
                   : order.email}
@@ -635,49 +570,37 @@ export default function AdminOrderRoute() {
       <SectionCard title="Shipments">
         {order.shipments.length > 0 && (
           <div className="mb-4 overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-zinc-700">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-zinc-800">
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Status
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Carrier
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Tracking
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Shipped At
-                  </th>
+            <table className="divide-border min-w-full divide-y text-sm">
+              <thead className="bg-surface-2/50">
+                <tr>
+                  <Th>Status</Th>
+                  <Th>Carrier</Th>
+                  <Th>Tracking</Th>
+                  <Th>Shipped At</Th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+              <tbody className="divide-border divide-y">
                 {order.shipments.map((s) => (
                   <tr key={s.id}>
-                    <td className="px-3 py-2 text-gray-700 capitalize dark:text-zinc-300">
-                      {s.status}
-                    </td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-zinc-300">
-                      {s.carrier ?? '—'}
-                    </td>
-                    <td className="px-3 py-2">
+                    <Td className="text-text capitalize">{s.status}</Td>
+                    <Td className="text-text">{s.carrier ?? '—'}</Td>
+                    <Td>
                       {s.trackingUrl ? (
                         <a
                           href={s.trackingUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-mono text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+                          className="text-accent font-mono text-xs hover:underline"
                         >
                           {s.trackingNumber ?? s.trackingUrl}
                         </a>
                       ) : (
-                        <span className="font-mono text-xs text-gray-500 dark:text-zinc-400">
+                        <span className="font-mono text-xs">
                           {s.trackingNumber ?? '—'}
                         </span>
                       )}
-                    </td>
-                    <td className="px-3 py-2 text-gray-500 dark:text-zinc-400">
+                    </Td>
+                    <Td>
                       {s.shippedAt
                         ? new Date(s.shippedAt).toLocaleDateString('en-US', {
                             month: 'short',
@@ -685,7 +608,7 @@ export default function AdminOrderRoute() {
                             year: 'numeric',
                           })
                         : '—'}
-                    </td>
+                    </Td>
                   </tr>
                 ))}
               </tbody>
@@ -698,7 +621,7 @@ export default function AdminOrderRoute() {
           (l) => l.fulfilledQuantity < l.quantity - l.returnedQuantity
         ) && (
           <div className="mb-4 space-y-2">
-            <p className="text-xs font-medium text-gray-500 dark:text-zinc-400">
+            <p className="text-text-muted text-xs font-medium">
               Ship quantities (partial fulfillment)
             </p>
             {order.lines
@@ -707,9 +630,7 @@ export default function AdminOrderRoute() {
               )
               .map((line) => (
                 <div key={line.id} className="flex items-center gap-3 text-sm">
-                  <span className="flex-1 text-gray-700 dark:text-zinc-300">
-                    {line.title}
-                  </span>
+                  <span className="text-text flex-1">{line.title}</span>
                   <input
                     type="number"
                     name={`ship-qty-${line.id}`}
@@ -724,7 +645,7 @@ export default function AdminOrderRoute() {
                       line.fulfilledQuantity -
                       line.returnedQuantity
                     }
-                    className="w-20 rounded-md border-0 bg-white px-2 py-1 text-sm shadow-sm ring-1 ring-gray-300 ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                    className={`${controlClasses} w-20`}
                   />
                 </div>
               ))}
@@ -734,51 +655,43 @@ export default function AdminOrderRoute() {
         {/* Mark Shipped form */}
         <Form method="post" className="space-y-3">
           <input type="hidden" name="intent" value="add-shipment" />
-          <p className="text-sm font-medium text-gray-700 dark:text-zinc-300">
-            Add Shipment
-          </p>
+          <p className="text-text text-sm font-medium">Add Shipment</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <label className="mb-1 block text-xs text-gray-500 dark:text-zinc-400">
+              <label className="text-text-muted mb-1 block text-xs">
                 Carrier
               </label>
               <input
                 type="text"
                 name="carrier"
                 placeholder="UPS, FedEx…"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className={controlClasses}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-gray-500 dark:text-zinc-400">
+              <label className="text-text-muted mb-1 block text-xs">
                 Tracking Number
               </label>
               <input
                 type="text"
                 name="trackingNumber"
                 placeholder="1Z999…"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className={controlClasses}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-gray-500 dark:text-zinc-400">
+              <label className="text-text-muted mb-1 block text-xs">
                 Tracking URL
               </label>
               <input
                 type="url"
                 name="trackingUrl"
                 placeholder="https://…"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className={controlClasses}
               />
             </div>
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60"
-          >
-            Mark Shipped
-          </button>
+          <ButtonSubmit disabled={isSubmitting}>Mark Shipped</ButtonSubmit>
         </Form>
       </SectionCard>
 
@@ -787,25 +700,20 @@ export default function AdminOrderRoute() {
         {order.returns.length > 0 && (
           <div className="mb-4 space-y-4">
             {order.returns.map((ret) => (
-              <div
-                key={ret.id}
-                className="rounded-md border border-gray-200 p-4 dark:border-zinc-700"
-              >
+              <div key={ret.id} className="border-border rounded-md border p-4">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="font-mono text-xs text-gray-500">
+                  <span className="text-text-muted font-mono text-xs">
                     {ret.id.slice(-8)}
                   </span>
-                  <span className="text-sm text-gray-700 capitalize dark:text-zinc-300">
+                  <span className="text-text text-sm capitalize">
                     {ret.status}
                     {ret.resolution ? ` (${ret.resolution})` : ''}
                   </span>
                 </div>
                 {ret.reason && (
-                  <p className="mb-2 text-sm text-gray-600 dark:text-zinc-400">
-                    {ret.reason}
-                  </p>
+                  <p className="text-text-muted mb-2 text-sm">{ret.reason}</p>
                 )}
-                <ul className="mb-3 text-sm text-gray-700 dark:text-zinc-300">
+                <ul className="text-text mb-3 text-sm">
                   {ret.lines.map((l) => (
                     <li key={l.id}>
                       {l.title} × {l.quantity}
@@ -823,12 +731,9 @@ export default function AdminOrderRoute() {
                       />
                       <input type="hidden" name="returnId" value={ret.id} />
                       <input type="hidden" name="resolution" value="refund" />
-                      <button
-                        type="submit"
-                        className="rounded-md bg-indigo-600 px-2 py-1 text-xs font-semibold text-white"
-                      >
+                      <Button type="submit" variant="primary">
                         Approve (Refund)
-                      </button>
+                      </Button>
                     </Form>
                   )}
                   {ret.status === 'approved' && (
@@ -839,12 +744,9 @@ export default function AdminOrderRoute() {
                         value="receive-return"
                       />
                       <input type="hidden" name="returnId" value={ret.id} />
-                      <button
-                        type="submit"
-                        className="rounded-md bg-indigo-600 px-2 py-1 text-xs font-semibold text-white"
-                      >
+                      <Button type="submit" variant="primary">
                         Mark Received
-                      </button>
+                      </Button>
                     </Form>
                   )}
                   {ret.status === 'received' && (
@@ -857,12 +759,9 @@ export default function AdminOrderRoute() {
                         />
                         <input type="hidden" name="returnId" value={ret.id} />
                         <input type="hidden" name="resolution" value="refund" />
-                        <button
-                          type="submit"
-                          className="rounded-md bg-red-600 px-2 py-1 text-xs font-semibold text-white"
-                        >
+                        <Button type="submit" variant="danger">
                           Issue Refund
-                        </button>
+                        </Button>
                       </Form>
                       <Form method="post" className="inline">
                         <input
@@ -876,12 +775,9 @@ export default function AdminOrderRoute() {
                           name="resolution"
                           value="store_credit"
                         />
-                        <button
-                          type="submit"
-                          className="rounded-md bg-green-600 px-2 py-1 text-xs font-semibold text-white"
-                        >
+                        <Button type="submit" variant="primary">
                           Issue Store Credit
-                        </button>
+                        </Button>
                       </Form>
                     </>
                   )}
@@ -891,9 +787,7 @@ export default function AdminOrderRoute() {
           </div>
         )}
         {order.returns.length === 0 && (
-          <p className="text-sm text-gray-500 dark:text-zinc-400">
-            No returns for this order.
-          </p>
+          <p className="text-text-muted text-sm">No returns for this order.</p>
         )}
       </SectionCard>
 
@@ -901,42 +795,30 @@ export default function AdminOrderRoute() {
       <SectionCard title="Refunds">
         {order.refunds.length > 0 && (
           <div className="mb-4 overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-zinc-700">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-zinc-800">
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Amount
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Reason
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Status
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Date
-                  </th>
+            <table className="divide-border min-w-full divide-y text-sm">
+              <thead className="bg-surface-2/50">
+                <tr>
+                  <Th>Amount</Th>
+                  <Th>Reason</Th>
+                  <Th>Status</Th>
+                  <Th>Date</Th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+              <tbody className="divide-border divide-y">
                 {order.refunds.map((r) => (
                   <tr key={r.id}>
-                    <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">
+                    <Td className="text-text font-medium">
                       {formatCents(r.amountCents, order.currency)}
-                    </td>
-                    <td className="px-3 py-2 text-gray-700 dark:text-zinc-300">
-                      {r.reason ?? '—'}
-                    </td>
-                    <td className="px-3 py-2 text-gray-700 capitalize dark:text-zinc-300">
-                      {r.status}
-                    </td>
-                    <td className="px-3 py-2 text-gray-500 dark:text-zinc-400">
+                    </Td>
+                    <Td className="text-text">{r.reason ?? '—'}</Td>
+                    <Td className="text-text capitalize">{r.status}</Td>
+                    <Td>
                       {new Date(r.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
                       })}
-                    </td>
+                    </Td>
                   </tr>
                 ))}
               </tbody>
@@ -947,12 +829,10 @@ export default function AdminOrderRoute() {
         {/* Refund form */}
         <Form method="post" className="space-y-3">
           <input type="hidden" name="intent" value="add-refund" />
-          <p className="text-sm font-medium text-gray-700 dark:text-zinc-300">
-            Issue Refund
-          </p>
+          <p className="text-text text-sm font-medium">Issue Refund</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs text-gray-500 dark:text-zinc-400">
+              <label className="text-text-muted mb-1 block text-xs">
                 Amount (cents)
               </label>
               <input
@@ -960,35 +840,31 @@ export default function AdminOrderRoute() {
                 name="amountCents"
                 min={1}
                 placeholder="e.g. 1000 = $10.00"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className={controlClasses}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-gray-500 dark:text-zinc-400">
+              <label className="text-text-muted mb-1 block text-xs">
                 Reason
               </label>
               <input
                 type="text"
                 name="reason"
                 placeholder="Customer request, damaged item…"
-                className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+                className={controlClasses}
               />
             </div>
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:opacity-60"
-          >
+          <ButtonSubmit variant="danger" disabled={isSubmitting}>
             Create Refund
-          </button>
+          </ButtonSubmit>
         </Form>
       </SectionCard>
 
       {/* Notes */}
       <SectionCard title="Notes">
         {order.notes && (
-          <p className="mb-4 text-sm whitespace-pre-wrap text-gray-700 dark:text-zinc-300">
+          <p className="text-text mb-4 text-sm whitespace-pre-wrap">
             {order.notes}
           </p>
         )}
@@ -999,15 +875,9 @@ export default function AdminOrderRoute() {
             defaultValue={order.notes}
             rows={4}
             placeholder="Internal notes about this order…"
-            className="w-full rounded-md border-0 bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-700 dark:placeholder:text-zinc-500"
+            className={controlClasses}
           />
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60"
-          >
-            Save Notes
-          </button>
+          <ButtonSubmit disabled={isSubmitting}>Save Notes</ButtonSubmit>
         </Form>
       </SectionCard>
     </div>
