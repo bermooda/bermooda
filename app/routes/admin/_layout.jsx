@@ -9,24 +9,10 @@ import {
 import {
   ArrowRightStartOnRectangleIcon,
   Bars3Icon,
-  ChartBarIcon,
-  ClipboardDocumentListIcon,
-  DocumentChartBarIcon,
-  DocumentTextIcon,
-  CodeBracketIcon,
-  Cog6ToothIcon,
-  CubeIcon,
   GlobeAltIcon,
   MagnifyingGlassIcon,
   MoonIcon,
-  PaintBrushIcon,
-  PuzzlePieceIcon,
-  ReceiptPercentIcon,
-  ShoppingBagIcon,
-  StarIcon,
   SunIcon,
-  TagIcon,
-  UserGroupIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { UserIcon as UserIconSolid } from '@heroicons/react/24/solid';
@@ -40,7 +26,12 @@ import {
 } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
+import useCommandPalette, {
+  getCommandPaletteShortcutLabel,
+} from '#/hooks/use-command-palette';
 import useTheme from '#/hooks/use-theme';
+import CommandPalette from '#/components/admin/command-palette';
+import { NAV_GROUPS } from '#/components/admin/nav-config';
 import Logo from '#/components/ui/logo';
 
 import { I18nContext } from '#/core/i18n/context';
@@ -63,82 +54,6 @@ export async function loader({ request }) {
     messages,
   };
 }
-
-// ------------------------------------------------------------------
-// Nav items
-// ------------------------------------------------------------------
-
-const NAV_GROUPS = [
-  {
-    label: 'Overview',
-    items: [
-      { name: 'Dashboard', href: '/admin/dashboard', Icon: ChartBarIcon },
-      { name: 'Reports', href: '/admin/reports', Icon: DocumentChartBarIcon },
-      {
-        name: 'Audit Log',
-        href: '/admin/audit-log',
-        Icon: ClipboardDocumentListIcon,
-      },
-    ],
-  },
-  {
-    label: 'Catalog',
-    items: [
-      { name: 'Products', href: '/admin/products', Icon: CubeIcon },
-      { name: 'Categories', href: '/admin/categories', Icon: TagIcon },
-      { name: 'Inventory', href: '/admin/inventory', Icon: CubeIcon },
-      { name: 'Price Lists', href: '/admin/price-lists', Icon: TagIcon },
-    ],
-  },
-  {
-    label: 'Content',
-    items: [
-      { name: 'Pages', href: '/admin/pages', Icon: DocumentTextIcon },
-      { name: 'Menus', href: '/admin/menus', Icon: Bars3Icon },
-      { name: 'Reviews', href: '/admin/reviews', Icon: StarIcon },
-    ],
-  },
-  {
-    label: 'Sales',
-    items: [
-      { name: 'Orders', href: '/admin/orders', Icon: ShoppingBagIcon },
-      { name: 'Discounts', href: '/admin/discounts', Icon: ReceiptPercentIcon },
-      {
-        name: 'Gift Cards',
-        href: '/admin/gift-cards',
-        Icon: ReceiptPercentIcon,
-      },
-    ],
-  },
-  {
-    label: 'Customers',
-    items: [
-      { name: 'Customers', href: '/admin/customers', Icon: UserGroupIcon },
-      {
-        name: 'Customer Groups',
-        href: '/admin/customer-groups',
-        Icon: UserGroupIcon,
-      },
-      { name: 'Loyalty', href: '/admin/loyalty', Icon: StarIcon },
-    ],
-  },
-  {
-    label: 'Growth',
-    items: [
-      { name: 'Marketing', href: '/admin/marketing', Icon: ChartBarIcon },
-      { name: 'Channels', href: '/admin/channels', Icon: GlobeAltIcon },
-    ],
-  },
-  {
-    label: 'Configuration',
-    items: [
-      { name: 'Themes', href: '/admin/themes', Icon: PaintBrushIcon },
-      { name: 'Plugins', href: '/admin/plugins', Icon: PuzzlePieceIcon },
-      { name: 'API', href: '/admin/api-settings', Icon: CodeBracketIcon },
-      { name: 'Settings', href: '/admin/settings', Icon: Cog6ToothIcon },
-    ],
-  },
-];
 
 // ------------------------------------------------------------------
 // Sub-components
@@ -408,8 +323,9 @@ function LocaleMenu() {
 /**
  * Top bar with hamburger menu, search, and user actions
  */
-function Topbar({ onMenuOpen }) {
+function Topbar({ onMenuOpen, onOpenCommandPalette }) {
   const { isDark, toggleTheme } = useTheme();
+  const shortcutLabel = getCommandPaletteShortcutLabel();
 
   return (
     <header className="border-border bg-surface sticky top-0 z-10 flex h-14 items-center gap-3 border-b px-4 md:px-6">
@@ -423,16 +339,23 @@ function Topbar({ onMenuOpen }) {
         <Bars3Icon className="h-6 w-6" />
       </button>
 
-      {/* Search */}
+      {/* Command palette trigger */}
       <div className="flex flex-1 items-center">
-        <div className="relative w-full max-w-md">
-          <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <input
-            type="search"
-            placeholder="Search..."
-            className="bg-surface-2 text-text border-border placeholder:text-text-muted/70 focus:border-accent focus:ring-accent/40 w-full rounded-md border py-1.5 pr-3 pl-9 text-sm outline-none focus:ring-2"
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          className="bg-surface-2 text-text-muted border-border hover:border-accent/40 focus:border-accent focus:ring-accent/40 relative flex w-full max-w-md items-center rounded-md border py-1.5 pr-3 pl-9 text-left text-sm transition-colors focus:ring-2 focus:outline-none"
+          aria-label={`Open command palette (${shortcutLabel})`}
+        >
+          <MagnifyingGlassIcon
+            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+            aria-hidden="true"
           />
-        </div>
+          <span className="truncate">Search admin...</span>
+          <kbd className="border-border bg-surface text-text-muted pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 rounded border px-1.5 py-0.5 text-[10px] font-medium sm:inline">
+            {shortcutLabel}
+          </kbd>
+        </button>
       </div>
 
       {/* Right-side actions */}
@@ -475,6 +398,7 @@ export const handle = {
 export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { messages } = useLoaderData();
+  const { open, setOpen, openPalette } = useCommandPalette();
 
   function t(key, params) {
     return translate(key, params, messages);
@@ -492,7 +416,11 @@ export default function AdminLayout() {
 
         {/* Main content area */}
         <div className="flex flex-1 flex-col md:ml-64">
-          <Topbar onMenuOpen={() => setMobileOpen(true)} />
+          <Topbar
+            onMenuOpen={() => setMobileOpen(true)}
+            onOpenCommandPalette={openPalette}
+          />
+          <CommandPalette open={open} onOpenChange={setOpen} />
 
           <main className="flex-1 overflow-auto p-4 md:p-6">
             <div className="mx-auto w-full max-w-7xl">
