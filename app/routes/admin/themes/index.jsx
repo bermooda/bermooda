@@ -1,15 +1,20 @@
 // app/routes/admin/themes/index.jsx
 // Admin Themes page — list registered themes, activate, and configure settings.
 
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef } from 'react';
-import {
-  Form,
-  useActionData,
-  useLoaderData,
-  useNavigation,
-} from 'react-router';
+import { Form, useActionData, useLoaderData } from 'react-router';
 
 import cache from '#/utils/cache.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import EmptyState from '#/components/admin/empty-state';
+import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
+import PageHeader from '#/components/admin/page-header';
+import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
+import Button, { ButtonSubmit } from '#/components/ui/button';
 
 import { get, set } from '#/core/settings/index.server';
 import { _registry, resolveActiveTheme } from '#/core/themes/index.server';
@@ -108,52 +113,31 @@ export async function action({ request }) {
 // ---------------------------------------------------------------------------
 
 /**
- * Badge shown on the currently-active theme card.
- */
-function ActiveBadge() {
-  return (
-    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-      Active
-    </span>
-  );
-}
-
-/**
  * A single theme card.
  *
  * @param {{ manifest: object, isActive: boolean }} props
  */
 function ThemeCard({ manifest, isActive }) {
-  const navigation = useNavigation();
-  const isActivating =
-    navigation.state === 'submitting' &&
-    navigation.formData?.get('intent') === 'activate' &&
-    navigation.formData?.get('themeId') === manifest.id;
-
   return (
-    <div
-      className={[
-        'rounded-xl border p-5 transition-colors',
-        isActive
-          ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/30'
-          : 'border-gray-200 bg-white dark:border-dark-700 dark:bg-dark-800',
-      ].join(' ')}
+    <Card
+      padded={false}
+      className={isActive ? 'border-accent bg-accent/5 p-5' : 'p-5'}
     >
       {/* Header row */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-text truncate text-sm font-semibold">
               {manifest.name}
             </h3>
-            {isActive && <ActiveBadge />}
+            {isActive && <Badge tone="success">Active</Badge>}
           </div>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-text-muted mt-0.5 text-xs">
             v{manifest.version} &middot;{' '}
             <span className="font-mono">{manifest.id}</span>
           </p>
           {manifest.description && (
-            <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-300">
+            <p className="text-text-muted mt-1.5 text-sm">
               {manifest.description}
             </p>
           )}
@@ -164,17 +148,13 @@ function ThemeCard({ manifest, isActive }) {
           <Form method="post" className="flex-shrink-0">
             <input type="hidden" name="intent" value="activate" />
             <input type="hidden" name="themeId" value={manifest.id} />
-            <button
-              type="submit"
-              disabled={isActivating}
-              className="rounded-lg border border-indigo-600 px-3 py-1.5 text-xs font-medium text-indigo-600 transition hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-400 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
-            >
-              {isActivating ? 'Activating…' : 'Activate'}
-            </button>
+            <Button type="submit" variant="secondary">
+              Activate
+            </Button>
           </Form>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -185,11 +165,6 @@ function ThemeCard({ manifest, isActive }) {
  */
 function ThemeSettingsForm({ manifest, values }) {
   const actionData = useActionData();
-  const navigation = useNavigation();
-  const isSaving =
-    navigation.state === 'submitting' &&
-    navigation.formData?.get('intent') === 'save-settings';
-
   const formRef = useRef(null);
 
   // Show a brief success flash
@@ -202,22 +177,16 @@ function ThemeSettingsForm({ manifest, values }) {
   if (!manifest.settings?.length) return null;
 
   return (
-    <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white">
-      <div className="dark:border-dark-700 border-b border-gray-200 px-5 py-4">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-          Theme Settings
-        </h2>
-        <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+    <Card padded={false}>
+      <div className="border-border border-b px-5 py-4">
+        <h2 className="text-text text-base font-semibold">Theme Settings</h2>
+        <p className="text-text-muted mt-0.5 text-sm">
           Configure options for{' '}
-          <span className="font-medium">{manifest.name}</span>.
+          <span className="text-text font-medium">{manifest.name}</span>.
         </p>
       </div>
 
-      <Form
-        ref={formRef}
-        method="post"
-        className="dark:divide-dark-700/60 divide-y divide-gray-100"
-      >
+      <Form ref={formRef} method="post" className="divide-border divide-y">
         <input type="hidden" name="intent" value="save-settings" />
         <input type="hidden" name="themeId" value={manifest.id} />
 
@@ -231,29 +200,19 @@ function ThemeSettingsForm({ manifest, values }) {
           ))}
         </div>
 
-        <div className="flex items-center justify-between px-5 py-4">
-          {actionData?.savedSettings && (
-            <p className="text-sm text-green-600 dark:text-green-400">
-              Settings saved.
-            </p>
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
+          {actionData?.savedSettings ? (
+            <SuccessAlert message="Settings saved." />
+          ) : actionData?.error ? (
+            <ErrorAlert message={actionData.error} />
+          ) : (
+            <span />
           )}
-          {actionData?.error && (
-            <p className="text-sm text-red-600 dark:text-red-400">
-              {actionData.error}
-            </p>
-          )}
-          {!actionData?.savedSettings && !actionData?.error && <span />}
 
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {isSaving ? 'Saving…' : 'Save Settings'}
-          </button>
+          <ButtonSubmit>Save Settings</ButtonSubmit>
         </div>
       </Form>
-    </div>
+    </Card>
   );
 }
 
@@ -266,34 +225,18 @@ function SettingField({ setting, value }) {
   const { key, label, type, options } = setting;
   const id = `setting-${key}`;
 
-  return (
-    <div>
-      {type !== 'toggle' && (
-        <label
-          htmlFor={id}
-          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          {label ?? key}
-        </label>
-      )}
+  if (type === 'text') {
+    return (
+      <Field label={label ?? key} htmlFor={id}>
+        <Input id={id} type="text" name={key} defaultValue={value} />
+      </Field>
+    );
+  }
 
-      {type === 'text' && (
-        <input
-          id={id}
-          type="text"
-          name={key}
-          defaultValue={value}
-          className="dark:border-dark-600 dark:bg-dark-700 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:text-white"
-        />
-      )}
-
-      {type === 'select' && (
-        <select
-          id={id}
-          name={key}
-          defaultValue={value}
-          className="dark:border-dark-600 dark:bg-dark-700 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:text-white"
-        >
+  if (type === 'select') {
+    return (
+      <Field label={label ?? key} htmlFor={id}>
+        <Select id={id} name={key} defaultValue={value}>
           {(options ?? []).map((opt) => {
             const optValue = typeof opt === 'object' ? opt.value : opt;
             const optLabel = typeof opt === 'object' ? opt.label : opt;
@@ -303,29 +246,31 @@ function SettingField({ setting, value }) {
               </option>
             );
           })}
-        </select>
-      )}
+        </Select>
+      </Field>
+    );
+  }
 
-      {type === 'toggle' && (
-        <label className="flex cursor-pointer items-center gap-3">
-          <div className="relative">
-            <input
-              id={id}
-              type="checkbox"
-              name={key}
-              defaultChecked={value === true || value === 'true'}
-              className="peer sr-only"
-            />
-            <div className="dark:bg-dark-600 h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-500" />
-            <div className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-4" />
-          </div>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {label ?? key}
-          </span>
-        </label>
-      )}
-    </div>
-  );
+  if (type === 'toggle') {
+    return (
+      <label className="flex cursor-pointer items-center gap-3">
+        <div className="relative">
+          <input
+            id={id}
+            type="checkbox"
+            name={key}
+            defaultChecked={value === true || value === 'true'}
+            className="peer sr-only"
+          />
+          <div className="bg-surface-2 peer-checked:bg-accent h-5 w-9 rounded-full" />
+          <div className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-4" />
+        </div>
+        <span className="text-text text-sm font-medium">{label ?? key}</span>
+      </label>
+    );
+  }
+
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -342,46 +287,25 @@ export default function AdminThemesRoute() {
 
   return (
     <div className="space-y-8">
-      {/* Page heading */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Themes
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage your storefront&apos;s appearance.
-          </p>
-        </div>
-
-        {/* Storefront preview link */}
-        <a
-          href="/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="dark:border-dark-600 dark:bg-dark-800 dark:hover:bg-dark-700 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:text-gray-300"
-        >
-          Preview Storefront
-          <svg
-            className="h-3.5 w-3.5"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="2"
-            stroke="currentColor"
-            aria-hidden="true"
+      <PageHeader
+        title="Themes"
+        subtitle="Manage your storefront's appearance."
+        actions={
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-border bg-surface text-text hover:bg-surface-2 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-            />
-          </svg>
-        </a>
-      </div>
+            Preview Storefront
+            <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+          </a>
+        }
+      />
 
       {/* Active theme ID note (always show so admin can see what's configured) */}
       {activeThemeId && !activeTheme && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300">
+        <div className="border-warn/40 bg-warn/10 text-warn rounded-lg border px-4 py-3 text-sm">
           Active theme ID is set to{' '}
           <span className="font-mono font-medium">{activeThemeId}</span>, but no
           matching theme is registered. Register the theme at startup to
@@ -391,17 +315,15 @@ export default function AdminThemesRoute() {
 
       {/* Theme list */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-text mb-3 text-lg font-semibold">
           Registered Themes
         </h2>
 
         {themes.length === 0 ? (
-          <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-8 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              No themes registered. Themes are loaded from{' '}
-              <span className="font-mono">app/themes/</span> at startup.
-            </p>
-          </div>
+          <EmptyState
+            title="No themes registered"
+            description="Themes are loaded from app/themes/ at startup."
+          />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {themes.map((manifest) => (
