@@ -12,6 +12,13 @@ import { useState } from 'react';
 import { useFetcher, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import { controlClasses } from '#/components/admin/form/input';
+import PageHeader from '#/components/admin/page-header';
+import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import Tabs from '#/components/admin/tabs';
+import Button from '#/components/ui/button';
 
 import {
   createApiKey,
@@ -127,28 +134,24 @@ export function meta() {
 // Shared sub-components
 // ---------------------------------------------------------------------------
 
+const CHECKBOX_CLASS =
+  'border-border text-accent focus:ring-accent bg-surface h-4 w-4 rounded';
+
 function inputClass(extra) {
-  return clsx(
-    'block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500',
-    extra
-  );
+  return clsx(controlClasses, extra);
 }
 
 function SectionCard({ title, description, children }) {
   return (
-    <div className="rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-      <div className="border-b border-gray-100 px-6 py-4 dark:border-zinc-800">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-          {title}
-        </h2>
+    <Card padded={false}>
+      <div className="border-border border-b px-4 py-4 sm:px-6">
+        <h2 className="text-text text-base font-semibold">{title}</h2>
         {description && (
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-zinc-400">
-            {description}
-          </p>
+          <p className="text-text-muted mt-0.5 text-sm">{description}</p>
         )}
       </div>
-      <div className="px-6 py-5">{children}</div>
-    </div>
+      <div className="p-4 sm:p-6">{children}</div>
+    </Card>
   );
 }
 
@@ -169,11 +172,11 @@ function CopyButton({ value }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="ml-2 rounded p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+      className="text-text-muted hover:text-accent ml-2 rounded p-1"
       title="Copy to clipboard"
     >
       {copied ? (
-        <CheckIcon className="h-4 w-4 text-green-500" />
+        <CheckIcon className="text-success h-4 w-4" />
       ) : (
         <ClipboardDocumentIcon className="h-4 w-4" />
       )}
@@ -208,28 +211,22 @@ function ApiKeysSection({ data }) {
       description="API keys authenticate requests to /api/admin/v1/* endpoints. Store keys securely — they are shown only once."
     >
       <div className="mb-4 flex justify-end">
-        <button
-          type="button"
-          onClick={() => setShowCreate((v) => !v)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-        >
-          <PlusIcon className="h-4 w-4" />
+        <Button type="button" onClick={() => setShowCreate((v) => !v)}>
+          <PlusIcon className="mr-1.5 h-4 w-4" />
           Create key
-        </button>
+        </Button>
       </div>
 
       {showCreate && (
-        <div className="mb-6 rounded-lg border border-indigo-100 bg-indigo-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/60">
-          <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-            New API key
-          </h3>
+        <div className="border-border bg-surface-2 mb-6 rounded-lg border p-4">
+          <h3 className="text-text mb-3 text-sm font-semibold">New API key</h3>
 
           {justCreated && createFetcher.data?.key && (
-            <div className="mb-4 rounded-md bg-green-50 p-3 dark:bg-green-900/20">
-              <p className="mb-1 text-sm font-semibold text-green-800 dark:text-green-300">
+            <div className="bg-success/10 mb-4 rounded-md p-3">
+              <p className="text-success mb-1 text-sm font-semibold">
                 Key created — copy it now, it won't be shown again:
               </p>
-              <div className="flex items-center font-mono text-sm text-green-900 dark:text-green-200">
+              <div className="text-success flex items-center font-mono text-sm">
                 <code className="break-all">{createFetcher.data.key}</code>
                 <CopyButton value={createFetcher.data.key} />
               </div>
@@ -237,7 +234,7 @@ function ApiKeysSection({ data }) {
           )}
 
           {createError && (
-            <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+            <div className="bg-danger/10 text-danger mb-3 rounded-md px-3 py-2 text-sm">
               {createError}
             </div>
           )}
@@ -249,7 +246,7 @@ function ApiKeysSection({ data }) {
             ))}
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+              <label className="text-text-muted mb-1 block text-xs font-medium">
                 Label
               </label>
               <input
@@ -262,7 +259,7 @@ function ApiKeysSection({ data }) {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+              <label className="text-text-muted mb-1 block text-xs font-medium">
                 Scopes
               </label>
               <div className="flex gap-4">
@@ -281,28 +278,22 @@ function ApiKeysSection({ data }) {
                             : [...prev, scope]
                         )
                       }
-                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className={CHECKBOX_CLASS}
                     />
-                    <span className="text-gray-700 capitalize dark:text-zinc-300">
-                      {scope}
-                    </span>
+                    <span className="text-text capitalize">{scope}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                type="submit"
-                disabled={createFetcher.state !== 'idle'}
-                className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
-              >
+              <Button type="submit" disabled={createFetcher.state !== 'idle'}>
                 {createFetcher.state !== 'idle' ? 'Creating…' : 'Create'}
-              </button>
+              </Button>
               <button
                 type="button"
                 onClick={() => setShowCreate(false)}
-                className="text-sm text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                className="text-text-muted hover:text-text text-sm"
               >
                 Cancel
               </button>
@@ -311,87 +302,67 @@ function ApiKeysSection({ data }) {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-zinc-700">
-        <table className="min-w-full divide-y divide-gray-100 dark:divide-zinc-800">
-          <thead className="bg-gray-50 dark:bg-zinc-800">
-            <tr>
-              {['Label', 'Scopes', 'Last used', 'Created', ''].map((h) => (
-                <th
-                  key={h}
-                  className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 bg-white dark:divide-zinc-800 dark:bg-zinc-900">
-            {data.apiKeys.length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-8 text-center text-sm text-gray-400 dark:text-zinc-500"
-                >
-                  No API keys yet.
-                </td>
-              </tr>
-            )}
-            {data.apiKeys.map((key) => (
-              <tr
-                key={key.id}
-                className="hover:bg-gray-50 dark:hover:bg-zinc-800/50"
-              >
-                <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                  {key.label}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1">
-                    {key.scopes.map((s) => (
-                      <span
-                        key={s}
-                        className="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300"
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400">
-                  {key.lastUsedAt
-                    ? new Date(key.lastUsedAt).toLocaleDateString()
-                    : 'Never'}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400">
-                  {new Date(key.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-4 py-3">
-                  <revokeFetcher.Form method="post">
-                    <input type="hidden" name="intent" value="revoke-api-key" />
-                    <input type="hidden" name="id" value={key.id} />
-                    <button
-                      type="submit"
-                      disabled={revokeFetcher.state !== 'idle'}
-                      onClick={(e) => {
-                        if (
-                          !confirm(
-                            `Revoke "${key.label}"? This cannot be undone.`
-                          )
-                        ) {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="rounded p-1 text-gray-400 hover:text-red-500 disabled:opacity-50 dark:hover:text-red-400"
-                      title="Revoke key"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
-                  </revokeFetcher.Form>
-                </td>
-              </tr>
+      <Table>
+        <THead>
+          <tr>
+            {['Label', 'Scopes', 'Last used', 'Created', ''].map((h, i) => (
+              <Th key={h || `col-${i}`}>{h}</Th>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </tr>
+        </THead>
+        <TBody>
+          {data.apiKeys.length === 0 && (
+            <tr>
+              <Td colSpan={5} className="py-8 text-center">
+                No API keys yet.
+              </Td>
+            </tr>
+          )}
+          {data.apiKeys.map((key) => (
+            <tr key={key.id}>
+              <Td className="text-text font-medium">{key.label}</Td>
+              <Td>
+                <div className="flex flex-wrap gap-1">
+                  {key.scopes.map((s) => (
+                    <Badge key={s} tone="accent">
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+              </Td>
+              <Td>
+                {key.lastUsedAt
+                  ? new Date(key.lastUsedAt).toLocaleDateString()
+                  : 'Never'}
+              </Td>
+              <Td>{new Date(key.createdAt).toLocaleDateString()}</Td>
+              <Td>
+                <revokeFetcher.Form method="post">
+                  <input type="hidden" name="intent" value="revoke-api-key" />
+                  <input type="hidden" name="id" value={key.id} />
+                  <button
+                    type="submit"
+                    disabled={revokeFetcher.state !== 'idle'}
+                    onClick={(e) => {
+                      if (
+                        !confirm(
+                          `Revoke "${key.label}"? This cannot be undone.`
+                        )
+                      ) {
+                        e.preventDefault();
+                      }
+                    }}
+                    className="text-text-muted hover:text-danger rounded p-1 disabled:opacity-50"
+                    title="Revoke key"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </revokeFetcher.Form>
+              </Td>
+            </tr>
+          ))}
+        </TBody>
+      </Table>
     </SectionCard>
   );
 }
@@ -425,29 +396,25 @@ function WebhooksSection({ data }) {
       description="Receive real-time domain events as signed HTTP POSTs. Deliveries are retried on failure with exponential back-off."
     >
       <div className="mb-4 flex justify-end">
-        <button
-          type="button"
-          onClick={() => setShowCreate((v) => !v)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-        >
-          <PlusIcon className="h-4 w-4" />
+        <Button type="button" onClick={() => setShowCreate((v) => !v)}>
+          <PlusIcon className="mr-1.5 h-4 w-4" />
           Add endpoint
-        </button>
+        </Button>
       </div>
 
       {showCreate && (
-        <div className="mb-6 rounded-lg border border-indigo-100 bg-indigo-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/60">
-          <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+        <div className="border-border bg-surface-2 mb-6 rounded-lg border p-4">
+          <h3 className="text-text mb-3 text-sm font-semibold">
             New webhook endpoint
           </h3>
 
           {justCreated && (
-            <div className="mb-3 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
+            <div className="bg-success/10 text-success mb-3 rounded-md px-3 py-2 text-sm">
               Webhook subscription created.
             </div>
           )}
           {createError && (
-            <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+            <div className="bg-danger/10 text-danger mb-3 rounded-md px-3 py-2 text-sm">
               {createError}
             </div>
           )}
@@ -459,7 +426,7 @@ function WebhooksSection({ data }) {
             ))}
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+              <label className="text-text-muted mb-1 block text-xs font-medium">
                 URL
               </label>
               <input
@@ -472,7 +439,7 @@ function WebhooksSection({ data }) {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+              <label className="text-text-muted mb-1 block text-xs font-medium">
                 Signing secret
               </label>
               <input
@@ -482,14 +449,14 @@ function WebhooksSection({ data }) {
                 required
                 className={inputClass()}
               />
-              <p className="mt-1 text-xs text-gray-400 dark:text-zinc-500">
+              <p className="text-text-muted mt-1 text-xs">
                 Used to compute HMAC-SHA256 signatures in the{' '}
                 <code>X-Bermooda-Signature</code> header.
               </p>
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+              <label className="text-text-muted mb-1 block text-xs font-medium">
                 Label (optional)
               </label>
               <input
@@ -501,7 +468,7 @@ function WebhooksSection({ data }) {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+              <label className="text-text-muted mb-1 block text-xs font-medium">
                 Events
               </label>
               <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
@@ -517,30 +484,24 @@ function WebhooksSection({ data }) {
                             : [...prev, ev]
                         )
                       }
-                      className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className={clsx(CHECKBOX_CLASS, 'h-3.5 w-3.5')}
                     />
-                    <span className="font-mono text-gray-700 dark:text-zinc-300">
-                      {ev}
-                    </span>
+                    <span className="text-text font-mono">{ev}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                type="submit"
-                disabled={createFetcher.state !== 'idle'}
-                className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
-              >
+              <Button type="submit" disabled={createFetcher.state !== 'idle'}>
                 {createFetcher.state !== 'idle'
                   ? 'Creating…'
                   : 'Create endpoint'}
-              </button>
+              </Button>
               <button
                 type="button"
                 onClick={() => setShowCreate(false)}
-                className="text-sm text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                className="text-text-muted hover:text-text text-sm"
               >
                 Cancel
               </button>
@@ -549,100 +510,73 @@ function WebhooksSection({ data }) {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-zinc-700">
-        <table className="min-w-full divide-y divide-gray-100 dark:divide-zinc-800">
-          <thead className="bg-gray-50 dark:bg-zinc-800">
-            <tr>
-              {['URL', 'Events', 'Status', 'Created', ''].map((h) => (
-                <th
-                  key={h}
-                  className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 bg-white dark:divide-zinc-800 dark:bg-zinc-900">
-            {data.subscriptions.length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-8 text-center text-sm text-gray-400 dark:text-zinc-500"
-                >
-                  No webhook endpoints configured.
-                </td>
-              </tr>
-            )}
-            {data.subscriptions.map((sub) => (
-              <tr
-                key={sub.id}
-                className="hover:bg-gray-50 dark:hover:bg-zinc-800/50"
-              >
-                <td className="max-w-xs px-4 py-3 text-sm text-gray-900 dark:text-white">
-                  <span className="block truncate font-mono" title={sub.url}>
-                    {sub.url}
-                  </span>
-                  {sub.label && (
-                    <span className="text-xs text-gray-400 dark:text-zinc-500">
-                      {sub.label}
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1">
-                    {sub.events.map((ev) => (
-                      <span
-                        key={ev}
-                        className="inline-flex rounded-full bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-700 dark:bg-zinc-700 dark:text-zinc-300"
-                      >
-                        {ev}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={clsx(
-                      'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-                      sub.active
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-zinc-400'
-                    )}
-                  >
-                    {sub.active ? 'Active' : 'Paused'}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400">
-                  {new Date(sub.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-4 py-3">
-                  <deleteFetcher.Form method="post">
-                    <input type="hidden" name="intent" value="delete-webhook" />
-                    <input type="hidden" name="id" value={sub.id} />
-                    <button
-                      type="submit"
-                      disabled={deleteFetcher.state !== 'idle'}
-                      onClick={(e) => {
-                        if (!confirm(`Delete webhook for "${sub.url}"?`))
-                          e.preventDefault();
-                      }}
-                      className="rounded p-1 text-gray-400 hover:text-red-500 disabled:opacity-50 dark:hover:text-red-400"
-                      title="Delete"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
-                  </deleteFetcher.Form>
-                </td>
-              </tr>
+      <Table>
+        <THead>
+          <tr>
+            {['URL', 'Events', 'Status', 'Created', ''].map((h, i) => (
+              <Th key={h || `col-${i}`}>{h}</Th>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </tr>
+        </THead>
+        <TBody>
+          {data.subscriptions.length === 0 && (
+            <tr>
+              <Td colSpan={5} className="py-8 text-center">
+                No webhook endpoints configured.
+              </Td>
+            </tr>
+          )}
+          {data.subscriptions.map((sub) => (
+            <tr key={sub.id}>
+              <Td className="text-text max-w-xs">
+                <span className="block truncate font-mono" title={sub.url}>
+                  {sub.url}
+                </span>
+                {sub.label && (
+                  <span className="text-text-muted text-xs">{sub.label}</span>
+                )}
+              </Td>
+              <Td>
+                <div className="flex flex-wrap gap-1">
+                  {sub.events.map((ev) => (
+                    <Badge key={ev} className="font-mono">
+                      {ev}
+                    </Badge>
+                  ))}
+                </div>
+              </Td>
+              <Td>
+                <Badge tone={sub.active ? 'success' : 'neutral'}>
+                  {sub.active ? 'Active' : 'Paused'}
+                </Badge>
+              </Td>
+              <Td>{new Date(sub.createdAt).toLocaleDateString()}</Td>
+              <Td>
+                <deleteFetcher.Form method="post">
+                  <input type="hidden" name="intent" value="delete-webhook" />
+                  <input type="hidden" name="id" value={sub.id} />
+                  <button
+                    type="submit"
+                    disabled={deleteFetcher.state !== 'idle'}
+                    onClick={(e) => {
+                      if (!confirm(`Delete webhook for "${sub.url}"?`))
+                        e.preventDefault();
+                    }}
+                    className="text-text-muted hover:text-danger rounded p-1 disabled:opacity-50"
+                    title="Delete"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </deleteFetcher.Form>
+              </Td>
+            </tr>
+          ))}
+        </TBody>
+      </Table>
 
-      <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-800/40">
-        <p className="text-xs text-gray-500 dark:text-zinc-400">
-          <strong className="font-semibold text-gray-700 dark:text-zinc-300">
+      <div className="border-border bg-surface-2 mt-4 rounded-lg border px-4 py-3">
+        <p className="text-text-muted text-xs">
+          <strong className="text-text font-semibold">
             Signature verification:
           </strong>{' '}
           Each POST carries an{' '}
@@ -670,33 +604,23 @@ export default function AdminApiSettingsRoute() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          API Settings
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Manage API keys and outbound webhook endpoints. Base URL:{' '}
-          <code className="font-mono text-xs">/api/admin/v1</code>
-        </p>
-      </div>
+      <PageHeader
+        title="API Settings"
+        subtitle={
+          <>
+            Manage API keys and outbound webhook endpoints. Base URL:{' '}
+            <code className="font-mono text-xs">/api/admin/v1</code>
+          </>
+        }
+        className="mb-6"
+      />
 
-      <div className="mb-6 flex flex-wrap gap-1 border-b border-gray-200 dark:border-zinc-700">
-        {TABS.map((tab, i) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(i)}
-            className={clsx(
-              'px-4 py-2 text-sm font-medium transition-colors focus:outline-none',
-              activeTab === i
-                ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200'
-            )}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        tabs={TABS}
+        active={activeTab}
+        onChange={setActiveTab}
+        className="mb-6"
+      />
 
       {activeTab === 0 && <ApiKeysSection data={data} />}
       {activeTab === 1 && <WebhooksSection data={data} />}

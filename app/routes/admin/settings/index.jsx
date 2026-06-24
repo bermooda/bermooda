@@ -15,9 +15,20 @@ import { useFetcher, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import { controlClasses } from '#/components/admin/form/input';
+import PageHeader from '#/components/admin/page-header';
+import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import Tabs from '#/components/admin/tabs';
+import Button from '#/components/ui/button';
 
 import { hasPermission } from '#/core/rbac/index.server';
 import { get, set } from '#/core/settings/index.server';
+
+const CHECKBOX_CLASS =
+  'border-border text-accent focus:ring-accent bg-surface h-4 w-4 rounded';
+const RADIO_CLASS = 'border-border text-accent focus:ring-accent h-4 w-4';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -255,14 +266,11 @@ export async function action({ request }) {
 // ---------------------------------------------------------------------------
 
 function inputClass(extra) {
-  return clsx(
-    'block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500',
-    extra
-  );
+  return clsx(controlClasses, extra);
 }
 
 function selectClass() {
-  return 'block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600';
+  return clsx(controlClasses, 'pr-8');
 }
 
 function SaveButton({ fetcher, intent, label = 'Save' }) {
@@ -273,15 +281,11 @@ function SaveButton({ fetcher, intent, label = 'Save' }) {
     fetcher.data?.intent === intent;
   return (
     <div className="flex items-center gap-3">
-      <button
-        type="submit"
-        disabled={busy}
-        className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
-      >
+      <Button type="submit" disabled={busy}>
         {busy ? 'Saving…' : label}
-      </button>
+      </Button>
       {saved && (
-        <span className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
+        <span className="text-success flex items-center gap-1 text-sm">
           <CheckIcon className="h-4 w-4" />
           Saved
         </span>
@@ -290,7 +294,7 @@ function SaveButton({ fetcher, intent, label = 'Save' }) {
         fetcher.data &&
         !fetcher.data.ok &&
         fetcher.data?.intent === intent && (
-          <span className="text-sm text-red-600 dark:text-red-400">
+          <span className="text-danger text-sm">
             {fetcher.data.error ?? 'Error saving.'}
           </span>
         )}
@@ -300,20 +304,18 @@ function SaveButton({ fetcher, intent, label = 'Save' }) {
 
 function SectionCard({ title, children }) {
   return (
-    <div className="rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-      <div className="border-b border-gray-100 px-6 py-4 dark:border-zinc-800">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-          {title}
-        </h2>
+    <Card padded={false}>
+      <div className="border-border border-b px-4 py-4 sm:px-6">
+        <h2 className="text-text text-base font-semibold">{title}</h2>
       </div>
-      <div className="px-6 py-5">{children}</div>
-    </div>
+      <div className="p-4 sm:p-6">{children}</div>
+    </Card>
   );
 }
 
 function FieldLabel({ children }) {
   return (
-    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-zinc-300">
+    <label className="text-text mb-1 block text-sm font-medium">
       {children}
     </label>
   );
@@ -411,61 +413,48 @@ function CurrenciesTab({ data }) {
         ))}
         <input type="hidden" name="defaultCurrency" value={defaultCurrency} />
 
-        <p className="text-sm text-gray-500 dark:text-zinc-400">
+        <p className="text-text-muted text-sm">
           Enable or disable currencies. The default is used as the primary
           storefront currency.
         </p>
 
-        <div className="overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-zinc-700">
-          <table className="min-w-full divide-y divide-gray-100 dark:divide-zinc-800">
-            <thead className="bg-gray-50 dark:bg-zinc-800">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Currency
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Enabled
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Default
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white dark:divide-zinc-800 dark:bg-zinc-900">
-              {ALL_CURRENCIES.map((c) => {
-                const isEnabled = enabled.includes(c);
-                const isDefault = defaultCurrency === c;
-                return (
-                  <tr
-                    key={c}
-                    className="hover:bg-gray-50 dark:hover:bg-zinc-800/50"
-                  >
-                    <td className="px-4 py-3 font-mono text-sm font-semibold text-gray-900 dark:text-white">
-                      {c}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={isEnabled}
-                        onChange={() => toggle(c)}
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="radio"
-                        checked={isDefault}
-                        disabled={!isEnabled}
-                        onChange={() => setDefaultCurrency(c)}
-                        className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-40"
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <THead>
+            <tr>
+              <Th>Currency</Th>
+              <Th className="text-center">Enabled</Th>
+              <Th className="text-center">Default</Th>
+            </tr>
+          </THead>
+          <TBody>
+            {ALL_CURRENCIES.map((c) => {
+              const isEnabled = enabled.includes(c);
+              const isDefault = defaultCurrency === c;
+              return (
+                <tr key={c}>
+                  <Td className="text-text font-mono font-semibold">{c}</Td>
+                  <Td className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={isEnabled}
+                      onChange={() => toggle(c)}
+                      className={CHECKBOX_CLASS}
+                    />
+                  </Td>
+                  <Td className="text-center">
+                    <input
+                      type="radio"
+                      checked={isDefault}
+                      disabled={!isEnabled}
+                      onChange={() => setDefaultCurrency(c)}
+                      className={clsx(RADIO_CLASS, 'disabled:opacity-40')}
+                    />
+                  </Td>
+                </tr>
+              );
+            })}
+          </TBody>
+        </Table>
 
         <SaveButton fetcher={fetcher} intent="save-currencies" />
       </fetcher.Form>
@@ -497,61 +486,48 @@ function LocalesTab({ data }) {
         ))}
         <input type="hidden" name="defaultLocale" value={defaultLocale} />
 
-        <p className="text-sm text-gray-500 dark:text-zinc-400">
+        <p className="text-text-muted text-sm">
           Enable locales for your storefront. The default locale is used when no
           locale is detected.
         </p>
 
-        <div className="overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-zinc-700">
-          <table className="min-w-full divide-y divide-gray-100 dark:divide-zinc-800">
-            <thead className="bg-gray-50 dark:bg-zinc-800">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Locale
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Enabled
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Default
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white dark:divide-zinc-800 dark:bg-zinc-900">
-              {ALL_LOCALES.map((l) => {
-                const isEnabled = enabled.includes(l);
-                const isDefault = defaultLocale === l;
-                return (
-                  <tr
-                    key={l}
-                    className="hover:bg-gray-50 dark:hover:bg-zinc-800/50"
-                  >
-                    <td className="px-4 py-3 font-mono text-sm font-semibold text-gray-900 dark:text-white">
-                      {l}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={isEnabled}
-                        onChange={() => toggle(l)}
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="radio"
-                        checked={isDefault}
-                        disabled={!isEnabled}
-                        onChange={() => setDefaultLocale(l)}
-                        className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-40"
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <THead>
+            <tr>
+              <Th>Locale</Th>
+              <Th className="text-center">Enabled</Th>
+              <Th className="text-center">Default</Th>
+            </tr>
+          </THead>
+          <TBody>
+            {ALL_LOCALES.map((l) => {
+              const isEnabled = enabled.includes(l);
+              const isDefault = defaultLocale === l;
+              return (
+                <tr key={l}>
+                  <Td className="text-text font-mono font-semibold">{l}</Td>
+                  <Td className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={isEnabled}
+                      onChange={() => toggle(l)}
+                      className={CHECKBOX_CLASS}
+                    />
+                  </Td>
+                  <Td className="text-center">
+                    <input
+                      type="radio"
+                      checked={isDefault}
+                      disabled={!isEnabled}
+                      onChange={() => setDefaultLocale(l)}
+                      className={clsx(RADIO_CLASS, 'disabled:opacity-40')}
+                    />
+                  </Td>
+                </tr>
+              );
+            })}
+          </TBody>
+        </Table>
 
         <SaveButton fetcher={fetcher} intent="save-locales" />
       </fetcher.Form>
@@ -618,15 +594,13 @@ function TaxTab({ data }) {
                   value={mode}
                   checked={taxMode === mode}
                   onChange={() => setTaxMode(mode)}
-                  className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className={RADIO_CLASS}
                 />
-                <span className="text-sm text-gray-700 capitalize dark:text-zinc-300">
-                  {mode}
-                </span>
+                <span className="text-text text-sm capitalize">{mode}</span>
               </label>
             ))}
           </div>
-          <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
+          <p className="text-text-muted mt-1 text-xs">
             {taxMode === 'inclusive'
               ? 'Prices already include tax.'
               : 'Tax is added on top of prices at checkout.'}
@@ -640,7 +614,7 @@ function TaxTab({ data }) {
             <button
               type="button"
               onClick={addRegion}
-              className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+              className="text-accent inline-flex items-center gap-1 text-sm hover:underline"
             >
               <PlusIcon className="h-4 w-4" />
               Add region
@@ -648,7 +622,7 @@ function TaxTab({ data }) {
           </div>
 
           {regions.length === 0 ? (
-            <p className="text-sm text-gray-400 italic dark:text-zinc-500">
+            <p className="text-text-muted text-sm italic">
               No tax regions configured.
             </p>
           ) : (
@@ -677,13 +651,11 @@ function TaxTab({ data }) {
                     step="0.01"
                     className={inputClass('w-24')}
                   />
-                  <span className="text-sm text-gray-500 dark:text-zinc-400">
-                    %
-                  </span>
+                  <span className="text-text-muted text-sm">%</span>
                   <button
                     type="button"
                     onClick={() => removeRegion(r._key)}
-                    className="rounded p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                    className="text-text-muted hover:text-danger rounded p-1"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -760,19 +732,19 @@ function ShippingTab({ data }) {
           value={JSON.stringify(zonesForSubmit)}
         />
 
-        <p className="text-sm text-gray-500 dark:text-zinc-400">
+        <p className="text-text-muted text-sm">
           Configure shipping zones with flat rates and optional free-shipping
           thresholds.
         </p>
 
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-700 dark:text-zinc-300">
+          <span className="text-text text-sm font-medium">
             {zones.length} zone{zones.length !== 1 ? 's' : ''}
           </span>
           <button
             type="button"
             onClick={addZone}
-            className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            className="text-accent inline-flex items-center gap-1 text-sm hover:underline"
           >
             <PlusIcon className="h-4 w-4" />
             Add zone
@@ -780,7 +752,7 @@ function ShippingTab({ data }) {
         </div>
 
         {zones.length === 0 ? (
-          <p className="text-sm text-gray-400 italic dark:text-zinc-500">
+          <p className="text-text-muted text-sm italic">
             No shipping zones configured.
           </p>
         ) : (
@@ -795,23 +767,21 @@ function ShippingTab({ data }) {
               return (
                 <div
                   key={z._key}
-                  className="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-700"
+                  className="border-border space-y-3 rounded-lg border p-4"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700 dark:text-zinc-300">
-                      Zone
-                    </span>
+                    <span className="text-text text-sm font-medium">Zone</span>
                     <button
                       type="button"
                       onClick={() => removeZone(z._key)}
-                      className="rounded p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                      className="text-text-muted hover:text-danger rounded p-1"
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+                      <label className="text-text-muted mb-1 block text-xs font-medium">
                         Zone name
                       </label>
                       <input
@@ -825,7 +795,7 @@ function ShippingTab({ data }) {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+                      <label className="text-text-muted mb-1 block text-xs font-medium">
                         Countries (comma-separated codes)
                       </label>
                       <input
@@ -839,7 +809,7 @@ function ShippingTab({ data }) {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+                      <label className="text-text-muted mb-1 block text-xs font-medium">
                         Rate (cents)
                       </label>
                       <input
@@ -854,7 +824,7 @@ function ShippingTab({ data }) {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+                      <label className="text-text-muted mb-1 block text-xs font-medium">
                         Free over (cents, optional)
                       </label>
                       <input
@@ -907,35 +877,31 @@ function AdminUsersTab({ data }) {
     <div className="space-y-6">
       <SectionCard title="Admin Users">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm text-gray-500 dark:text-zinc-400">
+          <p className="text-text-muted text-sm">
             {data.users.length} user{data.users.length !== 1 ? 's' : ''}
           </p>
-          <button
-            type="button"
-            onClick={() => setShowInvite((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-          >
-            <UserPlusIcon className="h-4 w-4" />
+          <Button type="button" onClick={() => setShowInvite((v) => !v)}>
+            <UserPlusIcon className="mr-1.5 h-4 w-4" />
             Invite Admin
-          </button>
+          </Button>
         </div>
 
         {/* Invite form */}
         {showInvite && (
-          <div className="mb-6 rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/60">
-            <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+          <div className="border-border bg-surface-2 mb-6 rounded-lg border p-4">
+            <h3 className="text-text mb-3 text-sm font-semibold">
               Invite new admin user
             </h3>
 
             {inviteSuccess && (
-              <div className="mb-3 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
+              <div className="bg-success/10 text-success mb-3 rounded-md px-3 py-2 text-sm">
                 User created. Temporary password:{' '}
                 <code className="font-mono font-bold">ChangeMe123!</code> — ask
                 them to change it on first login.
               </div>
             )}
             {inviteError && (
-              <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+              <div className="bg-danger/10 text-danger mb-3 rounded-md px-3 py-2 text-sm">
                 {inviteError}
               </div>
             )}
@@ -943,7 +909,7 @@ function AdminUsersTab({ data }) {
             <inviteFetcher.Form method="post" className="max-w-sm space-y-3">
               <input type="hidden" name="intent" value="invite-admin" />
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+                <label className="text-text-muted mb-1 block text-xs font-medium">
                   Email
                 </label>
                 <input
@@ -955,7 +921,7 @@ function AdminUsersTab({ data }) {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-zinc-400">
+                <label className="text-text-muted mb-1 block text-xs font-medium">
                   Name (optional)
                 </label>
                 <input
@@ -966,17 +932,13 @@ function AdminUsersTab({ data }) {
                 />
               </div>
               <div className="flex items-center gap-3">
-                <button
-                  type="submit"
-                  disabled={inviteFetcher.state !== 'idle'}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
-                >
+                <Button type="submit" disabled={inviteFetcher.state !== 'idle'}>
                   {inviteFetcher.state !== 'idle' ? 'Creating…' : 'Create user'}
-                </button>
+                </Button>
                 <button
                   type="button"
                   onClick={() => setShowInvite(false)}
-                  className="text-sm text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  className="text-text-muted hover:text-text text-sm"
                 >
                   Cancel
                 </button>
@@ -986,107 +948,69 @@ function AdminUsersTab({ data }) {
         )}
 
         {/* Users table */}
-        <div className="overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-zinc-700">
-          <table className="min-w-full divide-y divide-gray-100 dark:divide-zinc-800">
-            <thead className="bg-gray-50 dark:bg-zinc-800">
+        <Table>
+          <THead>
+            <tr>
+              <Th>Name</Th>
+              <Th>Email</Th>
+              <Th>Role</Th>
+              <Th>Verified</Th>
+              <Th>Joined</Th>
+              <Th>Actions</Th>
+            </tr>
+          </THead>
+          <TBody>
+            {data.users.length === 0 && (
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Name
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Email
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Role
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Verified
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Joined
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                  Actions
-                </th>
+                <Td colSpan={6} className="py-8 text-center">
+                  No admin users found.
+                </Td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white dark:divide-zinc-800 dark:bg-zinc-900">
-              {data.users.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-sm text-gray-400 dark:text-zinc-500"
-                  >
-                    No admin users found.
-                  </td>
-                </tr>
-              )}
-              {data.users.map((user) => (
-                <tr
-                  key={user.id}
-                  className="hover:bg-gray-50 dark:hover:bg-zinc-800/50"
-                >
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                    {user.name || '—'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-zinc-300">
-                    {user.email}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={clsx(
-                        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-                        user.role === 'admin'
-                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
-                          : 'bg-gray-100 text-gray-700 dark:bg-zinc-700 dark:text-zinc-300'
-                      )}
+            )}
+            {data.users.map((user) => (
+              <tr key={user.id}>
+                <Td className="text-text font-medium">{user.name || '—'}</Td>
+                <Td className="text-text">{user.email}</Td>
+                <Td>
+                  <Badge tone={user.role === 'admin' ? 'accent' : 'neutral'}>
+                    {user.role}
+                  </Badge>
+                </Td>
+                <Td>
+                  <Badge tone={user.emailVerified ? 'success' : 'warn'}>
+                    {user.emailVerified ? 'Verified' : 'Pending'}
+                  </Badge>
+                </Td>
+                <Td>
+                  {new Date(user.createdAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </Td>
+                <Td>
+                  <roleFetcher.Form method="post" className="inline">
+                    <input type="hidden" name="intent" value="change-role" />
+                    <input type="hidden" name="userId" value={user.id} />
+                    <input
+                      type="hidden"
+                      name="role"
+                      value={user.role === 'admin' ? 'staff' : 'admin'}
+                    />
+                    <button
+                      type="submit"
+                      disabled={roleFetcher.state !== 'idle'}
+                      className="text-accent text-xs hover:underline disabled:opacity-50"
+                      title={`Switch to ${user.role === 'admin' ? 'staff' : 'admin'}`}
                     >
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={clsx(
-                        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-                        user.emailVerified
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                      )}
-                    >
-                      {user.emailVerified ? 'Verified' : 'Pending'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400">
-                    {new Date(user.createdAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <roleFetcher.Form method="post" className="inline">
-                      <input type="hidden" name="intent" value="change-role" />
-                      <input type="hidden" name="userId" value={user.id} />
-                      <input
-                        type="hidden"
-                        name="role"
-                        value={user.role === 'admin' ? 'staff' : 'admin'}
-                      />
-                      <button
-                        type="submit"
-                        disabled={roleFetcher.state !== 'idle'}
-                        className="text-xs text-indigo-600 hover:text-indigo-500 disabled:opacity-50 dark:text-indigo-400"
-                        title={`Switch to ${user.role === 'admin' ? 'staff' : 'admin'}`}
-                      >
-                        {user.role === 'admin' ? 'Make staff' : 'Make admin'}
-                      </button>
-                    </roleFetcher.Form>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      {user.role === 'admin' ? 'Make staff' : 'Make admin'}
+                    </button>
+                  </roleFetcher.Form>
+                </Td>
+              </tr>
+            ))}
+          </TBody>
+        </Table>
       </SectionCard>
     </div>
   );
@@ -1099,7 +1023,7 @@ function AdminUsersTab({ data }) {
 function EmailTemplatesTab() {
   return (
     <SectionCard title="Email Templates">
-      <p className="mb-4 text-sm text-gray-500 dark:text-zinc-400">
+      <p className="text-text-muted mb-4 text-sm">
         These are the available email templates. Preview links will be active in
         a future update.
       </p>
@@ -1107,18 +1031,16 @@ function EmailTemplatesTab() {
         {EMAIL_TEMPLATES.map((tpl) => (
           <div
             key={tpl.key}
-            className="flex items-start justify-between rounded-lg border border-gray-200 px-4 py-3 dark:border-zinc-700"
+            className="border-border flex items-start justify-between rounded-lg border px-4 py-3"
           >
             <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {tpl.name}
-              </p>
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-zinc-400">
+              <p className="text-text text-sm font-medium">{tpl.name}</p>
+              <p className="text-text-muted mt-0.5 text-xs">
                 {tpl.description}
               </p>
             </div>
             <span
-              className="ml-4 shrink-0 text-xs text-gray-400 italic dark:text-zinc-500"
+              className="text-text-muted ml-4 shrink-0 text-xs italic"
               title="Preview not yet available"
             >
               Preview coming soon
@@ -1140,34 +1062,19 @@ export default function AdminSettingsRoute() {
 
   return (
     <div>
-      {/* Page header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Settings
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Manage your shop configuration.
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        subtitle="Manage your shop configuration."
+        className="mb-6"
+      />
 
       {/* Tab nav */}
-      <div className="mb-6 flex flex-wrap gap-1 border-b border-gray-200 dark:border-zinc-700">
-        {TABS.map((tab, i) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(i)}
-            className={clsx(
-              'px-4 py-2 text-sm font-medium transition-colors focus:outline-none',
-              activeTab === i
-                ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200'
-            )}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        tabs={TABS}
+        active={activeTab}
+        onChange={setActiveTab}
+        className="mb-6"
+      />
 
       {/* Tab content */}
       {activeTab === 0 && <GeneralTab data={data} />}
