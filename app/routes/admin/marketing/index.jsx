@@ -2,6 +2,13 @@
 
 import { Form, useLoaderData } from 'react-router';
 
+import Card from '#/components/admin/card';
+import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
+import Textarea from '#/components/admin/form/textarea';
+import PageHeader from '#/components/admin/page-header';
+import Button from '#/components/ui/button';
+
 import {
   createAbandonedCartSequence,
   createCampaign,
@@ -92,171 +99,141 @@ export default function AdminMarketingRoute() {
   const { segments, campaigns, sequences, groups } = useLoaderData();
 
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-          Marketing automation
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Segments, email campaigns, and abandoned-cart sequences.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Marketing automation"
+        subtitle="Segments, email campaigns, and abandoned-cart sequences."
+        className="mb-6"
+      />
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-lg font-medium">Segments</h2>
-        <Form method="post" className="mt-4 flex flex-wrap gap-3">
-          <input type="hidden" name="intent" value="create-segment" />
-          <input
-            name="name"
-            placeholder="Segment name"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          />
-          <input
-            name="minOrders"
-            type="number"
-            min="0"
-            placeholder="Min orders"
-            className="w-28 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          />
-          <input
-            name="minSpentCents"
-            type="number"
-            min="0"
-            placeholder="Min spent (cents)"
-            className="w-36 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          />
-          <select
-            name="customerGroupId"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          >
-            <option value="">Any group</option>
-            {groups.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white"
-          >
-            Create segment
-          </button>
-        </Form>
-        <ul className="mt-4 space-y-1 text-sm">
-          {segments.map((s) => (
-            <li key={s.id}>
-              {s.name} ({s._count.campaigns} campaigns)
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-lg font-medium">Campaigns</h2>
-        <Form method="post" className="mt-4 grid gap-3 md:grid-cols-2">
-          <input type="hidden" name="intent" value="create-campaign" />
-          <select
-            name="segmentId"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          >
-            <option value="">Select segment</option>
+      <div className="space-y-6">
+        <Card>
+          <h2 className="text-text text-lg font-semibold">Segments</h2>
+          <Form method="post" className="mt-4 flex flex-wrap items-end gap-3">
+            <input type="hidden" name="intent" value="create-segment" />
+            <Input name="name" placeholder="Segment name" className="w-auto" />
+            <Input
+              name="minOrders"
+              type="number"
+              min="0"
+              placeholder="Min orders"
+              className="w-28"
+            />
+            <Input
+              name="minSpentCents"
+              type="number"
+              min="0"
+              placeholder="Min spent (cents)"
+              className="w-36"
+            />
+            <Select name="customerGroupId" className="w-auto">
+              <option value="">Any group</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </Select>
+            <Button type="submit" variant="primary">
+              Create segment
+            </Button>
+          </Form>
+          <ul className="text-text-muted mt-4 space-y-1 text-sm">
             {segments.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
+              <li key={s.id}>
+                {s.name} ({s._count.campaigns} campaigns)
+              </li>
             ))}
-          </select>
-          <input
-            name="name"
-            placeholder="Campaign name"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          />
-          <input
-            name="subject"
-            placeholder="Email subject"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          />
-          <textarea
-            name="bodyHtml"
-            placeholder="HTML body (use {{name}})"
-            rows={3}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm md:col-span-2 dark:border-slate-600 dark:bg-slate-800"
-          />
-          <button
-            type="submit"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white md:col-span-2 md:w-fit"
-          >
-            Create campaign
-          </button>
-        </Form>
-        <ul className="mt-4 space-y-2 text-sm">
-          {campaigns.map((c) => (
-            <li key={c.id} className="flex items-center gap-3">
-              <span>
-                {c.name} — {c.status} ({c._count.deliveries} deliveries)
-              </span>
-              {c.status !== 'sent' && (
-                <Form method="post">
-                  <input type="hidden" name="intent" value="send-campaign" />
-                  <input type="hidden" name="campaignId" value={c.id} />
-                  <button
-                    type="submit"
-                    className="text-indigo-600 hover:underline"
-                  >
-                    Send
-                  </button>
-                </Form>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
+          </ul>
+        </Card>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-lg font-medium">Abandoned cart sequences</h2>
-        <Form method="post" className="mt-4 flex flex-wrap gap-3">
-          <input type="hidden" name="intent" value="create-sequence" />
-          <input
-            name="name"
-            placeholder="Step name"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          />
-          <input
-            name="stepNumber"
-            type="number"
-            min="1"
-            placeholder="Step #"
-            className="w-20 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          />
-          <input
-            name="delayMinutes"
-            type="number"
-            min="1"
-            placeholder="Delay (min)"
-            className="w-28 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          />
-          <input
-            name="subject"
-            placeholder="Email subject"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          />
-          <button
-            type="submit"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white"
-          >
-            Add step
-          </button>
-        </Form>
-        <ul className="mt-4 space-y-1 text-sm">
-          {sequences.map((s) => (
-            <li key={s.id}>
-              Step {s.stepNumber}: {s.name} — after {s.delayMinutes}m (
-              {s.active ? 'active' : 'inactive'})
-            </li>
-          ))}
-        </ul>
-      </section>
+        <Card>
+          <h2 className="text-text text-lg font-semibold">Campaigns</h2>
+          <Form method="post" className="mt-4 grid gap-3 md:grid-cols-2">
+            <input type="hidden" name="intent" value="create-campaign" />
+            <Select name="segmentId">
+              <option value="">Select segment</option>
+              {segments.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </Select>
+            <Input name="name" placeholder="Campaign name" />
+            <Input name="subject" placeholder="Email subject" />
+            <Textarea
+              name="bodyHtml"
+              placeholder="HTML body (use {{name}})"
+              rows={3}
+              className="md:col-span-2"
+            />
+            <Button type="submit" variant="primary" className="md:w-fit">
+              Create campaign
+            </Button>
+          </Form>
+          <ul className="text-text-muted mt-4 space-y-2 text-sm">
+            {campaigns.map((c) => (
+              <li key={c.id} className="flex items-center gap-3">
+                <span>
+                  {c.name} — {c.status} ({c._count.deliveries} deliveries)
+                </span>
+                {c.status !== 'sent' && (
+                  <Form method="post">
+                    <input type="hidden" name="intent" value="send-campaign" />
+                    <input type="hidden" name="campaignId" value={c.id} />
+                    <button
+                      type="submit"
+                      className="text-accent hover:underline"
+                    >
+                      Send
+                    </button>
+                  </Form>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Card>
+
+        <Card>
+          <h2 className="text-text text-lg font-semibold">
+            Abandoned cart sequences
+          </h2>
+          <Form method="post" className="mt-4 flex flex-wrap items-end gap-3">
+            <input type="hidden" name="intent" value="create-sequence" />
+            <Input name="name" placeholder="Step name" className="w-auto" />
+            <Input
+              name="stepNumber"
+              type="number"
+              min="1"
+              placeholder="Step #"
+              className="w-20"
+            />
+            <Input
+              name="delayMinutes"
+              type="number"
+              min="1"
+              placeholder="Delay (min)"
+              className="w-28"
+            />
+            <Input
+              name="subject"
+              placeholder="Email subject"
+              className="w-auto"
+            />
+            <Button type="submit" variant="primary">
+              Add step
+            </Button>
+          </Form>
+          <ul className="text-text-muted mt-4 space-y-1 text-sm">
+            {sequences.map((s) => (
+              <li key={s.id}>
+                Step {s.stepNumber}: {s.name} — after {s.delayMinutes}m (
+                {s.active ? 'active' : 'inactive'})
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
     </div>
   );
 }

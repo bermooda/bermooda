@@ -1,6 +1,13 @@
 // app/routes/admin/loyalty/index.jsx
 
-import { Form, useLoaderData } from 'react-router';
+import { Form, useActionData, useLoaderData } from 'react-router';
+
+import Card from '#/components/admin/card';
+import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import PageHeader from '#/components/admin/page-header';
+import { SuccessAlert } from '#/components/ui/alert';
+import { ButtonSubmit } from '#/components/ui/button';
 
 import {
   getLoyaltyConfig,
@@ -40,68 +47,57 @@ export async function action({ request }) {
 
 export default function AdminLoyaltyRoute() {
   const { config } = useLoaderData();
+  const actionData = useActionData();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-          Loyalty & referrals
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Configure points earning, redemption, and referral bonuses.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Loyalty & referrals"
+        subtitle="Configure points earning, redemption, and referral bonuses."
+        className="mb-6"
+      />
 
-      <Form
-        method="post"
-        className="max-w-lg space-y-4 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900"
-      >
-        <input type="hidden" name="intent" value="save-settings" />
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            name="enabled"
-            defaultChecked={config.enabled}
-          />
-          Enable loyalty program
-        </label>
-        <label className="block text-sm">
-          Points per dollar spent
-          <input
-            name="pointsPerDollar"
-            type="number"
-            min="0"
-            defaultValue={config.pointsPerDollar}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
-          />
-        </label>
-        <label className="block text-sm">
-          Redemption rate (cents per 100 points)
-          <input
-            name="redemptionRateCents"
-            type="number"
-            min="1"
-            defaultValue={config.redemptionRateCents}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
-          />
-        </label>
-        <label className="block text-sm">
-          Referral bonus points
-          <input
-            name="referralBonusPoints"
-            type="number"
-            min="0"
-            defaultValue={config.referralBonusPoints}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
-          />
-        </label>
-        <button
-          type="submit"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white"
-        >
-          Save settings
-        </button>
-      </Form>
+      <Card className="max-w-lg">
+        <Form method="post" className="space-y-4">
+          <input type="hidden" name="intent" value="save-settings" />
+          <label className="text-text flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="enabled"
+              defaultChecked={config.enabled}
+            />
+            Enable loyalty program
+          </label>
+          <Field label="Points per dollar spent">
+            <Input
+              name="pointsPerDollar"
+              type="number"
+              min="0"
+              defaultValue={config.pointsPerDollar}
+            />
+          </Field>
+          <Field label="Redemption rate (cents per 100 points)">
+            <Input
+              name="redemptionRateCents"
+              type="number"
+              min="1"
+              defaultValue={config.redemptionRateCents}
+            />
+          </Field>
+          <Field label="Referral bonus points">
+            <Input
+              name="referralBonusPoints"
+              type="number"
+              min="0"
+              defaultValue={config.referralBonusPoints}
+            />
+          </Field>
+
+          {actionData?.ok && <SuccessAlert message="Settings saved." />}
+
+          <ButtonSubmit>Save settings</ButtonSubmit>
+        </Form>
+      </Card>
     </div>
   );
 }

@@ -2,6 +2,10 @@ import clsx from 'clsx';
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import PageHeader from '#/components/admin/page-header';
+import Pagination from '#/components/admin/pagination';
+import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 
 import {
   countPendingReviews,
@@ -93,11 +97,15 @@ export default function AdminReviewsRoute() {
     setSearchParams(params);
   }
 
+  function goToPage(p) {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', String(p));
+    setSearchParams(params);
+  }
+
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
-        Reviews
-      </h1>
+      <PageHeader title="Reviews" className="mb-6" />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {tabs.map((tab) => (
@@ -106,10 +114,10 @@ export default function AdminReviewsRoute() {
             type="button"
             onClick={() => setTab(tab.key)}
             className={clsx(
-              'rounded-full px-3 py-1 text-sm font-medium',
+              'rounded-full px-3 py-1 text-sm font-medium transition-colors',
               status === tab.key
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 text-gray-700 dark:bg-zinc-800'
+                ? 'bg-accent text-accent-fg'
+                : 'bg-surface-2 text-text-muted hover:text-text'
             )}
           >
             {tab.label}
@@ -117,104 +125,84 @@ export default function AdminReviewsRoute() {
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-          <thead className="bg-gray-50 dark:bg-zinc-800/50">
+      <Table>
+        <THead>
+          <tr>
+            <Th>Product</Th>
+            <Th>Customer</Th>
+            <Th>Rating</Th>
+            <Th>Review</Th>
+            <Th className="text-right">Actions</Th>
+          </tr>
+        </THead>
+        <TBody>
+          {reviews.length === 0 ? (
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                Product
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                Customer
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                Rating
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                Review
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">
-                Actions
-              </th>
+              <Td colSpan={5} className="py-8 text-center">
+                No reviews in this tab.
+              </Td>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-            {reviews.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-8 text-center text-sm text-gray-500"
-                >
-                  No reviews in this tab.
-                </td>
-              </tr>
-            ) : (
-              reviews.map((r) => (
-                <tr key={r.id}>
-                  <td className="px-4 py-3 text-sm">{r.productTitle}</td>
-                  <td className="px-4 py-3 text-sm">{r.customerName}</td>
-                  <td className="px-4 py-3 text-sm">
-                    {'★'.repeat(r.rating)}
-                    {r.verifiedPurchase && (
-                      <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-800">
-                        Verified
-                      </span>
+          ) : (
+            reviews.map((r) => (
+              <tr key={r.id}>
+                <Td className="text-text">{r.productTitle}</Td>
+                <Td>{r.customerName}</Td>
+                <Td>
+                  <span className="text-warn">{'★'.repeat(r.rating)}</span>
+                  {r.verifiedPurchase && (
+                    <Badge tone="success" className="ml-2">
+                      Verified
+                    </Badge>
+                  )}
+                </Td>
+                <Td className="max-w-xs truncate whitespace-normal">
+                  {r.body}
+                </Td>
+                <Td className="text-right">
+                  <div className="flex justify-end gap-3">
+                    {r.status === 'pending' && (
+                      <>
+                        <Form method="post" className="inline">
+                          <input type="hidden" name="id" value={r.id} />
+                          <input type="hidden" name="intent" value="approve" />
+                          <button
+                            type="submit"
+                            className="text-success text-sm hover:underline"
+                          >
+                            Approve
+                          </button>
+                        </Form>
+                        <Form method="post" className="inline">
+                          <input type="hidden" name="id" value={r.id} />
+                          <input type="hidden" name="intent" value="reject" />
+                          <button
+                            type="submit"
+                            className="text-warn text-sm hover:underline"
+                          >
+                            Reject
+                          </button>
+                        </Form>
+                      </>
                     )}
-                  </td>
-                  <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-600">
-                    {r.body}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-2">
-                      {r.status === 'pending' && (
-                        <>
-                          <Form method="post" className="inline">
-                            <input type="hidden" name="id" value={r.id} />
-                            <input
-                              type="hidden"
-                              name="intent"
-                              value="approve"
-                            />
-                            <button
-                              type="submit"
-                              className="text-sm text-green-600"
-                            >
-                              Approve
-                            </button>
-                          </Form>
-                          <Form method="post" className="inline">
-                            <input type="hidden" name="id" value={r.id} />
-                            <input type="hidden" name="intent" value="reject" />
-                            <button
-                              type="submit"
-                              className="text-sm text-amber-600"
-                            >
-                              Reject
-                            </button>
-                          </Form>
-                        </>
-                      )}
-                      <Form method="post" className="inline">
-                        <input type="hidden" name="id" value={r.id} />
-                        <input type="hidden" name="intent" value="delete" />
-                        <button type="submit" className="text-sm text-red-600">
-                          Delete
-                        </button>
-                      </Form>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                    <Form method="post" className="inline">
+                      <input type="hidden" name="id" value={r.id} />
+                      <input type="hidden" name="intent" value="delete" />
+                      <button
+                        type="submit"
+                        className="text-danger text-sm hover:underline"
+                      >
+                        Delete
+                      </button>
+                    </Form>
+                  </div>
+                </Td>
+              </tr>
+            ))
+          )}
+        </TBody>
+      </Table>
 
-      {totalPages > 1 && (
-        <p className="mt-4 text-center text-sm text-gray-500">
-          Page {page} of {totalPages}
-        </p>
-      )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
     </div>
   );
 }
