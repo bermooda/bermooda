@@ -10,11 +10,11 @@ export function ErrorAlert({ message }) {
   if (!message) return null;
 
   return (
-    <div className="mb-4 rounded-md bg-red-50 p-4 dark:border dark:border-red-500/30 dark:bg-red-500/10">
+    <div className="bg-danger/10 border-danger/30 mb-4 rounded-md border p-4">
       <div className="flex">
         <div className="shrink-0">
           <svg
-            className="h-5 w-5 text-red-400 dark:text-red-400"
+            className="text-danger h-5 w-5"
             viewBox="0 0 20 20"
             fill="currentColor"
             aria-hidden="true"
@@ -27,9 +27,7 @@ export function ErrorAlert({ message }) {
           </svg>
         </div>
         <div className="ml-3">
-          <h3 className="text-sm/6 font-medium text-red-800 dark:text-red-300">
-            {message}
-          </h3>
+          <h3 className="text-danger text-sm/6 font-medium">{message}</h3>
         </div>
       </div>
     </div>
@@ -48,11 +46,11 @@ export function SuccessAlert({ message }) {
   if (!message) return null;
 
   return (
-    <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4 shadow-xs dark:border-green-500/30 dark:bg-green-500/10">
+    <div className="bg-success/10 border-success/30 mb-4 rounded-md border p-4 shadow-xs">
       <div className="flex">
         <div className="shrink-0">
           <svg
-            className="h-5 w-5 text-green-400"
+            className="text-success h-5 w-5"
             viewBox="0 0 20 20"
             fill="currentColor"
             aria-hidden="true"
@@ -65,9 +63,7 @@ export function SuccessAlert({ message }) {
           </svg>
         </div>
         <div className="ml-3">
-          <h3 className="text-sm/6 font-medium text-green-800 dark:text-green-400">
-            {message}
-          </h3>
+          <h3 className="text-success text-sm/6 font-medium">{message}</h3>
         </div>
       </div>
     </div>

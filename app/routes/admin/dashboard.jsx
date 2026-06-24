@@ -7,6 +7,11 @@ import {
 import { useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import EmptyState from '#/components/admin/empty-state';
+import PageHeader from '#/components/admin/page-header';
+import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
 
 // ---------------------------------------------------------------------------
 // Meta
@@ -148,14 +153,12 @@ function formatDate(iso) {
 // Status badge
 // ---------------------------------------------------------------------------
 
-const STATUS_STYLES = {
-  pending:
-    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-  paid: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  fulfilled:
-    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  refunded: 'bg-gray-100 text-gray-700 dark:bg-gray-700/40 dark:text-gray-300',
+const STATUS_TONES = {
+  pending: 'warn',
+  paid: 'accent',
+  fulfilled: 'success',
+  cancelled: 'danger',
+  refunded: 'neutral',
 };
 
 /**
@@ -164,16 +167,7 @@ const STATUS_STYLES = {
  * @param {{ status: string }} props
  */
 function StatusBadge({ status }) {
-  const styles =
-    STATUS_STYLES[status] ??
-    'bg-gray-100 text-gray-700 dark:bg-gray-700/40 dark:text-gray-300';
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${styles}`}
-    >
-      {status}
-    </span>
-  );
+  return <Badge tone={STATUS_TONES[status] ?? 'neutral'}>{status}</Badge>;
 }
 
 // ---------------------------------------------------------------------------
@@ -187,19 +181,17 @@ function StatusBadge({ status }) {
  */
 function KpiTile({ icon: Icon, label, value }) {
   return (
-    <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-6">
+    <Card>
       <div className="flex items-center gap-3">
-        <div className="dark:bg-dark-700 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
-          <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+        <div className="bg-surface-2 text-text-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
+          <Icon className="h-5 w-5" />
         </div>
-        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          {label}
-        </dt>
+        <dt className="text-text-muted text-sm font-medium">{label}</dt>
       </div>
-      <dd className="mt-4 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
+      <dd className="text-text mt-4 text-3xl font-semibold tracking-tight">
         {value}
       </dd>
-    </div>
+    </Card>
   );
 }
 
@@ -226,14 +218,10 @@ export default function AdminDashboardRoute() {
   return (
     <div className="space-y-8">
       {/* Page heading */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Dashboard
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Overview of your store&apos;s performance.
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Overview of your store's performance."
+      />
 
       {/* KPI tiles */}
       <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -264,71 +252,41 @@ export default function AdminDashboardRoute() {
 
       {/* Recent orders */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-          Recent Orders
-        </h2>
+        <h2 className="text-text mb-4 text-lg font-semibold">Recent Orders</h2>
 
         {recentOrders.length === 0 ? (
-          <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-8 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              No orders yet.
-            </p>
-          </div>
+          <EmptyState
+            icon={ShoppingBagIcon}
+            title="No orders yet"
+            description="Orders will appear here once customers start checking out."
+          />
         ) : (
-          <div className="dark:border-dark-700 dark:bg-dark-800 overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <div className="overflow-x-auto">
-              <table className="dark:divide-dark-700 min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    {['Order', 'Customer', 'Status', 'Total', 'Date'].map(
-                      (col) => (
-                        <th
-                          key={col}
-                          scope="col"
-                          className="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
-                        >
-                          {col}
-                        </th>
-                      )
-                    )}
-                  </tr>
-                </thead>
-                <tbody className="dark:divide-dark-700/60 divide-y divide-gray-100">
-                  {recentOrders.map((order) => (
-                    <tr
-                      key={order.id}
-                      className="dark:hover:bg-dark-700/30 hover:bg-gray-50"
-                    >
-                      {/* Order number */}
-                      <td className="px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">
-                        #{order.orderNumber}
-                      </td>
-
-                      {/* Customer email */}
-                      <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-300">
-                        {order.customer?.email ?? order.email}
-                      </td>
-
-                      {/* Status badge */}
-                      <td className="px-4 py-3 text-sm whitespace-nowrap">
-                        <StatusBadge status={order.status} />
-                      </td>
-
-                      {/* Total */}
-                      <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-900 dark:text-white">
-                        {formatCents(order.totalCents, order.currency)}
-                      </td>
-
-                      {/* Date */}
-                      <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                        {formatDate(order.createdAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <Table>
+            <THead>
+              <tr>
+                {['Order', 'Customer', 'Status', 'Total', 'Date'].map((col) => (
+                  <Th key={col}>{col}</Th>
+                ))}
+              </tr>
+            </THead>
+            <TBody>
+              {recentOrders.map((order) => (
+                <tr key={order.id}>
+                  <Td className="text-text font-medium">
+                    #{order.orderNumber}
+                  </Td>
+                  <Td>{order.customer?.email ?? order.email}</Td>
+                  <Td>
+                    <StatusBadge status={order.status} />
+                  </Td>
+                  <Td className="text-text">
+                    {formatCents(order.totalCents, order.currency)}
+                  </Td>
+                  <Td>{formatDate(order.createdAt)}</Td>
+                </tr>
+              ))}
+            </TBody>
+          </Table>
         )}
       </div>
     </div>
