@@ -13,6 +13,14 @@ import { useState, useEffect } from 'react';
 import { useFetcher, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
+import PageHeader from '#/components/admin/page-header';
+import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
+import Button, { ButtonSubmit } from '#/components/ui/button';
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -231,136 +239,96 @@ function DiscountForm({
         <input type="hidden" name="intent" value="create" />
       )}
 
-      {error && (
-        <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {error}
-        </div>
-      )}
+      <ErrorAlert message={error} />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {/* Code */}
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-            Code
-          </label>
-          <input
+        <Field label="Code" className="space-y-1">
+          <Input
             type="text"
             name="code"
             required
             defaultValue={discount?.code ?? ''}
             placeholder="SUMMER20"
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm uppercase shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+            className="uppercase"
           />
-        </div>
+        </Field>
 
-        {/* Type */}
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-            Type
-          </label>
-          <select
+        <Field label="Type" className="space-y-1">
+          <Select
             name="type"
             required
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
           >
             <option value="percent">Percent (%)</option>
             <option value="fixed">Fixed amount</option>
-          </select>
-        </div>
+          </Select>
+        </Field>
 
-        {/* Value */}
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-            Value{type === 'percent' ? ' (%)' : ' (cents)'}
-          </label>
-          <input
+        <Field
+          label={`Value${type === 'percent' ? ' (%)' : ' (cents)'}`}
+          className="space-y-1"
+        >
+          <Input
             type="number"
             name="value"
             required
             min="1"
             defaultValue={discount?.value ?? ''}
             placeholder={type === 'percent' ? '10' : '1000'}
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
           />
-        </div>
+        </Field>
 
         {/* Currency — only shown for fixed */}
-        <div className={clsx(type !== 'fixed' && 'invisible')}>
-          <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-            Currency
-          </label>
-          <input
+        <Field
+          label="Currency"
+          className={clsx('space-y-1', type !== 'fixed' && 'invisible')}
+        >
+          <Input
             type="text"
             name="currency"
             defaultValue={discount?.currency ?? ''}
             placeholder="USD"
             maxLength={3}
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm uppercase shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
+            className="uppercase"
           />
-        </div>
+        </Field>
 
-        {/* Min subtotal */}
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-            Min subtotal (cents, optional)
-          </label>
-          <input
+        <Field label="Min subtotal (cents, optional)" className="space-y-1">
+          <Input
             type="number"
             name="minSubtotalCents"
             min="0"
             defaultValue={discount?.minSubtotalCents ?? ''}
             placeholder="e.g. 5000"
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
           />
-        </div>
+        </Field>
 
-        {/* Max uses */}
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-            Max uses (optional)
-          </label>
-          <input
+        <Field label="Max uses (optional)" className="space-y-1">
+          <Input
             type="number"
             name="maxUsesCount"
             min="1"
             defaultValue={discount?.maxUsesCount ?? ''}
             placeholder="e.g. 100"
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
           />
-        </div>
+        </Field>
 
-        {/* Expires at */}
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-zinc-400">
-            Expires at (optional)
-          </label>
-          <input
+        <Field label="Expires at (optional)" className="space-y-1">
+          <Input
             type="date"
             name="expiresAt"
             defaultValue={toDateInputValue(discount?.expiresAt)}
-            className="mt-1 block w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 dark:bg-zinc-800 dark:text-white dark:ring-zinc-600"
           />
-        </div>
+        </Field>
       </div>
 
       <div className="flex items-center gap-3 pt-1">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
-        >
-          {isSubmitting ? 'Saving…' : submitLabel}
-        </button>
+        <ButtonSubmit loading={isSubmitting}>{submitLabel}</ButtonSubmit>
         {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-sm text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-          >
+          <Button variant="ghost" onClick={onClose}>
             Cancel
-          </button>
+          </Button>
         )}
       </div>
     </fetcher.Form>
@@ -391,27 +359,21 @@ function AddDiscountPanel() {
 
   if (!open) {
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-      >
-        <PlusIcon className="h-4 w-4" />
+      <Button variant="primary" onClick={() => setOpen(true)}>
+        <PlusIcon className="mr-1.5 h-4 w-4" />
         Add Discount
-      </button>
+      </Button>
     );
   }
 
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
+    <Card className="w-full sm:w-96">
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-          New Discount
-        </span>
+        <span className="text-text text-sm font-semibold">New Discount</span>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200"
+          className="text-text-muted hover:text-text rounded p-1"
         >
           <XMarkIcon className="h-4 w-4" />
         </button>
@@ -423,7 +385,7 @@ function AddDiscountPanel() {
         formKey={formKey}
         fetcher={fetcher}
       />
-    </div>
+    </Card>
   );
 }
 
@@ -439,26 +401,19 @@ function InlineEditForm({ discount, onClose }) {
     fetcher.data?.intent === 'save';
 
   return (
-    <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-zinc-600 dark:bg-zinc-800/60">
+    <div className="border-border bg-surface-2 rounded-lg border p-4">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-          Edit discount
-        </span>
+        <span className="text-text text-sm font-semibold">Edit discount</span>
         <button
           type="button"
           onClick={onClose}
-          className="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200"
+          className="text-text-muted hover:text-text rounded p-1"
         >
           <XMarkIcon className="h-4 w-4" />
         </button>
       </div>
 
-      {saved && (
-        <div className="mb-3 flex items-center gap-1.5 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
-          <CheckIcon className="h-4 w-4" />
-          Saved.
-        </div>
-      )}
+      {saved && <SuccessAlert message="Saved." />}
 
       <DiscountForm
         discount={discount}
@@ -487,48 +442,43 @@ function DiscountRow({ discount, editingId, onEditToggle }) {
       {/* Row */}
       <div
         className={clsx(
-          'flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 cursor-pointer',
-          isEditing && 'bg-indigo-50 dark:bg-zinc-800/60'
+          'hover:bg-surface-2/50 flex cursor-pointer items-center gap-3 px-4 py-3',
+          isEditing && 'bg-surface-2/60'
         )}
         onClick={() => onEditToggle(discount.id)}
       >
         {/* Code */}
-        <span className="w-32 shrink-0 font-mono text-sm font-semibold text-gray-900 dark:text-white">
+        <span className="text-text w-32 shrink-0 font-mono text-sm font-semibold">
           {discount.code}
         </span>
 
         {/* Type badge */}
-        <span
-          className={clsx(
-            'w-16 shrink-0 rounded-full px-2 py-0.5 text-center text-xs font-medium',
-            discount.type === 'percent'
-              ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
-              : 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-          )}
-        >
-          {discount.type}
+        <span className="w-16 shrink-0">
+          <Badge tone={discount.type === 'percent' ? 'accent' : 'neutral'}>
+            {discount.type}
+          </Badge>
         </span>
 
         {/* Value */}
-        <span className="w-24 shrink-0 text-sm text-gray-700 dark:text-zinc-300">
+        <span className="text-text w-24 shrink-0 text-sm">
           {formatValue(discount.type, discount.value, discount.currency)}
         </span>
 
         {/* Min subtotal */}
-        <span className="hidden w-28 shrink-0 text-sm text-gray-500 sm:block dark:text-zinc-400">
+        <span className="text-text-muted hidden w-28 shrink-0 text-sm sm:block">
           {discount.minSubtotalCents != null
             ? `$${(discount.minSubtotalCents / 100).toFixed(2)}`
             : '—'}
         </span>
 
         {/* Uses */}
-        <span className="hidden w-24 shrink-0 text-sm text-gray-500 md:block dark:text-zinc-400">
+        <span className="text-text-muted hidden w-24 shrink-0 text-sm md:block">
           {discount.usedCount}
           {discount.maxUsesCount != null ? ` / ${discount.maxUsesCount}` : ''}
         </span>
 
         {/* Currency */}
-        <span className="hidden w-16 shrink-0 text-sm text-gray-500 lg:block dark:text-zinc-400">
+        <span className="text-text-muted hidden w-16 shrink-0 text-sm lg:block">
           {discount.currency ? discount.currency.toUpperCase() : '—'}
         </span>
 
@@ -536,9 +486,7 @@ function DiscountRow({ discount, editingId, onEditToggle }) {
         <span
           className={clsx(
             'hidden w-24 shrink-0 text-sm lg:block',
-            isExpired
-              ? 'text-red-500 dark:text-red-400'
-              : 'text-gray-500 dark:text-zinc-400'
+            isExpired ? 'text-danger' : 'text-text-muted'
           )}
         >
           {formatDate(discount.expiresAt)}
@@ -548,15 +496,10 @@ function DiscountRow({ discount, editingId, onEditToggle }) {
         <span className="flex-1" />
 
         {/* Active badge */}
-        <span
-          className={clsx(
-            'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
-            discount.active
-              ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-              : 'bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-zinc-400'
-          )}
-        >
-          {discount.active ? 'Active' : 'Inactive'}
+        <span className="shrink-0">
+          <Badge tone={discount.active ? 'success' : 'neutral'}>
+            {discount.active ? 'Active' : 'Inactive'}
+          </Badge>
         </span>
 
         {/* Toggle active */}
@@ -570,8 +513,8 @@ function DiscountRow({ discount, editingId, onEditToggle }) {
             className={clsx(
               'rounded p-1 text-sm transition-colors disabled:opacity-50',
               discount.active
-                ? 'text-green-600 hover:text-red-500 dark:text-green-400 dark:hover:text-red-400'
-                : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'
+                ? 'text-success hover:text-danger'
+                : 'text-text-muted hover:text-success'
             )}
           >
             <CheckIcon className="h-4 w-4" />
@@ -588,9 +531,7 @@ function DiscountRow({ discount, editingId, onEditToggle }) {
           }}
           className={clsx(
             'rounded p-1 transition-colors',
-            isEditing
-              ? 'text-indigo-600 dark:text-indigo-400'
-              : 'text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200'
+            isEditing ? 'text-accent' : 'text-text-muted hover:text-text'
           )}
         >
           <PencilSquareIcon className="h-4 w-4" />
@@ -616,7 +557,7 @@ function DiscountRow({ discount, editingId, onEditToggle }) {
             type="submit"
             title="Delete"
             disabled={deleteFetcher.state !== 'idle'}
-            className="rounded p-1 text-gray-400 hover:text-red-500 disabled:opacity-50 dark:hover:text-red-400"
+            className="text-text-muted hover:text-danger rounded p-1 disabled:opacity-50"
           >
             <TrashIcon className="h-4 w-4" />
           </button>
@@ -650,46 +591,40 @@ export default function AdminDiscountsRoute() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Discounts
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {discounts.length} discount{discounts.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <AddDiscountPanel />
-      </div>
+      <PageHeader
+        title="Discounts"
+        subtitle={`${discounts.length} discount${discounts.length !== 1 ? 's' : ''}`}
+        actions={<AddDiscountPanel />}
+        className="mb-6"
+      />
 
       {/* Table */}
-      <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
+      <Card padded={false} className="overflow-hidden">
         {/* Column headers */}
-        <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-2 dark:border-zinc-800">
-          <span className="w-32 shrink-0 text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-zinc-500">
+        <div className="border-border bg-surface-2/50 flex items-center gap-3 border-b px-4 py-2">
+          <span className="text-text-muted w-32 shrink-0 text-xs font-medium tracking-wide uppercase">
             Code
           </span>
-          <span className="w-16 shrink-0 text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-zinc-500">
+          <span className="text-text-muted w-16 shrink-0 text-xs font-medium tracking-wide uppercase">
             Type
           </span>
-          <span className="w-24 shrink-0 text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-zinc-500">
+          <span className="text-text-muted w-24 shrink-0 text-xs font-medium tracking-wide uppercase">
             Value
           </span>
-          <span className="hidden w-28 shrink-0 text-xs font-medium tracking-wide text-gray-400 uppercase sm:block dark:text-zinc-500">
+          <span className="text-text-muted hidden w-28 shrink-0 text-xs font-medium tracking-wide uppercase sm:block">
             Min subtotal
           </span>
-          <span className="hidden w-24 shrink-0 text-xs font-medium tracking-wide text-gray-400 uppercase md:block dark:text-zinc-500">
+          <span className="text-text-muted hidden w-24 shrink-0 text-xs font-medium tracking-wide uppercase md:block">
             Uses
           </span>
-          <span className="hidden w-16 shrink-0 text-xs font-medium tracking-wide text-gray-400 uppercase lg:block dark:text-zinc-500">
+          <span className="text-text-muted hidden w-16 shrink-0 text-xs font-medium tracking-wide uppercase lg:block">
             Currency
           </span>
-          <span className="hidden w-24 shrink-0 text-xs font-medium tracking-wide text-gray-400 uppercase lg:block dark:text-zinc-500">
+          <span className="text-text-muted hidden w-24 shrink-0 text-xs font-medium tracking-wide uppercase lg:block">
             Expires
           </span>
           <span className="flex-1" />
-          <span className="shrink-0 text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-zinc-500">
+          <span className="text-text-muted shrink-0 text-xs font-medium tracking-wide uppercase">
             Status
           </span>
           {/* spacer for action buttons */}
@@ -697,11 +632,11 @@ export default function AdminDiscountsRoute() {
         </div>
 
         {discounts.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-gray-400 dark:text-zinc-500">
+          <div className="text-text-muted px-4 py-10 text-center text-sm">
             No discounts yet. Use the button above to create one.
           </div>
         ) : (
-          <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+          <div className="divide-border divide-y">
             {discounts.map((discount) => (
               <DiscountRow
                 key={discount.id}
@@ -712,7 +647,7 @@ export default function AdminDiscountsRoute() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
