@@ -3,6 +3,13 @@
 import { Form, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import EmptyState from '#/components/admin/empty-state';
+import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
+import PageHeader from '#/components/admin/page-header';
+import Button from '#/components/ui/button';
 
 import {
   createPriceList,
@@ -80,104 +87,93 @@ export default function AdminPriceListsRoute() {
   const { priceLists, variants, groups } = useLoaderData();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-          Price lists
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Group and quantity-specific pricing overrides.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Price lists"
+        subtitle="Group and quantity-specific pricing overrides."
+        className="mb-6"
+      />
 
-      <Form method="post" className="flex flex-wrap gap-3">
-        <input type="hidden" name="intent" value="create-list" />
-        <input
-          name="name"
-          placeholder="List name"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+      <Card className="mb-6">
+        <Form method="post" className="flex flex-wrap items-end gap-3">
+          <input type="hidden" name="intent" value="create-list" />
+          <Input name="name" placeholder="List name" className="w-auto" />
+          <Input name="currency" defaultValue="USD" className="w-24" />
+          <Select name="customerGroupId" className="w-auto">
+            <option value="">All customers</option>
+            {groups.map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
+            ))}
+          </Select>
+          <Input
+            name="priority"
+            type="number"
+            defaultValue="0"
+            className="w-20"
+          />
+          <Button type="submit" variant="primary">
+            Create list
+          </Button>
+        </Form>
+      </Card>
+
+      {priceLists.length === 0 ? (
+        <EmptyState
+          title="No price lists yet"
+          description="Create a price list above to add group or quantity-specific pricing."
         />
-        <input
-          name="currency"
-          defaultValue="USD"
-          className="w-24 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-        />
-        <select
-          name="customerGroupId"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-        >
-          <option value="">All customers</option>
-          {groups.map((group) => (
-            <option key={group.id} value={group.id}>
-              {group.name}
-            </option>
+      ) : (
+        <div className="space-y-6">
+          {priceLists.map((list) => (
+            <Card key={list.id}>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-text text-lg font-semibold">{list.name}</h2>
+                <Badge tone="neutral">{list.currency}</Badge>
+                {list.customerGroup && (
+                  <Badge tone="accent">{list.customerGroup.name}</Badge>
+                )}
+              </div>
+              <p className="text-text-muted mt-1 text-sm">
+                Priority {list.priority} · {list._count.entries} entries
+              </p>
+
+              <Form
+                method="post"
+                className="mt-4 flex flex-wrap items-end gap-3"
+              >
+                <input type="hidden" name="intent" value="add-entry" />
+                <input type="hidden" name="priceListId" value={list.id} />
+                <Select name="variantId" className="w-auto">
+                  {variants.map((variant) => (
+                    <option key={variant.id} value={variant.id}>
+                      {variant.sku || variant.id}
+                    </option>
+                  ))}
+                </Select>
+                <Input
+                  name="priceCents"
+                  type="number"
+                  min="1"
+                  placeholder="Price (cents)"
+                  className="w-32"
+                />
+                <Input
+                  name="minQuantity"
+                  type="number"
+                  min="1"
+                  defaultValue="1"
+                  className="w-20"
+                />
+                <Button type="submit" variant="secondary">
+                  Add entry
+                </Button>
+              </Form>
+            </Card>
           ))}
-        </select>
-        <input
-          name="priority"
-          type="number"
-          defaultValue="0"
-          className="w-20 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-        />
-        <button
-          type="submit"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white"
-        >
-          Create list
-        </button>
-      </Form>
-
-      <section className="space-y-6">
-        {priceLists.map((list) => (
-          <div
-            key={list.id}
-            className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900"
-          >
-            <h2 className="text-lg font-medium">
-              {list.name} ({list.currency})
-              {list.customerGroup ? ` — ${list.customerGroup.name}` : ''}
-            </h2>
-            <p className="text-sm text-slate-500">
-              Priority {list.priority} · {list._count.entries} entries
-            </p>
-
-            <Form method="post" className="mt-4 flex flex-wrap gap-3">
-              <input type="hidden" name="intent" value="add-entry" />
-              <input type="hidden" name="priceListId" value={list.id} />
-              <select
-                name="variantId"
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-              >
-                {variants.map((variant) => (
-                  <option key={variant.id} value={variant.id}>
-                    {variant.sku || variant.id}
-                  </option>
-                ))}
-              </select>
-              <input
-                name="priceCents"
-                type="number"
-                min="1"
-                placeholder="Price (cents)"
-                className="w-32 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-              />
-              <input
-                name="minQuantity"
-                type="number"
-                min="1"
-                defaultValue="1"
-                className="w-20 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-              />
-              <button
-                type="submit"
-                className="rounded-md border border-slate-300 px-4 py-2 text-sm dark:border-slate-600"
-              >
-                Add entry
-              </button>
-            </Form>
-          </div>
-        ))}
-      </section>
+        </div>
+      )}
     </div>
   );
 }
