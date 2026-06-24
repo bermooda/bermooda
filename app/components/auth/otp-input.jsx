@@ -85,10 +85,7 @@ export default function OtpInput({
 
   return (
     <div>
-      <label
-        htmlFor="otp-0"
-        className="block text-sm/6 font-medium text-gray-900 dark:text-white"
-      >
+      <label htmlFor="otp-0" className="text-text block text-sm/6 font-medium">
         {label}
       </label>
       <div className="mt-2 flex justify-between gap-2">
@@ -107,15 +104,13 @@ export default function OtpInput({
             onKeyDown={(e) => handleKeyDown(index, e)}
             onPaste={index === 0 ? handlePaste : undefined}
             disabled={disabled}
-            className="dark:bg-surface-700 block w-full rounded-md bg-white px-3 py-3 text-center text-2xl font-semibold text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-500 dark:text-white dark:outline-white/10"
+            className="bg-surface text-text border-border focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-3 text-center text-2xl font-semibold outline-none focus:ring-2"
             aria-label={`Digit ${index + 1}`}
             autoComplete={index === 0 ? 'one-time-code' : 'off'}
           />
         ))}
       </div>
-      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        Code expires in 5 minutes
-      </p>
+      <p className="text-text-muted mt-2 text-xs">Code expires in 5 minutes</p>
     </div>
   );
 }
