@@ -3,6 +3,11 @@
 import { Form, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Card from '#/components/admin/card';
+import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
+import PageHeader from '#/components/admin/page-header';
+import Button from '#/components/ui/button';
 
 import {
   addCustomerToGroup,
@@ -72,102 +77,90 @@ export default function AdminCustomerGroupsRoute() {
   const { groups, customers, memberships } = useLoaderData();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-          Customer groups
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          B2B groups for price list targeting.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Customer groups"
+        subtitle="B2B groups for price list targeting."
+        className="mb-6"
+      />
 
-      <Form method="post" className="flex flex-wrap gap-3">
-        <input type="hidden" name="intent" value="create-group" />
-        <input
-          name="name"
-          placeholder="Group name"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-        />
-        <input
-          name="handle"
-          placeholder="handle"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-        />
-        <button
-          type="submit"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white"
-        >
-          Create group
-        </button>
-      </Form>
+      <div className="space-y-6">
+        <Card>
+          <Form method="post" className="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="intent" value="create-group" />
+            <Input name="name" placeholder="Group name" className="w-auto" />
+            <Input name="handle" placeholder="handle" className="w-auto" />
+            <Button type="submit" variant="primary">
+              Create group
+            </Button>
+          </Form>
+        </Card>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-lg font-medium">Groups</h2>
-        <ul className="mt-3 space-y-2 text-sm">
-          {groups.map((group) => (
-            <li key={group.id}>
-              {group.name} ({group.handle}) — {group._count.members} members,{' '}
-              {group._count.priceLists} price lists
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-lg font-medium">Add member</h2>
-        <Form method="post" className="mt-3 flex flex-wrap gap-3">
-          <input type="hidden" name="intent" value="add-member" />
-          <select
-            name="customerGroupId"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          >
+        <Card>
+          <h2 className="text-text text-lg font-semibold">Groups</h2>
+          <ul className="text-text-muted mt-3 space-y-2 text-sm">
             {groups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.name}
-              </option>
+              <li key={group.id}>
+                {group.name} ({group.handle}) — {group._count.members} members,{' '}
+                {group._count.priceLists} price lists
+              </li>
             ))}
-          </select>
-          <select
-            name="customerId"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          >
-            {customers.map((customer) => (
-              <option key={customer.id} value={customer.id}>
-                {customer.email}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white"
-          >
-            Add
-          </button>
-        </Form>
+          </ul>
+        </Card>
 
-        <ul className="mt-4 space-y-2 text-sm">
-          {memberships.map((row) => (
-            <li key={row.id} className="flex items-center gap-3">
-              <span>
-                {row.customer.email} → {row.group.name}
-              </span>
-              <Form method="post">
-                <input type="hidden" name="intent" value="remove-member" />
-                <input
-                  type="hidden"
-                  name="customerGroupId"
-                  value={row.customerGroupId}
-                />
-                <input type="hidden" name="customerId" value={row.customerId} />
-                <button type="submit" className="text-xs text-red-600">
-                  Remove
-                </button>
-              </Form>
-            </li>
-          ))}
-        </ul>
-      </section>
+        <Card>
+          <h2 className="text-text text-lg font-semibold">Add member</h2>
+          <Form method="post" className="mt-3 flex flex-wrap items-end gap-3">
+            <input type="hidden" name="intent" value="add-member" />
+            <Select name="customerGroupId" className="w-auto">
+              {groups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </Select>
+            <Select name="customerId" className="w-auto">
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.email}
+                </option>
+              ))}
+            </Select>
+            <Button type="submit" variant="primary">
+              Add
+            </Button>
+          </Form>
+
+          <ul className="text-text mt-4 space-y-2 text-sm">
+            {memberships.map((row) => (
+              <li key={row.id} className="flex items-center gap-3">
+                <span>
+                  {row.customer.email} → {row.group.name}
+                </span>
+                <Form method="post">
+                  <input type="hidden" name="intent" value="remove-member" />
+                  <input
+                    type="hidden"
+                    name="customerGroupId"
+                    value={row.customerGroupId}
+                  />
+                  <input
+                    type="hidden"
+                    name="customerId"
+                    value={row.customerId}
+                  />
+                  <button
+                    type="submit"
+                    className="text-danger text-xs hover:underline"
+                  >
+                    Remove
+                  </button>
+                </Form>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
     </div>
   );
 }

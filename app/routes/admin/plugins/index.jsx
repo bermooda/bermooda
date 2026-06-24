@@ -10,6 +10,16 @@ import {
   useNavigation,
 } from 'react-router';
 
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import EmptyState from '#/components/admin/empty-state';
+import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
+import PageHeader from '#/components/admin/page-header';
+import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
+import Button, { ButtonSubmit } from '#/components/ui/button';
+
 import { _registry } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
 
@@ -173,28 +183,6 @@ export async function action({ request }) {
 // ---------------------------------------------------------------------------
 
 /**
- * Enabled badge shown on active plugins.
- */
-function EnabledBadge() {
-  return (
-    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-      Enabled
-    </span>
-  );
-}
-
-/**
- * Disabled badge shown on inactive plugins.
- */
-function DisabledBadge() {
-  return (
-    <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-      Disabled
-    </span>
-  );
-}
-
-/**
  * Renders a single setting field based on its type.
  *
  * @param {{ setting: object, value: any }} props
@@ -203,34 +191,18 @@ function SettingField({ setting, value }) {
   const { key, label, type, options } = setting;
   const id = `setting-${key}`;
 
-  return (
-    <div>
-      {type !== 'toggle' && (
-        <label
-          htmlFor={id}
-          className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          {label ?? key}
-        </label>
-      )}
+  if (type === 'text') {
+    return (
+      <Field label={label ?? key} htmlFor={id}>
+        <Input id={id} type="text" name={key} defaultValue={value} />
+      </Field>
+    );
+  }
 
-      {type === 'text' && (
-        <input
-          id={id}
-          type="text"
-          name={key}
-          defaultValue={value}
-          className="dark:border-dark-600 dark:bg-dark-700 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:text-white"
-        />
-      )}
-
-      {type === 'select' && (
-        <select
-          id={id}
-          name={key}
-          defaultValue={value}
-          className="dark:border-dark-600 dark:bg-dark-700 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:text-white"
-        >
+  if (type === 'select') {
+    return (
+      <Field label={label ?? key} htmlFor={id}>
+        <Select id={id} name={key} defaultValue={value}>
           {(options ?? []).map((opt) => {
             const optValue = typeof opt === 'object' ? opt.value : opt;
             const optLabel = typeof opt === 'object' ? opt.label : opt;
@@ -240,29 +212,31 @@ function SettingField({ setting, value }) {
               </option>
             );
           })}
-        </select>
-      )}
+        </Select>
+      </Field>
+    );
+  }
 
-      {type === 'toggle' && (
-        <label className="flex cursor-pointer items-center gap-3">
-          <div className="relative">
-            <input
-              id={id}
-              type="checkbox"
-              name={key}
-              defaultChecked={value === true || value === 'true'}
-              className="peer sr-only"
-            />
-            <div className="dark:bg-dark-600 h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-500" />
-            <div className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-4" />
-          </div>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {label ?? key}
-          </span>
-        </label>
-      )}
-    </div>
-  );
+  if (type === 'toggle') {
+    return (
+      <label className="flex cursor-pointer items-center gap-3">
+        <div className="relative">
+          <input
+            id={id}
+            type="checkbox"
+            name={key}
+            defaultChecked={value === true || value === 'true'}
+            className="peer sr-only"
+          />
+          <div className="bg-surface-2 peer-checked:bg-accent h-5 w-9 rounded-full" />
+          <div className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-4" />
+        </div>
+        <span className="text-text text-sm font-medium">{label ?? key}</span>
+      </label>
+    );
+  }
+
+  return null;
 }
 
 /**
@@ -272,24 +246,16 @@ function SettingField({ setting, value }) {
  */
 function PluginSettingsForm({ manifest, values }) {
   const actionData = useActionData();
-  const navigation = useNavigation();
   const formRef = useRef(null);
-
-  const isSaving =
-    navigation.state === 'submitting' &&
-    navigation.formData?.get('intent') === 'save-settings' &&
-    navigation.formData?.get('pluginId') === manifest.id;
 
   const savedThisPlugin = actionData?.savedSettings === manifest.id;
 
   if (!manifest.settings?.length) return null;
 
   return (
-    <div className="dark:border-dark-700 dark:bg-dark-900/40 mt-4 rounded-lg border border-gray-200 bg-gray-50">
-      <div className="dark:border-dark-700 border-b border-gray-200 px-4 py-3">
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Plugin Settings
-        </h4>
+    <div className="border-border bg-surface-2 mt-4 rounded-lg border">
+      <div className="border-border border-b px-4 py-3">
+        <h4 className="text-text text-sm font-semibold">Plugin Settings</h4>
       </div>
 
       <Form ref={formRef} method="post" className="px-4 py-4">
@@ -306,25 +272,15 @@ function PluginSettingsForm({ manifest, values }) {
           ))}
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex items-center justify-between gap-3">
           {savedThisPlugin ? (
-            <p className="text-sm text-green-600 dark:text-green-400">
-              Settings saved.
-            </p>
+            <SuccessAlert message="Settings saved." />
           ) : actionData?.error ? (
-            <p className="text-sm text-red-600 dark:text-red-400">
-              {actionData.error}
-            </p>
+            <ErrorAlert message={actionData.error} />
           ) : (
             <span />
           )}
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {isSaving ? 'Saving…' : 'Save Settings'}
-          </button>
+          <ButtonSubmit>Save Settings</ButtonSubmit>
         </div>
       </Form>
     </div>
@@ -355,7 +311,7 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
   const values = pluginSettings[manifest.id] ?? {};
 
   return (
-    <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-5 transition-colors">
+    <Card padded={false} className="p-5">
       {/* Header row */}
       <div className="flex items-start gap-3">
         {/* Reorder buttons */}
@@ -367,7 +323,7 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
               type="submit"
               disabled={isFirst || isReordering}
               title="Move up"
-              className="rounded p-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 dark:hover:text-zinc-200"
+              className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
             >
               <ChevronUpIcon className="h-4 w-4" />
             </button>
@@ -379,7 +335,7 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
               type="submit"
               disabled={isLast || isReordering}
               title="Move down"
-              className="rounded p-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30 dark:hover:text-zinc-200"
+              className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
             >
               <ChevronDownIcon className="h-4 w-4" />
             </button>
@@ -389,17 +345,19 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
         {/* Main content */}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              {manifest.name}
-            </h3>
-            {isEnabled ? <EnabledBadge /> : <DisabledBadge />}
+            <h3 className="text-text text-sm font-semibold">{manifest.name}</h3>
+            {isEnabled ? (
+              <Badge tone="success">Enabled</Badge>
+            ) : (
+              <Badge tone="neutral">Disabled</Badge>
+            )}
           </div>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-text-muted mt-0.5 text-xs">
             v{manifest.version} &middot;{' '}
             <span className="font-mono">{manifest.id}</span>
           </p>
           {manifest.description && (
-            <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-300">
+            <p className="text-text-muted mt-1.5 text-sm">
               {manifest.description}
             </p>
           )}
@@ -411,7 +369,7 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
           {manifest.adminPath && (
             <a
               href={manifest.adminPath}
-              className="dark:border-dark-600 dark:hover:bg-dark-700 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 dark:text-gray-300"
+              className="border-border text-text hover:bg-surface-2 rounded-md border px-3 py-1.5 text-xs font-medium transition"
             >
               Plugin Admin &rarr;
             </a>
@@ -421,24 +379,13 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
           <Form method="post">
             <input type="hidden" name="intent" value={toggleIntent} />
             <input type="hidden" name="pluginId" value={manifest.id} />
-            <button
+            <Button
               type="submit"
+              variant={isEnabled ? 'danger' : 'secondary'}
               disabled={isToggling}
-              className={[
-                'rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50',
-                isEnabled
-                  ? 'border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/30'
-                  : 'border-indigo-600 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-400 dark:hover:bg-indigo-950/40',
-              ].join(' ')}
             >
-              {isToggling
-                ? isEnabled
-                  ? 'Disabling…'
-                  : 'Enabling…'
-                : isEnabled
-                  ? 'Disable'
-                  : 'Enable'}
-            </button>
+              {isEnabled ? 'Disable' : 'Enable'}
+            </Button>
           </Form>
         </div>
       </div>
@@ -447,7 +394,7 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
       {manifest.settings?.length > 0 && (
         <PluginSettingsForm manifest={manifest} values={values} />
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -465,30 +412,22 @@ export default function AdminPluginsRoute() {
 
   return (
     <div className="space-y-8">
-      {/* Page heading */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Plugins
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Manage installed plugins. Display order and enabled state are
-          persisted to settings.
-        </p>
-      </div>
+      <PageHeader
+        title="Plugins"
+        subtitle="Manage installed plugins. Display order and enabled state are persisted to settings."
+      />
 
       {/* Plugin list */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-text mb-3 text-lg font-semibold">
           Registered Plugins
         </h2>
 
         {plugins.length === 0 ? (
-          <div className="dark:border-dark-700 dark:bg-dark-800 rounded-xl border border-gray-200 bg-white p-8 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              No plugins registered. Plugins are loaded from{' '}
-              <span className="font-mono">app/plugins/</span> at startup.
-            </p>
-          </div>
+          <EmptyState
+            title="No plugins registered"
+            description="Plugins are loaded from app/plugins/ at startup."
+          />
         ) : (
           <div className="space-y-4">
             {plugins.map((manifest, idx) => (

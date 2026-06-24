@@ -69,10 +69,8 @@ export default function AdminPluginDispatcher() {
   if (data.status === 'not-found') {
     return (
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Plugin not found
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="text-text text-2xl font-bold">Plugin not found</h1>
+        <p className="text-text-muted text-sm">
           No plugin with ID <span className="font-mono">{data.pluginId}</span>{' '}
           is registered.
         </p>
@@ -83,10 +81,8 @@ export default function AdminPluginDispatcher() {
   if (data.status === 'no-admin-routes') {
     return (
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {data.manifest.name}
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="text-text text-2xl font-bold">{data.manifest.name}</h1>
+        <p className="text-text-muted text-sm">
           This plugin has no admin pages.
         </p>
       </div>
@@ -96,10 +92,8 @@ export default function AdminPluginDispatcher() {
   if (data.status === 'no-match') {
     return (
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {data.manifest.name}
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="text-text text-2xl font-bold">{data.manifest.name}</h1>
+        <p className="text-text-muted text-sm">
           This plugin has no admin pages for this path.
         </p>
       </div>
@@ -113,10 +107,8 @@ export default function AdminPluginDispatcher() {
   if (!PluginComponent) {
     return (
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {manifest.name}
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="text-text text-2xl font-bold">{manifest.name}</h1>
+        <p className="text-text-muted text-sm">
           This plugin has no admin pages for this path.
         </p>
       </div>

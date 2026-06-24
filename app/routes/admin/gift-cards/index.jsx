@@ -2,6 +2,13 @@
 
 import { Form, useLoaderData } from 'react-router';
 
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import Input from '#/components/admin/form/input';
+import PageHeader from '#/components/admin/page-header';
+import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
+import Button from '#/components/ui/button';
+
 import {
   generateGiftCardCode,
   issueGiftCard,
@@ -44,75 +51,76 @@ function formatMoney(cents, currency) {
   );
 }
 
+function statusTone(status) {
+  if (status === 'active') return 'success';
+  if (status === 'redeemed' || status === 'disabled') return 'neutral';
+  return 'neutral';
+}
+
 export default function AdminGiftCardsRoute() {
   const { giftCards, total } = useLoaderData();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-          Gift cards
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Issue gift cards redeemable at checkout.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Gift cards"
+        subtitle="Issue gift cards redeemable at checkout."
+        className="mb-6"
+      />
 
-      <Form method="post" className="flex flex-wrap gap-3">
-        <input type="hidden" name="intent" value="issue" />
-        <input
-          name="code"
-          placeholder="Code (optional)"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-        />
-        <input
-          name="balanceCents"
-          type="number"
-          min="1"
-          placeholder="Balance (cents)"
-          className="w-40 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-        />
-        <input
-          name="currency"
-          defaultValue="USD"
-          className="w-24 rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-        />
-        <button
-          type="submit"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white"
-        >
-          Issue card
-        </button>
-      </Form>
+      <Card className="mb-6">
+        <Form method="post" className="flex flex-wrap items-end gap-3">
+          <input type="hidden" name="intent" value="issue" />
+          <Input name="code" placeholder="Code (optional)" className="w-auto" />
+          <Input
+            name="balanceCents"
+            type="number"
+            min="1"
+            placeholder="Balance (cents)"
+            className="w-40"
+          />
+          <Input name="currency" defaultValue="USD" className="w-24" />
+          <Button type="submit" variant="primary">
+            Issue card
+          </Button>
+        </Form>
+      </Card>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-lg font-medium">Issued cards ({total})</h2>
-        <table className="mt-4 w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-700">
-              <th className="py-2">Code</th>
-              <th className="py-2">Balance</th>
-              <th className="py-2">Status</th>
-              <th className="py-2">Customer</th>
+      <h2 className="text-text mb-3 text-lg font-semibold">
+        Issued cards ({total})
+      </h2>
+      <Table>
+        <THead>
+          <tr>
+            <Th>Code</Th>
+            <Th>Balance</Th>
+            <Th>Status</Th>
+            <Th>Customer</Th>
+          </tr>
+        </THead>
+        <TBody>
+          {giftCards.length === 0 ? (
+            <tr>
+              <Td colSpan={4} className="py-8 text-center">
+                No gift cards issued yet.
+              </Td>
             </tr>
-          </thead>
-          <tbody>
-            {giftCards.map((card) => (
-              <tr
-                key={card.id}
-                className="border-b border-slate-100 dark:border-slate-800"
-              >
-                <td className="py-2 font-mono">{card.code}</td>
-                <td className="py-2">
+          ) : (
+            giftCards.map((card) => (
+              <tr key={card.id}>
+                <Td className="text-text font-mono">{card.code}</Td>
+                <Td className="text-text">
                   {formatMoney(card.balanceCents, card.currency)}
-                </td>
-                <td className="py-2">{card.status}</td>
-                <td className="py-2">{card.customer?.email ?? '—'}</td>
+                </Td>
+                <Td>
+                  <Badge tone={statusTone(card.status)}>{card.status}</Badge>
+                </Td>
+                <Td>{card.customer?.email ?? '—'}</Td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+            ))
+          )}
+        </TBody>
+      </Table>
     </div>
   );
 }

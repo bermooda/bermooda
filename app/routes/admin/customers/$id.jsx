@@ -2,16 +2,17 @@
 // Customer detail — header, edit form, addresses, order history.
 
 import clsx from 'clsx';
-import {
-  Form,
-  Link,
-  useActionData,
-  useLoaderData,
-  useNavigation,
-} from 'react-router';
+import { Form, Link, useActionData, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
+import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
+import Button, { ButtonSubmit } from '#/components/ui/button';
 
 import { recordAdminAudit } from '#/core/audit/index.server';
 import {
@@ -224,28 +225,17 @@ export async function action({ request, params }) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const ORDER_STATUS_CLASSES = {
-  pending:
-    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  paid: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  fulfilled:
-    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  refunded: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+const STATUS_TONES = {
+  pending: 'warn',
+  pending_payment: 'warn',
+  paid: 'accent',
+  fulfilled: 'success',
+  cancelled: 'danger',
+  refunded: 'neutral',
 };
 
 function StatusBadge({ status }) {
-  return (
-    <span
-      className={clsx(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize',
-        ORDER_STATUS_CLASSES[status] ??
-          'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-      )}
-    >
-      {status}
-    </span>
-  );
+  return <Badge tone={STATUS_TONES[status] ?? 'neutral'}>{status}</Badge>;
 }
 
 function formatCents(cents, currency = 'USD') {
@@ -258,14 +248,12 @@ function formatCents(cents, currency = 'USD') {
 
 function SectionCard({ title, children }) {
   return (
-    <div className="rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-      <div className="border-b border-gray-200 px-6 py-4 dark:border-zinc-700">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-          {title}
-        </h2>
+    <Card padded={false}>
+      <div className="border-border border-b px-6 py-4">
+        <h2 className="text-text text-base font-semibold">{title}</h2>
       </div>
       <div className="px-6 py-4">{children}</div>
-    </div>
+    </Card>
   );
 }
 
@@ -276,14 +264,12 @@ function SectionCard({ title, children }) {
 export default function AdminCustomerRoute() {
   const { customer } = useLoaderData();
   const actionData = useActionData();
-  const navigation = useNavigation();
-  const isSubmitting = navigation.state === 'submitting';
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       {/* Breadcrumb + Header */}
       <div>
-        <div className="mb-1 flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
+        <div className="text-text-muted mb-1 flex items-center gap-2 text-sm">
           <Link to="/admin/customers" className="hover:underline">
             Customers
           </Link>
@@ -291,10 +277,10 @@ export default function AdminCustomerRoute() {
           <span className="max-w-xs truncate">{customer.email}</span>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-text text-2xl font-bold">
             {customer.name ?? customer.email}
           </h1>
-          <span className="text-sm text-gray-500 dark:text-zinc-400">
+          <span className="text-text-muted text-sm">
             Joined{' '}
             {new Date(customer.createdAt).toLocaleDateString('en-US', {
               month: 'long',
@@ -304,86 +290,55 @@ export default function AdminCustomerRoute() {
           </span>
         </div>
         {customer.name && (
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-zinc-400">
-            {customer.email}
-          </p>
+          <p className="text-text-muted mt-0.5 text-sm">{customer.email}</p>
         )}
       </div>
 
       {/* Action feedback */}
-      {actionData?.ok && (
-        <div className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400">
-          Saved successfully.
-        </div>
-      )}
-      {actionData?.error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {actionData.error}
-        </div>
-      )}
+      {actionData?.ok && <SuccessAlert message="Saved successfully." />}
+      <ErrorAlert message={actionData?.error} />
 
       {/* Edit Customer */}
       <SectionCard title="Customer Details">
         <Form method="post" className="grid gap-4 sm:grid-cols-3">
           <input type="hidden" name="intent" value="update-customer" />
 
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-zinc-300">
-              Name
-            </label>
-            <input
+          <Field label="Name">
+            <Input
               type="text"
               name="name"
               defaultValue={customer.name ?? ''}
               placeholder="Jane Doe"
-              className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-zinc-300">
-              Phone
-            </label>
-            <input
+          <Field label="Phone">
+            <Input
               type="tel"
               name="phone"
               defaultValue={customer.phone ?? ''}
               placeholder="+1 555 000 0000"
-              className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-zinc-300">
-              Preferred Locale
-            </label>
-            <input
+          <Field label="Preferred Locale">
+            <Input
               type="text"
               name="preferredLocale"
               defaultValue={customer.preferredLocale ?? ''}
               placeholder="en, de, fr…"
-              className="w-full rounded-md border-0 bg-white px-3 py-1.5 text-sm shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-600 dark:placeholder:text-zinc-500"
             />
-          </div>
+          </Field>
 
           {/* Read-only email */}
-          <div className="sm:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-zinc-400">
-              Email (read-only)
-            </label>
-            <p className="rounded-md bg-gray-50 px-3 py-1.5 text-sm text-gray-700 ring-1 ring-gray-200 ring-inset dark:bg-zinc-800/50 dark:text-zinc-300 dark:ring-zinc-700">
+          <Field label="Email (read-only)" className="sm:col-span-2">
+            <p className="bg-surface-2 border-border text-text-muted rounded-md border px-3 py-1.5 text-sm">
               {customer.email}
             </p>
-          </div>
+          </Field>
 
           <div className="sm:col-span-3">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60"
-            >
-              {isSubmitting ? 'Saving…' : 'Save Changes'}
-            </button>
+            <ButtonSubmit>Save Changes</ButtonSubmit>
           </div>
         </Form>
       </SectionCard>
@@ -391,35 +346,31 @@ export default function AdminCustomerRoute() {
       {/* Addresses */}
       <SectionCard title={`Addresses (${customer.addresses.length})`}>
         {customer.addresses.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-zinc-500">
-            No addresses saved.
-          </p>
+          <p className="text-text-muted text-sm">No addresses saved.</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {customer.addresses.map((addr) => (
               <div
                 key={addr.id}
                 className={clsx(
-                  'relative rounded-lg p-4 ring-1',
+                  'relative rounded-lg border p-4',
                   addr.isDefault
-                    ? 'ring-indigo-300 bg-indigo-50/50 dark:ring-indigo-700 dark:bg-indigo-900/10'
-                    : 'ring-gray-200 bg-gray-50 dark:ring-zinc-700 dark:bg-zinc-800/40'
+                    ? 'border-accent bg-accent/5'
+                    : 'border-border bg-surface-2'
                 )}
               >
                 {addr.isDefault && (
-                  <span className="absolute top-3 right-3 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                  <Badge tone="accent" className="absolute top-3 right-3">
                     Default
-                  </span>
+                  </Badge>
                 )}
 
-                <address className="text-sm text-gray-700 not-italic dark:text-zinc-300">
+                <address className="text-text text-sm not-italic">
                   <p className="font-medium">
                     {addr.firstName} {addr.lastName}
                   </p>
                   {addr.company && (
-                    <p className="text-gray-500 dark:text-zinc-400">
-                      {addr.company}
-                    </p>
+                    <p className="text-text-muted">{addr.company}</p>
                   )}
                   <p>{addr.line1}</p>
                   {addr.line2 && <p>{addr.line2}</p>}
@@ -430,9 +381,7 @@ export default function AdminCustomerRoute() {
                   </p>
                   <p>{addr.country}</p>
                   {addr.phone && (
-                    <p className="mt-1 text-gray-500 dark:text-zinc-400">
-                      {addr.phone}
-                    </p>
+                    <p className="text-text-muted mt-1">{addr.phone}</p>
                   )}
                 </address>
 
@@ -445,29 +394,24 @@ export default function AdminCustomerRoute() {
                         value="set-default-address"
                       />
                       <input type="hidden" name="addressId" value={addr.id} />
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="rounded-md px-2.5 py-1 text-xs font-medium text-indigo-700 ring-1 ring-indigo-300 hover:bg-indigo-50 disabled:opacity-60 dark:text-indigo-400 dark:ring-indigo-700 dark:hover:bg-indigo-900/20"
-                      >
+                      <Button type="submit" variant="secondary">
                         Set Default
-                      </button>
+                      </Button>
                     </Form>
                   )}
                   <Form method="post">
                     <input type="hidden" name="intent" value="delete-address" />
                     <input type="hidden" name="addressId" value={addr.id} />
-                    <button
+                    <Button
                       type="submit"
-                      disabled={isSubmitting}
+                      variant="danger"
                       onClick={(e) => {
                         if (!confirm('Delete this address?'))
                           e.preventDefault();
                       }}
-                      className="rounded-md px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-red-300 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:ring-red-700 dark:hover:bg-red-900/20"
                     >
                       Delete
-                    </button>
+                    </Button>
                   </Form>
                 </div>
               </div>
@@ -479,57 +423,48 @@ export default function AdminCustomerRoute() {
       {/* GDPR & Privacy */}
       <SectionCard title="GDPR & Privacy">
         {customer.erasedAt ? (
-          <p className="text-sm text-amber-700 dark:text-amber-400">
+          <p className="text-warn text-sm">
             This customer was erased on{' '}
             {new Date(customer.erasedAt).toLocaleString('en')}. Personal data
             has been anonymized; order history is preserved.
           </p>
         ) : (
           <div className="space-y-4">
-            <Form method="post" className="flex flex-wrap gap-4">
+            <Form method="post" className="flex flex-wrap items-center gap-4">
               <input type="hidden" name="intent" value="update-consent" />
-              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-zinc-300">
+              <label className="text-text flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   name="analytics"
                   defaultChecked={customer.consent.analytics}
-                  className="rounded border-gray-300"
                 />
                 Analytics consent
               </label>
-              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-zinc-300">
+              <label className="text-text flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   name="marketing"
                   defaultChecked={customer.consent.marketing}
-                  className="rounded border-gray-300"
                 />
                 Marketing consent
               </label>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
-              >
+              <Button type="submit" variant="primary">
                 Save consent
-              </button>
+              </Button>
             </Form>
 
-            <div className="flex flex-wrap gap-3 border-t border-gray-200 pt-4 dark:border-zinc-700">
+            <div className="border-border flex flex-wrap gap-3 border-t pt-4">
               <Form method="post">
                 <input type="hidden" name="intent" value="export-data" />
-                <button
-                  type="submit"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-indigo-700 ring-1 ring-indigo-300 hover:bg-indigo-50 dark:text-indigo-400 dark:ring-indigo-700 dark:hover:bg-indigo-900/20"
-                >
+                <Button type="submit" variant="secondary">
                   Export customer data (JSON)
-                </button>
+                </Button>
               </Form>
               <Form method="post">
                 <input type="hidden" name="intent" value="erase-customer" />
-                <button
+                <Button
                   type="submit"
-                  disabled={isSubmitting}
+                  variant="danger"
                   onClick={(e) => {
                     if (
                       !confirm(
@@ -539,10 +474,9 @@ export default function AdminCustomerRoute() {
                       e.preventDefault();
                     }
                   }}
-                  className="rounded-md px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-red-300 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:ring-red-700 dark:hover:bg-red-900/20"
                 >
                   Erase personal data
-                </button>
+                </Button>
               </Form>
             </div>
           </div>
@@ -552,60 +486,45 @@ export default function AdminCustomerRoute() {
       {/* Order History */}
       <SectionCard title="Order History">
         {customer.orders.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-zinc-500">
-            No orders yet.
-          </p>
+          <p className="text-text-muted text-sm">No orders yet.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-zinc-800">
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Order #
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Status
-                  </th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Total
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                    Date
-                  </th>
+          <Table>
+            <THead>
+              <tr>
+                <Th>Order #</Th>
+                <Th>Status</Th>
+                <Th className="text-right">Total</Th>
+                <Th>Date</Th>
+              </tr>
+            </THead>
+            <TBody>
+              {customer.orders.map((order) => (
+                <tr key={order.id}>
+                  <Td>
+                    <Link
+                      to={`/admin/orders/${order.id}`}
+                      className="text-accent font-mono text-sm font-medium hover:underline"
+                    >
+                      {order.orderNumber}
+                    </Link>
+                  </Td>
+                  <Td>
+                    <StatusBadge status={order.status} />
+                  </Td>
+                  <Td className="text-text text-right">
+                    {formatCents(order.totalCents, order.currency)}
+                  </Td>
+                  <Td>
+                    {new Date(order.createdAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </Td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                {customer.orders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-gray-50 dark:hover:bg-zinc-800/60"
-                  >
-                    <td className="px-3 py-2">
-                      <Link
-                        to={`/admin/orders/${order.id}`}
-                        className="font-mono text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                      >
-                        {order.orderNumber}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2">
-                      <StatusBadge status={order.status} />
-                    </td>
-                    <td className="px-3 py-2 text-right text-sm text-gray-700 dark:text-zinc-300">
-                      {formatCents(order.totalCents, order.currency)}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">
-                      {new Date(order.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </TBody>
+          </Table>
         )}
       </SectionCard>
     </div>
