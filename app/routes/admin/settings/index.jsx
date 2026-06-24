@@ -11,7 +11,7 @@ import {
 import bcrypt from 'bcryptjs';
 import clsx from 'clsx';
 import { useState } from 'react';
-import { useFetcher, useLoaderData } from 'react-router';
+import { useFetcher, useLoaderData, useLocation } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import prisma from '#/libs/prisma.server';
@@ -23,8 +23,12 @@ import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
 import Tabs from '#/components/admin/tabs';
 import Button from '#/components/ui/button';
 
+import { getRequestLocale } from '#/core/i18n/index.server';
 import { hasPermission } from '#/core/rbac/index.server';
 import { get, set } from '#/core/settings/index.server';
+
+const ADMIN_AVAILABLE_LOCALES = ['en', 'de', 'fr'];
+const ADMIN_LOCALE_LABELS = { en: 'English', de: 'Deutsch', fr: 'Français' };
 
 const CHECKBOX_CLASS =
   'border-border text-accent focus:ring-accent bg-surface h-4 w-4 rounded';
@@ -79,7 +83,9 @@ const EMAIL_TEMPLATES = [
 // Loader
 // ---------------------------------------------------------------------------
 
-export async function loader() {
+export async function loader({ request }) {
+  const adminLocale = await getRequestLocale(request);
+
   const [
     shopName,
     contactEmail,
@@ -124,6 +130,8 @@ export async function loader() {
     taxMode: taxMode ?? 'exclusive',
     taxRegions: taxRegions ?? [],
     shippingZones: shippingZones ?? [],
+    adminLocale,
+    adminAvailableLocales: ADMIN_AVAILABLE_LOCALES,
     users: users.map((u) => ({
       ...u,
       createdAt: u.createdAt.toISOString(),
@@ -325,66 +333,105 @@ function FieldLabel({ children }) {
 // Tab: General
 // ---------------------------------------------------------------------------
 
+function AdminLocaleField({ adminLocale, availableLocales }) {
+  const fetcher = useFetcher();
+  const location = useLocation();
+  const returnTo = location.pathname + location.search;
+
+  if (!availableLocales || availableLocales.length <= 1) return null;
+
+  return (
+    <fetcher.Form method="post" action="/api/set-locale">
+      <input type="hidden" name="returnTo" value={returnTo} />
+      <FieldLabel>Admin Interface Language</FieldLabel>
+      <select
+        name="locale"
+        defaultValue={adminLocale}
+        onChange={(event) => event.currentTarget.form.requestSubmit()}
+        className={selectClass()}
+      >
+        {availableLocales.map((locale) => (
+          <option key={locale} value={locale}>
+            {ADMIN_LOCALE_LABELS[locale] ?? locale}
+          </option>
+        ))}
+      </select>
+      <p className="text-text-muted mt-1 text-xs">
+        Language used in the admin back office.
+      </p>
+    </fetcher.Form>
+  );
+}
+
 function GeneralTab({ data }) {
   const fetcher = useFetcher();
 
   return (
     <SectionCard title="General Settings">
-      <fetcher.Form method="post" className="max-w-lg space-y-4">
-        <input type="hidden" name="intent" value="save-general" />
-        <div>
-          <FieldLabel>Shop Name</FieldLabel>
-          <input
-            type="text"
-            name="shopName"
-            defaultValue={data.shopName}
-            placeholder="My Awesome Store"
-            className={inputClass()}
-          />
-        </div>
-        <div>
-          <FieldLabel>Contact Email</FieldLabel>
-          <input
-            type="email"
-            name="contactEmail"
-            defaultValue={data.contactEmail}
-            placeholder="hello@example.com"
-            className={inputClass()}
-          />
-        </div>
-        <div>
-          <FieldLabel>Default Locale</FieldLabel>
-          <select
-            name="defaultLocale"
-            defaultValue={data.defaultLocale}
-            className={selectClass()}
-          >
-            {(data.locales.length > 0 ? data.locales : ALL_LOCALES).map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <FieldLabel>Default Currency</FieldLabel>
-          <select
-            name="defaultCurrency"
-            defaultValue={data.defaultCurrency}
-            className={selectClass()}
-          >
-            {(data.currencies.length > 0
-              ? data.currencies
-              : ALL_CURRENCIES
-            ).map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-        <SaveButton fetcher={fetcher} intent="save-general" />
-      </fetcher.Form>
+      <div className="max-w-lg space-y-6">
+        <fetcher.Form method="post" className="space-y-4">
+          <input type="hidden" name="intent" value="save-general" />
+          <div>
+            <FieldLabel>Shop Name</FieldLabel>
+            <input
+              type="text"
+              name="shopName"
+              defaultValue={data.shopName}
+              placeholder="My Awesome Store"
+              className={inputClass()}
+            />
+          </div>
+          <div>
+            <FieldLabel>Contact Email</FieldLabel>
+            <input
+              type="email"
+              name="contactEmail"
+              defaultValue={data.contactEmail}
+              placeholder="hello@example.com"
+              className={inputClass()}
+            />
+          </div>
+          <div>
+            <FieldLabel>Default Locale</FieldLabel>
+            <select
+              name="defaultLocale"
+              defaultValue={data.defaultLocale}
+              className={selectClass()}
+            >
+              {(data.locales.length > 0 ? data.locales : ALL_LOCALES).map(
+                (l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                )
+              )}
+            </select>
+          </div>
+          <div>
+            <FieldLabel>Default Currency</FieldLabel>
+            <select
+              name="defaultCurrency"
+              defaultValue={data.defaultCurrency}
+              className={selectClass()}
+            >
+              {(data.currencies.length > 0
+                ? data.currencies
+                : ALL_CURRENCIES
+              ).map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <SaveButton fetcher={fetcher} intent="save-general" />
+        </fetcher.Form>
+
+        <AdminLocaleField
+          adminLocale={data.adminLocale}
+          availableLocales={data.adminAvailableLocales}
+        />
+      </div>
     </SectionCard>
   );
 }
