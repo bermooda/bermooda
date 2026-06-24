@@ -185,7 +185,7 @@ function SidebarContent({ onClose }) {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="border-border flex items-center justify-between border-b px-4 py-4">
+      <div className="flex items-center justify-between px-4 py-4">
         <Link
           to="/admin/dashboard"
           className="text-text flex items-center gap-2 px-1"
