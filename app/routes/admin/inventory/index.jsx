@@ -4,6 +4,10 @@
 import { Form, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Card from '#/components/admin/card';
+import Input from '#/components/admin/form/input';
+import PageHeader from '#/components/admin/page-header';
+import Button from '#/components/ui/button';
 
 import {
   ensureDefaultLocation,
@@ -71,104 +75,91 @@ export default function AdminInventoryRoute() {
   const { locations, variants, levelsByVariant } = useLoaderData();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-          Inventory by location
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Stock levels per warehouse location. Totals sync to variant inventory
-          counts.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Inventory by location"
+        subtitle="Stock levels per warehouse location. Totals sync to variant inventory counts."
+        className="mb-6"
+      />
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-lg font-medium text-slate-900 dark:text-white">
-          Locations
-        </h2>
-        <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
-          {locations.map((location) => (
-            <li key={location.id}>
-              {location.name} ({location.code})
-              {location.isDefault ? ' — default' : ''}
-            </li>
-          ))}
-        </ul>
+      <div className="space-y-6">
+        <Card>
+          <h2 className="text-text text-lg font-semibold">Locations</h2>
+          <ul className="text-text-muted mt-3 space-y-2 text-sm">
+            {locations.map((location) => (
+              <li key={location.id}>
+                {location.name} ({location.code})
+                {location.isDefault ? ' — default' : ''}
+              </li>
+            ))}
+          </ul>
 
-        <Form method="post" className="mt-4 flex flex-wrap gap-3">
-          <input type="hidden" name="intent" value="create-location" />
-          <input
-            name="name"
-            placeholder="Location name"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          />
-          <input
-            name="code"
-            placeholder="code"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-          />
-          <button
-            type="submit"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white"
+          <Form
+            method="post"
+            className="mt-4 flex flex-wrap items-center gap-3"
           >
-            Add location
-          </button>
-        </Form>
-      </section>
+            <input type="hidden" name="intent" value="create-location" />
+            <Input name="name" placeholder="Location name" className="w-auto" />
+            <Input name="code" placeholder="code" className="w-auto" />
+            <Button type="submit" variant="primary">
+              Add location
+            </Button>
+          </Form>
+        </Card>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-lg font-medium text-slate-900 dark:text-white">
-          Variant stock
-        </h2>
-        <div className="mt-4 space-y-6">
-          {variants.map((variant) => (
-            <div
-              key={variant.id}
-              className="border-b border-slate-100 pb-4 dark:border-slate-800"
-            >
-              <p className="font-medium text-slate-800 dark:text-slate-100">
-                {variant.sku || variant.id}{' '}
-                <span className="text-slate-500">
-                  (total: {variant.inventoryCount})
-                </span>
-              </p>
-              <div className="mt-2 flex flex-wrap gap-4">
-                {(levelsByVariant[variant.id] ?? []).map((level) => (
-                  <Form
-                    key={level.id}
-                    method="post"
-                    className="flex items-center gap-2 text-sm"
-                  >
-                    <input type="hidden" name="intent" value="update-level" />
-                    <input type="hidden" name="variantId" value={variant.id} />
-                    <input
-                      type="hidden"
-                      name="locationId"
-                      value={level.locationId}
-                    />
-                    <span className="text-slate-600 dark:text-slate-300">
-                      {level.location.name}
-                    </span>
-                    <input
-                      name="quantity"
-                      type="number"
-                      min="0"
-                      defaultValue={level.quantity}
-                      className="w-20 rounded-md border border-slate-300 px-2 py-1 dark:border-slate-600 dark:bg-slate-800"
-                    />
-                    <button
-                      type="submit"
-                      className="rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-600"
+        <Card>
+          <h2 className="text-text text-lg font-semibold">Variant stock</h2>
+          <div className="mt-4 space-y-6">
+            {variants.map((variant) => (
+              <div
+                key={variant.id}
+                className="border-border border-b pb-4 last:border-b-0 last:pb-0"
+              >
+                <p className="text-text font-medium">
+                  {variant.sku || variant.id}{' '}
+                  <span className="text-text-muted">
+                    (total: {variant.inventoryCount})
+                  </span>
+                </p>
+                <div className="mt-2 flex flex-wrap gap-4">
+                  {(levelsByVariant[variant.id] ?? []).map((level) => (
+                    <Form
+                      key={level.id}
+                      method="post"
+                      className="flex items-center gap-2 text-sm"
                     >
-                      Save
-                    </button>
-                  </Form>
-                ))}
+                      <input type="hidden" name="intent" value="update-level" />
+                      <input
+                        type="hidden"
+                        name="variantId"
+                        value={variant.id}
+                      />
+                      <input
+                        type="hidden"
+                        name="locationId"
+                        value={level.locationId}
+                      />
+                      <span className="text-text-muted">
+                        {level.location.name}
+                      </span>
+                      <Input
+                        name="quantity"
+                        type="number"
+                        min="0"
+                        defaultValue={level.quantity}
+                        className="w-20"
+                      />
+                      <Button type="submit" variant="secondary">
+                        Save
+                      </Button>
+                    </Form>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
