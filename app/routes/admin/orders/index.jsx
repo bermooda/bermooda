@@ -2,10 +2,17 @@
 // Orders admin list — paginated table with status filter and search.
 
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
 import { Form, Link, useLoaderData, useSearchParams } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import Badge from '#/components/admin/badge';
+import Card from '#/components/admin/card';
+import { controlClasses } from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
+import PageHeader from '#/components/admin/page-header';
+import Pagination from '#/components/admin/pagination';
+import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import { ButtonSubmit } from '#/components/ui/button';
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -73,30 +80,17 @@ export async function loader({ request }) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const STATUS_CLASSES = {
-  pending:
-    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  pending_payment:
-    'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-  paid: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  fulfilled:
-    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  refunded: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+const STATUS_TONES = {
+  pending: 'warn',
+  pending_payment: 'warn',
+  paid: 'accent',
+  fulfilled: 'success',
+  cancelled: 'danger',
+  refunded: 'neutral',
 };
 
 function StatusBadge({ status }) {
-  return (
-    <span
-      className={clsx(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize',
-        STATUS_CLASSES[status] ??
-          'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-      )}
-    >
-      {status}
-    </span>
-  );
+  return <Badge tone={STATUS_TONES[status] ?? 'neutral'}>{status}</Badge>;
 }
 
 function formatCents(cents, currency = 'USD') {
@@ -105,6 +99,14 @@ function formatCents(cents, currency = 'USD') {
     currency,
     minimumFractionDigits: 2,
   }).format(cents / 100);
+}
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 const STATUS_OPTIONS = [
@@ -134,145 +136,110 @@ export default function AdminOrdersRoute() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Orders
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {total} order{total !== 1 ? 's' : ''}
-        </p>
-      </div>
+      <PageHeader
+        title="Orders"
+        subtitle={`${total} order${total !== 1 ? 's' : ''}`}
+        className="mb-6"
+      />
 
       {/* Filters */}
-      <Form method="get" className="mb-4 flex flex-wrap gap-3">
+      <Form method="get" className="mb-4 flex flex-col gap-3 sm:flex-row">
         {/* Search */}
-        <div className="relative max-w-sm flex-1">
-          <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <div className="relative sm:max-w-sm sm:flex-1">
+          <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <input
             type="search"
             name="q"
             defaultValue={q}
             placeholder="Order # or email…"
-            className="w-full rounded-md border-0 bg-white py-2 pr-3 pl-9 text-sm text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-700 dark:placeholder:text-zinc-500"
+            className={`${controlClasses} pl-9`}
           />
         </div>
 
         {/* Status filter */}
-        <select
-          name="status"
-          defaultValue={status}
-          className="rounded-md border-0 bg-white py-2 pr-8 pl-3 text-sm text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset focus:ring-2 focus:ring-indigo-600 focus:ring-inset dark:bg-zinc-800 dark:text-white dark:ring-zinc-700"
-        >
+        <Select name="status" defaultValue={status} className="sm:w-44">
           {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
           ))}
-        </select>
+        </Select>
 
-        <button
-          type="submit"
-          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-        >
-          Filter
-        </button>
+        <ButtonSubmit>Filter</ButtonSubmit>
       </Form>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-200 dark:bg-zinc-900 dark:ring-zinc-700">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-          <thead>
-            <tr className="bg-gray-50 dark:bg-zinc-800">
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                Order #
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                Customer
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                Status
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                Total
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-                Created
-              </th>
+      {/* Table (md+) */}
+      <Table className="hidden md:block">
+        <THead>
+          <tr>
+            <Th>Order #</Th>
+            <Th>Customer</Th>
+            <Th>Status</Th>
+            <Th className="text-right">Total</Th>
+            <Th>Created</Th>
+          </tr>
+        </THead>
+        <TBody>
+          {rows.length === 0 && (
+            <tr>
+              <Td colSpan={5} className="py-8 text-center">
+                No orders found.
+              </Td>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-            {rows.length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-8 text-center text-sm text-gray-400 dark:text-zinc-500"
+          )}
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <Td>
+                <Link
+                  to={`/admin/orders/${row.id}`}
+                  className="text-accent font-mono text-sm font-medium hover:underline"
                 >
-                  No orders found.
-                </td>
-              </tr>
-            )}
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="hover:bg-gray-50 dark:hover:bg-zinc-800/60"
-              >
-                <td className="px-4 py-3">
-                  <Link
-                    to={`/admin/orders/${row.id}`}
-                    className="font-mono text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-                  >
+                  {row.orderNumber}
+                </Link>
+              </Td>
+              <Td className="text-text">{row.email}</Td>
+              <Td>
+                <StatusBadge status={row.status} />
+              </Td>
+              <Td className="text-text text-right">
+                {formatCents(row.totalCents, row.currency)}
+              </Td>
+              <Td>{formatDate(row.createdAt)}</Td>
+            </tr>
+          ))}
+        </TBody>
+      </Table>
+
+      {/* Card list (mobile) */}
+      <div className="space-y-3 md:hidden">
+        {rows.length === 0 ? (
+          <Card className="text-text-muted text-center text-sm">
+            No orders found.
+          </Card>
+        ) : (
+          rows.map((row) => (
+            <Link key={row.id} to={`/admin/orders/${row.id}`} className="block">
+              <Card className="space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="text-accent font-mono text-sm font-medium">
                     {row.orderNumber}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-700 dark:text-zinc-300">
-                  {row.email}
-                </td>
-                <td className="px-4 py-3">
+                  </span>
                   <StatusBadge status={row.status} />
-                </td>
-                <td className="px-4 py-3 text-right text-sm text-gray-700 dark:text-zinc-300">
-                  {formatCents(row.totalCents, row.currency)}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400">
-                  {new Date(row.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+                <p className="text-text truncate text-sm">{row.email}</p>
+                <div className="text-text-muted flex items-center justify-between text-xs">
+                  <span className="text-text font-medium">
+                    {formatCents(row.totalCents, row.currency)}
+                  </span>
+                  <span>{formatDate(row.createdAt)}</span>
+                </div>
+              </Card>
+            </Link>
+          ))
+        )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-gray-600 dark:text-zinc-400">
-          <span>
-            Page {page} of {totalPages}
-          </span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => goToPage(page - 1)}
-              className="rounded-md px-3 py-1.5 ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-40 dark:ring-zinc-700 dark:hover:bg-zinc-800"
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => goToPage(page + 1)}
-              className="rounded-md px-3 py-1.5 ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-40 dark:ring-zinc-700 dark:hover:bg-zinc-800"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
     </div>
   );
 }
