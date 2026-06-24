@@ -29,9 +29,7 @@ export default function PageHeader({
         <h1 className="text-text truncate text-2xl font-bold tracking-tight">
           {title}
         </h1>
-        {subtitle && (
-          <p className="text-text-muted mt-1 text-sm">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-text-muted mt-1 text-sm">{subtitle}</p>}
       </div>
       {actions && (
         <div className="flex flex-wrap items-center gap-2">{actions}</div>

@@ -176,9 +176,7 @@ function NavLink({ item, onClick }) {
     >
       <item.Icon
         className={`h-5 w-5 flex-shrink-0 ${
-          active
-            ? 'text-accent'
-            : 'text-text-muted/80 group-hover:text-text'
+          active ? 'text-accent' : 'text-text-muted/80 group-hover:text-text'
         }`}
         aria-hidden="true"
       />

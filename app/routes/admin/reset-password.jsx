@@ -193,9 +193,7 @@ export default function AdminResetPasswordRoute() {
           </div>
 
           {passwordError && (
-            <p className="text-danger text-sm">
-              {passwordError}
-            </p>
+            <p className="text-danger text-sm">{passwordError}</p>
           )}
         </div>
 

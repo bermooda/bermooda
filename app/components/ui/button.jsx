@@ -17,8 +17,7 @@ const VARIANTS = {
     'bg-surface text-text border border-border hover:bg-surface-2 focus-visible:outline-accent',
   ghost:
     'bg-transparent text-text hover:bg-surface-2 focus-visible:outline-accent',
-  danger:
-    'bg-danger text-white hover:opacity-90 focus-visible:outline-danger',
+  danger: 'bg-danger text-white hover:opacity-90 focus-visible:outline-danger',
 };
 
 /**
@@ -41,7 +40,8 @@ export default function Button({
   children,
   ...props
 }) {
-  const resolvedVariant = variant ?? (type === 'submit' ? 'primary' : 'secondary');
+  const resolvedVariant =
+    variant ?? (type === 'submit' ? 'primary' : 'secondary');
 
   const buttonClasses = clsx(
     'flex items-center justify-center rounded-md px-3 py-1.5 text-sm leading-6 font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2 disabled:opacity-70',
