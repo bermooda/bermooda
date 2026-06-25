@@ -60,6 +60,18 @@ export default function CommandPalette({ open, onOpenChange }) {
     }
   }, [filteredItems.length, selectedIndex]);
 
+  useEffect(() => {
+    if (!open || filteredItems.length === 0) return;
+
+    const frame = requestAnimationFrame(() => {
+      document
+        .getElementById(`${listboxId}-item-${selectedIndex}`)
+        ?.scrollIntoView({ block: 'nearest' });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [open, filteredItems.length, listboxId, selectedIndex]);
+
   /**
    * Navigate to the selected command item and close the palette.
    *
@@ -175,7 +187,7 @@ export default function CommandPalette({ open, onOpenChange }) {
                             onMouseEnter={() => setSelectedIndex(itemIndex)}
                             onClick={() => selectItem(item)}
                             className={clsx(
-                              'group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
+                              'group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm',
                               isSelected
                                 ? 'bg-accent text-accent-fg'
                                 : 'text-text hover:bg-surface-2'
