@@ -9,6 +9,7 @@ import {
 import {
   ArrowRightStartOnRectangleIcon,
   Bars3Icon,
+  ChevronUpIcon,
   GlobeAltIcon,
   MagnifyingGlassIcon,
   MoonIcon,
@@ -19,6 +20,7 @@ import { UserIcon as UserIconSolid } from '@heroicons/react/24/solid';
 import { useState } from 'react';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 
+import config from '#/config';
 import { authenticate } from '#/libs/auth/admin.server';
 import useCommandPalette, {
   getCommandPaletteShortcutLabel,
@@ -104,7 +106,7 @@ function AdminUserMenu() {
   return (
     <Menu>
       <MenuButton className="text-text data-active:bg-surface-2 data-hover:bg-surface-2 flex w-full cursor-default items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm font-medium">
-        <span className="flex min-w-0 items-center gap-3">
+        <span className="flex min-w-0 flex-1 items-center gap-3">
           <span className="border-border bg-surface-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
             <UserIconSolid className="text-text-muted h-5 w-5" />
           </span>
@@ -117,6 +119,10 @@ function AdminUserMenu() {
             </span>
           </span>
         </span>
+        <ChevronUpIcon
+          className="text-text-muted h-4 w-4 shrink-0"
+          aria-hidden="true"
+        />
       </MenuButton>
 
       <MenuItems
@@ -177,18 +183,23 @@ function AdminUserMenu() {
  */
 function SidebarContent({ onClose, onOpenCommandPalette }) {
   const shortcutLabel = getCommandPaletteShortcutLabel();
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+
+  function handleNavScroll(event) {
+    setHeaderScrolled(event.currentTarget.scrollTop > 0);
+  }
 
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 px-4 py-4">
+      <div className="relative flex items-center justify-between gap-2 px-4 py-4">
         <Link
           to="/admin/dashboard"
           className="text-text flex min-w-0 items-center gap-2 px-1"
           onClick={onClose}
         >
           <Logo alt="Admin" className="-m-1 h-7 w-auto shrink-0" />
-          <span className="truncate text-base font-bold">Admin</span>
+          <span className="truncate text-base font-bold">{config.appName}</span>
         </Link>
 
         <div className="flex shrink-0 items-center gap-1">
@@ -210,11 +221,21 @@ function SidebarContent({ onClose, onOpenCommandPalette }) {
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
+
+        <div
+          aria-hidden="true"
+          className={`bg-border/50 pointer-events-none absolute inset-x-0 bottom-0 h-px transition-opacity duration-200 ${
+            headerScrolled ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
       </div>
 
       {/* Nav */}
-      <div className="flex h-full min-h-0 flex-col overflow-y-auto">
-        <nav className="flex-1 space-y-6 px-3 py-4">
+      <div
+        className="min-h-0 flex-1 overflow-y-auto"
+        onScroll={handleNavScroll}
+      >
+        <nav className="space-y-6 px-3 py-4">
           {NAV_GROUPS.map((group) => (
             <div key={group.label} className="space-y-1">
               <p className="text-text-muted px-3 pb-1 text-xs font-semibold tracking-wider uppercase">
@@ -226,11 +247,11 @@ function SidebarContent({ onClose, onOpenCommandPalette }) {
             </div>
           ))}
         </nav>
+      </div>
 
-        {/* User menu at the bottom */}
-        <div className="border-border mt-auto border-t p-3">
-          <AdminUserMenu />
-        </div>
+      {/* User menu pinned to the bottom */}
+      <div className="border-border/50 bg-surface shrink-0 border-t p-3">
+        <AdminUserMenu />
       </div>
     </div>
   );
