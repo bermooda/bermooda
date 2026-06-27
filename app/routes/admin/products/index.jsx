@@ -2,16 +2,22 @@
 // Products admin list — paginated table with search, status, variant count,
 // category badges and a "New Product" button.
 
-import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
+import {
+  CubeIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+} from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData, useSearchParams } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 import Badge from '#/components/admin/badge';
-import Card from '#/components/admin/card';
+import EmptyState from '#/components/admin/empty-state';
 import { controlClasses } from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
-import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import Stat from '#/components/admin/stat';
+import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
+import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -39,8 +45,14 @@ export async function loader({ request }) {
 
   const whereClause = productIds !== null ? { id: { in: productIds } } : {};
 
-  const [total, products] = await Promise.all([
+  const [total, publishedCount, draftCount, products] = await Promise.all([
     prisma.product.count({ where: whereClause }),
+    prisma.product.count({
+      where: { ...whereClause, publishedAt: { not: null } },
+    }),
+    prisma.product.count({
+      where: { ...whereClause, publishedAt: null },
+    }),
     prisma.product.findMany({
       where: whereClause,
       orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
@@ -78,24 +90,37 @@ export async function loader({ request }) {
     categoryTranslations.map((t) => [t.entityId, t.value])
   );
 
-  // Fetch slugs for display
+  // Fetch slugs and titles for display
   const productIdList = products.map((p) => p.id);
-  const slugs =
+  const [slugs, titles] = await Promise.all([
     productIdList.length > 0
-      ? await prisma.slug.findMany({
+      ? prisma.slug.findMany({
           where: {
             entityType: 'product',
             entityId: { in: productIdList },
             locale: 'en',
           },
         })
-      : [];
+      : [],
+    productIdList.length > 0
+      ? prisma.translation.findMany({
+          where: {
+            entityType: 'product',
+            entityId: { in: productIdList },
+            locale: 'en',
+            field: 'title',
+          },
+        })
+      : [],
+  ]);
   const slugMap = Object.fromEntries(slugs.map((s) => [s.entityId, s.slug]));
+  const titleMap = Object.fromEntries(titles.map((t) => [t.entityId, t.value]));
 
   const rows = products.map((p) => ({
     id: p.id,
     idPrefix: p.id.slice(0, 8),
     slug: slugMap[p.id] ?? null,
+    title: titleMap[p.id] ?? null,
     published: p.publishedAt !== null,
     publishedAt: p.publishedAt?.toISOString() ?? null,
     variantCount: p.variants.length,
@@ -109,6 +134,8 @@ export async function loader({ request }) {
   return {
     rows,
     total,
+    publishedCount,
+    draftCount,
     page,
     pageSize: PAGE_SIZE,
     totalPages: Math.ceil(total / PAGE_SIZE),
@@ -145,7 +172,8 @@ function formatDate(iso) {
 // ---------------------------------------------------------------------------
 
 export default function AdminProductsRoute() {
-  const { rows, total, page, totalPages, q } = useLoaderData();
+  const { rows, total, publishedCount, draftCount, page, totalPages, q } =
+    useLoaderData();
   const [, setSearchParams] = useSearchParams();
 
   function goToPage(p) {
@@ -160,125 +188,169 @@ export default function AdminProductsRoute() {
     <div>
       <PageHeader
         title="Products"
-        subtitle={`${total} product${total !== 1 ? 's' : ''}`}
+        subtitle="Manage your catalog, variants, and pricing."
         actions={
           <Link
             to="/admin/products/new"
-            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
-            New Product
+            New product
           </Link>
         }
-        className="mb-6"
       />
 
-      {/* Search */}
-      <Form method="get" className="mb-4">
-        <div className="relative max-w-sm">
-          <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <input
-            type="search"
-            name="q"
-            defaultValue={q}
-            placeholder="Search by slug…"
-            className={`${controlClasses} pl-9`}
-          />
-        </div>
-      </Form>
+      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+        <Stat label="Total products" value={total} />
+        <Stat label="Published" value={publishedCount} />
+        <Stat label="Drafts" value={draftCount} />
+      </div>
 
-      {/* Table (md+) */}
-      <Table className="hidden md:block">
-        <THead>
-          <tr>
-            {['ID', 'Slug', 'Status', 'Variants', 'Categories', 'Created'].map(
-              (col) => (
-                <Th key={col}>{col}</Th>
-              )
-            )}
-          </tr>
-        </THead>
-        <TBody>
-          {rows.length === 0 && (
+      <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
+        <Toolbar>
+          <Form method="get" className="w-full sm:max-w-sm">
+            <div className="relative">
+              <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <input
+                type="search"
+                name="q"
+                defaultValue={q}
+                placeholder="Search by slug…"
+                className={`${controlClasses} pl-9`}
+              />
+            </div>
+          </Form>
+          <ToolbarGroup>
+            <span className="text-text-muted text-sm">
+              {total} result{total !== 1 ? 's' : ''}
+            </span>
+          </ToolbarGroup>
+        </Toolbar>
+
+        {/* Table (md+) */}
+        <Table className="hidden rounded-none border-0 shadow-none md:block">
+          <THead>
             <tr>
-              <Td colSpan={6} className="py-8 text-center">
-                No products found.
-              </Td>
+              {['Product', 'Status', 'Variants', 'Categories', 'Created'].map(
+                (col) => (
+                  <Th key={col}>{col}</Th>
+                )
+              )}
             </tr>
-          )}
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <Td>
-                <Link
-                  to={`/admin/products/${row.id}`}
-                  className="text-accent font-mono text-xs hover:underline"
-                >
-                  {row.idPrefix}…
-                </Link>
-              </Td>
-              <Td className="text-text">
-                {row.slug ? (
+          </THead>
+          <TBody>
+            {rows.length === 0 && (
+              <tr>
+                <Td colSpan={5} className="p-0">
+                  <EmptyState
+                    icon={CubeIcon}
+                    title="No products found"
+                    description={
+                      q
+                        ? 'Try a different search term or clear the filter.'
+                        : 'Create your first product to start selling.'
+                    }
+                    action={
+                      !q && (
+                        <Link
+                          to="/admin/products/new"
+                          className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
+                        >
+                          <PlusIcon className="h-4 w-4" />
+                          New product
+                        </Link>
+                      )
+                    }
+                    className="border-0 shadow-none"
+                  />
+                </Td>
+              </tr>
+            )}
+            {rows.map((row) => (
+              <Tr key={row.id}>
+                <Td className="whitespace-normal">
                   <Link
                     to={`/admin/products/${row.id}`}
-                    className="hover:underline"
+                    className="group block min-w-0"
                   >
-                    {row.slug}
+                    <span className="text-text group-hover:text-accent block truncate font-medium transition-colors">
+                      {row.title || row.slug || `${row.idPrefix}…`}
+                    </span>
+                    <span className="text-text-muted mt-0.5 block truncate font-mono text-xs">
+                      {row.slug ?? row.idPrefix}
+                    </span>
                   </Link>
-                ) : (
-                  '—'
-                )}
-              </Td>
-              <Td>
-                <StatusBadge published={row.published} />
-              </Td>
-              <Td className="text-text">{row.variantCount}</Td>
-              <Td>
-                <div className="flex flex-wrap gap-1">
-                  {row.categories.map((c) => (
-                    <CategoryBadge key={c.id} title={c.title} />
-                  ))}
-                </div>
-              </Td>
-              <Td>{formatDate(row.createdAt)}</Td>
-            </tr>
-          ))}
-        </TBody>
-      </Table>
+                </Td>
+                <Td>
+                  <StatusBadge published={row.published} />
+                </Td>
+                <Td className="tabular-nums">{row.variantCount}</Td>
+                <Td className="whitespace-normal">
+                  <div className="flex max-w-xs flex-wrap gap-1">
+                    {row.categories.length === 0 ? (
+                      <span className="text-text-muted text-xs">—</span>
+                    ) : (
+                      row.categories.map((c) => (
+                        <CategoryBadge key={c.id} title={c.title} />
+                      ))
+                    )}
+                  </div>
+                </Td>
+                <Td className="tabular-nums">{formatDate(row.createdAt)}</Td>
+              </Tr>
+            ))}
+          </TBody>
+        </Table>
 
-      {/* Card list (mobile) */}
-      <div className="space-y-3 md:hidden">
-        {rows.length === 0 ? (
-          <Card className="text-text-muted text-center text-sm">
-            No products found.
-          </Card>
-        ) : (
-          rows.map((row) => (
-            <Card key={row.id} className="space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <Link
-                  to={`/admin/products/${row.id}`}
-                  className="text-text min-w-0 truncate text-sm font-medium hover:underline"
-                >
-                  {row.slug ?? `${row.idPrefix}…`}
-                </Link>
-                <StatusBadge published={row.published} />
-              </div>
-              {row.categories.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {row.categories.map((c) => (
-                    <CategoryBadge key={c.id} title={c.title} />
-                  ))}
+        {/* Card list (mobile) */}
+        <div className="divide-border divide-y md:hidden">
+          {rows.length === 0 ? (
+            <EmptyState
+              icon={CubeIcon}
+              title="No products found"
+              description={
+                q
+                  ? 'Try a different search term.'
+                  : 'Create your first product to start selling.'
+              }
+              className="border-0 shadow-none"
+            />
+          ) : (
+            rows.map((row) => (
+              <Link
+                key={row.id}
+                to={`/admin/products/${row.id}`}
+                className="hover:bg-surface-2/60 block px-4 py-4 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-text truncate text-sm font-medium">
+                      {row.title || row.slug || `${row.idPrefix}…`}
+                    </p>
+                    <p className="text-text-muted mt-0.5 truncate font-mono text-xs">
+                      {row.slug ?? row.idPrefix}
+                    </p>
+                  </div>
+                  <StatusBadge published={row.published} />
                 </div>
-              )}
-              <div className="text-text-muted flex items-center justify-between text-xs">
-                <span>
-                  {row.variantCount} variant{row.variantCount !== 1 ? 's' : ''}
-                </span>
-                <span>{formatDate(row.createdAt)}</span>
-              </div>
-            </Card>
-          ))
-        )}
+                {row.categories.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {row.categories.map((c) => (
+                      <CategoryBadge key={c.id} title={c.title} />
+                    ))}
+                  </div>
+                )}
+                <div className="text-text-muted mt-3 flex items-center justify-between text-xs">
+                  <span>
+                    {row.variantCount} variant
+                    {row.variantCount !== 1 ? 's' : ''}
+                  </span>
+                  <span>{formatDate(row.createdAt)}</span>
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
       </div>
 
       <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />

@@ -21,10 +21,16 @@ import {
 import { redirect } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import ActionBar from '#/components/admin/action-bar';
 import Badge from '#/components/admin/badge';
-import Card from '#/components/admin/card';
-import { controlClasses } from '#/components/admin/form/input';
+import Breadcrumbs from '#/components/admin/breadcrumbs';
+import Card, { CardHeader } from '#/components/admin/card';
+import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import Textarea from '#/components/admin/form/textarea';
+import PageHeader from '#/components/admin/page-header';
 import { Th } from '#/components/admin/table';
+import Tabs from '#/components/admin/tabs';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 
@@ -489,24 +495,15 @@ export async function action({ request, params }) {
 
 /** Tab bar for switching locales */
 function LocaleTabs({ locales, activeLocale, onSelect }) {
+  const activeIndex = Math.max(0, locales.indexOf(activeLocale));
+
   return (
-    <div className="border-border flex gap-1 border-b">
-      {locales.map((locale) => (
-        <button
-          key={locale}
-          type="button"
-          onClick={() => onSelect(locale)}
-          className={clsx(
-            'rounded-t px-4 py-2 text-sm font-medium transition-colors',
-            activeLocale === locale
-              ? 'border-accent text-accent border-b-2'
-              : 'text-text-muted hover:text-text'
-          )}
-        >
-          {locale.toUpperCase()}
-        </button>
-      ))}
-    </div>
+    <Tabs
+      tabs={locales.map((locale) => locale.toUpperCase())}
+      active={activeIndex}
+      onChange={(index) => onSelect(locales[index])}
+      variant="pills"
+    />
   );
 }
 
@@ -516,72 +513,55 @@ function LocaleEditor({ locale, translations, slugMap }) {
   const slug = slugMap[locale] ?? '';
 
   return (
-    <div className="space-y-4 pt-4">
-      {/* Hidden locale marker */}
+    <div className="space-y-5 pt-5">
       <input type="hidden" name="locales[]" value={locale} />
 
-      <div>
-        <label className="text-text block text-sm font-medium">
-          Slug ({locale})
-        </label>
-        <input
-          type="text"
+      <Field label={`Slug (${locale})`} htmlFor={`slug-${locale}`}>
+        <Input
+          id={`slug-${locale}`}
           name={`slug[${locale}]`}
           defaultValue={slug}
           placeholder="url-slug"
-          className={`${controlClasses} mt-1`}
         />
-      </div>
+      </Field>
 
-      <div>
-        <label className="text-text block text-sm font-medium">Title</label>
-        <input
-          type="text"
+      <Field label="Title" htmlFor={`title-${locale}`}>
+        <Input
+          id={`title-${locale}`}
           name={`translation[${locale}][title]`}
           defaultValue={t.title ?? ''}
-          className={`${controlClasses} mt-1`}
         />
-      </div>
+      </Field>
 
-      <div>
-        <label className="text-text block text-sm font-medium">
-          Description
-        </label>
-        <textarea
+      <Field label="Description" htmlFor={`description-${locale}`}>
+        <Textarea
+          id={`description-${locale}`}
           name={`translation[${locale}][description]`}
           defaultValue={t.description ?? ''}
           rows={4}
-          className={`${controlClasses} mt-1`}
         />
-      </div>
+      </Field>
 
-      <div className="bg-surface-2 rounded-lg p-4">
-        <p className="text-text-muted mb-3 text-xs font-semibold tracking-wide uppercase">
+      <div className="bg-surface-2/70 border-border rounded-lg border p-4">
+        <p className="text-text-muted mb-4 text-xs font-semibold tracking-wide uppercase">
           SEO
         </p>
-        <div className="space-y-3">
-          <div>
-            <label className="text-text block text-sm font-medium">
-              SEO Title
-            </label>
-            <input
-              type="text"
+        <div className="space-y-4">
+          <Field label="SEO title" htmlFor={`seo-title-${locale}`}>
+            <Input
+              id={`seo-title-${locale}`}
               name={`translation[${locale}][seoTitle]`}
               defaultValue={t.seoTitle ?? ''}
-              className={`${controlClasses} mt-1`}
             />
-          </div>
-          <div>
-            <label className="text-text block text-sm font-medium">
-              SEO Description
-            </label>
-            <textarea
+          </Field>
+          <Field label="SEO description" htmlFor={`seo-desc-${locale}`}>
+            <Textarea
+              id={`seo-desc-${locale}`}
               name={`translation[${locale}][seoDescription]`}
               defaultValue={t.seoDescription ?? ''}
               rows={2}
-              className={`${controlClasses} mt-1`}
             />
-          </div>
+          </Field>
         </div>
       </div>
     </div>
@@ -653,29 +633,32 @@ function OptionsEditor({ initialOptions }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {options.map((opt) => (
-        <div key={opt.id} className="border-border rounded-lg border p-4">
+        <div
+          key={opt.id}
+          className="bg-surface-2/50 border-border rounded-lg border p-4"
+        >
           <input type="hidden" name={`option[${opt.id}][id]`} value={opt.id} />
           <div className="flex items-center gap-3">
-            <input
-              type="text"
+            <Input
               name={`option[${opt.id}][name]`}
               value={opt.name}
               onChange={(e) => updateOptionName(opt.id, e.target.value)}
               placeholder="Option name (e.g. Size)"
-              className={`${controlClasses} flex-1`}
+              className="flex-1"
             />
             <button
               type="button"
               onClick={() => removeOption(opt.id)}
-              className="text-text-muted hover:text-danger rounded p-1"
+              className="text-text-muted hover:bg-danger/10 hover:text-danger rounded-md p-2 transition-colors"
+              aria-label="Remove option"
             >
               <TrashIcon className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="mt-3 space-y-2">
+          <div className="mt-4 space-y-2">
             {opt.values.map((val, vi) => (
               <div key={val.id} className="flex items-center gap-2">
                 <input
@@ -683,18 +666,18 @@ function OptionsEditor({ initialOptions }) {
                   name={`optionValueId[${opt.id}][${vi}]`}
                   value={val.id}
                 />
-                <input
-                  type="text"
+                <Input
                   name={`optionValue[${opt.id}][${vi}]`}
                   value={val.value}
                   onChange={(e) => updateValue(opt.id, val.id, e.target.value)}
                   placeholder="Value"
-                  className={`${controlClasses} flex-1`}
+                  className="flex-1"
                 />
                 <button
                   type="button"
                   onClick={() => removeValue(opt.id, val.id)}
-                  className="text-text-muted hover:text-danger rounded p-1"
+                  className="text-text-muted hover:bg-danger/10 hover:text-danger rounded-md p-2 transition-colors"
+                  aria-label="Remove value"
                 >
                   <XMarkIcon className="h-4 w-4" />
                 </button>
@@ -703,9 +686,9 @@ function OptionsEditor({ initialOptions }) {
             <button
               type="button"
               onClick={() => addValue(opt.id)}
-              className="text-accent flex items-center gap-1 text-xs hover:underline"
+              className="text-accent hover:text-accent-hover inline-flex items-center gap-1 text-xs font-medium transition-colors"
             >
-              <PlusIcon className="h-3 w-3" />
+              <PlusIcon className="h-3.5 w-3.5" />
               Add value
             </button>
           </div>
@@ -715,7 +698,7 @@ function OptionsEditor({ initialOptions }) {
       <button
         type="button"
         onClick={addOption}
-        className="text-accent flex items-center gap-1.5 text-sm hover:underline"
+        className="text-accent hover:text-accent-hover border-border hover:border-accent/40 inline-flex items-center gap-1.5 rounded-lg border border-dashed px-3 py-2 text-sm font-medium transition-colors"
       >
         <PlusIcon className="h-4 w-4" />
         Add option
@@ -732,107 +715,110 @@ function VariantPriceGrid({ variants, currencies }) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="divide-border min-w-full divide-y text-sm">
-        <thead className="bg-surface-2/50">
-          <tr>
-            <Th>SKU</Th>
-            <Th>Inventory</Th>
-            {currencies.map((cur) => (
-              <Th key={cur} colSpan={2} className="text-center">
-                {cur}
-              </Th>
-            ))}
-          </tr>
-          <tr className="bg-surface-2/50">
-            <th />
-            <th />
-            {currencies.map((cur) => (
-              <>
-                <th
-                  key={`${cur}-price`}
-                  className="text-text-muted px-3 py-1 text-left text-xs"
-                >
-                  Price
-                </th>
-                <th
-                  key={`${cur}-compare`}
-                  className="text-text-muted px-3 py-1 text-left text-xs"
-                >
-                  Compare
-                </th>
-              </>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-border [&>tr:hover]:bg-surface-2/50 divide-y">
-          {variants.map((variant) => (
-            <tr key={variant.id}>
-              <td className="px-3 py-2">
-                <input
-                  type="text"
-                  name={`variant[${variant.id}][sku]`}
-                  defaultValue={variant.sku}
-                  placeholder="SKU"
-                  className={`${controlClasses} w-24`}
-                />
-              </td>
-              <td className="px-3 py-2">
-                <input
-                  type="number"
-                  name={`variant[${variant.id}][inventoryCount]`}
-                  defaultValue={variant.inventoryCount}
-                  min={0}
-                  className={`${controlClasses} w-16`}
-                />
-              </td>
-              {currencies.map((cur) => {
-                const priceData = variant.prices[cur];
-                return (
-                  <>
-                    <td
-                      key={`${variant.id}-${cur}-price`}
-                      className="px-3 py-2"
-                    >
-                      <input
-                        type="number"
-                        name={`price[${variant.id}][${cur}]`}
-                        defaultValue={
-                          priceData ? centsToDisplay(priceData.priceCents) : ''
-                        }
-                        min={0}
-                        step="0.01"
-                        placeholder="0.00"
-                        className={`${controlClasses} w-24`}
-                      />
-                    </td>
-                    <td
-                      key={`${variant.id}-${cur}-compare`}
-                      className="px-3 py-2"
-                    >
-                      <input
-                        type="number"
-                        name={`comparePrice[${variant.id}][${cur}]`}
-                        defaultValue={
-                          priceData?.comparePriceCents
-                            ? centsToDisplay(priceData.comparePriceCents)
-                            : ''
-                        }
-                        min={0}
-                        step="0.01"
-                        placeholder="—"
-                        className={`${controlClasses} w-24`}
-                      />
-                    </td>
-                  </>
-                );
-              })}
+    <div className="border-border overflow-hidden rounded-lg border">
+      <div className="overflow-x-auto">
+        <table className="divide-border min-w-full divide-y text-sm">
+          <thead className="bg-surface-2/60">
+            <tr>
+              <Th>SKU</Th>
+              <Th>Inventory</Th>
+              {currencies.map((cur) => (
+                <Th key={cur} colSpan={2} className="text-center">
+                  {cur}
+                </Th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+            <tr className="bg-surface-2/40">
+              <th />
+              <th />
+              {currencies.map((cur) => (
+                <>
+                  <th
+                    key={`${cur}-price`}
+                    className="text-text-muted px-3 py-2 text-left text-xs font-medium"
+                  >
+                    Price
+                  </th>
+                  <th
+                    key={`${cur}-compare`}
+                    className="text-text-muted px-3 py-2 text-left text-xs font-medium"
+                  >
+                    Compare
+                  </th>
+                </>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-border bg-surface [&>tr:hover]:bg-surface-2/40 divide-y">
+            {variants.map((variant) => (
+              <tr key={variant.id}>
+                <td className="px-3 py-3">
+                  <Input
+                    name={`variant[${variant.id}][sku]`}
+                    defaultValue={variant.sku}
+                    placeholder="SKU"
+                    className="w-28"
+                  />
+                </td>
+                <td className="px-3 py-3">
+                  <Input
+                    type="number"
+                    name={`variant[${variant.id}][inventoryCount]`}
+                    defaultValue={variant.inventoryCount}
+                    min={0}
+                    className="w-20"
+                  />
+                </td>
+                {currencies.map((cur) => {
+                  const priceData = variant.prices[cur];
+                  return (
+                    <>
+                      <td
+                        key={`${variant.id}-${cur}-price`}
+                        className="px-3 py-3"
+                      >
+                        <Input
+                          type="number"
+                          name={`price[${variant.id}][${cur}]`}
+                          defaultValue={
+                            priceData
+                              ? centsToDisplay(priceData.priceCents)
+                              : ''
+                          }
+                          min={0}
+                          step="0.01"
+                          placeholder="0.00"
+                          className="w-24"
+                        />
+                      </td>
+                      <td
+                        key={`${variant.id}-${cur}-compare`}
+                        className="px-3 py-3"
+                      >
+                        <Input
+                          type="number"
+                          name={`comparePrice[${variant.id}][${cur}]`}
+                          defaultValue={
+                            priceData?.comparePriceCents
+                              ? centsToDisplay(priceData.comparePriceCents)
+                              : ''
+                          }
+                          min={0}
+                          step="0.01"
+                          placeholder="—"
+                          className="w-24"
+                        />
+                      </td>
+                    </>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {variants.length === 0 && (
-        <p className="text-text-muted py-4 text-center text-sm">
+        <p className="text-text-muted py-8 text-center text-sm">
           No variants yet.
         </p>
       )}
@@ -879,11 +865,11 @@ function MediaUploader({ productId: _productId, initialMedia }) {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-3">
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
         {media.map((item) => (
           <div
             key={item.mediaId}
-            className="group border-border bg-surface-2 relative h-24 w-24 overflow-hidden rounded-lg border"
+            className="group border-border bg-surface-2 relative aspect-square overflow-hidden rounded-lg border"
           >
             <img
               src={item.url}
@@ -893,17 +879,17 @@ function MediaUploader({ productId: _productId, initialMedia }) {
             <button
               type="button"
               onClick={() => handleDelete(item.mediaId)}
-              className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
+              className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition-opacity group-hover:opacity-100"
+              aria-label="Delete image"
             >
               <TrashIcon className="h-5 w-5 text-white" />
             </button>
           </div>
         ))}
 
-        {/* Upload button */}
         <label
           className={clsx(
-            'border-border text-text-muted hover:border-accent hover:text-accent flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors',
+            'border-border text-text-muted hover:border-accent hover:bg-accent/5 hover:text-accent flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors',
             isUploading && 'cursor-wait opacity-60'
           )}
         >
@@ -912,7 +898,7 @@ function MediaUploader({ productId: _productId, initialMedia }) {
           ) : (
             <>
               <PhotoIcon className="h-6 w-6" />
-              <span className="mt-1 text-xs">Add image</span>
+              <span className="mt-2 text-xs font-medium">Add image</span>
             </>
           )}
           <input
@@ -946,16 +932,19 @@ function CategoryPicker({ allCategories, selectedIds }) {
   }
 
   return (
-    <div className="max-h-48 space-y-2 overflow-y-auto">
+    <div className="border-border max-h-56 space-y-1 overflow-y-auto rounded-lg border p-2">
       {allCategories.length === 0 && (
-        <p className="text-text-muted text-sm">No categories yet.</p>
+        <p className="text-text-muted px-2 py-3 text-sm">No categories yet.</p>
       )}
       {allCategories.map((cat) => {
         const checked = selected.has(cat.id);
         return (
           <label
             key={cat.id}
-            className="flex cursor-pointer items-center gap-2"
+            className={clsx(
+              'flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 transition-colors',
+              checked ? 'bg-accent/10' : 'hover:bg-surface-2'
+            )}
           >
             <input
               type="checkbox"
@@ -995,127 +984,145 @@ export default function AdminProductRoute() {
   const [activeLocale, setActiveLocale] = useState(locales[0] ?? 'en');
 
   const isPublished = product.publishedAt !== null;
+  const displayTitle =
+    translationMap.en?.title ||
+    slugMap.en ||
+    `Product ${product.id.slice(0, 8)}`;
 
   return (
-    <div className="mx-auto max-w-5xl">
-      {/* Header */}
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <div className="text-text-muted mb-1 flex items-center gap-2 text-sm">
-            <a href="/admin/products" className="hover:underline">
-              Products
-            </a>
-            <span>/</span>
-            <span className="font-mono text-xs">{product.id.slice(0, 8)}…</span>
+    <div className="mx-auto max-w-6xl">
+      <PageHeader
+        breadcrumbs={
+          <Breadcrumbs
+            items={[
+              { label: 'Products', href: '/admin/products' },
+              { label: displayTitle },
+            ]}
+          />
+        }
+        title={displayTitle}
+        subtitle={`Created ${new Date(product.createdAt).toLocaleDateString(
+          'en-US',
+          {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          }
+        )}`}
+        actions={
+          <div className="flex items-center gap-2">
+            <Badge tone={isPublished ? 'success' : 'neutral'}>
+              {isPublished ? 'Published' : 'Draft'}
+            </Badge>
+            <Form method="post">
+              <input type="hidden" name="intent" value="save" />
+              <input
+                type="hidden"
+                name="publishedAt"
+                value={isPublished ? 'unpublish' : 'publish'}
+              />
+              {locales.map((l) => (
+                <input key={l} type="hidden" name="locales[]" value={l} />
+              ))}
+              <Button
+                type="submit"
+                variant={isPublished ? 'secondary' : 'primary'}
+              >
+                {isPublished ? 'Unpublish' : 'Publish'}
+              </Button>
+            </Form>
           </div>
-          <h1 className="text-text text-2xl font-bold tracking-tight">
-            Edit Product
-          </h1>
-          <p className="text-text-muted mt-0.5 text-sm">
-            Created{' '}
-            {new Date(product.createdAt).toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </p>
-        </div>
+        }
+      />
 
-        {/* Publish toggle */}
-        <div className="flex items-center gap-3">
-          <Badge tone={isPublished ? 'success' : 'neutral'}>
-            {isPublished ? 'Published' : 'Draft'}
-          </Badge>
-          <Form method="post">
-            <input type="hidden" name="intent" value="save" />
-            <input
-              type="hidden"
-              name="publishedAt"
-              value={isPublished ? 'unpublish' : 'publish'}
-            />
-            {/* We need currencies/locales in the form even for publish toggle */}
-            {locales.map((l) => (
-              <input key={l} type="hidden" name="locales[]" value={l} />
-            ))}
-            <Button
-              type="submit"
-              variant={isPublished ? 'secondary' : 'primary'}
-            >
-              {isPublished ? 'Unpublish' : 'Publish'}
-            </Button>
-          </Form>
-        </div>
-      </div>
-
-      {/* Notification */}
       {actionData?.ok && actionData?.intent === 'save' && (
         <SuccessAlert message="Product saved." />
       )}
       {actionData?.error && <ErrorAlert message={actionData.error} />}
 
-      {/* Main save form */}
       <Form method="post" className="space-y-6">
         <input type="hidden" name="intent" value="save" />
 
-        {/* Locale tabs */}
-        <Card>
-          <h2 className="text-text mb-4 text-base font-semibold">Content</h2>
-          <LocaleTabs
-            locales={locales}
-            activeLocale={activeLocale}
-            onSelect={setActiveLocale}
-          />
-          {locales.map((locale) => (
-            <div
-              key={locale}
-              className={locale === activeLocale ? 'block' : 'hidden'}
-            >
-              <LocaleEditor
-                locale={locale}
-                translations={translationMap}
-                slugMap={slugMap}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader
+                title="Content"
+                description="Localized titles, descriptions, and SEO metadata."
               />
-            </div>
-          ))}
-        </Card>
+              <LocaleTabs
+                locales={locales}
+                activeLocale={activeLocale}
+                onSelect={setActiveLocale}
+              />
+              {locales.map((locale) => (
+                <div
+                  key={locale}
+                  className={locale === activeLocale ? 'block' : 'hidden'}
+                >
+                  <LocaleEditor
+                    locale={locale}
+                    translations={translationMap}
+                    slugMap={slugMap}
+                  />
+                </div>
+              ))}
+            </Card>
 
-        {/* Options editor */}
-        <Card>
-          <h2 className="text-text mb-4 text-base font-semibold">Options</h2>
-          <OptionsEditor initialOptions={product.options} />
-        </Card>
+            <Card>
+              <CardHeader
+                title="Options"
+                description="Define option groups like size or color for variant generation."
+              />
+              <OptionsEditor initialOptions={product.options} />
+            </Card>
 
-        {/* Variants + price grid */}
-        <Card>
-          <h2 className="text-text mb-4 text-base font-semibold">
-            Variants &amp; Pricing
-          </h2>
-          {/* Hidden currencies markers */}
-          {currencies.map((c) => (
-            <input key={c} type="hidden" name="currencies[]" value={c} />
-          ))}
-          <VariantPriceGrid
-            variants={product.variants}
-            currencies={currencies}
-          />
-        </Card>
+            <Card>
+              <CardHeader
+                title="Variants & pricing"
+                description="SKU, inventory, and per-currency prices for each variant."
+              />
+              {currencies.map((c) => (
+                <input key={c} type="hidden" name="currencies[]" value={c} />
+              ))}
+              <VariantPriceGrid
+                variants={product.variants}
+                currencies={currencies}
+              />
+            </Card>
+          </div>
 
-        {/* Category picker */}
-        <Card>
-          <h2 className="text-text mb-4 text-base font-semibold">Categories</h2>
-          <CategoryPicker
-            allCategories={allCategories}
-            selectedIds={product.selectedCategoryIds}
-          />
-        </Card>
+          <aside className="space-y-6">
+            <Card>
+              <CardHeader
+                title="Categories"
+                description="Assign this product to one or more categories."
+              />
+              <CategoryPicker
+                allCategories={allCategories}
+                selectedIds={product.selectedCategoryIds}
+              />
+            </Card>
 
-        {/* Save button */}
-        <div className="flex items-center gap-4">
-          <ButtonSubmit disabled={isSaving}>
-            {isSaving ? 'Saving…' : 'Save Product'}
-          </ButtonSubmit>
+            <Card>
+              <CardHeader
+                title="Media"
+                description="Product images shown on the storefront."
+              />
+              <MediaUploader
+                productId={product.id}
+                initialMedia={product.media}
+              />
+            </Card>
+          </aside>
+        </div>
 
-          {/* Delete */}
+        <ActionBar>
+          <div className="flex items-center gap-3">
+            <ButtonSubmit disabled={isSaving}>
+              {isSaving ? 'Saving…' : 'Save product'}
+            </ButtonSubmit>
+          </div>
           <Form method="post">
             <input type="hidden" name="intent" value="delete" />
             <button
@@ -1127,19 +1134,13 @@ export default function AdminProductRoute() {
                   e.preventDefault();
                 }
               }}
-              className="text-danger text-sm hover:underline"
+              className="text-danger hover:text-danger/80 text-sm font-medium transition-colors"
             >
               Delete product
             </button>
           </Form>
-        </div>
+        </ActionBar>
       </Form>
-
-      {/* Media uploader (separate fetcher — not inside main form) */}
-      <Card className="mt-6">
-        <h2 className="text-text mb-4 text-base font-semibold">Media</h2>
-        <MediaUploader productId={product.id} initialMedia={product.media} />
-      </Card>
     </div>
   );
 }
