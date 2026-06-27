@@ -35,7 +35,8 @@ Configure explicit URLs in [app/routes.js](mdc:app/routes.js) to match this tree
 ## Auth and errors
 
 - For authenticated routes, export `middleware = [authMiddleware]` from `#/libs/auth/admin.server`.
-- In loader/action `catch` blocks, return `handleError` from `#/libs/error.server`.
+- In loader/action `catch` blocks, return `handleError` from `#/libs/error.server` (logs + production alert via `#/libs/alerting.server`).
+- For background jobs or direct alerts, use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting.server`. See [alerting.mdc](mdc:.cursor/rules/alerting.mdc).
 
 ## Boundaries
 

@@ -16,7 +16,7 @@ The install script is idempotent and safe to run repeatedly. To reset the local 
 
 **Architecture layers:**
 
-- `app/libs/*` = infrastructure (auth, db clients, queue, SDK wrappers)
+- `app/libs/*` = infrastructure (auth, db clients, queue, SDK wrappers, alerting)
 - `app/core/*` = domain layer (catalog, cart, orders, payments, shipping, customers, etc.)
 - `app/routes/*` = route modules
 - `app/components/*` = reusable UI
@@ -51,3 +51,4 @@ A `.env` file must exist in the repo root (see `.env.example`). Placeholder valu
 - `prisma/generated/` is committed but must match the schema; always run `npx prisma generate` after pulling schema changes.
 - Lint exit code 1 from pre-existing oxfmt formatting warnings is expected and not a sign of breakage.
 - The `#/*` import alias maps to `./app/` (configured in `vite.config.js`).
+- **Alerting:** use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting.server` for production errors and ops notifications; route handlers use `handleError` from `#/libs/error.server`. Default provider is Telegram (`ERROR_ALERT_PROVIDER=telegram`). Do not call `sendTelegramError` / `sendTelegramMessage` in new code. See [.cursor/rules/alerting.mdc](.cursor/rules/alerting.mdc).

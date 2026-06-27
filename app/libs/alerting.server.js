@@ -12,6 +12,8 @@ let _builtinsRegistered = false;
  *
  * Providers must expose:
  *   sendError(errorData, options?) => Promise<boolean>
+ * Optional:
+ *   sendMessage(message, options?) => Promise<boolean>
  *
  * @param {string} id
  * @param {import('#/libs/alerting-types.server').AlertProvider} provider
@@ -93,6 +95,42 @@ export async function sendErrorAlert(errorData, options = {}) {
     return false;
   }
 }
+
+/**
+ * Send a general notification through the configured alert provider.
+ *
+ * @param {string} message
+ * @param {import('#/libs/alerting-types.server').AlertOptions} [options]
+ * @returns {Promise<boolean>}
+ */
+export async function sendAlertMessage(message, options = {}) {
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
+
+  if (process.env.ERROR_ALERTS_ENABLED === 'false') {
+    return false;
+  }
+
+  try {
+    const provider = getActiveProvider();
+
+    if (typeof provider.sendMessage !== 'function') {
+      logger.warn(
+        `Alert provider "${provider.id}" does not implement sendMessage()`
+      );
+      return false;
+    }
+
+    return await provider.sendMessage(message, options);
+  } catch (error) {
+    logger.error(error, 'Failed to send alert message');
+    return false;
+  }
+}
+
+/** @deprecated Prefer sendAlertMessage */
+export const sendTelegramMessage = sendAlertMessage;
 
 function ensureBuiltinProviders() {
   if (_builtinsRegistered) {

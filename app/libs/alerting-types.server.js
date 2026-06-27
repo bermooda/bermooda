@@ -25,6 +25,7 @@
  * @property {string} id - Provider identifier used in ERROR_ALERT_PROVIDER
  * @property {string} [name] - Human-readable provider name
  * @property {(errorData: ErrorAlert|string|Error, options?: AlertOptions) => Promise<boolean>} sendError
+ * @property {(message: string, options?: AlertOptions) => Promise<boolean>} [sendMessage]
  */
 
 export const SEVERITY = {
