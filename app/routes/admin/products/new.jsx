@@ -1,16 +1,51 @@
 // app/routes/admin/products/new.jsx
-// New product form — creates a blank product and redirects to the full editor.
+// New product — full editor shown immediately; product is created on save.
 
-import { Form, Link, useActionData } from 'react-router';
+import { useActionData, useLoaderData, useNavigation } from 'react-router';
 import { redirect } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
-import Card from '#/components/admin/card';
-import Field from '#/components/admin/form/field';
-import Input from '#/components/admin/form/input';
-import PageHeader from '#/components/admin/page-header';
-import { ErrorAlert } from '#/components/ui/alert';
-import { ButtonSubmit } from '#/components/ui/button';
+import ProductEditor, {
+  NEW_VARIANT_ID,
+} from '#/components/admin/product-editor';
+
+import {
+  createBlankProduct,
+  loadAdminProductEditorContext,
+  persistAdminProduct,
+  validatePrimarySlug,
+} from '#/core/catalog/admin-product-form.server';
+
+// ---------------------------------------------------------------------------
+// Loader
+// ---------------------------------------------------------------------------
+
+export async function loader() {
+  const context = await loadAdminProductEditorContext();
+
+  return {
+    ...context,
+    product: {
+      id: null,
+      publishedAt: null,
+      createdAt: new Date().toISOString(),
+      variants: [
+        {
+          id: NEW_VARIANT_ID,
+          sku: '',
+          inventoryCount: 0,
+          inventoryTracked: true,
+          position: 0,
+          prices: {},
+        },
+      ],
+      options: [],
+      selectedCategoryIds: [],
+      media: [],
+    },
+    translationMap: {},
+    slugMap: {},
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Action
@@ -18,46 +53,26 @@ import { ButtonSubmit } from '#/components/ui/button';
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const slug = formData.get('slug')?.toString().trim();
+  const intent = formData.get('intent');
 
-  if (!slug) {
-    return { error: 'Slug is required.' };
+  if (intent !== 'create') {
+    return { error: 'Invalid request.' };
   }
 
-  // Validate slug format
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-    return {
-      error:
-        'Slug must be lowercase letters, numbers and hyphens only (no spaces).',
-    };
+  const context = await loadAdminProductEditorContext();
+  const primaryLocale = context.locales[0] ?? 'en';
+  const slugError = await validatePrimarySlug(formData, primaryLocale);
+  if (slugError.error) {
+    return slugError;
   }
 
-  // Check slug uniqueness
-  const existing = await prisma.slug.findUnique({ where: { slug } });
-  if (existing) {
-    return { error: `Slug "${slug}" is already taken.` };
-  }
+  const { id, defaultVariantId } = await createBlankProduct();
 
-  // Create the product with a default variant
-  const product = await prisma.product.create({
-    data: {
-      variants: {
-        create: [{ inventoryCount: 0, inventoryTracked: true, position: 0 }],
-      },
-    },
+  await persistAdminProduct(id, formData, {
+    variantIdMap: { [NEW_VARIANT_ID]: defaultVariantId },
   });
 
-  // Create the en slug
-  await prisma.slug.create({
-    data: {
-      entityType: 'product',
-      entityId: product.id,
-      locale: 'en',
-      slug,
-    },
-  });
-
-  return redirect(`/admin/products/${product.id}`);
+  return redirect(`/admin/products/${id}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -65,47 +80,24 @@ export async function action({ request }) {
 // ---------------------------------------------------------------------------
 
 export default function AdminNewProductRoute() {
+  const data = useLoaderData();
   const actionData = useActionData();
+  const navigation = useNavigation();
+  const isSaving =
+    navigation.state === 'submitting' &&
+    navigation.formData?.get('intent') === 'create';
 
   return (
-    <div className="mx-auto max-w-lg">
-      <PageHeader
-        title="New Product"
-        subtitle="Enter a unique slug to create the product and open the full editor."
-        className="mb-6"
-      />
-
-      <Card>
-        <Form method="post" className="space-y-4">
-          <Field
-            label="URL Slug"
-            htmlFor="slug"
-            hint="Lowercase letters, numbers and hyphens only. This is the URL-safe identifier for the product."
-          >
-            <Input
-              id="slug"
-              name="slug"
-              type="text"
-              required
-              autoFocus
-              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-              placeholder="my-new-product"
-            />
-          </Field>
-
-          <ErrorAlert message={actionData?.error} />
-
-          <div className="flex items-center gap-3">
-            <ButtonSubmit>Create Product</ButtonSubmit>
-            <Link
-              to="/admin/products"
-              className="text-text-muted hover:text-text text-sm"
-            >
-              Cancel
-            </Link>
-          </div>
-        </Form>
-      </Card>
-    </div>
+    <ProductEditor
+      mode="create"
+      product={data.product}
+      locales={data.locales}
+      currencies={data.currencies}
+      translationMap={data.translationMap}
+      slugMap={data.slugMap}
+      allCategories={data.allCategories}
+      actionData={actionData}
+      isSaving={isSaving}
+    />
   );
 }

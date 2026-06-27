@@ -63,14 +63,30 @@ export function Th({ children, className = '', ...props }) {
 export function Td({ children, className = '', ...props }) {
   return (
     <td
-      className={clsx(
-        'text-text-muted px-4 py-3 text-sm whitespace-nowrap',
-        className
-      )}
+      className={clsx('text-text-muted px-4 py-3.5 text-sm', className)}
       {...props}
     >
       {children}
     </td>
+  );
+}
+
+/**
+ * Clickable table row with hover affordance.
+ *
+ * @param {Object} props
+ * @param {React.ReactNode} props.children
+ * @param {string} [props.className]
+ * @returns {React.ReactElement}
+ */
+export function Tr({ children, className = '', ...props }) {
+  return (
+    <tr
+      className={clsx('hover:bg-surface-2/60 transition-colors', className)}
+      {...props}
+    >
+      {children}
+    </tr>
   );
 }
 
