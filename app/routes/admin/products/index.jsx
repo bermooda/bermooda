@@ -7,7 +7,13 @@ import {
   MagnifyingGlassIcon,
   PlusIcon,
 } from '@heroicons/react/24/outline';
-import { Form, Link, useLoaderData, useSearchParams } from 'react-router';
+import {
+  Form,
+  Link,
+  useLoaderData,
+  useNavigate,
+  useSearchParams,
+} from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 import Badge from '#/components/admin/badge';
@@ -175,6 +181,7 @@ export default function AdminProductsRoute() {
   const { rows, total, publishedCount, draftCount, page, totalPages, q } =
     useLoaderData();
   const [, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   function goToPage(p) {
     setSearchParams((prev) => {
@@ -267,19 +274,28 @@ export default function AdminProductsRoute() {
               </tr>
             )}
             {rows.map((row) => (
-              <Tr key={row.id}>
+              <Tr
+                key={row.id}
+                role="link"
+                tabIndex={0}
+                className="group cursor-pointer"
+                onClick={() => navigate(`/admin/products/${row.id}`)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    navigate(`/admin/products/${row.id}`);
+                  }
+                }}
+              >
                 <Td className="whitespace-normal">
-                  <Link
-                    to={`/admin/products/${row.id}`}
-                    className="group block min-w-0"
-                  >
+                  <span className="block min-w-0">
                     <span className="text-text group-hover:text-accent block truncate font-medium transition-colors">
                       {row.title || row.slug || `${row.idPrefix}…`}
                     </span>
                     <span className="text-text-muted mt-0.5 block truncate font-mono text-xs">
                       {row.slug ?? row.idPrefix}
                     </span>
-                  </Link>
+                  </span>
                 </Td>
                 <Td>
                   <StatusBadge published={row.published} />

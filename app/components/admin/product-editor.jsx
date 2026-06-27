@@ -5,7 +5,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Form, Link, useFetcher, useRevalidator } from 'react-router';
 
 import { slugify } from '#/utils/slugify';
@@ -315,20 +315,14 @@ function VariantPriceGrid({ variants, currencies }) {
               <th />
               <th />
               {currencies.map((cur) => (
-                <>
-                  <th
-                    key={`${cur}-price`}
-                    className="text-text-muted px-3 py-2 text-left text-xs font-medium"
-                  >
+                <Fragment key={cur}>
+                  <th className="text-text-muted px-3 py-2 text-left text-xs font-medium">
                     Price
                   </th>
-                  <th
-                    key={`${cur}-compare`}
-                    className="text-text-muted px-3 py-2 text-left text-xs font-medium"
-                  >
+                  <th className="text-text-muted px-3 py-2 text-left text-xs font-medium">
                     Compare
                   </th>
-                </>
+                </Fragment>
               ))}
             </tr>
           </thead>
@@ -355,11 +349,8 @@ function VariantPriceGrid({ variants, currencies }) {
                 {currencies.map((cur) => {
                   const priceData = variant.prices[cur];
                   return (
-                    <>
-                      <td
-                        key={`${variant.id}-${cur}-price`}
-                        className="px-3 py-3"
-                      >
+                    <Fragment key={cur}>
+                      <td className="px-3 py-3">
                         <Input
                           type="number"
                           name={`price[${variant.id}][${cur}]`}
@@ -374,10 +365,7 @@ function VariantPriceGrid({ variants, currencies }) {
                           className="w-24"
                         />
                       </td>
-                      <td
-                        key={`${variant.id}-${cur}-compare`}
-                        className="px-3 py-3"
-                      >
+                      <td className="px-3 py-3">
                         <Input
                           type="number"
                           name={`comparePrice[${variant.id}][${cur}]`}
@@ -392,7 +380,7 @@ function VariantPriceGrid({ variants, currencies }) {
                           className="w-24"
                         />
                       </td>
-                    </>
+                    </Fragment>
                   );
                 })}
               </tr>
