@@ -1,0 +1,65 @@
+---
+description: Ecommerce architecture — surfaces, themes, plugins, auth, and layering
+globs: app/routes/**/*,app/core/**/*,app/themes/**/*,app/plugins/**/*
+alwaysApply: false
+---
+
+# Ecommerce architecture
+
+bermooda is a single-shop, open-source ecommerce platform. One React Router app serves the storefront, admin back office, and REST API.
+
+## Surfaces
+
+| Surface | Route prefix | UI location |
+| ------- | ------------ | ----------- |
+| Storefront | `/` (via `app/routes/storefront/`) | Active theme in `app/themes/<name>/components/` |
+| Admin | `/admin/*` | Core-owned UI in `app/components/admin/` |
+| Public API | `/api/v1/*` | Thin route handlers over `app/core/*` |
+| Admin API | `/api/admin/v1/*` | API-key auth; thin handlers over `app/core/*` |
+| Webhooks | `/webhooks/:provider` | Generic dispatcher to payment/shipping providers |
+| Auth handlers | `/admin/auth/*`, `/account/auth/*` | Proxies to better-auth (`app/routes/auth/`) |
+
+Plugin dispatchers (static routes, not runtime mutation): `/admin/plugins/:pluginId/*`, `/apps/:pluginId/*`.
+
+All public URLs must be registered in [app/routes.js](mdc:app/routes.js).
+
+## Layering
+
+- **Routes** orchestrate loaders/actions and call `app/core/*`.
+- **`app/core/*`** owns domain logic (catalog, cart, checkout, orders, payments, etc.).
+- **Themes** render storefront UI only. Theme components receive data from route loaders; they do not import `app/core/*` server modules directly. Client-safe helpers come from `#/core/index.js`.
+- **Plugins** extend via manifests, hooks, blocks, and optional admin/storefront route descriptors resolved by static dispatchers. See [docs/plugins.md](mdc:docs/plugins.md).
+
+Do not put ecommerce domain workflows in `app/services`, `app/utils`, or `app/components`.
+
+## Themes
+
+- Each theme lives under `app/themes/<name>/` with `manifest.js`, `components/`, and optional `i18n/<locale>.json`.
+- Storefront page components belong in the active theme, not in `app/components/`.
+- Theme engine: `#/core/themes/index.server`. See [docs/themes.md](mdc:docs/themes.md).
+
+## Plugins
+
+- Each plugin lives under `app/plugins/<id>/` with `manifest.js`, optional `index.server.js` (hooks), `admin/routes.js`, and `blocks/`.
+- Plugin engine: `#/core/plugins/index.server`. See [docs/plugins.md](mdc:docs/plugins.md).
+
+## Dual auth
+
+Admin/staff and customers are **separate** better-auth instances with isolated cookies and models. See [docs/auth.md](mdc:docs/auth.md).
+
+| Audience | Server module | Client module | Base path |
+| -------- | ------------- | ------------- | --------- |
+| Admin/staff | `#/libs/auth/admin.server` | `#/libs/auth/admin-client` | `/admin/auth` |
+| Customer | `#/libs/auth/customer.server` | `#/libs/auth/customer-client` | `/account/auth` |
+
+Protect routes with `adminAuthMiddleware` / `customerAuthMiddleware`, or call `authenticate(request)` / `getCustomerSession(request)` in layout loaders — follow the pattern in the nearest sibling route.
+
+## i18n and locale
+
+Storefront locale is **cookie-driven**, not encoded in URL paths. Resolution lives in `app/core/i18n/`.
+
+## Emails
+
+- Shop transactional emails: `app/emails/shop/` (order confirmation, shipping, etc.).
+- Auth emails: `app/emails/templates/`.
+- Queue via `#/emails/job.server`.

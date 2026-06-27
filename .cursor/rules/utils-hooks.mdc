@@ -11,7 +11,7 @@ alwaysApply: false
 - Put reusable helper functions here.
 - Keep utilities small and mostly side-effect free.
 - Use `*.server.js` for server-only utilities.
-- Do not place business workflows here (use `app/services`).
+- Do not place business workflows here (use `app/core`).
 
 ## `app/hooks`
 
@@ -22,5 +22,5 @@ alwaysApply: false
 
 ## Shared boundaries
 
-- Keep data-layer workflows in routes/services, not in generic hooks/utils.
+- Keep data-layer workflows in routes and `app/core`, not in generic hooks/utils.
 - Use `#/*` imports and omit extensions.

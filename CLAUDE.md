@@ -2,6 +2,8 @@
 
 Project-wide conventions. Operational/setup notes live in [AGENTS.md](AGENTS.md).
 
+bermooda is an open-source ecommerce platform: one React Router app with a themed storefront, merchant admin, and REST API. Ecommerce domain logic lives in `app/core/*`; do not add new shop workflows under `app/services`.
+
 This ruleset intentionally keeps only non-obvious, repository-specific requirements. Favor existing patterns in nearby files over introducing new abstractions.
 
 ## Core
@@ -30,21 +32,25 @@ This ruleset intentionally keeps only non-obvious, repository-specific requireme
 - Layout route modules use `_layout.jsx`.
 - Use `index.jsx` / `index.js` only for directory entry modules.
 
-## Components (`app/components/**`)
+## Components (`app/components/**`, `app/themes/**`)
 
-Keep component rules short and practical. Favor existing patterns in `app/components`.
+Keep component rules short and practical. Favor existing patterns in nearby files.
 
 **Placement**
 
 - Reusable primitives in `app/components/ui/`.
-- Feature-specific UI in its feature folder (e.g. `auth/`, `dashboard/`, `landing/`, `support/`).
-- Keep route-level data loading/mutations in routes and services, not in shared UI primitives.
+- Admin back-office UI in `app/components/admin/`.
+- Shared auth chrome in `app/components/auth/`.
+- Marketing/landing pages in `app/components/landing/`.
+- **Storefront page UI** in `app/themes/<name>/components/` (not `app/components/`).
+- Keep route-level data loading/mutations in routes and `app/core`, not in shared UI primitives.
 
 **Boundaries**
 
 - `ui` components are presentation-focused and reusable.
 - Feature components can compose UI components and local hooks.
-- Move business workflows to `app/services` (or `app/core`) when logic grows beyond view orchestration.
+- Move business workflows to `app/core` when logic grows beyond view orchestration.
+- Theme components receive data via props/loaders; do not import `app/core/*.server` from theme code.
 
 **Naming**
 
@@ -57,7 +63,7 @@ Keep component rules short and practical. Favor existing patterns in `app/compon
 
 **Alerting** — production errors and ops notifications use the provider registry in `#/libs/alerting.server` (`sendErrorAlert`, `sendAlertMessage`). Default provider is Telegram. Route handlers use `handleError` from `#/libs/error.server`. See [.cursor/rules/alerting.mdc](.cursor/rules/alerting.mdc).
 
-**`app/core`** — domain/business workflows that orchestrate libs and persistence (catalog, cart, orders, payments, shipping, customers, etc.). Core modules may depend on libs and other core modules.
+**`app/core`** — domain/business workflows that orchestrate libs and persistence (catalog, cart, orders, payments, shipping, customers, etc.). Core modules may depend on libs and other core modules. **Do not add new ecommerce code under `app/services`.**
 
 **Dependency boundary**
 
@@ -68,6 +74,8 @@ Keep component rules short and practical. Favor existing patterns in `app/compon
 
 - Prefer `*.server.js` for server-only modules in both directories.
 
+See also [.cursor/rules/ecommerce-architecture.mdc](.cursor/rules/ecommerce-architecture.mdc) for themes, plugins, auth, and route surfaces.
+
 ## Utils and hooks (`app/utils/**`, `app/hooks/**`)
 
 **`app/utils`**
@@ -75,7 +83,7 @@ Keep component rules short and practical. Favor existing patterns in `app/compon
 - Reusable helper functions.
 - Keep utilities small and mostly side-effect free.
 - Use `*.server.js` for server-only utilities.
-- Do not place business workflows here (use `app/services` / `app/core`).
+- Do not place business workflows here (use `app/core`).
 
 **`app/hooks`**
 
@@ -85,7 +93,7 @@ Keep component rules short and practical. Favor existing patterns in `app/compon
 
 **Shared boundaries**
 
-- Keep data-layer workflows in routes/services, not in generic hooks/utils.
+- Keep data-layer workflows in routes and `app/core`, not in generic hooks/utils.
 
 ## React Router framework
 
@@ -99,6 +107,8 @@ Use React Router framework mode for routing and data APIs in this repo.
 Reference: https://reactrouter.com/home
 
 ## Routes (`app/routes/**`)
+
+**Surfaces** — `storefront/` (shop), `admin/` (back office), `api/v1/` (public API), `api/admin/v1/` (admin API), `webhooks/`, `auth/`. Plugin dispatchers: `admin/plugins/$pluginId`, `storefront/apps/$pluginId`.
 
 **File layout** — do **not** use React Router filename dot routing (avoid `account.orders.jsx`). Prefer nested directories.
 
@@ -122,17 +132,35 @@ Configure explicit URLs in [app/routes.js](app/routes.js) to match this tree.
 
 - Read data in `loader`.
 - Handle mutations in `action`, typically from `<Form>` or `fetcher` submissions.
+- Call `app/core/*` for domain logic; keep routes thin.
+- Production runs on Fly.io with LiteFS — in `loader`s that perform database writes, call `await ensurePrimary()` from `#/utils/litefs.server` as the **first line** (before any reads). Actions and read-only loaders do not need it. See [.cursor/rules/litefs.mdc](.cursor/rules/litefs.mdc).
 
 **Auth and errors**
 
-- For authenticated routes, export `middleware = [authMiddleware]` from `#/libs/auth/admin.server`.
+Dual auth — admin/staff and customers are separate better-auth instances ([docs/auth.md](docs/auth.md)).
+
+- **Admin routes** — `adminAuthMiddleware` from `#/libs/auth/admin.server`, or `authenticate(request)` in layout loaders.
+- **Customer account routes** — `customerAuthMiddleware` from `#/libs/auth/customer.server`, or `getCustomerSession(request)` in layout loaders.
 - In loader/action `catch` blocks, return `handleError` from `#/libs/error.server` (logs + production alert via `#/libs/alerting.server`).
 - For background jobs or direct alerts, use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting.server`.
 
 **Boundaries**
 
 - Keep route orchestration in route modules.
-- Move reusable UI to `app/components` and domain workflows to `app/core`.
+- Move reusable UI to `app/components` (admin) or `app/themes/<name>/components/` (storefront).
+- Move domain workflows to `app/core`.
+
+## Themes and plugins
+
+- **Themes** — `app/themes/<name>/` (manifest, components, i18n). See [docs/themes.md](docs/themes.md).
+- **Plugins** — `app/plugins/<id>/` (manifest, hooks, blocks, admin routes). See [docs/plugins.md](docs/plugins.md).
+- Storefront locale is cookie-driven, not in URL paths (`app/core/i18n/`).
+
+## Emails
+
+- Shop transactional: `app/emails/shop/`.
+- Auth: `app/emails/templates/`.
+- Queue: `#/emails/job.server`.
 
 ## Prisma schema changes (`prisma/schema.prisma`)
 

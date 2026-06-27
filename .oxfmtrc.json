@@ -29,11 +29,6 @@
         "elementNamePattern": ["#/emails/**"]
       },
       {
-        "groupName": "internal-services",
-        "selector": "import",
-        "elementNamePattern": ["#/services/**"]
-      },
-      {
         "groupName": "internal-hooks",
         "selector": "import",
         "elementNamePattern": ["#/hooks/**"]
@@ -58,7 +53,6 @@
       "internal-utils",
       "internal-libs",
       "internal-emails",
-      "internal-services",
       "internal-hooks",
       "internal-components",
       { "newlinesBetween": true },
