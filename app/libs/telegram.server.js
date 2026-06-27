@@ -1,6 +1,7 @@
 import { Telegraf } from 'telegraf';
 
 import logger from '#/utils/logger.server';
+import { SEVERITY } from '#/libs/alerting-types.server';
 
 /**
  * @typedef {Object} TelegramConfig
@@ -33,12 +34,7 @@ import logger from '#/utils/logger.server';
  * @property {Object} [metadata] - Additional metadata to include in the message
  */
 
-export const SEVERITY = {
-  LOW: 'low',
-  MEDIUM: 'medium',
-  HIGH: 'high',
-  CRITICAL: 'critical',
-};
+export { SEVERITY };
 
 /**
  * Telegram Notifier Service

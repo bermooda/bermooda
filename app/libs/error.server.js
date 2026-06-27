@@ -1,7 +1,7 @@
 import { data } from 'react-router';
 
 import logger from '#/utils/logger.server';
-import { sendTelegramError, SEVERITY } from '#/libs/telegram.server';
+import { sendErrorAlert, SEVERITY } from '#/libs/alerting.server';
 
 /**
  * Handle error
@@ -22,8 +22,8 @@ export const handleError = (
   // Log for debugging
   logger.error(error, message);
 
-  // Send error to Telegram in production
-  sendTelegramError({
+  // Send error alert in production via configured provider
+  sendErrorAlert({
     severity: severity || SEVERITY.HIGH,
     stack: error.stack,
     message,
