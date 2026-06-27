@@ -53,7 +53,9 @@ Keep component rules short and practical. Favor existing patterns in `app/compon
 
 ## Libs vs core (`app/libs/**`, `app/core/**`)
 
-**`app/libs`** — infrastructure and integrations (auth setup, db clients, queue, third-party SDK wrappers). Keep modules reusable and low-level. Do not put domain workflows here.
+**`app/libs`** — infrastructure and integrations (auth setup, db clients, queue, third-party SDK wrappers, alerting). Keep modules reusable and low-level. Do not put domain workflows here.
+
+**Alerting** — production errors and ops notifications use the provider registry in `#/libs/alerting.server` (`sendErrorAlert`, `sendAlertMessage`). Default provider is Telegram. Route handlers use `handleError` from `#/libs/error.server`. See [.cursor/rules/alerting.mdc](.cursor/rules/alerting.mdc).
 
 **`app/core`** — domain/business workflows that orchestrate libs and persistence (catalog, cart, orders, payments, shipping, customers, etc.). Core modules may depend on libs and other core modules.
 
@@ -124,7 +126,8 @@ Configure explicit URLs in [app/routes.js](app/routes.js) to match this tree.
 **Auth and errors**
 
 - For authenticated routes, export `middleware = [authMiddleware]` from `#/libs/auth/admin.server`.
-- In loader/action `catch` blocks, return `handleError` from `#/libs/error.server`.
+- In loader/action `catch` blocks, return `handleError` from `#/libs/error.server` (logs + production alert via `#/libs/alerting.server`).
+- For background jobs or direct alerts, use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting.server`.
 
 **Boundaries**
 

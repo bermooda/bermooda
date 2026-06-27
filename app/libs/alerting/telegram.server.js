@@ -18,5 +18,14 @@ export function createTelegramAlertProvider() {
 
       return notifier.sendError(errorData, options);
     },
+    async sendMessage(message, options = {}) {
+      const notifier = createTelegramNotifier();
+
+      if (!notifier) {
+        return false;
+      }
+
+      return notifier.sendNotification(message, options);
+    },
   };
 }
