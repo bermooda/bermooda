@@ -59,10 +59,8 @@ This is the supported approach in better-auth 1.6.x — there is no
 `modelPrefix` shorthand on `prismaAdapter`; model remapping is done per-entity
 via `BetterAuthDBOptions.modelName`.
 
-> **Phase 2 note**: The `Customer*` Prisma tables do not exist yet. The
-> configuration above compiles and the handler mounts at `/account/auth/*`.
-> Actual DB operations against these tables require the Phase 2 schema
-> migration (`prisma migrate dev`) that adds the four `Customer*` models.
+> **Note:** Customer auth uses the `Customer*` Prisma models defined in
+> `prisma/schema.prisma`.
 
 ---
 
@@ -94,7 +92,6 @@ instance.
 ## Route handlers
 
 ```
-GET/POST  /auth/*          app/routes/auth/all.jsx       (legacy, index.server.js)
 GET/POST  /admin/auth/*    app/routes/auth/admin.jsx     (adminAuth)
 GET/POST  /account/auth/*  app/routes/auth/customer.jsx  (customerAuth)
 ```
@@ -113,20 +110,28 @@ export async function action({ request }) {
 
 ---
 
-## Route middleware
+## Protecting routes
 
-better-auth sessions are validated inside React Router middleware functions:
+Use either React Router middleware or loader-based session checks — follow the
+pattern in the nearest sibling route.
 
-- **Admin routes** — wrap the admin layout with `adminAuthMiddleware` from
-  `admin.server.js`. On success it sets `adminAuthContext` so child routes can
-  read the current admin user via `useRouteLoaderData` / `context.get(adminAuthContext)`.
+### Middleware (optional)
 
-- **Customer routes** — wrap the account layout with `customerAuthMiddleware`
-  from `customer.server.js`. On success it sets `customerAuthContext`.
-  Unauthenticated requests are redirected to `/account/login`.
+- **Admin routes** — `adminAuthMiddleware` from `admin.server.js`. On success
+  it sets `adminAuthContext` so child routes can read the current admin user
+  via `context.get(adminAuthContext)`.
 
-Both middleware functions follow the same pattern as the existing `authMiddleware`
-in `index.server.js`.
+- **Customer routes** — `customerAuthMiddleware` from `customer.server.js`.
+  On success it sets `customerAuthContext`. Unauthenticated requests redirect
+  to `/account/login`.
+
+### Loader-based (current default in layouts)
+
+- **Admin** — call `authenticate(request)` from `admin.server.js` in
+  `app/routes/admin/_layout.jsx` (or per-route loaders).
+
+- **Customer account** — call `getCustomerSession(request)` from
+  `customer.server.js` in `app/routes/storefront/account/_layout.jsx`.
 
 ---
 
@@ -138,8 +143,7 @@ in `index.server.js`.
 | `customerAuthClient` | `/account/auth` | none              |
 
 Both clients derive `baseURL` from `window.location.origin` in the browser and
-fall back to `config.baseUrl` on the server, matching the pattern in the
-original `client.js`.
+fall back to `config.baseUrl` on the server.
 
 ---
 
@@ -195,20 +199,4 @@ curl -I http://localhost:3000/account/auth/get-session
 ```
 
 Both endpoints should be reachable (HTTP 200 or better-auth's own 404/401),
-confirming the two instances are independently mounted. Full end-to-end login
-flows against the `Customer*` tables require the Phase 2 schema migration.
-
----
-
-## Legacy auth instance
-
-`app/libs/auth/index.server.js` (and its companion `app/libs/auth/client.js`)
-is the original single better-auth instance. It is mounted at `/auth/*` via
-`app/routes/auth/all.jsx` and remains in production for backward compatibility
-(existing sessions, OAuth callbacks, third-party integrations that already use
-the `/auth/` base path).
-
-**New code should not add to this instance.** Use `admin.server.js` for
-anything staff/admin-facing and `customer.server.js` for anything
-storefront-facing. The legacy instance may be removed in a future phase once
-all callers have been migrated.
+confirming the two instances are independently mounted.

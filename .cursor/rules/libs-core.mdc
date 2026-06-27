@@ -17,6 +17,7 @@ alwaysApply: false
 
 - Domain/business workflows that orchestrate libs and persistence (catalog, cart, orders, payments, shipping, customers, etc.).
 - Core modules may depend on libs and other core modules.
+- **Do not add ecommerce domain code under `app/services`.** That directory was removed; use `app/core/*` instead.
 
 ## Dependency boundary
 

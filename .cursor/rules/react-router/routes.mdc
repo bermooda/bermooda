@@ -20,6 +20,21 @@ Do **not** use React Router filename dot routing (e.g. avoid `account.orders.jsx
 
 Configure explicit URLs in [app/routes.js](mdc:app/routes.js) to match this tree.
 
+## Route surfaces
+
+| Directory | Purpose |
+| --------- | ------- |
+| `app/routes/storefront/` | Customer-facing shop (loaders call `app/core/*`, render theme components) |
+| `app/routes/admin/` | Merchant back office (`app/components/admin/`) |
+| `app/routes/api/v1/` | Public storefront REST API |
+| `app/routes/api/admin/v1/` | Admin REST API (API-key auth) |
+| `app/routes/webhooks/` | Inbound provider webhooks |
+| `app/routes/auth/` | better-auth handler proxies |
+
+Plugin pages use static dispatchers: `admin/plugins/$pluginId.jsx`, `storefront/apps/$pluginId.jsx`.
+
+See [ecommerce-architecture.mdc](mdc:.cursor/rules/ecommerce-architecture.mdc) for layering details.
+
 ## Conventions
 
 - Configure route paths in [app/routes.js](mdc:app/routes.js).
@@ -30,15 +45,23 @@ Configure explicit URLs in [app/routes.js](mdc:app/routes.js) to match this tree
 
 - Read data in `loader`.
 - Handle mutations in `action`, typically from `<Form>` or `fetcher` submissions.
+- Call `app/core/*` for domain logic; keep routes thin.
 - Production runs on Fly.io with LiteFS — in `loader`s that perform database writes, call `await ensurePrimary()` from `#/utils/litefs.server` as the **first line** (before any reads). Actions and read-only loaders do not need it. See [litefs.mdc](mdc:.cursor/rules/litefs.mdc).
 
 ## Auth and errors
 
-- For authenticated routes, export `middleware = [authMiddleware]` from `#/libs/auth/admin.server`.
-- In loader/action `catch` blocks, return `handleError` from `#/libs/error.server` (logs + production alert via `#/libs/alerting.server`).
-- For background jobs or direct alerts, use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting.server`. See [alerting.mdc](mdc:.cursor/rules/alerting.mdc).
+Dual auth — admin/staff and customers are separate better-auth instances. See [docs/auth.md](mdc:docs/auth.md).
+
+| Area | Protection |
+| ---- | ---------- |
+| Admin (`/admin/*`) | `adminAuthMiddleware` from `#/libs/auth/admin.server`, or `authenticate(request)` in layout loaders |
+| Customer account (`/account/*`) | `customerAuthMiddleware` from `#/libs/auth/customer.server`, or `getCustomerSession(request)` in layout loaders |
+
+In loader/action `catch` blocks, return `handleError` from `#/libs/error.server` (logs + production alert via `#/libs/alerting.server`).
+For background jobs or direct alerts, use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting.server`. See [alerting.mdc](mdc:.cursor/rules/alerting.mdc).
 
 ## Boundaries
 
 - Keep route orchestration in route modules.
-- Move reusable UI to `app/components` and domain workflows to `app/core`.
+- Move reusable UI to `app/components` (admin) or `app/themes/<name>/components/` (storefront).
+- Move domain workflows to `app/core`.

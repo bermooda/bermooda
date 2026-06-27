@@ -352,8 +352,8 @@ Computed on every cart mutation, every checkout step, and re-run server-side at 
 
 **Agent rules / architecture docs**
 
-- [.cursor/rules/general.mdc](../.cursor/rules/general.mdc), [.cursor/rules/react-router/routes.mdc](../.cursor/rules/react-router/routes.mdc), [.cursor/rules/libs-services.mdc](../.cursor/rules/libs-services.mdc), and any other local rule that says domain workflows belong in `app/services` — rewrite to say ecommerce domain workflows belong in `app/core/*`; `app/libs/*` remains infrastructure and SDK clients.
-- [AGENTS.md](../AGENTS.md) — add a short note that Phase 1 moves shop engine code to `app/core/*` and future agents should not introduce new ecommerce workflows under `app/services/*`.
+- [.cursor/rules/general.mdc](../.cursor/rules/general.mdc), [.cursor/rules/react-router/routes.mdc](../.cursor/rules/react-router/routes.mdc), [.cursor/rules/libs-core.mdc](../.cursor/rules/libs-core.mdc), [.cursor/rules/ecommerce-architecture.mdc](../.cursor/rules/ecommerce-architecture.mdc), [.cursor/rules/components.mdc](../.cursor/rules/components.mdc), [.cursor/rules/utils-hooks.mdc](../.cursor/rules/utils-hooks.mdc), [CLAUDE.md](../CLAUDE.md), and any other local rule that said domain workflows belong in `app/services` — rewritten to say ecommerce domain workflows belong in `app/core/*`; `app/libs/*` remains infrastructure and SDK clients. (Former `libs-services.mdc` renamed to `libs-core.mdc`.)
+- [AGENTS.md](../AGENTS.md) — note added that shop engine code lives in `app/core/*` and agents should not introduce new ecommerce workflows under `app/services/*`.
 
 **Polish (drive-bys with the same first commit)**
 
@@ -413,7 +413,7 @@ flowchart TD
 
 Tasks P0-1..P0-4 are parallel. P0-5 runs last because P0-2 and P0-3 remove the callers of the models P0-5 drops.
 
-- **P0-1. Rewrite architecture rules (parallel).** Owns [.cursor/rules/general.mdc](../.cursor/rules/general.mdc), [.cursor/rules/libs-services.mdc](../.cursor/rules/libs-services.mdc), [.cursor/rules/react-router/routes.mdc](../.cursor/rules/react-router/routes.mdc), [AGENTS.md](../AGENTS.md). Replace `app/services/*` guidance with `app/core/*` as the domain layer; keep `app/libs/*` as infrastructure.
+- **P0-1. Rewrite architecture rules (parallel). Done.** Owns [.cursor/rules/general.mdc](../.cursor/rules/general.mdc), [.cursor/rules/libs-core.mdc](../.cursor/rules/libs-core.mdc) (renamed from `libs-services.mdc`), [.cursor/rules/ecommerce-architecture.mdc](../.cursor/rules/ecommerce-architecture.mdc), [.cursor/rules/react-router/routes.mdc](../.cursor/rules/react-router/routes.mdc), [.cursor/rules/components.mdc](../.cursor/rules/components.mdc), [.cursor/rules/utils-hooks.mdc](../.cursor/rules/utils-hooks.mdc), [CLAUDE.md](../CLAUDE.md), [AGENTS.md](../AGENTS.md), [docs/auth.md](./auth.md). Replaced `app/services/*` guidance with `app/core/*` as the domain layer; kept `app/libs/*` as infrastructure.
 - **P0-2. Drop SaaS/org routes + services (parallel).** Delete `app/routes/app/` (all files), `app/routes/organization/accept-invitation.jsx`, `app/routes/checkout/polar.jsx`, `app/routes/webhooks/polar.jsx`, `app/services/polar.server.js`. Remove the corresponding entries from [app/routes.js](../app/routes.js).
 - **P0-3. Drop Polar + org from config/auth/landing (parallel).** Remove `@polar-sh/remix` from [package.json](../package.json); drop `polar.plans` from [app/config.js](../app/config.js); strip the `/checkout/polar` CTA from [app/components/landing/hero.jsx](../app/components/landing/hero.jsx); remove the `organization` plugin block from [app/libs/auth/index.server.js](../app/libs/auth/index.server.js) and the `organizationClient` import from [app/libs/auth/client.js](../app/libs/auth/client.js).
 - **P0-4. Polish drive-bys (parallel).** In [app/utils/logger.server.js](../app/utils/logger.server.js) set Pino `name` to `bermooda`. In [README.md](../README.md) change dev URL `5173` → `3000`.

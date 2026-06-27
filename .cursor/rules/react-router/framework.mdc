@@ -1,5 +1,5 @@
 ---
-description: Framework specific rules for React Router / Remix
+description: Framework-specific rules for React Router 7
 globs: app/**/*.js,app/**/*.jsx,app/root.jsx,app/routes.js
 alwaysApply: false
 ---

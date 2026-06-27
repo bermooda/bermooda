@@ -1,24 +1,28 @@
 ---
-description: Rules for organizing React components in app/components directory
-globs: app/components/**/*.jsx,app/components/**/*.js
+description: Rules for organizing React components in app/components and app/themes
+globs: app/components/**/*.jsx,app/components/**/*.js,app/themes/**/*.jsx
 alwaysApply: false
 ---
 
 # Component organization (minimal)
 
-Keep component rules short and practical. Favor existing patterns in `app/components`.
+Keep component rules short and practical. Favor existing patterns in nearby files.
 
 ## Placement
 
-- Put reusable primitives in `app/components/ui/`.
-- Put feature-specific UI in its feature folder (for example `auth/`, `dashboard/`, `landing/`, `support/`).
-- Keep route-level data loading/mutations in routes and services, not in shared UI primitives.
+- Reusable primitives in `app/components/ui/`.
+- Admin back-office UI in `app/components/admin/`.
+- Shared auth chrome in `app/components/auth/`.
+- Marketing/landing pages in `app/components/landing/`.
+- **Storefront page UI** in `app/themes/<name>/components/` (not `app/components/`).
+- Keep route-level data loading/mutations in routes and `app/core`, not in shared UI primitives.
 
 ## Boundaries
 
 - `ui` components should be presentation-focused and reusable.
 - Feature components can compose UI components and local hooks.
-- Move business workflows to `app/services` when logic grows beyond view orchestration.
+- Move business workflows to `app/core` when logic grows beyond view orchestration.
+- Theme components receive data via props/loaders; do not import `app/core/*.server` modules from theme code.
 
 ## Naming and imports
 
