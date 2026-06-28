@@ -298,15 +298,19 @@ function VariantPriceGrid({ variants, currencies }) {
   }
 
   return (
-    <div className="border-border overflow-hidden rounded-lg border">
+    <div className="border-border min-w-0 overflow-hidden rounded-lg border">
       <div className="overflow-x-auto">
-        <table className="divide-border min-w-full divide-y text-sm">
+        <table className="divide-border w-max divide-y text-sm">
           <thead className="bg-surface-2/60">
             <tr>
-              <Th>SKU</Th>
-              <Th>Inventory</Th>
+              <Th className="px-3 py-2 whitespace-nowrap">SKU</Th>
+              <Th className="px-3 py-2 whitespace-nowrap">Inventory</Th>
               {currencies.map((cur) => (
-                <Th key={cur} colSpan={2} className="text-center">
+                <Th
+                  key={cur}
+                  colSpan={2}
+                  className="px-3 py-2 text-center whitespace-nowrap"
+                >
                   {cur}
                 </Th>
               ))}
@@ -316,10 +320,10 @@ function VariantPriceGrid({ variants, currencies }) {
               <th />
               {currencies.map((cur) => (
                 <Fragment key={cur}>
-                  <th className="text-text-muted px-3 py-2 text-left text-xs font-medium">
+                  <th className="text-text-muted px-3 py-2 text-left text-xs font-medium whitespace-nowrap">
                     Price
                   </th>
-                  <th className="text-text-muted px-3 py-2 text-left text-xs font-medium">
+                  <th className="text-text-muted px-3 py-2 text-left text-xs font-medium whitespace-nowrap">
                     Compare
                   </th>
                 </Fragment>
@@ -329,28 +333,28 @@ function VariantPriceGrid({ variants, currencies }) {
           <tbody className="divide-border bg-surface [&>tr:hover]:bg-surface-2/40 divide-y">
             {variants.map((variant) => (
               <tr key={variant.id}>
-                <td className="px-3 py-3">
+                <td className="px-3 py-2 whitespace-nowrap">
                   <Input
                     name={`variant[${variant.id}][sku]`}
                     defaultValue={variant.sku}
                     placeholder="SKU"
-                    className="w-28"
+                    className="w-24"
                   />
                 </td>
-                <td className="px-3 py-3">
+                <td className="px-3 py-2 whitespace-nowrap">
                   <Input
                     type="number"
                     name={`variant[${variant.id}][inventoryCount]`}
                     defaultValue={variant.inventoryCount}
                     min={0}
-                    className="w-20"
+                    className="w-16"
                   />
                 </td>
                 {currencies.map((cur) => {
                   const priceData = variant.prices[cur];
                   return (
                     <Fragment key={cur}>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-2 whitespace-nowrap">
                         <Input
                           type="number"
                           name={`price[${variant.id}][${cur}]`}
@@ -362,10 +366,10 @@ function VariantPriceGrid({ variants, currencies }) {
                           min={0}
                           step="0.01"
                           placeholder="0.00"
-                          className="w-24"
+                          className="w-20"
                         />
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-2 whitespace-nowrap">
                         <Input
                           type="number"
                           name={`comparePrice[${variant.id}][${cur}]`}
@@ -377,7 +381,7 @@ function VariantPriceGrid({ variants, currencies }) {
                           min={0}
                           step="0.01"
                           placeholder="—"
-                          className="w-24"
+                          className="w-20"
                         />
                       </td>
                     </Fragment>
@@ -575,13 +579,22 @@ export default function ProductEditor({
       slugMap[primaryLocale] ||
       `Product ${product.id.slice(0, 8)}`;
 
-  const subtitle = isCreate
-    ? 'Add product details, pricing, and categories. Images can be uploaded after saving.'
-    : `Created ${new Date(product.createdAt).toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      })}`;
+  const createdDate = new Date(product.createdAt).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  const subtitle = isCreate ? (
+    'Add product details, pricing, and categories. Images can be uploaded after saving.'
+  ) : (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      <Badge tone={isPublished ? 'success' : 'neutral'}>
+        {isPublished ? 'Published' : 'Draft'}
+      </Badge>
+      <span>Created {createdDate}</span>
+    </span>
+  );
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -598,28 +611,23 @@ export default function ProductEditor({
         subtitle={subtitle}
         actions={
           !isCreate && (
-            <div className="flex items-center gap-2">
-              <Badge tone={isPublished ? 'success' : 'neutral'}>
-                {isPublished ? 'Published' : 'Draft'}
-              </Badge>
-              <Form method="post">
-                <input type="hidden" name="intent" value="save" />
-                <input
-                  type="hidden"
-                  name="publishedAt"
-                  value={isPublished ? 'unpublish' : 'publish'}
-                />
-                {locales.map((l) => (
-                  <input key={l} type="hidden" name="locales[]" value={l} />
-                ))}
-                <Button
-                  type="submit"
-                  variant={isPublished ? 'secondary' : 'primary'}
-                >
-                  {isPublished ? 'Unpublish' : 'Publish'}
-                </Button>
-              </Form>
-            </div>
+            <Form method="post">
+              <input type="hidden" name="intent" value="save" />
+              <input
+                type="hidden"
+                name="publishedAt"
+                value={isPublished ? 'unpublish' : 'publish'}
+              />
+              {locales.map((l) => (
+                <input key={l} type="hidden" name="locales[]" value={l} />
+              ))}
+              <Button
+                type="submit"
+                variant={isPublished ? 'secondary' : 'primary'}
+              >
+                {isPublished ? 'Unpublish' : 'Publish'}
+              </Button>
+            </Form>
           )
         }
       />
@@ -636,8 +644,8 @@ export default function ProductEditor({
           value={isCreate ? 'create' : 'save'}
         />
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-6">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0 space-y-6">
             <Card>
               <CardHeader
                 title="Content"
@@ -714,24 +722,7 @@ export default function ProductEditor({
         </div>
 
         <ActionBar>
-          <div className="flex items-center gap-3">
-            <ButtonSubmit disabled={isSaving}>
-              {isSaving
-                ? isCreate
-                  ? 'Creating…'
-                  : 'Saving…'
-                : isCreate
-                  ? 'Create product'
-                  : 'Save product'}
-            </ButtonSubmit>
-            <Link
-              to="/admin/products"
-              className="text-text-muted hover:text-text text-sm transition-colors"
-            >
-              Cancel
-            </Link>
-          </div>
-          {!isCreate && (
+          {!isCreate ? (
             <Form method="post">
               <input type="hidden" name="intent" value="delete" />
               <button
@@ -750,7 +741,26 @@ export default function ProductEditor({
                 Delete product
               </button>
             </Form>
+          ) : (
+            <span />
           )}
+          <div className="flex items-center gap-3">
+            <Link
+              to="/admin/products"
+              className="text-text-muted hover:text-text text-sm transition-colors"
+            >
+              Cancel
+            </Link>
+            <ButtonSubmit disabled={isSaving}>
+              {isSaving
+                ? isCreate
+                  ? 'Creating…'
+                  : 'Saving…'
+                : isCreate
+                  ? 'Create product'
+                  : 'Save product'}
+            </ButtonSubmit>
+          </div>
         </ActionBar>
       </Form>
     </div>
