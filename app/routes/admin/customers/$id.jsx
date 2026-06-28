@@ -6,10 +6,13 @@ import { Form, Link, useActionData, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import prisma from '#/libs/prisma.server';
+import ActionBar from '#/components/admin/action-bar';
 import Badge from '#/components/admin/badge';
-import Card from '#/components/admin/card';
+import Breadcrumbs from '#/components/admin/breadcrumbs';
+import Card, { CardHeader } from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
+import PageHeader from '#/components/admin/page-header';
 import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
@@ -246,13 +249,11 @@ function formatCents(cents, currency = 'USD') {
   }).format(cents / 100);
 }
 
-function SectionCard({ title, children }) {
+function SectionCard({ title, description, children }) {
   return (
-    <Card padded={false}>
-      <div className="border-border border-b px-6 py-4">
-        <h2 className="text-text text-base font-semibold">{title}</h2>
-      </div>
-      <div className="px-6 py-4">{children}</div>
+    <Card>
+      <CardHeader title={title} description={description} />
+      {children}
     </Card>
   );
 }
@@ -265,86 +266,91 @@ export default function AdminCustomerRoute() {
   const { customer } = useLoaderData();
   const actionData = useActionData();
 
+  const joinedDate = new Date(customer.createdAt).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      {/* Breadcrumb + Header */}
-      <div>
-        <div className="text-text-muted mb-1 flex items-center gap-2 text-sm">
-          <Link to="/admin/customers" className="hover:underline">
-            Customers
-          </Link>
-          <span>/</span>
-          <span className="max-w-xs truncate">{customer.email}</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-text text-2xl font-bold">
-            {customer.name ?? customer.email}
-          </h1>
-          <span className="text-text-muted text-sm">
-            Joined{' '}
-            {new Date(customer.createdAt).toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            })}
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeader
+        breadcrumbs={
+          <Breadcrumbs
+            items={[
+              { label: 'Customers', href: '/admin/customers' },
+              { label: customer.name || customer.email },
+            ]}
+          />
+        }
+        title={customer.name ?? customer.email}
+        subtitle={
+          <span className="inline-flex flex-wrap items-center gap-2">
+            {customer.name && <span>{customer.email}</span>}
+            <span>Joined {joinedDate}</span>
           </span>
-        </div>
-        {customer.name && (
-          <p className="text-text-muted mt-0.5 text-sm">{customer.email}</p>
-        )}
-      </div>
+        }
+      />
 
       {/* Action feedback */}
       {actionData?.ok && <SuccessAlert message="Saved successfully." />}
       <ErrorAlert message={actionData?.error} />
 
       {/* Edit Customer */}
-      <SectionCard title="Customer Details">
-        <Form method="post" className="grid gap-4 sm:grid-cols-3">
+      <SectionCard
+        title="Customer details"
+        description="Update profile information for this customer."
+      >
+        <Form method="post" className="space-y-6">
           <input type="hidden" name="intent" value="update-customer" />
 
-          <Field label="Name">
-            <Input
-              type="text"
-              name="name"
-              defaultValue={customer.name ?? ''}
-              placeholder="Jane Doe"
-            />
-          </Field>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Name">
+              <Input
+                type="text"
+                name="name"
+                defaultValue={customer.name ?? ''}
+                placeholder="Jane Doe"
+              />
+            </Field>
 
-          <Field label="Phone">
-            <Input
-              type="tel"
-              name="phone"
-              defaultValue={customer.phone ?? ''}
-              placeholder="+1 555 000 0000"
-            />
-          </Field>
+            <Field label="Phone">
+              <Input
+                type="tel"
+                name="phone"
+                defaultValue={customer.phone ?? ''}
+                placeholder="+1 555 000 0000"
+              />
+            </Field>
 
-          <Field label="Preferred Locale">
-            <Input
-              type="text"
-              name="preferredLocale"
-              defaultValue={customer.preferredLocale ?? ''}
-              placeholder="en, de, fr…"
-            />
-          </Field>
+            <Field label="Preferred locale">
+              <Input
+                type="text"
+                name="preferredLocale"
+                defaultValue={customer.preferredLocale ?? ''}
+                placeholder="en, de, fr…"
+              />
+            </Field>
 
-          {/* Read-only email */}
-          <Field label="Email (read-only)" className="sm:col-span-2">
-            <p className="bg-surface-2 border-border text-text-muted rounded-md border px-3 py-1.5 text-sm">
-              {customer.email}
-            </p>
-          </Field>
-
-          <div className="sm:col-span-3">
-            <ButtonSubmit>Save Changes</ButtonSubmit>
+            <Field label="Email (read-only)" className="sm:col-span-2">
+              <p className="bg-surface-2 border-border text-text-muted rounded-md border px-3 py-1.5 text-sm">
+                {customer.email}
+              </p>
+            </Field>
           </div>
+
+          <ActionBar className="-mx-4 mt-6 rounded-none border-x-0 border-b-0 sm:-mx-6">
+            <span />
+            <ButtonSubmit>Save changes</ButtonSubmit>
+          </ActionBar>
         </Form>
       </SectionCard>
 
       {/* Addresses */}
-      <SectionCard title={`Addresses (${customer.addresses.length})`}>
+      <SectionCard
+        title={`Addresses (${customer.addresses.length})`}
+        description="Saved shipping and billing addresses."
+      >
         {customer.addresses.length === 0 ? (
           <p className="text-text-muted text-sm">No addresses saved.</p>
         ) : (
@@ -421,7 +427,10 @@ export default function AdminCustomerRoute() {
       </SectionCard>
 
       {/* GDPR & Privacy */}
-      <SectionCard title="GDPR & Privacy">
+      <SectionCard
+        title="GDPR & privacy"
+        description="Manage consent preferences and data requests."
+      >
         {customer.erasedAt ? (
           <p className="text-warn text-sm">
             This customer was erased on{' '}
@@ -484,7 +493,10 @@ export default function AdminCustomerRoute() {
       </SectionCard>
 
       {/* Order History */}
-      <SectionCard title="Order History">
+      <SectionCard
+        title="Order history"
+        description="Recent orders placed by this customer."
+      >
         {customer.orders.length === 0 ? (
           <p className="text-text-muted text-sm">No orders yet.</p>
         ) : (
