@@ -4,7 +4,6 @@
 
 import {
   Form,
-  Link,
   useActionData,
   useLoaderData,
   useNavigation,
@@ -12,8 +11,10 @@ import {
 
 import prisma from '#/libs/prisma.server';
 import Badge from '#/components/admin/badge';
-import Card from '#/components/admin/card';
+import Breadcrumbs from '#/components/admin/breadcrumbs';
+import Card, { CardHeader } from '#/components/admin/card';
 import { controlClasses } from '#/components/admin/form/input';
+import PageHeader from '#/components/admin/page-header';
 import { Td, Th } from '#/components/admin/table';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
@@ -294,13 +295,11 @@ function formatCents(cents, currency = 'USD') {
   }).format(cents / 100);
 }
 
-function SectionCard({ title, children }) {
+function SectionCard({ title, description, children }) {
   return (
-    <Card padded={false}>
-      <div className="border-border border-b px-4 py-4 sm:px-6">
-        <h2 className="text-text text-base font-semibold">{title}</h2>
-      </div>
-      <div className="p-4 sm:p-6">{children}</div>
+    <Card>
+      <CardHeader title={title} description={description} />
+      {children}
     </Card>
   );
 }
@@ -373,37 +372,39 @@ export default function AdminOrderRoute() {
 
   const transitions = STATUS_TRANSITIONS[order.status] ?? [];
 
+  const createdDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      {/* Breadcrumb + Header */}
-      <div>
-        <div className="text-text-muted mb-1 flex items-center gap-2 text-sm">
-          <Link to="/admin/orders" className="hover:underline">
-            Orders
-          </Link>
-          <span>/</span>
-          <span className="font-mono text-xs">{order.orderNumber}</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-text text-2xl font-bold tracking-tight">
-            Order {order.orderNumber}
-          </h1>
-          <StatusBadge status={order.status} />
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeader
+        breadcrumbs={
+          <Breadcrumbs
+            items={[
+              { label: 'Orders', href: '/admin/orders' },
+              { label: order.orderNumber },
+            ]}
+          />
+        }
+        title={`Order ${order.orderNumber}`}
+        subtitle={
+          <span className="inline-flex flex-wrap items-center gap-2">
+            <StatusBadge status={order.status} />
+            <span>Placed {createdDate}</span>
+          </span>
+        }
+        actions={
           <a
             href={`/admin/orders/${order.id}/documents`}
-            className="text-accent text-sm hover:underline"
+            className="border-border bg-surface-2 text-text hover:bg-surface inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-xs transition"
           >
-            Download Invoice
+            Download invoice
           </a>
-          <span className="text-text-muted text-sm">
-            {new Date(order.createdAt).toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </span>
-        </div>
-      </div>
+        }
+      />
 
       {/* Action feedback */}
       {actionData?.ok && <SuccessAlert message="Saved successfully." />}
@@ -428,7 +429,10 @@ export default function AdminOrderRoute() {
       )}
 
       {/* Line items */}
-      <SectionCard title="Line Items">
+      <SectionCard
+        title="Line items"
+        description="Products included in this order."
+      >
         <div className="overflow-x-auto">
           <table className="divide-border min-w-full divide-y">
             <thead className="bg-surface-2/50">
@@ -518,7 +522,10 @@ export default function AdminOrderRoute() {
       {/* Payment info + Address (side by side on wider screens) */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Payment info */}
-        <SectionCard title="Payment">
+        <SectionCard
+          title="Payment"
+          description="Payment provider and customer details."
+        >
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-text-muted">Provider</dt>
@@ -556,7 +563,10 @@ export default function AdminOrderRoute() {
         </SectionCard>
 
         {/* Shipping address */}
-        <SectionCard title="Shipping Address">
+        <SectionCard
+          title="Shipping address"
+          description="Delivery and billing addresses."
+        >
           <AddressDisplay json={order.shippingAddressJson} />
           {order.billingAddressJson && (
             <div className="mt-4">
@@ -567,7 +577,10 @@ export default function AdminOrderRoute() {
       </div>
 
       {/* Shipments */}
-      <SectionCard title="Shipments">
+      <SectionCard
+        title="Shipments"
+        description="Track fulfillment and add new shipments."
+      >
         {order.shipments.length > 0 && (
           <div className="mb-4 overflow-x-auto">
             <table className="divide-border min-w-full divide-y text-sm">
@@ -696,7 +709,10 @@ export default function AdminOrderRoute() {
       </SectionCard>
 
       {/* Returns */}
-      <SectionCard title="Returns">
+      <SectionCard
+        title="Returns"
+        description="Manage return requests and resolutions."
+      >
         {order.returns.length > 0 && (
           <div className="mb-4 space-y-4">
             {order.returns.map((ret) => (
@@ -792,7 +808,10 @@ export default function AdminOrderRoute() {
       </SectionCard>
 
       {/* Refunds */}
-      <SectionCard title="Refunds">
+      <SectionCard
+        title="Refunds"
+        description="Issue and review refunds for this order."
+      >
         {order.refunds.length > 0 && (
           <div className="mb-4 overflow-x-auto">
             <table className="divide-border min-w-full divide-y text-sm">
@@ -862,7 +881,10 @@ export default function AdminOrderRoute() {
       </SectionCard>
 
       {/* Notes */}
-      <SectionCard title="Notes">
+      <SectionCard
+        title="Notes"
+        description="Internal notes visible only to staff."
+      >
         {order.notes && (
           <p className="text-text mb-4 text-sm whitespace-pre-wrap">
             {order.notes}
