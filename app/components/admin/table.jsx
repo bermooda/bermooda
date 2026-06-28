@@ -23,7 +23,9 @@ export default function Table({ children, className = '' }) {
       )}
     >
       <div className="overflow-x-auto">
-        <table className="divide-border min-w-full divide-y">{children}</table>
+        <table className="divide-border w-max min-w-full divide-y">
+          {children}
+        </table>
       </div>
     </div>
   );
