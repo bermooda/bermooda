@@ -4,6 +4,7 @@
 import {
   MagnifyingGlassIcon,
   PlusIcon,
+  UserGroupIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
@@ -13,23 +14,23 @@ import {
   redirect,
   useActionData,
   useLoaderData,
+  useNavigate,
   useSearchParams,
 } from 'react-router';
 
 import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
 import Card from '#/components/admin/card';
+import EmptyState from '#/components/admin/empty-state';
 import Field from '#/components/admin/form/field';
 import Input, { controlClasses } from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
-import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import Stat from '#/components/admin/stat';
+import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
+import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
 import { ErrorAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
-
-// ---------------------------------------------------------------------------
-// Loader
-// ---------------------------------------------------------------------------
 
 const PAGE_SIZE = 20;
 
@@ -45,8 +46,14 @@ export async function loader({ request }) {
       }
     : {};
 
-  const [total, customers] = await Promise.all([
+  const [total, withOrdersCount, customers] = await Promise.all([
     prisma.customer.count({ where }),
+    prisma.customer.count({
+      where: {
+        ...where,
+        orders: { some: {} },
+      },
+    }),
     prisma.customer.findMany({
       where,
       orderBy: { createdAt: 'desc' },
@@ -58,6 +65,7 @@ export async function loader({ request }) {
         name: true,
         phone: true,
         createdAt: true,
+        _count: { select: { orders: true } },
       },
     }),
   ]);
@@ -67,22 +75,20 @@ export async function loader({ request }) {
     email: c.email,
     name: c.name ?? null,
     phone: c.phone ?? null,
+    orderCount: c._count.orders,
     createdAt: c.createdAt.toISOString(),
   }));
 
   return {
     rows,
     total,
+    withOrdersCount,
     page,
     pageSize: PAGE_SIZE,
     totalPages: Math.ceil(total / PAGE_SIZE),
     q,
   };
 }
-
-// ---------------------------------------------------------------------------
-// Action
-// ---------------------------------------------------------------------------
 
 export async function action({ request }) {
   const formData = await request.formData();
@@ -112,10 +118,6 @@ export async function action({ request }) {
   return { ok: false, error: 'Unknown intent.' };
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
@@ -124,14 +126,11 @@ function formatDate(iso) {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 export default function AdminCustomersRoute() {
-  const { rows, total, page, totalPages, q } = useLoaderData();
+  const { rows, total, withOrdersCount, page, totalPages, q } = useLoaderData();
   const actionData = useActionData();
   const [, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
 
   function goToPage(p) {
@@ -146,31 +145,36 @@ export default function AdminCustomersRoute() {
     <div>
       <PageHeader
         title="Customers"
-        subtitle={`${total} customer${total !== 1 ? 's' : ''}`}
+        subtitle="Manage customer profiles, addresses, and order history."
         actions={
-          <Button variant="primary" onClick={() => setShowCreate((v) => !v)}>
+          <button
+            type="button"
+            onClick={() => setShowCreate((v) => !v)}
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
             {showCreate ? (
               <>
-                <XMarkIcon className="mr-1.5 h-4 w-4" />
+                <XMarkIcon className="h-4 w-4" />
                 Cancel
               </>
             ) : (
               <>
-                <PlusIcon className="mr-1.5 h-4 w-4" />
-                Create Customer
+                <PlusIcon className="h-4 w-4" />
+                New customer
               </>
             )}
-          </Button>
+          </button>
         }
-        className="mb-6"
       />
 
-      {/* Inline Create Panel */}
+      <div className="mb-6 grid gap-3 sm:grid-cols-2">
+        <Stat label="Total customers" value={total} />
+        <Stat label="With orders" value={withOrdersCount} />
+      </div>
+
       {showCreate && (
         <Card className="mb-6">
-          <h2 className="text-text mb-4 text-base font-semibold">
-            New Customer
-          </h2>
+          <h2 className="text-text mb-4 text-sm font-semibold">New customer</h2>
           <ErrorAlert message={actionData?.error} />
           <Form method="post" className="grid gap-4 sm:grid-cols-3">
             <input type="hidden" name="intent" value="create" />
@@ -204,7 +208,7 @@ export default function AdminCustomersRoute() {
               />
             </Field>
             <div className="flex gap-3 sm:col-span-3">
-              <ButtonSubmit>Create Customer</ButtonSubmit>
+              <ButtonSubmit>Create customer</ButtonSubmit>
               <Button variant="secondary" onClick={() => setShowCreate(false)}>
                 Cancel
               </Button>
@@ -213,86 +217,135 @@ export default function AdminCustomersRoute() {
         </Card>
       )}
 
-      {/* Search */}
-      <Form method="get" className="mb-4">
-        <div className="relative max-w-sm">
-          <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <input
-            type="search"
-            name="q"
-            defaultValue={q}
-            placeholder="Search by email or name…"
-            className={`${controlClasses} pl-9`}
-          />
-        </div>
-      </Form>
+      <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
+        <Toolbar>
+          <Form method="get" className="w-full sm:max-w-sm">
+            <div className="relative">
+              <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <input
+                type="search"
+                name="q"
+                defaultValue={q}
+                placeholder="Search by email or name…"
+                className={`${controlClasses} pl-9`}
+              />
+            </div>
+          </Form>
+          <ToolbarGroup>
+            <span className="text-text-muted text-sm">
+              {total} result{total !== 1 ? 's' : ''}
+            </span>
+          </ToolbarGroup>
+        </Toolbar>
 
-      {/* Table (md+) */}
-      <Table className="hidden md:block">
-        <THead>
-          <tr>
-            <Th>Email</Th>
-            <Th>Name</Th>
-            <Th>Phone</Th>
-            <Th>Created</Th>
-            <Th />
-          </tr>
-        </THead>
-        <TBody>
-          {rows.length === 0 && (
+        <Table className="hidden rounded-none border-0 shadow-none md:block">
+          <THead>
             <tr>
-              <Td colSpan={5} className="py-8 text-center">
-                No customers found.
-              </Td>
+              {['Customer', 'Phone', 'Orders', 'Joined'].map((col) => (
+                <Th key={col}>{col}</Th>
+              ))}
             </tr>
-          )}
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <Td className="text-text font-medium">{row.email}</Td>
-              <Td className="text-text">{row.name ?? '—'}</Td>
-              <Td className="text-text">{row.phone ?? '—'}</Td>
-              <Td>{formatDate(row.createdAt)}</Td>
-              <Td className="text-right">
-                <Link
-                  to={`/admin/customers/${row.id}`}
-                  className="text-accent font-medium hover:underline"
-                >
-                  View
-                </Link>
-              </Td>
-            </tr>
-          ))}
-        </TBody>
-      </Table>
+          </THead>
+          <TBody>
+            {rows.length === 0 && (
+              <tr>
+                <Td colSpan={4} className="p-0">
+                  <EmptyState
+                    icon={UserGroupIcon}
+                    title="No customers found"
+                    description={
+                      q
+                        ? 'Try a different search term or clear the filter.'
+                        : 'Customers will appear here after they register or place an order.'
+                    }
+                    action={
+                      !q && (
+                        <button
+                          type="button"
+                          onClick={() => setShowCreate(true)}
+                          className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
+                        >
+                          <PlusIcon className="h-4 w-4" />
+                          New customer
+                        </button>
+                      )
+                    }
+                    className="border-0 shadow-none"
+                  />
+                </Td>
+              </tr>
+            )}
+            {rows.map((row) => (
+              <Tr
+                key={row.id}
+                role="link"
+                tabIndex={0}
+                className="group cursor-pointer"
+                onClick={() => navigate(`/admin/customers/${row.id}`)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    navigate(`/admin/customers/${row.id}`);
+                  }
+                }}
+              >
+                <Td className="whitespace-normal">
+                  <span className="block min-w-0">
+                    <span className="text-text group-hover:text-accent block truncate font-medium transition-colors">
+                      {row.name || row.email}
+                    </span>
+                    {row.name && (
+                      <span className="text-text-muted mt-0.5 block truncate text-xs">
+                        {row.email}
+                      </span>
+                    )}
+                  </span>
+                </Td>
+                <Td className="text-text">{row.phone ?? '—'}</Td>
+                <Td className="tabular-nums">{row.orderCount}</Td>
+                <Td className="tabular-nums">{formatDate(row.createdAt)}</Td>
+              </Tr>
+            ))}
+          </TBody>
+        </Table>
 
-      {/* Card list (mobile) */}
-      <div className="space-y-3 md:hidden">
-        {rows.length === 0 ? (
-          <Card className="text-text-muted text-center text-sm">
-            No customers found.
-          </Card>
-        ) : (
-          rows.map((row) => (
-            <Link
-              key={row.id}
-              to={`/admin/customers/${row.id}`}
-              className="block"
-            >
-              <Card className="space-y-1">
+        <div className="divide-border divide-y md:hidden">
+          {rows.length === 0 ? (
+            <EmptyState
+              icon={UserGroupIcon}
+              title="No customers found"
+              description={
+                q
+                  ? 'Try a different search term.'
+                  : 'Customers will appear here after they register or place an order.'
+              }
+              className="border-0 shadow-none"
+            />
+          ) : (
+            rows.map((row) => (
+              <Link
+                key={row.id}
+                to={`/admin/customers/${row.id}`}
+                className="hover:bg-surface-2/60 block px-4 py-4 transition-colors"
+              >
                 <p className="text-text truncate text-sm font-medium">
-                  {row.email}
+                  {row.name || row.email}
                 </p>
                 {row.name && (
-                  <p className="text-text-muted text-sm">{row.name}</p>
+                  <p className="text-text-muted mt-0.5 truncate text-xs">
+                    {row.email}
+                  </p>
                 )}
-                <div className="text-text-muted flex items-center justify-between text-xs">
-                  <span>{row.phone ?? '—'}</span>
+                <div className="text-text-muted mt-3 flex items-center justify-between text-xs">
+                  <span>
+                    {row.orderCount} order{row.orderCount !== 1 ? 's' : ''}
+                  </span>
                   <span>{formatDate(row.createdAt)}</span>
                 </div>
-              </Card>
-            </Link>
-          ))
-        )}
+              </Link>
+            ))
+          )}
+        </div>
       </div>
 
       <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
