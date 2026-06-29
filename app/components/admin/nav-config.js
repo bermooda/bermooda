@@ -114,6 +114,24 @@ export const QUICK_ACTIONS = [
     group: 'Quick actions',
   },
   {
+    name: 'New customer',
+    href: '/admin/customers/new',
+    Icon: PlusIcon,
+    group: 'Quick actions',
+  },
+  {
+    name: 'New category',
+    href: '/admin/categories/new',
+    Icon: PlusIcon,
+    group: 'Quick actions',
+  },
+  {
+    name: 'New discount',
+    href: '/admin/discounts/new',
+    Icon: PlusIcon,
+    group: 'Quick actions',
+  },
+  {
     name: 'View storefront',
     href: '/',
     Icon: GlobeAltIcon,

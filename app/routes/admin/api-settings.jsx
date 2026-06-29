@@ -1,32 +1,19 @@
 // app/routes/admin/api-settings.jsx
 // Admin UI for managing API keys and outbound webhook subscriptions.
 
-import {
-  CheckIcon,
-  ClipboardDocumentIcon,
-  PlusIcon,
-  TrashIcon,
-} from '@heroicons/react/24/outline';
-import clsx from 'clsx';
+import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { useFetcher, useLoaderData } from 'react-router';
+import { Link, useFetcher, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
-import { controlClasses } from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
 import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
 import Tabs from '#/components/admin/tabs';
-import Button from '#/components/ui/button';
 
+import { revokeApiKey, listApiKeys } from '#/core/api-keys/index.server';
 import {
-  createApiKey,
-  listApiKeys,
-  revokeApiKey,
-} from '#/core/api-keys/index.server';
-import {
-  createSubscription,
   deleteSubscription,
   listSubscriptions,
   WEBHOOK_EVENTS,
@@ -54,22 +41,6 @@ export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get('intent');
 
-  // ── Create API key ─────────────────────────────────────────────────────────
-  if (intent === 'create-api-key') {
-    const label = formData.get('label')?.toString().trim() ?? '';
-    const scopesRaw = formData.getAll('scopes').map(String);
-    const scopes = scopesRaw.length > 0 ? scopesRaw : ['admin'];
-
-    if (!label) return { ok: false, intent, error: 'Label is required' };
-
-    try {
-      const { key, record } = await createApiKey({ label, scopes });
-      return { ok: true, intent, key, record };
-    } catch (err) {
-      return { ok: false, intent, error: err.message };
-    }
-  }
-
   // ── Revoke API key ─────────────────────────────────────────────────────────
   if (intent === 'revoke-api-key') {
     const id = formData.get('id')?.toString();
@@ -77,31 +48,6 @@ export async function action({ request }) {
     try {
       await revokeApiKey(id);
       return { ok: true, intent };
-    } catch (err) {
-      return { ok: false, intent, error: err.message };
-    }
-  }
-
-  // ── Create webhook subscription ────────────────────────────────────────────
-  if (intent === 'create-webhook') {
-    const url = formData.get('url')?.toString().trim() ?? '';
-    const secret = formData.get('secret')?.toString().trim() ?? '';
-    const label = formData.get('label')?.toString().trim() || undefined;
-    const events = formData.getAll('events').map(String);
-
-    if (!url) return { ok: false, intent, error: 'URL is required' };
-    if (!secret) return { ok: false, intent, error: 'Secret is required' };
-    if (events.length === 0)
-      return { ok: false, intent, error: 'Select at least one event' };
-
-    try {
-      const subscription = await createSubscription({
-        url,
-        events,
-        secret,
-        label,
-      });
-      return { ok: true, intent, subscription };
     } catch (err) {
       return { ok: false, intent, error: err.message };
     }
@@ -134,13 +80,6 @@ export function meta() {
 // Shared sub-components
 // ---------------------------------------------------------------------------
 
-const CHECKBOX_CLASS =
-  'border-border text-accent focus:ring-accent bg-surface h-4 w-4 rounded';
-
-function inputClass(extra) {
-  return clsx(controlClasses, extra);
-}
-
 function SectionCard({ title, description, children }) {
   return (
     <Card padded={false}>
@@ -159,51 +98,8 @@ function SectionCard({ title, description, children }) {
 // API Keys section
 // ---------------------------------------------------------------------------
 
-function CopyButton({ value }) {
-  const [copied, setCopied] = useState(false);
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="text-text-muted hover:text-accent ml-2 rounded p-1"
-      title="Copy to clipboard"
-    >
-      {copied ? (
-        <CheckIcon className="text-success h-4 w-4" />
-      ) : (
-        <ClipboardDocumentIcon className="h-4 w-4" />
-      )}
-    </button>
-  );
-}
-
 function ApiKeysSection({ data }) {
-  const [showCreate, setShowCreate] = useState(false);
-  const [selectedScopes, setSelectedScopes] = useState(['admin']);
-  const createFetcher = useFetcher();
   const revokeFetcher = useFetcher();
-
-  const justCreated =
-    createFetcher.state === 'idle' &&
-    createFetcher.data?.ok &&
-    createFetcher.data?.intent === 'create-api-key';
-
-  const createError =
-    createFetcher.state === 'idle' &&
-    createFetcher.data &&
-    !createFetcher.data.ok &&
-    createFetcher.data?.intent === 'create-api-key'
-      ? createFetcher.data.error
-      : null;
-
-  const AVAILABLE_SCOPES = ['admin', 'storefront'];
 
   return (
     <SectionCard
@@ -211,96 +107,14 @@ function ApiKeysSection({ data }) {
       description="API keys authenticate requests to /api/admin/v1/* endpoints. Store keys securely — they are shown only once."
     >
       <div className="mb-4 flex justify-end">
-        <Button type="button" onClick={() => setShowCreate((v) => !v)}>
-          <PlusIcon className="mr-1.5 h-4 w-4" />
+        <Link
+          to="/admin/api-settings/keys/new"
+          className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+        >
+          <PlusIcon className="h-4 w-4" />
           Create key
-        </Button>
+        </Link>
       </div>
-
-      {showCreate && (
-        <div className="border-border bg-surface-2 mb-6 rounded-lg border p-4">
-          <h3 className="text-text mb-3 text-sm font-semibold">New API key</h3>
-
-          {justCreated && createFetcher.data?.key && (
-            <div className="bg-success/10 mb-4 rounded-md p-3">
-              <p className="text-success mb-1 text-sm font-semibold">
-                Key created — copy it now, it won't be shown again:
-              </p>
-              <div className="text-success flex items-center font-mono text-sm">
-                <code className="break-all">{createFetcher.data.key}</code>
-                <CopyButton value={createFetcher.data.key} />
-              </div>
-            </div>
-          )}
-
-          {createError && (
-            <div className="bg-danger/10 text-danger mb-3 rounded-md px-3 py-2 text-sm">
-              {createError}
-            </div>
-          )}
-
-          <createFetcher.Form method="post" className="max-w-sm space-y-3">
-            <input type="hidden" name="intent" value="create-api-key" />
-            {selectedScopes.map((s) => (
-              <input key={s} type="hidden" name="scopes" value={s} />
-            ))}
-
-            <div>
-              <label className="text-text-muted mb-1 block text-xs font-medium">
-                Label
-              </label>
-              <input
-                type="text"
-                name="label"
-                placeholder="My integration"
-                required
-                className={inputClass()}
-              />
-            </div>
-
-            <div>
-              <label className="text-text-muted mb-1 block text-xs font-medium">
-                Scopes
-              </label>
-              <div className="flex gap-4">
-                {AVAILABLE_SCOPES.map((scope) => (
-                  <label
-                    key={scope}
-                    className="flex items-center gap-1.5 text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedScopes.includes(scope)}
-                      onChange={() =>
-                        setSelectedScopes((prev) =>
-                          prev.includes(scope)
-                            ? prev.filter((s) => s !== scope)
-                            : [...prev, scope]
-                        )
-                      }
-                      className={CHECKBOX_CLASS}
-                    />
-                    <span className="text-text capitalize">{scope}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Button type="submit" disabled={createFetcher.state !== 'idle'}>
-                {createFetcher.state !== 'idle' ? 'Creating…' : 'Create'}
-              </Button>
-              <button
-                type="button"
-                onClick={() => setShowCreate(false)}
-                className="text-text-muted hover:text-text text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </createFetcher.Form>
-        </div>
-      )}
 
       <Table>
         <THead>
@@ -372,23 +186,7 @@ function ApiKeysSection({ data }) {
 // ---------------------------------------------------------------------------
 
 function WebhooksSection({ data }) {
-  const [showCreate, setShowCreate] = useState(false);
-  const [selectedEvents, setSelectedEvents] = useState([]);
-  const createFetcher = useFetcher();
   const deleteFetcher = useFetcher();
-
-  const createError =
-    createFetcher.state === 'idle' &&
-    createFetcher.data &&
-    !createFetcher.data.ok &&
-    createFetcher.data?.intent === 'create-webhook'
-      ? createFetcher.data.error
-      : null;
-
-  const justCreated =
-    createFetcher.state === 'idle' &&
-    createFetcher.data?.ok &&
-    createFetcher.data?.intent === 'create-webhook';
 
   return (
     <SectionCard
@@ -396,119 +194,14 @@ function WebhooksSection({ data }) {
       description="Receive real-time domain events as signed HTTP POSTs. Deliveries are retried on failure with exponential back-off."
     >
       <div className="mb-4 flex justify-end">
-        <Button type="button" onClick={() => setShowCreate((v) => !v)}>
-          <PlusIcon className="mr-1.5 h-4 w-4" />
+        <Link
+          to="/admin/api-settings/webhooks/new"
+          className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+        >
+          <PlusIcon className="h-4 w-4" />
           Add endpoint
-        </Button>
+        </Link>
       </div>
-
-      {showCreate && (
-        <div className="border-border bg-surface-2 mb-6 rounded-lg border p-4">
-          <h3 className="text-text mb-3 text-sm font-semibold">
-            New webhook endpoint
-          </h3>
-
-          {justCreated && (
-            <div className="bg-success/10 text-success mb-3 rounded-md px-3 py-2 text-sm">
-              Webhook subscription created.
-            </div>
-          )}
-          {createError && (
-            <div className="bg-danger/10 text-danger mb-3 rounded-md px-3 py-2 text-sm">
-              {createError}
-            </div>
-          )}
-
-          <createFetcher.Form method="post" className="space-y-3">
-            <input type="hidden" name="intent" value="create-webhook" />
-            {selectedEvents.map((e) => (
-              <input key={e} type="hidden" name="events" value={e} />
-            ))}
-
-            <div>
-              <label className="text-text-muted mb-1 block text-xs font-medium">
-                URL
-              </label>
-              <input
-                type="url"
-                name="url"
-                placeholder="https://example.com/webhook"
-                required
-                className={inputClass()}
-              />
-            </div>
-
-            <div>
-              <label className="text-text-muted mb-1 block text-xs font-medium">
-                Signing secret
-              </label>
-              <input
-                type="text"
-                name="secret"
-                placeholder="whsec_..."
-                required
-                className={inputClass()}
-              />
-              <p className="text-text-muted mt-1 text-xs">
-                Used to compute HMAC-SHA256 signatures in the{' '}
-                <code>X-Bermooda-Signature</code> header.
-              </p>
-            </div>
-
-            <div>
-              <label className="text-text-muted mb-1 block text-xs font-medium">
-                Label (optional)
-              </label>
-              <input
-                type="text"
-                name="label"
-                placeholder="My endpoint"
-                className={inputClass()}
-              />
-            </div>
-
-            <div>
-              <label className="text-text-muted mb-1 block text-xs font-medium">
-                Events
-              </label>
-              <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
-                {data.supportedEvents.map((ev) => (
-                  <label key={ev} className="flex items-center gap-1.5 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={selectedEvents.includes(ev)}
-                      onChange={() =>
-                        setSelectedEvents((prev) =>
-                          prev.includes(ev)
-                            ? prev.filter((e) => e !== ev)
-                            : [...prev, ev]
-                        )
-                      }
-                      className={clsx(CHECKBOX_CLASS, 'h-3.5 w-3.5')}
-                    />
-                    <span className="text-text font-mono">{ev}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Button type="submit" disabled={createFetcher.state !== 'idle'}>
-                {createFetcher.state !== 'idle'
-                  ? 'Creating…'
-                  : 'Create endpoint'}
-              </Button>
-              <button
-                type="button"
-                onClick={() => setShowCreate(false)}
-                className="text-text-muted hover:text-text text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </createFetcher.Form>
-        </div>
-      )}
 
       <Table>
         <THead>

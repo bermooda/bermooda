@@ -1,0 +1,100 @@
+import {
+  Form,
+  Link,
+  redirect,
+  useActionData,
+  useNavigation,
+} from 'react-router';
+
+import prisma from '#/libs/prisma.server';
+import ActionBar from '#/components/admin/action-bar';
+import Breadcrumbs from '#/components/admin/breadcrumbs';
+import Card, { CardHeader } from '#/components/admin/card';
+import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import PageHeader from '#/components/admin/page-header';
+import { ErrorAlert } from '#/components/ui/alert';
+import { ButtonSubmit } from '#/components/ui/button';
+
+export async function action({ request }) {
+  const formData = await request.formData();
+  const name = formData.get('name')?.toString().trim();
+  const code = formData.get('code')?.toString().trim().toLowerCase();
+
+  if (!name || !code) {
+    return { error: 'Name and code are required.' };
+  }
+
+  await prisma.location.create({
+    data: { name, code, active: true },
+  });
+
+  return redirect('/admin/inventory');
+}
+
+export default function AdminNewInventoryLocationRoute() {
+  const actionData = useActionData();
+  const navigation = useNavigation();
+  const isSaving = navigation.state === 'submitting';
+
+  return (
+    <div className="mx-auto max-w-6xl">
+      <PageHeader
+        breadcrumbs={
+          <Breadcrumbs
+            items={[
+              { label: 'Inventory', href: '/admin/inventory' },
+              { label: 'New location' },
+            ]}
+          />
+        }
+        title="New inventory location"
+        subtitle="Add a warehouse or fulfillment location."
+      />
+
+      <ErrorAlert message={actionData?.error} />
+
+      <Form method="post" className="space-y-6">
+        <Card>
+          <CardHeader
+            title="Location details"
+            description="Code is a short lowercase identifier used internally."
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Name *" htmlFor="location-name">
+              <Input
+                id="location-name"
+                name="name"
+                required
+                placeholder="Main warehouse"
+              />
+            </Field>
+            <Field label="Code *" htmlFor="location-code">
+              <Input
+                id="location-code"
+                name="code"
+                required
+                placeholder="main"
+              />
+            </Field>
+          </div>
+        </Card>
+
+        <ActionBar>
+          <span />
+          <div className="flex items-center gap-3">
+            <Link
+              to="/admin/inventory"
+              className="text-text-muted hover:text-text text-sm transition-colors"
+            >
+              Cancel
+            </Link>
+            <ButtonSubmit disabled={isSaving}>
+              {isSaving ? 'Creating…' : 'Create location'}
+            </ButtonSubmit>
+          </div>
+        </ActionBar>
+      </Form>
+    </div>
+  );
+}

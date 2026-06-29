@@ -1,13 +1,13 @@
 // app/routes/admin/reports/index.jsx
 // Sales analytics dashboard with date-range filters and export controls.
 
+import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
-import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
 import { ButtonSubmit } from '#/components/ui/button';
@@ -17,7 +17,6 @@ import {
   EXPORT_SCHEDULES,
   EXPORT_TYPES,
   listScheduledExports,
-  createScheduledExport,
   deleteScheduledExport,
   queueScheduledExport,
 } from '#/core/exports/index.server';
@@ -64,40 +63,6 @@ export async function action({ request }) {
   const { user } = await authenticate(request);
   const formData = await request.formData();
   const intent = formData.get('intent');
-
-  if (intent === 'create-scheduled-export') {
-    const label = formData.get('label')?.toString().trim();
-    const exportType = formData.get('exportType')?.toString();
-    const schedule = formData.get('schedule')?.toString();
-    const recipientEmail =
-      formData.get('recipientEmail')?.toString().trim() || null;
-
-    if (!label || !exportType || !schedule) {
-      return {
-        ok: false,
-        error: 'Label, export type, and schedule are required.',
-      };
-    }
-
-    try {
-      const created = await createScheduledExport({
-        label,
-        exportType,
-        schedule,
-        recipientEmail,
-      });
-      await recordAdminAudit({
-        user,
-        action: 'scheduled_export.created',
-        entityType: 'scheduled_export',
-        entityId: created.id,
-        metadata: { label, exportType, schedule },
-      });
-      return { ok: true, intent };
-    } catch (err) {
-      return { ok: false, error: err.message };
-    }
-  }
 
   if (intent === 'run-scheduled-export') {
     const id = formData.get('id')?.toString();
@@ -149,8 +114,7 @@ function MetricCard({ label, value, sub }) {
 }
 
 export default function AdminReportsRoute() {
-  const { report, scheduledExports, filters, exportTypes, exportSchedules } =
-    useLoaderData();
+  const { report, scheduledExports, filters, exportTypes } = useLoaderData();
   const { overview, salesOverTime, salesByProduct, salesByCategory } = report;
 
   const exportQuery = new URLSearchParams();
@@ -278,40 +242,15 @@ export default function AdminReportsRoute() {
           })}
         </div>
 
-        <Form
-          method="post"
-          className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          <input type="hidden" name="intent" value="create-scheduled-export" />
-          <Input
-            type="text"
-            name="label"
-            placeholder="Schedule label"
-            required
-          />
-          <Select name="exportType" required>
-            {exportTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </Select>
-          <Select name="schedule" required>
-            {exportSchedules.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </Select>
-          <Input
-            type="email"
-            name="recipientEmail"
-            placeholder="Recipient email (optional)"
-          />
-          <ButtonSubmit className="sm:col-span-2 lg:col-span-1">
+        <div className="mt-6">
+          <Link
+            to="/admin/reports/schedules/new"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
+            <PlusIcon className="h-4 w-4" />
             Schedule export
-          </ButtonSubmit>
-        </Form>
+          </Link>
+        </div>
 
         {scheduledExports.length > 0 && (
           <Table className="mt-6">
