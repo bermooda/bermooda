@@ -1,12 +1,7 @@
-import { Form, useActionData } from 'react-router';
+import { useActionData, useNavigation } from 'react-router';
 import { redirect } from 'react-router';
 
-import Card from '#/components/admin/card';
-import Field from '#/components/admin/form/field';
-import Input from '#/components/admin/form/input';
-import PageHeader from '#/components/admin/page-header';
-import { ErrorAlert } from '#/components/ui/alert';
-import { ButtonSubmit } from '#/components/ui/button';
+import PageEditor from '#/components/admin/page-editor';
 
 import { createPage } from '#/core/content/index.server';
 
@@ -38,31 +33,18 @@ export async function action({ request }) {
 
 export default function AdminNewPageRoute() {
   const actionData = useActionData();
+  const navigation = useNavigation();
+  const isSaving = navigation.state === 'submitting';
 
   return (
-    <div className="mx-auto max-w-lg">
-      <PageHeader title="New Page" className="mb-6" />
-
-      <Card>
-        <Form method="post" className="space-y-4">
-          <Field label="Title" htmlFor="title">
-            <Input id="title" name="title" type="text" required />
-          </Field>
-          <Field label="URL Slug" htmlFor="slug">
-            <Input
-              id="slug"
-              name="slug"
-              type="text"
-              required
-              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-            />
-          </Field>
-
-          <ErrorAlert message={actionData?.error} />
-
-          <ButtonSubmit>Create Page</ButtonSubmit>
-        </Form>
-      </Card>
-    </div>
+    <PageEditor
+      mode="create"
+      page={{ status: 'draft' }}
+      locales={['en']}
+      translationMap={{}}
+      slugMap={{}}
+      actionData={actionData}
+      isSaving={isSaving}
+    />
   );
 }
