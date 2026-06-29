@@ -1,6 +1,7 @@
 // app/routes/admin/channels/index.jsx
 
-import { Form, useLoaderData } from 'react-router';
+import { PlusIcon } from '@heroicons/react/24/outline';
+import { Form, Link, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 import Badge from '#/components/admin/badge';
@@ -12,7 +13,6 @@ import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 import Button from '#/components/ui/button';
 
 import {
-  createChannel,
   listChannels,
   setChannelPriceOverride,
   setChannelProductPublished,
@@ -32,19 +32,6 @@ export async function loader() {
 export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get('intent');
-
-  if (intent === 'create-channel') {
-    const name = formData.get('name')?.toString().trim();
-    const handle = formData.get('handle')?.toString().trim().toLowerCase();
-    const domain = formData.get('domain')?.toString().trim() || null;
-    const currency = formData.get('currency')?.toString().trim() || 'USD';
-    const locale = formData.get('locale')?.toString().trim() || 'en';
-    if (!name || !handle) {
-      return { ok: false, error: 'Name and handle are required.' };
-    }
-    await createChannel({ name, handle, domain, currency, locale });
-    return { ok: true };
-  }
 
   if (intent === 'toggle-product') {
     const channelId = formData.get('channelId')?.toString();
@@ -91,28 +78,19 @@ export default function AdminChannelsRoute() {
       <PageHeader
         title="Sales channels"
         subtitle="Multi-storefront channels with per-domain routing and catalog overrides."
+        actions={
+          <Link
+            to="/admin/channels/new"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
+            <PlusIcon className="h-4 w-4" />
+            New channel
+          </Link>
+        }
         className="mb-6"
       />
 
       <div className="space-y-6">
-        <Card>
-          <Form method="post" className="flex flex-wrap items-end gap-3">
-            <input type="hidden" name="intent" value="create-channel" />
-            <Input name="name" placeholder="Channel name" className="w-auto" />
-            <Input name="handle" placeholder="handle" className="w-auto" />
-            <Input
-              name="domain"
-              placeholder="domain (optional)"
-              className="w-auto"
-            />
-            <Input name="currency" defaultValue="USD" className="w-20" />
-            <Input name="locale" defaultValue="en" className="w-16" />
-            <Button type="submit" variant="primary">
-              Create channel
-            </Button>
-          </Form>
-        </Card>
-
         <div>
           <h2 className="text-text mb-3 text-lg font-semibold">
             Channels ({total})

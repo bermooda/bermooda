@@ -1,18 +1,11 @@
-// app/routes/admin/customers/index.jsx
-// Customers admin list — paginated table with email/name search and inline create panel.
-
 import {
   MagnifyingGlassIcon,
   PlusIcon,
   UserGroupIcon,
-  XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { useState } from 'react';
 import {
   Form,
   Link,
-  redirect,
-  useActionData,
   useLoaderData,
   useNavigate,
   useSearchParams,
@@ -20,17 +13,13 @@ import {
 
 import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
-import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
-import Field from '#/components/admin/form/field';
-import Input, { controlClasses } from '#/components/admin/form/input';
+import { controlClasses } from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
 import Stat from '#/components/admin/stat';
 import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
-import { ErrorAlert } from '#/components/ui/alert';
-import Button, { ButtonSubmit } from '#/components/ui/button';
 
 const PAGE_SIZE = 20;
 
@@ -90,34 +79,6 @@ export async function loader({ request }) {
   };
 }
 
-export async function action({ request }) {
-  const formData = await request.formData();
-  const intent = formData.get('intent');
-
-  if (intent === 'create') {
-    const email = formData.get('email')?.toString().trim() ?? '';
-    const name = formData.get('name')?.toString().trim() || null;
-    const phone = formData.get('phone')?.toString().trim() || null;
-
-    if (!email) {
-      return { ok: false, error: 'Email is required.' };
-    }
-
-    const existing = await prisma.customer.findUnique({ where: { email } });
-    if (existing) {
-      return { ok: false, error: 'A customer with that email already exists.' };
-    }
-
-    const customer = await prisma.customer.create({
-      data: { email, name, phone },
-    });
-
-    return redirect(`/admin/customers/${customer.id}`);
-  }
-
-  return { ok: false, error: 'Unknown intent.' };
-}
-
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
@@ -128,10 +89,8 @@ function formatDate(iso) {
 
 export default function AdminCustomersRoute() {
   const { rows, total, withOrdersCount, page, totalPages, q } = useLoaderData();
-  const actionData = useActionData();
   const [, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [showCreate, setShowCreate] = useState(false);
 
   function goToPage(p) {
     setSearchParams((prev) => {
@@ -147,23 +106,13 @@ export default function AdminCustomersRoute() {
         title="Customers"
         subtitle="Manage customer profiles, addresses, and order history."
         actions={
-          <button
-            type="button"
-            onClick={() => setShowCreate((v) => !v)}
+          <Link
+            to="/admin/customers/new"
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
-            {showCreate ? (
-              <>
-                <XMarkIcon className="h-4 w-4" />
-                Cancel
-              </>
-            ) : (
-              <>
-                <PlusIcon className="h-4 w-4" />
-                New customer
-              </>
-            )}
-          </button>
+            <PlusIcon className="h-4 w-4" />
+            New customer
+          </Link>
         }
       />
 
@@ -171,51 +120,6 @@ export default function AdminCustomersRoute() {
         <Stat label="Total customers" value={total} />
         <Stat label="With orders" value={withOrdersCount} />
       </div>
-
-      {showCreate && (
-        <Card className="mb-6">
-          <h2 className="text-text mb-4 text-sm font-semibold">New customer</h2>
-          <ErrorAlert message={actionData?.error} />
-          <Form method="post" className="grid gap-4 sm:grid-cols-3">
-            <input type="hidden" name="intent" value="create" />
-            <Field
-              label="Email *"
-              htmlFor="customer-email"
-              className="space-y-1"
-            >
-              <Input
-                id="customer-email"
-                type="email"
-                name="email"
-                required
-                placeholder="customer@example.com"
-              />
-            </Field>
-            <Field label="Name" htmlFor="customer-name" className="space-y-1">
-              <Input
-                id="customer-name"
-                type="text"
-                name="name"
-                placeholder="Jane Doe"
-              />
-            </Field>
-            <Field label="Phone" htmlFor="customer-phone" className="space-y-1">
-              <Input
-                id="customer-phone"
-                type="tel"
-                name="phone"
-                placeholder="+1 555 000 0000"
-              />
-            </Field>
-            <div className="flex gap-3 sm:col-span-3">
-              <ButtonSubmit>Create customer</ButtonSubmit>
-              <Button variant="secondary" onClick={() => setShowCreate(false)}>
-                Cancel
-              </Button>
-            </div>
-          </Form>
-        </Card>
-      )}
 
       <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
         <Toolbar>
@@ -260,14 +164,13 @@ export default function AdminCustomersRoute() {
                     }
                     action={
                       !q && (
-                        <button
-                          type="button"
-                          onClick={() => setShowCreate(true)}
+                        <Link
+                          to="/admin/customers/new"
                           className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
                         >
                           <PlusIcon className="h-4 w-4" />
                           New customer
-                        </button>
+                        </Link>
                       )
                     }
                     className="border-0 shadow-none"

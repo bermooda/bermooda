@@ -8,10 +8,9 @@ import {
   TrashIcon,
   UserPlusIcon,
 } from '@heroicons/react/24/outline';
-import bcrypt from 'bcryptjs';
 import clsx from 'clsx';
 import { useState } from 'react';
-import { useFetcher, useLoaderData, useLocation } from 'react-router';
+import { Link, useFetcher, useLoaderData, useLocation } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import prisma from '#/libs/prisma.server';
@@ -206,46 +205,6 @@ export async function action({ request }) {
     }
     await set('shipping.zones', zones);
     return { ok: true, intent };
-  }
-
-  // ── Invite Admin ───────────────────────────────────────────────────────────
-  if (intent === 'invite-admin') {
-    const session = await authenticate(request);
-    if (!(await hasPermission(session.user.role, 'settings:manage'))) {
-      return { ok: false, error: 'Forbidden', intent };
-    }
-
-    const email = formData.get('email')?.toString().trim() ?? '';
-    const name = formData.get('name')?.toString().trim() ?? '';
-    if (!email) return { ok: false, error: 'Email is required.', intent };
-
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing)
-      return {
-        ok: false,
-        error: 'A user with that email already exists.',
-        intent,
-      };
-
-    const hashedPassword = await bcrypt.hash('ChangeMe123!', 10);
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name: name || email,
-        role: 'staff',
-        emailVerified: false,
-      },
-    });
-    await prisma.account.create({
-      data: {
-        accountId: user.id,
-        providerId: 'credential',
-        userId: user.id,
-        password: hashedPassword,
-      },
-    });
-
-    return { ok: true, intent, newUserId: user.id };
   }
 
   // ── Change Role ────────────────────────────────────────────────────────────
@@ -903,22 +862,7 @@ function ShippingTab({ data }) {
 // ---------------------------------------------------------------------------
 
 function AdminUsersTab({ data }) {
-  const inviteFetcher = useFetcher();
   const roleFetcher = useFetcher();
-  const [showInvite, setShowInvite] = useState(false);
-
-  const inviteSuccess =
-    inviteFetcher.state === 'idle' &&
-    inviteFetcher.data?.ok &&
-    inviteFetcher.data?.intent === 'invite-admin';
-
-  const inviteError =
-    inviteFetcher.state === 'idle' &&
-    inviteFetcher.data &&
-    !inviteFetcher.data.ok &&
-    inviteFetcher.data?.intent === 'invite-admin'
-      ? inviteFetcher.data.error
-      : null;
 
   return (
     <div className="space-y-6">
@@ -927,72 +871,14 @@ function AdminUsersTab({ data }) {
           <p className="text-text-muted text-sm">
             {data.users.length} user{data.users.length !== 1 ? 's' : ''}
           </p>
-          <Button type="button" onClick={() => setShowInvite((v) => !v)}>
-            <UserPlusIcon className="mr-1.5 h-4 w-4" />
-            Invite Admin
-          </Button>
+          <Link
+            to="/admin/settings/users/new"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
+            <UserPlusIcon className="h-4 w-4" />
+            Invite admin
+          </Link>
         </div>
-
-        {/* Invite form */}
-        {showInvite && (
-          <div className="border-border bg-surface-2 mb-6 rounded-lg border p-4">
-            <h3 className="text-text mb-3 text-sm font-semibold">
-              Invite new admin user
-            </h3>
-
-            {inviteSuccess && (
-              <div className="bg-success/10 text-success mb-3 rounded-md px-3 py-2 text-sm">
-                User created. Temporary password:{' '}
-                <code className="font-mono font-bold">ChangeMe123!</code> — ask
-                them to change it on first login.
-              </div>
-            )}
-            {inviteError && (
-              <div className="bg-danger/10 text-danger mb-3 rounded-md px-3 py-2 text-sm">
-                {inviteError}
-              </div>
-            )}
-
-            <inviteFetcher.Form method="post" className="max-w-sm space-y-3">
-              <input type="hidden" name="intent" value="invite-admin" />
-              <div>
-                <label className="text-text-muted mb-1 block text-xs font-medium">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  placeholder="admin@example.com"
-                  className={inputClass()}
-                />
-              </div>
-              <div>
-                <label className="text-text-muted mb-1 block text-xs font-medium">
-                  Name (optional)
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Jane Smith"
-                  className={inputClass()}
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <Button type="submit" disabled={inviteFetcher.state !== 'idle'}>
-                  {inviteFetcher.state !== 'idle' ? 'Creating…' : 'Create user'}
-                </Button>
-                <button
-                  type="button"
-                  onClick={() => setShowInvite(false)}
-                  className="text-text-muted hover:text-text text-sm"
-                >
-                  Cancel
-                </button>
-              </div>
-            </inviteFetcher.Form>
-          </div>
-        )}
 
         {/* Users table */}
         <Table>

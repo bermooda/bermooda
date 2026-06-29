@@ -1,7 +1,8 @@
 // app/routes/admin/inventory/index.jsx
 // Multi-location inventory admin.
 
-import { Form, useLoaderData } from 'react-router';
+import { PlusIcon } from '@heroicons/react/24/outline';
+import { Form, Link, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 import Card from '#/components/admin/card';
@@ -55,19 +56,6 @@ export async function action({ request }) {
     return { ok: true };
   }
 
-  if (intent === 'create-location') {
-    const name = formData.get('name')?.toString().trim();
-    const code = formData.get('code')?.toString().trim().toLowerCase();
-    if (!name || !code) {
-      return { ok: false, error: 'Name and code are required.' };
-    }
-
-    await prisma.location.create({
-      data: { name, code, active: true },
-    });
-    return { ok: true };
-  }
-
   return { ok: false, error: 'Unknown action.' };
 }
 
@@ -79,6 +67,15 @@ export default function AdminInventoryRoute() {
       <PageHeader
         title="Inventory by location"
         subtitle="Stock levels per warehouse location. Totals sync to variant inventory counts."
+        actions={
+          <Link
+            to="/admin/inventory/new"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
+            <PlusIcon className="h-4 w-4" />
+            New location
+          </Link>
+        }
         className="mb-6"
       />
 
@@ -93,18 +90,6 @@ export default function AdminInventoryRoute() {
               </li>
             ))}
           </ul>
-
-          <Form
-            method="post"
-            className="mt-4 flex flex-wrap items-center gap-3"
-          >
-            <input type="hidden" name="intent" value="create-location" />
-            <Input name="name" placeholder="Location name" className="w-auto" />
-            <Input name="code" placeholder="code" className="w-auto" />
-            <Button type="submit" variant="primary">
-              Add location
-            </Button>
-          </Form>
         </Card>
 
         <Card>
