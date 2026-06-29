@@ -9,8 +9,8 @@ import {
   CheckIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import { useState, useEffect } from 'react';
-import { useFetcher, useLoaderData } from 'react-router';
+import { useState } from 'react';
+import { Link, useFetcher, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 import Badge from '#/components/admin/badge';
@@ -40,59 +40,6 @@ export async function loader() {
 export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get('intent');
-
-  // ── Create ─────────────────────────────────────────────────────────────────
-  if (intent === 'create') {
-    const code = formData.get('code')?.toString().trim().toUpperCase() ?? '';
-    const type = formData.get('type')?.toString() ?? '';
-    const value = parseInt(formData.get('value') ?? '0', 10);
-    const minSubtotalCents = formData.get('minSubtotalCents')?.toString().trim()
-      ? parseInt(formData.get('minSubtotalCents'), 10)
-      : null;
-    const maxUsesCount = formData.get('maxUsesCount')?.toString().trim()
-      ? parseInt(formData.get('maxUsesCount'), 10)
-      : null;
-    const currency = formData.get('currency')?.toString().trim() || null;
-    const expiresAtRaw = formData.get('expiresAt')?.toString().trim();
-    const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null;
-
-    if (!code) return { ok: false, error: 'Code is required.', intent };
-    if (!type) return { ok: false, error: 'Type is required.', intent };
-    if (!value || value <= 0)
-      return { ok: false, error: 'Value must be greater than 0.', intent };
-    if (type === 'fixed' && !currency)
-      return {
-        ok: false,
-        error: 'Currency is required for fixed discounts.',
-        intent,
-      };
-
-    try {
-      await prisma.discount.create({
-        data: {
-          code,
-          type,
-          value,
-          minSubtotalCents,
-          maxUsesCount,
-          currency: type === 'fixed' ? currency : null,
-          expiresAt,
-          active: true,
-        },
-      });
-    } catch (err) {
-      if (err?.code === 'P2002') {
-        return {
-          ok: false,
-          error: 'A discount with that code already exists.',
-          intent,
-        };
-      }
-      throw err;
-    }
-
-    return { ok: true, intent };
-  }
 
   // ── Save (edit) ────────────────────────────────────────────────────────────
   if (intent === 'save') {
@@ -336,60 +283,6 @@ function DiscountForm({
 }
 
 // ---------------------------------------------------------------------------
-// AddDiscountPanel — toggle-open inline create panel
-// ---------------------------------------------------------------------------
-
-function AddDiscountPanel() {
-  const [open, setOpen] = useState(false);
-  const [formKey, setFormKey] = useState(0);
-  const fetcher = useFetcher();
-
-  // Close + reset after successful create
-  useEffect(() => {
-    if (
-      fetcher.state === 'idle' &&
-      fetcher.data?.ok &&
-      fetcher.data?.intent === 'create' &&
-      open
-    ) {
-      setOpen(false);
-      setFormKey((k) => k + 1);
-    }
-  }, [fetcher.state, fetcher.data, open]);
-
-  if (!open) {
-    return (
-      <Button variant="primary" onClick={() => setOpen(true)}>
-        <PlusIcon className="mr-1.5 h-4 w-4" />
-        Add Discount
-      </Button>
-    );
-  }
-
-  return (
-    <Card className="w-full sm:w-96">
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-text text-sm font-semibold">New Discount</span>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-text-muted hover:text-text rounded p-1"
-        >
-          <XMarkIcon className="h-4 w-4" />
-        </button>
-      </div>
-      <DiscountForm
-        discount={null}
-        onClose={() => setOpen(false)}
-        submitLabel="Create"
-        formKey={formKey}
-        fetcher={fetcher}
-      />
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // InlineEditForm
 // ---------------------------------------------------------------------------
 
@@ -594,7 +487,15 @@ export default function AdminDiscountsRoute() {
       <PageHeader
         title="Discounts"
         subtitle={`${discounts.length} discount${discounts.length !== 1 ? 's' : ''}`}
-        actions={<AddDiscountPanel />}
+        actions={
+          <Link
+            to="/admin/discounts/new"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
+            <PlusIcon className="h-4 w-4" />
+            New discount
+          </Link>
+        }
         className="mb-6"
       />
 
@@ -633,7 +534,14 @@ export default function AdminDiscountsRoute() {
 
         {discounts.length === 0 ? (
           <div className="text-text-muted px-4 py-10 text-center text-sm">
-            No discounts yet. Use the button above to create one.
+            No discounts yet.{' '}
+            <Link
+              to="/admin/discounts/new"
+              className="text-accent hover:underline"
+            >
+              Create your first discount
+            </Link>
+            .
           </div>
         ) : (
           <div className="divide-border divide-y">

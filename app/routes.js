@@ -165,6 +165,7 @@ export default [
     layout('routes/admin/_layout.jsx', [
       route('dashboard', 'routes/admin/dashboard.jsx'),
       route('reports', 'routes/admin/reports/index.jsx'),
+      route('reports/schedules/new', 'routes/admin/reports/schedules/new.jsx'),
       route('reports/export', 'routes/admin/reports/export.jsx'),
       route('audit-log', 'routes/admin/audit-log.jsx'),
       // Products (P5-3)
@@ -173,6 +174,7 @@ export default [
       route('products/:id', 'routes/admin/products/$id.jsx'),
       // Categories (P5-4)
       route('categories', 'routes/admin/categories/index.jsx'),
+      route('categories/new', 'routes/admin/categories/new.jsx'),
       // Content (W5)
       route('pages', 'routes/admin/pages/index.jsx'),
       route('pages/new', 'routes/admin/pages/new.jsx'),
@@ -185,16 +187,35 @@ export default [
       route('orders/:id/documents', 'routes/admin/orders/$id/documents.jsx'),
       // Customers (P5-6)
       route('customers', 'routes/admin/customers/index.jsx'),
+      route('customers/new', 'routes/admin/customers/new.jsx'),
       route('customers/:id', 'routes/admin/customers/$id.jsx'),
       // Discounts (P5-7)
       route('discounts', 'routes/admin/discounts/index.jsx'),
+      route('discounts/new', 'routes/admin/discounts/new.jsx'),
       route('inventory', 'routes/admin/inventory/index.jsx'),
+      route('inventory/new', 'routes/admin/inventory/new.jsx'),
       route('customer-groups', 'routes/admin/customer-groups/index.jsx'),
+      route('customer-groups/new', 'routes/admin/customer-groups/new.jsx'),
       route('price-lists', 'routes/admin/price-lists/index.jsx'),
+      route('price-lists/new', 'routes/admin/price-lists/new.jsx'),
       route('gift-cards', 'routes/admin/gift-cards/index.jsx'),
+      route('gift-cards/new', 'routes/admin/gift-cards/new.jsx'),
       route('loyalty', 'routes/admin/loyalty/index.jsx'),
       route('marketing', 'routes/admin/marketing/index.jsx'),
+      route(
+        'marketing/segments/new',
+        'routes/admin/marketing/segments/new.jsx'
+      ),
+      route(
+        'marketing/campaigns/new',
+        'routes/admin/marketing/campaigns/new.jsx'
+      ),
+      route(
+        'marketing/sequences/new',
+        'routes/admin/marketing/sequences/new.jsx'
+      ),
       route('channels', 'routes/admin/channels/index.jsx'),
+      route('channels/new', 'routes/admin/channels/new.jsx'),
       // Themes (P5-8)
       route('themes', 'routes/admin/themes/index.jsx'),
       // Plugins (P5-9)
@@ -202,8 +223,14 @@ export default [
       route('plugins/:pluginId/*', 'routes/admin/plugins/$pluginId.jsx'),
       // API settings (W2)
       route('api-settings', 'routes/admin/api-settings.jsx'),
+      route('api-settings/keys/new', 'routes/admin/api-settings/keys/new.jsx'),
+      route(
+        'api-settings/webhooks/new',
+        'routes/admin/api-settings/webhooks/new.jsx'
+      ),
       // Settings (P5-10)
       route('settings', 'routes/admin/settings/index.jsx'),
+      route('settings/users/new', 'routes/admin/settings/users/new.jsx'),
     ]),
   ]),
 

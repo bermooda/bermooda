@@ -1,6 +1,7 @@
 // app/routes/admin/price-lists/index.jsx
 
-import { Form, useLoaderData } from 'react-router';
+import { PlusIcon } from '@heroicons/react/24/outline';
+import { Form, Link, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 import Badge from '#/components/admin/badge';
@@ -12,7 +13,6 @@ import PageHeader from '#/components/admin/page-header';
 import Button from '#/components/ui/button';
 
 import {
-  createPriceList,
   listPriceLists,
   upsertPriceListEntry,
 } from '#/core/pricing/index.server';
@@ -34,26 +34,6 @@ export async function loader() {
 export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get('intent');
-
-  if (intent === 'create-list') {
-    const name = formData.get('name')?.toString().trim();
-    const currency = formData.get('currency')?.toString().trim().toUpperCase();
-    const customerGroupId = formData.get('customerGroupId')?.toString() || null;
-    const priority = parseInt(formData.get('priority')?.toString() ?? '0', 10);
-
-    if (!name || !currency) {
-      return { ok: false, error: 'Name and currency are required.' };
-    }
-
-    await createPriceList({
-      name,
-      currency,
-      customerGroupId: customerGroupId || null,
-      priority,
-      active: true,
-    });
-    return { ok: true };
-  }
 
   if (intent === 'add-entry') {
     const priceListId = formData.get('priceListId')?.toString();
@@ -84,45 +64,38 @@ export async function action({ request }) {
 }
 
 export default function AdminPriceListsRoute() {
-  const { priceLists, variants, groups } = useLoaderData();
+  const { priceLists, variants } = useLoaderData();
 
   return (
     <div>
       <PageHeader
         title="Price lists"
         subtitle="Group and quantity-specific pricing overrides."
+        actions={
+          <Link
+            to="/admin/price-lists/new"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
+            <PlusIcon className="h-4 w-4" />
+            New price list
+          </Link>
+        }
         className="mb-6"
       />
-
-      <Card className="mb-6">
-        <Form method="post" className="flex flex-wrap items-end gap-3">
-          <input type="hidden" name="intent" value="create-list" />
-          <Input name="name" placeholder="List name" className="w-auto" />
-          <Input name="currency" defaultValue="USD" className="w-24" />
-          <Select name="customerGroupId" className="w-auto">
-            <option value="">All customers</option>
-            {groups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.name}
-              </option>
-            ))}
-          </Select>
-          <Input
-            name="priority"
-            type="number"
-            defaultValue="0"
-            className="w-20"
-          />
-          <Button type="submit" variant="primary">
-            Create list
-          </Button>
-        </Form>
-      </Card>
 
       {priceLists.length === 0 ? (
         <EmptyState
           title="No price lists yet"
-          description="Create a price list above to add group or quantity-specific pricing."
+          description="Create a price list to add group or quantity-specific pricing."
+          action={
+            <Link
+              to="/admin/price-lists/new"
+              className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
+            >
+              <PlusIcon className="h-4 w-4" />
+              New price list
+            </Link>
+          }
         />
       ) : (
         <div className="space-y-6">
@@ -164,9 +137,9 @@ export default function AdminPriceListsRoute() {
                   type="number"
                   min="1"
                   defaultValue="1"
-                  className="w-20"
+                  className="w-24"
                 />
-                <Button type="submit" variant="secondary">
+                <Button type="submit" variant="primary">
                   Add entry
                 </Button>
               </Form>

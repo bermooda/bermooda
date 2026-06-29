@@ -11,15 +11,20 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import { useState, useEffect } from 'react';
-import { Form, useFetcher, useLoaderData, useNavigation } from 'react-router';
+import { useState } from 'react';
+import {
+  Form,
+  Link,
+  useFetcher,
+  useLoaderData,
+  useNavigation,
+} from 'react-router';
 
 import prisma from '#/libs/prisma.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
-import Select from '#/components/admin/form/select';
 import Textarea from '#/components/admin/form/textarea';
 import PageHeader from '#/components/admin/page-header';
 import { SuccessAlert } from '#/components/ui/alert';
@@ -95,13 +100,7 @@ export async function loader() {
 
   const tree = buildTree(categories, null);
 
-  // For parent selector: all categories with en title
-  const allForSelect = categories.map((c) => ({
-    id: c.id,
-    title: translationMap[c.id]?.en?.title ?? `(${c.id.slice(0, 6)})`,
-  }));
-
-  return { tree, locales, allForSelect };
+  return { tree, locales };
 }
 
 // ---------------------------------------------------------------------------
@@ -111,53 +110,6 @@ export async function loader() {
 export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get('intent');
-
-  // ── Create ─────────────────────────────────────────────────────────────────
-  if (intent === 'create') {
-    const title = formData.get('title')?.toString().trim() ?? '';
-    const slugValue = formData.get('slug')?.toString().trim() ?? '';
-    const parentId = formData.get('parentId')?.toString().trim() || null;
-
-    // Position = max sibling position + 1
-    const lastSibling = await prisma.category.findFirst({
-      where: { parentId },
-      orderBy: { position: 'desc' },
-    });
-    const position = (lastSibling?.position ?? -1) + 1;
-
-    const category = await prisma.category.create({
-      data: { parentId, position },
-    });
-
-    if (title) {
-      await prisma.translation.create({
-        data: {
-          entityType: 'category',
-          entityId: category.id,
-          locale: 'en',
-          field: 'title',
-          value: title,
-        },
-      });
-    }
-
-    if (slugValue) {
-      try {
-        await prisma.slug.create({
-          data: {
-            entityType: 'category',
-            entityId: category.id,
-            locale: 'en',
-            slug: slugValue,
-          },
-        });
-      } catch {
-        // Slug collision — ignore
-      }
-    }
-
-    return { ok: true, intent: 'create' };
-  }
 
   // ── Save (edit) ────────────────────────────────────────────────────────────
   if (intent === 'save') {
@@ -412,84 +364,12 @@ function InlineEditForm({ category, locales, onClose }) {
   );
 }
 
-/** "Add Category" inline form */
-function AddCategoryForm({ allForSelect }) {
-  const [open, setOpen] = useState(false);
-  const fetcher = useFetcher();
-  const isSubmitting = fetcher.state !== 'idle';
-
-  // We use a key to reset the form after submit
-  const [formKey, setFormKey] = useState(0);
-
-  // Close + reset after successful creation
-  useEffect(() => {
-    if (fetcher.state === 'idle' && fetcher.data?.ok && open) {
-      setOpen(false);
-      setFormKey((k) => k + 1);
-    }
-  }, [fetcher.state, fetcher.data, open]);
-
-  if (!open) {
-    return (
-      <Button variant="primary" onClick={() => setOpen(true)}>
-        <PlusIcon className="mr-1.5 h-4 w-4" />
-        Add Category
-      </Button>
-    );
-  }
-
-  return (
-    <Card className="w-full sm:w-80">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-text text-sm font-semibold">New Category</span>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-text-muted hover:text-text rounded p-1"
-        >
-          <XMarkIcon className="h-4 w-4" />
-        </button>
-      </div>
-
-      <fetcher.Form key={formKey} method="post" className="space-y-3">
-        <input type="hidden" name="intent" value="create" />
-
-        <Field label="Name (EN)" className="space-y-1">
-          <Input type="text" name="title" required placeholder="e.g. Apparel" />
-        </Field>
-
-        <Field label="Slug (EN)" className="space-y-1">
-          <Input type="text" name="slug" placeholder="apparel" />
-        </Field>
-
-        <Field label="Parent (optional)" className="space-y-1">
-          <Select name="parentId" defaultValue="">
-            <option value="">— None (root) —</option>
-            {allForSelect.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.title}
-              </option>
-            ))}
-          </Select>
-        </Field>
-
-        <div className="flex items-center gap-3 pt-1">
-          <ButtonSubmit loading={isSubmitting}>Create</ButtonSubmit>
-          <Button variant="ghost" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-        </div>
-      </fetcher.Form>
-    </Card>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
 export default function AdminCategoriesRoute() {
-  const { tree, locales, allForSelect } = useLoaderData();
+  const { tree, locales } = useLoaderData();
   const navigation = useNavigation();
   const [editingId, setEditingId] = useState(null);
 
@@ -503,7 +383,15 @@ export default function AdminCategoriesRoute() {
       <PageHeader
         title="Categories"
         subtitle={`${tree.length} categor${tree.length !== 1 ? 'ies' : 'y'}`}
-        actions={<AddCategoryForm allForSelect={allForSelect} />}
+        actions={
+          <Link
+            to="/admin/categories/new"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
+            <PlusIcon className="h-4 w-4" />
+            New category
+          </Link>
+        }
         className="mb-6"
       />
 
@@ -511,7 +399,14 @@ export default function AdminCategoriesRoute() {
       <Card padded={false} className="overflow-hidden">
         {tree.length === 0 ? (
           <div className="text-text-muted px-4 py-10 text-center text-sm">
-            No categories yet. Use the button above to create one.
+            No categories yet.{' '}
+            <Link
+              to="/admin/categories/new"
+              className="text-accent hover:underline"
+            >
+              Create your first category
+            </Link>
+            .
           </div>
         ) : (
           <div className="divide-border divide-y">
