@@ -32,8 +32,8 @@ ENV NODE_ENV="production"
 # For WAL support: https://github.com/prisma/prisma-engines/issues/4675#issuecomment-1914383246
 ENV PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK="1"
 
-# Add shortcut for connecting to database CLI
-RUN printf '%s\n' '#!/bin/sh' 'set -x' 'sqlite3 $DATABASE_PATH' > /usr/local/bin/dbconn && chmod +x /usr/local/bin/dbconn
+# Add shortcut for connecting to the database CLI.
+RUN printf '%s\n' '#!/bin/sh' 'exec sqlite3 "$DATABASE_URL" "$@"' > /usr/local/bin/dbcli && chmod +x /usr/local/bin/dbcli
 
 # Install necessary dependencies for LiteFS
 RUN apk add ca-certificates fuse3 sqlite
