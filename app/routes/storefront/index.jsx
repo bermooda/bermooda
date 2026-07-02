@@ -10,9 +10,11 @@ import {
   buildOrganizationJsonLd,
   buildWebSiteJsonLd,
 } from '#/core/seo/index.server';
-import HomePage from '#/themes/default/components/home-page';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
+  const themeId = await preloadStorefrontTheme();
   const locale = await getRequestLocale(request);
   const currency = await getRequestCurrency(request);
 
@@ -29,6 +31,7 @@ export async function loader({ request }) {
   ]);
 
   return {
+    themeId,
     products,
     categories,
     locale,
@@ -45,7 +48,9 @@ export function meta() {
 }
 
 export default function StorefrontIndexRoute() {
-  const data = useLoaderData();
+  const { themeId, ...data } = useLoaderData();
+  const HomePage = getStorefrontComponent('HomePage', themeId);
+  if (!HomePage) throw new Error('HomePage theme component not found');
   return (
     <>
       <JsonLd data={data.jsonLd} />

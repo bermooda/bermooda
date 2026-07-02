@@ -3,9 +3,11 @@ import { useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
 
-import LoginPage from '#/themes/default/components/login-page';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
+  const themeId = await preloadStorefrontTheme();
   const session = await getCustomerSession(request);
   if (session?.user) return redirect('/account');
 
@@ -13,7 +15,11 @@ export async function loader({ request }) {
   const returnTo = url.searchParams.get('returnTo') ?? '/account';
   const error = url.searchParams.get('error') ?? null;
 
-  return { returnTo, error };
+  return {
+    themeId,
+    returnTo,
+    error,
+  };
 }
 
 export function meta() {
@@ -21,6 +27,8 @@ export function meta() {
 }
 
 export default function AccountLoginRoute() {
-  const data = useLoaderData();
+  const { themeId, ...data } = useLoaderData();
+  const LoginPage = getStorefrontComponent('LoginPage', themeId);
+  if (!LoginPage) throw new Error('LoginPage theme component not found');
   return <LoginPage {...data} />;
 }

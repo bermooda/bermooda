@@ -426,3 +426,53 @@ export type ChannelProduct = Prisma.ChannelProductModel
  * 
  */
 export type ChannelPriceOverride = Prisma.ChannelPriceOverrideModel
+/**
+ * Model Collection
+ * 
+ */
+export type Collection = Prisma.CollectionModel
+/**
+ * Model CollectionProduct
+ * 
+ */
+export type CollectionProduct = Prisma.CollectionProductModel
+/**
+ * Model ProductTag
+ * 
+ */
+export type ProductTag = Prisma.ProductTagModel
+/**
+ * Model ProductTagAssignment
+ * 
+ */
+export type ProductTagAssignment = Prisma.ProductTagAssignmentModel
+/**
+ * Model ProductRelation
+ * 
+ */
+export type ProductRelation = Prisma.ProductRelationModel
+/**
+ * Model VariantOptionValue
+ * 
+ */
+export type VariantOptionValue = Prisma.VariantOptionValueModel
+/**
+ * Model SubscriptionPlan
+ * 
+ */
+export type SubscriptionPlan = Prisma.SubscriptionPlanModel
+/**
+ * Model Subscription
+ * 
+ */
+export type Subscription = Prisma.SubscriptionModel
+/**
+ * Model PosSession
+ * 
+ */
+export type PosSession = Prisma.PosSessionModel
+/**
+ * Model PosOrder
+ * 
+ */
+export type PosOrder = Prisma.PosOrderModel

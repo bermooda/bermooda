@@ -31,6 +31,7 @@ model User {
   sessions  Session[]
   accounts  Account[]
   twoFactor TwoFactor?
+  posSessions PosSession[]
 
   @@index([email])
 }
@@ -128,6 +129,7 @@ model Customer {
   referralCode     ReferralCode?
   referredBy       Referral?              @relation("ReferredCustomer")
   campaignDeliveries CampaignDelivery[]
+  subscriptions      Subscription[]
 
   @@index([email])
 }
@@ -233,6 +235,10 @@ model Product {
   digitalAssets DigitalAsset[]
   bundleItems   BundleItem[]     @relation("BundleProduct")
   channelProducts ChannelProduct[]
+  collections   CollectionProduct[]
+  tags          ProductTagAssignment[]
+  relations     ProductRelation[] @relation("ProductRelations")
+  relatedFrom   ProductRelation[] @relation("RelatedToProduct")
 }
 
 model ProductVariant {
@@ -257,6 +263,8 @@ model ProductVariant {
   backInStockSubscriptions BackInStockSubscription[]
   bundleComponents        BundleItem[]
   channelPriceOverrides   ChannelPriceOverride[]
+  optionValues            VariantOptionValue[]
+  subscriptionPlans       SubscriptionPlan[]
 
   @@index([productId])
   @@index([sku])
@@ -301,6 +309,7 @@ model ProductOptionValue {
   updatedAt DateTime @updatedAt
 
   option ProductOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  variants VariantOptionValue[]
 
   @@index([optionId])
 }
@@ -468,6 +477,7 @@ model Order {
   returns    Return[]
   discounts  OrderDiscount[]
   giftCardRedemptions GiftCardRedemption[]
+  posOrder            PosOrder?
 
   @@index([customerId])
   @@index([salesChannelId])
@@ -952,6 +962,7 @@ model Location {
   updatedAt   DateTime @updatedAt
 
   inventoryLevels InventoryLevel[]
+  posSessions     PosSession[]
 }
 
 model InventoryLevel {
@@ -1307,4 +1318,156 @@ model ChannelPriceOverride {
 
   @@unique([channelId, variantId, currency])
   @@index([variantId])
+}
+
+// ─── Collections, tags, relations, variant options ─────────────────────────
+
+model Collection {
+  id             String    @id @default(cuid())
+  handle         String    @unique
+  collectionType String    @default("manual")
+  rulesJson      String?
+  position       Int       @default(0)
+  publishedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  products CollectionProduct[]
+
+  @@index([collectionType])
+}
+
+model CollectionProduct {
+  id           String   @id @default(cuid())
+  collectionId String
+  productId    String
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, productId])
+  @@index([productId])
+}
+
+model ProductTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  products ProductTagAssignment[]
+}
+
+model ProductTagAssignment {
+  id        String   @id @default(cuid())
+  productId String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  product Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tag     ProductTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, tagId])
+  @@index([tagId])
+}
+
+model ProductRelation {
+  id           String   @id @default(cuid())
+  productId    String
+  relatedId    String
+  relationType String
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  product Product @relation("ProductRelations", fields: [productId], references: [id], onDelete: Cascade)
+  related Product @relation("RelatedToProduct", fields: [relatedId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, relatedId, relationType])
+  @@index([relatedId])
+}
+
+model VariantOptionValue {
+  id            String   @id @default(cuid())
+  variantId     String
+  optionValueId String
+  createdAt     DateTime @default(now())
+
+  variant     ProductVariant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  optionValue ProductOptionValue @relation(fields: [optionValueId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, optionValueId])
+  @@index([optionValueId])
+}
+
+// ─── Subscriptions (recurring billing) ───────────────────────────────────
+
+model SubscriptionPlan {
+  id            String   @id @default(cuid())
+  name          String
+  variantId     String?
+  interval      String
+  intervalCount Int      @default(1)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  variant       ProductVariant? @relation(fields: [variantId], references: [id])
+  subscriptions Subscription[]
+
+  @@index([variantId])
+}
+
+model Subscription {
+  id                     String    @id @default(cuid())
+  customerId             String
+  planId                 String
+  status                 String    @default("active")
+  externalSubscriptionId String?
+  currentPeriodEnd       DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  customer Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  plan     SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([customerId])
+  @@index([planId])
+  @@index([status])
+}
+
+// ─── POS (in-store orders) ─────────────────────────────────────────────────
+
+model PosSession {
+  id         String    @id @default(cuid())
+  staffId    String
+  locationId String?
+  status     String    @default("open")
+  openedAt   DateTime  @default(now())
+  closedAt   DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  staff    User       @relation(fields: [staffId], references: [id])
+  location Location?  @relation(fields: [locationId], references: [id])
+  orders   PosOrder[]
+
+  @@index([staffId])
+  @@index([locationId])
+}
+
+model PosOrder {
+  id           String   @id @default(cuid())
+  posSessionId String
+  orderId      String?  @unique
+  status       String   @default("draft")
+  totalCents   Int      @default(0)
+  currency     String   @default("USD")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  posSession PosSession @relation(fields: [posSessionId], references: [id], onDelete: Cascade)
+  order      Order?     @relation(fields: [orderId], references: [id])
+
+  @@index([posSessionId])
 }

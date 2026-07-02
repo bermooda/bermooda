@@ -10,15 +10,21 @@ import {
   setDefaultAddress,
 } from '#/core/customers/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
-import AccountAddressesPage from '#/themes/default/components/account-addresses-page';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
+  const themeId = await preloadStorefrontTheme();
   const locale = await getRequestLocale(request);
   const session = await getCustomerSession(request);
   const customer = session?.user ?? null;
 
   const addresses = customer ? await listAddresses(customer.id) : [];
-  return { addresses, locale };
+  return {
+    themeId,
+    addresses,
+    locale,
+  };
 }
 
 export async function action({ request }) {
@@ -62,5 +68,9 @@ export function meta() {
 export default function AccountAddressesRoute() {
   const data = useLoaderData();
   const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
+  const AccountAddressesPage = getStorefrontComponent('AccountAddressesPage');
+  if (!AccountAddressesPage) {
+    throw new Error('AccountAddressesPage theme component not found');
+  }
   return <AccountAddressesPage {...data} customer={layoutData?.customer} />;
 }

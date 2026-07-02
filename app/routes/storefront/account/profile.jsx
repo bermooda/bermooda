@@ -4,11 +4,16 @@ import { getCustomerSession } from '#/libs/auth/customer.server';
 
 import { updateCustomer } from '#/core/customers/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
-import AccountProfilePage from '#/themes/default/components/account-profile-page';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
+  const themeId = await preloadStorefrontTheme();
   const locale = await getRequestLocale(request);
-  return { locale };
+  return {
+    themeId,
+    locale,
+  };
 }
 
 export async function action({ request }) {
@@ -36,5 +41,13 @@ export function meta() {
 export default function AccountProfileRoute() {
   const data = useLoaderData();
   const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
+  const themeId = layoutData?.themeId ?? 'default';
+  const AccountProfilePage = getStorefrontComponent(
+    'AccountProfilePage',
+    themeId
+  );
+  if (!AccountProfilePage) {
+    throw new Error('AccountProfilePage theme component not found');
+  }
   return <AccountProfilePage {...data} customer={layoutData?.customer} />;
 }

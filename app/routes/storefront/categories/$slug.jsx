@@ -10,9 +10,11 @@ import {
   buildBreadcrumbJsonLd,
   buildCategoryMeta,
 } from '#/core/seo/index.server';
-import CategoryPage from '#/themes/default/components/category-page';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request, params }) {
+  const themeId = await preloadStorefrontTheme();
   const locale = await getRequestLocale(request);
   const currency = await getRequestCurrency(request);
   const category = await getCategoryBySlug(params.slug, { locale });
@@ -43,6 +45,7 @@ export async function loader({ request, params }) {
   );
 
   return {
+    themeId,
     category,
     products,
     total,
@@ -61,7 +64,9 @@ export function meta({ loaderData }) {
 }
 
 export default function CategoryRoute() {
-  const data = useLoaderData();
+  const { themeId, ...data } = useLoaderData();
+  const CategoryPage = getStorefrontComponent('CategoryPage', themeId);
+  if (!CategoryPage) throw new Error('CategoryPage theme component not found');
   return (
     <>
       <JsonLd data={data.jsonLd} />

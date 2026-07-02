@@ -1,0 +1,174 @@
+openapi: 3.1.0
+info:
+  title: bermooda REST API
+  version: 1.0.0
+  description: Storefront and admin REST API for bermooda ecommerce.
+
+servers:
+  - url: /api/v1
+    description: Storefront API
+  - url: /api/admin/v1
+    description: Admin API (Bearer API key)
+
+paths:
+  /catalog:
+    get:
+      summary: List published products
+      tags: [Storefront]
+      parameters:
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: limit, in: query, schema: { type: integer, maximum: 100 } }
+        - { name: locale, in: query, schema: { type: string } }
+        - { name: currency, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Product list
+
+  /cart:
+    post:
+      summary: Create cart
+      tags: [Storefront]
+      responses:
+        '201':
+          description: Cart created
+
+  /products/{productId}/reviews:
+    get:
+      summary: List product reviews
+      tags: [Storefront]
+      parameters:
+        - {
+            name: productId,
+            in: path,
+            required: true,
+            schema: { type: string },
+          }
+      responses:
+        '200':
+          description: Reviews
+    post:
+      summary: Submit a review
+      tags: [Storefront]
+      parameters:
+        - {
+            name: productId,
+            in: path,
+            required: true,
+            schema: { type: string },
+          }
+      responses:
+        '201':
+          description: Review created
+
+  /checkout:
+    post:
+      summary: Create checkout session
+      tags: [Storefront]
+      responses:
+        '201':
+          description: Checkout session
+
+  /products:
+    get:
+      summary: List products (admin)
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Products
+    post:
+      summary: Create product
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Product created
+
+  /orders:
+    get:
+      summary: List orders
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Orders
+
+  /inventory/locations:
+    get:
+      summary: List inventory locations and levels
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Locations
+
+  /gift-cards:
+    get:
+      summary: List gift cards
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Gift cards
+    post:
+      summary: Issue gift card
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Gift card issued
+
+  /wishlists:
+    get:
+      summary: Get customer wishlist items
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - {
+            name: customerId,
+            in: query,
+            required: true,
+            schema: { type: string },
+          }
+      responses:
+        '200':
+          description: Wishlist items
+    post:
+      summary: Add or remove wishlist item
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Updated wishlist
+
+  /pos:
+    post:
+      summary: POS session and draft order actions
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: POS action result
+
+  /subscriptions/plans:
+    get:
+      summary: List subscription plans
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Plans
+    post:
+      summary: Create subscription plan
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Plan created
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Admin API key (berm_...)

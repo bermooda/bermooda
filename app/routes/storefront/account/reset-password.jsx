@@ -1,12 +1,18 @@
 import { useLoaderData } from 'react-router';
 
-import ResetPasswordPage from '#/themes/default/components/reset-password-page';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
+  const themeId = await preloadStorefrontTheme();
   const url = new URL(request.url);
   const token = url.searchParams.get('token') ?? '';
   const error = url.searchParams.get('error') ?? null;
-  return { token, error };
+  return {
+    themeId,
+    token,
+    error,
+  };
 }
 
 export function meta() {
@@ -14,6 +20,12 @@ export function meta() {
 }
 
 export default function AccountResetPasswordRoute() {
-  const data = useLoaderData();
+  const { themeId, ...data } = useLoaderData();
+  const ResetPasswordPage = getStorefrontComponent(
+    'ResetPasswordPage',
+    themeId
+  );
+  if (!ResetPasswordPage)
+    throw new Error('ResetPasswordPage theme component not found');
   return <ResetPasswordPage {...data} />;
 }

@@ -78,6 +78,10 @@ export default [
     ...prefix('api/v1', [
       route('catalog', 'routes/api/v1/catalog.jsx'),
       route('catalog/:id', 'routes/api/v1/catalog/$id.jsx'),
+      route(
+        'products/:productId/reviews',
+        'routes/api/v1/products/$productId/reviews.jsx'
+      ),
       route('categories', 'routes/api/v1/categories.jsx'),
       route('search', 'routes/api/v1/search.jsx'),
       route('cart', 'routes/api/v1/cart.jsx'),
@@ -122,6 +126,17 @@ export default [
       ),
       route('customers', 'routes/api/admin/v1/customers.jsx'),
       route('customers/:id', 'routes/api/admin/v1/customers/$id.jsx'),
+      route(
+        'inventory/locations',
+        'routes/api/admin/v1/inventory/locations.jsx'
+      ),
+      route('gift-cards', 'routes/api/admin/v1/gift-cards.jsx'),
+      route('wishlists', 'routes/api/admin/v1/wishlists.jsx'),
+      route('pos', 'routes/api/admin/v1/pos.jsx'),
+      route(
+        'subscriptions/plans',
+        'routes/api/admin/v1/subscriptions/plans.jsx'
+      ),
       route('discounts', 'routes/api/admin/v1/discounts.jsx'),
       route('discounts/:id', 'routes/api/admin/v1/discounts/$id.jsx'),
       route('api-keys', 'routes/api/admin/v1/api-keys.jsx'),
@@ -172,7 +187,14 @@ export default [
       route('products', 'routes/admin/products/index.jsx'),
       route('products/new', 'routes/admin/products/new.jsx'),
       route('products/:id', 'routes/admin/products/$id.jsx'),
+      route(
+        'products/:id/merchandising',
+        'routes/admin/products/$id/merchandising.jsx'
+      ),
       // Categories (P5-4)
+      route('collections', 'routes/admin/collections/index.jsx'),
+      route('collections/new', 'routes/admin/collections/new.jsx'),
+      route('import', 'routes/admin/import/index.jsx'),
       route('categories', 'routes/admin/categories/index.jsx'),
       route('categories/new', 'routes/admin/categories/new.jsx'),
       // Content (W5)

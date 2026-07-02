@@ -16,9 +16,12 @@ import {
   buildProductJsonLd,
   buildProductMeta,
 } from '#/core/seo/index.server';
-import ProductPage from '#/themes/default/components/product-page';
+import { getSlotBlocks } from '#/core/themes/index.server';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request, params }) {
+  const themeId = await preloadStorefrontTheme();
   const locale = await getRequestLocale(request);
   const currency = await getRequestCurrency(request);
   const product = await getProductBySlug(params.slug, { locale, currency });
@@ -66,7 +69,10 @@ export async function loader({ request, params }) {
     reviewSummary,
   });
 
+  const slotBlocks = await getSlotBlocks('product.afterDescription');
+
   return {
+    themeId,
     product,
     locale,
     currency,
@@ -76,6 +82,7 @@ export async function loader({ request, params }) {
     reviewSummary,
     customer: session?.user ?? null,
     path,
+    slotBlocks,
     jsonLd: [breadcrumb, productJsonLd],
     metaTags: await buildProductMeta({ product, request, path }),
   };
@@ -117,8 +124,10 @@ export function meta({ loaderData }) {
 }
 
 export default function ProductRoute() {
-  const data = useLoaderData();
+  const { themeId, ...data } = useLoaderData();
   const actionData = useActionData();
+  const ProductPage = getStorefrontComponent('ProductPage', themeId);
+  if (!ProductPage) throw new Error('ProductPage theme component not found');
 
   return (
     <>

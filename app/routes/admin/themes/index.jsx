@@ -18,6 +18,7 @@ import Button, { ButtonSubmit } from '#/components/ui/button';
 
 import { get, set } from '#/core/settings/index.server';
 import { _registry, resolveActiveTheme } from '#/core/themes/index.server';
+import { invalidateThemeCache } from '#/core/themes/resolve.server';
 
 // ---------------------------------------------------------------------------
 // Meta
@@ -82,6 +83,7 @@ export async function action({ request }) {
     await set('activeTheme', themeId);
     // Also bust the TTL cache entry used by resolveActiveTheme
     cache.delete('theme:active');
+    invalidateThemeCache();
 
     return { success: true, activated: themeId };
   }

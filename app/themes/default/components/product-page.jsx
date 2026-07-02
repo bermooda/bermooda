@@ -2,8 +2,10 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { Link, Form, useFetcher } from 'react-router';
 
+import SlotBlocks from '#/components/storefront/slot-blocks';
+
 import { useT } from '#/core/i18n/index';
-import { formatPrice, Slot } from '#/core/index';
+import { formatPrice } from '#/core/index';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';
@@ -48,6 +50,7 @@ export default function ProductPage({
   reviewPage,
   customer,
   reviewActionData,
+  slotBlocks = [],
 }) {
   const t = useT();
   const fetcher = useFetcher();
@@ -297,7 +300,7 @@ export default function ProductPage({
             )}
 
             {/* Slot: after description */}
-            <Slot name="product.afterDescription" />
+            <SlotBlocks blocks={slotBlocks} />
 
             {/* Reviews */}
             <ProductReviewsSection

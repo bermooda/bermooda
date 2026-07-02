@@ -41,6 +41,8 @@ export const NAV_GROUPS = [
     items: [
       { name: 'Products', href: '/admin/products', Icon: CubeIcon },
       { name: 'Categories', href: '/admin/categories', Icon: TagIcon },
+      { name: 'Collections', href: '/admin/collections', Icon: TagIcon },
+      { name: 'Import', href: '/admin/import', Icon: DocumentChartBarIcon },
       { name: 'Inventory', href: '/admin/inventory', Icon: CubeIcon },
       { name: 'Price Lists', href: '/admin/price-lists', Icon: TagIcon },
     ],
