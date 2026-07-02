@@ -4,9 +4,11 @@ import { listCategories } from '#/core/catalog/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { search } from '#/core/search/index.server';
-import SearchPage from '#/themes/default/components/search-page';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
+  const themeId = await preloadStorefrontTheme();
   const url = new URL(request.url);
   const query = url.searchParams.get('q') ?? '';
   const categoryId = url.searchParams.get('category') || undefined;
@@ -45,6 +47,7 @@ export async function loader({ request }) {
   ]);
 
   return {
+    themeId,
     query,
     sort,
     page,
@@ -65,6 +68,8 @@ export function meta({ loaderData }) {
 }
 
 export default function SearchRoute() {
-  const data = useLoaderData();
+  const { themeId, ...data } = useLoaderData();
+  const SearchPage = getStorefrontComponent('SearchPage', themeId);
+  if (!SearchPage) throw new Error('SearchPage theme component not found');
   return <SearchPage {...data} />;
 }

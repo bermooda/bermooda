@@ -1,6 +1,7 @@
 import { redirect } from 'react-router';
 import { useLoaderData } from 'react-router';
 
+import { getCartTokenFromRequest } from '#/utils/cart-cookie.server';
 import logger from '#/utils/logger.server';
 
 import { validateAddress } from '#/core/address-validation/index.server';
@@ -20,15 +21,10 @@ import {
   listProvidersWithDetails,
 } from '#/core/payments/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
-import CheckoutLayout from '#/themes/default/components/checkout-layout';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 const VALID_STEPS = ['address', 'shipping', 'payment', 'review'];
-
-function getCartToken(request) {
-  const cookie = request.headers.get('cookie') ?? '';
-  const match = cookie.match(/(?:^|;\s*)cart_token=([^;]+)/);
-  return match ? decodeURIComponent(match[1].trim()) : null;
-}
 
 function getCheckoutSessionId(request) {
   const cookie = request.headers.get('cookie') ?? '';
@@ -65,6 +61,7 @@ function normaliseSession(session) {
 }
 
 export async function loader({ request, params }) {
+  const themeId = await preloadStorefrontTheme();
   const { step } = params;
 
   if (!VALID_STEPS.includes(step)) {
@@ -73,7 +70,7 @@ export async function loader({ request, params }) {
 
   const locale = await getRequestLocale(request);
   const currency = await getRequestCurrency(request);
-  const cartToken = getCartToken(request);
+  const cartToken = getCartTokenFromRequest(request);
 
   if (!cartToken) return redirect('/cart');
 
@@ -131,6 +128,7 @@ export async function loader({ request, params }) {
 
   return Response.json(
     {
+      themeId,
       step,
       session: normaliseSession(session),
       cart,
@@ -170,7 +168,10 @@ export async function action({ request, params }) {
       });
     } catch (err) {
       logger.error({ err }, 'placeOrder failed at review step');
-      return { error: err.message };
+      return {
+        themeId,
+        error: err.message,
+      };
     }
 
     const origin = new URL(request.url).origin;
@@ -311,6 +312,9 @@ export function meta({ loaderData }) {
 }
 
 export default function CheckoutRoute() {
-  const data = useLoaderData();
+  const { themeId, ...data } = useLoaderData();
+  const CheckoutLayout = getStorefrontComponent('CheckoutLayout', themeId);
+  if (!CheckoutLayout)
+    throw new Error('CheckoutLayout theme component not found');
   return <CheckoutLayout {...data} />;
 }

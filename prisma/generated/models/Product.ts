@@ -233,6 +233,10 @@ export type ProductWhereInput = {
   digitalAssets?: Prisma.DigitalAssetListRelationFilter
   bundleItems?: Prisma.BundleItemListRelationFilter
   channelProducts?: Prisma.ChannelProductListRelationFilter
+  collections?: Prisma.CollectionProductListRelationFilter
+  tags?: Prisma.ProductTagAssignmentListRelationFilter
+  relations?: Prisma.ProductRelationListRelationFilter
+  relatedFrom?: Prisma.ProductRelationListRelationFilter
 }
 
 export type ProductOrderByWithRelationInput = {
@@ -251,6 +255,10 @@ export type ProductOrderByWithRelationInput = {
   digitalAssets?: Prisma.DigitalAssetOrderByRelationAggregateInput
   bundleItems?: Prisma.BundleItemOrderByRelationAggregateInput
   channelProducts?: Prisma.ChannelProductOrderByRelationAggregateInput
+  collections?: Prisma.CollectionProductOrderByRelationAggregateInput
+  tags?: Prisma.ProductTagAssignmentOrderByRelationAggregateInput
+  relations?: Prisma.ProductRelationOrderByRelationAggregateInput
+  relatedFrom?: Prisma.ProductRelationOrderByRelationAggregateInput
 }
 
 export type ProductWhereUniqueInput = Prisma.AtLeast<{
@@ -272,6 +280,10 @@ export type ProductWhereUniqueInput = Prisma.AtLeast<{
   digitalAssets?: Prisma.DigitalAssetListRelationFilter
   bundleItems?: Prisma.BundleItemListRelationFilter
   channelProducts?: Prisma.ChannelProductListRelationFilter
+  collections?: Prisma.CollectionProductListRelationFilter
+  tags?: Prisma.ProductTagAssignmentListRelationFilter
+  relations?: Prisma.ProductRelationListRelationFilter
+  relatedFrom?: Prisma.ProductRelationListRelationFilter
 }, "id">
 
 export type ProductOrderByWithAggregationInput = {
@@ -316,6 +328,10 @@ export type ProductCreateInput = {
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductUncheckedCreateInput = {
@@ -334,6 +350,10 @@ export type ProductUncheckedCreateInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductUpdateInput = {
@@ -352,6 +372,10 @@ export type ProductUpdateInput = {
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductUncheckedUpdateInput = {
@@ -370,6 +394,10 @@ export type ProductUncheckedUpdateInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductCreateManyInput = {
@@ -573,6 +601,62 @@ export type ProductUpdateOneRequiredWithoutChannelProductsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProductUpdateToOneWithWhereWithoutChannelProductsInput, Prisma.ProductUpdateWithoutChannelProductsInput>, Prisma.ProductUncheckedUpdateWithoutChannelProductsInput>
 }
 
+export type ProductCreateNestedOneWithoutCollectionsInput = {
+  create?: Prisma.XOR<Prisma.ProductCreateWithoutCollectionsInput, Prisma.ProductUncheckedCreateWithoutCollectionsInput>
+  connectOrCreate?: Prisma.ProductCreateOrConnectWithoutCollectionsInput
+  connect?: Prisma.ProductWhereUniqueInput
+}
+
+export type ProductUpdateOneRequiredWithoutCollectionsNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductCreateWithoutCollectionsInput, Prisma.ProductUncheckedCreateWithoutCollectionsInput>
+  connectOrCreate?: Prisma.ProductCreateOrConnectWithoutCollectionsInput
+  upsert?: Prisma.ProductUpsertWithoutCollectionsInput
+  connect?: Prisma.ProductWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProductUpdateToOneWithWhereWithoutCollectionsInput, Prisma.ProductUpdateWithoutCollectionsInput>, Prisma.ProductUncheckedUpdateWithoutCollectionsInput>
+}
+
+export type ProductCreateNestedOneWithoutTagsInput = {
+  create?: Prisma.XOR<Prisma.ProductCreateWithoutTagsInput, Prisma.ProductUncheckedCreateWithoutTagsInput>
+  connectOrCreate?: Prisma.ProductCreateOrConnectWithoutTagsInput
+  connect?: Prisma.ProductWhereUniqueInput
+}
+
+export type ProductUpdateOneRequiredWithoutTagsNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductCreateWithoutTagsInput, Prisma.ProductUncheckedCreateWithoutTagsInput>
+  connectOrCreate?: Prisma.ProductCreateOrConnectWithoutTagsInput
+  upsert?: Prisma.ProductUpsertWithoutTagsInput
+  connect?: Prisma.ProductWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProductUpdateToOneWithWhereWithoutTagsInput, Prisma.ProductUpdateWithoutTagsInput>, Prisma.ProductUncheckedUpdateWithoutTagsInput>
+}
+
+export type ProductCreateNestedOneWithoutRelationsInput = {
+  create?: Prisma.XOR<Prisma.ProductCreateWithoutRelationsInput, Prisma.ProductUncheckedCreateWithoutRelationsInput>
+  connectOrCreate?: Prisma.ProductCreateOrConnectWithoutRelationsInput
+  connect?: Prisma.ProductWhereUniqueInput
+}
+
+export type ProductCreateNestedOneWithoutRelatedFromInput = {
+  create?: Prisma.XOR<Prisma.ProductCreateWithoutRelatedFromInput, Prisma.ProductUncheckedCreateWithoutRelatedFromInput>
+  connectOrCreate?: Prisma.ProductCreateOrConnectWithoutRelatedFromInput
+  connect?: Prisma.ProductWhereUniqueInput
+}
+
+export type ProductUpdateOneRequiredWithoutRelationsNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductCreateWithoutRelationsInput, Prisma.ProductUncheckedCreateWithoutRelationsInput>
+  connectOrCreate?: Prisma.ProductCreateOrConnectWithoutRelationsInput
+  upsert?: Prisma.ProductUpsertWithoutRelationsInput
+  connect?: Prisma.ProductWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProductUpdateToOneWithWhereWithoutRelationsInput, Prisma.ProductUpdateWithoutRelationsInput>, Prisma.ProductUncheckedUpdateWithoutRelationsInput>
+}
+
+export type ProductUpdateOneRequiredWithoutRelatedFromNestedInput = {
+  create?: Prisma.XOR<Prisma.ProductCreateWithoutRelatedFromInput, Prisma.ProductUncheckedCreateWithoutRelatedFromInput>
+  connectOrCreate?: Prisma.ProductCreateOrConnectWithoutRelatedFromInput
+  upsert?: Prisma.ProductUpsertWithoutRelatedFromInput
+  connect?: Prisma.ProductWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProductUpdateToOneWithWhereWithoutRelatedFromInput, Prisma.ProductUpdateWithoutRelatedFromInput>, Prisma.ProductUncheckedUpdateWithoutRelatedFromInput>
+}
+
 export type ProductCreateWithoutVariantsInput = {
   id?: string
   productType?: string
@@ -588,6 +672,10 @@ export type ProductCreateWithoutVariantsInput = {
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductUncheckedCreateWithoutVariantsInput = {
@@ -605,6 +693,10 @@ export type ProductUncheckedCreateWithoutVariantsInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductCreateOrConnectWithoutVariantsInput = {
@@ -638,6 +730,10 @@ export type ProductUpdateWithoutVariantsInput = {
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutVariantsInput = {
@@ -655,6 +751,10 @@ export type ProductUncheckedUpdateWithoutVariantsInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductCreateWithoutOptionsInput = {
@@ -672,6 +772,10 @@ export type ProductCreateWithoutOptionsInput = {
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductUncheckedCreateWithoutOptionsInput = {
@@ -689,6 +793,10 @@ export type ProductUncheckedCreateWithoutOptionsInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductCreateOrConnectWithoutOptionsInput = {
@@ -722,6 +830,10 @@ export type ProductUpdateWithoutOptionsInput = {
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutOptionsInput = {
@@ -739,6 +851,10 @@ export type ProductUncheckedUpdateWithoutOptionsInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductCreateWithoutCategoriesInput = {
@@ -756,6 +872,10 @@ export type ProductCreateWithoutCategoriesInput = {
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductUncheckedCreateWithoutCategoriesInput = {
@@ -773,6 +893,10 @@ export type ProductUncheckedCreateWithoutCategoriesInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductCreateOrConnectWithoutCategoriesInput = {
@@ -806,6 +930,10 @@ export type ProductUpdateWithoutCategoriesInput = {
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutCategoriesInput = {
@@ -823,6 +951,10 @@ export type ProductUncheckedUpdateWithoutCategoriesInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductCreateWithoutMediaInput = {
@@ -840,6 +972,10 @@ export type ProductCreateWithoutMediaInput = {
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductUncheckedCreateWithoutMediaInput = {
@@ -857,6 +993,10 @@ export type ProductUncheckedCreateWithoutMediaInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductCreateOrConnectWithoutMediaInput = {
@@ -890,6 +1030,10 @@ export type ProductUpdateWithoutMediaInput = {
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutMediaInput = {
@@ -907,6 +1051,10 @@ export type ProductUncheckedUpdateWithoutMediaInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductCreateWithoutAttributesInput = {
@@ -924,6 +1072,10 @@ export type ProductCreateWithoutAttributesInput = {
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductUncheckedCreateWithoutAttributesInput = {
@@ -941,6 +1093,10 @@ export type ProductUncheckedCreateWithoutAttributesInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductCreateOrConnectWithoutAttributesInput = {
@@ -974,6 +1130,10 @@ export type ProductUpdateWithoutAttributesInput = {
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutAttributesInput = {
@@ -991,6 +1151,10 @@ export type ProductUncheckedUpdateWithoutAttributesInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductCreateWithoutReviewsInput = {
@@ -1008,6 +1172,10 @@ export type ProductCreateWithoutReviewsInput = {
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductUncheckedCreateWithoutReviewsInput = {
@@ -1025,6 +1193,10 @@ export type ProductUncheckedCreateWithoutReviewsInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductCreateOrConnectWithoutReviewsInput = {
@@ -1058,6 +1230,10 @@ export type ProductUpdateWithoutReviewsInput = {
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutReviewsInput = {
@@ -1075,6 +1251,10 @@ export type ProductUncheckedUpdateWithoutReviewsInput = {
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductCreateWithoutDigitalAssetsInput = {
@@ -1092,6 +1272,10 @@ export type ProductCreateWithoutDigitalAssetsInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductUncheckedCreateWithoutDigitalAssetsInput = {
@@ -1109,6 +1293,10 @@ export type ProductUncheckedCreateWithoutDigitalAssetsInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
   channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductCreateOrConnectWithoutDigitalAssetsInput = {
@@ -1142,6 +1330,10 @@ export type ProductUpdateWithoutDigitalAssetsInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutDigitalAssetsInput = {
@@ -1159,6 +1351,10 @@ export type ProductUncheckedUpdateWithoutDigitalAssetsInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
   channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductCreateWithoutBundleItemsInput = {
@@ -1176,6 +1372,10 @@ export type ProductCreateWithoutBundleItemsInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductUncheckedCreateWithoutBundleItemsInput = {
@@ -1193,6 +1393,10 @@ export type ProductUncheckedCreateWithoutBundleItemsInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductCreateOrConnectWithoutBundleItemsInput = {
@@ -1226,6 +1430,10 @@ export type ProductUpdateWithoutBundleItemsInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutBundleItemsInput = {
@@ -1243,6 +1451,10 @@ export type ProductUncheckedUpdateWithoutBundleItemsInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductCreateWithoutChannelProductsInput = {
@@ -1260,6 +1472,10 @@ export type ProductCreateWithoutChannelProductsInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductUncheckedCreateWithoutChannelProductsInput = {
@@ -1277,6 +1493,10 @@ export type ProductUncheckedCreateWithoutChannelProductsInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
   digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
   bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
 }
 
 export type ProductCreateOrConnectWithoutChannelProductsInput = {
@@ -1310,6 +1530,10 @@ export type ProductUpdateWithoutChannelProductsInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
 }
 
 export type ProductUncheckedUpdateWithoutChannelProductsInput = {
@@ -1327,6 +1551,410 @@ export type ProductUncheckedUpdateWithoutChannelProductsInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
   digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
   bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
+}
+
+export type ProductCreateWithoutCollectionsInput = {
+  id?: string
+  productType?: string
+  publishedAt?: Date | string | null
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.ProductVariantCreateNestedManyWithoutProductInput
+  categories?: Prisma.ProductCategoryCreateNestedManyWithoutProductInput
+  media?: Prisma.ProductMediaCreateNestedManyWithoutProductInput
+  options?: Prisma.ProductOptionCreateNestedManyWithoutProductInput
+  attributes?: Prisma.ProductAttributeCreateNestedManyWithoutProductInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
+  digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
+  bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
+}
+
+export type ProductUncheckedCreateWithoutCollectionsInput = {
+  id?: string
+  productType?: string
+  publishedAt?: Date | string | null
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.ProductVariantUncheckedCreateNestedManyWithoutProductInput
+  categories?: Prisma.ProductCategoryUncheckedCreateNestedManyWithoutProductInput
+  media?: Prisma.ProductMediaUncheckedCreateNestedManyWithoutProductInput
+  options?: Prisma.ProductOptionUncheckedCreateNestedManyWithoutProductInput
+  attributes?: Prisma.ProductAttributeUncheckedCreateNestedManyWithoutProductInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
+  digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
+  bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
+}
+
+export type ProductCreateOrConnectWithoutCollectionsInput = {
+  where: Prisma.ProductWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProductCreateWithoutCollectionsInput, Prisma.ProductUncheckedCreateWithoutCollectionsInput>
+}
+
+export type ProductUpsertWithoutCollectionsInput = {
+  update: Prisma.XOR<Prisma.ProductUpdateWithoutCollectionsInput, Prisma.ProductUncheckedUpdateWithoutCollectionsInput>
+  create: Prisma.XOR<Prisma.ProductCreateWithoutCollectionsInput, Prisma.ProductUncheckedCreateWithoutCollectionsInput>
+  where?: Prisma.ProductWhereInput
+}
+
+export type ProductUpdateToOneWithWhereWithoutCollectionsInput = {
+  where?: Prisma.ProductWhereInput
+  data: Prisma.XOR<Prisma.ProductUpdateWithoutCollectionsInput, Prisma.ProductUncheckedUpdateWithoutCollectionsInput>
+}
+
+export type ProductUpdateWithoutCollectionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productType?: Prisma.StringFieldUpdateOperationsInput | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.ProductVariantUpdateManyWithoutProductNestedInput
+  categories?: Prisma.ProductCategoryUpdateManyWithoutProductNestedInput
+  media?: Prisma.ProductMediaUpdateManyWithoutProductNestedInput
+  options?: Prisma.ProductOptionUpdateManyWithoutProductNestedInput
+  attributes?: Prisma.ProductAttributeUpdateManyWithoutProductNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
+  digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
+  bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
+}
+
+export type ProductUncheckedUpdateWithoutCollectionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productType?: Prisma.StringFieldUpdateOperationsInput | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.ProductVariantUncheckedUpdateManyWithoutProductNestedInput
+  categories?: Prisma.ProductCategoryUncheckedUpdateManyWithoutProductNestedInput
+  media?: Prisma.ProductMediaUncheckedUpdateManyWithoutProductNestedInput
+  options?: Prisma.ProductOptionUncheckedUpdateManyWithoutProductNestedInput
+  attributes?: Prisma.ProductAttributeUncheckedUpdateManyWithoutProductNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
+  digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
+  bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
+}
+
+export type ProductCreateWithoutTagsInput = {
+  id?: string
+  productType?: string
+  publishedAt?: Date | string | null
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.ProductVariantCreateNestedManyWithoutProductInput
+  categories?: Prisma.ProductCategoryCreateNestedManyWithoutProductInput
+  media?: Prisma.ProductMediaCreateNestedManyWithoutProductInput
+  options?: Prisma.ProductOptionCreateNestedManyWithoutProductInput
+  attributes?: Prisma.ProductAttributeCreateNestedManyWithoutProductInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
+  digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
+  bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
+}
+
+export type ProductUncheckedCreateWithoutTagsInput = {
+  id?: string
+  productType?: string
+  publishedAt?: Date | string | null
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.ProductVariantUncheckedCreateNestedManyWithoutProductInput
+  categories?: Prisma.ProductCategoryUncheckedCreateNestedManyWithoutProductInput
+  media?: Prisma.ProductMediaUncheckedCreateNestedManyWithoutProductInput
+  options?: Prisma.ProductOptionUncheckedCreateNestedManyWithoutProductInput
+  attributes?: Prisma.ProductAttributeUncheckedCreateNestedManyWithoutProductInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
+  digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
+  bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
+}
+
+export type ProductCreateOrConnectWithoutTagsInput = {
+  where: Prisma.ProductWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProductCreateWithoutTagsInput, Prisma.ProductUncheckedCreateWithoutTagsInput>
+}
+
+export type ProductUpsertWithoutTagsInput = {
+  update: Prisma.XOR<Prisma.ProductUpdateWithoutTagsInput, Prisma.ProductUncheckedUpdateWithoutTagsInput>
+  create: Prisma.XOR<Prisma.ProductCreateWithoutTagsInput, Prisma.ProductUncheckedCreateWithoutTagsInput>
+  where?: Prisma.ProductWhereInput
+}
+
+export type ProductUpdateToOneWithWhereWithoutTagsInput = {
+  where?: Prisma.ProductWhereInput
+  data: Prisma.XOR<Prisma.ProductUpdateWithoutTagsInput, Prisma.ProductUncheckedUpdateWithoutTagsInput>
+}
+
+export type ProductUpdateWithoutTagsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productType?: Prisma.StringFieldUpdateOperationsInput | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.ProductVariantUpdateManyWithoutProductNestedInput
+  categories?: Prisma.ProductCategoryUpdateManyWithoutProductNestedInput
+  media?: Prisma.ProductMediaUpdateManyWithoutProductNestedInput
+  options?: Prisma.ProductOptionUpdateManyWithoutProductNestedInput
+  attributes?: Prisma.ProductAttributeUpdateManyWithoutProductNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
+  digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
+  bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
+}
+
+export type ProductUncheckedUpdateWithoutTagsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productType?: Prisma.StringFieldUpdateOperationsInput | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.ProductVariantUncheckedUpdateManyWithoutProductNestedInput
+  categories?: Prisma.ProductCategoryUncheckedUpdateManyWithoutProductNestedInput
+  media?: Prisma.ProductMediaUncheckedUpdateManyWithoutProductNestedInput
+  options?: Prisma.ProductOptionUncheckedUpdateManyWithoutProductNestedInput
+  attributes?: Prisma.ProductAttributeUncheckedUpdateManyWithoutProductNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
+  digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
+  bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
+}
+
+export type ProductCreateWithoutRelationsInput = {
+  id?: string
+  productType?: string
+  publishedAt?: Date | string | null
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.ProductVariantCreateNestedManyWithoutProductInput
+  categories?: Prisma.ProductCategoryCreateNestedManyWithoutProductInput
+  media?: Prisma.ProductMediaCreateNestedManyWithoutProductInput
+  options?: Prisma.ProductOptionCreateNestedManyWithoutProductInput
+  attributes?: Prisma.ProductAttributeCreateNestedManyWithoutProductInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
+  digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
+  bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationCreateNestedManyWithoutRelatedInput
+}
+
+export type ProductUncheckedCreateWithoutRelationsInput = {
+  id?: string
+  productType?: string
+  publishedAt?: Date | string | null
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.ProductVariantUncheckedCreateNestedManyWithoutProductInput
+  categories?: Prisma.ProductCategoryUncheckedCreateNestedManyWithoutProductInput
+  media?: Prisma.ProductMediaUncheckedCreateNestedManyWithoutProductInput
+  options?: Prisma.ProductOptionUncheckedCreateNestedManyWithoutProductInput
+  attributes?: Prisma.ProductAttributeUncheckedCreateNestedManyWithoutProductInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
+  digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
+  bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relatedFrom?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutRelatedInput
+}
+
+export type ProductCreateOrConnectWithoutRelationsInput = {
+  where: Prisma.ProductWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProductCreateWithoutRelationsInput, Prisma.ProductUncheckedCreateWithoutRelationsInput>
+}
+
+export type ProductCreateWithoutRelatedFromInput = {
+  id?: string
+  productType?: string
+  publishedAt?: Date | string | null
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.ProductVariantCreateNestedManyWithoutProductInput
+  categories?: Prisma.ProductCategoryCreateNestedManyWithoutProductInput
+  media?: Prisma.ProductMediaCreateNestedManyWithoutProductInput
+  options?: Prisma.ProductOptionCreateNestedManyWithoutProductInput
+  attributes?: Prisma.ProductAttributeCreateNestedManyWithoutProductInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutProductInput
+  digitalAssets?: Prisma.DigitalAssetCreateNestedManyWithoutProductInput
+  bundleItems?: Prisma.BundleItemCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationCreateNestedManyWithoutProductInput
+}
+
+export type ProductUncheckedCreateWithoutRelatedFromInput = {
+  id?: string
+  productType?: string
+  publishedAt?: Date | string | null
+  position?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  variants?: Prisma.ProductVariantUncheckedCreateNestedManyWithoutProductInput
+  categories?: Prisma.ProductCategoryUncheckedCreateNestedManyWithoutProductInput
+  media?: Prisma.ProductMediaUncheckedCreateNestedManyWithoutProductInput
+  options?: Prisma.ProductOptionUncheckedCreateNestedManyWithoutProductInput
+  attributes?: Prisma.ProductAttributeUncheckedCreateNestedManyWithoutProductInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutProductInput
+  digitalAssets?: Prisma.DigitalAssetUncheckedCreateNestedManyWithoutProductInput
+  bundleItems?: Prisma.BundleItemUncheckedCreateNestedManyWithoutBundleProductInput
+  channelProducts?: Prisma.ChannelProductUncheckedCreateNestedManyWithoutProductInput
+  collections?: Prisma.CollectionProductUncheckedCreateNestedManyWithoutProductInput
+  tags?: Prisma.ProductTagAssignmentUncheckedCreateNestedManyWithoutProductInput
+  relations?: Prisma.ProductRelationUncheckedCreateNestedManyWithoutProductInput
+}
+
+export type ProductCreateOrConnectWithoutRelatedFromInput = {
+  where: Prisma.ProductWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProductCreateWithoutRelatedFromInput, Prisma.ProductUncheckedCreateWithoutRelatedFromInput>
+}
+
+export type ProductUpsertWithoutRelationsInput = {
+  update: Prisma.XOR<Prisma.ProductUpdateWithoutRelationsInput, Prisma.ProductUncheckedUpdateWithoutRelationsInput>
+  create: Prisma.XOR<Prisma.ProductCreateWithoutRelationsInput, Prisma.ProductUncheckedCreateWithoutRelationsInput>
+  where?: Prisma.ProductWhereInput
+}
+
+export type ProductUpdateToOneWithWhereWithoutRelationsInput = {
+  where?: Prisma.ProductWhereInput
+  data: Prisma.XOR<Prisma.ProductUpdateWithoutRelationsInput, Prisma.ProductUncheckedUpdateWithoutRelationsInput>
+}
+
+export type ProductUpdateWithoutRelationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productType?: Prisma.StringFieldUpdateOperationsInput | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.ProductVariantUpdateManyWithoutProductNestedInput
+  categories?: Prisma.ProductCategoryUpdateManyWithoutProductNestedInput
+  media?: Prisma.ProductMediaUpdateManyWithoutProductNestedInput
+  options?: Prisma.ProductOptionUpdateManyWithoutProductNestedInput
+  attributes?: Prisma.ProductAttributeUpdateManyWithoutProductNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
+  digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
+  bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUpdateManyWithoutRelatedNestedInput
+}
+
+export type ProductUncheckedUpdateWithoutRelationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productType?: Prisma.StringFieldUpdateOperationsInput | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.ProductVariantUncheckedUpdateManyWithoutProductNestedInput
+  categories?: Prisma.ProductCategoryUncheckedUpdateManyWithoutProductNestedInput
+  media?: Prisma.ProductMediaUncheckedUpdateManyWithoutProductNestedInput
+  options?: Prisma.ProductOptionUncheckedUpdateManyWithoutProductNestedInput
+  attributes?: Prisma.ProductAttributeUncheckedUpdateManyWithoutProductNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
+  digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
+  bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relatedFrom?: Prisma.ProductRelationUncheckedUpdateManyWithoutRelatedNestedInput
+}
+
+export type ProductUpsertWithoutRelatedFromInput = {
+  update: Prisma.XOR<Prisma.ProductUpdateWithoutRelatedFromInput, Prisma.ProductUncheckedUpdateWithoutRelatedFromInput>
+  create: Prisma.XOR<Prisma.ProductCreateWithoutRelatedFromInput, Prisma.ProductUncheckedCreateWithoutRelatedFromInput>
+  where?: Prisma.ProductWhereInput
+}
+
+export type ProductUpdateToOneWithWhereWithoutRelatedFromInput = {
+  where?: Prisma.ProductWhereInput
+  data: Prisma.XOR<Prisma.ProductUpdateWithoutRelatedFromInput, Prisma.ProductUncheckedUpdateWithoutRelatedFromInput>
+}
+
+export type ProductUpdateWithoutRelatedFromInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productType?: Prisma.StringFieldUpdateOperationsInput | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.ProductVariantUpdateManyWithoutProductNestedInput
+  categories?: Prisma.ProductCategoryUpdateManyWithoutProductNestedInput
+  media?: Prisma.ProductMediaUpdateManyWithoutProductNestedInput
+  options?: Prisma.ProductOptionUpdateManyWithoutProductNestedInput
+  attributes?: Prisma.ProductAttributeUpdateManyWithoutProductNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutProductNestedInput
+  digitalAssets?: Prisma.DigitalAssetUpdateManyWithoutProductNestedInput
+  bundleItems?: Prisma.BundleItemUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUpdateManyWithoutProductNestedInput
+}
+
+export type ProductUncheckedUpdateWithoutRelatedFromInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productType?: Prisma.StringFieldUpdateOperationsInput | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variants?: Prisma.ProductVariantUncheckedUpdateManyWithoutProductNestedInput
+  categories?: Prisma.ProductCategoryUncheckedUpdateManyWithoutProductNestedInput
+  media?: Prisma.ProductMediaUncheckedUpdateManyWithoutProductNestedInput
+  options?: Prisma.ProductOptionUncheckedUpdateManyWithoutProductNestedInput
+  attributes?: Prisma.ProductAttributeUncheckedUpdateManyWithoutProductNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutProductNestedInput
+  digitalAssets?: Prisma.DigitalAssetUncheckedUpdateManyWithoutProductNestedInput
+  bundleItems?: Prisma.BundleItemUncheckedUpdateManyWithoutBundleProductNestedInput
+  channelProducts?: Prisma.ChannelProductUncheckedUpdateManyWithoutProductNestedInput
+  collections?: Prisma.CollectionProductUncheckedUpdateManyWithoutProductNestedInput
+  tags?: Prisma.ProductTagAssignmentUncheckedUpdateManyWithoutProductNestedInput
+  relations?: Prisma.ProductRelationUncheckedUpdateManyWithoutProductNestedInput
 }
 
 
@@ -1344,6 +1972,10 @@ export type ProductCountOutputType = {
   digitalAssets: number
   bundleItems: number
   channelProducts: number
+  collections: number
+  tags: number
+  relations: number
+  relatedFrom: number
 }
 
 export type ProductCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1356,6 +1988,10 @@ export type ProductCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   digitalAssets?: boolean | ProductCountOutputTypeCountDigitalAssetsArgs
   bundleItems?: boolean | ProductCountOutputTypeCountBundleItemsArgs
   channelProducts?: boolean | ProductCountOutputTypeCountChannelProductsArgs
+  collections?: boolean | ProductCountOutputTypeCountCollectionsArgs
+  tags?: boolean | ProductCountOutputTypeCountTagsArgs
+  relations?: boolean | ProductCountOutputTypeCountRelationsArgs
+  relatedFrom?: boolean | ProductCountOutputTypeCountRelatedFromArgs
 }
 
 /**
@@ -1431,6 +2067,34 @@ export type ProductCountOutputTypeCountChannelProductsArgs<ExtArgs extends runti
   where?: Prisma.ChannelProductWhereInput
 }
 
+/**
+ * ProductCountOutputType without action
+ */
+export type ProductCountOutputTypeCountCollectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CollectionProductWhereInput
+}
+
+/**
+ * ProductCountOutputType without action
+ */
+export type ProductCountOutputTypeCountTagsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProductTagAssignmentWhereInput
+}
+
+/**
+ * ProductCountOutputType without action
+ */
+export type ProductCountOutputTypeCountRelationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProductRelationWhereInput
+}
+
+/**
+ * ProductCountOutputType without action
+ */
+export type ProductCountOutputTypeCountRelatedFromArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProductRelationWhereInput
+}
+
 
 export type ProductSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1448,6 +2112,10 @@ export type ProductSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   digitalAssets?: boolean | Prisma.Product$digitalAssetsArgs<ExtArgs>
   bundleItems?: boolean | Prisma.Product$bundleItemsArgs<ExtArgs>
   channelProducts?: boolean | Prisma.Product$channelProductsArgs<ExtArgs>
+  collections?: boolean | Prisma.Product$collectionsArgs<ExtArgs>
+  tags?: boolean | Prisma.Product$tagsArgs<ExtArgs>
+  relations?: boolean | Prisma.Product$relationsArgs<ExtArgs>
+  relatedFrom?: boolean | Prisma.Product$relatedFromArgs<ExtArgs>
   _count?: boolean | Prisma.ProductCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["product"]>
 
@@ -1489,6 +2157,10 @@ export type ProductInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   digitalAssets?: boolean | Prisma.Product$digitalAssetsArgs<ExtArgs>
   bundleItems?: boolean | Prisma.Product$bundleItemsArgs<ExtArgs>
   channelProducts?: boolean | Prisma.Product$channelProductsArgs<ExtArgs>
+  collections?: boolean | Prisma.Product$collectionsArgs<ExtArgs>
+  tags?: boolean | Prisma.Product$tagsArgs<ExtArgs>
+  relations?: boolean | Prisma.Product$relationsArgs<ExtArgs>
+  relatedFrom?: boolean | Prisma.Product$relatedFromArgs<ExtArgs>
   _count?: boolean | Prisma.ProductCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProductIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1506,6 +2178,10 @@ export type $ProductPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     digitalAssets: Prisma.$DigitalAssetPayload<ExtArgs>[]
     bundleItems: Prisma.$BundleItemPayload<ExtArgs>[]
     channelProducts: Prisma.$ChannelProductPayload<ExtArgs>[]
+    collections: Prisma.$CollectionProductPayload<ExtArgs>[]
+    tags: Prisma.$ProductTagAssignmentPayload<ExtArgs>[]
+    relations: Prisma.$ProductRelationPayload<ExtArgs>[]
+    relatedFrom: Prisma.$ProductRelationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1917,6 +2593,10 @@ export interface Prisma__ProductClient<T, Null = never, ExtArgs extends runtime.
   digitalAssets<T extends Prisma.Product$digitalAssetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Product$digitalAssetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DigitalAssetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bundleItems<T extends Prisma.Product$bundleItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Product$bundleItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BundleItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   channelProducts<T extends Prisma.Product$channelProductsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Product$channelProductsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChannelProductPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  collections<T extends Prisma.Product$collectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Product$collectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CollectionProductPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  tags<T extends Prisma.Product$tagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Product$tagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductTagAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  relations<T extends Prisma.Product$relationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Product$relationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductRelationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  relatedFrom<T extends Prisma.Product$relatedFromArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Product$relatedFromArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductRelationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2556,6 +3236,102 @@ export type Product$channelProductsArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.ChannelProductScalarFieldEnum | Prisma.ChannelProductScalarFieldEnum[]
+}
+
+/**
+ * Product.collections
+ */
+export type Product$collectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CollectionProduct
+   */
+  select?: Prisma.CollectionProductSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CollectionProduct
+   */
+  omit?: Prisma.CollectionProductOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CollectionProductInclude<ExtArgs> | null
+  where?: Prisma.CollectionProductWhereInput
+  orderBy?: Prisma.CollectionProductOrderByWithRelationInput | Prisma.CollectionProductOrderByWithRelationInput[]
+  cursor?: Prisma.CollectionProductWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CollectionProductScalarFieldEnum | Prisma.CollectionProductScalarFieldEnum[]
+}
+
+/**
+ * Product.tags
+ */
+export type Product$tagsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProductTagAssignment
+   */
+  select?: Prisma.ProductTagAssignmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProductTagAssignment
+   */
+  omit?: Prisma.ProductTagAssignmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProductTagAssignmentInclude<ExtArgs> | null
+  where?: Prisma.ProductTagAssignmentWhereInput
+  orderBy?: Prisma.ProductTagAssignmentOrderByWithRelationInput | Prisma.ProductTagAssignmentOrderByWithRelationInput[]
+  cursor?: Prisma.ProductTagAssignmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProductTagAssignmentScalarFieldEnum | Prisma.ProductTagAssignmentScalarFieldEnum[]
+}
+
+/**
+ * Product.relations
+ */
+export type Product$relationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProductRelation
+   */
+  select?: Prisma.ProductRelationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProductRelation
+   */
+  omit?: Prisma.ProductRelationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProductRelationInclude<ExtArgs> | null
+  where?: Prisma.ProductRelationWhereInput
+  orderBy?: Prisma.ProductRelationOrderByWithRelationInput | Prisma.ProductRelationOrderByWithRelationInput[]
+  cursor?: Prisma.ProductRelationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProductRelationScalarFieldEnum | Prisma.ProductRelationScalarFieldEnum[]
+}
+
+/**
+ * Product.relatedFrom
+ */
+export type Product$relatedFromArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProductRelation
+   */
+  select?: Prisma.ProductRelationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProductRelation
+   */
+  omit?: Prisma.ProductRelationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProductRelationInclude<ExtArgs> | null
+  where?: Prisma.ProductRelationWhereInput
+  orderBy?: Prisma.ProductRelationOrderByWithRelationInput | Prisma.ProductRelationOrderByWithRelationInput[]
+  cursor?: Prisma.ProductRelationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProductRelationScalarFieldEnum | Prisma.ProductRelationScalarFieldEnum[]
 }
 
 /**

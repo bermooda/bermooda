@@ -412,6 +412,7 @@ export type OrderWhereInput = {
   returns?: Prisma.ReturnListRelationFilter
   discounts?: Prisma.OrderDiscountListRelationFilter
   giftCardRedemptions?: Prisma.GiftCardRedemptionListRelationFilter
+  posOrder?: Prisma.XOR<Prisma.PosOrderNullableScalarRelationFilter, Prisma.PosOrderWhereInput> | null
 }
 
 export type OrderOrderByWithRelationInput = {
@@ -448,6 +449,7 @@ export type OrderOrderByWithRelationInput = {
   returns?: Prisma.ReturnOrderByRelationAggregateInput
   discounts?: Prisma.OrderDiscountOrderByRelationAggregateInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionOrderByRelationAggregateInput
+  posOrder?: Prisma.PosOrderOrderByWithRelationInput
 }
 
 export type OrderWhereUniqueInput = Prisma.AtLeast<{
@@ -487,6 +489,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   returns?: Prisma.ReturnListRelationFilter
   discounts?: Prisma.OrderDiscountListRelationFilter
   giftCardRedemptions?: Prisma.GiftCardRedemptionListRelationFilter
+  posOrder?: Prisma.XOR<Prisma.PosOrderNullableScalarRelationFilter, Prisma.PosOrderWhereInput> | null
 }, "id" | "orderNumber">
 
 export type OrderOrderByWithAggregationInput = {
@@ -585,6 +588,7 @@ export type OrderCreateInput = {
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderCreateNestedOneWithoutOrderInput
 }
 
 export type OrderUncheckedCreateInput = {
@@ -619,6 +623,7 @@ export type OrderUncheckedCreateInput = {
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderUncheckedCreateNestedOneWithoutOrderInput
 }
 
 export type OrderUpdateInput = {
@@ -653,6 +658,7 @@ export type OrderUpdateInput = {
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateInput = {
@@ -687,6 +693,7 @@ export type OrderUncheckedUpdateInput = {
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUncheckedUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderCreateManyInput = {
@@ -1067,6 +1074,22 @@ export type OrderUncheckedUpdateManyWithoutSalesChannelNestedInput = {
   deleteMany?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
 }
 
+export type OrderCreateNestedOneWithoutPosOrderInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutPosOrderInput, Prisma.OrderUncheckedCreateWithoutPosOrderInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutPosOrderInput
+  connect?: Prisma.OrderWhereUniqueInput
+}
+
+export type OrderUpdateOneWithoutPosOrderNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutPosOrderInput, Prisma.OrderUncheckedCreateWithoutPosOrderInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutPosOrderInput
+  upsert?: Prisma.OrderUpsertWithoutPosOrderInput
+  disconnect?: Prisma.OrderWhereInput | boolean
+  delete?: Prisma.OrderWhereInput | boolean
+  connect?: Prisma.OrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrderUpdateToOneWithWhereWithoutPosOrderInput, Prisma.OrderUpdateWithoutPosOrderInput>, Prisma.OrderUncheckedUpdateWithoutPosOrderInput>
+}
+
 export type OrderCreateWithoutCustomerInput = {
   id?: string
   orderNumber: string
@@ -1098,6 +1121,7 @@ export type OrderCreateWithoutCustomerInput = {
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderCreateNestedOneWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutCustomerInput = {
@@ -1131,6 +1155,7 @@ export type OrderUncheckedCreateWithoutCustomerInput = {
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderUncheckedCreateNestedOneWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutCustomerInput = {
@@ -1220,6 +1245,7 @@ export type OrderCreateWithoutLinesInput = {
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderCreateNestedOneWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutLinesInput = {
@@ -1253,6 +1279,7 @@ export type OrderUncheckedCreateWithoutLinesInput = {
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderUncheckedCreateNestedOneWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutLinesInput = {
@@ -1302,6 +1329,7 @@ export type OrderUpdateWithoutLinesInput = {
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutLinesInput = {
@@ -1335,6 +1363,7 @@ export type OrderUncheckedUpdateWithoutLinesInput = {
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUncheckedUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutShipmentsInput = {
@@ -1368,6 +1397,7 @@ export type OrderCreateWithoutShipmentsInput = {
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderCreateNestedOneWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutShipmentsInput = {
@@ -1401,6 +1431,7 @@ export type OrderUncheckedCreateWithoutShipmentsInput = {
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderUncheckedCreateNestedOneWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutShipmentsInput = {
@@ -1450,6 +1481,7 @@ export type OrderUpdateWithoutShipmentsInput = {
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutShipmentsInput = {
@@ -1483,6 +1515,7 @@ export type OrderUncheckedUpdateWithoutShipmentsInput = {
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUncheckedUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutRefundsInput = {
@@ -1516,6 +1549,7 @@ export type OrderCreateWithoutRefundsInput = {
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderCreateNestedOneWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutRefundsInput = {
@@ -1549,6 +1583,7 @@ export type OrderUncheckedCreateWithoutRefundsInput = {
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderUncheckedCreateNestedOneWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutRefundsInput = {
@@ -1598,6 +1633,7 @@ export type OrderUpdateWithoutRefundsInput = {
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutRefundsInput = {
@@ -1631,6 +1667,7 @@ export type OrderUncheckedUpdateWithoutRefundsInput = {
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUncheckedUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutDiscountsInput = {
@@ -1664,6 +1701,7 @@ export type OrderCreateWithoutDiscountsInput = {
   refunds?: Prisma.RefundCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderCreateNestedOneWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutDiscountsInput = {
@@ -1697,6 +1735,7 @@ export type OrderUncheckedCreateWithoutDiscountsInput = {
   refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderUncheckedCreateNestedOneWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutDiscountsInput = {
@@ -1746,6 +1785,7 @@ export type OrderUpdateWithoutDiscountsInput = {
   refunds?: Prisma.RefundUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutDiscountsInput = {
@@ -1779,6 +1819,7 @@ export type OrderUncheckedUpdateWithoutDiscountsInput = {
   refunds?: Prisma.RefundUncheckedUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUncheckedUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutReturnsInput = {
@@ -1812,6 +1853,7 @@ export type OrderCreateWithoutReturnsInput = {
   refunds?: Prisma.RefundCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderCreateNestedOneWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutReturnsInput = {
@@ -1845,6 +1887,7 @@ export type OrderUncheckedCreateWithoutReturnsInput = {
   refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderUncheckedCreateNestedOneWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutReturnsInput = {
@@ -1894,6 +1937,7 @@ export type OrderUpdateWithoutReturnsInput = {
   refunds?: Prisma.RefundUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutReturnsInput = {
@@ -1927,6 +1971,7 @@ export type OrderUncheckedUpdateWithoutReturnsInput = {
   refunds?: Prisma.RefundUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUncheckedUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutGiftCardRedemptionsInput = {
@@ -1960,6 +2005,7 @@ export type OrderCreateWithoutGiftCardRedemptionsInput = {
   refunds?: Prisma.RefundCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderCreateNestedOneWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutGiftCardRedemptionsInput = {
@@ -1993,6 +2039,7 @@ export type OrderUncheckedCreateWithoutGiftCardRedemptionsInput = {
   refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutOrderInput
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderUncheckedCreateNestedOneWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutGiftCardRedemptionsInput = {
@@ -2042,6 +2089,7 @@ export type OrderUpdateWithoutGiftCardRedemptionsInput = {
   refunds?: Prisma.RefundUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutGiftCardRedemptionsInput = {
@@ -2075,6 +2123,7 @@ export type OrderUncheckedUpdateWithoutGiftCardRedemptionsInput = {
   refunds?: Prisma.RefundUncheckedUpdateManyWithoutOrderNestedInput
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUncheckedUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderCreateWithoutSalesChannelInput = {
@@ -2108,6 +2157,7 @@ export type OrderCreateWithoutSalesChannelInput = {
   returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderCreateNestedOneWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutSalesChannelInput = {
@@ -2141,6 +2191,7 @@ export type OrderUncheckedCreateWithoutSalesChannelInput = {
   returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
   discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
+  posOrder?: Prisma.PosOrderUncheckedCreateNestedOneWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutSalesChannelInput = {
@@ -2166,6 +2217,158 @@ export type OrderUpdateWithWhereUniqueWithoutSalesChannelInput = {
 export type OrderUpdateManyWithWhereWithoutSalesChannelInput = {
   where: Prisma.OrderScalarWhereInput
   data: Prisma.XOR<Prisma.OrderUpdateManyMutationInput, Prisma.OrderUncheckedUpdateManyWithoutSalesChannelInput>
+}
+
+export type OrderCreateWithoutPosOrderInput = {
+  id?: string
+  orderNumber: string
+  email: string
+  status?: string
+  currency: string
+  subtotalCents: number
+  shippingCents?: number
+  taxCents?: number
+  discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
+  loyaltyPointsCents?: number
+  totalCents: number
+  shippingAddressJson: string
+  billingAddressJson?: string | null
+  paymentProvider?: string | null
+  paymentIntentId?: string | null
+  couponCode?: string | null
+  vatId?: string | null
+  taxExempt?: boolean
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  customer?: Prisma.CustomerCreateNestedOneWithoutOrdersInput
+  salesChannel?: Prisma.SalesChannelCreateNestedOneWithoutOrdersInput
+  lines?: Prisma.OrderLineCreateNestedManyWithoutOrderInput
+  shipments?: Prisma.ShipmentCreateNestedManyWithoutOrderInput
+  refunds?: Prisma.RefundCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnCreateNestedManyWithoutOrderInput
+  discounts?: Prisma.OrderDiscountCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionCreateNestedManyWithoutOrderInput
+}
+
+export type OrderUncheckedCreateWithoutPosOrderInput = {
+  id?: string
+  orderNumber: string
+  customerId?: string | null
+  salesChannelId?: string | null
+  email: string
+  status?: string
+  currency: string
+  subtotalCents: number
+  shippingCents?: number
+  taxCents?: number
+  discountCents?: number
+  storeCreditCents?: number
+  giftCardCents?: number
+  loyaltyPointsCents?: number
+  totalCents: number
+  shippingAddressJson: string
+  billingAddressJson?: string | null
+  paymentProvider?: string | null
+  paymentIntentId?: string | null
+  couponCode?: string | null
+  vatId?: string | null
+  taxExempt?: boolean
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lines?: Prisma.OrderLineUncheckedCreateNestedManyWithoutOrderInput
+  shipments?: Prisma.ShipmentUncheckedCreateNestedManyWithoutOrderInput
+  refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutOrderInput
+  returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutOrderInput
+  discounts?: Prisma.OrderDiscountUncheckedCreateNestedManyWithoutOrderInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedCreateNestedManyWithoutOrderInput
+}
+
+export type OrderCreateOrConnectWithoutPosOrderInput = {
+  where: Prisma.OrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderCreateWithoutPosOrderInput, Prisma.OrderUncheckedCreateWithoutPosOrderInput>
+}
+
+export type OrderUpsertWithoutPosOrderInput = {
+  update: Prisma.XOR<Prisma.OrderUpdateWithoutPosOrderInput, Prisma.OrderUncheckedUpdateWithoutPosOrderInput>
+  create: Prisma.XOR<Prisma.OrderCreateWithoutPosOrderInput, Prisma.OrderUncheckedCreateWithoutPosOrderInput>
+  where?: Prisma.OrderWhereInput
+}
+
+export type OrderUpdateToOneWithWhereWithoutPosOrderInput = {
+  where?: Prisma.OrderWhereInput
+  data: Prisma.XOR<Prisma.OrderUpdateWithoutPosOrderInput, Prisma.OrderUncheckedUpdateWithoutPosOrderInput>
+}
+
+export type OrderUpdateWithoutPosOrderInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  subtotalCents?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
+  taxCents?: Prisma.IntFieldUpdateOperationsInput | number
+  discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
+  totalCents?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
+  billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  customer?: Prisma.CustomerUpdateOneWithoutOrdersNestedInput
+  salesChannel?: Prisma.SalesChannelUpdateOneWithoutOrdersNestedInput
+  lines?: Prisma.OrderLineUpdateManyWithoutOrderNestedInput
+  shipments?: Prisma.ShipmentUpdateManyWithoutOrderNestedInput
+  refunds?: Prisma.RefundUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
+  discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderUncheckedUpdateWithoutPosOrderInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  salesChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  subtotalCents?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingCents?: Prisma.IntFieldUpdateOperationsInput | number
+  taxCents?: Prisma.IntFieldUpdateOperationsInput | number
+  discountCents?: Prisma.IntFieldUpdateOperationsInput | number
+  storeCreditCents?: Prisma.IntFieldUpdateOperationsInput | number
+  giftCardCents?: Prisma.IntFieldUpdateOperationsInput | number
+  loyaltyPointsCents?: Prisma.IntFieldUpdateOperationsInput | number
+  totalCents?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingAddressJson?: Prisma.StringFieldUpdateOperationsInput | string
+  billingAddressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentIntentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  couponCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxExempt?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lines?: Prisma.OrderLineUncheckedUpdateManyWithoutOrderNestedInput
+  shipments?: Prisma.ShipmentUncheckedUpdateManyWithoutOrderNestedInput
+  refunds?: Prisma.RefundUncheckedUpdateManyWithoutOrderNestedInput
+  returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
+  discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
+  giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateManyCustomerInput = {
@@ -2226,6 +2429,7 @@ export type OrderUpdateWithoutCustomerInput = {
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutCustomerInput = {
@@ -2259,6 +2463,7 @@ export type OrderUncheckedUpdateWithoutCustomerInput = {
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUncheckedUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateManyWithoutCustomerInput = {
@@ -2346,6 +2551,7 @@ export type OrderUpdateWithoutSalesChannelInput = {
   returns?: Prisma.ReturnUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutSalesChannelInput = {
@@ -2379,6 +2585,7 @@ export type OrderUncheckedUpdateWithoutSalesChannelInput = {
   returns?: Prisma.ReturnUncheckedUpdateManyWithoutOrderNestedInput
   discounts?: Prisma.OrderDiscountUncheckedUpdateManyWithoutOrderNestedInput
   giftCardRedemptions?: Prisma.GiftCardRedemptionUncheckedUpdateManyWithoutOrderNestedInput
+  posOrder?: Prisma.PosOrderUncheckedUpdateOneWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateManyWithoutSalesChannelInput = {
@@ -2518,6 +2725,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   returns?: boolean | Prisma.Order$returnsArgs<ExtArgs>
   discounts?: boolean | Prisma.Order$discountsArgs<ExtArgs>
   giftCardRedemptions?: boolean | Prisma.Order$giftCardRedemptionsArgs<ExtArgs>
+  posOrder?: boolean | Prisma.Order$posOrderArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
@@ -2619,6 +2827,7 @@ export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   returns?: boolean | Prisma.Order$returnsArgs<ExtArgs>
   discounts?: boolean | Prisma.Order$discountsArgs<ExtArgs>
   giftCardRedemptions?: boolean | Prisma.Order$giftCardRedemptionsArgs<ExtArgs>
+  posOrder?: boolean | Prisma.Order$posOrderArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2641,6 +2850,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     returns: Prisma.$ReturnPayload<ExtArgs>[]
     discounts: Prisma.$OrderDiscountPayload<ExtArgs>[]
     giftCardRedemptions: Prisma.$GiftCardRedemptionPayload<ExtArgs>[]
+    posOrder: Prisma.$PosOrderPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3070,6 +3280,7 @@ export interface Prisma__OrderClient<T, Null = never, ExtArgs extends runtime.Ty
   returns<T extends Prisma.Order$returnsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$returnsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReturnPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   discounts<T extends Prisma.Order$discountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$discountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderDiscountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   giftCardRedemptions<T extends Prisma.Order$giftCardRedemptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$giftCardRedemptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GiftCardRedemptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  posOrder<T extends Prisma.Order$posOrderArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$posOrderArgs<ExtArgs>>): Prisma.Prisma__PosOrderClient<runtime.Types.Result.GetResult<Prisma.$PosOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3702,6 +3913,25 @@ export type Order$giftCardRedemptionsArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.GiftCardRedemptionScalarFieldEnum | Prisma.GiftCardRedemptionScalarFieldEnum[]
+}
+
+/**
+ * Order.posOrder
+ */
+export type Order$posOrderArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PosOrder
+   */
+  select?: Prisma.PosOrderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PosOrder
+   */
+  omit?: Prisma.PosOrderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PosOrderInclude<ExtArgs> | null
+  where?: Prisma.PosOrderWhereInput
 }
 
 /**

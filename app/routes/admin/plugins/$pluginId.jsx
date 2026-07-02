@@ -3,11 +3,8 @@
 
 import { useLoaderData } from 'react-router';
 
+import { resolvePluginAdminRoute } from '#/core/plugins/admin-routes.client';
 import { _registry, resolvePluginRoute } from '#/core/plugins/index.server';
-
-// ---------------------------------------------------------------------------
-// Meta
-// ---------------------------------------------------------------------------
 
 export function meta({ params }) {
   return [
@@ -16,16 +13,7 @@ export function meta({ params }) {
   ];
 }
 
-// ---------------------------------------------------------------------------
-// Loader
-// ---------------------------------------------------------------------------
-
-/**
- * Resolves the plugin manifest and the matched route descriptor for the
- * current splat path. Returns enough data for the component to decide what
- * to render without throwing HTTP errors (all states are rendered inline).
- */
-export async function loader({ params }) {
+export async function loader({ params, request }) {
   const { pluginId } = params;
   const splatPath = params['*'] ?? '';
 
@@ -37,7 +25,7 @@ export async function loader({ params }) {
 
   const { manifest } = entry;
 
-  if (!manifest.adminRoutes) {
+  if (!manifest.adminRoutes && !resolvePluginRoute(pluginId, splatPath)) {
     return { status: 'no-admin-routes', pluginId, manifest };
   }
 
@@ -47,22 +35,20 @@ export async function loader({ params }) {
     return { status: 'no-match', pluginId, manifest, splatPath };
   }
 
-  return { status: 'ok', pluginId, manifest, descriptor, splatPath };
+  let pluginLoaderData = null;
+  if (typeof descriptor.loader === 'function') {
+    pluginLoaderData = await descriptor.loader({ request, params });
+  }
+
+  return {
+    status: 'ok',
+    pluginId,
+    manifest,
+    splatPath,
+    pluginLoaderData,
+  };
 }
 
-// ---------------------------------------------------------------------------
-// Route component
-// ---------------------------------------------------------------------------
-
-/**
- * Renders the appropriate content based on the loader result:
- * - not-found          → "Plugin not found" message
- * - no-admin-routes    → "This plugin has no admin pages"
- * - no-match           → "This plugin has no admin pages for this path"
- * - ok                 → rendered plugin admin component
- *
- * @returns {React.ReactElement}
- */
 export default function AdminPluginDispatcher() {
   const data = useLoaderData();
 
@@ -100,14 +86,13 @@ export default function AdminPluginDispatcher() {
     );
   }
 
-  // status === 'ok': descriptor resolved — render the plugin's admin component.
-  const { descriptor, manifest } = data;
-  const PluginComponent = descriptor?.component;
+  const descriptor = resolvePluginAdminRoute(data.pluginId, data.splatPath);
+  const PluginComponent = descriptor?.Component;
 
   if (!PluginComponent) {
     return (
       <div className="space-y-2">
-        <h1 className="text-text text-2xl font-bold">{manifest.name}</h1>
+        <h1 className="text-text text-2xl font-bold">{data.manifest.name}</h1>
         <p className="text-text-muted text-sm">
           This plugin has no admin pages for this path.
         </p>
@@ -117,7 +102,7 @@ export default function AdminPluginDispatcher() {
 
   return (
     <div>
-      <PluginComponent />
+      <PluginComponent loaderData={data.pluginLoaderData} />
     </div>
   );
 }

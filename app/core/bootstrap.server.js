@@ -22,6 +22,7 @@ import { registerLoyaltySubscribers } from '#/core/loyalty/index.server';
 import { seedDefaultAbandonedCartSequences } from '#/core/marketing/index.server';
 import { registerPaymentEventHandlers } from '#/core/orders/index.server';
 import { registerProvider as registerPayment } from '#/core/payments/index.server';
+import { klarnaProvider } from '#/core/payments/klarna.server';
 import { manualProvider } from '#/core/payments/manual.server';
 import { paypalProvider } from '#/core/payments/paypal.server';
 import { stripeProvider } from '#/core/payments/stripe.server';
@@ -32,6 +33,7 @@ import {
 import { seedRolePermissions } from '#/core/rbac/index.server';
 import { dbProvider as dbSearchProvider } from '#/core/search/index.server';
 import { registerProvider as registerSearch } from '#/core/search/index.server';
+import { carrierProvider } from '#/core/shipping/carrier.server';
 import { registerProvider as registerShipping } from '#/core/shipping/index.server';
 import { flatRateProvider } from '#/core/shipping/index.server';
 import { registerProvider as registerTax } from '#/core/tax/index.server';
@@ -39,6 +41,7 @@ import {
   simplePercentProvider,
   automaticTaxProvider,
 } from '#/core/tax/index.server';
+import { taxJarProvider } from '#/core/tax/taxjar.server';
 import { registerTheme } from '#/core/themes/index.server';
 import { registerWebhookSubscribers } from '#/core/webhooks/index.server';
 // W2: load webhook delivery worker (registers enqueuer) + subscriber registration
@@ -64,26 +67,24 @@ export function registerBuiltins() {
   registerPayment('stripe', stripeProvider);
   registerPayment('paypal', paypalProvider);
   registerPayment('manual', manualProvider);
+  registerPayment('klarna', klarnaProvider);
 
   // Address validation — built-in no-op; Google/Loqate via plugin
   registerAddressValidation('noop', noopProvider);
 
   // Shipping providers
   registerShipping('flat_rate', flatRateProvider);
+  registerShipping('carrier', carrierProvider);
 
   // Tax providers
   registerTax('simple_percent', simplePercentProvider);
   registerTax('automatic', automaticTaxProvider);
+  registerTax('taxjar', taxJarProvider);
 
   // Search providers — W1: built-in DB provider (SQLite LIKE; Postgres ilike via W8)
   registerSearch('db', dbSearchProvider);
 
-  // Default storefront theme
-  // W0-6 decision: themes are import-based. Routes import directly from
-  // #/themes/default/... so the admin theme-switcher does not hot-swap the
-  // active theme at runtime. The registry is still populated so the admin
-  // UI can list available themes. Full runtime theme resolution (option a)
-  // is deferred to a later phase.
+  // Default storefront theme — runtime resolution via preloadStorefrontTheme()
   registerTheme(defaultThemeManifest);
 
   // Domain-event subscribers

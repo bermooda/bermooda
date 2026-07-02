@@ -217,6 +217,7 @@ export type UserWhereInput = {
   sessions?: Prisma.SessionListRelationFilter
   accounts?: Prisma.AccountListRelationFilter
   twoFactor?: Prisma.XOR<Prisma.TwoFactorNullableScalarRelationFilter, Prisma.TwoFactorWhereInput> | null
+  posSessions?: Prisma.PosSessionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -232,6 +233,7 @@ export type UserOrderByWithRelationInput = {
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   accounts?: Prisma.AccountOrderByRelationAggregateInput
   twoFactor?: Prisma.TwoFactorOrderByWithRelationInput
+  posSessions?: Prisma.PosSessionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -250,6 +252,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   sessions?: Prisma.SessionListRelationFilter
   accounts?: Prisma.AccountListRelationFilter
   twoFactor?: Prisma.XOR<Prisma.TwoFactorNullableScalarRelationFilter, Prisma.TwoFactorWhereInput> | null
+  posSessions?: Prisma.PosSessionListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -295,6 +298,7 @@ export type UserCreateInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   twoFactor?: Prisma.TwoFactorCreateNestedOneWithoutUserInput
+  posSessions?: Prisma.PosSessionCreateNestedManyWithoutStaffInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -310,6 +314,7 @@ export type UserUncheckedCreateInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   twoFactor?: Prisma.TwoFactorUncheckedCreateNestedOneWithoutUserInput
+  posSessions?: Prisma.PosSessionUncheckedCreateNestedManyWithoutStaffInput
 }
 
 export type UserUpdateInput = {
@@ -325,6 +330,7 @@ export type UserUpdateInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   twoFactor?: Prisma.TwoFactorUpdateOneWithoutUserNestedInput
+  posSessions?: Prisma.PosSessionUpdateManyWithoutStaffNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -340,6 +346,7 @@ export type UserUncheckedUpdateInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   twoFactor?: Prisma.TwoFactorUncheckedUpdateOneWithoutUserNestedInput
+  posSessions?: Prisma.PosSessionUncheckedUpdateManyWithoutStaffNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -481,6 +488,20 @@ export type UserUpdateOneRequiredWithoutTwoFactorNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTwoFactorInput, Prisma.UserUpdateWithoutTwoFactorInput>, Prisma.UserUncheckedUpdateWithoutTwoFactorInput>
 }
 
+export type UserCreateNestedOneWithoutPosSessionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPosSessionsInput, Prisma.UserUncheckedCreateWithoutPosSessionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPosSessionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPosSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPosSessionsInput, Prisma.UserUncheckedCreateWithoutPosSessionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPosSessionsInput
+  upsert?: Prisma.UserUpsertWithoutPosSessionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPosSessionsInput, Prisma.UserUpdateWithoutPosSessionsInput>, Prisma.UserUncheckedUpdateWithoutPosSessionsInput>
+}
+
 export type UserCreateWithoutSessionsInput = {
   id?: string
   email: string
@@ -493,6 +514,7 @@ export type UserCreateWithoutSessionsInput = {
   updatedAt?: Date | string
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   twoFactor?: Prisma.TwoFactorCreateNestedOneWithoutUserInput
+  posSessions?: Prisma.PosSessionCreateNestedManyWithoutStaffInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -507,6 +529,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   updatedAt?: Date | string
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   twoFactor?: Prisma.TwoFactorUncheckedCreateNestedOneWithoutUserInput
+  posSessions?: Prisma.PosSessionUncheckedCreateNestedManyWithoutStaffInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -537,6 +560,7 @@ export type UserUpdateWithoutSessionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   twoFactor?: Prisma.TwoFactorUpdateOneWithoutUserNestedInput
+  posSessions?: Prisma.PosSessionUpdateManyWithoutStaffNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -551,6 +575,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   twoFactor?: Prisma.TwoFactorUncheckedUpdateOneWithoutUserNestedInput
+  posSessions?: Prisma.PosSessionUncheckedUpdateManyWithoutStaffNestedInput
 }
 
 export type UserCreateWithoutAccountsInput = {
@@ -565,6 +590,7 @@ export type UserCreateWithoutAccountsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   twoFactor?: Prisma.TwoFactorCreateNestedOneWithoutUserInput
+  posSessions?: Prisma.PosSessionCreateNestedManyWithoutStaffInput
 }
 
 export type UserUncheckedCreateWithoutAccountsInput = {
@@ -579,6 +605,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   twoFactor?: Prisma.TwoFactorUncheckedCreateNestedOneWithoutUserInput
+  posSessions?: Prisma.PosSessionUncheckedCreateNestedManyWithoutStaffInput
 }
 
 export type UserCreateOrConnectWithoutAccountsInput = {
@@ -609,6 +636,7 @@ export type UserUpdateWithoutAccountsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   twoFactor?: Prisma.TwoFactorUpdateOneWithoutUserNestedInput
+  posSessions?: Prisma.PosSessionUpdateManyWithoutStaffNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -623,6 +651,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   twoFactor?: Prisma.TwoFactorUncheckedUpdateOneWithoutUserNestedInput
+  posSessions?: Prisma.PosSessionUncheckedUpdateManyWithoutStaffNestedInput
 }
 
 export type UserCreateWithoutTwoFactorInput = {
@@ -637,6 +666,7 @@ export type UserCreateWithoutTwoFactorInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  posSessions?: Prisma.PosSessionCreateNestedManyWithoutStaffInput
 }
 
 export type UserUncheckedCreateWithoutTwoFactorInput = {
@@ -651,6 +681,7 @@ export type UserUncheckedCreateWithoutTwoFactorInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  posSessions?: Prisma.PosSessionUncheckedCreateNestedManyWithoutStaffInput
 }
 
 export type UserCreateOrConnectWithoutTwoFactorInput = {
@@ -681,6 +712,7 @@ export type UserUpdateWithoutTwoFactorInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  posSessions?: Prisma.PosSessionUpdateManyWithoutStaffNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTwoFactorInput = {
@@ -695,6 +727,83 @@ export type UserUncheckedUpdateWithoutTwoFactorInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  posSessions?: Prisma.PosSessionUncheckedUpdateManyWithoutStaffNestedInput
+}
+
+export type UserCreateWithoutPosSessionsInput = {
+  id?: string
+  email: string
+  emailVerified?: boolean
+  name?: string | null
+  image?: string | null
+  twoFactorEnabled?: boolean
+  role?: $Enums.Role
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  twoFactor?: Prisma.TwoFactorCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutPosSessionsInput = {
+  id?: string
+  email: string
+  emailVerified?: boolean
+  name?: string | null
+  image?: string | null
+  twoFactorEnabled?: boolean
+  role?: $Enums.Role
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  twoFactor?: Prisma.TwoFactorUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutPosSessionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPosSessionsInput, Prisma.UserUncheckedCreateWithoutPosSessionsInput>
+}
+
+export type UserUpsertWithoutPosSessionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPosSessionsInput, Prisma.UserUncheckedUpdateWithoutPosSessionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPosSessionsInput, Prisma.UserUncheckedCreateWithoutPosSessionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPosSessionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPosSessionsInput, Prisma.UserUncheckedUpdateWithoutPosSessionsInput>
+}
+
+export type UserUpdateWithoutPosSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  twoFactor?: Prisma.TwoFactorUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPosSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  twoFactor?: Prisma.TwoFactorUncheckedUpdateOneWithoutUserNestedInput
 }
 
 
@@ -705,11 +814,13 @@ export type UserUncheckedUpdateWithoutTwoFactorInput = {
 export type UserCountOutputType = {
   sessions: number
   accounts: number
+  posSessions: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
   accounts?: boolean | UserCountOutputTypeCountAccountsArgs
+  posSessions?: boolean | UserCountOutputTypeCountPosSessionsArgs
 }
 
 /**
@@ -736,6 +847,13 @@ export type UserCountOutputTypeCountAccountsArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.AccountWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPosSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PosSessionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -750,6 +868,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
   twoFactor?: boolean | Prisma.User$twoFactorArgs<ExtArgs>
+  posSessions?: boolean | Prisma.User$posSessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -794,6 +913,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
   twoFactor?: boolean | Prisma.User$twoFactorArgs<ExtArgs>
+  posSessions?: boolean | Prisma.User$posSessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -805,6 +925,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     sessions: Prisma.$SessionPayload<ExtArgs>[]
     accounts: Prisma.$AccountPayload<ExtArgs>[]
     twoFactor: Prisma.$TwoFactorPayload<ExtArgs> | null
+    posSessions: Prisma.$PosSessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1213,6 +1334,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   accounts<T extends Prisma.User$accountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   twoFactor<T extends Prisma.User$twoFactorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$twoFactorArgs<ExtArgs>>): Prisma.Prisma__TwoFactorClient<runtime.Types.Result.GetResult<Prisma.$TwoFactorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  posSessions<T extends Prisma.User$posSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$posSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PosSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1706,6 +1828,30 @@ export type User$twoFactorArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   include?: Prisma.TwoFactorInclude<ExtArgs> | null
   where?: Prisma.TwoFactorWhereInput
+}
+
+/**
+ * User.posSessions
+ */
+export type User$posSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PosSession
+   */
+  select?: Prisma.PosSessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PosSession
+   */
+  omit?: Prisma.PosSessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PosSessionInclude<ExtArgs> | null
+  where?: Prisma.PosSessionWhereInput
+  orderBy?: Prisma.PosSessionOrderByWithRelationInput | Prisma.PosSessionOrderByWithRelationInput[]
+  cursor?: Prisma.PosSessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PosSessionScalarFieldEnum | Prisma.PosSessionScalarFieldEnum[]
 }
 
 /**
