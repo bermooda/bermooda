@@ -370,18 +370,58 @@ export function loadPlugins() {
 }
 
 // ---------------------------------------------------------------------------
-// resolvePluginRoute — stable export (Phase 5 will implement fully)
+// Admin route modules (eager-loaded from app/plugins/*/admin/routes.js)
 // ---------------------------------------------------------------------------
 
+const adminRouteModules = import.meta.glob(
+  '#/plugins/*/admin/routes.server.js',
+  {
+    eager: true,
+  }
+);
+
+/** @type {Map<string, Array<{ path: string, loader?: Function, Component: Function }>>} */
+const adminRoutesByPlugin = new Map();
+
+for (const [modulePath, mod] of Object.entries(adminRouteModules)) {
+  const match = modulePath.match(
+    /\/plugins\/([^/]+)\/admin\/routes\.server\.js$/
+  );
+  if (!match) continue;
+  const pluginId = match[1];
+  const routes = mod.routes ?? mod.default;
+  if (Array.isArray(routes)) {
+    adminRoutesByPlugin.set(pluginId, routes);
+  }
+}
+
 /**
- * Resolves an admin route for a plugin.
- * Returns null until Phase 5 implements full route resolution.
+ * Resolves an admin route descriptor for a plugin path.
  *
- * @param {string} _pluginId
- * @param {string} _path
- * @returns {null}
+ * @param {string} pluginId
+ * @param {string} path - splat path without leading slash
+ * @returns {{ path: string, loader?: Function, Component: Function } | null}
  */
-export function resolvePluginRoute(_pluginId, _path) {
+export function resolvePluginRoute(pluginId, path) {
+  const routes = adminRoutesByPlugin.get(pluginId);
+  if (!routes?.length) return null;
+
+  const normalized = String(path ?? '')
+    .replace(/^\/+|\/+$/g, '')
+    .split('?')[0];
+
+  for (const route of routes) {
+    const routePath = String(route.path ?? '').replace(/^\/+|\/+$/g, '');
+    if (routePath === normalized) {
+      return route;
+    }
+  }
+
+  // Default to first route when path is empty (plugin home).
+  if (!normalized && routes[0]) {
+    return routes[0];
+  }
+
   return null;
 }
 

@@ -3,9 +3,11 @@ import { useLoaderData } from 'react-router';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { listOrders } from '#/core/orders/index.server';
-import CheckoutThankYouPage from '#/themes/default/components/checkout-thank-you-page';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request, params }) {
+  const themeId = await preloadStorefrontTheme();
   const locale = await getRequestLocale(request);
   const currency = await getRequestCurrency(request);
   const { orderNumber } = params;
@@ -23,7 +25,7 @@ export async function loader({ request, params }) {
     'checkout_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0'
   );
 
-  return Response.json({ order, locale, currency }, { headers });
+  return Response.json({ order, locale, currency, themeId }, { headers });
 }
 
 export function meta({ loaderData }) {
@@ -33,6 +35,12 @@ export function meta({ loaderData }) {
 }
 
 export default function ThankYouRoute() {
-  const data = useLoaderData();
+  const { themeId, ...data } = useLoaderData();
+  const CheckoutThankYouPage = getStorefrontComponent(
+    'CheckoutThankYouPage',
+    themeId
+  );
+  if (!CheckoutThankYouPage)
+    throw new Error('CheckoutThankYouPage theme component not found');
   return <CheckoutThankYouPage {...data} />;
 }

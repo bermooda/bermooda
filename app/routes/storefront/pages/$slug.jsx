@@ -9,9 +9,11 @@ import {
   buildPageMeta,
   buildWebPageJsonLd,
 } from '#/core/seo/index.server';
-import PagePage from '#/themes/default/components/page-page';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request, params }) {
+  const themeId = await preloadStorefrontTheme();
   const locale = await getRequestLocale(request);
   const page = await getPageBySlug(params.slug, {
     locale,
@@ -33,6 +35,7 @@ export async function loader({ request, params }) {
   const webPage = buildWebPageJsonLd(page, { request, path });
 
   return {
+    themeId,
     page,
     locale,
     path,
@@ -47,7 +50,9 @@ export function meta({ loaderData }) {
 }
 
 export default function StorefrontPageRoute() {
-  const { page, jsonLd } = useLoaderData();
+  const { page, jsonLd, themeId } = useLoaderData();
+  const PagePage = getStorefrontComponent('PagePage', themeId);
+  if (!PagePage) throw new Error('PagePage theme component not found');
 
   return (
     <>

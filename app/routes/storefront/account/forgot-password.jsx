@@ -1,11 +1,16 @@
 import { useLoaderData } from 'react-router';
 
-import ForgotPasswordPage from '#/themes/default/components/forgot-password-page';
+import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
+  const themeId = await preloadStorefrontTheme();
   const url = new URL(request.url);
   const sent = url.searchParams.get('sent') === 'true';
-  return { sent };
+  return {
+    themeId,
+    sent,
+  };
 }
 
 export function meta() {
@@ -13,6 +18,12 @@ export function meta() {
 }
 
 export default function AccountForgotPasswordRoute() {
-  const data = useLoaderData();
+  const { themeId, ...data } = useLoaderData();
+  const ForgotPasswordPage = getStorefrontComponent(
+    'ForgotPasswordPage',
+    themeId
+  );
+  if (!ForgotPasswordPage)
+    throw new Error('ForgotPasswordPage theme component not found');
   return <ForgotPasswordPage {...data} />;
 }

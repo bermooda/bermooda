@@ -4,6 +4,8 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
+import { emit } from '#/core/events/index.server';
+
 /**
  * @typedef {{ minOrders?: number, minSpentCents?: number, customerGroupId?: string }} SegmentRules
  */
@@ -307,6 +309,15 @@ export async function processAbandonedCarts() {
         },
       });
       if (alreadySent) continue;
+
+      emit('cart.abandoned', {
+        cartId: cart.id,
+        token: cart.token,
+        email,
+        currency: cart.currency,
+        lineCount: cart.lines.length,
+        updatedAt: cart.updatedAt.toISOString(),
+      });
 
       queueAbandonedCart({
         email,
