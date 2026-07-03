@@ -13,7 +13,7 @@ export default function Toolbar({ children, className = '' }) {
   return (
     <div
       className={clsx(
-        'border-border bg-surface flex flex-col gap-3 rounded-t-xl border border-b-0 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5',
+        'bg-surface flex flex-col gap-3 rounded-t-xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5',
         className
       )}
     >
