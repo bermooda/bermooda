@@ -7,6 +7,7 @@ import {
   ClipboardDocumentListIcon,
   CodeBracketIcon,
   Cog6ToothIcon,
+  ComputerDesktopIcon,
   CubeIcon,
   DocumentChartBarIcon,
   DocumentPlusIcon,
@@ -22,7 +23,6 @@ import {
   ShoppingBagIcon,
   Square3Stack3DIcon,
   StarIcon,
-  TagIcon,
   UserGroupIcon,
   UserIcon,
 } from '@heroicons/react/24/outline';
@@ -30,11 +30,12 @@ import {
 /**
  * Admin sidebar navigation groups.
  *
- * @type {Array<{ label: string, items: Array<{ name: string, href: string, Icon: import('@heroicons/react/24/outline').ForwardRefExoticComponent }> }>}
+ * @type {Array<{ label: string, Icon: import('@heroicons/react/24/outline').ForwardRefExoticComponent, items: Array<{ name: string, href: string, Icon: import('@heroicons/react/24/outline').ForwardRefExoticComponent }> }>}
  */
 export const NAV_GROUPS = [
   {
     label: 'Overview',
+    Icon: ChartBarIcon,
     items: [
       { name: 'Dashboard', href: '/admin/dashboard', Icon: ChartBarIcon },
       { name: 'Reports', href: '/admin/reports', Icon: DocumentChartBarIcon },
@@ -47,6 +48,7 @@ export const NAV_GROUPS = [
   },
   {
     label: 'Catalog',
+    Icon: CubeIcon,
     items: [
       { name: 'Products', href: '/admin/products', Icon: CubeIcon },
       {
@@ -70,6 +72,7 @@ export const NAV_GROUPS = [
   },
   {
     label: 'Content',
+    Icon: DocumentTextIcon,
     items: [
       { name: 'Pages', href: '/admin/pages', Icon: DocumentTextIcon },
       { name: 'Menus', href: '/admin/menus', Icon: Bars3Icon },
@@ -78,6 +81,7 @@ export const NAV_GROUPS = [
   },
   {
     label: 'Sales',
+    Icon: ShoppingBagIcon,
     items: [
       { name: 'Orders', href: '/admin/orders', Icon: ShoppingBagIcon },
       { name: 'Discounts', href: '/admin/discounts', Icon: ReceiptPercentIcon },
@@ -90,6 +94,7 @@ export const NAV_GROUPS = [
   },
   {
     label: 'Customers',
+    Icon: UserGroupIcon,
     items: [
       { name: 'Customers', href: '/admin/customers', Icon: UserIcon },
       {
@@ -102,6 +107,7 @@ export const NAV_GROUPS = [
   },
   {
     label: 'Growth',
+    Icon: ArrowTrendingUpIcon,
     items: [
       {
         name: 'Marketing',
@@ -113,6 +119,7 @@ export const NAV_GROUPS = [
   },
   {
     label: 'Configuration',
+    Icon: Cog6ToothIcon,
     items: [
       { name: 'Themes', href: '/admin/themes', Icon: PaintBrushIcon },
       { name: 'Plugins', href: '/admin/plugins', Icon: PuzzlePieceIcon },
@@ -161,7 +168,7 @@ export const QUICK_ACTIONS = [
   {
     name: 'View storefront',
     href: '/',
-    Icon: GlobeAltIcon,
+    Icon: ComputerDesktopIcon,
     group: 'Quick actions',
     external: true,
   },

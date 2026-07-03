@@ -11,7 +11,7 @@ import {
   Bars3Icon,
   ChevronDownIcon,
   ChevronUpIcon,
-  GlobeAltIcon,
+  ComputerDesktopIcon,
   MagnifyingGlassIcon,
   MoonIcon,
   SunIcon,
@@ -93,9 +93,15 @@ function NavGroup({ group, onClose, isExpanded, onToggle }) {
         aria-expanded={isExpanded}
         aria-controls={panelId}
         onClick={onToggle}
-        className="text-text-muted hover:text-text flex w-full items-center justify-between rounded-md px-3 py-1.5 text-left text-xs font-semibold tracking-wider uppercase transition-colors"
+        className="text-text-muted hover:text-text group flex w-full items-center justify-between rounded-md px-3 py-1.5 text-left text-xs font-semibold tracking-wider uppercase transition-colors"
       >
-        <span>{group.label}</span>
+        <span className="flex min-w-0 items-center gap-3">
+          <group.Icon
+            className="text-text-muted/80 group-hover:text-text h-5 w-5 shrink-0"
+            aria-hidden="true"
+          />
+          <span>{group.label}</span>
+        </span>
         {isExpanded ? (
           <ChevronUpIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
         ) : (
@@ -125,18 +131,12 @@ function NavLink({ item, onClick }) {
       to={item.href}
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className={`group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+      className={`block rounded-md py-2 pr-3 pl-11 text-sm font-medium transition-colors ${
         active
           ? 'bg-surface-2 text-text'
           : 'text-text-muted hover:bg-surface-2/60 hover:text-text'
       }`}
     >
-      <item.Icon
-        className={`h-5 w-5 flex-shrink-0 ${
-          active ? 'text-accent' : 'text-text-muted/80 group-hover:text-text'
-        }`}
-        aria-hidden="true"
-      />
       {item.name}
     </Link>
   );
@@ -202,7 +202,7 @@ function AdminUserMenu() {
             rel="noopener noreferrer"
             className="text-text data-focus:bg-accent data-focus:text-accent-fg group col-span-full grid w-full cursor-default grid-cols-[auto_1fr] items-center rounded-lg px-3 py-1.5 text-left text-sm focus:outline-hidden"
           >
-            <GlobeAltIcon className="text-text-muted group-data-focus:text-accent-fg mr-2 h-4 w-4" />
+            <ComputerDesktopIcon className="text-text-muted group-data-focus:text-accent-fg mr-2 h-4 w-4" />
             View storefront
           </a>
         </MenuItem>
@@ -326,7 +326,7 @@ function SidebarContent({ onClose, onOpenCommandPalette }) {
  */
 function DesktopSidebar({ onOpenCommandPalette }) {
   return (
-    <div className="border-border bg-surface fixed hidden h-full w-64 flex-col border-r md:flex">
+    <div className="bg-surface fixed hidden h-full w-64 flex-col md:flex">
       <SidebarContent
         onClose={() => {}}
         onOpenCommandPalette={onOpenCommandPalette}
