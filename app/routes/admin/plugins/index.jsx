@@ -311,46 +311,18 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
   const values = pluginSettings[manifest.id] ?? {};
 
   return (
-    <Card padded={false} className="p-5">
+    <Card
+      padded={false}
+      className={isEnabled ? 'border-accent bg-accent/5 p-5' : 'p-5'}
+    >
       {/* Header row */}
-      <div className="flex items-start gap-3">
-        {/* Reorder buttons */}
-        <div className="flex flex-col gap-0.5 pt-0.5">
-          <Form method="post">
-            <input type="hidden" name="intent" value="reorder-up" />
-            <input type="hidden" name="pluginId" value={manifest.id} />
-            <button
-              type="submit"
-              disabled={isFirst || isReordering}
-              title="Move up"
-              className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
-            >
-              <ChevronUpIcon className="h-4 w-4" />
-            </button>
-          </Form>
-          <Form method="post">
-            <input type="hidden" name="intent" value="reorder-down" />
-            <input type="hidden" name="pluginId" value={manifest.id} />
-            <button
-              type="submit"
-              disabled={isLast || isReordering}
-              title="Move down"
-              className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
-            >
-              <ChevronDownIcon className="h-4 w-4" />
-            </button>
-          </Form>
-        </div>
-
-        {/* Main content */}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-text text-sm font-semibold">{manifest.name}</h3>
-            {isEnabled ? (
-              <Badge tone="success">Enabled</Badge>
-            ) : (
-              <Badge tone="neutral">Disabled</Badge>
-            )}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-text truncate text-sm font-semibold">
+              {manifest.name}
+            </h3>
+            {isEnabled && <Badge tone="success">Enabled</Badge>}
           </div>
           <p className="text-text-muted mt-0.5 text-xs">
             v{manifest.version} &middot;{' '}
@@ -363,32 +335,69 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-shrink-0 items-center gap-2">
-          {/* Plugin admin page link */}
-          {manifest.adminPath && (
-            <a
-              href={manifest.adminPath}
-              className="border-border text-text hover:bg-surface-2 rounded-md border px-3 py-1.5 text-xs font-medium transition"
-            >
-              Plugin Admin &rarr;
-            </a>
-          )}
-
-          {/* Enable / Disable toggle */}
-          <Form method="post">
+        {/* Enable / Disable — mirrors theme Activate button placement */}
+        {!isEnabled && (
+          <Form method="post" className="flex-shrink-0">
             <input type="hidden" name="intent" value={toggleIntent} />
             <input type="hidden" name="pluginId" value={manifest.id} />
-            <Button
-              type="submit"
-              variant={isEnabled ? 'danger' : 'secondary'}
-              disabled={isToggling}
-            >
-              {isEnabled ? 'Disable' : 'Enable'}
+            <Button type="submit" variant="secondary" disabled={isToggling}>
+              Enable
             </Button>
           </Form>
-        </div>
+        )}
       </div>
+
+      {/* Reorder, admin link, and disable — secondary actions below header */}
+      {(isEnabled || manifest.adminPath || !isFirst || !isLast) && (
+        <div className="border-border mt-4 flex items-center justify-between gap-2 border-t pt-3">
+          <div className="flex items-center gap-0.5">
+            <Form method="post">
+              <input type="hidden" name="intent" value="reorder-up" />
+              <input type="hidden" name="pluginId" value={manifest.id} />
+              <button
+                type="submit"
+                disabled={isFirst || isReordering}
+                title="Move up"
+                className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
+              >
+                <ChevronUpIcon className="h-4 w-4" />
+              </button>
+            </Form>
+            <Form method="post">
+              <input type="hidden" name="intent" value="reorder-down" />
+              <input type="hidden" name="pluginId" value={manifest.id} />
+              <button
+                type="submit"
+                disabled={isLast || isReordering}
+                title="Move down"
+                className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
+              >
+                <ChevronDownIcon className="h-4 w-4" />
+              </button>
+            </Form>
+          </div>
+
+          <div className="flex flex-shrink-0 items-center gap-2">
+            {manifest.adminPath && (
+              <a
+                href={manifest.adminPath}
+                className="border-border text-text hover:bg-surface-2 rounded-md border px-3 py-1.5 text-xs font-medium transition"
+              >
+                Plugin Admin &rarr;
+              </a>
+            )}
+            {isEnabled && (
+              <Form method="post">
+                <input type="hidden" name="intent" value={toggleIntent} />
+                <input type="hidden" name="pluginId" value={manifest.id} />
+                <Button type="submit" variant="danger" disabled={isToggling}>
+                  Disable
+                </Button>
+              </Form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Manifest-driven settings form */}
       {manifest.settings?.length > 0 && (
@@ -429,7 +438,7 @@ export default function AdminPluginsRoute() {
             description="Plugins are loaded from app/plugins/ at startup."
           />
         ) : (
-          <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {plugins.map((manifest, idx) => (
               <PluginCard
                 key={manifest.id}
