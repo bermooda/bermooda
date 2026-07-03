@@ -8,6 +8,7 @@ import { getRequestLocale } from '#/core/i18n/index.server';
 import { attachReviewSummaries } from '#/core/reviews/index.server';
 import {
   buildOrganizationJsonLd,
+  buildSiteMeta,
   buildWebSiteJsonLd,
 } from '#/core/seo/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
@@ -25,9 +26,10 @@ export async function loader({ request }) {
 
   const products = await attachReviewSummaries(rawProducts);
 
-  const [organization, webSite] = await Promise.all([
+  const [organization, webSite, metaTags] = await Promise.all([
     buildOrganizationJsonLd(request),
-    Promise.resolve(buildWebSiteJsonLd(request)),
+    buildWebSiteJsonLd(request),
+    buildSiteMeta({ request, path: '/' }),
   ]);
 
   return {
@@ -37,14 +39,15 @@ export async function loader({ request }) {
     locale,
     currency,
     jsonLd: [organization, webSite],
+    metaTags,
   };
 }
 
-export function meta() {
-  return [
-    { title: 'bermooda' },
-    { name: 'description', content: 'Welcome to bermooda' },
-  ];
+export function meta({ loaderData }) {
+  if (!loaderData?.metaTags) {
+    return [{ title: 'bermooda' }];
+  }
+  return loaderData.metaTags;
 }
 
 export default function StorefrontIndexRoute() {
