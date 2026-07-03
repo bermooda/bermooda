@@ -9,6 +9,7 @@ import {
 import {
   ArrowRightStartOnRectangleIcon,
   Bars3Icon,
+  ChevronDownIcon,
   ChevronUpIcon,
   GlobeAltIcon,
   MagnifyingGlassIcon,
@@ -65,6 +66,51 @@ export async function loader({ request }) {
 function isActive(pathname, href) {
   if (href === '/admin/dashboard') return pathname === href;
   return pathname === href || pathname.startsWith(href + '/');
+}
+
+/**
+ * Returns true when any item in the nav group matches the current path.
+ *
+ * @param {string} pathname
+ * @param {{ label: string, items: Array<{ href: string }> }} group
+ * @returns {boolean}
+ */
+function isGroupActive(pathname, group) {
+  return group.items.some((item) => isActive(pathname, item.href));
+}
+
+/**
+ * Collapsible admin nav group.
+ */
+function NavGroup({ group, onClose, isExpanded, onToggle }) {
+  const panelId = `nav-group-${group.label.toLowerCase().replace(/\s+/g, '-')}`;
+
+  return (
+    <div className="space-y-1">
+      <button
+        type="button"
+        id={`${panelId}-trigger`}
+        aria-expanded={isExpanded}
+        aria-controls={panelId}
+        onClick={onToggle}
+        className="text-text-muted hover:text-text flex w-full items-center justify-between rounded-md px-3 py-1.5 text-left text-xs font-semibold tracking-wider uppercase transition-colors"
+      >
+        <span>{group.label}</span>
+        {isExpanded ? (
+          <ChevronUpIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+        ) : (
+          <ChevronDownIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+        )}
+      </button>
+      {isExpanded ? (
+        <div id={panelId} role="region" aria-labelledby={`${panelId}-trigger`}>
+          {group.items.map((item) => (
+            <NavLink key={item.name} item={item} onClick={onClose} />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 /**
@@ -182,11 +228,25 @@ function AdminUserMenu() {
  * Sidebar content
  */
 function SidebarContent({ onClose, onOpenCommandPalette }) {
+  const location = useLocation();
   const shortcutLabel = getCommandPaletteShortcutLabel();
   const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState(() => new Set());
 
   function handleNavScroll(event) {
     setHeaderScrolled(event.currentTarget.scrollTop > 0);
+  }
+
+  function toggleGroup(label) {
+    setExpandedGroups((previous) => {
+      const next = new Set(previous);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      return next;
+    });
   }
 
   return (
@@ -235,17 +295,21 @@ function SidebarContent({ onClose, onOpenCommandPalette }) {
         className="min-h-0 flex-1 overflow-y-auto"
         onScroll={handleNavScroll}
       >
-        <nav className="space-y-6 px-3 py-4">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.label} className="space-y-1">
-              <p className="text-text-muted px-3 pb-1 text-xs font-semibold tracking-wider uppercase">
-                {group.label}
-              </p>
-              {group.items.map((item) => (
-                <NavLink key={item.name} item={item} onClick={onClose} />
-              ))}
-            </div>
-          ))}
+        <nav className="space-y-4 px-3 py-4">
+          {NAV_GROUPS.map((group) => {
+            const active = isGroupActive(location.pathname, group);
+            const isExpanded = active || expandedGroups.has(group.label);
+
+            return (
+              <NavGroup
+                key={group.label}
+                group={group}
+                onClose={onClose}
+                isExpanded={isExpanded}
+                onToggle={() => toggleGroup(group.label)}
+              />
+            );
+          })}
         </nav>
       </div>
 

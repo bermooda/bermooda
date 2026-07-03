@@ -1,5 +1,8 @@
 import {
+  ArrowDownOnSquareIcon,
+  ArrowTrendingUpIcon,
   Bars3Icon,
+  BuildingStorefrontIcon,
   ChartBarIcon,
   ClipboardDocumentListIcon,
   CodeBracketIcon,
@@ -8,15 +11,20 @@ import {
   DocumentChartBarIcon,
   DocumentPlusIcon,
   DocumentTextIcon,
+  GiftIcon,
   GlobeAltIcon,
+  ListBulletIcon,
   PaintBrushIcon,
   PlusIcon,
   PuzzlePieceIcon,
   ReceiptPercentIcon,
+  RectangleStackIcon,
   ShoppingBagIcon,
+  Square3Stack3DIcon,
   StarIcon,
   TagIcon,
   UserGroupIcon,
+  UserIcon,
 } from '@heroicons/react/24/outline';
 
 /**
@@ -41,11 +49,23 @@ export const NAV_GROUPS = [
     label: 'Catalog',
     items: [
       { name: 'Products', href: '/admin/products', Icon: CubeIcon },
-      { name: 'Categories', href: '/admin/categories', Icon: TagIcon },
-      { name: 'Collections', href: '/admin/collections', Icon: TagIcon },
-      { name: 'Import', href: '/admin/import', Icon: DocumentChartBarIcon },
-      { name: 'Inventory', href: '/admin/inventory', Icon: CubeIcon },
-      { name: 'Price Lists', href: '/admin/price-lists', Icon: TagIcon },
+      {
+        name: 'Categories',
+        href: '/admin/categories',
+        Icon: RectangleStackIcon,
+      },
+      { name: 'Price Lists', href: '/admin/price-lists', Icon: ListBulletIcon },
+      {
+        name: 'Collections',
+        href: '/admin/collections',
+        Icon: Square3Stack3DIcon,
+      },
+      {
+        name: 'Inventory',
+        href: '/admin/inventory',
+        Icon: BuildingStorefrontIcon,
+      },
+      { name: 'Import', href: '/admin/import', Icon: ArrowDownOnSquareIcon },
     ],
   },
   {
@@ -64,14 +84,14 @@ export const NAV_GROUPS = [
       {
         name: 'Gift Cards',
         href: '/admin/gift-cards',
-        Icon: ReceiptPercentIcon,
+        Icon: GiftIcon,
       },
     ],
   },
   {
     label: 'Customers',
     items: [
-      { name: 'Customers', href: '/admin/customers', Icon: UserGroupIcon },
+      { name: 'Customers', href: '/admin/customers', Icon: UserIcon },
       {
         name: 'Customer Groups',
         href: '/admin/customer-groups',
@@ -83,7 +103,11 @@ export const NAV_GROUPS = [
   {
     label: 'Growth',
     items: [
-      { name: 'Marketing', href: '/admin/marketing', Icon: ChartBarIcon },
+      {
+        name: 'Marketing',
+        href: '/admin/marketing',
+        Icon: ArrowTrendingUpIcon,
+      },
       { name: 'Channels', href: '/admin/channels', Icon: GlobeAltIcon },
     ],
   },
