@@ -259,8 +259,9 @@ export default [
   // Healthcheck for deployments
   route('health', 'routes/health.jsx'),
 
-  // Sitemap
+  // Sitemap + robots
   route('sitemap.xml', 'routes/sitemap.jsx'),
+  route('robots.txt', 'routes/robots.jsx'),
 
   // 404 catch-all — must be last
   route('*', 'routes/404.jsx'),
