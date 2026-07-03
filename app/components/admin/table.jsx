@@ -18,7 +18,7 @@ export default function Table({ children, className = '' }) {
   return (
     <div
       className={clsx(
-        'border-border bg-surface overflow-hidden rounded-xl border shadow-xs',
+        'border-border bg-surface overflow-hidden border shadow-xs',
         className
       )}
     >
