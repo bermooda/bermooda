@@ -22,7 +22,9 @@ export const carrierProvider = {
       0
     );
 
-    const useLiveRates = process.env.CARRIER_LIVE_RATES === 'true';
+    const useLiveRates =
+      process.env.CARRIER_LIVE_RATES === 'true' &&
+      Boolean(process.env.CARRIER_API_KEY);
 
     if (!useLiveRates) {
       return [

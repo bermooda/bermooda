@@ -25,6 +25,10 @@ import {
   StarIcon,
   UserGroupIcon,
   UserIcon,
+  BuildingOffice2Icon,
+  DocumentDuplicateIcon,
+  DeviceTabletIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 
 /**
@@ -90,6 +94,13 @@ export const NAV_GROUPS = [
         href: '/admin/gift-cards',
         Icon: GiftIcon,
       },
+      {
+        name: 'Subscriptions',
+        href: '/admin/subscriptions',
+        Icon: ArrowPathIcon,
+      },
+      { name: 'POS', href: '/admin/pos', Icon: DeviceTabletIcon },
+      { name: 'Quotes', href: '/admin/quotes', Icon: DocumentDuplicateIcon },
     ],
   },
   {
@@ -101,6 +112,11 @@ export const NAV_GROUPS = [
         name: 'Customer Groups',
         href: '/admin/customer-groups',
         Icon: UserGroupIcon,
+      },
+      {
+        name: 'Companies',
+        href: '/admin/companies',
+        Icon: BuildingOffice2Icon,
       },
       { name: 'Loyalty', href: '/admin/loyalty', Icon: StarIcon },
     ],

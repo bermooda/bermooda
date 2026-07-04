@@ -54,6 +54,15 @@ export async function removeFromWishlist(customerId, variantId) {
   });
 }
 
+export async function getWishlistedVariantIds(customerId, productId) {
+  const wishlist = await getOrCreateDefaultWishlist(customerId);
+  const items = await prisma.wishlistItem.findMany({
+    where: { wishlistId: wishlist.id, variant: { productId } },
+    select: { variantId: true },
+  });
+  return items.map((item) => item.variantId);
+}
+
 export async function isInWishlist(customerId, variantId) {
   const wishlist = await prisma.wishlist.findFirst({
     where: { customerId, isDefault: true },

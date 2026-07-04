@@ -2,10 +2,13 @@ import { useLoaderData } from 'react-router';
 
 import { JsonLd } from '#/components/seo/json-ld';
 
-import { getCategoryBySlug, listProducts } from '#/core/catalog/index.server';
+import { parseCatalogSearchParams } from '#/core/catalog/filter-params';
+import { getCategoryBySlug } from '#/core/catalog/index.server';
+import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { attachReviewSummaries } from '#/core/reviews/index.server';
+import { search } from '#/core/search/index.server';
 import {
   buildBreadcrumbJsonLd,
   buildCategoryMeta,
@@ -17,6 +20,7 @@ export async function loader({ request, params }) {
   const themeId = await preloadStorefrontTheme();
   const locale = await getRequestLocale(request);
   const currency = await getRequestCurrency(request);
+  const channel = await resolveChannelFromRequest(request);
   const category = await getCategoryBySlug(params.slug, { locale });
 
   if (!category) {
@@ -24,14 +28,24 @@ export async function loader({ request, params }) {
   }
 
   const url = new URL(request.url);
-  const page = Number(url.searchParams.get('page') ?? 1);
-  const { products: rawProducts, total } = await listProducts({
-    locale,
-    currency,
-    categoryId: category.id,
+  const { sort, page, filters } = parseCatalogSearchParams(url);
+
+  const {
+    products: rawProducts,
+    total,
+    facets,
+  } = await search({
+    query: '',
+    filters: {
+      ...filters,
+      categoryId: category.id,
+      channelId: channel.id,
+    },
+    sort,
     page,
     limit: 24,
-    published: true,
+    locale,
+    currency,
   });
 
   const products = await attachReviewSummaries(rawProducts);
@@ -50,6 +64,9 @@ export async function loader({ request, params }) {
     products,
     total,
     page,
+    sort,
+    filters: { ...filters, categoryId: category.id },
+    facets,
     locale,
     currency,
     path,

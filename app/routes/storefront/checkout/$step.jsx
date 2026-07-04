@@ -3,6 +3,7 @@ import { useLoaderData } from 'react-router';
 
 import { getCartTokenFromRequest } from '#/utils/cart-cookie.server';
 import logger from '#/utils/logger.server';
+import { getCustomerSession } from '#/libs/auth/customer.server';
 
 import { validateAddress } from '#/core/address-validation/index.server';
 import { getCart } from '#/core/cart/index.server';
@@ -10,17 +11,25 @@ import {
   advanceStep,
   createCheckoutSession,
   getCheckoutSession,
+  linkCheckoutCustomer,
 } from '#/core/checkout/index.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
-import { placeOrder } from '#/core/orders/index.server';
+import {
+  getLoyaltyBalance,
+  getLoyaltyConfig,
+  pointsToCents,
+} from '#/core/loyalty/index.server';
+import { attachPaymentIntent, placeOrder } from '#/core/orders/index.server';
 import {
   createCheckoutSession as createPaymentSession,
+  createPaymentIntent,
   getProvider as getPaymentProvider,
   listProvidersWithDetails,
 } from '#/core/payments/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
+import { getStoreCreditBalance } from '#/core/store-credit/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
@@ -60,6 +69,51 @@ function normaliseSession(session) {
   };
 }
 
+function buildTotalsParams(session, cart, shippingAddress) {
+  const shippingOption = session.shippingOptionJson
+    ? JSON.parse(session.shippingOptionJson)
+    : null;
+
+  return {
+    cart,
+    cartId: cart.id,
+    shippingAddress,
+    couponCode: session.couponCode ?? undefined,
+    shippingOptionId: shippingOption?.id ?? undefined,
+    taxExempt: session.taxExempt ?? false,
+    vatId: session.vatId ?? undefined,
+    customerId: session.customerId ?? undefined,
+    giftCardCode: session.giftCardCode ?? undefined,
+    storeCreditCents: session.storeCreditCents ?? 0,
+    loyaltyPointsCents: session.loyaltyPointsCents ?? 0,
+    salesChannelId: session.salesChannelId ?? undefined,
+  };
+}
+
+async function loadTenderBalances(customerId) {
+  if (!customerId) {
+    return { isLoggedIn: false };
+  }
+
+  const [storeCreditBalanceCents, loyaltyBalance, loyaltyConfig] =
+    await Promise.all([
+      getStoreCreditBalance(customerId),
+      getLoyaltyBalance(customerId),
+      getLoyaltyConfig(),
+    ]);
+
+  return {
+    isLoggedIn: true,
+    storeCreditBalanceCents,
+    loyaltyBalance,
+    loyaltyEnabled: loyaltyConfig.enabled,
+    loyaltyValueCents: pointsToCents(
+      loyaltyBalance,
+      loyaltyConfig.redemptionRateCents
+    ),
+  };
+}
+
 export async function loader({ request, params }) {
   const themeId = await preloadStorefrontTheme();
   const { step } = params;
@@ -71,6 +125,8 @@ export async function loader({ request, params }) {
   const locale = await getRequestLocale(request);
   const currency = await getRequestCurrency(request);
   const cartToken = getCartTokenFromRequest(request);
+  const customerAuth = await getCustomerSession(request);
+  const customerId = customerAuth?.user?.id ?? undefined;
 
   if (!cartToken) return redirect('/cart');
 
@@ -81,8 +137,14 @@ export async function loader({ request, params }) {
   let session = sessionId ? await getCheckoutSession(sessionId) : null;
 
   if (!session) {
-    session = await createCheckoutSession(cart.id);
+    session = await createCheckoutSession(cart.id, {
+      customerId: customerId ?? cart.customerId ?? undefined,
+      email: customerAuth?.user?.email ?? undefined,
+    });
     sessionId = session.id;
+  } else if (customerId && !session.customerId) {
+    await linkCheckoutCustomer(sessionId, customerId);
+    session = { ...session, customerId };
   }
 
   const stepIndex = VALID_STEPS.indexOf(step);
@@ -100,25 +162,22 @@ export async function loader({ request, params }) {
   // Shipping quotes: needed on shipping step and review step (for recap)
   const needsQuotes = step === 'shipping' || step === 'review';
 
-  const [shippingQuotes, paymentProviders, totals] = await Promise.all([
-    needsQuotes && shippingAddress
-      ? getAllQuotes({ cart, shippingAddress })
-      : Promise.resolve([]),
-    Promise.resolve(listProvidersWithDetails()),
-    step === 'review' || step === 'payment'
-      ? computeTotals({
-          cart,
-          cartId: cart.id,
-          shippingAddress,
-          couponCode: session.couponCode ?? undefined,
-          shippingOptionId: session.shippingOptionJson
-            ? JSON.parse(session.shippingOptionJson)?.id
-            : undefined,
-          taxExempt: session.taxExempt ?? false,
-          vatId: session.vatId ?? undefined,
-        })
-      : Promise.resolve(null),
-  ]);
+  const needsTenderBalances = step === 'payment' || step === 'review';
+  const effectiveCustomerId = session.customerId ?? customerId ?? undefined;
+
+  const [shippingQuotes, paymentProviders, totals, tenderBalances] =
+    await Promise.all([
+      needsQuotes && shippingAddress
+        ? getAllQuotes({ cart, shippingAddress })
+        : Promise.resolve([]),
+      Promise.resolve(listProvidersWithDetails()),
+      step === 'review' || step === 'payment'
+        ? computeTotals(buildTotalsParams(session, cart, shippingAddress))
+        : Promise.resolve(null),
+      needsTenderBalances
+        ? loadTenderBalances(effectiveCustomerId)
+        : Promise.resolve(null),
+    ]);
 
   const headers = new Headers();
   headers.set(
@@ -135,8 +194,10 @@ export async function loader({ request, params }) {
       shippingQuotes,
       paymentProviders,
       totals,
+      tenderBalances,
       locale,
       currency,
+      stripePublishableKey: process.env.STRIPE_PUBLIC_KEY ?? null,
     },
     { headers }
   );
@@ -180,6 +241,43 @@ export async function action({ request, params }) {
     // Manual/offline payment — no redirect; order stays pending_payment
     if (providerId === 'manual') {
       return redirect(`${origin}/thank-you/${order.orderNumber}`);
+    }
+
+    // Zero-balance orders (gift card / store credit covers total)
+    if (order.totalCents <= 0) {
+      return redirect(`${origin}/thank-you/${order.orderNumber}`);
+    }
+
+    // Stripe Payment Element — return client secret for embedded checkout
+    if (providerId === 'stripe_element') {
+      try {
+        const intent = await createPaymentIntent('stripe', {
+          amountCents: order.totalCents,
+          currency: order.currency,
+          orderId: order.id,
+          customerId: session.customerId ?? undefined,
+        });
+
+        await attachPaymentIntent(order.id, intent.paymentIntentId);
+
+        return {
+          themeId,
+          paymentElement: {
+            clientSecret: intent.clientSecret,
+            orderNumber: order.orderNumber,
+            publishableKey: process.env.STRIPE_PUBLIC_KEY ?? null,
+          },
+        };
+      } catch (err) {
+        logger.error(
+          { err, orderId: order.id },
+          'PaymentIntent creation failed'
+        );
+        return {
+          error:
+            'Payment setup failed. Your order was placed — please contact support.',
+        };
+      }
     }
 
     try {
@@ -279,8 +377,36 @@ export async function action({ request, params }) {
       shippingOptionJson,
     };
   } else if (step === 'payment') {
+    const session = await getCheckoutSession(sessionId);
+    const useStoreCredit =
+      rawData.useStoreCredit === 'on' || rawData.useStoreCredit === 'true';
+    const useLoyalty =
+      rawData.useLoyalty === 'on' || rawData.useLoyalty === 'true';
+
+    let storeCreditCents = 0;
+    let loyaltyPointsCents = 0;
+
+    if (session?.customerId && useStoreCredit) {
+      storeCreditCents = await getStoreCreditBalance(session.customerId);
+    }
+
+    if (session?.customerId && useLoyalty) {
+      const loyaltyConfig = await getLoyaltyConfig();
+      if (loyaltyConfig.enabled) {
+        const balance = await getLoyaltyBalance(session.customerId);
+        loyaltyPointsCents = pointsToCents(
+          balance,
+          loyaltyConfig.redemptionRateCents
+        );
+      }
+    }
+
     stepData = {
       paymentProvider: rawData.paymentProvider ?? 'stripe',
+      giftCardCode:
+        rawData.giftCardCode?.toString().trim().toUpperCase() || null,
+      storeCreditCents,
+      loyaltyPointsCents,
     };
   } else {
     stepData = rawData;
