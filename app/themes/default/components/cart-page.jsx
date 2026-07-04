@@ -3,13 +3,15 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { Link, Form, useNavigation } from 'react-router';
 
+import SlotBlocks from '#/components/storefront/slot-blocks';
+
 import { useT } from '#/core/i18n/index';
 import { formatPrice } from '#/core/index';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';
 
-export default function CartPage({ cart, locale, currency }) {
+export default function CartPage({ cart, locale, currency, slotBlocks = {} }) {
   const t = useT();
   const navigation = useNavigation();
   const [mismatchDismissed, setMismatchDismissed] = useState(false);
@@ -60,6 +62,8 @@ export default function CartPage({ cart, locale, currency }) {
     cart.currency &&
     currency &&
     cart.currency !== currency;
+  const summarySlotBlocks = slotBlocks['cart.summary'] ?? [];
+  const slotProps = { cart, locale, currency };
 
   return (
     <StorefrontShell>
@@ -240,6 +244,8 @@ export default function CartPage({ cart, locale, currency }) {
               <p className="mb-8 text-xs text-stone-500">
                 Shipping and tax calculated at checkout
               </p>
+
+              <SlotBlocks blocks={summarySlotBlocks} slotProps={slotProps} />
 
               {/* Checkout */}
               <Form method="post" action="/cart">

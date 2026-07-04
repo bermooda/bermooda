@@ -13,6 +13,7 @@ import {
   buildBreadcrumbJsonLd,
   buildCategoryMeta,
 } from '#/core/seo/index.server';
+import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
@@ -48,7 +49,10 @@ export async function loader({ request, params }) {
     currency,
   });
 
-  const products = await attachReviewSummaries(rawProducts);
+  const [products, slotBlocks] = await Promise.all([
+    attachReviewSummaries(rawProducts),
+    getSlotBlocksMap(['category.top']),
+  ]);
   const path = `/categories/${params.slug}`;
   const breadcrumb = buildBreadcrumbJsonLd(
     [
@@ -69,6 +73,7 @@ export async function loader({ request, params }) {
     facets,
     locale,
     currency,
+    slotBlocks,
     path,
     jsonLd: breadcrumb,
     metaTags: await buildCategoryMeta({ category, request, path }),

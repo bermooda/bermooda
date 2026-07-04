@@ -18,7 +18,7 @@ import {
   buildProductJsonLd,
   buildProductMeta,
 } from '#/core/seo/index.server';
-import { getSlotBlocks } from '#/core/themes/index.server';
+import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import {
@@ -54,14 +54,16 @@ export async function loader({ request, params }) {
     ? await getWishlistedVariantIds(customer.id, product.id)
     : [];
 
-  const [{ reviews, total: reviewTotal }, reviewSummary] = await Promise.all([
-    listReviewsForProduct(product.id, {
-      status: 'approved',
-      page: reviewPage,
-      limit: 5,
-    }),
-    getReviewSummary(product.id),
-  ]);
+  const [{ reviews, total: reviewTotal }, reviewSummary, slotBlocks] =
+    await Promise.all([
+      listReviewsForProduct(product.id, {
+        status: 'approved',
+        page: reviewPage,
+        limit: 5,
+      }),
+      getReviewSummary(product.id),
+      getSlotBlocksMap(['product.afterDescription', 'product.sidebar']),
+    ]);
 
   const path = `/products/${params.slug}`;
   const category = product.categories?.[0];
@@ -85,8 +87,6 @@ export async function loader({ request, params }) {
     request,
     reviewSummary,
   });
-
-  const slotBlocks = await getSlotBlocks('product.afterDescription');
 
   return {
     themeId,

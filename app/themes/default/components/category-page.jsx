@@ -1,6 +1,8 @@
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigation } from 'react-router';
 
+import SlotBlocks from '#/components/storefront/slot-blocks';
+
 import { useT } from '#/core/i18n/index';
 import {
   CatalogActiveFilters,
@@ -26,6 +28,7 @@ export default function CategoryPage({
   facets = {},
   locale,
   currency,
+  slotBlocks = {},
 }) {
   const t = useT();
   const location = useLocation();
@@ -37,6 +40,18 @@ export default function CategoryPage({
   const hasPrev = page > 1;
   const hasNext = page < totalPages;
   const hasFacets = catalogHasFacets(facets, { hideCategoryFacet: true });
+  const topSlotBlocks = slotBlocks['category.top'] ?? [];
+  const slotProps = {
+    category,
+    products,
+    total,
+    page,
+    sort,
+    filters,
+    facets,
+    locale,
+    currency,
+  };
 
   function pageHref(p) {
     const params = new URLSearchParams(location.search);
@@ -71,6 +86,12 @@ export default function CategoryPage({
             </p>
           )}
         </div>
+
+        {topSlotBlocks.length > 0 && (
+          <div className="mb-6">
+            <SlotBlocks blocks={topSlotBlocks} slotProps={slotProps} />
+          </div>
+        )}
 
         <div className="mb-6">
           <CatalogActiveFilters
