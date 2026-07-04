@@ -13,9 +13,10 @@ This document describes the bermooda plugin architecture and serves as the refer
 5. [Event Hook Catalog](#event-hook-catalog)
 6. [Plugin Data Storage](#plugin-data-storage)
 7. [Admin Routes](#admin-routes)
-8. [Plugin Blocks for Storefront Slots](#plugin-blocks-for-storefront-slots)
-9. [Sample Plugin Walkthrough](#sample-plugin-walkthrough)
-10. [Plugin Folder Layout](#plugin-folder-layout)
+8. [Storefront Routes](#storefront-routes)
+9. [Plugin Blocks for Storefront Slots](#plugin-blocks-for-storefront-slots)
+10. [Sample Plugin Walkthrough](#sample-plugin-walkthrough)
+11. [Plugin Folder Layout](#plugin-folder-layout)
 
 ---
 
@@ -46,7 +47,8 @@ A manifest is a plain JavaScript object that describes the plugin to the platfor
   description: '...',        // string, optional — short description shown in admin
   hooks: { ... },            // object, optional — event handler map (see defineHooks)
   providers: { ... },        // object, optional — payment/shipping/tax provider specs
-  adminRoutes: './admin/routes.js', // string, optional — path to admin routes file
+  adminRoutes: '#/plugins/my-plugin/admin/routes.server', // string, optional
+  storefrontRoutes: '#/plugins/my-plugin/storefront/routes.server', // string, optional
   onEnable: async (ctx) => {},     // function, optional — called when plugin is enabled
   onDisable: async (ctx) => {},    // function, optional — called when plugin is disabled
 }
@@ -54,17 +56,18 @@ A manifest is a plain JavaScript object that describes the plugin to the platfor
 
 ### Field Reference
 
-| Field         | Type           | Required | Description                                                                                                      |
-| ------------- | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
-| `id`          | string         | yes      | Unique plugin identifier. Used as namespace key for PluginData and settings. Must be non-empty.                  |
-| `name`        | string         | yes      | Display name shown in the admin UI. Must be non-empty.                                                           |
-| `version`     | string         | yes      | Plugin version. Must be non-empty. Semver recommended.                                                           |
-| `description` | string         | no       | Short description of what the plugin does.                                                                       |
-| `hooks`       | object         | no       | Map of event names to handler functions. Pass through `defineHooks()`.                                           |
-| `providers`   | object         | no       | Map of provider specs. Each value should be created with `defineProvider()`.                                     |
-| `adminRoutes` | string         | no       | Relative path (from the plugin root) to the admin routes file. Enables an admin page at `/admin/plugins/<id>/*`. |
-| `onEnable`    | async function | no       | Called with `ctx` after hook handlers are registered. Use for initialization tasks.                              |
-| `onDisable`   | async function | no       | Called with `ctx` before hook handlers are removed. Use for cleanup tasks.                                       |
+| Field              | Type           | Required | Description                                                                                                      |
+| ------------------ | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `id`               | string         | yes      | Unique plugin identifier. Used as namespace key for PluginData and settings. Must be non-empty.                  |
+| `name`             | string         | yes      | Display name shown in the admin UI. Must be non-empty.                                                           |
+| `version`          | string         | yes      | Plugin version. Must be non-empty. Semver recommended.                                                           |
+| `description`      | string         | no       | Short description of what the plugin does.                                                                       |
+| `hooks`            | object         | no       | Map of event names to handler functions. Pass through `defineHooks()`.                                           |
+| `providers`        | object         | no       | Map of provider specs. Each value should be created with `defineProvider()`.                                     |
+| `adminRoutes`      | string         | no       | Module id for the plugin's admin server routes. Enables pages at `/admin/plugins/<id>/*`.                        |
+| `storefrontRoutes` | string         | no       | Module id for the plugin's storefront server routes. Enables pages at `/apps/<id>/*` when the plugin is enabled. |
+| `onEnable`         | async function | no       | Called with `ctx` after hook handlers are registered. Use for initialization tasks.                              |
+| `onDisable`        | async function | no       | Called with `ctx` before hook handlers are removed. Use for cleanup tasks.                                       |
 
 ---
 
@@ -211,9 +214,17 @@ Only handlers that were registered via `enable()` and have not yet been removed 
 
 ---
 
+### `resolvePluginAdminRoute(pluginId, path)`
+
+Resolves an admin route descriptor for a plugin using the splat path relative to `/admin/plugins/<pluginId>/`.
+
+### `resolvePluginStorefrontRoute(pluginId, path)`
+
+Resolves a storefront route descriptor for a plugin using the splat path relative to `/apps/<pluginId>/`.
+
 ### `resolvePluginRoute(pluginId, path)`
 
-Resolves an admin route descriptor for a plugin. Currently returns `null`; full implementation arrives in Phase 5.
+Deprecated alias for `resolvePluginAdminRoute(pluginId, path)`.
 
 ---
 
@@ -444,7 +455,12 @@ In v1, `PluginData` is the only storage mechanism plugins have. Plugins cannot d
 
 A plugin that sets `adminRoutes` in its manifest gets a dedicated admin page mounted at `/admin/plugins/<pluginId>/*`.
 
-The value of `adminRoutes` is a path relative to the plugin's root directory pointing to a routes file. This file must export a `routes` array. Each route entry follows React Router conventions and must have the shape:
+Admin routes are defined as a server/client pair:
+
+- `admin/routes.server.js` — exports route descriptors with optional `loader`
+- `admin/routes.client.js` — exports route descriptors with the client `Component`
+
+Both files must export the same `routes` array shape. Each route entry follows React Router conventions and must have the shape:
 
 ```js
 {
@@ -454,7 +470,7 @@ The value of `adminRoutes` is a path relative to the plugin's root directory poi
 }
 ```
 
-Example routes file (`admin/routes.js`):
+Example server routes file (`admin/routes.server.js`):
 
 ```js
 import prisma from '#/libs/prisma.server';
@@ -480,7 +496,50 @@ function MyAdminPage({ loaderData }) {
 
 The `loader` function runs on the server before the component renders, matching standard React Router loader behavior. Components receive loader data via the `loaderData` prop.
 
-Full admin route resolution (`resolvePluginRoute`) is implemented in Phase 5.
+The dispatcher resolves admin pages with `resolvePluginAdminRoute(pluginId, params['*'])`.
+
+---
+
+## Storefront Routes
+
+A plugin that sets `storefrontRoutes` in its manifest gets a dedicated storefront page mounted at `/apps/<pluginId>/*`.
+
+Storefront routes follow the same split-module pattern as admin routes:
+
+- `storefront/routes.server.js` — exports route descriptors with optional `loader`
+- `storefront/routes.client.js` — exports route descriptors with the client `Component`
+
+Each route entry has the same shape:
+
+```js
+{
+  path: '',              // string — path relative to /apps/<pluginId>/
+  loader: async () => { /* return data */ },  // optional
+  Component: MyComponent,                     // required
+}
+```
+
+The storefront dispatcher:
+
+- uses `params['*']` as the splat path
+- only exposes storefront routes for enabled plugins
+- resolves the server descriptor with `resolvePluginStorefrontRoute(pluginId, params['*'])`
+- runs the descriptor `loader` on the server when present
+- resolves the client component from `storefront/routes.client.js`
+
+Example client routes file (`storefront/routes.client.js`):
+
+```js
+import { AnalyticsPage } from '#/plugins/sample-analytics/storefront/analytics-page';
+
+export const routes = [{ path: '', Component: AnalyticsPage }];
+```
+
+Example URL:
+
+```txt
+/apps/sample-analytics/
+```
 
 ---
 
@@ -526,12 +585,13 @@ The theme renders slot blocks via `getSlotBlocks(slotName)` from `app/core/theme
 
 ## Sample Plugin Walkthrough
 
-The `sample-analytics` plugin is the canonical reference implementation. It captures `order.created` events and surfaces them in a simple admin table.
+The `sample-analytics` plugin is the canonical reference implementation. It captures `order.created` events and surfaces them in admin and storefront pages.
 
 **What it does:**
 
 - Listens to `order.created` and appends a structured event record to `PluginData` under the key `recentEvents`, capped at 100 entries.
 - Exposes an admin page at `/admin/plugins/sample-analytics/` that reads and displays those events.
+- Exposes a storefront page at `/apps/sample-analytics/` that shows a public event summary when the plugin is enabled.
 - Contributes a UI block to the `product.afterDescription` slot.
 
 ### Step 1 — The manifest
@@ -543,8 +603,10 @@ export default {
   id: 'sample-analytics',
   name: 'Sample Analytics',
   version: '1.0.0',
-  description: 'Captures order.created events and surfaces them in the admin.',
-  adminRoutes: './admin/routes.js',
+  description:
+    'Captures order.created events and surfaces them in admin and storefront pages.',
+  adminRoutes: '#/plugins/sample-analytics/admin/routes.server',
+  storefrontRoutes: '#/plugins/sample-analytics/storefront/routes.server',
 };
 ```
 
@@ -610,7 +672,7 @@ Key points:
 
 ### Step 3 — The admin routes
 
-`app/plugins/sample-analytics/admin/routes.js` exports a single route that reads the stored events and renders a table:
+`app/plugins/sample-analytics/admin/routes.server.js` exports a server route that reads the stored events, while `admin/routes.client.js` exports the matching client component:
 
 ```js
 import prisma from '#/libs/prisma.server';
@@ -635,7 +697,40 @@ export const routes = [
 
 The `loader` fetches data server-side; `RecentEventsPage` renders it client-side via `loaderData`.
 
-### Step 4 — The storefront block
+### Step 4 — The storefront routes
+
+`app/plugins/sample-analytics/storefront/routes.server.js` exposes a public summary page at `/apps/sample-analytics/`:
+
+```js
+import prisma from '#/libs/prisma.server';
+
+import { AnalyticsPage } from '#/plugins/sample-analytics/storefront/analytics-page';
+
+const PLUGIN_ID = 'sample-analytics';
+const EVENTS_KEY = 'recentEvents';
+
+export const routes = [
+  {
+    path: '',
+    async loader() {
+      const row = await prisma.pluginData.findUnique({
+        where: { pluginId_key: { pluginId: PLUGIN_ID, key: EVENTS_KEY } },
+      });
+      const events = row ? JSON.parse(row.value) : [];
+
+      return {
+        eventCount: events.length,
+        latestEvent: events[0] ?? null,
+      };
+    },
+    Component: AnalyticsPage,
+  },
+];
+```
+
+The matching `storefront/routes.client.js` file exports the same route path with `AnalyticsPage` as its component.
+
+### Step 5 — The storefront block
 
 `app/plugins/sample-analytics/blocks/product/after-description.jsx` contributes a small indicator block to every product page:
 
@@ -651,7 +746,7 @@ export default function ProductAfterDescriptionBlock({ product }) {
 }
 ```
 
-### Step 5 — i18n strings
+### Step 6 — i18n strings
 
 `app/plugins/sample-analytics/i18n/en.json` contributes translation keys merged into the platform's i18n catalog:
 
@@ -671,10 +766,14 @@ Keys should be prefixed with a camelCase version of the plugin id to avoid colli
 ```
 app/plugins/
   <plugin-id>/
-    manifest.js              Static metadata — id, name, version, description, adminRoutes.
+    manifest.js              Static metadata — id, name, version, description, adminRoutes, storefrontRoutes.
     index.server.js          Main entry point. Calls definePlugin() and exports pluginManifest.
     admin/
-      routes.js              Exported as { routes: [...] }. Required if adminRoutes is set.
+      routes.server.js       Server route descriptors with optional loaders.
+      routes.client.js       Client route descriptors with Components.
+    storefront/
+      routes.server.js       Server route descriptors with optional loaders.
+      routes.client.js       Client route descriptors with Components.
     blocks/
       <slot-name>.jsx        One file per slot. Filename must match the slot name exactly.
     i18n/
