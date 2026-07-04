@@ -2,6 +2,8 @@ import { CheckIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { Link, Form, useActionData, useNavigation } from 'react-router';
 
+import SlotBlocks from '#/components/storefront/slot-blocks';
+
 import { useT } from '#/core/i18n/index';
 import { formatPrice } from '#/core/index';
 import StorefrontShell, {
@@ -883,6 +885,7 @@ export default function CheckoutLayout({
   tenderBalances,
   locale,
   currency,
+  slotBlocks = {},
 }) {
   const t = useT();
   const navigation = useNavigation();
@@ -894,6 +897,18 @@ export default function CheckoutLayout({
   const backHref = STEP_BACK[currentStep];
   const effectiveCurrency = currency ?? cart?.currency ?? 'USD';
   const effectiveLocale = locale ?? 'en';
+  const afterPaymentBlocks = slotBlocks['checkout.afterPayment'] ?? [];
+  const afterPaymentSlotProps = {
+    step: currentStep,
+    session,
+    cart,
+    shippingQuotes,
+    paymentProviders,
+    totals,
+    tenderBalances,
+    locale: effectiveLocale,
+    currency: effectiveCurrency,
+  };
 
   function renderStep() {
     switch (currentStep) {
@@ -975,6 +990,14 @@ export default function CheckoutLayout({
             </div>
 
             {renderStep()}
+            {currentStep === 'payment' && afterPaymentBlocks.length > 0 && (
+              <div className="mt-6">
+                <SlotBlocks
+                  blocks={afterPaymentBlocks}
+                  slotProps={afterPaymentSlotProps}
+                />
+              </div>
+            )}
 
             {/* Back link */}
             {backHref && currentStep !== 'review' && (

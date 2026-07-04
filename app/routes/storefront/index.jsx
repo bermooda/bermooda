@@ -11,6 +11,7 @@ import {
   buildSiteMeta,
   buildWebSiteJsonLd,
 } from '#/core/seo/index.server';
+import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
@@ -19,10 +20,13 @@ export async function loader({ request }) {
   const locale = await getRequestLocale(request);
   const currency = await getRequestCurrency(request);
 
-  const [{ products: rawProducts }, categories] = await Promise.all([
-    listProducts({ locale, currency, limit: 12, published: true }),
-    listCategories({ locale }),
-  ]);
+  const [{ products: rawProducts }, categories, slotBlocks] = await Promise.all(
+    [
+      listProducts({ locale, currency, limit: 12, published: true }),
+      listCategories({ locale }),
+      getSlotBlocksMap(['home.hero', 'home.featured']),
+    ]
+  );
 
   const products = await attachReviewSummaries(rawProducts);
 
@@ -38,6 +42,7 @@ export async function loader({ request }) {
     categories,
     locale,
     currency,
+    slotBlocks,
     jsonLd: [organization, webSite],
     metaTags,
   };

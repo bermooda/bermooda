@@ -8,6 +8,8 @@ import {
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { Link } from 'react-router';
 
+import SlotBlocks from '#/components/storefront/slot-blocks';
+
 import { formatPrice } from '#/core/index';
 import StorefrontShell, {
   STOREFRONT_CREAM as CREAM,
@@ -67,6 +69,7 @@ export default function HomePage({
   categories = [],
   locale,
   currency,
+  slotBlocks = {},
 }) {
   const featuredCollections = (categories.length ? categories : products)
     .slice(0, 3)
@@ -87,6 +90,9 @@ export default function HomePage({
 
   const newArrivals = products.slice(0, 8);
   const favorites = products.slice(2, 6);
+  const heroSlotBlocks = slotBlocks['home.hero'] ?? [];
+  const featuredSlotBlocks = slotBlocks['home.featured'] ?? [];
+  const slotProps = { products, categories, locale, currency };
 
   return (
     <StorefrontShell>
@@ -209,6 +215,11 @@ export default function HomePage({
             </div>
           </div>
         </div>
+        {heroSlotBlocks.length > 0 && (
+          <div className="relative mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+            <SlotBlocks blocks={heroSlotBlocks} slotProps={slotProps} />
+          </div>
+        )}
       </section>
 
       {/* Featured collections */}
@@ -270,6 +281,11 @@ export default function HomePage({
             </Link>
           ))}
         </div>
+        {featuredSlotBlocks.length > 0 && (
+          <div className="mt-10">
+            <SlotBlocks blocks={featuredSlotBlocks} slotProps={slotProps} />
+          </div>
+        )}
       </section>
 
       {/* New arrivals */}

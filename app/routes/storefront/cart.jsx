@@ -16,6 +16,7 @@ import {
 } from '#/core/cart/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
+import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
@@ -25,12 +26,14 @@ export async function loader({ request }) {
   const currency = await getRequestCurrency(request);
   const token = getCartTokenFromRequest(request);
   const cart = token ? await getCart(token) : null;
+  const slotBlocks = await getSlotBlocksMap(['cart.summary']);
 
   return {
     themeId,
     cart,
     locale,
     currency,
+    slotBlocks,
   };
 }
 
