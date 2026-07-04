@@ -135,7 +135,20 @@ Slots are named injection points in the storefront layout where plugins can cont
 | `layout.header`            | Inside the global site header (rendered by `Layout`)      |
 | `layout.footer`            | Inside the global site footer (rendered by `Layout`)      |
 
-Themes render slots by calling `getSlotBlocks(slotName)` and mounting each returned `{ pluginId, component }` entry. Plugin block resolution is wired in Phase 5; `getSlotBlocks` returns an empty array until then.
+The default theme renders all 10 of these slots. Route loaders fetch blocks server-side and pass a `slotBlocks` map into the theme component or shell that owns the slot.
+
+Themes render slots by calling `getSlotBlocks(slotName)` or `getSlotBlocksMap(slotNames)` and mounting each returned `{ pluginId, component }` entry. The shared `SlotBlocks` component in `app/components/storefront/slot-blocks.jsx` accepts optional `slotProps`, which are spread into every plugin block so blocks can receive page-specific data like `product`, `cart`, `category`, or checkout state.
+
+Example:
+
+```jsx
+import SlotBlocks from '#/components/storefront/slot-blocks';
+
+<SlotBlocks
+  blocks={slotBlocks['product.afterDescription']}
+  slotProps={{ product, locale, currency }}
+/>;
+```
 
 ---
 
@@ -220,8 +233,6 @@ const Layout = await getStorefrontComponent('Layout');
 
 Async. Returns an ordered array of `{ pluginId: string, component: unknown }` objects for the given slot, ordered by `Setting.pluginOrder`. The plugin order setting is TTL-cached (5 minutes, key `setting:pluginOrder`).
 
-Returns an empty array until Phase 5 wires in real plugin block resolution.
-
 ```js
 import { getSlotBlocks } from '#/core/themes/index.server';
 
@@ -229,6 +240,18 @@ const blocks = await getSlotBlocks('home.hero');
 for (const { pluginId, component: Block } of blocks) {
   // render <Block key={pluginId} />
 }
+```
+
+---
+
+### `getSlotBlocksMap(slotNames)`
+
+Async. Returns an object keyed by slot name where each value is the ordered block array for that slot. Use this when a loader needs to hydrate multiple slots in one pass and pass a consistent `slotBlocks` map to the theme.
+
+```js
+import { getSlotBlocksMap } from '#/core/themes/index.server';
+
+const slotBlocks = await getSlotBlocksMap(['layout.header', 'layout.footer']);
 ```
 
 ---

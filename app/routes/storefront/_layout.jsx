@@ -18,6 +18,7 @@ import { translate } from '#/core/i18n/index';
 import { getRequestLocale, loadMessages } from '#/core/i18n/index.server';
 import { trackReferral } from '#/core/loyalty/index.server';
 import { get as settingsGet } from '#/core/settings/index.server';
+import { getSlotBlocksMap } from '#/core/themes/index.server';
 
 export async function loader({ request }) {
   const locale = await getRequestLocale(request);
@@ -43,14 +44,21 @@ export async function loader({ request }) {
     }
   }
 
-  const [messages, currencies, mainMenu, footerMenu, subHeaderMenu] =
-    await Promise.all([
-      loadMessages(locale),
-      settingsGet('currencies'),
-      getMenuByHandle('main', { locale }),
-      getMenuByHandle('footer', { locale }),
-      getMenuByHandle('sub-header', { locale }),
-    ]);
+  const [
+    messages,
+    currencies,
+    mainMenu,
+    footerMenu,
+    subHeaderMenu,
+    slotBlocks,
+  ] = await Promise.all([
+    loadMessages(locale),
+    settingsGet('currencies'),
+    getMenuByHandle('main', { locale }),
+    getMenuByHandle('footer', { locale }),
+    getMenuByHandle('sub-header', { locale }),
+    getSlotBlocksMap(['layout.header', 'layout.footer']),
+  ]);
 
   const availableLocales = ['en', 'de', 'fr'];
   const availableCurrencies = Array.isArray(currencies)
@@ -83,6 +91,7 @@ export async function loader({ request }) {
         footer: footerMenu?.items ?? [],
         subHeader: subHeaderMenu?.items ?? [],
       },
+      slotBlocks,
     },
     { headers }
   );

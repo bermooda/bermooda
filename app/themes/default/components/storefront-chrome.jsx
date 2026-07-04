@@ -5,6 +5,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { Form, Link, useRouteLoaderData } from 'react-router';
 
+import SlotBlocks from '#/components/storefront/slot-blocks';
+
 import { useT } from '#/core/i18n/index';
 import CurrencySwitcher from '#/themes/default/components/currency-switcher';
 import LocaleSwitcher from '#/themes/default/components/locale-switcher';
@@ -102,6 +104,8 @@ function StorefrontMainNav({
   availableLocales,
   availableCurrencies,
   menuItems = [],
+  slotBlocks = [],
+  slotProps,
 }) {
   const t = useT();
 
@@ -163,16 +167,28 @@ function StorefrontMainNav({
           </Link>
         </div>
       </div>
+      {slotBlocks.length > 0 && (
+        <div className="border-t border-stone-200">
+          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+            <SlotBlocks blocks={slotBlocks} slotProps={slotProps} />
+          </div>
+        </div>
+      )}
     </header>
   );
 }
 
-export function StorefrontFooter({ items = [] }) {
+export function StorefrontFooter({ items = [], slotBlocks = [], slotProps }) {
   const year = new Date().getFullYear();
 
   return (
     <footer className="border-t border-stone-200 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        {slotBlocks.length > 0 && (
+          <div className="mb-6">
+            <SlotBlocks blocks={slotBlocks} slotProps={slotProps} />
+          </div>
+        )}
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <p className="text-center text-sm text-stone-500">
             &copy; {year} bermooda. All rights reserved.
@@ -212,6 +228,9 @@ export default function StorefrontShell({ children }) {
   const availableLocales = layoutData?.availableLocales ?? ['en'];
   const availableCurrencies = layoutData?.availableCurrencies ?? ['USD'];
   const menus = layoutData?.menus ?? { main: [], footer: [], subHeader: [] };
+  const slotBlocks = layoutData?.slotBlocks ?? {};
+  const headerSlotBlocks = slotBlocks['layout.header'] ?? [];
+  const footerSlotBlocks = slotBlocks['layout.footer'] ?? [];
 
   return (
     <div className="flex min-h-screen flex-col bg-[#fbf7ef] font-sans text-stone-800 antialiased">
@@ -223,9 +242,15 @@ export default function StorefrontShell({ children }) {
         availableLocales={availableLocales}
         availableCurrencies={availableCurrencies}
         menuItems={menus.main}
+        slotBlocks={headerSlotBlocks}
+        slotProps={layoutData}
       />
       <main className="flex-1">{children}</main>
-      <StorefrontFooter items={menus.footer} />
+      <StorefrontFooter
+        items={menus.footer}
+        slotBlocks={footerSlotBlocks}
+        slotProps={layoutData}
+      />
     </div>
   );
 }
