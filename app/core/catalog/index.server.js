@@ -10,6 +10,7 @@ import {
   buildChannelPublishedWhere,
   isProductPublishedOnChannel,
 } from '#/core/channels/index.server';
+import { emit } from '#/core/events/index.server';
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -287,6 +288,8 @@ export async function createProduct(data) {
     );
   }
 
+  await emit('product.created', { productId: product.id });
+
   logger.info({ productId: product.id }, 'product created');
   invalidateCatalogCache();
   return product;
@@ -307,12 +310,15 @@ export async function updateProduct(id, data) {
     await setTranslation('product', id, locale, 'description', description);
   }
 
+  await emit('product.updated', { productId: product.id });
+
   invalidateCatalogCache();
   return product;
 }
 
 export async function deleteProduct(id) {
   await prisma.product.delete({ where: { id } });
+  await emit('product.deleted', { productId: id });
   invalidateCatalogCache();
   logger.info({ productId: id }, 'product deleted');
 }

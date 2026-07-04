@@ -6,6 +6,7 @@ import { randomUUID } from 'crypto';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
+import { emit } from '#/core/events/index.server';
 import {
   getCustomerGroupIds,
   resolveVariantPrice,
@@ -21,6 +22,14 @@ export async function createCart({ currency = 'USD', customerId } = {}) {
 
   const cart = await prisma.cart.create({
     data: { token, currency, customerId, expiresAt },
+  });
+
+  await emit('cart.created', {
+    cartId: cart.id,
+    token: cart.token,
+    currency: cart.currency,
+    customerId: cart.customerId,
+    expiresAt: cart.expiresAt,
   });
 
   logger.info({ cartId: cart.id }, 'cart created');
@@ -95,13 +104,22 @@ export async function addLine(
   });
 
   if (existing) {
-    return prisma.cartLine.update({
+    const line = await prisma.cartLine.update({
       where: { id: existing.id },
       data: { quantity: { increment: quantity } },
     });
+
+    await emit('cart.itemAdded', {
+      cartId,
+      variantId,
+      quantity,
+      lineId: line.id,
+    });
+
+    return line;
   }
 
-  return prisma.cartLine.create({
+  const line = await prisma.cartLine.create({
     data: {
       cartId,
       variantId,
@@ -110,6 +128,15 @@ export async function addLine(
       titleSnapshot,
     },
   });
+
+  await emit('cart.itemAdded', {
+    cartId,
+    variantId,
+    quantity,
+    lineId: line.id,
+  });
+
+  return line;
 }
 
 // ---------------------------------------------------------------------------
@@ -118,6 +145,11 @@ export async function addLine(
 
 export async function removeLine(cartId, lineId) {
   await prisma.cartLine.delete({ where: { id: lineId, cartId } });
+
+  await emit('cart.itemRemoved', {
+    cartId,
+    lineId,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -129,10 +161,18 @@ export async function updateQuantity(cartId, lineId, quantity) {
     return removeLine(cartId, lineId);
   }
 
-  return prisma.cartLine.update({
+  const line = await prisma.cartLine.update({
     where: { id: lineId, cartId },
     data: { quantity },
   });
+
+  await emit('cart.updated', {
+    cartId,
+    lineId: line.id,
+    quantity: line.quantity,
+  });
+
+  return line;
 }
 
 // ---------------------------------------------------------------------------

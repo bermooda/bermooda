@@ -42,6 +42,10 @@ vi.mock('#/core/gift-cards/index.server', () => ({
   resolveGiftCardRedemption: vi.fn(),
 }));
 
+vi.mock('#/core/events/index.server', () => ({
+  emit: vi.fn(),
+}));
+
 // ---------------------------------------------------------------------------
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
@@ -56,6 +60,7 @@ import {
 } from '#/core/checkout/pipeline.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { resolvePromotions } from '#/core/discounts/index.server';
+import { emit } from '#/core/events/index.server';
 import { resolveVariantPrice } from '#/core/pricing/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
@@ -300,6 +305,28 @@ describe('createCheckoutSession', () => {
         step: 'address',
         email: 'test@example.com',
       }),
+    });
+  });
+
+  it('emits checkout.started after creating the session', async () => {
+    const session = makeSession({
+      id: 'sess_started',
+      customerId: 'cust_1',
+      email: 'checkout@example.com',
+    });
+    lockCart.mockResolvedValue({});
+    prisma.checkoutSession.create.mockResolvedValue(session);
+
+    await createCheckoutSession('cart_1', {
+      customerId: 'cust_1',
+      email: 'checkout@example.com',
+    });
+
+    expect(emit).toHaveBeenCalledWith('checkout.started', {
+      sessionId: 'sess_started',
+      cartId: 'cart_1',
+      customerId: 'cust_1',
+      email: 'checkout@example.com',
     });
   });
 });

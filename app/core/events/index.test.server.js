@@ -133,18 +133,16 @@ describe('event bus', () => {
     });
   });
 
-  describe('checkout.* events — errors rethrow', () => {
-    it('rethrows when a handler on a checkout.* event throws', async () => {
+  describe('checkout.* events use the normal post-hook isolation path', () => {
+    it('swallows errors when a handler on a checkout.* event throws', async () => {
       on('checkout.completed', () => {
         throw new Error('checkout failure');
       });
 
-      await expect(emit('checkout.completed', {})).rejects.toThrow(
-        'checkout failure'
-      );
+      await expect(emit('checkout.completed', {})).resolves.toBeUndefined();
     });
 
-    it('stops dispatch on first error in a checkout.* event', async () => {
+    it('continues dispatch after an error in a checkout.* event', async () => {
       const afterHandler = vi.fn();
 
       on('checkout.started', () => {
@@ -152,8 +150,8 @@ describe('event bus', () => {
       });
       on('checkout.started', afterHandler);
 
-      await expect(emit('checkout.started', {})).rejects.toThrow();
-      expect(afterHandler).not.toHaveBeenCalled();
+      await expect(emit('checkout.started', {})).resolves.toBeUndefined();
+      expect(afterHandler).toHaveBeenCalledOnce();
     });
 
     it('dispatches successfully when no checkout.* handler throws', async () => {

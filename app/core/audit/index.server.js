@@ -9,14 +9,21 @@ import { WEBHOOK_EVENTS } from '#/core/webhooks/index.server';
 const ENTITY_TYPE_BY_EVENT = {
   'order.created': 'order',
   'order.confirmed': 'order',
+  'order.updated': 'order',
+  'order.fulfilled': 'order',
   'order.cancelled': 'order',
   'order.returned': 'order',
+  'checkout.completed': 'order',
   'shipment.created': 'shipment',
   'shipment.shipped': 'shipment',
   'shipment.delivered': 'shipment',
   'payment.succeeded': 'payment',
   'payment.failed': 'payment',
   'payment.refunded': 'refund',
+  'customer.registered': 'customer',
+  'product.created': 'product',
+  'product.updated': 'product',
+  'product.deleted': 'product',
   'return.requested': 'return',
   'return.approved': 'return',
   'return.received': 'return',
@@ -36,6 +43,8 @@ function entityIdFromPayload(event, payload) {
   if (payload.shipmentId) return payload.shipmentId;
   if (payload.refundId) return payload.refundId;
   if (payload.returnId) return payload.returnId;
+  if (payload.productId) return payload.productId;
+  if (payload.customerId) return payload.customerId;
   if (payload.id) return payload.id;
   return undefined;
 }
