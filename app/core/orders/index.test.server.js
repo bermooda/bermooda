@@ -112,6 +112,7 @@ import {
   getOrder,
   listOrders,
   updateOrderStatus,
+  syncOrderFulfillmentStatus,
   cancelOrder,
   addShipment,
   markShipped,
@@ -300,8 +301,44 @@ describe('placeOrder', () => {
         orderNumber: order.orderNumber,
       })
     );
-    // emit must be called AFTER the transaction
-    expect(emitCallOrder).toEqual(['transaction', 'emit']);
+    // both post-order events must fire only after the transaction commits
+    expect(emitCallOrder).toEqual(['transaction', 'emit', 'emit']);
+  });
+
+  it('emits checkout.completed after placing the order', async () => {
+    const session = makeCheckoutSession();
+    const order = makeOrder();
+
+    setupTransaction();
+
+    prisma.checkoutSession.findUnique.mockResolvedValue(session);
+    prisma.order.create.mockResolvedValue(order);
+    prisma.orderLine.create.mockResolvedValue({});
+    prisma.cartLine.deleteMany.mockResolvedValue({});
+    prisma.cart.update.mockResolvedValue({});
+    prisma.checkoutSession.update.mockResolvedValue({});
+    decrementInventory.mockResolvedValue(undefined);
+    emit.mockResolvedValue(undefined);
+
+    await placeOrder('sess_1', {});
+
+    expect(emit).toHaveBeenNthCalledWith(
+      1,
+      'order.created',
+      expect.objectContaining({
+        orderId: 'order_1',
+        orderNumber: 'ORD-123',
+      })
+    );
+    expect(emit).toHaveBeenNthCalledWith(
+      2,
+      'checkout.completed',
+      expect.objectContaining({
+        checkoutSessionId: 'sess_1',
+        orderId: 'order_1',
+        orderNumber: 'ORD-123',
+      })
+    );
   });
 
   it('throws CHECKOUT_SESSION_NOT_AT_REVIEW when step is not review', async () => {
@@ -470,6 +507,7 @@ describe('updateOrderStatus', () => {
   });
 
   it('updates order status for valid values', async () => {
+    prisma.order.findUnique.mockResolvedValue(makeOrder({ status: 'pending' }));
     prisma.order.update.mockResolvedValue(makeOrder({ status: 'confirmed' }));
 
     await updateOrderStatus('order_1', 'confirmed');
@@ -478,6 +516,32 @@ describe('updateOrderStatus', () => {
       where: { id: 'order_1' },
       data: { status: 'confirmed' },
     });
+  });
+
+  it('emits order.updated when the status changes', async () => {
+    prisma.order.findUnique.mockResolvedValue(makeOrder({ status: 'pending' }));
+    prisma.order.update.mockResolvedValue(makeOrder({ status: 'confirmed' }));
+    emit.mockResolvedValue(undefined);
+
+    await updateOrderStatus('order_1', 'confirmed');
+
+    expect(emit).toHaveBeenCalledWith('order.updated', {
+      orderId: 'order_1',
+      previousStatus: 'pending',
+      status: 'confirmed',
+    });
+  });
+
+  it('does not emit order.updated when the status is unchanged', async () => {
+    prisma.order.findUnique.mockResolvedValue(
+      makeOrder({ status: 'confirmed' })
+    );
+    prisma.order.update.mockResolvedValue(makeOrder({ status: 'confirmed' }));
+    emit.mockResolvedValue(undefined);
+
+    await updateOrderStatus('order_1', 'confirmed');
+
+    expect(emit).not.toHaveBeenCalledWith('order.updated', expect.anything());
   });
 
   it.each(['pending', 'confirmed', 'cancelled', 'refunded'])(
@@ -949,5 +1013,29 @@ describe('deriveFulfillmentStatus', () => {
     expect(
       deriveFulfillmentStatus([{ quantity: 2, fulfilledQuantity: 2 }])
     ).toBe('fulfilled');
+  });
+});
+
+describe('syncOrderFulfillmentStatus', () => {
+  it('emits order.fulfilled when the order transitions to fulfilled', async () => {
+    prisma.order.findUnique.mockResolvedValue(
+      makeOrder({
+        status: 'confirmed',
+        lines: [{ quantity: 2, fulfilledQuantity: 2 }],
+      })
+    );
+    prisma.order.update.mockResolvedValue(makeOrder({ status: 'fulfilled' }));
+    emit.mockResolvedValue(undefined);
+
+    await syncOrderFulfillmentStatus('order_1');
+
+    expect(prisma.order.update).toHaveBeenCalledWith({
+      where: { id: 'order_1' },
+      data: { status: 'fulfilled' },
+    });
+    expect(emit).toHaveBeenCalledWith('order.fulfilled', {
+      orderId: 'order_1',
+      status: 'fulfilled',
+    });
   });
 });

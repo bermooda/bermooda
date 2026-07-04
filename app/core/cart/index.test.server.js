@@ -36,6 +36,10 @@ vi.mock('#/core/pricing/index.server', () => ({
   resolveVariantPrice: vi.fn(),
 }));
 
+vi.mock('#/core/events/index.server', () => ({
+  emit: vi.fn(),
+}));
+
 import prisma from '#/libs/prisma.server';
 
 import {
@@ -48,6 +52,7 @@ import {
   lockCart,
   unlockCart,
 } from '#/core/cart/index.server';
+import { emit } from '#/core/events/index.server';
 import { resolveVariantPrice } from '#/core/pricing/index.server';
 
 beforeEach(() => {
@@ -107,6 +112,25 @@ describe('createCart', () => {
     );
     expect(cart.customerId).toBe('cust_1');
   });
+
+  it('emits cart.created after creating the cart', async () => {
+    prisma.cart.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 'cart_1', ...data })
+    );
+
+    const cart = await createCart({ currency: 'EUR', customerId: 'cust_1' });
+
+    expect(emit).toHaveBeenCalledWith(
+      'cart.created',
+      expect.objectContaining({
+        cartId: cart.id,
+        token: cart.token,
+        currency: 'EUR',
+        customerId: 'cust_1',
+        expiresAt: expect.any(Date),
+      })
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -161,6 +185,12 @@ describe('addLine — upsert', () => {
       data: { quantity: { increment: 3 } },
     });
     expect(prisma.cartLine.create).not.toHaveBeenCalled();
+    expect(emit).toHaveBeenCalledWith('cart.itemAdded', {
+      cartId: 'cart_1',
+      variantId: 'variant_1',
+      quantity: 3,
+      lineId: 'line_1',
+    });
   });
 
   it('creates a new line when no existing line for this variantId', async () => {
@@ -180,6 +210,12 @@ describe('addLine — upsert', () => {
         priceCentsSnapshot: 2500,
         titleSnapshot: 'Blue T-Shirt',
       }),
+    });
+    expect(emit).toHaveBeenCalledWith('cart.itemAdded', {
+      cartId: 'cart_1',
+      variantId: 'variant_2',
+      quantity: 1,
+      lineId: 'line_2',
     });
   });
 
@@ -210,6 +246,10 @@ describe('removeLine', () => {
 
     expect(prisma.cartLine.delete).toHaveBeenCalledWith({
       where: { id: 'line_1', cartId: 'cart_1' },
+    });
+    expect(emit).toHaveBeenCalledWith('cart.itemRemoved', {
+      cartId: 'cart_1',
+      lineId: 'line_1',
     });
   });
 });
@@ -246,6 +286,11 @@ describe('updateQuantity', () => {
     expect(prisma.cartLine.update).toHaveBeenCalledWith({
       where: { id: 'line_1', cartId: 'cart_1' },
       data: { quantity: 4 },
+    });
+    expect(emit).toHaveBeenCalledWith('cart.updated', {
+      cartId: 'cart_1',
+      lineId: 'line_1',
+      quantity: 4,
     });
   });
 });
