@@ -31,6 +31,8 @@ The plugin lifecycle is:
 3. **Enable** — `enable(pluginId)` persists the enabled state, wires hook handlers onto the event bus, and calls the plugin's `onEnable` lifecycle hook.
 4. **Disable** — `disable(pluginId)` calls `onDisable`, removes hook handlers from the event bus, and persists the disabled state.
 
+In the admin plugins screen, toggling a plugin updates the persisted `enabledPlugins` array for startup and also calls `enable()` or `disable()` immediately so hooks, providers, and lifecycle callbacks are wired live without waiting for a restart.
+
 All plugin infrastructure lives in `app/core/plugins/index.server.js`.
 
 ---

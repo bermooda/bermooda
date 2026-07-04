@@ -20,7 +20,7 @@ import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 
-import { _registry } from '#/core/plugins/index.server';
+import { _registry, disable, enable } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
@@ -107,9 +107,11 @@ export async function action({ request }) {
   if (intent === 'enable' || intent === 'disable') {
     const pluginId = formData.get('pluginId');
     if (!pluginId) return { error: 'Missing pluginId' };
+    if (!_registry.has(pluginId)) return { error: 'Plugin not found' };
 
     const enabledRaw = await get('enabledPlugins');
-    const enabled = Array.isArray(enabledRaw) ? [...enabledRaw] : [];
+    const previousEnabled = Array.isArray(enabledRaw) ? [...enabledRaw] : [];
+    const enabled = [...previousEnabled];
 
     if (intent === 'enable') {
       if (!enabled.includes(pluginId)) enabled.push(pluginId);
@@ -119,6 +121,20 @@ export async function action({ request }) {
     }
 
     await set('enabledPlugins', enabled);
+    try {
+      if (intent === 'enable') {
+        await enable(pluginId);
+      } else {
+        await disable(pluginId);
+      }
+    } catch (err) {
+      await set('enabledPlugins', previousEnabled);
+      return {
+        error:
+          err instanceof Error ? err.message : 'Failed to update plugin state',
+      };
+    }
+
     return { success: true, intent };
   }
 
