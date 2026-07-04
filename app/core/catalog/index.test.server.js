@@ -55,7 +55,13 @@ vi.mock('#/utils/logger.server', () => ({
   default: { info: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock('#/core/events/index.server', () => ({
+  emit: vi.fn(),
+}));
+
 import prisma from '#/libs/prisma.server';
+
+import { emit } from '#/core/events/index.server';
 
 // Build a transaction mock that delegates to the same mock fns.
 const mockTx = {
@@ -539,6 +545,16 @@ describe('createProduct', () => {
       createProduct({ prices: [{ currency: 'USD', priceCents: 1000 }] })
     ).rejects.toThrow(/prices must be set per-variant/);
   });
+
+  it('emits product.created after creating a product', async () => {
+    prisma.product.create.mockResolvedValue({ id: 'prod_new' });
+
+    await createProduct({});
+
+    expect(emit).toHaveBeenCalledWith('product.created', {
+      productId: 'prod_new',
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -573,6 +589,16 @@ describe('updateProduct', () => {
 
     expect(prisma.translation.upsert).not.toHaveBeenCalled();
   });
+
+  it('emits product.updated after updating a product', async () => {
+    prisma.product.update.mockResolvedValue({ id: 'prod_1' });
+
+    await updateProduct('prod_1', { position: 2 });
+
+    expect(emit).toHaveBeenCalledWith('product.updated', {
+      productId: 'prod_1',
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -587,6 +613,16 @@ describe('deleteProduct', () => {
 
     expect(prisma.product.delete).toHaveBeenCalledWith({
       where: { id: 'prod_1' },
+    });
+  });
+
+  it('emits product.deleted after deleting a product', async () => {
+    prisma.product.delete.mockResolvedValue({});
+
+    await deleteProduct('prod_1');
+
+    expect(emit).toHaveBeenCalledWith('product.deleted', {
+      productId: 'prod_1',
     });
   });
 });

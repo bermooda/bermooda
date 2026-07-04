@@ -81,6 +81,10 @@ vi.mock('#/emails/job.server', () => ({
   queueCustomerWelcomeEmail: vi.fn(),
 }));
 
+vi.mock('#/core/events/index.server', () => ({
+  emit: vi.fn(),
+}));
+
 vi.mock('#/config', () => ({
   default: {
     appName: 'bermooda',
@@ -110,7 +114,14 @@ vi.mock('react-router', () => ({
 // Import modules under test (after all mocks are registered)
 // ---------------------------------------------------------------------------
 
-import { customerAuthMiddleware } from '#/libs/auth/customer.server';
+import logger from '#/utils/logger.server';
+import {
+  customerAuth,
+  customerAuthMiddleware,
+  getCustomerSession,
+} from '#/libs/auth/customer.server';
+
+import { emit } from '#/core/events/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -211,5 +222,36 @@ describe('customerAuthMiddleware', () => {
       email: 'customer@example.com',
       name: 'Test Customer',
     });
+  });
+});
+
+describe('customerAuth database hooks', () => {
+  it('emits customer.registered after a new customer is created', async () => {
+    const hook = customerAuth._cfg.databaseHooks.user.create.after;
+
+    await hook({
+      id: 'cust_1',
+      email: 'new@example.com',
+      name: 'New Customer',
+    });
+
+    expect(emit).toHaveBeenCalledWith('customer.registered', {
+      customerId: 'cust_1',
+      email: 'new@example.com',
+      name: 'New Customer',
+    });
+  });
+});
+
+describe('getCustomerSession', () => {
+  it('logs through the shared logger when getSession throws', async () => {
+    customerState.sessionImpl.mockRejectedValue(new Error('session boom'));
+
+    const session = await getCustomerSession(
+      new Request('http://localhost:3000/account')
+    );
+
+    expect(session).toBeNull();
+    expect(logger.error).toHaveBeenCalled();
   });
 });

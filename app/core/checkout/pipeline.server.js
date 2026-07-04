@@ -5,6 +5,7 @@ import prisma from '#/libs/prisma.server';
 
 import { lockCart, unlockCart } from '#/core/cart/index.server';
 import { computeTotals } from '#/core/checkout/totals.server';
+import { emit } from '#/core/events/index.server';
 
 // ---------------------------------------------------------------------------
 // Step order
@@ -42,6 +43,13 @@ export async function createCheckoutSession(
       email: email ?? null,
       step: 'address',
     },
+  });
+
+  await emit('checkout.started', {
+    sessionId: session.id,
+    cartId: session.cartId,
+    customerId: session.customerId,
+    email: session.email,
   });
 
   return session;
