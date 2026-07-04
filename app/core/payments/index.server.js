@@ -102,6 +102,23 @@ export function createCheckoutSession(providerId, params) {
 }
 
 /**
+ * Create a PaymentIntent via the named provider (Stripe Payment Element).
+ *
+ * @param {string} providerId
+ * @param {object} params
+ * @returns {Promise<{ clientSecret: string, paymentIntentId: string }>}
+ */
+export function createPaymentIntent(providerId, params) {
+  const provider = getProvider(providerId);
+  if (typeof provider.createPaymentIntent !== 'function') {
+    throw new Error(
+      `Payment provider "${providerId}" does not support Payment Element`
+    );
+  }
+  return provider.createPaymentIntent(params);
+}
+
+/**
  * Verify a webhook request via the named provider.
  * Returns { event, rawBody }.
  *

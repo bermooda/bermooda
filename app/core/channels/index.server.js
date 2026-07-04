@@ -190,6 +190,72 @@ export async function listChannelProducts(channelId) {
   });
 }
 
+/**
+ * Prisma `where` fragment: products visible on a sales channel.
+ * Honors ChannelProduct overrides; falls back to product.publishedAt.
+ *
+ * @param {string} channelId
+ */
+export function buildChannelPublishedWhere(channelId) {
+  if (!channelId) return {};
+  return {
+    OR: [
+      { channelProducts: { some: { channelId, published: true } } },
+      {
+        AND: [
+          { NOT: { channelProducts: { some: { channelId } } } },
+          { publishedAt: { not: null } },
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * Apply channel price overrides to hydrated catalog/search products.
+ *
+ * @param {Array} products
+ * @param {string|undefined} channelId
+ * @param {string|undefined} currency
+ */
+export async function applyChannelPricesToProducts(
+  products,
+  channelId,
+  currency
+) {
+  if (!channelId || !currency || !products?.length) return products;
+
+  const variantIds = products.flatMap(
+    (product) => product.variants?.map((variant) => variant.id) ?? []
+  );
+  if (!variantIds.length) return products;
+
+  const overrides = await prisma.channelPriceOverride.findMany({
+    where: { channelId, variantId: { in: variantIds }, currency },
+  });
+  if (!overrides.length) return products;
+
+  const overrideMap = Object.fromEntries(
+    overrides.map((row) => [row.variantId, row.priceCents])
+  );
+
+  return products.map((product) => ({
+    ...product,
+    variants: product.variants?.map((variant) => {
+      const priceCents = overrideMap[variant.id];
+      if (priceCents == null) return variant;
+
+      const prices = variant.prices?.length
+        ? variant.prices.map((price) =>
+            price.currency === currency ? { ...price, priceCents } : price
+          )
+        : [{ currency, priceCents }];
+
+      return { ...variant, prices };
+    }),
+  }));
+}
+
 /** Reset cached default channel id. Test use only. */
 export function __resetChannelCache() {
   _defaultChannelId = null;

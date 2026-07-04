@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('#/core/events/index.server', () => ({ on: vi.fn() }));
 vi.mock('#/core/orders/index.server', () => ({
@@ -17,6 +17,9 @@ vi.mock('#/core/payments/paypal.server', () => ({
 }));
 vi.mock('#/core/payments/stripe.server', () => ({
   stripeProvider: { name: 'Stripe' },
+}));
+vi.mock('#/core/payments/stripe-element.server', () => ({
+  stripeElementProvider: { name: 'Card on site' },
 }));
 vi.mock('#/core/payments/klarna.server', () => ({
   klarnaProvider: { name: 'Klarna' },
@@ -50,6 +53,9 @@ vi.mock('#/core/shipping/index.server', () => ({
 vi.mock('#/core/shipping/carrier.server', () => ({
   carrierProvider: { name: 'Carrier' },
 }));
+vi.mock('#/core/shipping/pickup.server', () => ({
+  pickupProvider: { name: 'Store Pickup' },
+}));
 vi.mock('#/core/tax/index.server', () => ({
   registerProvider: vi.fn(),
   simplePercentProvider: { name: 'Simple Percent' },
@@ -80,8 +86,18 @@ describe('bootstrap.server', () => {
   let registerAuditSubscribers;
   let registerBackInStockSubscribers;
   let registerLoyaltySubscribers;
+  let savedEnv;
 
   beforeEach(async () => {
+    savedEnv = {
+      KLARNA_API_KEY: process.env.KLARNA_API_KEY,
+      TAXJAR_API_KEY: process.env.TAXJAR_API_KEY,
+      CARRIER_API_KEY: process.env.CARRIER_API_KEY,
+    };
+    delete process.env.KLARNA_API_KEY;
+    delete process.env.TAXJAR_API_KEY;
+    delete process.env.CARRIER_API_KEY;
+
     vi.resetModules();
 
     const bootstrap = await import('#/core/bootstrap.server');
@@ -108,18 +124,36 @@ describe('bootstrap.server', () => {
     registerLoyaltySubscribers = loyalty.registerLoyaltySubscribers;
   });
 
+  afterEach(() => {
+    for (const [key, value] of Object.entries(savedEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  });
+
   it('registers all built-in providers and event handlers on first call', () => {
     registerBuiltins();
 
     expect(registerPayment).toHaveBeenCalledWith('stripe', expect.any(Object));
+    expect(registerPayment).toHaveBeenCalledWith(
+      'stripe_element',
+      expect.any(Object)
+    );
     expect(registerPayment).toHaveBeenCalledWith('paypal', expect.any(Object));
     expect(registerPayment).toHaveBeenCalledWith('manual', expect.any(Object));
-    expect(registerPayment).toHaveBeenCalledWith('klarna', expect.any(Object));
+    expect(registerPayment).not.toHaveBeenCalledWith(
+      'klarna',
+      expect.any(Object)
+    );
     expect(registerShipping).toHaveBeenCalledWith(
       'flat_rate',
       expect.any(Object)
     );
-    expect(registerShipping).toHaveBeenCalledWith(
+    expect(registerShipping).toHaveBeenCalledWith('pickup', expect.any(Object));
+    expect(registerShipping).not.toHaveBeenCalledWith(
       'carrier',
       expect.any(Object)
     );
@@ -128,7 +162,7 @@ describe('bootstrap.server', () => {
       expect.any(Object)
     );
     expect(registerTax).toHaveBeenCalledWith('automatic', expect.any(Object));
-    expect(registerTax).toHaveBeenCalledWith('taxjar', expect.any(Object));
+    expect(registerTax).not.toHaveBeenCalledWith('taxjar', expect.any(Object));
     expect(registerSearch).toHaveBeenCalledWith('db', expect.any(Object));
     expect(registerTheme).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'default' })
@@ -137,6 +171,21 @@ describe('bootstrap.server', () => {
     expect(registerAuditSubscribers).toHaveBeenCalledOnce();
     expect(registerBackInStockSubscribers).toHaveBeenCalledOnce();
     expect(registerLoyaltySubscribers).toHaveBeenCalledOnce();
+  });
+
+  it('registers stub providers when env keys are set', () => {
+    process.env.KLARNA_API_KEY = 'test-klarna';
+    process.env.TAXJAR_API_KEY = 'test-taxjar';
+    process.env.CARRIER_API_KEY = 'test-carrier';
+
+    registerBuiltins();
+
+    expect(registerPayment).toHaveBeenCalledWith('klarna', expect.any(Object));
+    expect(registerShipping).toHaveBeenCalledWith(
+      'carrier',
+      expect.any(Object)
+    );
+    expect(registerTax).toHaveBeenCalledWith('taxjar', expect.any(Object));
   });
 
   it('is idempotent — second call is a no-op', () => {

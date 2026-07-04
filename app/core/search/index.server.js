@@ -8,6 +8,8 @@
 // filters shape:
 //   {
 //     categoryId?: string,
+//     productIds?: string[], // scope results to these product IDs
+//     channelId?: string,    // sales channel publish filter + price overrides
 //     priceMin?: number,   // cents
 //     priceMax?: number,   // cents
 //     inStock?: boolean,
@@ -25,6 +27,11 @@
 import logger from '#/utils/logger.server';
 import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
+
+import {
+  applyChannelPricesToProducts,
+  buildChannelPublishedWhere,
+} from '#/core/channels/index.server';
 
 // ---------------------------------------------------------------------------
 // Registry
@@ -402,6 +409,8 @@ export const dbProvider = {
   } = {}) {
     const {
       categoryId,
+      productIds,
+      channelId,
       priceMin,
       priceMax,
       inStock,
@@ -413,17 +422,24 @@ export const dbProvider = {
       getTextMatchIds(query, locale),
       getPriceMatchIds(priceMin, priceMax, currency),
     ]);
-    const idFilter = intersectIds(textIds, priceIds);
+    let idFilter = intersectIds(textIds, priceIds);
+    if (Array.isArray(productIds)) {
+      idFilter = productIds.length ? intersectIds(idFilter, productIds) : [];
+    }
 
     const where = { publishedAt: { not: null } };
     if (idFilter !== null) {
-      where.id = { in: idFilter };
+      where.id = { in: idFilter.length ? idFilter : ['__none__'] };
     }
     if (categoryId) {
       where.categories = { some: { categoryId } };
     }
 
+    const channelWhere = buildChannelPublishedWhere(channelId);
     const andConditions = [];
+    if (Object.keys(channelWhere).length > 0) {
+      andConditions.push(channelWhere);
+    }
 
     if (inStock === true) {
       andConditions.push({
@@ -455,9 +471,14 @@ export const dbProvider = {
       buildFacets({ where, currency, locale }),
     ]);
 
-    const products = await hydrateProducts(rawProducts, locale);
+    let products = await hydrateProducts(rawProducts, locale);
+    products = await applyChannelPricesToProducts(
+      products,
+      channelId,
+      currency
+    );
 
-    logger.debug({ query, total, page, sort }, 'search:db');
+    logger.debug({ query, total, page, sort, channelId }, 'search:db');
 
     return { products, total, facets };
   },

@@ -131,6 +131,7 @@ export async function placeOrder(
       paymentProvider ?? session.paymentProvider ?? null;
     const initialStatus =
       effectiveProvider === 'manual' ? 'pending_payment' : 'pending';
+    const pickupLocationId = shippingOption?.pickupLocationId ?? null;
 
     const rawInventoryItems = lines
       .filter((line) => line.variantId != null)
@@ -161,6 +162,7 @@ export async function placeOrder(
         billingAddressJson: session.billingAddressJson ?? null,
         paymentProvider: effectiveProvider,
         paymentIntentId: paymentIntentId ?? null,
+        pickupLocationId,
         couponCode: primaryCouponCode ?? session.couponCode ?? null,
         vatId: session.vatId ?? null,
         taxExempt: session.taxExempt ?? false,
@@ -273,6 +275,19 @@ export async function placeOrder(
   );
 
   return createdOrder;
+}
+
+/**
+ * Attach a Stripe PaymentIntent id to a placed order.
+ *
+ * @param {string} orderId
+ * @param {string} paymentIntentId
+ */
+export async function attachPaymentIntent(orderId, paymentIntentId) {
+  return prisma.order.update({
+    where: { id: orderId },
+    data: { paymentIntentId },
+  });
 }
 
 // ---------------------------------------------------------------------------

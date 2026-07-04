@@ -72,6 +72,27 @@ export async function getCheckoutSession(sessionId) {
   });
 }
 
+/**
+ * Attach a logged-in customer to a checkout session when not already linked.
+ *
+ * @param {string} sessionId
+ * @param {string} customerId
+ * @returns {Promise<object|null>} updated session or existing session
+ */
+export async function linkCheckoutCustomer(sessionId, customerId) {
+  if (!customerId) return null;
+
+  const session = await prisma.checkoutSession.findUnique({
+    where: { id: sessionId },
+  });
+  if (!session || session.customerId) return session;
+
+  return prisma.checkoutSession.update({
+    where: { id: sessionId },
+    data: { customerId },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // advanceStep
 // ---------------------------------------------------------------------------

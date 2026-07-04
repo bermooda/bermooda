@@ -4,8 +4,10 @@
  */
 export const routeComponents = {
   '/': 'HomePage',
+  '/search': 'SearchPage',
   '/products/:slug': 'ProductPage',
   '/categories/:slug': 'CategoryPage',
+  '/collections/:handle': 'CollectionPage',
   '/cart': 'CartPage',
   '/checkout/:step': 'CheckoutLayout',
   '/thank-you/:orderNumber': 'CheckoutThankYouPage',

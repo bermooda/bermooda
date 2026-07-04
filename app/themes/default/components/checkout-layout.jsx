@@ -1,12 +1,13 @@
 import { CheckIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import { Link, Form, useNavigation } from 'react-router';
+import { Link, Form, useActionData, useNavigation } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
 import { formatPrice } from '#/core/index';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';
+import StripePaymentElement from '#/themes/default/components/stripe-payment-element';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -462,6 +463,18 @@ function ShippingStep({
                   <span className="text-sm font-medium text-stone-900">
                     {option.name}
                   </span>
+                  {option.pickupAddress && (
+                    <p className="text-xs text-stone-500">
+                      {[
+                        option.pickupAddress.line1,
+                        option.pickupAddress.city,
+                        option.pickupAddress.state,
+                        option.pickupAddress.postalCode,
+                      ]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </p>
+                  )}
                 </div>
                 <span className="text-sm text-stone-600">
                   {option.priceCents === 0
@@ -488,6 +501,93 @@ function ShippingStep({
 }
 
 // ---------------------------------------------------------------------------
+// Payment tenders (gift card, store credit, loyalty)
+// ---------------------------------------------------------------------------
+
+function TenderOptions({ session, tenderBalances, currency, locale, t }) {
+  const showStoreCredit =
+    tenderBalances?.isLoggedIn && tenderBalances.storeCreditBalanceCents > 0;
+  const showLoyalty =
+    tenderBalances?.isLoggedIn &&
+    tenderBalances.loyaltyEnabled &&
+    tenderBalances.loyaltyBalance > 0;
+
+  return (
+    <fieldset className="space-y-4">
+      <legend className="mb-1 text-sm font-semibold text-stone-900">
+        {t('checkout.tenders.title')}
+      </legend>
+
+      <div>
+        <FieldLabel htmlFor="giftCardCode">
+          {t('checkout.tenders.giftCard')}
+        </FieldLabel>
+        <TextInput
+          id="giftCardCode"
+          name="giftCardCode"
+          defaultValue={session?.giftCardCode ?? ''}
+          placeholder="XXXX-XXXX-XXXX"
+        />
+      </div>
+
+      {showStoreCredit && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-stone-200 bg-white p-4 shadow-sm transition-colors hover:border-stone-400 has-[:checked]:border-stone-900 has-[:checked]:bg-stone-50">
+          <input
+            type="checkbox"
+            name="useStoreCredit"
+            defaultChecked={(session?.storeCreditCents ?? 0) > 0}
+            className="mt-0.5 h-4 w-4 rounded border-stone-300 text-stone-900 focus:ring-stone-500"
+          />
+          <span className="text-sm text-stone-900">
+            {t('checkout.tenders.applyStoreCredit')}{' '}
+            <span className="font-semibold">
+              {formatPrice(
+                tenderBalances.storeCreditBalanceCents,
+                currency,
+                locale
+              )}
+            </span>
+          </span>
+        </label>
+      )}
+
+      {showLoyalty && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-stone-200 bg-white p-4 shadow-sm transition-colors hover:border-stone-400 has-[:checked]:border-stone-900 has-[:checked]:bg-stone-50">
+          <input
+            type="checkbox"
+            name="useLoyalty"
+            defaultChecked={(session?.loyaltyPointsCents ?? 0) > 0}
+            className="mt-0.5 h-4 w-4 rounded border-stone-300 text-stone-900 focus:ring-stone-500"
+          />
+          <span className="text-sm text-stone-900">
+            {t('checkout.tenders.applyLoyalty', {
+              points: tenderBalances.loyaltyBalance.toLocaleString(),
+              value: formatPrice(
+                tenderBalances.loyaltyValueCents,
+                currency,
+                locale
+              ),
+            })}
+          </span>
+        </label>
+      )}
+
+      {tenderBalances && !tenderBalances.isLoggedIn && (
+        <p className="text-sm text-stone-500">
+          {t('checkout.tenders.signInPrompt')}{' '}
+          <Link
+            to="/account/login"
+            className="font-medium text-stone-800 underline-offset-4 hover:underline"
+          >
+            {t('nav.signIn')}
+          </Link>
+        </p>
+      )}
+    </fieldset>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Payment step
 // ---------------------------------------------------------------------------
 
@@ -496,6 +596,7 @@ function PaymentStep({
   cart,
   paymentProviders,
   totals,
+  tenderBalances,
   currency,
   locale,
   t,
@@ -513,6 +614,14 @@ function PaymentStep({
 
   return (
     <Form method="post" className="space-y-6">
+      <TenderOptions
+        session={session}
+        tenderBalances={tenderBalances}
+        currency={currency}
+        locale={locale}
+        t={t}
+      />
+
       <fieldset>
         <legend className="mb-3 text-sm font-semibold text-stone-900">
           Payment method
@@ -579,6 +688,7 @@ function ReviewStep({
   locale,
   t,
   isSubmitting,
+  paymentElement,
 }) {
   const addr = session?.shippingAddress ?? {};
   const lines = cart?.lines ?? [];
@@ -598,6 +708,9 @@ function ReviewStep({
     );
   const discountCents = totals?.discountCents ?? 0;
   const taxCents = totals?.taxCents ?? 0;
+  const storeCreditCents = totals?.storeCreditCents ?? 0;
+  const giftCardCents = totals?.giftCardCents ?? 0;
+  const loyaltyPointsCents = totals?.loyaltyPointsCents ?? 0;
   const totalCents =
     totals?.totalCents ??
     subtotalCents - discountCents + shippingCents + taxCents;
@@ -709,18 +822,49 @@ function ReviewStep({
             <span>{formatPrice(taxCents, currency, locale)}</span>
           </div>
         )}
+        {storeCreditCents > 0 && (
+          <div className="flex justify-between text-sm text-green-700">
+            <span>{t('checkout.tenders.storeCreditApplied')}</span>
+            <span>-{formatPrice(storeCreditCents, currency, locale)}</span>
+          </div>
+        )}
+        {giftCardCents > 0 && (
+          <div className="flex justify-between text-sm text-green-700">
+            <span>{t('checkout.tenders.giftCardApplied')}</span>
+            <span>-{formatPrice(giftCardCents, currency, locale)}</span>
+          </div>
+        )}
+        {loyaltyPointsCents > 0 && (
+          <div className="flex justify-between text-sm text-green-700">
+            <span>{t('checkout.tenders.loyaltyApplied')}</span>
+            <span>-{formatPrice(loyaltyPointsCents, currency, locale)}</span>
+          </div>
+        )}
         <div className="flex justify-between border-t border-stone-200 pt-2 text-sm font-bold text-stone-900">
           <span>{t('checkout.total')}</span>
           <span>{formatPrice(totalCents, currency, locale)}</span>
         </div>
       </div>
 
-      <Form method="post" className="space-y-3">
-        <input type="hidden" name="_action" value="review" />
-        <SubmitButton disabled={isSubmitting}>
-          {isSubmitting ? t('common.loading') : t('checkout.placeOrder')}
-        </SubmitButton>
-      </Form>
+      {paymentElement ? (
+        <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+          <h3 className="mb-3 text-sm font-semibold text-stone-900">
+            Complete payment
+          </h3>
+          <StripePaymentElement
+            publishableKey={paymentElement.publishableKey}
+            clientSecret={paymentElement.clientSecret}
+            orderNumber={paymentElement.orderNumber}
+          />
+        </div>
+      ) : (
+        <Form method="post" className="space-y-3">
+          <input type="hidden" name="_action" value="review" />
+          <SubmitButton disabled={isSubmitting}>
+            {isSubmitting ? t('common.loading') : t('checkout.placeOrder')}
+          </SubmitButton>
+        </Form>
+      )}
     </div>
   );
 }
@@ -736,12 +880,15 @@ export default function CheckoutLayout({
   shippingQuotes,
   paymentProviders,
   totals,
+  tenderBalances,
   locale,
   currency,
 }) {
   const t = useT();
   const navigation = useNavigation();
+  const actionData = useActionData();
   const isSubmitting = navigation.state === 'submitting';
+  const paymentElement = actionData?.paymentElement ?? null;
 
   const currentStep = step ?? session?.step ?? 'address';
   const backHref = STEP_BACK[currentStep];
@@ -772,6 +919,7 @@ export default function CheckoutLayout({
             cart={cart}
             paymentProviders={paymentProviders}
             totals={totals}
+            tenderBalances={tenderBalances}
             currency={effectiveCurrency}
             locale={effectiveLocale}
             t={t}
@@ -790,6 +938,7 @@ export default function CheckoutLayout({
             locale={effectiveLocale}
             t={t}
             isSubmitting={isSubmitting}
+            paymentElement={paymentElement}
           />
         );
       default:

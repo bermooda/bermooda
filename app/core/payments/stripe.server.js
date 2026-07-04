@@ -181,16 +181,20 @@ export const stripeProvider = {
     cart,
     orderId,
     customerId,
+    amountCents,
+    currency,
     savePaymentMethod = false,
   }) {
-    const amount = (cart?.lines ?? []).reduce(
-      (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-      0
-    );
+    const amount =
+      amountCents ??
+      (cart?.lines ?? []).reduce(
+        (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
+        0
+      );
 
     const intentParams = {
       amount,
-      currency: (cart?.currency ?? 'USD').toLowerCase(),
+      currency: (currency ?? cart?.currency ?? 'USD').toLowerCase(),
       automatic_payment_methods: { enabled: true },
       metadata: orderId ? { orderId } : {},
     };
