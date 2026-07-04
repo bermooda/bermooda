@@ -30,6 +30,7 @@ import {
 } from '#/core/payments/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import { getStoreCreditBalance } from '#/core/store-credit/index.server';
+import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
@@ -165,7 +166,7 @@ export async function loader({ request, params }) {
   const needsTenderBalances = step === 'payment' || step === 'review';
   const effectiveCustomerId = session.customerId ?? customerId ?? undefined;
 
-  const [shippingQuotes, paymentProviders, totals, tenderBalances] =
+  const [shippingQuotes, paymentProviders, totals, tenderBalances, slotBlocks] =
     await Promise.all([
       needsQuotes && shippingAddress
         ? getAllQuotes({ cart, shippingAddress })
@@ -177,6 +178,9 @@ export async function loader({ request, params }) {
       needsTenderBalances
         ? loadTenderBalances(effectiveCustomerId)
         : Promise.resolve(null),
+      step === 'payment'
+        ? getSlotBlocksMap(['checkout.afterPayment'])
+        : Promise.resolve({}),
     ]);
 
   const headers = new Headers();
@@ -197,6 +201,7 @@ export async function loader({ request, params }) {
       tenderBalances,
       locale,
       currency,
+      slotBlocks,
       stripePublishableKey: process.env.STRIPE_PUBLIC_KEY ?? null,
     },
     { headers }

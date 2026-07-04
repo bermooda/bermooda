@@ -35,6 +35,10 @@ vi.mock('#/utils/cache.server', () => ({
   default: {},
 }));
 
+vi.mock('#/core/plugins/index.server', () => ({
+  getPluginBlocksForSlot: vi.fn(async () => []),
+}));
+
 // ---------------------------------------------------------------------------
 // Import modules AFTER mocks are registered.
 // ---------------------------------------------------------------------------
@@ -45,11 +49,14 @@ const {
   resolveActiveTheme,
   getStorefrontComponent,
   getSlotBlocks,
+  getSlotBlocksMap,
   SLOT_NAMES,
   __resetRegistry,
 } = await import('#/core/themes/index.server');
 
 import prisma from '#/libs/prisma.server';
+
+import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -312,5 +319,29 @@ describe('getSlotBlocks', () => {
       const blocks = await getSlotBlocks(slotName);
       expect(blocks).toEqual([]);
     }
+  });
+});
+
+describe('getSlotBlocksMap', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns a slot-keyed map for every requested slot', async () => {
+    getPluginBlocksForSlot
+      .mockResolvedValueOnce([{ pluginId: 'hero', component: () => null }])
+      .mockResolvedValueOnce([{ pluginId: 'featured', component: () => null }]);
+
+    const slotBlocks = await getSlotBlocksMap(['home.hero', 'home.featured']);
+
+    expect(getPluginBlocksForSlot).toHaveBeenCalledTimes(2);
+    expect(getPluginBlocksForSlot).toHaveBeenNthCalledWith(1, 'home.hero');
+    expect(getPluginBlocksForSlot).toHaveBeenNthCalledWith(2, 'home.featured');
+    expect(slotBlocks).toEqual({
+      'home.hero': [{ pluginId: 'hero', component: expect.any(Function) }],
+      'home.featured': [
+        { pluginId: 'featured', component: expect.any(Function) },
+      ],
+    });
   });
 });

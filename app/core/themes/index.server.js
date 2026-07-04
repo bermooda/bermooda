@@ -172,6 +172,20 @@ export async function getSlotBlocks(slotName) {
   return getPluginBlocksForSlot(slotName);
 }
 
+/**
+ * Returns a slot-keyed map of plugin blocks for the requested slot names.
+ *
+ * @param {string[]} slotNames
+ * @returns {Promise<Record<string, Array<{ pluginId: string, component: unknown }>>>}
+ */
+export async function getSlotBlocksMap(slotNames = []) {
+  const entries = await Promise.all(
+    slotNames.map(async (slotName) => [slotName, await getSlotBlocks(slotName)])
+  );
+
+  return Object.fromEntries(entries);
+}
+
 // ---------------------------------------------------------------------------
 // Internal exports (for testing)
 // ---------------------------------------------------------------------------

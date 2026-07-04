@@ -53,7 +53,7 @@ export default function ProductPage({
   customer,
   wishlistedVariantIds = [],
   actionData,
-  slotBlocks = [],
+  slotBlocks = {},
 }) {
   const t = useT();
   const fetcher = useFetcher();
@@ -98,6 +98,9 @@ export default function ProductPage({
     notifyFetcher.data?.backInStockOk || actionData?.backInStockOk;
   const notifyError =
     notifyFetcher.data?.backInStockError || actionData?.backInStockError;
+  const afterDescriptionBlocks = slotBlocks['product.afterDescription'] ?? [];
+  const sidebarBlocks = slotBlocks['product.sidebar'] ?? [];
+  const slotProps = { product, locale, currency };
 
   const images = product.media ?? [];
   const activeImage = images[activeImageIndex];
@@ -192,251 +195,276 @@ export default function ProductPage({
           </div>
 
           {/* Product info */}
-          <div className="flex flex-col gap-6 lg:pt-2">
-            <div>
-              <div className="text-[11px] font-semibold tracking-[0.22em] text-stone-500 uppercase">
-                Bermooda Studio
-              </div>
-              <h1 className="mt-2 font-serif text-4xl leading-tight tracking-tight text-stone-900 md:text-5xl">
-                {product.title}
-              </h1>
-
-              {/* Price */}
-              {priceEntry && (
-                <p className="mt-4 text-2xl font-semibold text-stone-900">
-                  {formatPrice(
-                    priceEntry.priceCents,
-                    priceEntry.currency,
-                    locale
-                  )}
-                </p>
-              )}
-            </div>
-
-            {/* Variant selectors */}
-            {hasOptions &&
-              product.options.map((option) => (
-                <div key={option.id}>
-                  <p className="mb-2 text-sm font-semibold text-stone-800">
-                    {option.name}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {option.values.map((val) => (
-                      <button
-                        key={val.id}
-                        type="button"
-                        onClick={() =>
-                          handleOptionChange(option.name, val.value)
-                        }
-                        className={clsx(
-                          'rounded-full border px-4 py-2 text-sm font-medium transition-colors',
-                          selectedOptions[option.name] === val.value
-                            ? 'border-stone-900 bg-stone-900 text-white'
-                            : 'border-stone-300 text-stone-700 hover:border-stone-500'
-                        )}
-                      >
-                        {val.value}
-                      </button>
-                    ))}
-                  </div>
+          <div
+            className={clsx(
+              'lg:pt-2',
+              sidebarBlocks.length > 0
+                ? 'xl:grid xl:grid-cols-[minmax(0,1fr)_260px] xl:gap-8'
+                : ''
+            )}
+          >
+            <div className="flex flex-col gap-6">
+              <div>
+                <div className="text-[11px] font-semibold tracking-[0.22em] text-stone-500 uppercase">
+                  Bermooda Studio
                 </div>
-              ))}
+                <h1 className="mt-2 font-serif text-4xl leading-tight tracking-tight text-stone-900 md:text-5xl">
+                  {product.title}
+                </h1>
 
-            <div className="flex flex-col gap-4">
-              <fetcher.Form method="post" action="/cart">
-                <input type="hidden" name="intent" value="add" />
-                <input
-                  type="hidden"
-                  name="variantId"
-                  value={selectedVariant?.id ?? ''}
-                />
-
-                <div className="flex flex-col gap-4">
-                  {/* Quantity */}
-                  <div>
-                    <label
-                      htmlFor="quantity"
-                      className="mb-2 block text-sm font-semibold text-stone-800"
-                    >
-                      {t('product.quantity')}
-                    </label>
-                    <input
-                      id="quantity"
-                      type="number"
-                      name="quantity"
-                      min={1}
-                      max={maxQty}
-                      value={quantity}
-                      onChange={(e) =>
-                        setQuantity(
-                          Math.max(
-                            1,
-                            Math.min(maxQty, parseInt(e.target.value, 10) || 1)
-                          )
-                        )
-                      }
-                      className="w-24 rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 outline-none focus:ring-2 focus:ring-stone-300"
-                    />
-                  </div>
-
-                  {/* Add to cart button */}
-                  <button
-                    type="submit"
-                    disabled={!inStock || isSubmitting || !selectedVariant}
-                    className={clsx(
-                      'w-full rounded-full py-3.5 px-6 text-sm font-semibold transition-all',
-                      inStock && selectedVariant
-                        ? 'text-white shadow-md hover:-translate-y-0.5 hover:shadow-lg disabled:translate-y-0 disabled:opacity-90'
-                        : 'cursor-not-allowed bg-stone-200 text-stone-400'
+                {/* Price */}
+                {priceEntry && (
+                  <p className="mt-4 text-2xl font-semibold text-stone-900">
+                    {formatPrice(
+                      priceEntry.priceCents,
+                      priceEntry.currency,
+                      locale
                     )}
-                    style={
-                      inStock && selectedVariant
-                        ? {
-                            background: GREEN,
-                            boxShadow: '0 8px 24px -8px rgba(47,74,58,.45)',
-                          }
-                        : undefined
-                    }
-                  >
-                    {isSubmitting
-                      ? t('common.loading')
-                      : !inStock
-                        ? t('product.outOfStock')
-                        : !selectedVariant
-                          ? t('product.selectVariant')
-                          : t('product.addToCart')}
-                  </button>
-                </div>
-              </fetcher.Form>
+                  </p>
+                )}
+              </div>
 
-              {/* Wishlist */}
-              {customer ? (
-                <wishlistFetcher.Form method="post">
-                  <input
-                    type="hidden"
-                    name="intent"
-                    value={isWishlisted ? 'wishlist-remove' : 'wishlist-add'}
-                  />
+              {/* Variant selectors */}
+              {hasOptions &&
+                product.options.map((option) => (
+                  <div key={option.id}>
+                    <p className="mb-2 text-sm font-semibold text-stone-800">
+                      {option.name}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {option.values.map((val) => (
+                        <button
+                          key={val.id}
+                          type="button"
+                          onClick={() =>
+                            handleOptionChange(option.name, val.value)
+                          }
+                          className={clsx(
+                            'rounded-full border px-4 py-2 text-sm font-medium transition-colors',
+                            selectedOptions[option.name] === val.value
+                              ? 'border-stone-900 bg-stone-900 text-white'
+                              : 'border-stone-300 text-stone-700 hover:border-stone-500'
+                          )}
+                        >
+                          {val.value}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+              <div className="flex flex-col gap-4">
+                <fetcher.Form method="post" action="/cart">
+                  <input type="hidden" name="intent" value="add" />
                   <input
                     type="hidden"
                     name="variantId"
                     value={selectedVariant?.id ?? ''}
                   />
-                  <button
-                    type="submit"
-                    disabled={!selectedVariant || isWishlistBusy}
-                    className={clsx(
-                      'flex w-full items-center justify-center gap-2 rounded-full border py-3 px-6 text-sm font-semibold transition-colors',
-                      isWishlisted
-                        ? 'border-stone-900 bg-stone-900 text-white'
-                        : 'border-stone-300 text-stone-700 hover:border-stone-500 hover:bg-stone-50'
-                    )}
-                  >
-                    {isWishlisted ? (
-                      <HeartSolidIcon className="h-4 w-4" />
-                    ) : (
-                      <HeartOutlineIcon className="h-4 w-4" />
-                    )}
-                    {isWishlisted
-                      ? t('product.removeFromWishlist')
-                      : t('product.addToWishlist')}
-                  </button>
-                  {wishlistFetcher.data?.wishlistError && (
-                    <p className="mt-2 text-sm text-red-600">
-                      {wishlistFetcher.data.wishlistError}
-                    </p>
-                  )}
-                </wishlistFetcher.Form>
-              ) : (
-                <Link
-                  to={`/account/login?returnTo=${encodeURIComponent(`/products/${product.slug}`)}`}
-                  className="flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 px-6 py-3 text-sm font-semibold text-stone-700 hover:border-stone-500 hover:bg-stone-50"
-                >
-                  <HeartOutlineIcon className="h-4 w-4" />
-                  {t('product.signInToWishlist')}
-                </Link>
-              )}
 
-              {/* Back in stock */}
-              {!inStock && selectedVariant && (
-                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-                  <p className="text-sm font-semibold text-stone-800">
-                    {t('product.backInStock.title')}
-                  </p>
-                  <p className="mt-1 text-sm text-stone-600">
-                    {t('product.backInStock.description')}
-                  </p>
-                  {notifySuccess ? (
-                    <p className="mt-3 text-sm text-green-700">
-                      {t('product.backInStock.success')}
-                    </p>
-                  ) : (
-                    <notifyFetcher.Form
-                      method="post"
-                      className="mt-3 space-y-2"
-                    >
-                      <input
-                        type="hidden"
-                        name="intent"
-                        value="back-in-stock"
-                      />
-                      <input
-                        type="hidden"
-                        name="variantId"
-                        value={selectedVariant.id}
-                      />
-                      <input
-                        type="email"
-                        name="email"
-                        required
-                        defaultValue={customer?.email ?? ''}
-                        placeholder={t('product.backInStock.emailPlaceholder')}
-                        className="w-full rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 outline-none focus:ring-2 focus:ring-stone-300"
-                      />
-                      {notifyError && (
-                        <p className="text-sm text-red-600">{notifyError}</p>
-                      )}
-                      <button
-                        type="submit"
-                        disabled={notifyFetcher.state !== 'idle'}
-                        className="w-full rounded-full border border-stone-900 bg-white py-2.5 text-sm font-semibold text-stone-900 hover:bg-stone-100"
+                  <div className="flex flex-col gap-4">
+                    {/* Quantity */}
+                    <div>
+                      <label
+                        htmlFor="quantity"
+                        className="mb-2 block text-sm font-semibold text-stone-800"
                       >
-                        {notifyFetcher.state !== 'idle'
-                          ? t('common.loading')
-                          : t('product.backInStock.submit')}
-                      </button>
-                    </notifyFetcher.Form>
-                  )}
+                        {t('product.quantity')}
+                      </label>
+                      <input
+                        id="quantity"
+                        type="number"
+                        name="quantity"
+                        min={1}
+                        max={maxQty}
+                        value={quantity}
+                        onChange={(e) =>
+                          setQuantity(
+                            Math.max(
+                              1,
+                              Math.min(
+                                maxQty,
+                                parseInt(e.target.value, 10) || 1
+                              )
+                            )
+                          )
+                        }
+                        className="w-24 rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 outline-none focus:ring-2 focus:ring-stone-300"
+                      />
+                    </div>
+
+                    {/* Add to cart button */}
+                    <button
+                      type="submit"
+                      disabled={!inStock || isSubmitting || !selectedVariant}
+                      className={clsx(
+                        'w-full rounded-full py-3.5 px-6 text-sm font-semibold transition-all',
+                        inStock && selectedVariant
+                          ? 'text-white shadow-md hover:-translate-y-0.5 hover:shadow-lg disabled:translate-y-0 disabled:opacity-90'
+                          : 'cursor-not-allowed bg-stone-200 text-stone-400'
+                      )}
+                      style={
+                        inStock && selectedVariant
+                          ? {
+                              background: GREEN,
+                              boxShadow: '0 8px 24px -8px rgba(47,74,58,.45)',
+                            }
+                          : undefined
+                      }
+                    >
+                      {isSubmitting
+                        ? t('common.loading')
+                        : !inStock
+                          ? t('product.outOfStock')
+                          : !selectedVariant
+                            ? t('product.selectVariant')
+                            : t('product.addToCart')}
+                    </button>
+                  </div>
+                </fetcher.Form>
+
+                {/* Wishlist */}
+                {customer ? (
+                  <wishlistFetcher.Form method="post">
+                    <input
+                      type="hidden"
+                      name="intent"
+                      value={isWishlisted ? 'wishlist-remove' : 'wishlist-add'}
+                    />
+                    <input
+                      type="hidden"
+                      name="variantId"
+                      value={selectedVariant?.id ?? ''}
+                    />
+                    <button
+                      type="submit"
+                      disabled={!selectedVariant || isWishlistBusy}
+                      className={clsx(
+                        'flex w-full items-center justify-center gap-2 rounded-full border py-3 px-6 text-sm font-semibold transition-colors',
+                        isWishlisted
+                          ? 'border-stone-900 bg-stone-900 text-white'
+                          : 'border-stone-300 text-stone-700 hover:border-stone-500 hover:bg-stone-50'
+                      )}
+                    >
+                      {isWishlisted ? (
+                        <HeartSolidIcon className="h-4 w-4" />
+                      ) : (
+                        <HeartOutlineIcon className="h-4 w-4" />
+                      )}
+                      {isWishlisted
+                        ? t('product.removeFromWishlist')
+                        : t('product.addToWishlist')}
+                    </button>
+                    {wishlistFetcher.data?.wishlistError && (
+                      <p className="mt-2 text-sm text-red-600">
+                        {wishlistFetcher.data.wishlistError}
+                      </p>
+                    )}
+                  </wishlistFetcher.Form>
+                ) : (
+                  <Link
+                    to={`/account/login?returnTo=${encodeURIComponent(`/products/${product.slug}`)}`}
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 px-6 py-3 text-sm font-semibold text-stone-700 hover:border-stone-500 hover:bg-stone-50"
+                  >
+                    <HeartOutlineIcon className="h-4 w-4" />
+                    {t('product.signInToWishlist')}
+                  </Link>
+                )}
+
+                {/* Back in stock */}
+                {!inStock && selectedVariant && (
+                  <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                    <p className="text-sm font-semibold text-stone-800">
+                      {t('product.backInStock.title')}
+                    </p>
+                    <p className="mt-1 text-sm text-stone-600">
+                      {t('product.backInStock.description')}
+                    </p>
+                    {notifySuccess ? (
+                      <p className="mt-3 text-sm text-green-700">
+                        {t('product.backInStock.success')}
+                      </p>
+                    ) : (
+                      <notifyFetcher.Form
+                        method="post"
+                        className="mt-3 space-y-2"
+                      >
+                        <input
+                          type="hidden"
+                          name="intent"
+                          value="back-in-stock"
+                        />
+                        <input
+                          type="hidden"
+                          name="variantId"
+                          value={selectedVariant.id}
+                        />
+                        <input
+                          type="email"
+                          name="email"
+                          required
+                          defaultValue={customer?.email ?? ''}
+                          placeholder={t(
+                            'product.backInStock.emailPlaceholder'
+                          )}
+                          className="w-full rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 outline-none focus:ring-2 focus:ring-stone-300"
+                        />
+                        {notifyError && (
+                          <p className="text-sm text-red-600">{notifyError}</p>
+                        )}
+                        <button
+                          type="submit"
+                          disabled={notifyFetcher.state !== 'idle'}
+                          className="w-full rounded-full border border-stone-900 bg-white py-2.5 text-sm font-semibold text-stone-900 hover:bg-stone-100"
+                        >
+                          {notifyFetcher.state !== 'idle'
+                            ? t('common.loading')
+                            : t('product.backInStock.submit')}
+                        </button>
+                      </notifyFetcher.Form>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Description */}
+              {product.description && (
+                <div className="border-t border-stone-200 pt-8">
+                  <h2 className="mb-4 text-[11px] font-semibold tracking-[0.22em] text-stone-500 uppercase">
+                    {t('product.description')}
+                  </h2>
+                  <div
+                    className="prose prose-sm prose-stone max-w-none text-stone-600"
+                    dangerouslySetInnerHTML={{ __html: product.description }}
+                  />
                 </div>
               )}
+
+              {/* Slot: after description */}
+              <SlotBlocks
+                blocks={afterDescriptionBlocks}
+                slotProps={slotProps}
+              />
+
+              {/* Reviews */}
+              <ProductReviewsSection
+                reviews={reviews}
+                reviewSummary={reviewSummary}
+                reviewTotal={reviewTotal}
+                reviewPage={reviewPage}
+                customer={customer}
+                productSlug={product.slug}
+                actionData={actionData}
+              />
             </div>
 
-            {/* Description */}
-            {product.description && (
-              <div className="border-t border-stone-200 pt-8">
-                <h2 className="mb-4 text-[11px] font-semibold tracking-[0.22em] text-stone-500 uppercase">
-                  {t('product.description')}
-                </h2>
-                <div
-                  className="prose prose-sm prose-stone max-w-none text-stone-600"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
-                />
-              </div>
+            {sidebarBlocks.length > 0 && (
+              <aside className="mt-8 xl:mt-0">
+                <div className="xl:sticky xl:top-28">
+                  <SlotBlocks blocks={sidebarBlocks} slotProps={slotProps} />
+                </div>
+              </aside>
             )}
-
-            {/* Slot: after description */}
-            <SlotBlocks blocks={slotBlocks} />
-
-            {/* Reviews */}
-            <ProductReviewsSection
-              reviews={reviews}
-              reviewSummary={reviewSummary}
-              reviewTotal={reviewTotal}
-              reviewPage={reviewPage}
-              customer={customer}
-              productSlug={product.slug}
-              actionData={actionData}
-            />
           </div>
         </div>
       </div>

@@ -1,5 +1,7 @@
 import { Link } from 'react-router';
 
+import SlotBlocks from '#/components/storefront/slot-blocks';
+
 import { useT } from '#/core/i18n/index';
 import { formatPrice } from '#/core/index';
 
@@ -25,8 +27,11 @@ export default function AccountDashboard({
   recentOrders = [],
   locale,
   customer,
+  slotBlocks = {},
 }) {
   const t = useT();
+  const dashboardSlotBlocks = slotBlocks['account.dashboard'] ?? [];
+  const slotProps = { recentOrders, locale, customer };
 
   return (
     <div className="space-y-8">
@@ -37,6 +42,8 @@ export default function AccountDashboard({
         </h1>
         <p className="mt-1 text-sm text-zinc-500">{customer?.email}</p>
       </div>
+
+      <SlotBlocks blocks={dashboardSlotBlocks} slotProps={slotProps} />
 
       {/* Recent orders */}
       <section>
