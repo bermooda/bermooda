@@ -31,7 +31,7 @@ swallows** handler errors for every non-`checkout.*` event, a plugin literally
 cannot stop a shipment from being created or marked shipped. It can only react
 after the fact.
 
-Real merchant use cases that need a *veto*:
+Real merchant use cases that need a _veto_:
 
 - Block shipping an order flagged for fraud review.
 - Block fulfillment until a 3PL / ERP acknowledges stock allocation.
@@ -76,8 +76,8 @@ See §8.
 event bus, using a fail-closed, throw-to-veto contract.**
 
 Add one new dispatcher, `emitBefore(event, payload)`, to
-`app/core/events/index.server.js`. It reuses the *same* `handlers` map and the
-*same* `on()` / `off()` registration path that post-hooks already use — the only
+`app/core/events/index.server.js`. It reuses the _same_ `handlers` map and the
+_same_ `on()` / `off()` registration path that post-hooks already use — the only
 difference is dispatch semantics:
 
 - Handlers for `before.<event>` are awaited in registration order.
@@ -100,12 +100,12 @@ await emit('shipment.created', { shipmentId: shipment.id, orderId }); // unchang
 
 ### Why this and not the alternatives
 
-| Option | Verdict | Reasoning |
-| --- | --- | --- |
-| **`before.*` on the existing bus (chosen)** | ✅ | Smallest change that fully solves blocking. Reuses `on`/`off`, `enable`/`disable`, manifest `hooks`, `defineHooks`, `buildCtx`. Plugin authors keep one mental model: a `before.x` hook is a blocking hook. No new registry, no new manifest field. |
-| **Filter pipeline returning transformed values** | ⚠️ later | A true filter (each handler returns a possibly-mutated payload that feeds the next) is more powerful but the bus currently ignores handler return values, and mutating domain payloads mid-transaction invites subtle bugs. MVP is *veto*, not *transform*. The API below reserves return values for a future transform phase without breaking the veto contract. |
-| **Generic middleware chain (`use(fn)`), à la Express** | ❌ | Introduces a second extension primitive competing with the event bus. Plugins would need a new registration surface and lifecycle. Over-engineered for "let a plugin say no." |
-| **Provider-registry-style veto registry** | ❌ | The provider registry (payments/shipping/tax) is for *one selected implementation per type*. Blocking is *many observers, any can veto* — that is exactly what the event bus already models. |
+| Option                                                 | Verdict  | Reasoning                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`before.*` on the existing bus (chosen)**            | ✅       | Smallest change that fully solves blocking. Reuses `on`/`off`, `enable`/`disable`, manifest `hooks`, `defineHooks`, `buildCtx`. Plugin authors keep one mental model: a `before.x` hook is a blocking hook. No new registry, no new manifest field.                                                                                                               |
+| **Filter pipeline returning transformed values**       | ⚠️ later | A true filter (each handler returns a possibly-mutated payload that feeds the next) is more powerful but the bus currently ignores handler return values, and mutating domain payloads mid-transaction invites subtle bugs. MVP is _veto_, not _transform_. The API below reserves return values for a future transform phase without breaking the veto contract. |
+| **Generic middleware chain (`use(fn)`), à la Express** | ❌       | Introduces a second extension primitive competing with the event bus. Plugins would need a new registration surface and lifecycle. Over-engineered for "let a plugin say no."                                                                                                                                                                                     |
+| **Provider-registry-style veto registry**              | ❌       | The provider registry (payments/shipping/tax) is for _one selected implementation per type_. Blocking is _many observers, any can veto_ — that is exactly what the event bus already models.                                                                                                                                                                      |
 
 The chosen approach also lets us **retire the fragile `checkout.` name-based
 special case** in `emit()` (see §7): all error-propagating / blocking behavior
@@ -138,7 +138,9 @@ there).
  * @returns {Promise<object>} the payload (reserved for future transform phase).
  * @throws {HookAbortError} when a filter vetoes the action.
  */
-export async function emitBefore(event, payload) { /* ... */ }
+export async function emitBefore(event, payload) {
+  /* ... */
+}
 ```
 
 Dispatch body (pseudocode):
@@ -163,18 +165,22 @@ export class HookAbortError extends Error {
   constructor(reason, { code = 'HOOK_BLOCKED', pluginId = null } = {}) {
     super(reason);
     this.name = 'HookAbortError';
-    this.code = code;          // machine-readable, e.g. 'FRAUD_HOLD'
-    this.reason = reason;      // human-readable, safe to show a merchant
-    this.pluginId = pluginId;  // which plugin blocked (filled by the bus if null)
-    this.blocked = true;       // quick discriminator for catch blocks
+    this.code = code; // machine-readable, e.g. 'FRAUD_HOLD'
+    this.reason = reason; // human-readable, safe to show a merchant
+    this.pluginId = pluginId; // which plugin blocked (filled by the bus if null)
+    this.blocked = true; // quick discriminator for catch blocks
   }
 }
 
 /** Throw a veto. Ergonomic sugar for plugin authors. */
-export function deny(reason, opts) { throw new HookAbortError(reason, opts); }
+export function deny(reason, opts) {
+  throw new HookAbortError(reason, opts);
+}
 
 /** Type guard for route/core catch blocks. */
-export function isHookAbort(err) { return err instanceof HookAbortError || err?.blocked === true; }
+export function isHookAbort(err) {
+  return err instanceof HookAbortError || err?.blocked === true;
+}
 ```
 
 To attribute the veto to a plugin without asking authors to pass `pluginId`
@@ -196,9 +202,12 @@ export const pluginManifest = definePlugin({
   ...manifest,
   hooks: defineHooks({
     'before.shipment.ship': async ({ order }) => {
-      if (order.fraudHold) deny('Order is on fraud hold', { code: 'FRAUD_HOLD' });
+      if (order.fraudHold)
+        deny('Order is on fraud hold', { code: 'FRAUD_HOLD' });
     },
-    'shipment.shipped': async (payload) => { /* post-hook, unchanged */ },
+    'shipment.shipped': async (payload) => {
+      /* post-hook, unchanged */
+    },
   }),
 });
 ```
@@ -210,24 +219,24 @@ attribution wrapper.
 
 ### 3.4 Handler signature and return/throw contract
 
-| Aspect | Contract |
-| --- | --- |
+| Aspect    | Contract                                                                                                                                                              |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Signature | `async (payload) => void` — same as post-hooks. Handlers do **not** receive `ctx`; import `#/libs/prisma.server` etc. directly (matches existing docs/sample plugin). |
-| Allow | Return normally (return value ignored in MVP). |
-| Block | `deny(reason, { code })` — or throw any error (treated as a veto, `code: 'HOOK_BLOCKED'`). |
-| Ordering | Registration order = plugin enable order (`Setting.pluginOrder` / startup order). First veto wins; later filters do not run. |
-| Async | Awaited sequentially. Keep filters fast; they run on the request's critical path before the transaction. |
+| Allow     | Return normally (return value ignored in MVP).                                                                                                                        |
+| Block     | `deny(reason, { code })` — or throw any error (treated as a veto, `code: 'HOOK_BLOCKED'`).                                                                            |
+| Ordering  | Registration order = plugin enable order (`Setting.pluginOrder` / startup order). First veto wins; later filters do not run.                                          |
+| Async     | Awaited sequentially. Keep filters fast; they run on the request's critical path before the transaction.                                                              |
 
 ### 3.5 Error codes (reserved first-wave)
 
-| Code | Meaning |
-| --- | --- |
-| `HOOK_BLOCKED` | Generic veto (default when a plugin throws without a code). |
-| `FRAUD_HOLD` | Fulfillment blocked by fraud/risk check. |
-| `INVENTORY_HOLD` | External stock allocation not confirmed. |
-| `REFUND_POLICY` | Refund exceeds policy / requires approval. |
-| `ADDRESS_INVALID` | Address validation failed pre-placement. |
-| `COMPLIANCE_HOLD` | Export/sanctions/compliance block. |
+| Code              | Meaning                                                     |
+| ----------------- | ----------------------------------------------------------- |
+| `HOOK_BLOCKED`    | Generic veto (default when a plugin throws without a code). |
+| `FRAUD_HOLD`      | Fulfillment blocked by fraud/risk check.                    |
+| `INVENTORY_HOLD`  | External stock allocation not confirmed.                    |
+| `REFUND_POLICY`   | Refund exceeds policy / requires approval.                  |
+| `ADDRESS_INVALID` | Address validation failed pre-placement.                    |
+| `COMPLIANCE_HOLD` | Export/sanctions/compliance block.                          |
 
 Codes are just strings; plugins may define their own. Core only special-cases
 none of them — the code is passed through to the HTTP response and audit log.
@@ -242,24 +251,24 @@ so filters don't re-query. Payloads are **read-only** in MVP.
 
 ### MVP (ship first — fulfillment)
 
-| Event | Emitted in | Payload | Blocks |
-| --- | --- | --- | --- |
-| `before.shipment.create` | `addShipment()` before `$transaction` | `{ orderId, order, data }` (`order` incl. `lines`; `data` = requested carrier/tracking/lines) | Creating a shipment record |
-| `before.shipment.ship` | `markShipped()` before `$transaction` | `{ shipmentId, orderId, shipment, order, data }` | Marking a shipment shipped / decrementing fulfillable qty |
+| Event                    | Emitted in                            | Payload                                                                                       | Blocks                                                    |
+| ------------------------ | ------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `before.shipment.create` | `addShipment()` before `$transaction` | `{ orderId, order, data }` (`order` incl. `lines`; `data` = requested carrier/tracking/lines) | Creating a shipment record                                |
+| `before.shipment.ship`   | `markShipped()` before `$transaction` | `{ shipmentId, orderId, shipment, order, data }`                                              | Marking a shipment shipped / decrementing fulfillable qty |
 
 ### Wave 2 (order lifecycle + money)
 
-| Event | Emitted in | Payload | Blocks |
-| --- | --- | --- | --- |
-| `before.order.place` | `placeOrder()` **inside** tx, after session/totals load, before `order.create` | `{ checkoutSessionId, session, cart, totals }` | Order creation (rolls the tx back) |
-| `before.order.cancel` | `cancelOrder()` before inventory restore | `{ orderId, order }` | Cancelling an order |
-| `before.refund.create` | `createRefund()` before `refund.create` | `{ orderId, order, amountCents, reason }` | Issuing a refund |
-| `before.shipment.deliver` | `markDelivered()` | `{ shipmentId }` | Marking delivered |
+| Event                     | Emitted in                                                                     | Payload                                        | Blocks                             |
+| ------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------- | ---------------------------------- |
+| `before.order.place`      | `placeOrder()` **inside** tx, after session/totals load, before `order.create` | `{ checkoutSessionId, session, cart, totals }` | Order creation (rolls the tx back) |
+| `before.order.cancel`     | `cancelOrder()` before inventory restore                                       | `{ orderId, order }`                           | Cancelling an order                |
+| `before.refund.create`    | `createRefund()` before `refund.create`                                        | `{ orderId, order, amountCents, reason }`      | Issuing a refund                   |
+| `before.shipment.deliver` | `markDelivered()`                                                              | `{ shipmentId }`                               | Marking delivered                  |
 
 ### Wave 3 (checkout flow)
 
-| Event | Emitted in | Payload | Blocks |
-| --- | --- | --- | --- |
+| Event                     | Emitted in                                 | Payload                                              | Blocks                                                                                           |
+| ------------------------- | ------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `before.checkout.advance` | `advanceStep()` before persisting the step | `{ sessionId, session, fromStep, toStep, stepData }` | Advancing to the next checkout step (e.g. address validation on the address→shipping transition) |
 
 **Prioritization:** implement MVP (fulfillment) end-to-end first — it is the
@@ -267,7 +276,7 @@ requested target, has a self-contained transaction boundary, and both call sites
 already load the `order` with `lines`. Waves 2–3 follow the identical pattern.
 
 `before.order.place` is the one nuance: placement runs entirely inside a
-`$transaction`. Emitting the filter *inside* the tx means a veto rolls back
+`$transaction`. Emitting the filter _inside_ the tx means a veto rolls back
 cleanly, but filter handlers then run while a DB transaction is open — keep them
 non-blocking / no long I/O, or (preferred) emit `before.order.place` **before**
 opening the transaction using a cheap pre-read of the session. The design picks
@@ -287,12 +296,14 @@ import { emit, emitBefore } from '#/core/events/index.server';
 
 export async function addShipment(orderId, data = {}) {
   const order = await prisma.order.findUnique({
-    where: { id: orderId }, include: { lines: true },
+    where: { id: orderId },
+    include: { lines: true },
   });
   if (!order) throw new Error('ORDER_NOT_FOUND');
 
   const shipmentLines = data.lines ?? [];
-  if (shipmentLines.length > 0) validateShipmentLines(order.lines, shipmentLines);
+  if (shipmentLines.length > 0)
+    validateShipmentLines(order.lines, shipmentLines);
 
   // NEW — veto point, BEFORE any write. Throws HookAbortError to abort.
   await emitBefore('shipment.create', { orderId, order, data });
@@ -306,7 +317,10 @@ export async function addShipment(orderId, data = {}) {
 `markShipped(shipmentId, data)` — shipment + order already loaded at the top:
 
 ```js
-export async function markShipped(shipmentId, { carrier, trackingNumber, trackingUrl } = {}) {
+export async function markShipped(
+  shipmentId,
+  { carrier, trackingNumber, trackingUrl } = {}
+) {
   const shipment = await prisma.shipment.findUnique({
     where: { id: shipmentId },
     include: { lines: true, order: { include: { lines: true } } },
@@ -315,13 +329,18 @@ export async function markShipped(shipmentId, { carrier, trackingNumber, trackin
 
   // NEW — veto point, before the transaction.
   await emitBefore('shipment.ship', {
-    shipmentId, orderId: shipment.orderId,
-    shipment, order: shipment.order,
+    shipmentId,
+    orderId: shipment.orderId,
+    shipment,
+    order: shipment.order,
     data: { carrier, trackingNumber, trackingUrl },
   });
 
   const updated = await prisma.$transaction(/* ...unchanged... */);
-  await emit('shipment.shipped', { shipmentId, orderId: shipment.orderId, /* ... */ });
+  await emit('shipment.shipped', {
+    shipmentId,
+    orderId: shipment.orderId /* ... */,
+  });
   return updated;
 }
 ```
@@ -416,7 +435,7 @@ Author experience notes:
 - To **allow**, do nothing. To **block**, call `deny(reason, { code })`.
 - Filters run in `Setting.pluginOrder`; the first veto short-circuits the rest.
 - Blocking hooks should be fast and side-effect-free (they may run and then a
-  *later* filter vetoes, or the same action is retried).
+  _later_ filter vetoes, or the same action is retried).
 
 ---
 
@@ -436,7 +455,7 @@ Plan:
 3. Any future checkout blocking uses `before.checkout.advance` (Wave 3), not a
    magic `checkout.*` name.
 4. Update `app/core/events/index.test.server.js`: replace the three
-   "checkout.* rethrow" cases with equivalent `emitBefore` veto cases, and add a
+   "checkout.\* rethrow" cases with equivalent `emitBefore` veto cases, and add a
    case asserting `emit('checkout.completed', ...)` now swallows handler errors
    like any other event.
 
@@ -469,8 +488,9 @@ the admin action):
 import { enable, disable } from '#/core/plugins/index.server';
 
 // ...after updating the enabledPlugins array + settings.set('enabledPlugins', ...)
-if (intent === 'enable')  await enable(pluginId);   // registers before.* + post hooks now
-else                      await disable(pluginId);  // off()s them now
+if (intent === 'enable')
+  await enable(pluginId); // registers before.* + post hooks now
+else await disable(pluginId); // off()s them now
 ```
 
 Notes / cleanup for the implementer:
@@ -491,8 +511,9 @@ Notes / cleanup for the implementer:
 // in enable(), when iterating manifest.hooks
 const wrapped = event.startsWith('before.')
   ? async (payload) => {
-      try { return await handler(payload); }
-      catch (err) {
+      try {
+        return await handler(payload);
+      } catch (err) {
         if (isHookAbort(err) && !err.pluginId) err.pluginId = pluginId;
         throw err;
       }
@@ -523,7 +544,7 @@ alerts, per `.cursor/rules/alerting.mdc`).
   (`registerAuditSubscribers`, `app/core/audit/index.server`) records blocks.
   This is optional for MVP but cheap and high-signal. Do **not** add
   `hook.blocked` to `WEBHOOK_EVENTS` initially.
-- **Distinguish veto vs crash:** a plugin filter that throws a *non*-veto error
+- **Distinguish veto vs crash:** a plugin filter that throws a _non_-veto error
   (a real bug) still aborts the action (fail-closed) but logs at `error`. Both
   reach the caller; the route shows a generic message for non-veto errors. This
   fail-closed default is intentional for a blocking pipeline — a broken risk
@@ -541,7 +562,7 @@ alerts, per `.cursor/rules/alerting.mdc`).
 - A handler that throws a plain `Error` also aborts (fail-closed), surfaced as
   `code: 'HOOK_BLOCKED'` after loader wrapping (test the wrapper separately).
 - `emitBefore` with no registered handlers resolves and returns the payload.
-- **Regression:** `emit()` now swallows errors for *all* events including
+- **Regression:** `emit()` now swallows errors for _all_ events including
   `checkout.*` (replace the old rethrow cases).
 
 ### Unit — plugin loader (`app/core/plugins/index.test.server.js`)
@@ -586,11 +607,11 @@ Ordered; each is independently shippable and green.
    `isHookAbort` to `app/core/events/index.server.js`. Collapse the `checkout.`
    special case in `emit()`. Re-export the new symbols from
    `app/core/plugins/index.server.js`. Update `events` unit tests (§7, §10).
-   *No behavior change to existing emits except checkout error-swallowing.*
+   _No behavior change to existing emits except checkout error-swallowing._
 2. **PR2 — Live enable/disable + attribution wrapper.** Fix
    `app/routes/admin/plugins/index.jsx` to call `enable()`/`disable()`. Add the
-   `before.*` attribution wrapper in `enable()`. Loader unit tests. *Prerequisite
-   for filters to work at runtime.*
+   `before.*` attribution wrapper in `enable()`. Loader unit tests. _Prerequisite
+   for filters to work at runtime._
 3. **PR3 — Fulfillment integration (MVP).** Add `emitBefore('shipment.create')`
    and `emitBefore('shipment.ship')` to `orders/index.server.js`. Enrich the two
    route catch blocks (`admin/orders/$id.jsx`, `api/admin/v1/.../shipments.jsx`)
@@ -611,24 +632,24 @@ Ordered; each is independently shippable and green.
 - **Fail-closed default.** A buggy filter that throws blocks the action. This is
   deliberate for fulfillment/refunds (safety over availability) but is a support
   burden. Mitigation: clear `warn`/`error` logs with `pluginId`; a broken plugin
-  can be disabled from the admin (now that PR2 makes disable live). *Open q:* do
+  can be disabled from the admin (now that PR2 makes disable live). _Open q:_ do
   we want a per-event "advisory" mode where a thrown error logs but allows?
   Recommend **no** for MVP — keep semantics simple.
 - **`before.order.place` transaction boundary.** Placement is fully
-  transactional. The plan emits the filter *before* opening the tx using a cheap
+  transactional. The plan emits the filter _before_ opening the tx using a cheap
   session pre-read; if a filter needs the exact computed totals, we'd have to
   either emit inside the tx (holding it open across plugin I/O — discouraged) or
-  compute totals twice. *Open q:* is pre-transaction context enough for real
+  compute totals twice. _Open q:_ is pre-transaction context enough for real
   placement filters? For MVP fulfillment this doesn't arise.
 - **Ordering determinism.** First-veto-wins depends on `Setting.pluginOrder`.
-  Two filters with conflicting opinions: order matters only for *which reason*
+  Two filters with conflicting opinions: order matters only for _which reason_
   the user sees, not whether it's blocked. Acceptable.
 - **Performance.** Filters run synchronously on the request critical path before
   the transaction. Slow external calls (fraud APIs) add latency. Guidance in
   docs: keep filters fast; do heavy work in post-hooks or queue jobs and cache a
   decision in `PluginData` that the filter reads.
 - **Persistence split (`enabledPlugins` array vs `plugin.<id>.enabled`).** PR2
-  keeps both. *Open q:* consolidate to one source of truth in a later cleanup?
+  keeps both. _Open q:_ consolidate to one source of truth in a later cleanup?
   Out of scope here.
 - **No transform in MVP.** If a concrete need for payload mutation (e.g. a plugin
   rewriting a shipping address) appears, extend `emitBefore` to thread handler

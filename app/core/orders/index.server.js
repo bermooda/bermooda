@@ -34,6 +34,23 @@ const VALID_ORDER_STATUSES = new Set([
 ]);
 const VALID_REFUND_STATUSES = new Set(['pending', 'succeeded', 'failed']);
 
+function buildOrderEventPayload(order, checkoutSessionId) {
+  return {
+    orderId: order.id,
+    orderNumber: order.orderNumber,
+    checkoutSessionId,
+    customerId: order.customerId,
+    email: order.email,
+    status: order.status,
+    subtotalCents: order.subtotalCents,
+    shippingCents: order.shippingCents,
+    taxCents: order.taxCents,
+    discountCents: order.discountCents,
+    totalCents: order.totalCents,
+    currency: order.currency,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // placeOrder
 // ---------------------------------------------------------------------------
@@ -260,14 +277,9 @@ export async function placeOrder(
   });
 
   // After transaction commits — emit event
-  await emit('order.created', {
-    orderId: createdOrder.id,
-    orderNumber: createdOrder.orderNumber,
-    customerId: createdOrder.customerId,
-    email: createdOrder.email,
-    totalCents: createdOrder.totalCents,
-    currency: createdOrder.currency,
-  });
+  const orderPayload = buildOrderEventPayload(createdOrder, checkoutSessionId);
+  await emit('order.created', orderPayload);
+  await emit('checkout.completed', orderPayload);
 
   logger.info(
     { orderId: createdOrder.id, orderNumber: createdOrder.orderNumber },
@@ -356,10 +368,25 @@ export async function updateOrderStatus(id, status) {
     throw new Error('INVALID_ORDER_STATUS');
   }
 
-  return prisma.order.update({
+  const current = await prisma.order.findUnique({
+    where: { id },
+    select: { status: true },
+  });
+
+  const updated = await prisma.order.update({
     where: { id },
     data: { status },
   });
+
+  if (current && current.status !== status) {
+    await emit('order.updated', {
+      orderId: id,
+      previousStatus: current.status,
+      status,
+    });
+  }
+
+  return updated;
 }
 
 // ---------------------------------------------------------------------------
@@ -441,9 +468,23 @@ export async function syncOrderFulfillmentStatus(orderId, tx) {
     fulfillment === 'fulfilled' &&
     ['paid', 'confirmed'].includes(order.status)
   ) {
-    await client.order.update({
-      where: { id: orderId },
-      data: { status: 'fulfilled' },
+    if (tx) {
+      await client.order.update({
+        where: { id: orderId },
+        data: { status: 'fulfilled' },
+      });
+      await emit('order.updated', {
+        orderId,
+        previousStatus: order.status,
+        status: 'fulfilled',
+      });
+    } else {
+      await updateOrderStatus(orderId, 'fulfilled');
+    }
+
+    await emit('order.fulfilled', {
+      orderId,
+      status: 'fulfilled',
     });
   }
 }

@@ -12,6 +12,8 @@ import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { queuePasswordResetEmail, queueVerifyEmail } from '#/emails/job.server';
 
+import { emit } from '#/core/events/index.server';
+
 const IS_DEV = process.env.NODE_ENV === 'development';
 const CUSTOMER_AUTH_BASE_URL = config.baseUrl + config.auth.customerBasePath;
 
@@ -97,6 +99,20 @@ export const customerAuth = betterAuth({
 
   verification: {
     modelName: 'CustomerVerification',
+  },
+
+  databaseHooks: {
+    user: {
+      create: {
+        async after(user) {
+          await emit('customer.registered', {
+            customerId: user.id,
+            email: user.email,
+            name: user.name,
+          });
+        },
+      },
+    },
   },
 
   // Override password hashing and verification to increase login performance
@@ -227,7 +243,7 @@ export async function getCustomerSession(request) {
 
     return session;
   } catch (error) {
-    console.error('Customer session error:', error);
+    logger.error({ err: error }, 'Customer session error');
     return null;
   }
 }

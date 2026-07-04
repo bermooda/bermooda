@@ -42,33 +42,23 @@ export function off(event, handler) {
  * Handlers are awaited in registration order.
  *
  * Error isolation:
- * - For non-checkout events: errors are caught, logged, and remaining
- *   handlers continue executing.
- * - For checkout.* events: errors propagate immediately (transactional path).
+ * - Post-hook errors are caught, logged, and remaining handlers continue
+ *   executing.
  *
  * @param {string} event - The event name
  * @param {*} payload - The event payload
  */
 export async function emit(event, payload) {
-  // ALL checkout.* events are considered transactional — errors rethrow and
-  // abort dispatch. Non-transactional checkout analytics must use a different
-  // namespace (e.g. analytics.*) so they receive the fault-tolerant path.
-  const isCheckout = event.startsWith('checkout.');
   const eventHandlers = handlers.get(event) ?? [];
 
   for (const handler of eventHandlers) {
-    if (isCheckout) {
-      // Let checkout errors bubble up — they are transactional.
+    try {
       await handler(payload);
-    } else {
-      try {
-        await handler(payload);
-      } catch (err) {
-        logger.error(
-          { err, event },
-          `Event handler error for "${event}" — continuing dispatch`
-        );
-      }
+    } catch (err) {
+      logger.error(
+        { err, event },
+        `Event handler error for "${event}" — continuing dispatch`
+      );
     }
   }
 }

@@ -317,30 +317,96 @@ Translation keys are contributed via your plugin's `i18n/en.json` file (see [Plu
 
 ## Event Hook Catalog
 
-These are the platform events that plugins can listen to. Declare handlers in your manifest's `hooks` field using `defineHooks()`.
+These are the core platform events that bermooda emits today. Declare handlers in your manifest's `hooks` field using `defineHooks()`.
 
-| Event                 | Payload fields                                                   | Description                                     |
-| --------------------- | ---------------------------------------------------------------- | ----------------------------------------------- |
-| `order.created`       | `orderId`, `orderNumber`, `totalCents`, `currency`, `customerId` | Fired when a new order is placed and persisted. |
-| `order.updated`       | `orderId`, `status`                                              | Fired when an order's status changes.           |
-| `payment.refunded`    | `orderId`, `refundId`, `amountCents`, `currency`                 | Fired when a payment refund is completed.       |
-| `customer.registered` | `customerId`, `email`                                            | Fired when a new customer account is created.   |
-| `cart.abandoned`      | `cartId`, `customerId`, `currency`                               | Fired when a cart is detected as abandoned.     |
+### Post-action hooks
+
+These events fire after the underlying domain work has happened. Post-hooks are fault-tolerant: if a handler throws, the event bus logs the error and continues with the remaining handlers. Post-hooks do not receive `ctx`; they receive only the payload.
+
+#### Orders and checkout
+
+| Event                | Payload fields                                                                                                                                                          | Description                                                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `checkout.started`   | `sessionId`, `cartId`, `customerId`, `email`                                                                                                                            | Fired after a checkout session is created and the cart is locked.                 |
+| `checkout.completed` | `orderId`, `orderNumber`, `checkoutSessionId`, `customerId`, `email`, `status`, `subtotalCents`, `shippingCents`, `taxCents`, `discountCents`, `totalCents`, `currency` | Fired after `placeOrder()` succeeds and the checkout session is marked completed. |
+| `order.created`      | `orderId`, `orderNumber`, `checkoutSessionId`, `customerId`, `email`, `status`, `subtotalCents`, `shippingCents`, `taxCents`, `discountCents`, `totalCents`, `currency` | Fired after an order is placed successfully.                                      |
+| `order.confirmed`    | `orderId`, `orderNumber`                                                                                                                                                | Fired when a successful payment webhook confirms an order.                        |
+| `order.updated`      | `orderId`, `previousStatus`, `status`                                                                                                                                   | Fired when `updateOrderStatus()` changes an order status value.                   |
+| `order.fulfilled`    | `orderId`, `status`                                                                                                                                                     | Fired when fulfillment sync transitions an order to `fulfilled`.                  |
+| `order.cancelled`    | `orderId`, `orderNumber`                                                                                                                                                | Fired after an order is cancelled.                                                |
+| `order.returned`     | `returnId`, `orderId`                                                                                                                                                   | Fired after a return is received and the order is marked as returned.             |
+
+#### Cart, customer, and catalog
+
+| Event                 | Payload fields                                                   | Description                                                                                                       |
+| --------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `cart.created`        | `cartId`, `token`, `currency`, `customerId`, `expiresAt`         | Fired after a new cart is created.                                                                                |
+| `cart.itemAdded`      | `cartId`, `variantId`, `quantity`, `lineId`                      | Fired after a line is created or incremented in a cart.                                                           |
+| `cart.itemRemoved`    | `cartId`, `lineId`                                               | Fired after a cart line is removed.                                                                               |
+| `cart.updated`        | `cartId`, `lineId`, `quantity`                                   | Fired after a cart line quantity is updated to a positive value.                                                  |
+| `cart.abandoned`      | `cartId`, `token`, `email`, `currency`, `lineCount`, `updatedAt` | Fired when the abandoned-cart job decides a reminder sequence should run. `updatedAt` is an ISO timestamp string. |
+| `customer.registered` | `customerId`, `email`, `name`                                    | Fired after Better Auth creates a new customer account row.                                                       |
+| `product.created`     | `productId`                                                      | Fired after a product record is created.                                                                          |
+| `product.updated`     | `productId`                                                      | Fired after a product record is updated.                                                                          |
+| `product.deleted`     | `productId`                                                      | Fired after a product record is deleted.                                                                          |
+
+#### Fulfillment, payments, returns, and inventory
+
+| Event                 | Payload fields                                                      | Description                                                                                                               |
+| --------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `shipment.created`    | `shipmentId`, `orderId`                                             | Fired after a shipment record is created.                                                                                 |
+| `shipment.shipped`    | `shipmentId`, `orderId`, `carrier`, `trackingNumber`, `trackingUrl` | Fired after a shipment is marked shipped.                                                                                 |
+| `shipment.delivered`  | `shipmentId`, `orderId`                                             | Fired after a shipment is marked delivered.                                                                               |
+| `payment.succeeded`   | `type`, `orderId`, `amount`                                         | Normalized payment-provider webhook event for a successful payment. `amount` is provider-normalized cents when available. |
+| `payment.failed`      | `type`, `orderId`                                                   | Normalized payment-provider webhook event for a failed or expired payment.                                                |
+| `payment.other`       | `type`                                                              | Plugin-facing catch-all for unhandled payment-provider webhook event types.                                               |
+| `payment.refunded`    | `refundId`, `orderId`, `amountCents`                                | Fired after a refund record is created.                                                                                   |
+| `return.requested`    | `returnId`, `orderId`, `customerId`                                 | Fired after a return request is created.                                                                                  |
+| `return.approved`     | `returnId`, `orderId`, `resolution`                                 | Fired after a return request is approved.                                                                                 |
+| `return.received`     | `returnId`, `orderId`                                               | Fired after returned inventory is received.                                                                               |
+| `return.completed`    | `returnId`, `orderId`, `resolution`, `amountCents`                  | Fired after a return is completed as refund, store credit, or exchange.                                                   |
+| `return.cancelled`    | `returnId`, `orderId`                                               | Fired after a return request is cancelled.                                                                                |
+| `inventory.restocked` | `variantId`                                                         | Fired when inventory for a variant goes from out-of-stock to in-stock.                                                    |
+
+Events intentionally not emitted today:
+
+- `customer.loggedIn` — skipped for now to avoid a noisy auth event surface.
+- `product.viewed` — skipped for now; page-view analytics should use a separate analytics/event stream instead of the domain event bus.
 
 Hook handlers are plain async functions. They receive the payload as their only argument:
 
 ```js
 hooks: defineHooks({
-  'order.created': async ({ orderId, orderNumber, totalCents, currency, customerId }) => {
+  'order.updated': async ({ orderId, previousStatus, status }) => {
     // handle the event
   },
-  'customer.registered': async ({ customerId, email }) => {
+  'customer.registered': async ({ customerId, email, name }) => {
     // handle the event
   },
 }),
 ```
 
-Handlers are invoked by the event bus when the corresponding event fires. If a handler throws, the error is contained by the event bus and does not affect other handlers or the caller.
+Handlers are invoked by the event bus when the corresponding event fires. If a post-hook handler throws, the error is contained by the event bus and does not affect other handlers or the caller, including `checkout.*` post-action events.
+
+### Before-hooks (planned, not implemented yet)
+
+Blocking `before.*` hooks are design-only today. bermooda does **not** currently expose `emitBefore()`, `deny()`, or vetoable plugin hooks in production. The design reference lives in [`docs/before-hooks-plan.md`](./before-hooks-plan.md).
+
+Planned first-wave `before.*` event names:
+
+- `before.shipment.create`
+- `before.shipment.ship`
+- `before.order.place`
+- `before.order.cancel`
+- `before.refund.create`
+- `before.shipment.deliver`
+- `before.checkout.advance`
+
+Design intent (not shipped yet):
+
+- Post-hooks stay fault-tolerant and never block the caller.
+- Before-hooks would run before the mutation starts and allow a plugin to veto the action.
+- A future `deny()` helper / veto error would propagate back to the caller instead of being swallowed, so the action can be rejected cleanly.
 
 **Note:** Hook handlers do not receive `ctx`. If a handler needs database access or other services, import them directly at the top of your `index.server.js` file.
 

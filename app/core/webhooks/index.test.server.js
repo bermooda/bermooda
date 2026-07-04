@@ -29,6 +29,7 @@ vi.mock('#/utils/logger.server', () => ({
 import prisma from '#/libs/prisma.server';
 
 import {
+  WEBHOOK_EVENTS,
   createSubscription,
   deleteSubscription,
   dispatchWebhookEvent,
@@ -200,5 +201,23 @@ describe('dispatchWebhookEvent', () => {
     prisma.webhookSubscription.findMany.mockResolvedValue([]);
     await dispatchWebhookEvent('order.created', {});
     expect(prisma.webhookDelivery.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('WEBHOOK_EVENTS', () => {
+  it('includes the newly public-facing lifecycle events and excludes cart churn', () => {
+    expect(WEBHOOK_EVENTS).toEqual(
+      expect.arrayContaining([
+        'order.updated',
+        'order.fulfilled',
+        'checkout.completed',
+        'customer.registered',
+        'product.created',
+        'product.updated',
+        'product.deleted',
+      ])
+    );
+    expect(WEBHOOK_EVENTS).not.toContain('cart.created');
+    expect(WEBHOOK_EVENTS).not.toContain('cart.itemAdded');
   });
 });

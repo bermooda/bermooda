@@ -149,4 +149,68 @@ describe('audit', () => {
       }),
     });
   });
+
+  it('maps product events to product audit entries', async () => {
+    const handlers = new Map();
+    const on = vi.fn((event, handler) => {
+      if (!handlers.has(event)) handlers.set(event, []);
+      handlers.get(event).push(handler);
+    });
+
+    prisma.auditLog.create.mockResolvedValue({
+      id: 'a3',
+      actorType: 'system',
+      actorId: null,
+      actorEmail: null,
+      action: 'product.deleted',
+      entityType: 'product',
+      entityId: 'prod_99',
+      diffJson: null,
+      metadataJson: '{"productId":"prod_99"}',
+      createdAt: new Date(),
+    });
+
+    registerAuditSubscribers({ on });
+    await handlers.get('product.deleted')[0]({ productId: 'prod_99' });
+
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: 'product.deleted',
+        entityType: 'product',
+        entityId: 'prod_99',
+      }),
+    });
+  });
+
+  it('maps customer.registered to the customer entity id', async () => {
+    const handlers = new Map();
+    const on = vi.fn((event, handler) => {
+      if (!handlers.has(event)) handlers.set(event, []);
+      handlers.get(event).push(handler);
+    });
+
+    prisma.auditLog.create.mockResolvedValue({
+      id: 'a4',
+      actorType: 'system',
+      actorId: null,
+      actorEmail: null,
+      action: 'customer.registered',
+      entityType: 'customer',
+      entityId: 'cust_99',
+      diffJson: null,
+      metadataJson: '{"customerId":"cust_99"}',
+      createdAt: new Date(),
+    });
+
+    registerAuditSubscribers({ on });
+    await handlers.get('customer.registered')[0]({ customerId: 'cust_99' });
+
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: 'customer.registered',
+        entityType: 'customer',
+        entityId: 'cust_99',
+      }),
+    });
+  });
 });
