@@ -55,7 +55,9 @@ const {
   defineProvider,
   register,
   loadPlugins,
+  resolvePluginAdminRoute,
   resolvePluginRoute,
+  resolvePluginStorefrontRoute,
   enable: _enable,
   disable: _disable,
   _registry,
@@ -137,6 +139,7 @@ describe('definePlugin', () => {
     const manifest = validManifest({
       description: 'A test plugin',
       adminRoutes: '/plugins/test/routes',
+      storefrontRoutes: '/plugins/test/storefront/routes',
     });
     expect(() => definePlugin(manifest)).not.toThrow();
   });
@@ -325,14 +328,53 @@ describe('loadPlugins', () => {
 });
 
 // ---------------------------------------------------------------------------
-// resolvePluginRoute — returns null
+// Route resolution
 // ---------------------------------------------------------------------------
 
+describe('resolvePluginAdminRoute', () => {
+  it('resolves the sample analytics admin root route', () => {
+    const descriptor = resolvePluginAdminRoute('sample-analytics', '');
+
+    expect(descriptor).toMatchObject({ path: '' });
+    expect(typeof descriptor?.loader).toBe('function');
+    expect(typeof descriptor?.Component).toBe('function');
+  });
+
+  it('normalizes the admin root path before matching', () => {
+    const rootDescriptor = resolvePluginAdminRoute('sample-analytics', '');
+
+    expect(resolvePluginAdminRoute('sample-analytics', '/?tab=events')).toBe(
+      rootDescriptor
+    );
+  });
+
+  it('returns null when no admin route matches', () => {
+    expect(resolvePluginAdminRoute('sample-analytics', 'missing')).toBeNull();
+  });
+});
+
 describe('resolvePluginRoute', () => {
-  it('returns null for any input', () => {
-    expect(resolvePluginRoute('my-plugin', '/admin')).toBeNull();
-    expect(resolvePluginRoute('', '')).toBeNull();
-    expect(resolvePluginRoute(null, null)).toBeNull();
+  it('keeps the deprecated admin alias working', () => {
+    expect(resolvePluginRoute('sample-analytics', '')).toBe(
+      resolvePluginAdminRoute('sample-analytics', '')
+    );
+  });
+});
+
+describe('resolvePluginStorefrontRoute', () => {
+  it('resolves the sample analytics storefront root route', () => {
+    const descriptor = resolvePluginStorefrontRoute('sample-analytics', '');
+
+    expect(descriptor).toMatchObject({ path: '' });
+    expect(typeof descriptor?.loader).toBe('function');
+    expect(typeof descriptor?.Component).toBe('function');
+  });
+
+  it('returns null when no storefront route matches', () => {
+    expect(
+      resolvePluginStorefrontRoute('sample-analytics', 'missing')
+    ).toBeNull();
+    expect(resolvePluginStorefrontRoute('missing-plugin', '')).toBeNull();
   });
 });
 

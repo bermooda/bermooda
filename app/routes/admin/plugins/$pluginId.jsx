@@ -4,7 +4,10 @@
 import { useLoaderData } from 'react-router';
 
 import { resolvePluginAdminRoute } from '#/core/plugins/admin-routes.client';
-import { _registry, resolvePluginRoute } from '#/core/plugins/index.server';
+import {
+  _registry,
+  resolvePluginAdminRoute as resolveAdminRoute,
+} from '#/core/plugins/index.server';
 
 export function meta({ params }) {
   return [
@@ -25,11 +28,11 @@ export async function loader({ params, request }) {
 
   const { manifest } = entry;
 
-  if (!manifest.adminRoutes && !resolvePluginRoute(pluginId, splatPath)) {
+  if (!manifest.adminRoutes && !resolveAdminRoute(pluginId, splatPath)) {
     return { status: 'no-admin-routes', pluginId, manifest };
   }
 
-  const descriptor = resolvePluginRoute(pluginId, splatPath);
+  const descriptor = resolveAdminRoute(pluginId, splatPath);
 
   if (!descriptor) {
     return { status: 'no-match', pluginId, manifest, splatPath };

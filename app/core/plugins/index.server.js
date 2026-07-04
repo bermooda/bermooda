@@ -31,6 +31,7 @@ const VALID_PROVIDER_TYPES = ['payment', 'shipping', 'tax'];
  * @property {Object} [providers]
  * @property {Object} [blocks]
  * @property {string} [adminRoutes]
+ * @property {string} [storefrontRoutes]
  */
 
 /** @type {Map<string, { manifest: PluginManifest, handlers: Map<string, Function> }>} */
@@ -370,7 +371,7 @@ export function loadPlugins() {
 }
 
 // ---------------------------------------------------------------------------
-// Admin route modules (eager-loaded from app/plugins/*/admin/routes.js)
+// Plugin route modules
 // ---------------------------------------------------------------------------
 
 const adminRouteModules = import.meta.glob(
@@ -395,6 +396,54 @@ for (const [modulePath, mod] of Object.entries(adminRouteModules)) {
   }
 }
 
+const storefrontRouteModules = import.meta.glob(
+  '#/plugins/*/storefront/routes.server.js',
+  {
+    eager: true,
+  }
+);
+
+/** @type {Map<string, Array<{ path: string, loader?: Function, Component: Function }>>} */
+const storefrontRoutesByPlugin = new Map();
+
+for (const [modulePath, mod] of Object.entries(storefrontRouteModules)) {
+  const match = modulePath.match(
+    /\/plugins\/([^/]+)\/storefront\/routes\.server\.js$/
+  );
+  if (!match) continue;
+  const pluginId = match[1];
+  const routes = mod.routes ?? mod.default;
+  if (Array.isArray(routes)) {
+    storefrontRoutesByPlugin.set(pluginId, routes);
+  }
+}
+
+function normalizePluginRoutePath(path) {
+  return String(path ?? '')
+    .replace(/^\/+|\/+$/g, '')
+    .split('?')[0];
+}
+
+function resolvePluginRouteDescriptor(routesByPlugin, pluginId, path) {
+  const routes = routesByPlugin.get(pluginId);
+  if (!routes?.length) return null;
+
+  const normalized = normalizePluginRoutePath(path);
+
+  for (const route of routes) {
+    const routePath = normalizePluginRoutePath(route.path);
+    if (routePath === normalized) {
+      return route;
+    }
+  }
+
+  if (!normalized && routes[0]) {
+    return routes[0];
+  }
+
+  return null;
+}
+
 /**
  * Resolves an admin route descriptor for a plugin path.
  *
@@ -402,27 +451,30 @@ for (const [modulePath, mod] of Object.entries(adminRouteModules)) {
  * @param {string} path - splat path without leading slash
  * @returns {{ path: string, loader?: Function, Component: Function } | null}
  */
+export function resolvePluginAdminRoute(pluginId, path) {
+  return resolvePluginRouteDescriptor(adminRoutesByPlugin, pluginId, path);
+}
+
+/**
+ * Deprecated alias for admin route resolution.
+ *
+ * @param {string} pluginId
+ * @param {string} path
+ * @returns {{ path: string, loader?: Function, Component: Function } | null}
+ */
 export function resolvePluginRoute(pluginId, path) {
-  const routes = adminRoutesByPlugin.get(pluginId);
-  if (!routes?.length) return null;
+  return resolvePluginAdminRoute(pluginId, path);
+}
 
-  const normalized = String(path ?? '')
-    .replace(/^\/+|\/+$/g, '')
-    .split('?')[0];
-
-  for (const route of routes) {
-    const routePath = String(route.path ?? '').replace(/^\/+|\/+$/g, '');
-    if (routePath === normalized) {
-      return route;
-    }
-  }
-
-  // Default to first route when path is empty (plugin home).
-  if (!normalized && routes[0]) {
-    return routes[0];
-  }
-
-  return null;
+/**
+ * Resolves a storefront route descriptor for a plugin path.
+ *
+ * @param {string} pluginId
+ * @param {string} path - splat path without leading slash
+ * @returns {{ path: string, loader?: Function, Component: Function } | null}
+ */
+export function resolvePluginStorefrontRoute(pluginId, path) {
+  return resolvePluginRouteDescriptor(storefrontRoutesByPlugin, pluginId, path);
 }
 
 // ---------------------------------------------------------------------------
