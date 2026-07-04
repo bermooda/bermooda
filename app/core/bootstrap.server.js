@@ -25,6 +25,7 @@ import { registerProvider as registerPayment } from '#/core/payments/index.serve
 import { klarnaProvider } from '#/core/payments/klarna.server';
 import { manualProvider } from '#/core/payments/manual.server';
 import { paypalProvider } from '#/core/payments/paypal.server';
+import { stripeElementProvider } from '#/core/payments/stripe-element.server';
 import { stripeProvider } from '#/core/payments/stripe.server';
 import {
   discoverPlugins,
@@ -36,6 +37,7 @@ import { registerProvider as registerSearch } from '#/core/search/index.server';
 import { carrierProvider } from '#/core/shipping/carrier.server';
 import { registerProvider as registerShipping } from '#/core/shipping/index.server';
 import { flatRateProvider } from '#/core/shipping/index.server';
+import { pickupProvider } from '#/core/shipping/pickup.server';
 import { registerProvider as registerTax } from '#/core/tax/index.server';
 import {
   simplePercentProvider,
@@ -65,21 +67,29 @@ export function registerBuiltins() {
 
   // Payment providers
   registerPayment('stripe', stripeProvider);
+  registerPayment('stripe_element', stripeElementProvider);
   registerPayment('paypal', paypalProvider);
   registerPayment('manual', manualProvider);
-  registerPayment('klarna', klarnaProvider);
+  if (process.env.KLARNA_API_KEY) {
+    registerPayment('klarna', klarnaProvider);
+  }
 
   // Address validation — built-in no-op; Google/Loqate via plugin
   registerAddressValidation('noop', noopProvider);
 
   // Shipping providers
   registerShipping('flat_rate', flatRateProvider);
-  registerShipping('carrier', carrierProvider);
+  registerShipping('pickup', pickupProvider);
+  if (process.env.CARRIER_API_KEY) {
+    registerShipping('carrier', carrierProvider);
+  }
 
   // Tax providers
   registerTax('simple_percent', simplePercentProvider);
   registerTax('automatic', automaticTaxProvider);
-  registerTax('taxjar', taxJarProvider);
+  if (process.env.TAXJAR_API_KEY) {
+    registerTax('taxjar', taxJarProvider);
+  }
 
   // Search providers — W1: built-in DB provider (SQLite LIKE; Postgres ilike via W8)
   registerSearch('db', dbSearchProvider);

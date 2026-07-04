@@ -3,7 +3,9 @@ import { useActionData, useLoaderData } from 'react-router';
 import { getCustomerSession } from '#/libs/auth/customer.server';
 import { JsonLd } from '#/components/seo/json-ld';
 
+import { subscribeBackInStock } from '#/core/back-in-stock/index.server';
 import { getProductBySlug } from '#/core/catalog/index.server';
+import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import {
@@ -19,12 +21,22 @@ import {
 import { getSlotBlocks } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import {
+  addToWishlist,
+  getWishlistedVariantIds,
+  removeFromWishlist,
+} from '#/core/wishlists/index.server';
 
 export async function loader({ request, params }) {
   const themeId = await preloadStorefrontTheme();
   const locale = await getRequestLocale(request);
   const currency = await getRequestCurrency(request);
-  const product = await getProductBySlug(params.slug, { locale, currency });
+  const channel = await resolveChannelFromRequest(request);
+  const product = await getProductBySlug(params.slug, {
+    locale,
+    currency,
+    channelId: channel.id,
+  });
 
   if (!product) {
     throw new Response('Product not found', { status: 404 });
@@ -37,6 +49,11 @@ export async function loader({ request, params }) {
   );
 
   const session = await getCustomerSession(request);
+  const customer = session?.user ?? null;
+  const wishlistedVariantIds = customer
+    ? await getWishlistedVariantIds(customer.id, product.id)
+    : [];
+
   const [{ reviews, total: reviewTotal }, reviewSummary] = await Promise.all([
     listReviewsForProduct(product.id, {
       status: 'approved',
@@ -80,7 +97,8 @@ export async function loader({ request, params }) {
     reviewTotal,
     reviewPage,
     reviewSummary,
-    customer: session?.user ?? null,
+    customer,
+    wishlistedVariantIds,
     path,
     slotBlocks,
     jsonLd: [breadcrumb, productJsonLd],
@@ -90,32 +108,84 @@ export async function loader({ request, params }) {
 
 export async function action({ request, params }) {
   const formData = await request.formData();
-  if (formData.get('intent') !== 'review') return null;
+  const intent = formData.get('intent')?.toString();
 
-  const session = await getCustomerSession(request);
-  if (!session?.user?.id) {
-    return { reviewError: 'Sign in to leave a review.' };
-  }
+  if (intent === 'review') {
+    const session = await getCustomerSession(request);
+    if (!session?.user?.id) {
+      return { reviewError: 'Sign in to leave a review.' };
+    }
 
-  const locale = await getRequestLocale(request);
-  const currency = await getRequestCurrency(request);
-  const product = await getProductBySlug(params.slug, { locale, currency });
-  if (!product) {
-    return { reviewError: 'Product not found.' };
-  }
-
-  try {
-    await createReview({
-      productId: product.id,
-      customerId: session.user.id,
-      rating: formData.get('rating'),
-      title: formData.get('title')?.toString(),
-      body: formData.get('body')?.toString(),
+    const locale = await getRequestLocale(request);
+    const currency = await getRequestCurrency(request);
+    const channel = await resolveChannelFromRequest(request);
+    const product = await getProductBySlug(params.slug, {
+      locale,
+      currency,
+      channelId: channel.id,
     });
-    return { reviewOk: true };
-  } catch (err) {
-    return { reviewError: err.message ?? 'Could not submit review.' };
+    if (!product) {
+      return { reviewError: 'Product not found.' };
+    }
+
+    try {
+      await createReview({
+        productId: product.id,
+        customerId: session.user.id,
+        rating: formData.get('rating'),
+        title: formData.get('title')?.toString(),
+        body: formData.get('body')?.toString(),
+      });
+      return { reviewOk: true };
+    } catch (err) {
+      return { reviewError: err.message ?? 'Could not submit review.' };
+    }
   }
+
+  if (intent === 'wishlist-add' || intent === 'wishlist-remove') {
+    const session = await getCustomerSession(request);
+    if (!session?.user?.id) {
+      return { wishlistError: 'Sign in to save items to your wishlist.' };
+    }
+
+    const variantId = formData.get('variantId')?.toString();
+    if (!variantId) {
+      return { wishlistError: 'Select a variant first.' };
+    }
+
+    if (intent === 'wishlist-add') {
+      await addToWishlist(session.user.id, variantId);
+      return { wishlistOk: true, wishlistAdded: true, variantId };
+    }
+
+    await removeFromWishlist(session.user.id, variantId);
+    return { wishlistOk: true, wishlistAdded: false, variantId };
+  }
+
+  if (intent === 'back-in-stock') {
+    const variantId = formData.get('variantId')?.toString();
+    const email = formData.get('email')?.toString() ?? '';
+    if (!variantId) {
+      return { backInStockError: 'Select a variant first.' };
+    }
+
+    const session = await getCustomerSession(request);
+    try {
+      await subscribeBackInStock({
+        variantId,
+        email,
+        customerId: session?.user?.id ?? null,
+      });
+      return { backInStockOk: true };
+    } catch (err) {
+      if (err.message === 'EMAIL_REQUIRED') {
+        return { backInStockError: 'Enter your email address.' };
+      }
+      return { backInStockError: 'Could not subscribe. Try again.' };
+    }
+  }
+
+  return null;
 }
 
 export function meta({ loaderData }) {
@@ -132,7 +202,7 @@ export default function ProductRoute() {
   return (
     <>
       <JsonLd data={data.jsonLd} />
-      <ProductPage {...data} reviewActionData={actionData} />
+      <ProductPage {...data} actionData={actionData} />
     </>
   );
 }

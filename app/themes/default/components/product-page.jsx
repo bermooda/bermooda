@@ -1,3 +1,5 @@
+import { HeartIcon as HeartOutlineIcon } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { Link, Form, useFetcher } from 'react-router';
@@ -49,11 +51,14 @@ export default function ProductPage({
   reviewTotal,
   reviewPage,
   customer,
-  reviewActionData,
+  wishlistedVariantIds = [],
+  actionData,
   slotBlocks = [],
 }) {
   const t = useT();
   const fetcher = useFetcher();
+  const wishlistFetcher = useFetcher();
+  const notifyFetcher = useFetcher();
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -75,6 +80,24 @@ export default function ProductPage({
   const priceEntry = getVariantPrice(selectedVariant, currency);
   const inStock = isInStock(selectedVariant);
   const isSubmitting = fetcher.state !== 'idle';
+  const isWishlistBusy = wishlistFetcher.state !== 'idle';
+
+  function isVariantWishlisted(variantId) {
+    if (!variantId) return false;
+    if (
+      wishlistFetcher.data?.variantId === variantId &&
+      wishlistFetcher.data?.wishlistOk
+    ) {
+      return wishlistFetcher.data.wishlistAdded;
+    }
+    return wishlistedVariantIds.includes(variantId);
+  }
+
+  const isWishlisted = isVariantWishlisted(selectedVariant?.id);
+  const notifySuccess =
+    notifyFetcher.data?.backInStockOk || actionData?.backInStockOk;
+  const notifyError =
+    notifyFetcher.data?.backInStockError || actionData?.backInStockError;
 
   const images = product.media ?? [];
   const activeImage = images[activeImageIndex];
@@ -219,72 +242,174 @@ export default function ProductPage({
                 </div>
               ))}
 
-            {/* Add to cart form */}
-            <fetcher.Form method="post" action="/cart">
-              <input type="hidden" name="intent" value="add" />
-              <input
-                type="hidden"
-                name="variantId"
-                value={selectedVariant?.id ?? ''}
-              />
+            <div className="flex flex-col gap-4">
+              <fetcher.Form method="post" action="/cart">
+                <input type="hidden" name="intent" value="add" />
+                <input
+                  type="hidden"
+                  name="variantId"
+                  value={selectedVariant?.id ?? ''}
+                />
 
-              <div className="flex flex-col gap-4">
-                {/* Quantity */}
-                <div>
-                  <label
-                    htmlFor="quantity"
-                    className="mb-2 block text-sm font-semibold text-stone-800"
-                  >
-                    {t('product.quantity')}
-                  </label>
-                  <input
-                    id="quantity"
-                    type="number"
-                    name="quantity"
-                    min={1}
-                    max={maxQty}
-                    value={quantity}
-                    onChange={(e) =>
-                      setQuantity(
-                        Math.max(
-                          1,
-                          Math.min(maxQty, parseInt(e.target.value, 10) || 1)
+                <div className="flex flex-col gap-4">
+                  {/* Quantity */}
+                  <div>
+                    <label
+                      htmlFor="quantity"
+                      className="mb-2 block text-sm font-semibold text-stone-800"
+                    >
+                      {t('product.quantity')}
+                    </label>
+                    <input
+                      id="quantity"
+                      type="number"
+                      name="quantity"
+                      min={1}
+                      max={maxQty}
+                      value={quantity}
+                      onChange={(e) =>
+                        setQuantity(
+                          Math.max(
+                            1,
+                            Math.min(maxQty, parseInt(e.target.value, 10) || 1)
+                          )
                         )
-                      )
-                    }
-                    className="w-24 rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 outline-none focus:ring-2 focus:ring-stone-300"
-                  />
-                </div>
+                      }
+                      className="w-24 rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 outline-none focus:ring-2 focus:ring-stone-300"
+                    />
+                  </div>
 
-                {/* Add to cart button */}
-                <button
-                  type="submit"
-                  disabled={!inStock || isSubmitting || !selectedVariant}
-                  className={clsx(
-                    'w-full rounded-full py-3.5 px-6 text-sm font-semibold transition-all',
-                    inStock && selectedVariant
-                      ? 'text-white shadow-md hover:-translate-y-0.5 hover:shadow-lg disabled:translate-y-0 disabled:opacity-90'
-                      : 'cursor-not-allowed bg-stone-200 text-stone-400'
+                  {/* Add to cart button */}
+                  <button
+                    type="submit"
+                    disabled={!inStock || isSubmitting || !selectedVariant}
+                    className={clsx(
+                      'w-full rounded-full py-3.5 px-6 text-sm font-semibold transition-all',
+                      inStock && selectedVariant
+                        ? 'text-white shadow-md hover:-translate-y-0.5 hover:shadow-lg disabled:translate-y-0 disabled:opacity-90'
+                        : 'cursor-not-allowed bg-stone-200 text-stone-400'
+                    )}
+                    style={
+                      inStock && selectedVariant
+                        ? {
+                            background: GREEN,
+                            boxShadow: '0 8px 24px -8px rgba(47,74,58,.45)',
+                          }
+                        : undefined
+                    }
+                  >
+                    {isSubmitting
+                      ? t('common.loading')
+                      : !inStock
+                        ? t('product.outOfStock')
+                        : !selectedVariant
+                          ? t('product.selectVariant')
+                          : t('product.addToCart')}
+                  </button>
+                </div>
+              </fetcher.Form>
+
+              {/* Wishlist */}
+              {customer ? (
+                <wishlistFetcher.Form method="post">
+                  <input
+                    type="hidden"
+                    name="intent"
+                    value={isWishlisted ? 'wishlist-remove' : 'wishlist-add'}
+                  />
+                  <input
+                    type="hidden"
+                    name="variantId"
+                    value={selectedVariant?.id ?? ''}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!selectedVariant || isWishlistBusy}
+                    className={clsx(
+                      'flex w-full items-center justify-center gap-2 rounded-full border py-3 px-6 text-sm font-semibold transition-colors',
+                      isWishlisted
+                        ? 'border-stone-900 bg-stone-900 text-white'
+                        : 'border-stone-300 text-stone-700 hover:border-stone-500 hover:bg-stone-50'
+                    )}
+                  >
+                    {isWishlisted ? (
+                      <HeartSolidIcon className="h-4 w-4" />
+                    ) : (
+                      <HeartOutlineIcon className="h-4 w-4" />
+                    )}
+                    {isWishlisted
+                      ? t('product.removeFromWishlist')
+                      : t('product.addToWishlist')}
+                  </button>
+                  {wishlistFetcher.data?.wishlistError && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {wishlistFetcher.data.wishlistError}
+                    </p>
                   )}
-                  style={
-                    inStock && selectedVariant
-                      ? {
-                          background: GREEN,
-                          boxShadow: '0 8px 24px -8px rgba(47,74,58,.45)',
-                        }
-                      : undefined
-                  }
+                </wishlistFetcher.Form>
+              ) : (
+                <Link
+                  to={`/account/login?returnTo=${encodeURIComponent(`/products/${product.slug}`)}`}
+                  className="flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 px-6 py-3 text-sm font-semibold text-stone-700 hover:border-stone-500 hover:bg-stone-50"
                 >
-                  {isSubmitting
-                    ? t('common.loading')
-                    : !inStock
-                      ? t('product.outOfStock')
-                      : !selectedVariant
-                        ? t('product.selectVariant')
-                        : t('product.addToCart')}
-                </button>
-              </div>
-            </fetcher.Form>
+                  <HeartOutlineIcon className="h-4 w-4" />
+                  {t('product.signInToWishlist')}
+                </Link>
+              )}
+
+              {/* Back in stock */}
+              {!inStock && selectedVariant && (
+                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                  <p className="text-sm font-semibold text-stone-800">
+                    {t('product.backInStock.title')}
+                  </p>
+                  <p className="mt-1 text-sm text-stone-600">
+                    {t('product.backInStock.description')}
+                  </p>
+                  {notifySuccess ? (
+                    <p className="mt-3 text-sm text-green-700">
+                      {t('product.backInStock.success')}
+                    </p>
+                  ) : (
+                    <notifyFetcher.Form
+                      method="post"
+                      className="mt-3 space-y-2"
+                    >
+                      <input
+                        type="hidden"
+                        name="intent"
+                        value="back-in-stock"
+                      />
+                      <input
+                        type="hidden"
+                        name="variantId"
+                        value={selectedVariant.id}
+                      />
+                      <input
+                        type="email"
+                        name="email"
+                        required
+                        defaultValue={customer?.email ?? ''}
+                        placeholder={t('product.backInStock.emailPlaceholder')}
+                        className="w-full rounded-full border border-stone-300 bg-white px-4 py-2 text-sm text-stone-900 outline-none focus:ring-2 focus:ring-stone-300"
+                      />
+                      {notifyError && (
+                        <p className="text-sm text-red-600">{notifyError}</p>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={notifyFetcher.state !== 'idle'}
+                        className="w-full rounded-full border border-stone-900 bg-white py-2.5 text-sm font-semibold text-stone-900 hover:bg-stone-100"
+                      >
+                        {notifyFetcher.state !== 'idle'
+                          ? t('common.loading')
+                          : t('product.backInStock.submit')}
+                      </button>
+                    </notifyFetcher.Form>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Description */}
             {product.description && (
@@ -310,7 +435,7 @@ export default function ProductPage({
               reviewPage={reviewPage}
               customer={customer}
               productSlug={product.slug}
-              reviewActionData={reviewActionData}
+              actionData={actionData}
             />
           </div>
         </div>
@@ -336,7 +461,7 @@ function ProductReviewsSection({
   reviewPage = 1,
   customer,
   productSlug: _productSlug,
-  reviewActionData,
+  actionData,
 }) {
   return (
     <div className="border-t border-stone-200 pt-8">
@@ -390,12 +515,10 @@ function ProductReviewsSection({
         >
           <input type="hidden" name="intent" value="review" />
           <p className="text-sm font-semibold text-stone-800">Write a review</p>
-          {reviewActionData?.reviewError && (
-            <p className="text-sm text-red-600">
-              {reviewActionData.reviewError}
-            </p>
+          {actionData?.reviewError && (
+            <p className="text-sm text-red-600">{actionData.reviewError}</p>
           )}
-          {reviewActionData?.reviewOk && (
+          {actionData?.reviewOk && (
             <p className="text-sm text-green-600">
               Thanks! Your review is pending moderation.
             </p>

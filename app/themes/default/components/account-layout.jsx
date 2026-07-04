@@ -3,6 +3,8 @@ import {
   ShoppingBagIcon,
   MapPinIcon,
   Cog6ToothIcon,
+  HeartIcon,
+  GiftIcon,
   ArrowRightStartOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import { Link, NavLink } from 'react-router';
@@ -13,6 +15,8 @@ import StorefrontShell from '#/themes/default/components/storefront-chrome';
 const NAV_ITEMS = [
   { href: '/account', label: 'account.dashboard', Icon: UserIcon, end: true },
   { href: '/account/orders', label: 'account.orders', Icon: ShoppingBagIcon },
+  { href: '/account/wishlist', label: 'account.wishlist', Icon: HeartIcon },
+  { href: '/account/loyalty', label: 'account.loyalty', Icon: GiftIcon },
   { href: '/account/addresses', label: 'account.addresses', Icon: MapPinIcon },
   { href: '/account/profile', label: 'account.profile', Icon: Cog6ToothIcon },
 ];

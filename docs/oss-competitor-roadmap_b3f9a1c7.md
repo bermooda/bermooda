@@ -1,37 +1,37 @@
 ---
 name: OSS Competitor Roadmap
-overview: Phase-2 roadmap that takes bermooda from a clean v1 scaffold to a credible open-source competitor (Medusa / Saleor / Vendure / WooCommerce class). Starts by fixing "looks-done-but-not-wired" gaps in the purchase loop, then adds the breadth features merchants and evaluators expect: storefront search, a public API, payment breadth, returns/RMA, CMS, reviews, reporting, and catalog/inventory depth. Successor to docs/phase-1-plan.md.
+overview: Phase-2 roadmap that takes bermooda from a clean v1 scaffold to a credible open-source competitor (Medusa / Saleor / Vendure / WooCommerce class). As of 2026-07, W0–W6 are shipped end-to-end in core and the default storefront; W7–W9 have substantial core coverage with remaining storefront/admin wiring and platform gaps documented below. Successor to docs/phase-1-plan.md.
 todos:
   - id: w0-purchase-loop
     content: 'W0 (bugs): register built-in providers + default theme at boot, persist tax on placed orders, initiate Stripe + reconcile webhook→order status, restore inventory on refund/cancel'
-    status: pending
+    status: completed
   - id: w1-discovery
     content: 'W1: storefront product search route + faceted filtering/sorting (DB first, pluggable search-engine provider interface)'
-    status: pending
+    status: completed
   - id: w2-public-api
     content: 'W2: public API over app/core/* (REST or GraphQL) with API-key auth, plus outbound webhook subscriptions'
-    status: pending
+    status: completed
   - id: w3-payments
     content: 'W3: payment breadth — PayPal + manual/offline method, saved methods, address validation; multi-discount promotions engine'
-    status: pending
+    status: in_progress
   - id: w4-returns
     content: 'W4: returns/RMA + exchanges + store credit; partial fulfillment, packing slips/invoices (PDF)'
-    status: pending
+    status: completed
   - id: w5-content-reviews
     content: 'W5: CMS pages + navigation/menu builder; product reviews & ratings; richer SEO (per-entity meta + JSON-LD)'
-    status: pending
+    status: completed
   - id: w6-reporting
     content: 'W6: reporting/analytics dashboards + CSV exports; admin audit log; GDPR data export/erasure'
-    status: pending
+    status: completed
   - id: w7-catalog-depth
     content: 'W7: multi-location inventory, customer groups + B2B price lists, gift cards, wishlists, back-in-stock'
-    status: pending
+    status: in_progress
   - id: w8-platform
     content: 'W8: Postgres-first config, granular RBAC, rate limiting, image optimization/CDN, theme + plugin runtime wiring'
-    status: pending
+    status: in_progress
   - id: w9-differentiators
     content: 'W9 (later): loyalty/referrals, marketing automation, multi-store/sales channels'
-    status: pending
+    status: in_progress
 isProject: true
 ---
 
@@ -45,6 +45,45 @@ This plan covers what is **missing** to make bermooda a credible alternative to 
 
 The benchmark gaps were identified by auditing the runtime wiring, the Prisma schema, `app/core/*`, and `app/routes/*`.
 
+## Implementation status (2026-07)
+
+Most Phase-2 workstreams are **implemented in `app/core/*` and wired through admin + REST API**. The default theme now covers the main DTC purchase loop; remaining gaps are mostly **storefront polish**, **stub provider gating**, and **enterprise/foundation features** not yet exposed to customers.
+
+| Workstream                    | Status      | Shipped (high level)                                                                                                                                                                                                               | Remaining gaps                                                                                                                                                        |
+| ----------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **W0** Purchase loop          | **Done**    | `bootstrap.server.js` registers providers + theme; tax on orders; Stripe initiate + webhook reconcile; inventory restore on refund; theme runtime via `getStorefrontComponent()`                                                   | —                                                                                                                                                                     |
+| **W1** Discovery              | **Done**    | DB search provider; `/search` + `SearchPage` in theme manifest; category/search facets (`catalog-filters`); `/collections/:handle`; smart-collection rule evaluator + admin rules builder + `refreshSmartCollection`               | Optional Meilisearch plugin (`app/plugins/meilisearch/`) for large catalogs                                                                                           |
+| **W2** Public API             | **Done**    | REST `/api/v1/*` + `/api/admin/v1/*`; API-key auth + scopes; outbound webhooks + delivery worker; [docs/api.md](api.md)                                                                                                            | Public GA still benefits from W8 Postgres + hardening                                                                                                                 |
+| **W3** Payments + promotions  | **Partial** | PayPal + manual/offline; Stripe Hosted Checkout + Payment Element path; promotions engine (stacking, automatic, BOGO, free shipping); Klarna/TaxJar/carrier live rates gated behind env keys                                       | Saved payment methods (no checkout UI); tax-class admin UI + variant assignment; address validation is no-op unless plugin installed                                  |
+| **W4** Returns/RMA            | **Done**    | Returns/exchanges/store credit; partial fulfillment; PDF invoice/packing slip; lifecycle emails                                                                                                                                    | —                                                                                                                                                                     |
+| **W5** CMS + reviews + SEO    | **Done**    | CMS pages + menu builder; product reviews + moderation; per-entity meta + JSON-LD + sitemap                                                                                                                                        | Cookie-only locale (no per-locale URLs) — documented SEO tradeoff                                                                                                     |
+| **W6** Reporting + compliance | **Done**    | Dashboard reports; CSV/scheduled exports; audit log subscribers; GDPR export/erasure on customer detail                                                                                                                            | —                                                                                                                                                                     |
+| **W7** Catalog depth + B2B    | **Partial** | Multi-location inventory; customer groups + price lists; gift cards + checkout tender UI; wishlist + back-in-stock on PDP; account nav for wishlist/loyalty; BOPIS pickup shipping method; B2B companies/quotes foundation (admin) | Digital product download delivery post-purchase; admin product-type UI for digital/bundles; full quote→checkout workflow; MSI ship-from allocation                    |
+| **W8** Platform hardening     | **Partial** | Granular RBAC (`seedRolePermissions`); rate limits on auth/API/webhooks; `sharp` responsive images; `getSlotBlocks()` on product page; plugin discovery + enable                                                                   | Postgres still hardcoded to SQLite in schema; plugin storefront dispatcher is a placeholder; theme slots unwired on home/category/cart/checkout; catalog read caching |
+| **W9** Differentiators        | **Partial** | Loyalty subscribers + account page; marketing automation worker + abandoned-cart sequences; sales channels + channel-aware catalog/search pricing                                                                                  | Subscriptions + POS are foundation-only (admin/API, not customer storefront); referrals; per-market domains/duties                                                    |
+
+### Storefront wiring — resolved since initial audit
+
+These were flagged as broken or missing; they are now wired in the default theme:
+
+- `/search` — `SearchPage` registered in theme manifest + `routes.js` (smoke-tested in `storefront-components.test.js`)
+- `/collections/:handle` — storefront route + `CollectionPage` theme component
+- Category browse filters — `catalog-filters` reused on category pages
+- Checkout tenders — gift card, store credit, and loyalty fields in checkout theme + `$step.jsx` action
+- PDP UX — wishlist button, back-in-stock subscribe form
+- Account nav — wishlist + loyalty links in `account-layout.jsx`
+- Payment Element — `stripe-payment-element.jsx` integrated in checkout when `stripe_element` provider is selected
+- Channel-aware catalog — search, category, collection, and PDP loaders pass `channelId` for publish/price overrides
+
+### Recommended next work (priority order)
+
+1. **W8** — Postgres-first datasource (env-driven); complete plugin storefront dispatcher + theme slot wiring beyond PDP
+2. **W3** — Tax-class admin UI; saved payment methods at checkout
+3. **W7** — Digital download delivery; B2B quote checkout; product-type admin for digital/bundles
+4. **W9** — Customer-facing subscriptions; POS polish; external search plugin enablement docs
+
+---
+
 ## Conventions (apply to every workstream)
 
 - Domain logic lives in `app/core/<domain>/index.server.js`; routes orchestrate and call core. Keep `app/libs/*` for infrastructure only (rule: `core -> libs` allowed, `libs -> core` not).
@@ -57,9 +96,11 @@ The benchmark gaps were identified by auditing the runtime wiring, the Prisma sc
 
 ## W0 — Fix the broken purchase loop (treat as bugs, do first)
 
+> **Status: completed (2026-07).** All tasks below shipped via `app/core/bootstrap.server.js`, checkout totals, Stripe webhook reconciliation, and theme runtime resolution.
+
 **Goal.** Make a real guest purchase work end-to-end on a fresh DB. These are not new features; they are wiring gaps in shipped v1 code, so they block everything customer-facing.
 
-**Findings being fixed**
+**Findings that were fixed**
 
 - Built-in providers (`stripeProvider`, `flatRateProvider`, `simplePercentProvider`) and the default theme are only registered in tests — never at server startup. At runtime `listProviders()` is empty, so checkout offers no payment/shipping options.
 - `placeOrder()` hardcodes `taxCents = 0`, so persisted order totals are wrong when tax applies. See [app/core/orders/index.server.js](app/core/orders/index.server.js).
@@ -82,7 +123,9 @@ The benchmark gaps were identified by auditing the runtime wiring, the Prisma sc
 
 ## W1 — Discovery: storefront search + filtering
 
-**Goal.** Customers can find products. This is table stakes and currently absent (no `/search` route; admin search is slug-only).
+> **Status: completed (2026-07).** DB search provider, `/search`, category/search facets, `/collections/:handle`, and smart-collection rules are wired. Meilisearch plugin available for larger catalogs.
+
+**Goal.** Customers can find products. This is table stakes and was absent in v1 (no `/search` route; admin search was slug-only).
 
 **Tasks**
 
@@ -99,7 +142,9 @@ The benchmark gaps were identified by auditing the runtime wiring, the Prisma sc
 
 ## W2 — Public API + outbound webhooks
 
-**Goal.** Unblock headless storefronts, mobile apps, and ERP/3PL/marketplace integrations — the single biggest reason teams pick Medusa/Saleor/Vendure. `/api/*` is reserved but unimplemented.
+> **Status: completed (2026-07).** REST `/api/v1/*` and `/api/admin/v1/*` with API-key auth, outbound webhooks, and [docs/api.md](api.md).
+
+**Goal.** Unblock headless storefronts, mobile apps, and ERP/3PL/marketplace integrations — the single biggest reason teams pick Medusa/Saleor/Vendure. `/api/*` was reserved but unimplemented in v1.
 
 **Tasks**
 
@@ -118,7 +163,9 @@ The benchmark gaps were identified by auditing the runtime wiring, the Prisma sc
 
 ## W3 — Payment breadth + promotions engine
 
-**Goal.** More than one way to pay, and real promotions. Today only Stripe Checkout exists and only one coupon per order is possible (`couponCode` is a single string).
+> **Status: in progress (2026-07).** PayPal, manual/offline, Stripe Hosted Checkout + Payment Element, and the promotions engine are shipped. Remaining: saved payment methods UI, tax-class admin UI, plugin address validation.
+
+**Goal.** More than one way to pay, and real promotions. v1 shipped only Stripe Checkout and a single coupon per order (`couponCode` was a single string).
 
 **Tasks**
 
@@ -137,7 +184,9 @@ The benchmark gaps were identified by auditing the runtime wiring, the Prisma sc
 
 ## W4 — Returns/RMA, fulfillment depth, documents
 
-**Goal.** Post-purchase operations. Today only refunds exist (no returns), fulfillment is a single `Shipment`, and there are no printable documents.
+> **Status: completed (2026-07).**
+
+**Goal.** Post-purchase operations. v1 shipped only refunds (no returns), single-shipment fulfillment, and no printable documents.
 
 **Tasks**
 
@@ -155,7 +204,9 @@ The benchmark gaps were identified by auditing the runtime wiring, the Prisma sc
 
 ## W5 — Content (CMS), reviews, SEO
 
-**Goal.** Stores need pages, navigation, social proof, and discoverability. None of these exist today (no `Page` model, no menu builder, no reviews).
+> **Status: completed (2026-07).** Cookie-only locale remains a documented SEO tradeoff.
+
+**Goal.** Stores need pages, navigation, social proof, and discoverability. None of these existed in v1 (no `Page` model, no menu builder, no reviews).
 
 **Tasks**
 
@@ -172,7 +223,9 @@ The benchmark gaps were identified by auditing the runtime wiring, the Prisma sc
 
 ## W6 — Reporting, audit, compliance
 
-**Goal.** Operators need numbers and accountability. The dashboard has only 4 KPI tiles (see [app/routes/admin/dashboard.jsx](app/routes/admin/dashboard.jsx)).
+> **Status: completed (2026-07).**
+
+**Goal.** Operators need numbers and accountability. The v1 dashboard had only 4 KPI tiles (see [app/routes/admin/dashboard.jsx](app/routes/admin/dashboard.jsx)).
 
 **Tasks**
 
@@ -189,7 +242,9 @@ The benchmark gaps were identified by auditing the runtime wiring, the Prisma sc
 
 ## W7 — Catalog & inventory depth, B2B
 
-**Goal.** Capabilities that unlock larger/serious merchants. Inventory is currently a single integer per variant (`ProductVariant.inventoryCount`) with no locations.
+> **Status: in progress (2026-07).** Multi-location inventory, price lists, gift cards, wishlists, back-in-stock, BOPIS pickup, and B2B companies/quotes foundation are shipped. Remaining: digital download delivery, product-type admin UI, full quote checkout.
+
+**Goal.** Capabilities that unlock larger/serious merchants. v1 inventory was a single integer per variant (`ProductVariant.inventoryCount`) with no locations.
 
 **Tasks**
 
@@ -207,6 +262,8 @@ The benchmark gaps were identified by auditing the runtime wiring, the Prisma sc
 
 ## W8 — Platform hardening & scale
 
+> **Status: in progress (2026-07).** RBAC, rate limiting, and image optimization shipped. Remaining: Postgres-first config, plugin storefront dispatcher, theme slot wiring beyond PDP, catalog caching.
+
 **Goal.** Production-readiness beyond a single small shop.
 
 **Tasks**
@@ -223,6 +280,8 @@ The benchmark gaps were identified by auditing the runtime wiring, the Prisma sc
 ---
 
 ## W9 — Differentiators (later)
+
+> **Status: in progress (2026-07).** Loyalty, marketing automation, and sales channels have core + partial admin/storefront wiring. Subscriptions and POS remain foundation-only (admin/API).
 
 - Loyalty / rewards / referrals.
 - Marketing automation (campaigns, segments, abandoned-cart sequences beyond the basic email stub).

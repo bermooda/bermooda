@@ -130,6 +130,8 @@ model Customer {
   referredBy       Referral?              @relation("ReferredCustomer")
   campaignDeliveries CampaignDelivery[]
   subscriptions      Subscription[]
+  companyMemberships CompanyMember[]
+  quotes             Quote[]
 
   @@index([email])
 }
@@ -265,6 +267,7 @@ model ProductVariant {
   channelPriceOverrides   ChannelPriceOverride[]
   optionValues            VariantOptionValue[]
   subscriptionPlans       SubscriptionPlan[]
+  quoteLines              QuoteLine[]
 
   @@index([productId])
   @@index([sku])
@@ -478,8 +481,12 @@ model Order {
   discounts  OrderDiscount[]
   giftCardRedemptions GiftCardRedemption[]
   posOrder            PosOrder?
+  quote               Quote?
+  pickupLocationId    String?
+  pickupLocation      Location? @relation("PickupLocation", fields: [pickupLocationId], references: [id], onDelete: SetNull)
 
   @@index([customerId])
+  @@index([pickupLocationId])
   @@index([salesChannelId])
   @@index([orderNumber])
   @@index([status])
@@ -952,17 +959,19 @@ model ExportRun {
 // ─── W7: Inventory depth, B2B, gift cards, wishlists ────────────────────────
 
 model Location {
-  id          String   @id @default(cuid())
-  name        String
-  code        String   @unique
-  isDefault   Boolean  @default(false)
-  addressJson String?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  code         String   @unique
+  isDefault    Boolean  @default(false)
+  addressJson  String?
+  allowsPickup Boolean  @default(false)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   inventoryLevels InventoryLevel[]
   posSessions     PosSession[]
+  pickupOrders    Order[]          @relation("PickupLocation")
 }
 
 model InventoryLevel {
@@ -1470,4 +1479,76 @@ model PosOrder {
   order      Order?     @relation(fields: [orderId], references: [id])
 
   @@index([posSessionId])
+}
+
+// ─── B2B: company accounts and quotes ───────────────────────────────────────
+
+model Company {
+  id           String   @id @default(cuid())
+  name         String
+  taxId        String?
+  netTermsDays Int      @default(30)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  members CompanyMember[]
+  quotes  Quote[]
+
+  @@index([name])
+}
+
+model CompanyMember {
+  id         String   @id @default(cuid())
+  companyId  String
+  customerId String
+  role       String   @default("buyer")
+  createdAt  DateTime @default(now())
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, customerId])
+  @@index([customerId])
+}
+
+model Quote {
+  id            String    @id @default(cuid())
+  quoteNumber   String    @unique
+  companyId     String
+  customerId    String?
+  status        String    @default("draft")
+  currency      String    @default("USD")
+  subtotalCents Int       @default(0)
+  totalCents    Int       @default(0)
+  expiresAt     DateTime?
+  notes         String?
+  orderId       String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  company  Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  order    Order?      @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  lines    QuoteLine[]
+
+  @@index([companyId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model QuoteLine {
+  id            String   @id @default(cuid())
+  quoteId       String
+  variantId     String
+  quantity      Int
+  priceCents    Int
+  titleSnapshot String?
+  createdAt     DateTime @default(now())
+
+  quote   Quote          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@index([variantId])
 }

@@ -5,6 +5,12 @@ import { getCachedResult, invalidateCachePrefix } from '#/utils/cache.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
+import {
+  applyChannelPricesToProducts,
+  buildChannelPublishedWhere,
+  isProductPublishedOnChannel,
+} from '#/core/channels/index.server';
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -95,6 +101,7 @@ export async function listProducts({
   locale,
   currency,
   categoryId,
+  channelId,
   page = 1,
   limit = 20,
   published,
@@ -104,6 +111,7 @@ export async function listProducts({
       locale,
       currency,
       categoryId,
+      channelId,
       page,
       limit,
       published,
@@ -113,6 +121,11 @@ export async function listProducts({
       if (published === true) where.publishedAt = { not: null };
       if (published === false) where.publishedAt = null;
       if (categoryId) where.categories = { some: { categoryId } };
+
+      const channelWhere = buildChannelPublishedWhere(channelId);
+      if (Object.keys(channelWhere).length > 0) {
+        where.AND = [...(where.AND ?? []), channelWhere];
+      }
 
       const skip = (page - 1) * limit;
 
@@ -140,7 +153,14 @@ export async function listProducts({
         prisma.product.count({ where }),
       ]);
 
-      if (!locale) return { products: rawProducts, total };
+      if (!locale) {
+        const products = await applyChannelPricesToProducts(
+          rawProducts,
+          channelId,
+          currency
+        );
+        return { products, total };
+      }
 
       const products = await Promise.all(
         rawProducts.map(async (product) => {
@@ -162,13 +182,20 @@ export async function listProducts({
         })
       );
 
-      return { products, total };
+      return {
+        products: await applyChannelPricesToProducts(
+          products,
+          channelId,
+          currency
+        ),
+        total,
+      };
     },
     5 * 60 * 1000
   );
 }
 
-export async function getProduct(id, { locale, currency } = {}) {
+export async function getProduct(id, { locale, currency, channelId } = {}) {
   const product = await prisma.product.findUnique({
     where: { id },
     include: {
@@ -196,7 +223,19 @@ export async function getProduct(id, { locale, currency } = {}) {
 
   if (!product) return null;
 
-  if (!locale) return product;
+  if (channelId) {
+    const published = await isProductPublishedOnChannel(id, channelId);
+    if (!published) return null;
+  }
+
+  if (!locale) {
+    const [withPrices] = await applyChannelPricesToProducts(
+      [product],
+      channelId,
+      currency
+    );
+    return withPrices;
+  }
 
   const [translations, slugRow] = await Promise.all([
     getTranslations('product', id, locale),
@@ -205,10 +244,17 @@ export async function getProduct(id, { locale, currency } = {}) {
     }),
   ]);
 
-  return withTranslations(
-    { ...product, slug: slugRow?.slug ?? null },
-    translations
+  const [withPrices] = await applyChannelPricesToProducts(
+    [
+      withTranslations(
+        { ...product, slug: slugRow?.slug ?? null },
+        translations
+      ),
+    ],
+    channelId,
+    currency
   );
+  return withPrices;
 }
 
 export async function getProductBySlug(slug, opts = {}) {

@@ -1,6 +1,7 @@
 import { useLoaderData } from 'react-router';
 
 import { listCategories } from '#/core/catalog/index.server';
+import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { search } from '#/core/search/index.server';
@@ -32,11 +33,19 @@ export async function loader({ request }) {
 
   const locale = await getRequestLocale(request);
   const currency = await getRequestCurrency(request);
+  const channel = await resolveChannelFromRequest(request);
 
   const [{ products, total, facets }, categories] = await Promise.all([
     search({
       query,
-      filters: { categoryId, priceMin, priceMax, inStock, attributes },
+      filters: {
+        categoryId,
+        priceMin,
+        priceMax,
+        inStock,
+        attributes,
+        channelId: channel.id,
+      },
       sort,
       page,
       limit: 24,
