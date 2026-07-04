@@ -3,6 +3,7 @@ import { Form } from 'react-router';
 
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 
@@ -12,6 +13,7 @@ export async function action({ request }) {
   const formData = await request.formData();
   const handle = formData.get('handle')?.toString().trim();
   const title = formData.get('title')?.toString().trim();
+  const collectionType = formData.get('collectionType')?.toString() ?? 'manual';
   const productIdsRaw = formData.get('productIds')?.toString().trim();
 
   if (!handle || !title) {
@@ -25,7 +27,7 @@ export async function action({ request }) {
         .filter(Boolean)
     : [];
 
-  await createCollection({ handle, title, productIds });
+  await createCollection({ handle, title, collectionType, productIds });
   return redirect('/admin/collections');
 }
 
@@ -38,7 +40,7 @@ export default function AdminNewCollectionRoute() {
     <div>
       <PageHeader
         title="New collection"
-        subtitle="Create a manual collection and assign products."
+        subtitle="Create a manual or smart collection."
       />
       <Form method="post" className="max-w-lg space-y-4">
         <Field label="Handle" htmlFor="handle">
@@ -47,7 +49,20 @@ export default function AdminNewCollectionRoute() {
         <Field label="Title" htmlFor="title">
           <Input id="title" name="title" required />
         </Field>
-        <Field label="Product IDs (comma-separated)" htmlFor="productIds">
+        <Field label="Collection type" htmlFor="collectionType">
+          <Select
+            id="collectionType"
+            name="collectionType"
+            defaultValue="manual"
+          >
+            <option value="manual">Manual</option>
+            <option value="smart">Smart (rule-based)</option>
+          </Select>
+        </Field>
+        <Field
+          label="Product IDs (manual collections only)"
+          htmlFor="productIds"
+        >
           <Input id="productIds" name="productIds" />
         </Field>
         <div className="flex gap-3">

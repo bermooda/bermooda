@@ -306,6 +306,32 @@ export async function buildCategoryMeta({ category, request, path }) {
   });
 }
 
+export async function buildCollectionMeta({ collection, request, path }) {
+  const seo = await getSiteSeoSettings();
+  const pageTitle = collection.title || collection.handle || 'Collection';
+  const title = formatPageTitle(pageTitle, seo);
+  const description =
+    collection.description?.slice(0, 160) || `Shop ${pageTitle}`;
+  const canonical = buildCanonicalUrl(request, path);
+  const alternates = await buildAlternateLinks({
+    entityType: 'collection',
+    entityId: collection.id,
+    request,
+    path,
+  });
+  const image = seo.ogImageUrl || null;
+
+  return buildMeta({
+    title,
+    description,
+    canonical,
+    alternates,
+    image,
+    robots: resolveRobotsMeta(seo),
+    ...siteMetaExtras(seo),
+  });
+}
+
 /**
  * Generate robots.txt body for the storefront.
  */

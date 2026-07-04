@@ -8,6 +8,7 @@ import CartPage from '#/themes/default/components/cart-page';
 import CategoryPage from '#/themes/default/components/category-page';
 import CheckoutLayout from '#/themes/default/components/checkout-layout';
 import CheckoutThankYouPage from '#/themes/default/components/checkout-thank-you-page';
+import CollectionPage from '#/themes/default/components/collection-page';
 import CurrencySwitcher from '#/themes/default/components/currency-switcher';
 import ForgotPasswordPage from '#/themes/default/components/forgot-password-page';
 import HomePage from '#/themes/default/components/home-page';
@@ -21,6 +22,7 @@ import ProductGrid from '#/themes/default/components/product-grid';
 import ProductPage from '#/themes/default/components/product-page';
 import RegisterPage from '#/themes/default/components/register-page';
 import ResetPasswordPage from '#/themes/default/components/reset-password-page';
+import SearchPage from '#/themes/default/components/search-page';
 
 export default {
   id: 'default',
@@ -33,6 +35,7 @@ export default {
     ProductPage,
     PagePage,
     CategoryPage,
+    CollectionPage,
     CartPage,
     CheckoutLayout,
     CheckoutThankYouPage,
@@ -51,5 +54,6 @@ export default {
     ResetPasswordPage,
     LocaleSwitcher,
     CurrencySwitcher,
+    SearchPage,
   },
 };

@@ -25,8 +25,12 @@ export async function action({ request }) {
     return { error: 'Name and code are required.' };
   }
 
+  const allowsPickup =
+    formData.get('allowsPickup') === 'on' ||
+    formData.get('allowsPickup') === 'true';
+
   await prisma.location.create({
-    data: { name, code, active: true },
+    data: { name, code, active: true, allowsPickup },
   });
 
   return redirect('/admin/inventory');
@@ -76,6 +80,17 @@ export default function AdminNewInventoryLocationRoute() {
                 required
                 placeholder="main"
               />
+            </Field>
+            <Field label="Store pickup (BOPIS)" htmlFor="allows-pickup">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  id="allows-pickup"
+                  name="allowsPickup"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-stone-300"
+                />
+                Allow customers to pick up orders at this location
+              </label>
             </Field>
           </div>
         </Card>

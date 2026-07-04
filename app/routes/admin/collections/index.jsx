@@ -1,5 +1,6 @@
 import { Link, useLoaderData } from 'react-router';
 
+import prisma from '#/libs/prisma.server';
 import PageHeader from '#/components/admin/page-header';
 import Button from '#/components/ui/button';
 
@@ -7,7 +8,22 @@ import { listCollections } from '#/core/collections/index.server';
 
 export async function loader() {
   const collections = await listCollections();
-  return { collections };
+  const titles = await prisma.translation.findMany({
+    where: {
+      entityType: 'collection',
+      entityId: { in: collections.map((c) => c.id) },
+      locale: 'en',
+      field: 'title',
+    },
+  });
+  const titleMap = Object.fromEntries(titles.map((t) => [t.entityId, t.value]));
+
+  return {
+    collections: collections.map((collection) => ({
+      ...collection,
+      title: titleMap[collection.id] ?? collection.handle,
+    })),
+  };
 }
 
 export function meta() {
@@ -35,11 +51,23 @@ export default function AdminCollectionsRoute() {
             className="flex items-center justify-between px-4 py-3"
           >
             <div>
-              <p className="font-medium">{c.handle}</p>
+              <Link
+                to={`/admin/collections/${c.id}`}
+                className="font-medium hover:underline"
+              >
+                {c.title}
+              </Link>
               <p className="text-sm text-stone-500">
-                {c.collectionType} · {c._count.products} products
+                /{c.handle} · {c.collectionType} · {c._count.products} products
               </p>
             </div>
+            <Button
+              as={Link}
+              to={`/admin/collections/${c.id}`}
+              variant="secondary"
+            >
+              Edit
+            </Button>
           </li>
         ))}
         {!collections.length && (

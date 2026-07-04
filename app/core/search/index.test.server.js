@@ -13,6 +13,7 @@ const { mockPrisma } = vi.hoisted(() => ({
     variantPrice: { findMany: vi.fn() },
     product: { findMany: vi.fn(), count: vi.fn() },
     slug: { findFirst: vi.fn() },
+    channelPriceOverride: { findMany: vi.fn().mockResolvedValue([]) },
   },
 }));
 
@@ -235,6 +236,26 @@ describe('dbProvider.search', () => {
     expect(productFindCall.where.categories).toMatchObject({
       some: { categoryId: 'cat_1' },
     });
+  });
+
+  it('applies channelId publish filter via AND condition', async () => {
+    await dbProvider.search({
+      query: '',
+      filters: { channelId: 'ch_1' },
+    });
+
+    const productFindCall = mockPrisma.product.findMany.mock.calls[0][0];
+    expect(productFindCall.where.AND).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          OR: expect.arrayContaining([
+            expect.objectContaining({
+              channelProducts: { some: { channelId: 'ch_1', published: true } },
+            }),
+          ]),
+        }),
+      ])
+    );
   });
 
   it('applies inStock filter via AND condition', async () => {

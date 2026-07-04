@@ -18,6 +18,7 @@ export default [
     // Product catalog
     route('products/:slug', 'routes/storefront/products/$slug.jsx'),
     route('categories/:slug', 'routes/storefront/categories/$slug.jsx'),
+    route('collections/:handle', 'routes/storefront/collections/$handle.jsx'),
 
     // Search
     route('search', 'routes/storefront/search.jsx'),
@@ -194,6 +195,7 @@ export default [
       // Categories (P5-4)
       route('collections', 'routes/admin/collections/index.jsx'),
       route('collections/new', 'routes/admin/collections/new.jsx'),
+      route('collections/:id', 'routes/admin/collections/$id.jsx'),
       route('import', 'routes/admin/import/index.jsx'),
       route('categories', 'routes/admin/categories/index.jsx'),
       route('categories/new', 'routes/admin/categories/new.jsx'),
@@ -222,6 +224,10 @@ export default [
       route('price-lists/new', 'routes/admin/price-lists/new.jsx'),
       route('gift-cards', 'routes/admin/gift-cards/index.jsx'),
       route('gift-cards/new', 'routes/admin/gift-cards/new.jsx'),
+      route('subscriptions', 'routes/admin/subscriptions/index.jsx'),
+      route('pos', 'routes/admin/pos/index.jsx'),
+      route('companies', 'routes/admin/companies/index.jsx'),
+      route('quotes', 'routes/admin/quotes/index.jsx'),
       route('loyalty', 'routes/admin/loyalty/index.jsx'),
       route('marketing', 'routes/admin/marketing/index.jsx'),
       route(
