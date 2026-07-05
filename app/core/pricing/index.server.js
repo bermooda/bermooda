@@ -3,11 +3,98 @@
 
 import prisma from '#/libs/prisma.server';
 
-function isPriceListActive(priceList, now = new Date()) {
+import { getChannelPriceOverride } from '#/core/channels/index.server';
+
+/**
+ * Whether a price list is active for the given timestamp.
+ *
+ * @param {object} priceList
+ * @param {Date} [now]
+ */
+export function isPriceListActive(priceList, now = new Date()) {
   if (!priceList.active) return false;
   if (priceList.startsAt && priceList.startsAt > now) return false;
   if (priceList.expiresAt && priceList.expiresAt <= now) return false;
   return true;
+}
+
+/**
+ * Prisma `OR` filter for price lists scoped to customer groups.
+ *
+ * @param {string[]} customerGroupIds
+ */
+export function buildPriceListGroupWhere(customerGroupIds) {
+  return [
+    { customerGroupId: null },
+    ...(customerGroupIds.length
+      ? [{ customerGroupId: { in: customerGroupIds } }]
+      : []),
+  ];
+}
+
+/**
+ * Pick the lowest applicable price from base, channel, and price list sources.
+ *
+ * @param {{
+ *   basePriceCents?: number|null,
+ *   channelPriceCents?: number|null,
+ *   channelId?: string,
+ *   priceLists?: object[],
+ *   variantId: string,
+ *   quantity?: number,
+ *   now?: Date,
+ * }} params
+ * @returns {{ priceCents: number, source: 'base'|'price_list'|'channel', priceListId?: string, channelId?: string }|null}
+ */
+export function pickBestVariantPrice({
+  basePriceCents = null,
+  channelPriceCents = null,
+  channelId,
+  priceLists = [],
+  variantId,
+  quantity = 1,
+  now = new Date(),
+}) {
+  let bestPrice = basePriceCents ?? null;
+  let bestSource = basePriceCents != null ? 'base' : null;
+  let bestPriceListId;
+  let bestChannelId;
+
+  if (channelPriceCents != null) {
+    if (bestPrice == null || channelPriceCents < bestPrice) {
+      bestPrice = channelPriceCents;
+      bestSource = 'channel';
+      bestChannelId = channelId;
+      bestPriceListId = undefined;
+    }
+  }
+
+  for (const priceList of priceLists) {
+    if (!isPriceListActive(priceList, now)) continue;
+
+    const entry = priceList.entries
+      ?.filter(
+        (row) => row.variantId === variantId && row.minQuantity <= quantity
+      )
+      .sort((a, b) => b.minQuantity - a.minQuantity)[0];
+    if (!entry) continue;
+
+    if (bestPrice == null || entry.priceCents < bestPrice) {
+      bestPrice = entry.priceCents;
+      bestSource = 'price_list';
+      bestPriceListId = priceList.id;
+      bestChannelId = undefined;
+    }
+  }
+
+  if (bestPrice == null || bestSource == null) return null;
+
+  return {
+    priceCents: bestPrice,
+    source: bestSource,
+    priceListId: bestPriceListId,
+    channelId: bestChannelId,
+  };
 }
 
 /**
@@ -21,6 +108,49 @@ export async function getCustomerGroupIds(customerId) {
     select: { customerGroupId: true },
   });
   return rows.map((row) => row.customerGroupId);
+}
+
+/**
+ * Resolve customer group IDs from explicit ids or a customer record.
+ *
+ * @param {{
+ *   customerId?: string,
+ *   customerGroupId?: string,
+ *   customerGroupIds?: string[],
+ * }} params
+ */
+export async function resolveCustomerGroupIds({
+  customerId,
+  customerGroupId,
+  customerGroupIds,
+} = {}) {
+  if (customerGroupIds?.length) return customerGroupIds;
+  if (customerGroupId) return [customerGroupId];
+  if (customerId) return getCustomerGroupIds(customerId);
+  return [];
+}
+
+async function loadActivePriceLists({
+  currency,
+  customerGroupIds,
+  variantIds,
+}) {
+  return prisma.priceList.findMany({
+    where: {
+      active: true,
+      currency,
+      OR: buildPriceListGroupWhere(customerGroupIds),
+    },
+    orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+    include: {
+      entries: {
+        where: {
+          variantId: { in: variantIds },
+        },
+        orderBy: { minQuantity: 'desc' },
+      },
+    },
+  });
 }
 
 /**
@@ -43,75 +173,88 @@ export async function resolveVariantPrice({
   customerGroupIds = [],
   salesChannelId,
 }) {
-  const base = await prisma.variantPrice.findUnique({
-    where: { variantId_currency: { variantId, currency } },
-  });
-  if (!base) return null;
-
-  let bestPrice = base.priceCents;
-  let bestSource = 'base';
-  let bestPriceListId;
-  let bestChannelId;
-
-  if (salesChannelId) {
-    const channelOverride = await prisma.channelPriceOverride.findUnique({
-      where: {
-        channelId_variantId_currency: {
-          channelId: salesChannelId,
-          variantId,
-          currency,
-        },
-      },
-    });
-    if (channelOverride) {
-      bestPrice = channelOverride.priceCents;
-      bestSource = 'channel';
-      bestChannelId = salesChannelId;
-    }
-  }
-
-  const now = new Date();
-  const priceLists = await prisma.priceList.findMany({
-    where: {
-      active: true,
+  const [base, channelOverride, priceLists] = await Promise.all([
+    prisma.variantPrice.findUnique({
+      where: { variantId_currency: { variantId, currency } },
+    }),
+    salesChannelId
+      ? getChannelPriceOverride(salesChannelId, variantId, currency)
+      : null,
+    loadActivePriceLists({
       currency,
-      OR: [
-        { customerGroupId: null },
-        ...(customerGroupIds.length
-          ? [{ customerGroupId: { in: customerGroupIds } }]
-          : []),
-      ],
-    },
-    orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
-    include: {
-      entries: {
-        where: {
-          variantId,
-          minQuantity: { lte: quantity },
-        },
-        orderBy: { minQuantity: 'desc' },
-        take: 1,
-      },
-    },
-  });
+      customerGroupIds,
+      variantIds: [variantId],
+    }),
+  ]);
 
-  for (const priceList of priceLists) {
-    if (!isPriceListActive(priceList, now)) continue;
-    const entry = priceList.entries[0];
-    if (!entry) continue;
-    if (entry.priceCents < bestPrice) {
-      bestPrice = entry.priceCents;
-      bestSource = 'price_list';
-      bestPriceListId = priceList.id;
+  return pickBestVariantPrice({
+    basePriceCents: base?.priceCents ?? null,
+    channelPriceCents: channelOverride?.priceCents ?? null,
+    channelId: salesChannelId,
+    priceLists,
+    variantId,
+    quantity,
+  });
+}
+
+/**
+ * Resolve prices for multiple variant/quantity pairs with batched queries.
+ *
+ * @param {Array<{ variantId: string, quantity?: number }>} items
+ * @param {{
+ *   currency: string,
+ *   customerGroupIds?: string[],
+ *   salesChannelId?: string,
+ * }} options
+ * @returns {Promise<Map<string, { priceCents: number, source: 'base'|'price_list'|'channel', priceListId?: string, channelId?: string }>>}
+ */
+export async function resolveVariantPrices(
+  items,
+  { currency, customerGroupIds = [], salesChannelId } = {}
+) {
+  const results = new Map();
+  if (!items?.length) return results;
+
+  const variantIds = [...new Set(items.map((item) => item.variantId))];
+
+  const [basePrices, channelOverrides, priceLists] = await Promise.all([
+    prisma.variantPrice.findMany({
+      where: { variantId: { in: variantIds }, currency },
+    }),
+    salesChannelId
+      ? prisma.channelPriceOverride.findMany({
+          where: {
+            channelId: salesChannelId,
+            variantId: { in: variantIds },
+            currency,
+          },
+        })
+      : [],
+    loadActivePriceLists({ currency, customerGroupIds, variantIds }),
+  ]);
+
+  const baseByVariant = Object.fromEntries(
+    basePrices.map((row) => [row.variantId, row.priceCents])
+  );
+  const channelByVariant = Object.fromEntries(
+    channelOverrides.map((row) => [row.variantId, row.priceCents])
+  );
+
+  for (const item of items) {
+    const resolved = pickBestVariantPrice({
+      basePriceCents: baseByVariant[item.variantId] ?? null,
+      channelPriceCents: channelByVariant[item.variantId] ?? null,
+      channelId: salesChannelId,
+      priceLists,
+      variantId: item.variantId,
+      quantity: item.quantity ?? 1,
+    });
+    if (resolved) {
+      results.set(`${item.variantId}:${item.quantity ?? 1}`, resolved);
     }
   }
 
-  return {
-    priceCents: bestPrice,
-    source: bestSource,
-    priceListId: bestPriceListId,
-    channelId: bestChannelId,
-  };
+  return results;
 }
 
 /**
@@ -125,26 +268,24 @@ export async function applyPriceListToCartLines(
 ) {
   if (!cart?.lines?.length) return cart;
 
-  const groupIds =
-    customerGroupIds ??
-    (customerId ? await getCustomerGroupIds(customerId) : []);
+  const groupIds = await resolveCustomerGroupIds({
+    customerId,
+    customerGroupIds,
+  });
+  const priceByLineKey = await resolveVariantPrices(cart.lines, {
+    currency: cart.currency,
+    customerGroupIds: groupIds,
+    salesChannelId,
+  });
 
-  const lines = await Promise.all(
-    cart.lines.map(async (line) => {
-      const resolved = await resolveVariantPrice({
-        variantId: line.variantId,
-        currency: cart.currency,
-        quantity: line.quantity,
-        customerGroupIds: groupIds,
-        salesChannelId,
-      });
-      if (!resolved) return line;
-      return {
-        ...line,
-        priceCentsSnapshot: resolved.priceCents,
-      };
-    })
-  );
+  const lines = cart.lines.map((line) => {
+    const resolved = priceByLineKey.get(`${line.variantId}:${line.quantity}`);
+    if (!resolved) return line;
+    return {
+      ...line,
+      priceCentsSnapshot: resolved.priceCents,
+    };
+  });
 
   return { ...cart, lines };
 }
@@ -157,6 +298,15 @@ export async function listCustomerGroups() {
   return prisma.customerGroup.findMany({
     orderBy: { name: 'asc' },
     include: { _count: { select: { members: true, priceLists: true } } },
+  });
+}
+
+export async function listCustomerGroupMembers() {
+  return prisma.customerGroupMember.findMany({
+    include: {
+      customer: { select: { id: true, email: true, name: true } },
+      group: { select: { id: true, name: true } },
+    },
   });
 }
 

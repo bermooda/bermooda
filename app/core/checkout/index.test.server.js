@@ -22,7 +22,7 @@ vi.mock('#/core/cart/index.server', () => ({
 
 vi.mock('#/core/pricing/index.server', () => ({
   applyPriceListToCartLines: vi.fn(),
-  getCustomerGroupIds: vi.fn(),
+  resolveCustomerGroupIds: vi.fn(),
 }));
 
 vi.mock('#/core/discounts/index.server', () => ({
@@ -61,7 +61,10 @@ import {
 import { computeTotals } from '#/core/checkout/totals.server';
 import { resolvePromotions } from '#/core/discounts/index.server';
 import { emit, emitBefore } from '#/core/events/index.server';
-import { applyPriceListToCartLines } from '#/core/pricing/index.server';
+import {
+  applyPriceListToCartLines,
+  resolveCustomerGroupIds,
+} from '#/core/pricing/index.server';
 import { resolveShippingOption } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
 import { makeCart } from '#/test/factories/cart';
@@ -98,6 +101,7 @@ beforeEach(() => {
   resolveShippingOption.mockResolvedValue({ option: null, quotes: [] });
   computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
   applyPriceListToCartLines.mockImplementation(async (cart) => cart);
+  resolveCustomerGroupIds.mockResolvedValue([]);
   resolvePromotions.mockResolvedValue({
     applied: [],
     discountCents: 0,

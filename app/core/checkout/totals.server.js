@@ -7,7 +7,7 @@ import { resolveGiftCardRedemption } from '#/core/gift-cards/index.server';
 import { resolveLoyaltyRedemption } from '#/core/loyalty/index.server';
 import {
   applyPriceListToCartLines,
-  getCustomerGroupIds,
+  resolveCustomerGroupIds,
 } from '#/core/pricing/index.server';
 import { resolveShippingOption } from '#/core/shipping/index.server';
 import { getStoreCreditBalance } from '#/core/store-credit/index.server';
@@ -68,11 +68,10 @@ export async function computeTotals({
   salesChannelId,
 }) {
   const currency = cart?.currency ?? 'USD';
-  const customerGroupIds = customerGroupId
-    ? [customerGroupId]
-    : customerId
-      ? await getCustomerGroupIds(customerId)
-      : [];
+  const customerGroupIds = await resolveCustomerGroupIds({
+    customerId,
+    customerGroupId,
+  });
 
   const pricedCart = await applyPriceListToCartLines(cart, {
     customerGroupIds,

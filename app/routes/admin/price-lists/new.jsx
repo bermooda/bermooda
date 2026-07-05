@@ -7,7 +7,6 @@ import {
   useNavigation,
 } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -18,12 +17,13 @@ import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
-import { createPriceList } from '#/core/pricing/index.server';
+import {
+  createPriceList,
+  listCustomerGroups,
+} from '#/core/pricing/index.server';
 
 export async function loader() {
-  const groups = await prisma.customerGroup.findMany({
-    orderBy: { name: 'asc' },
-  });
+  const groups = await listCustomerGroups();
   return { groups };
 }
 

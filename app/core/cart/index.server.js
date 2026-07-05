@@ -123,16 +123,6 @@ export async function addLine(
   const customerGroupIds = customerId
     ? await getCustomerGroupIds(customerId)
     : [];
-  const resolved = await resolveVariantPrice({
-    variantId,
-    currency: cart.currency,
-    quantity,
-    customerGroupIds,
-  });
-
-  if (!resolved) {
-    throw new Error('PRICE_NOT_FOUND');
-  }
 
   const titleSnapshot = await resolveTitleSnapshot(variantId, locale);
 
@@ -141,16 +131,31 @@ export async function addLine(
     where: { cartId, variantId },
   });
 
+  const lineQuantity = existing ? existing.quantity + quantity : quantity;
+  const resolved = await resolveVariantPrice({
+    variantId,
+    currency: cart.currency,
+    quantity: lineQuantity,
+    customerGroupIds,
+  });
+
+  if (!resolved) {
+    throw new Error('PRICE_NOT_FOUND');
+  }
+
   const line = existing
     ? await prisma.cartLine.update({
         where: { id: existing.id },
-        data: { quantity: { increment: quantity } },
+        data: {
+          quantity: lineQuantity,
+          priceCentsSnapshot: resolved.priceCents,
+        },
       })
     : await prisma.cartLine.create({
         data: {
           cartId,
           variantId,
-          quantity,
+          quantity: lineQuantity,
           priceCentsSnapshot: resolved.priceCents,
           titleSnapshot,
         },
@@ -188,9 +193,38 @@ export async function updateQuantity(cartId, lineId, quantity) {
     return removeLine(cartId, lineId);
   }
 
+  const existingLine = await prisma.cartLine.findFirst({
+    where: { id: lineId, cartId },
+  });
+  if (!existingLine) {
+    throw new Error('LINE_NOT_FOUND');
+  }
+
+  const cart = await prisma.cart.findUnique({ where: { id: cartId } });
+  if (!cart) {
+    throw new Error('CART_NOT_FOUND');
+  }
+
+  const customerGroupIds = cart.customerId
+    ? await getCustomerGroupIds(cart.customerId)
+    : [];
+  const resolved = await resolveVariantPrice({
+    variantId: existingLine.variantId,
+    currency: cart.currency,
+    quantity,
+    customerGroupIds,
+  });
+
+  if (!resolved) {
+    throw new Error('PRICE_NOT_FOUND');
+  }
+
   const line = await prisma.cartLine.update({
     where: { id: lineId, cartId },
-    data: { quantity },
+    data: {
+      quantity,
+      priceCentsSnapshot: resolved.priceCents,
+    },
   });
 
   await emit('cart.updated', {

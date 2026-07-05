@@ -18,17 +18,16 @@ import {
 } from '#/core/pricing/index.server';
 
 export async function loader() {
-  const [priceLists, variants, groups] = await Promise.all([
+  const [priceLists, variants] = await Promise.all([
     listPriceLists(),
     prisma.productVariant.findMany({
       take: 50,
       orderBy: { updatedAt: 'desc' },
       select: { id: true, sku: true },
     }),
-    prisma.customerGroup.findMany({ orderBy: { name: 'asc' } }),
   ]);
 
-  return { priceLists, variants, groups };
+  return { priceLists, variants };
 }
 
 export async function action({ request }) {
