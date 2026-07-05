@@ -34,6 +34,15 @@ export function registerProvider(id, provider) {
   _registry.set(id, provider);
 }
 
+/**
+ * Remove a registered payment provider by id.
+ *
+ * @param {string} id
+ */
+export function unregisterProvider(id) {
+  _registry.delete(id);
+}
+
 // ---------------------------------------------------------------------------
 // getProvider — retrieve a provider by id (throws if not found)
 // ---------------------------------------------------------------------------

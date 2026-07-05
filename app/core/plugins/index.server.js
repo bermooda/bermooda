@@ -7,15 +7,35 @@ import queue from '#/libs/queue.server';
 
 import { emit, off, on } from '#/core/events/index.server';
 import {
+  registerProvider as registerPaymentProvider,
+  unregisterProvider as unregisterPaymentProvider,
+} from '#/core/payments/index.server';
+import {
+  getDefaultProviderId as getDefaultSearchProviderId,
+  registerProvider as registerSearchProvider,
+  setDefaultProvider as setDefaultSearchProvider,
+  unregisterProvider as unregisterSearchProvider,
+} from '#/core/search/index.server';
+import {
   get as settingsGet,
   set as settingsSet,
 } from '#/core/settings/index.server';
+import {
+  registerProvider as registerShippingProvider,
+  unregisterProvider as unregisterShippingProvider,
+} from '#/core/shipping/index.server';
+import {
+  registerProvider as registerTaxProvider,
+  unregisterProvider as unregisterTaxProvider,
+} from '#/core/tax/index.server';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const VALID_PROVIDER_TYPES = ['payment', 'shipping', 'tax'];
+function getValidProviderTypes() {
+  return ['payment', 'shipping', 'tax', 'search'];
+}
 
 // ---------------------------------------------------------------------------
 // Registry — in-memory store of loaded plugins and their handlers
@@ -34,7 +54,11 @@ const VALID_PROVIDER_TYPES = ['payment', 'shipping', 'tax'];
  * @property {string} [storefrontRoutes]
  */
 
-/** @type {Map<string, { manifest: PluginManifest, handlers: Map<string, Function> }>} */
+/**
+ * @typedef {{ type: string, id: string, previousDefaultId?: string | null }} WiredProvider
+ */
+
+/** @type {Map<string, { manifest: PluginManifest, handlers: Map<string, Function>, providers: WiredProvider[], isEnabled: boolean }>} */
 const registry = new Map();
 
 // ---------------------------------------------------------------------------
@@ -59,6 +83,10 @@ export function definePlugin(manifest) {
     if (!value || typeof value !== 'string' || value.trim() === '') {
       throw new Error(`Plugin manifest missing required field: "${field}"`);
     }
+  }
+
+  if (manifest.providers) {
+    defineProviders(manifest.providers);
   }
 
   return manifest;
@@ -103,9 +131,10 @@ export function defineHooks(hookMap) {
  * @returns {{ type: string } & Object}
  */
 export function defineProvider(type, spec) {
-  if (!VALID_PROVIDER_TYPES.includes(type)) {
+  const validProviderTypes = getValidProviderTypes();
+  if (!validProviderTypes.includes(type)) {
     throw new Error(
-      `Invalid provider type "${type}". Must be one of: ${VALID_PROVIDER_TYPES.join(', ')}`
+      `Invalid provider type "${type}". Must be one of: ${validProviderTypes.join(', ')}`
     );
   }
 
@@ -114,6 +143,38 @@ export function defineProvider(type, spec) {
   }
 
   return { type, ...spec };
+}
+
+// ---------------------------------------------------------------------------
+// defineProviders — validates and returns a provider map
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a validated providers object.
+ * Values must be provider specs created with `defineProvider()`.
+ *
+ * @param {Record<string, { type: string } & Object>} providerMap
+ * @returns {Record<string, { type: string } & Object>}
+ */
+export function defineProviders(providerMap) {
+  if (!providerMap || typeof providerMap !== 'object') {
+    throw new Error('providerMap must be an object');
+  }
+
+  const validProviderTypes = getValidProviderTypes();
+
+  for (const [providerId, spec] of Object.entries(providerMap)) {
+    if (!spec || typeof spec !== 'object') {
+      throw new Error(`Provider "${providerId}" must be an object`);
+    }
+    if (!validProviderTypes.includes(spec.type)) {
+      throw new Error(
+        `Provider "${providerId}" has invalid type "${spec.type}". Must be one of: ${validProviderTypes.join(', ')}`
+      );
+    }
+  }
+
+  return providerMap;
 }
 
 // ---------------------------------------------------------------------------
@@ -189,6 +250,78 @@ function buildCtx(pluginId) {
   };
 }
 
+function registerProvidersForPlugin(entry) {
+  const providerMap = entry.manifest.providers;
+  if (!providerMap) return;
+
+  for (const [providerId, spec] of Object.entries(
+    defineProviders(providerMap)
+  )) {
+    const { type, ...providerSpec } = spec;
+
+    switch (type) {
+      case 'payment':
+        registerPaymentProvider(providerId, providerSpec);
+        entry.providers.push({ type, id: providerId });
+        break;
+      case 'shipping':
+        registerShippingProvider(providerId, providerSpec);
+        entry.providers.push({ type, id: providerId });
+        break;
+      case 'tax':
+        registerTaxProvider(providerId, providerSpec);
+        entry.providers.push({ type, id: providerId });
+        break;
+      case 'search': {
+        const previousDefaultId = providerSpec.isDefault
+          ? getDefaultSearchProviderId()
+          : null;
+
+        registerSearchProvider(providerId, providerSpec.provider, {
+          isDefault: providerSpec.isDefault,
+        });
+        entry.providers.push({
+          type,
+          id: providerId,
+          previousDefaultId,
+        });
+        break;
+      }
+      default:
+        throw new Error(`Unsupported provider type "${type}"`);
+    }
+  }
+}
+
+function unregisterProvidersForPlugin(entry) {
+  for (const provider of [...entry.providers].reverse()) {
+    switch (provider.type) {
+      case 'payment':
+        unregisterPaymentProvider(provider.id);
+        break;
+      case 'shipping':
+        unregisterShippingProvider(provider.id);
+        break;
+      case 'tax':
+        unregisterTaxProvider(provider.id);
+        break;
+      case 'search':
+        unregisterSearchProvider(provider.id);
+        if (
+          provider.previousDefaultId &&
+          provider.previousDefaultId !== provider.id
+        ) {
+          setDefaultSearchProvider(provider.previousDefaultId);
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  entry.providers = [];
+}
+
 // ---------------------------------------------------------------------------
 // enable / disable
 // ---------------------------------------------------------------------------
@@ -204,12 +337,13 @@ function buildCtx(pluginId) {
 export async function enable(pluginId) {
   const entry = registry.get(pluginId);
   if (!entry) throw new Error(`Plugin "${pluginId}" is not registered`);
-  if (entry.handlers.size > 0) return; // already enabled
+  if (entry.isEnabled) return;
 
   const { manifest } = entry;
   const settingKey = `plugin.${pluginId}.enabled`;
 
   await settingsSet(settingKey, true);
+  entry.isEnabled = true;
 
   // Register hooks from the manifest.
   if (manifest.hooks) {
@@ -220,6 +354,8 @@ export async function enable(pluginId) {
       }
     }
   }
+
+  registerProvidersForPlugin(entry);
 
   const ctx = buildCtx(pluginId);
 
@@ -255,11 +391,14 @@ export async function disable(pluginId) {
     await manifest.onDisable(ctx);
   }
 
+  unregisterProvidersForPlugin(entry);
+
   // Deregister all hooks this plugin registered.
   for (const [event, handler] of entry.handlers) {
     off(event, handler);
   }
   entry.handlers.clear();
+  entry.isEnabled = false;
 
   logger.info({ pluginId }, 'Plugin disabled');
 }
@@ -276,7 +415,12 @@ export async function disable(pluginId) {
  */
 export function register(manifest) {
   const validated = definePlugin(manifest);
-  registry.set(validated.id, { manifest: validated, handlers: new Map() });
+  registry.set(validated.id, {
+    manifest: validated,
+    handlers: new Map(),
+    providers: [],
+    isEnabled: false,
+  });
 }
 
 // ---------------------------------------------------------------------------
