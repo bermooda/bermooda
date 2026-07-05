@@ -28,8 +28,8 @@ The plugin lifecycle is:
 
 1. **Define** — the plugin calls `definePlugin(manifest)` at module load time to validate its manifest.
 2. **Register** — `register(manifest)` adds the plugin to the in-memory registry. This is typically done at application startup when the plugin's `index.server.js` is imported.
-3. **Enable** — `enable(pluginId)` persists the enabled state, wires hook handlers onto the event bus, and calls the plugin's `onEnable` lifecycle hook.
-4. **Disable** — `disable(pluginId)` calls `onDisable`, removes hook handlers from the event bus, and persists the disabled state.
+3. **Enable** — `enable(pluginId)` persists the enabled state, wires hook handlers onto the event bus, auto-registers any providers declared in `manifest.providers`, and calls the plugin's `onEnable` lifecycle hook.
+4. **Disable** — `disable(pluginId)` calls `onDisable`, unregisters any providers declared in `manifest.providers`, removes hook handlers from the event bus, and persists the disabled state.
 
 In the admin plugins screen, toggling a plugin updates the persisted `enabledPlugins` array for startup and also calls `enable()` or `disable()` immediately so hooks, providers, and lifecycle callbacks are wired live without waiting for a restart.
 
@@ -48,7 +48,7 @@ A manifest is a plain JavaScript object that describes the plugin to the platfor
   version: '1.0.0',          // string, required — semver version string
   description: '...',        // string, optional — short description shown in admin
   hooks: { ... },            // object, optional — event handler map (see defineHooks)
-  providers: { ... },        // object, optional — payment/shipping/tax provider specs
+  providers: { ... },        // object, optional — payment/shipping/tax/search provider specs
   adminRoutes: '#/plugins/my-plugin/admin/routes.server', // string, optional
   storefrontRoutes: '#/plugins/my-plugin/storefront/routes.server', // string, optional
   onEnable: async (ctx) => {},     // function, optional — called when plugin is enabled
@@ -58,18 +58,18 @@ A manifest is a plain JavaScript object that describes the plugin to the platfor
 
 ### Field Reference
 
-| Field              | Type           | Required | Description                                                                                                      |
-| ------------------ | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
-| `id`               | string         | yes      | Unique plugin identifier. Used as namespace key for PluginData and settings. Must be non-empty.                  |
-| `name`             | string         | yes      | Display name shown in the admin UI. Must be non-empty.                                                           |
-| `version`          | string         | yes      | Plugin version. Must be non-empty. Semver recommended.                                                           |
-| `description`      | string         | no       | Short description of what the plugin does.                                                                       |
-| `hooks`            | object         | no       | Map of event names to handler functions. Pass through `defineHooks()`.                                           |
-| `providers`        | object         | no       | Map of provider specs. Each value should be created with `defineProvider()`.                                     |
-| `adminRoutes`      | string         | no       | Module id for the plugin's admin server routes. Enables pages at `/admin/plugins/<id>/*`.                        |
-| `storefrontRoutes` | string         | no       | Module id for the plugin's storefront server routes. Enables pages at `/apps/<id>/*` when the plugin is enabled. |
-| `onEnable`         | async function | no       | Called with `ctx` after hook handlers are registered. Use for initialization tasks.                              |
-| `onDisable`        | async function | no       | Called with `ctx` before hook handlers are removed. Use for cleanup tasks.                                       |
+| Field              | Type           | Required | Description                                                                                                          |
+| ------------------ | -------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
+| `id`               | string         | yes      | Unique plugin identifier. Used as namespace key for PluginData and settings. Must be non-empty.                      |
+| `name`             | string         | yes      | Display name shown in the admin UI. Must be non-empty.                                                               |
+| `version`          | string         | yes      | Plugin version. Must be non-empty. Semver recommended.                                                               |
+| `description`      | string         | no       | Short description of what the plugin does.                                                                           |
+| `hooks`            | object         | no       | Map of event names to handler functions. Pass through `defineHooks()`.                                               |
+| `providers`        | object         | no       | Map of provider specs. Each value should be created with `defineProvider()` (or validated with `defineProviders()`). |
+| `adminRoutes`      | string         | no       | Module id for the plugin's admin server routes. Enables pages at `/admin/plugins/<id>/*`.                            |
+| `storefrontRoutes` | string         | no       | Module id for the plugin's storefront server routes. Enables pages at `/apps/<id>/*` when the plugin is enabled.     |
+| `onEnable`         | async function | no       | Called with `ctx` after hook handlers are registered. Use for initialization tasks.                                  |
+| `onDisable`        | async function | no       | Called with `ctx` before hook handlers are removed. Use for cleanup tasks.                                           |
 
 ---
 
@@ -136,12 +136,83 @@ const myPaymentProvider = defineProvider('payment', {
 });
 ```
 
+For `payment`, `shipping`, and `tax`, the `spec` object is the provider implementation that will be registered into the matching core registry.
+
+```js
+providers: {
+  my_gateway: defineProvider('payment', {
+    name: 'My Gateway',
+    createCheckoutSession: async ({ cart, successUrl, cancelUrl }) => {
+      /* ... */
+    },
+    verifyWebhook: async (request) => {
+      /* ... */
+    },
+    handleWebhookEvent: async (event) => {
+      /* ... */
+    },
+    createRefund: async ({ paymentIntentId, amountCents, reason }) => {
+      /* ... */
+    },
+  }),
+};
+```
+
+For `search`, pass the search implementation as `spec.provider`. Set `isDefault: true` if the plugin should become the active default search provider while enabled:
+
+```js
+import { definePlugin, defineProvider } from '#/core/plugins/index.server';
+
+import manifest from '#/plugins/meilisearch/manifest';
+import { meilisearchProvider } from '#/plugins/meilisearch/provider.server';
+
+export const pluginManifest = definePlugin({
+  ...manifest,
+  providers: {
+    meilisearch: defineProvider('search', {
+      provider: meilisearchProvider,
+      isDefault: true,
+    }),
+  },
+});
+```
+
 **Parameters:**
 
-- `type` — must be one of `'payment'`, `'shipping'`, or `'tax'`.
+- `type` — must be one of `'payment'`, `'shipping'`, `'tax'`, or `'search'`.
 - `spec` — object with provider-specific fields.
 
 **Throws:** `Error` if `type` is not one of the valid values, or if `spec` is not an object.
+
+---
+
+### `defineProviders(providerMap)`
+
+Validates a `providers` map and returns it unchanged. Each value must be a provider spec created with `defineProvider()`.
+
+```js
+import {
+  definePlugin,
+  defineProvider,
+  defineProviders,
+} from '#/core/plugins/index.server';
+
+export const pluginManifest = definePlugin({
+  id: 'my-plugin',
+  name: 'My Plugin',
+  version: '1.0.0',
+  providers: defineProviders({
+    my_gateway: defineProvider('payment', {
+      name: 'My Gateway',
+      createCheckoutSession: async () => {
+        /* ... */
+      },
+    }),
+  }),
+});
+```
+
+Use this when you want explicit validation of the entire provider map at declaration time. `definePlugin()` also validates the `providers` field when present.
 
 ---
 
@@ -166,7 +237,8 @@ Enables a registered plugin. This is an async function that:
 
 1. Persists `plugin.<pluginId>.enabled = true` in the `Setting` table.
 2. Registers all hook handlers from `manifest.hooks` onto the event bus via `on(event, handler)`.
-3. Calls `manifest.onEnable(ctx)` if defined.
+3. Registers all providers from `manifest.providers` into the matching core provider registries.
+4. Calls `manifest.onEnable(ctx)` if defined.
 
 ```js
 import { enable } from '#/core/plugins/index.server';
@@ -176,7 +248,7 @@ await enable('my-plugin');
 
 **Throws:** `Error` if the plugin is not in the registry.
 
-If the plugin is already enabled (its handlers map is non-empty), `enable()` returns immediately without re-registering or calling `onEnable` again.
+If the plugin is already enabled, `enable()` returns immediately without re-registering hooks/providers or calling `onEnable` again.
 
 ---
 
@@ -186,7 +258,8 @@ Disables a registered plugin. This is an async function that:
 
 1. Persists `plugin.<pluginId>.enabled = false` in the `Setting` table.
 2. Calls `manifest.onDisable(ctx)` if defined.
-3. Removes all hook handlers from the event bus via `off(event, handler)` and clears the handlers map.
+3. Unregisters all providers previously registered from `manifest.providers`. Search providers that temporarily became the default restore the previous default provider automatically.
+4. Removes all hook handlers from the event bus via `off(event, handler)` and clears the handlers map.
 
 ```js
 import { disable } from '#/core/plugins/index.server';
