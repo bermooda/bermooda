@@ -183,7 +183,7 @@ describe('addLine — PRICE_NOT_FOUND', () => {
 describe('addLine — upsert', () => {
   it('increments quantity when a line already exists for the same variantId', async () => {
     prisma.cart.findUnique.mockResolvedValue({ id: 'cart_1', currency: 'USD' });
-    resolveVariantPrice.mockResolvedValue({ priceCents: 1000, source: 'base' });
+    resolveVariantPrice.mockResolvedValue({ priceCents: 800, source: 'base' });
     prisma.translation.findUnique.mockResolvedValue(null);
     prisma.cartLine.findFirst.mockResolvedValue({
       id: 'line_1',
@@ -194,9 +194,15 @@ describe('addLine — upsert', () => {
 
     await addLine('cart_1', 'variant_1', 3, { locale: 'en' });
 
+    expect(resolveVariantPrice).toHaveBeenCalledWith({
+      variantId: 'variant_1',
+      currency: 'USD',
+      quantity: 5,
+      customerGroupIds: [],
+    });
     expect(prisma.cartLine.update).toHaveBeenCalledWith({
       where: { id: 'line_1' },
-      data: { quantity: { increment: 3 } },
+      data: { quantity: 5, priceCentsSnapshot: 800 },
     });
     expect(prisma.cartLine.create).not.toHaveBeenCalled();
     expect(emit).toHaveBeenCalledWith('cart.itemAdded', {
@@ -293,13 +299,30 @@ describe('updateQuantity', () => {
   });
 
   it('updates quantity when quantity is positive', async () => {
+    prisma.cartLine.findFirst.mockResolvedValue({
+      id: 'line_1',
+      variantId: 'variant_1',
+      quantity: 2,
+    });
+    prisma.cart.findUnique.mockResolvedValue({
+      id: 'cart_1',
+      currency: 'USD',
+      customerId: null,
+    });
+    resolveVariantPrice.mockResolvedValue({ priceCents: 700, source: 'base' });
     prisma.cartLine.update.mockResolvedValue({ id: 'line_1', quantity: 4 });
 
     await updateQuantity('cart_1', 'line_1', 4);
 
+    expect(resolveVariantPrice).toHaveBeenCalledWith({
+      variantId: 'variant_1',
+      currency: 'USD',
+      quantity: 4,
+      customerGroupIds: [],
+    });
     expect(prisma.cartLine.update).toHaveBeenCalledWith({
       where: { id: 'line_1', cartId: 'cart_1' },
-      data: { quantity: 4 },
+      data: { quantity: 4, priceCentsSnapshot: 700 },
     });
     expect(emit).toHaveBeenCalledWith('cart.updated', {
       cartId: 'cart_1',
