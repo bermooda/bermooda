@@ -9,7 +9,7 @@ import {
   applyPriceListToCartLines,
   getCustomerGroupIds,
 } from '#/core/pricing/index.server';
-import { getAllQuotes } from '#/core/shipping/index.server';
+import { resolveShippingOption } from '#/core/shipping/index.server';
 import { getStoreCreditBalance } from '#/core/store-credit/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
 
@@ -25,6 +25,7 @@ import { computeActiveTax } from '#/core/tax/index.server';
  *   shippingAddress?: object,
  *   couponCode?: string,
  *   shippingOptionId?: string,
+ *   shippingOption?: object|null,
  *   taxExempt?: boolean,
  *   vatId?: string,
  *   customerId?: string,
@@ -56,6 +57,7 @@ export async function computeTotals({
   shippingAddress,
   couponCode,
   shippingOptionId,
+  shippingOption: persistedShippingOption = null,
   taxExempt = false,
   vatId,
   customerId,
@@ -103,14 +105,16 @@ export async function computeTotals({
   let shippingOption = null;
 
   if (shippingAddress) {
-    const quotes = await getAllQuotes({
-      cart: pricedCart,
-      shippingAddress,
-    });
     if (shippingOptionId) {
-      shippingOption = quotes.find((q) => q.id === shippingOptionId) ?? null;
+      const resolved = await resolveShippingOption({
+        cart: pricedCart,
+        shippingAddress,
+        optionId: shippingOptionId,
+        persistedOption: persistedShippingOption,
+      });
+      shippingOption = resolved.option;
     }
-    shippingCents = shippingOption ? shippingOption.priceCents : 0;
+    shippingCents = shippingOption?.priceCents ?? 0;
     if (freeShipping) shippingCents = 0;
 
     if (!taxExempt) {
