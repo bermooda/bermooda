@@ -5,7 +5,7 @@ import prisma from '#/libs/prisma.server';
 
 import { lockCart, unlockCart } from '#/core/cart/index.server';
 import { computeTotals } from '#/core/checkout/totals.server';
-import { emit } from '#/core/events/index.server';
+import { emit, emitBefore } from '#/core/events/index.server';
 
 // ---------------------------------------------------------------------------
 // Step order
@@ -195,6 +195,14 @@ export async function advanceStep(sessionId, stepData = {}) {
   let updatedSession = session;
 
   if (Object.keys(updateData).length > 0) {
+    await emitBefore('checkout.advance', {
+      sessionId,
+      session,
+      fromStep: step,
+      toStep: updateData.step,
+      stepData,
+    });
+
     updatedSession = await prisma.checkoutSession.update({
       where: { id: sessionId },
       data: updateData,
