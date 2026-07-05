@@ -16,27 +16,31 @@ import { ErrorAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
 import {
-  generateGiftCardCode,
   issueGiftCard,
+  parseIssueGiftCardInput,
 } from '#/core/gift-cards/index.server';
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const code =
-    formData.get('code')?.toString().trim() || generateGiftCardCode();
-  const balanceCents = parseInt(
-    formData.get('balanceCents')?.toString() ?? '0',
-    10
-  );
-  const currency =
-    formData.get('currency')?.toString().trim().toUpperCase() || 'USD';
+  const input = parseIssueGiftCardInput({
+    code: formData.get('code'),
+    balanceCents: formData.get('balanceCents'),
+    currency: formData.get('currency'),
+  });
 
-  if (!balanceCents || balanceCents <= 0) {
+  if (!input.balanceCents || input.balanceCents <= 0) {
     return { error: 'Balance must be greater than zero.' };
   }
 
-  await issueGiftCard({ code, balanceCents, currency });
-  return redirect('/admin/gift-cards');
+  try {
+    await issueGiftCard(input);
+    return redirect('/admin/gift-cards');
+  } catch (err) {
+    if (err.code === 'GIFT_CARD_CODE_EXISTS') {
+      return { error: err.message };
+    }
+    throw err;
+  }
 }
 
 export default function AdminNewGiftCardRoute() {

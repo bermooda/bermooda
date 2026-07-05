@@ -82,7 +82,6 @@ vi.mock('#/core/store-credit/index.server', () => ({
 
 vi.mock('#/core/gift-cards/index.server', () => ({
   redeemGiftCard: vi.fn(),
-  getGiftCardByCode: vi.fn(),
 }));
 
 vi.mock('#/core/payments/index.server', () => ({
