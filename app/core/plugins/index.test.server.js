@@ -26,6 +26,52 @@ vi.mock('#/core/events/index.server', () => ({
   off: vi.fn(),
 }));
 
+const {
+  registerPaymentProvider,
+  unregisterPaymentProvider,
+  registerShippingProvider,
+  unregisterShippingProvider,
+  registerTaxProvider,
+  unregisterTaxProvider,
+  registerSearchProvider,
+  unregisterSearchProvider,
+  setDefaultSearchProvider,
+  getDefaultSearchProviderId,
+} = vi.hoisted(() => ({
+  registerPaymentProvider: vi.fn(),
+  unregisterPaymentProvider: vi.fn(),
+  registerShippingProvider: vi.fn(),
+  unregisterShippingProvider: vi.fn(),
+  registerTaxProvider: vi.fn(),
+  unregisterTaxProvider: vi.fn(),
+  registerSearchProvider: vi.fn(),
+  unregisterSearchProvider: vi.fn(),
+  setDefaultSearchProvider: vi.fn(),
+  getDefaultSearchProviderId: vi.fn(),
+}));
+
+vi.mock('#/core/payments/index.server', () => ({
+  registerProvider: registerPaymentProvider,
+  unregisterProvider: unregisterPaymentProvider,
+}));
+
+vi.mock('#/core/shipping/index.server', () => ({
+  registerProvider: registerShippingProvider,
+  unregisterProvider: unregisterShippingProvider,
+}));
+
+vi.mock('#/core/tax/index.server', () => ({
+  registerProvider: registerTaxProvider,
+  unregisterProvider: unregisterTaxProvider,
+}));
+
+vi.mock('#/core/search/index.server', () => ({
+  registerProvider: registerSearchProvider,
+  unregisterProvider: unregisterSearchProvider,
+  setDefaultProvider: setDefaultSearchProvider,
+  getDefaultProviderId: getDefaultSearchProviderId,
+}));
+
 // Mock prisma — no real database.
 const mockPluginData = {
   findUnique: vi.fn(),
@@ -53,6 +99,7 @@ const {
   definePlugin,
   defineHooks,
   defineProvider,
+  defineProviders,
   register,
   loadPlugins,
   resolvePluginAdminRoute,
@@ -196,6 +243,14 @@ describe('defineProvider', () => {
     expect(result.type).toBe('tax');
   });
 
+  it('returns a provider spec with the type attached for "search"', () => {
+    const provider = { search: vi.fn() };
+    const result = defineProvider('search', { provider, isDefault: true });
+    expect(result.type).toBe('search');
+    expect(result.provider).toBe(provider);
+    expect(result.isDefault).toBe(true);
+  });
+
   it('throws for an invalid provider type', () => {
     expect(() => defineProvider('inventory', {})).toThrow(/inventory/);
     expect(() => defineProvider('', {})).toThrow();
@@ -205,6 +260,46 @@ describe('defineProvider', () => {
   it('throws when spec is not an object', () => {
     expect(() => defineProvider('payment', null)).toThrow();
     expect(() => defineProvider('payment', 'spec')).toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// defineProviders — validates provider maps
+// ---------------------------------------------------------------------------
+
+describe('defineProviders', () => {
+  it('returns the provider map unchanged when all entries are valid', () => {
+    const providerMap = {
+      test_payment: defineProvider('payment', {
+        name: 'Test Payment',
+        createCheckoutSession: vi.fn(),
+      }),
+      test_search: defineProvider('search', {
+        provider: { search: vi.fn() },
+        isDefault: true,
+      }),
+    };
+
+    expect(defineProviders(providerMap)).toBe(providerMap);
+  });
+
+  it('throws when providerMap is not an object', () => {
+    expect(() => defineProviders(null)).toThrow();
+    expect(() => defineProviders('providers')).toThrow();
+  });
+
+  it('throws when a provider entry is missing a valid type', () => {
+    expect(() =>
+      defineProviders({
+        broken: { provider: { search: vi.fn() } },
+      })
+    ).toThrow(/broken/);
+
+    expect(() =>
+      defineProviders({
+        broken: { type: 'inventory' },
+      })
+    ).toThrow(/inventory/);
   });
 });
 
@@ -386,6 +481,7 @@ describe('enable', () => {
   beforeEach(() => {
     _registry.clear();
     vi.clearAllMocks();
+    getDefaultSearchProviderId.mockReturnValue('db');
   });
 
   it('throws when pluginId is not registered', async () => {
@@ -442,6 +538,63 @@ describe('enable', () => {
     expect(ctx).toHaveProperty('logger');
   });
 
+  it('registers payment providers declared in manifest.providers', async () => {
+    register(
+      validManifest({
+        id: 'plugin-payment',
+        name: 'Plugin Payment',
+        providers: {
+          acme_pay: defineProvider('payment', {
+            name: 'Acme Pay',
+            createCheckoutSession: vi.fn(),
+          }),
+        },
+      })
+    );
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _enable('plugin-payment');
+
+    expect(registerPaymentProvider).toHaveBeenCalledOnce();
+    const [providerId, provider] = registerPaymentProvider.mock.calls[0];
+    expect(providerId).toBe('acme_pay');
+    expect(provider).toEqual({
+      name: 'Acme Pay',
+      createCheckoutSession: expect.any(Function),
+    });
+    expect(provider).not.toHaveProperty('type');
+  });
+
+  it('registers search providers with isDefault before calling onEnable', async () => {
+    const onEnable = vi.fn().mockResolvedValue(undefined);
+
+    register(
+      validManifest({
+        id: 'plugin-search',
+        name: 'Plugin Search',
+        providers: {
+          meilisearch: defineProvider('search', {
+            provider: { search: vi.fn() },
+            isDefault: true,
+          }),
+        },
+        onEnable,
+      })
+    );
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _enable('plugin-search');
+
+    expect(registerSearchProvider).toHaveBeenCalledWith(
+      'meilisearch',
+      expect.objectContaining({ search: expect.any(Function) }),
+      { isDefault: true }
+    );
+    expect(registerSearchProvider.mock.invocationCallOrder[0]).toBeLessThan(
+      onEnable.mock.invocationCallOrder[0]
+    );
+  });
+
   it('is idempotent — second call does nothing when already enabled', async () => {
     // The guard is `handlers.size > 0`, so the plugin must have at least one
     // hook so the first enable() populates handlers and the second no-ops.
@@ -460,6 +613,28 @@ describe('enable', () => {
     // upsert called only once (on first enable)
     expect(mockSetting.upsert).toHaveBeenCalledOnce();
   });
+
+  it('is idempotent for plugins that only register providers', async () => {
+    register(
+      validManifest({
+        id: 'plugin-providers-only',
+        name: 'Plugin Providers Only',
+        providers: {
+          meilisearch: defineProvider('search', {
+            provider: { search: vi.fn() },
+            isDefault: true,
+          }),
+        },
+      })
+    );
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _enable('plugin-providers-only');
+    await _enable('plugin-providers-only');
+
+    expect(mockSetting.upsert).toHaveBeenCalledOnce();
+    expect(registerSearchProvider).toHaveBeenCalledOnce();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -470,6 +645,7 @@ describe('disable', () => {
   beforeEach(() => {
     _registry.clear();
     vi.clearAllMocks();
+    getDefaultSearchProviderId.mockReturnValue('db');
   });
 
   it('throws when pluginId is not registered', async () => {
@@ -534,5 +710,68 @@ describe('disable', () => {
     expect(onDisable).toHaveBeenCalledOnce();
     const ctx = onDisable.mock.calls[0][0];
     expect(ctx).toHaveProperty('plugin');
+  });
+
+  it('unregisters manifest providers and restores the previous search default', async () => {
+    register(
+      validManifest({
+        id: 'plugin-search-disable',
+        name: 'Plugin Search Disable',
+        providers: {
+          meilisearch: defineProvider('search', {
+            provider: { search: vi.fn() },
+            isDefault: true,
+          }),
+          acme_pay: defineProvider('payment', {
+            name: 'Acme Pay',
+            createCheckoutSession: vi.fn(),
+          }),
+        },
+      })
+    );
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _enable('plugin-search-disable');
+    vi.clearAllMocks();
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _disable('plugin-search-disable');
+
+    expect(unregisterSearchProvider).toHaveBeenCalledWith('meilisearch');
+    expect(unregisterPaymentProvider).toHaveBeenCalledWith('acme_pay');
+    expect(setDefaultSearchProvider).toHaveBeenCalledWith('db');
+  });
+
+  it('supports meilisearch-style manifests without manual lifecycle wiring', async () => {
+    register(
+      definePlugin({
+        id: 'meilisearch-style',
+        name: 'Meilisearch Style',
+        version: '1.0.0',
+        providers: {
+          meilisearch: defineProvider('search', {
+            provider: { search: vi.fn() },
+            isDefault: true,
+          }),
+        },
+      })
+    );
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _enable('meilisearch-style');
+
+    expect(registerSearchProvider).toHaveBeenCalledWith(
+      'meilisearch',
+      expect.objectContaining({ search: expect.any(Function) }),
+      { isDefault: true }
+    );
+
+    vi.clearAllMocks();
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _disable('meilisearch-style');
+
+    expect(unregisterSearchProvider).toHaveBeenCalledWith('meilisearch');
+    expect(setDefaultSearchProvider).toHaveBeenCalledWith('db');
   });
 });

@@ -63,6 +63,20 @@ export function registerProvider(id, provider, { isDefault = false } = {}) {
 }
 
 /**
+ * Remove a registered search provider by id.
+ *
+ * @param {string} id
+ */
+export function unregisterProvider(id) {
+  if (!_registry.has(id)) return;
+
+  _registry.delete(id);
+  if (_defaultProviderId === id) {
+    _defaultProviderId = _registry.keys().next().value ?? null;
+  }
+}
+
+/**
  * Get a registered search provider by id. Throws if not found.
  *
  * @param {string} id
@@ -95,6 +109,15 @@ export function setDefaultProvider(id) {
     throw new Error(`Search provider "${id}" is not registered`);
   }
   _defaultProviderId = id;
+}
+
+/**
+ * Return the current default provider id, or null when none is set.
+ *
+ * @returns {string | null}
+ */
+export function getDefaultProviderId() {
+  return _defaultProviderId;
 }
 
 // ---------------------------------------------------------------------------
