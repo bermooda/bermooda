@@ -229,7 +229,6 @@ export async function advanceStep(sessionId, stepData = {}) {
 
   const totals = await computeTotals({
     cart: updatedSession.cart,
-    cartId: updatedSession.cartId,
     shippingAddress,
     couponCode: updatedSession.couponCode ?? undefined,
     shippingOptionId: shippingOption?.id ?? undefined,

@@ -1,6 +1,7 @@
 // app/core/shipping/index.server.js
 // Shipping provider registry + built-in flat-rate adapter.
 
+import { summarizeCartLines } from '#/core/cart/lines';
 import { get as settingsGet } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
@@ -148,10 +149,7 @@ export const flatRateProvider = {
     const zones = (await settingsGet('shipping.zones')) ?? DEFAULT_ZONES;
 
     const country = shippingAddress?.country;
-    const subtotal = (cart?.lines ?? []).reduce(
-      (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-      0
-    );
+    const { subtotalCents: subtotal } = summarizeCartLines(cart?.lines);
 
     const matchingZones = zones.filter(
       (zone) =>

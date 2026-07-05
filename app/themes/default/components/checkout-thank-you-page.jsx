@@ -2,7 +2,7 @@ import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
-import { formatPrice } from '#/core/index';
+import { cartLineTotal, formatPrice } from '#/core/index';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';
@@ -76,11 +76,7 @@ export default function CheckoutThankYouPage({ order, locale, currency }) {
                   <span className="text-stone-500">× {line.quantity}</span>
                 </span>
                 <span className="font-semibold text-stone-900">
-                  {formatPrice(
-                    line.priceCentsSnapshot * line.quantity,
-                    displayCurrency,
-                    locale
-                  )}
+                  {formatPrice(cartLineTotal(line), displayCurrency, locale)}
                 </span>
               </li>
             ))}

@@ -1,6 +1,7 @@
 // app/core/checkout/totals.server.js
 // Totals engine: subtotal, multi-discount, shipping, tax-class-aware tax, total.
 
+import { summarizeCartLines } from '#/core/cart/lines';
 import { resolvePromotions } from '#/core/discounts/index.server';
 import { resolveGiftCardRedemption } from '#/core/gift-cards/index.server';
 import { resolveLoyaltyRedemption } from '#/core/loyalty/index.server';
@@ -21,7 +22,6 @@ import { computeActiveTax } from '#/core/tax/index.server';
  *
  * @param {{
  *   cart: object,
- *   cartId?: string,
  *   shippingAddress?: object,
  *   couponCode?: string,
  *   couponCodes?: string[],
@@ -54,7 +54,6 @@ import { computeActiveTax } from '#/core/tax/index.server';
  */
 export async function computeTotals({
   cart,
-  cartId,
   shippingAddress,
   couponCode,
   couponCodes,
@@ -91,10 +90,7 @@ export async function computeTotals({
   );
 
   const lines = pricedLines;
-  const subtotalCents = lines.reduce(
-    (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-    0
-  );
+  const { subtotalCents } = summarizeCartLines(lines);
 
   let discountCents = 0;
   let freeShipping = false;
@@ -104,7 +100,6 @@ export async function computeTotals({
   try {
     const promo = await resolvePromotions({
       cart: { ...cart, lines },
-      cartId,
       couponCode,
       couponCodes,
       customerGroupId: customerGroupIds[0] ?? null,

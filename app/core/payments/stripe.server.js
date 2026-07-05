@@ -5,6 +5,8 @@ import Stripe from 'stripe';
 
 import logger from '#/utils/logger.server';
 
+import { summarizeCartLines } from '#/core/cart/lines';
+
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -185,12 +187,7 @@ export const stripeProvider = {
     currency,
     savePaymentMethod = false,
   }) {
-    const amount =
-      amountCents ??
-      (cart?.lines ?? []).reduce(
-        (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-        0
-      );
+    const amount = amountCents ?? summarizeCartLines(cart?.lines).subtotalCents;
 
     const intentParams = {
       amount,

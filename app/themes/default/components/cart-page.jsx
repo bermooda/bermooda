@@ -6,7 +6,7 @@ import { Link, Form, useNavigation } from 'react-router';
 import SlotBlocks from '#/components/storefront/slot-blocks';
 
 import { useT } from '#/core/i18n/index';
-import { formatPrice } from '#/core/index';
+import { cartLineTotal, formatPrice, summarizeCartLines } from '#/core/index';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';
@@ -52,10 +52,7 @@ export default function CartPage({ cart, locale, currency, slotBlocks = {} }) {
     );
   }
 
-  const subtotalCents = lines.reduce(
-    (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-    0
-  );
+  const { subtotalCents } = summarizeCartLines(lines);
 
   const showMismatch =
     !mismatchDismissed &&
@@ -148,7 +145,7 @@ export default function CartPage({ cart, locale, currency, slotBlocks = {} }) {
                         <div className="shrink-0 text-right">
                           <p className="text-base font-semibold text-stone-900">
                             {formatPrice(
-                              line.priceCentsSnapshot * line.quantity,
+                              cartLineTotal(line),
                               cartCurrency,
                               locale
                             )}

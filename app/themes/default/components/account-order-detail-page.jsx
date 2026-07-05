@@ -1,7 +1,7 @@
 import { ChevronLeftIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router';
 
-import { formatPrice } from '#/core/index';
+import { cartLineTotal, formatPrice } from '#/core/index';
 
 function StatusBadge({ status }) {
   const colours = {
@@ -97,11 +97,7 @@ export default function AccountOrderDetailPage({ order, locale, currency }) {
                 <span className="text-zinc-500">× {line.quantity}</span>
               </span>
               <span className="font-medium">
-                {formatPrice(
-                  line.priceCentsSnapshot * line.quantity,
-                  displayCurrency,
-                  locale
-                )}
+                {formatPrice(cartLineTotal(line), displayCurrency, locale)}
               </span>
             </li>
           ))}

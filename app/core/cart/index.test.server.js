@@ -134,6 +134,20 @@ describe('createCart', () => {
 });
 
 // ---------------------------------------------------------------------------
+// addLine — cart not found
+// ---------------------------------------------------------------------------
+
+describe('addLine — CART_NOT_FOUND', () => {
+  it('throws CART_NOT_FOUND when cart does not exist', async () => {
+    prisma.cart.findUnique.mockResolvedValue(null);
+
+    await expect(addLine('missing_cart', 'variant_1', 1)).rejects.toThrow(
+      'CART_NOT_FOUND'
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // addLine — currency mismatch
 // ---------------------------------------------------------------------------
 
