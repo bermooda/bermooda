@@ -19,7 +19,9 @@ import prisma from '#/libs/prisma.server';
 import {
   applyStackingRules,
   calculateDiscountAmount,
+  isDiscountActive,
   resolvePromotions,
+  summarizeCartLines,
 } from '#/core/discounts/index.server';
 
 function makeDiscount(overrides = {}) {
@@ -48,6 +50,39 @@ function makeDiscount(overrides = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   prisma.cartDiscount.findMany.mockResolvedValue([]);
+});
+
+describe('summarizeCartLines', () => {
+  it('returns subtotal and total quantity for cart lines', () => {
+    expect(
+      summarizeCartLines([
+        { priceCentsSnapshot: 1000, quantity: 2 },
+        { priceCentsSnapshot: 500, quantity: 1 },
+      ])
+    ).toEqual({ subtotalCents: 2500, totalQuantity: 3 });
+  });
+
+  it('returns zeros for empty lines', () => {
+    expect(summarizeCartLines([])).toEqual({
+      subtotalCents: 0,
+      totalQuantity: 0,
+    });
+  });
+});
+
+describe('isDiscountActive', () => {
+  it('returns false when discount is inactive', () => {
+    expect(isDiscountActive(makeDiscount({ active: false }))).toBe(false);
+  });
+
+  it('returns false when discount has not started', () => {
+    const future = new Date(Date.now() + 60_000);
+    expect(isDiscountActive(makeDiscount({ startsAt: future }))).toBe(false);
+  });
+
+  it('returns true for a valid active discount', () => {
+    expect(isDiscountActive(makeDiscount())).toBe(true);
+  });
 });
 
 describe('calculateDiscountAmount', () => {
