@@ -3,7 +3,76 @@
 // Auth is handled by better-auth (app/libs/auth/customer.server.js).
 // This service is data-only — no auth imports.
 
+import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const CUSTOMER_PROFILE_FIELDS = ['name', 'phone', 'preferredLocale'];
+
+const CUSTOMER_ORDER_LIST_INCLUDE = { lines: true };
+
+const CUSTOMER_ORDER_DETAIL_INCLUDE = {
+  lines: true,
+  shipments: { include: { lines: true } },
+  returns: { include: { lines: true } },
+};
+
+// ---------------------------------------------------------------------------
+// Address helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Unset default flags on a customer's addresses, optionally keeping one id.
+ *
+ * @param {object} tx
+ * @param {string} customerId
+ * @param {string} [exceptAddressId]
+ */
+async function clearDefaultAddresses(tx, customerId, exceptAddressId) {
+  const where = { customerId, isDefault: true };
+  if (exceptAddressId) {
+    where.id = { not: exceptAddressId };
+  }
+
+  await tx.address.updateMany({
+    where,
+    data: { isDefault: false },
+  });
+}
+
+/**
+ * Build a Prisma where clause for customer list search.
+ *
+ * @param {string} [q]
+ * @returns {object}
+ */
+export function buildCustomerSearchWhere(q) {
+  const query = q?.trim();
+  if (!query) return {};
+
+  return {
+    OR: [{ email: containsFilter(query) }, { name: containsFilter(query) }],
+  };
+}
+
+/**
+ * Pick allowed customer profile fields from an update payload.
+ *
+ * @param {object} data
+ * @returns {object}
+ */
+export function pickCustomerProfileFields(data) {
+  const allowed = {};
+  for (const field of CUSTOMER_PROFILE_FIELDS) {
+    if (data[field] !== undefined) {
+      allowed[field] = data[field];
+    }
+  }
+  return allowed;
+}
 
 // ---------------------------------------------------------------------------
 // Profile
@@ -29,22 +98,63 @@ export async function getCustomer(id) {
  * @returns {Promise<object>}
  */
 export async function updateCustomer(id, data) {
-  const { name, phone, preferredLocale } = data;
-  const allowed = {};
-  if (name !== undefined) allowed.name = name;
-  if (phone !== undefined) allowed.phone = phone;
-  if (preferredLocale !== undefined) allowed.preferredLocale = preferredLocale;
-
-  return prisma.customer.update({ where: { id }, data: allowed });
+  return prisma.customer.update({
+    where: { id },
+    data: pickCustomerProfileFields(data),
+  });
 }
 
 /**
- * Get a customer by email.
- * @param {string} email
- * @returns {Promise<object|null>}
+ * Create a customer profile.
+ *
+ * @param {{ email: string, name?: string|null, phone?: string|null }} data
+ * @returns {Promise<object>}
  */
-export async function getCustomerByEmail(email) {
-  return prisma.customer.findUnique({ where: { email } });
+export async function createCustomer({ email, name = null, phone = null }) {
+  const existing = await prisma.customer.findUnique({ where: { email } });
+  if (existing) {
+    throw Object.assign(
+      new Error('A customer with that email already exists.'),
+      { code: 'CUSTOMER_EMAIL_EXISTS' }
+    );
+  }
+
+  return prisma.customer.create({
+    data: { email, name, phone },
+  });
+}
+
+/**
+ * List customers with optional search and pagination.
+ *
+ * @param {{ page?: number, limit?: number, q?: string }} options
+ * @returns {Promise<{ customers: object[], total: number }>}
+ */
+export async function listCustomers({ page = 1, limit = 20, q } = {}) {
+  const where = buildCustomerSearchWhere(q);
+  const skip = (page - 1) * limit;
+
+  const [customers, total] = await Promise.all([
+    prisma.customer.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        preferredLocale: true,
+        emailVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    }),
+    prisma.customer.count({ where }),
+  ]);
+
+  return { customers, total };
 }
 
 // ---------------------------------------------------------------------------
@@ -70,10 +180,7 @@ export async function listAddresses(customerId) {
 export async function addAddress(customerId, data) {
   if (data.isDefault) {
     return prisma.$transaction(async (tx) => {
-      await tx.address.updateMany({
-        where: { customerId, isDefault: true },
-        data: { isDefault: false },
-      });
+      await clearDefaultAddresses(tx, customerId);
       return tx.address.create({ data: { ...data, customerId } });
     });
   }
@@ -92,10 +199,7 @@ export async function addAddress(customerId, data) {
 export async function updateAddress(addressId, customerId, data) {
   if (data.isDefault) {
     return prisma.$transaction(async (tx) => {
-      await tx.address.updateMany({
-        where: { customerId, isDefault: true, id: { not: addressId } },
-        data: { isDefault: false },
-      });
+      await clearDefaultAddresses(tx, customerId, addressId);
       return tx.address.update({ where: { id: addressId, customerId }, data });
     });
   }
@@ -143,10 +247,7 @@ export async function deleteAddress(addressId, customerId) {
  */
 export async function setDefaultAddress(addressId, customerId) {
   return prisma.$transaction(async (tx) => {
-    await tx.address.updateMany({
-      where: { customerId, isDefault: true, id: { not: addressId } },
-      data: { isDefault: false },
-    });
+    await clearDefaultAddresses(tx, customerId, addressId);
     return tx.address.update({
       where: { id: addressId, customerId },
       data: { isDefault: true },
@@ -162,18 +263,24 @@ export async function setDefaultAddress(addressId, customerId) {
  * List orders for a customer with their lines, newest first.
  * @param {string} customerId
  * @param {{ page?: number, limit?: number }} options
- * @returns {Promise<object[]>}
+ * @returns {Promise<{ orders: object[], total: number }>}
  */
 export async function listOrders(customerId, { page = 1, limit = 20 } = {}) {
   const skip = (page - 1) * limit;
+  const where = { customerId };
 
-  return prisma.order.findMany({
-    where: { customerId },
-    include: { lines: true },
-    orderBy: { createdAt: 'desc' },
-    skip,
-    take: limit,
-  });
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      include: CUSTOMER_ORDER_LIST_INCLUDE,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.order.count({ where }),
+  ]);
+
+  return { orders, total };
 }
 
 /**
@@ -186,10 +293,6 @@ export async function listOrders(customerId, { page = 1, limit = 20 } = {}) {
 export async function getOrder(orderId, customerId) {
   return prisma.order.findFirst({
     where: { id: orderId, customerId },
-    include: {
-      lines: true,
-      shipments: { include: { lines: true } },
-      returns: { include: { lines: true } },
-    },
+    include: CUSTOMER_ORDER_DETAIL_INCLUDE,
   });
 }

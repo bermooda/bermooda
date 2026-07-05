@@ -11,7 +11,6 @@ import {
   useSearchParams,
 } from 'react-router';
 
-import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
 import EmptyState from '#/components/admin/empty-state';
 import { controlClasses } from '#/components/admin/form/input';
@@ -21,6 +20,8 @@ import Stat from '#/components/admin/stat';
 import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
 
+import { buildCustomerSearchWhere } from '#/core/customers/index.server';
+
 const PAGE_SIZE = 20;
 
 export async function loader({ request }) {
@@ -29,11 +30,7 @@ export async function loader({ request }) {
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const q = url.searchParams.get('q')?.trim() ?? '';
 
-  const where = q
-    ? {
-        OR: [{ email: containsFilter(q) }, { name: containsFilter(q) }],
-      }
-    : {};
+  const where = buildCustomerSearchWhere(q);
 
   const [total, withOrdersCount, customers] = await Promise.all([
     prisma.customer.count({ where }),

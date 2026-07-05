@@ -2,7 +2,8 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
-import prisma from '#/libs/prisma.server';
+
+import { listCustomers } from '#/core/customers/index.server';
 
 export async function loader({ request }) {
   await requireApiKey(request, ['admin']);
@@ -13,26 +14,9 @@ export async function loader({ request }) {
     parseInt(url.searchParams.get('limit') ?? '20', 10),
     100
   );
-  const skip = (page - 1) * limit;
+  const q = url.searchParams.get('q') ?? undefined;
 
-  const [customers, total] = await Promise.all([
-    prisma.customer.findMany({
-      skip,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        preferredLocale: true,
-        emailVerified: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    }),
-    prisma.customer.count(),
-  ]);
+  const { customers, total } = await listCustomers({ page, limit, q });
 
   return Response.json({ customers, total, page, limit });
 }

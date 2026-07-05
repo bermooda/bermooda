@@ -9,12 +9,12 @@ import { getCustomer, updateCustomer } from '#/core/customers/index.server';
 export async function loader({ request, params }) {
   await requireApiKey(request, ['admin']);
 
-  try {
-    const customer = await getCustomer(params.id);
-    return Response.json({ customer });
-  } catch {
+  const customer = await getCustomer(params.id);
+  if (!customer) {
     return Response.json({ error: 'Customer not found' }, { status: 404 });
   }
+
+  return Response.json({ customer });
 }
 
 export async function action({ request, params }) {

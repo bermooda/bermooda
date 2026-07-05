@@ -6,7 +6,6 @@ import {
   useNavigation,
 } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -15,6 +14,8 @@ import Input from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
+
+import { createCustomer } from '#/core/customers/index.server';
 
 export async function action({ request }) {
   const formData = await request.formData();
@@ -26,16 +27,15 @@ export async function action({ request }) {
     return { error: 'Email is required.' };
   }
 
-  const existing = await prisma.customer.findUnique({ where: { email } });
-  if (existing) {
-    return { error: 'A customer with that email already exists.' };
+  try {
+    const customer = await createCustomer({ email, name, phone });
+    return redirect(`/admin/customers/${customer.id}`);
+  } catch (err) {
+    if (err.code === 'CUSTOMER_EMAIL_EXISTS') {
+      return { error: err.message };
+    }
+    throw err;
   }
-
-  const customer = await prisma.customer.create({
-    data: { email, name, phone },
-  });
-
-  return redirect(`/admin/customers/${customer.id}`);
 }
 
 export default function AdminNewCustomerRoute() {

@@ -18,6 +18,9 @@ vi.mock('#/libs/prisma.server', () => {
   const prisma = {
     customer: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
+      count: vi.fn(),
+      create: vi.fn(),
       update: vi.fn(),
     },
     address: {
@@ -32,6 +35,7 @@ vi.mock('#/libs/prisma.server', () => {
     order: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
+      count: vi.fn(),
     },
     $transaction: vi.fn((fn) => fn(tx)),
     _tx: tx,
@@ -43,9 +47,12 @@ vi.mock('#/libs/prisma.server', () => {
 import prisma from '#/libs/prisma.server';
 
 import {
+  buildCustomerSearchWhere,
+  pickCustomerProfileFields,
   getCustomer,
   updateCustomer,
-  getCustomerByEmail,
+  createCustomer,
+  listCustomers,
   listAddresses,
   addAddress,
   updateAddress,
@@ -109,11 +116,50 @@ function makeOrder(overrides = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Reset the transaction mock to execute the callback by default
   prisma.$transaction.mockImplementation((fn) => fn(prisma._tx));
   prisma._tx.address.updateMany.mockResolvedValue({ count: 0 });
   prisma._tx.address.create.mockResolvedValue({});
   prisma._tx.address.update.mockResolvedValue({});
+});
+
+// ---------------------------------------------------------------------------
+// buildCustomerSearchWhere
+// ---------------------------------------------------------------------------
+
+describe('buildCustomerSearchWhere', () => {
+  it('returns empty object when query is blank', () => {
+    expect(buildCustomerSearchWhere('')).toEqual({});
+    expect(buildCustomerSearchWhere('   ')).toEqual({});
+    expect(buildCustomerSearchWhere(undefined)).toEqual({});
+  });
+
+  it('builds OR filter on email and name', () => {
+    const where = buildCustomerSearchWhere('alice');
+    expect(where.OR).toHaveLength(2);
+    expect(where.OR[0].email.contains).toBe('alice');
+    expect(where.OR[1].name.contains).toBe('alice');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// pickCustomerProfileFields
+// ---------------------------------------------------------------------------
+
+describe('pickCustomerProfileFields', () => {
+  it('keeps only allowed profile fields', () => {
+    expect(
+      pickCustomerProfileFields({
+        name: 'Bob',
+        phone: '+1555',
+        preferredLocale: 'fr',
+        email: 'hacker@evil.com',
+      })
+    ).toEqual({
+      name: 'Bob',
+      phone: '+1555',
+      preferredLocale: 'fr',
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -160,8 +206,8 @@ describe('updateCustomer', () => {
       name: 'Bob',
       phone: '+1555',
       preferredLocale: 'fr',
-      email: 'hacker@evil.com', // should be stripped
-      emailVerified: false, // should be stripped
+      email: 'hacker@evil.com',
+      emailVerified: false,
     });
 
     const callData = prisma.customer.update.mock.calls[0][0].data;
@@ -187,28 +233,64 @@ describe('updateCustomer', () => {
 });
 
 // ---------------------------------------------------------------------------
-// getCustomerByEmail
+// createCustomer
 // ---------------------------------------------------------------------------
 
-describe('getCustomerByEmail', () => {
-  it('returns customer when found by email', async () => {
-    const customer = makeCustomer();
-    prisma.customer.findUnique.mockResolvedValue(customer);
+describe('createCustomer', () => {
+  it('creates a customer when email is available', async () => {
+    const created = makeCustomer();
+    prisma.customer.findUnique.mockResolvedValue(null);
+    prisma.customer.create.mockResolvedValue(created);
 
-    const result = await getCustomerByEmail('alice@example.com');
-
-    expect(prisma.customer.findUnique).toHaveBeenCalledWith({
-      where: { email: 'alice@example.com' },
+    const result = await createCustomer({
+      email: 'alice@example.com',
+      name: 'Alice',
+      phone: '+1555',
     });
-    expect(result).toEqual(customer);
+
+    expect(prisma.customer.create).toHaveBeenCalledWith({
+      data: {
+        email: 'alice@example.com',
+        name: 'Alice',
+        phone: '+1555',
+      },
+    });
+    expect(result).toEqual(created);
   });
 
-  it('returns null when email not found', async () => {
-    prisma.customer.findUnique.mockResolvedValue(null);
+  it('throws CUSTOMER_EMAIL_EXISTS when email is taken', async () => {
+    prisma.customer.findUnique.mockResolvedValue(makeCustomer());
 
-    const result = await getCustomerByEmail('nobody@example.com');
+    await expect(
+      createCustomer({ email: 'alice@example.com' })
+    ).rejects.toMatchObject({
+      code: 'CUSTOMER_EMAIL_EXISTS',
+    });
+    expect(prisma.customer.create).not.toHaveBeenCalled();
+  });
+});
 
-    expect(result).toBeNull();
+// ---------------------------------------------------------------------------
+// listCustomers
+// ---------------------------------------------------------------------------
+
+describe('listCustomers', () => {
+  it('returns paginated customers and total count', async () => {
+    const customers = [makeCustomer()];
+    prisma.customer.findMany.mockResolvedValue(customers);
+    prisma.customer.count.mockResolvedValue(1);
+
+    const result = await listCustomers({ page: 2, limit: 10, q: 'alice' });
+
+    expect(prisma.customer.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: 10,
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+      })
+    );
+    expect(prisma.customer.count).toHaveBeenCalled();
+    expect(result).toEqual({ customers, total: 1 });
   });
 });
 
@@ -411,10 +493,12 @@ describe('setDefaultAddress', () => {
 // ---------------------------------------------------------------------------
 
 describe('listOrders', () => {
-  it('fetches orders newest first with default limit 20', async () => {
-    prisma.order.findMany.mockResolvedValue([makeOrder()]);
+  it('returns orders and total with default pagination', async () => {
+    const orders = [makeOrder()];
+    prisma.order.findMany.mockResolvedValue(orders);
+    prisma.order.count.mockResolvedValue(1);
 
-    await listOrders('cust_1');
+    const result = await listOrders('cust_1');
 
     expect(prisma.order.findMany).toHaveBeenCalledWith({
       where: { customerId: 'cust_1' },
@@ -423,10 +507,15 @@ describe('listOrders', () => {
       skip: 0,
       take: 20,
     });
+    expect(prisma.order.count).toHaveBeenCalledWith({
+      where: { customerId: 'cust_1' },
+    });
+    expect(result).toEqual({ orders, total: 1 });
   });
 
   it('applies pagination skip correctly for page 2 with limit 10', async () => {
     prisma.order.findMany.mockResolvedValue([]);
+    prisma.order.count.mockResolvedValue(0);
 
     await listOrders('cust_1', { page: 2, limit: 10 });
 
@@ -437,6 +526,7 @@ describe('listOrders', () => {
 
   it('applies pagination skip correctly for page 3 with limit 5', async () => {
     prisma.order.findMany.mockResolvedValue([]);
+    prisma.order.count.mockResolvedValue(0);
 
     await listOrders('cust_1', { page: 3, limit: 5 });
 
@@ -447,6 +537,7 @@ describe('listOrders', () => {
 
   it('orders by createdAt desc', async () => {
     prisma.order.findMany.mockResolvedValue([]);
+    prisma.order.count.mockResolvedValue(0);
 
     await listOrders('cust_1');
 
