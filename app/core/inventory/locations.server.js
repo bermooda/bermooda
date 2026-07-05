@@ -156,6 +156,84 @@ export async function listLocations() {
 }
 
 /**
+ * List locations with nested inventory levels for the admin API.
+ */
+export async function listLocationsWithInventory() {
+  return prisma.location.findMany({
+    orderBy: { name: 'asc' },
+    include: {
+      inventoryLevels: {
+        include: {
+          variant: { select: { id: true, sku: true, productId: true } },
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Create a warehouse or fulfillment location.
+ *
+ * @param {{ name: string, code: string, allowsPickup?: boolean }} data
+ */
+export async function createLocation({ name, code, allowsPickup = false }) {
+  return prisma.location.create({
+    data: {
+      name,
+      code,
+      active: true,
+      allowsPickup,
+    },
+  });
+}
+
+/**
+ * Recent variants for the inventory admin screen.
+ *
+ * @param {{ take?: number }} [options]
+ */
+export async function listRecentVariantsForInventory({ take = 50 } = {}) {
+  return prisma.productVariant.findMany({
+    take,
+    orderBy: { updatedAt: 'desc' },
+    include: {
+      product: true,
+      prices: true,
+    },
+  });
+}
+
+/**
+ * List inventory levels for many variants in one query.
+ *
+ * @param {string[]} variantIds
+ * @returns {Promise<Record<string, import('@prisma/client').InventoryLevel[]>>}
+ */
+export async function listInventoryLevelsForVariants(variantIds) {
+  if (variantIds.length === 0) return {};
+
+  for (const variantId of variantIds) {
+    await ensureVariantInventoryLevel(variantId);
+  }
+
+  const levels = await prisma.inventoryLevel.findMany({
+    where: { variantId: { in: variantIds } },
+    include: { location: true },
+    orderBy: { location: { isDefault: 'desc' } },
+  });
+
+  const levelsByVariant = {};
+  for (const level of levels) {
+    if (!levelsByVariant[level.variantId]) {
+      levelsByVariant[level.variantId] = [];
+    }
+    levelsByVariant[level.variantId].push(level);
+  }
+
+  return levelsByVariant;
+}
+
+/**
  * Set quantity for a variant at a location and sync inventoryCount.
  */
 export async function setInventoryLevelQuantity(
@@ -174,6 +252,17 @@ export async function setInventoryLevelQuantity(
     await syncVariantInventoryCount(variantId, tx);
     return level;
   });
+}
+
+/**
+ * Set a variant's stock at the default location and sync inventoryCount.
+ *
+ * @param {string} variantId
+ * @param {number} quantity
+ */
+export async function setDefaultLocationQuantity(variantId, quantity) {
+  const location = await ensureDefaultLocation();
+  return setInventoryLevelQuantity(variantId, location.id, quantity);
 }
 
 /**
