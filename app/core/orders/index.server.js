@@ -22,6 +22,7 @@ import {
   decrementInventory,
   incrementInventory,
 } from '#/core/inventory/index.server';
+import { inventoryItemsFromLines } from '#/core/inventory/items';
 import { redeemLoyaltyPoints } from '#/core/loyalty/index.server';
 import { redeemStoreCredit } from '#/core/store-credit/index.server';
 
@@ -38,8 +39,6 @@ const VALID_ORDER_STATUSES = new Set([
   'cancelled',
   'refunded',
 ]);
-const VALID_REFUND_STATUSES = new Set(['pending', 'succeeded', 'failed']);
-
 function buildOrderEventPayload(order, checkoutSessionId) {
   return {
     orderId: order.id,
@@ -160,11 +159,9 @@ export async function placeOrder(
     const { shippingOption } = parseCheckoutSessionFields(session);
     const pickupLocationId = shippingOption?.pickupLocationId ?? null;
 
-    const rawInventoryItems = lines
-      .filter((line) => line.variantId != null)
-      .map((line) => ({ variantId: line.variantId, quantity: line.quantity }));
-
-    const inventoryItems = await expandBundleInventoryItems(rawInventoryItems);
+    const inventoryItems = await expandBundleInventoryItems(
+      inventoryItemsFromLines(lines)
+    );
 
     if (inventoryItems.length > 0) {
       await decrementInventory(inventoryItems, tx);
@@ -214,24 +211,21 @@ export async function placeOrder(
       );
     }
 
-    if (giftCardCents > 0 && giftCardId) {
-      await redeemGiftCard(
-        giftCardId,
-        { amountCents: giftCardCents, orderId: order.id },
-        tx
-      );
-    } else if (session.giftCardCode && giftCardCents > 0) {
+    let resolvedGiftCardId = giftCardId;
+    if (!resolvedGiftCardId && giftCardCents > 0 && session.giftCardCode) {
       const giftCard = await getGiftCardByCode(
         session.giftCardCode,
         cart.currency
       );
-      if (giftCard) {
-        await redeemGiftCard(
-          giftCard.id,
-          { amountCents: giftCardCents, orderId: order.id },
-          tx
-        );
-      }
+      resolvedGiftCardId = giftCard?.id ?? null;
+    }
+
+    if (giftCardCents > 0 && resolvedGiftCardId) {
+      await redeemGiftCard(
+        resolvedGiftCardId,
+        { amountCents: giftCardCents, orderId: order.id },
+        tx
+      );
     }
 
     if (
@@ -411,7 +405,10 @@ export async function updateOrderStatus(id, status) {
  * @returns {Promise<object>} updated Order
  */
 export async function cancelOrder(orderId) {
-  const order = await getOrder(orderId);
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { lines: true },
+  });
 
   if (!order) {
     throw new Error('ORDER_NOT_FOUND');
@@ -419,14 +416,7 @@ export async function cancelOrder(orderId) {
 
   await emitBefore('order.cancel', { orderId, order });
 
-  // Restore inventory for all tracked order lines (W0-5)
-  const inventoryItems = (order.lines ?? [])
-    .filter((line) => line.variantId != null)
-    .map((line) => ({ variantId: line.variantId, quantity: line.quantity }));
-
-  if (inventoryItems.length > 0) {
-    await incrementInventory(inventoryItems);
-  }
+  await restoreOrderLineInventory(order.lines);
 
   const updated = await updateOrderStatus(orderId, 'cancelled');
 
@@ -435,6 +425,17 @@ export async function cancelOrder(orderId) {
   logger.info({ orderId, orderNumber: order.orderNumber }, 'order cancelled');
 
   return updated;
+}
+
+/**
+ * Restore inventory for tracked order lines.
+ * @param {Array<{ variantId?: string|null, quantity: number }>} lines
+ */
+async function restoreOrderLineInventory(lines = []) {
+  const items = inventoryItemsFromLines(lines);
+  if (items.length > 0) {
+    await incrementInventory(items);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -756,42 +757,12 @@ export async function createRefund(
   });
 
   if (restoreInventory) {
-    const inventoryItems = (order.lines ?? [])
-      .filter((line) => line.variantId != null)
-      .map((line) => ({
-        variantId: line.variantId,
-        quantity: line.quantity,
-      }));
-
-    if (inventoryItems.length > 0) {
-      await incrementInventory(inventoryItems);
-    }
+    await restoreOrderLineInventory(order.lines);
   }
 
   await emit('payment.refunded', { refundId: refund.id, orderId, amountCents });
 
   return refund;
-}
-
-// ---------------------------------------------------------------------------
-// updateRefundStatus
-// ---------------------------------------------------------------------------
-
-/**
- * Update refund status.
- * @param {string} refundId
- * @param {string} status - 'pending' | 'succeeded' | 'failed'
- * @returns {Promise<object>} updated Refund
- */
-export async function updateRefundStatus(refundId, status) {
-  if (!VALID_REFUND_STATUSES.has(status)) {
-    throw new Error('INVALID_REFUND_STATUS');
-  }
-
-  return prisma.refund.update({
-    where: { id: refundId },
-    data: { status },
-  });
 }
 
 // ---------------------------------------------------------------------------
