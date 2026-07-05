@@ -41,7 +41,6 @@ vi.mock('#/libs/prisma.server', () => ({
     },
     refund: {
       create: vi.fn(),
-      update: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -62,7 +61,6 @@ vi.mock('#/core/inventory/index.server', () => ({
 }));
 
 vi.mock('#/core/discounts/index.server', () => ({
-  resolvePromotions: vi.fn(),
   persistOrderDiscounts: vi.fn(),
 }));
 
@@ -103,10 +101,7 @@ import prisma from '#/libs/prisma.server';
 
 import { expandBundleInventoryItems } from '#/core/catalog/types.server';
 import { computeTotals } from '#/core/checkout/totals.server';
-import {
-  resolvePromotions,
-  persistOrderDiscounts,
-} from '#/core/discounts/index.server';
+import { persistOrderDiscounts } from '#/core/discounts/index.server';
 import { emit, emitBefore } from '#/core/events/index.server';
 import {
   decrementInventory,
@@ -123,7 +118,6 @@ import {
   markShipped,
   markDelivered,
   createRefund,
-  updateRefundStatus,
   registerPaymentEventHandlers,
   deriveFulfillmentStatus,
 } from '#/core/orders/index.server';
@@ -219,12 +213,6 @@ beforeEach(() => {
     Promise.resolve(items)
   );
   incrementInventory.mockResolvedValue(undefined);
-  resolvePromotions.mockResolvedValue({
-    applied: [],
-    discountCents: 0,
-    freeShipping: false,
-    primaryCode: null,
-  });
   persistOrderDiscounts.mockResolvedValue(undefined);
 });
 
@@ -391,12 +379,6 @@ describe('placeOrder', () => {
     prisma.cartLine.deleteMany.mockResolvedValue({});
     prisma.cart.update.mockResolvedValue({});
     prisma.checkoutSession.update.mockResolvedValue({});
-    resolvePromotions.mockResolvedValue({
-      applied,
-      discountCents: 200,
-      freeShipping: false,
-      primaryCode: 'SAVE10',
-    });
     computeTotals.mockResolvedValue(
       defaultTotals({
         discountCents: 200,
@@ -808,33 +790,6 @@ describe('createRefund', () => {
       orderId: 'order_1',
       amountCents: 500,
     });
-  });
-});
-
-// ---------------------------------------------------------------------------
-// updateRefundStatus
-// ---------------------------------------------------------------------------
-
-describe('updateRefundStatus', () => {
-  it('updates refund status for valid values', async () => {
-    prisma.refund.update.mockResolvedValue({
-      id: 'ref_1',
-      status: 'succeeded',
-    });
-
-    await updateRefundStatus('ref_1', 'succeeded');
-
-    expect(prisma.refund.update).toHaveBeenCalledWith({
-      where: { id: 'ref_1' },
-      data: { status: 'succeeded' },
-    });
-  });
-
-  it('throws INVALID_REFUND_STATUS for unknown values', async () => {
-    await expect(updateRefundStatus('ref_1', 'unknown')).rejects.toThrow(
-      'INVALID_REFUND_STATUS'
-    );
-    expect(prisma.refund.update).not.toHaveBeenCalled();
   });
 });
 
