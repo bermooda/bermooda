@@ -21,6 +21,11 @@ import Button, { ButtonSubmit } from '#/components/ui/button';
 import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
 import {
+  deleteAddress,
+  setDefaultAddress,
+  updateCustomer,
+} from '#/core/customers/index.server';
+import {
   exportCustomerData,
   eraseCustomer,
   updateCustomerConsent,
@@ -122,10 +127,7 @@ export async function action({ request, params }) {
       select: { name: true, phone: true, preferredLocale: true },
     });
 
-    await prisma.customer.update({
-      where: { id },
-      data: { name, phone, preferredLocale },
-    });
+    await updateCustomer(id, { name, phone, preferredLocale });
 
     await recordAdminAudit({
       user,
@@ -142,16 +144,7 @@ export async function action({ request, params }) {
     const addressId = formData.get('addressId')?.toString();
     if (!addressId) return { ok: false, error: 'Missing addressId.' };
 
-    await prisma.$transaction([
-      prisma.address.updateMany({
-        where: { customerId: id },
-        data: { isDefault: false },
-      }),
-      prisma.address.update({
-        where: { id: addressId, customerId: id },
-        data: { isDefault: true },
-      }),
-    ]);
+    await setDefaultAddress(addressId, id);
 
     await recordAdminAudit({
       user,
@@ -168,7 +161,7 @@ export async function action({ request, params }) {
     const addressId = formData.get('addressId')?.toString();
     if (!addressId) return { ok: false, error: 'Missing addressId.' };
 
-    await prisma.address.delete({ where: { id: addressId, customerId: id } });
+    await deleteAddress(addressId, id);
 
     await recordAdminAudit({
       user,
