@@ -9,9 +9,14 @@ import { validateAddress } from '#/core/address-validation/index.server';
 import { getCart } from '#/core/cart/index.server';
 import {
   advanceStep,
+  buildComputeTotalsParams,
+  CHECKOUT_STEPS,
   createCheckoutSession,
   getCheckoutSession,
+  isValidCheckoutStep,
   linkCheckoutCustomer,
+  normaliseCheckoutSessionForDisplay,
+  parseCheckoutSessionFields,
 } from '#/core/checkout/index.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
@@ -34,60 +39,10 @@ import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
-const VALID_STEPS = ['address', 'shipping', 'payment', 'review'];
-
 function getCheckoutSessionId(request) {
   const cookie = request.headers.get('cookie') ?? '';
   const match = cookie.match(/(?:^|;\s*)checkout_session=([^;]+)/);
   return match ? decodeURIComponent(match[1].trim()) : null;
-}
-
-/**
- * Parse JSON session fields into their object forms so theme components
- * can access them without knowing the raw field names.
- */
-function normaliseSession(session) {
-  if (!session) return session;
-
-  const shippingAddress = session.shippingAddressJson
-    ? JSON.parse(session.shippingAddressJson)
-    : null;
-
-  const billingAddress = session.billingAddressJson
-    ? JSON.parse(session.billingAddressJson)
-    : null;
-
-  const shippingOption = session.shippingOptionJson
-    ? JSON.parse(session.shippingOptionJson)
-    : null;
-
-  return {
-    ...session,
-    shippingAddress,
-    billingAddress,
-    shippingOption,
-    shippingOptionId: shippingOption?.id ?? null,
-  };
-}
-
-function buildTotalsParams(session, cart, shippingAddress) {
-  const shippingOption = session.shippingOptionJson
-    ? JSON.parse(session.shippingOptionJson)
-    : null;
-
-  return {
-    cart,
-    shippingAddress,
-    couponCode: session.couponCode ?? undefined,
-    shippingOptionId: shippingOption?.id ?? undefined,
-    taxExempt: session.taxExempt ?? false,
-    vatId: session.vatId ?? undefined,
-    customerId: session.customerId ?? undefined,
-    giftCardCode: session.giftCardCode ?? undefined,
-    storeCreditCents: session.storeCreditCents ?? 0,
-    loyaltyPointsCents: session.loyaltyPointsCents ?? 0,
-    salesChannelId: session.salesChannelId ?? undefined,
-  };
 }
 
 async function loadTenderBalances(customerId) {
@@ -118,7 +73,7 @@ export async function loader({ request, params }) {
   const themeId = await preloadStorefrontTheme();
   const { step } = params;
 
-  if (!VALID_STEPS.includes(step)) {
+  if (!isValidCheckoutStep(step)) {
     throw new Response('Invalid checkout step', { status: 404 });
   }
 
@@ -147,17 +102,15 @@ export async function loader({ request, params }) {
     session = { ...session, customerId };
   }
 
-  const stepIndex = VALID_STEPS.indexOf(step);
-  const sessionStepIndex = VALID_STEPS.indexOf(session.step ?? 'address');
+  const stepIndex = CHECKOUT_STEPS.indexOf(step);
+  const sessionStepIndex = CHECKOUT_STEPS.indexOf(session.step ?? 'address');
 
   if (stepIndex > sessionStepIndex) {
     return redirect(`/checkout/${session.step ?? 'address'}`);
   }
 
-  // Parse the shipping address from the session for quote fetching
-  const shippingAddress = session.shippingAddressJson
-    ? JSON.parse(session.shippingAddressJson)
-    : null;
+  const checkoutCart = session.cart ?? cart;
+  const { shippingAddress } = parseCheckoutSessionFields(session);
 
   // Shipping quotes: needed on shipping step and review step (for recap)
   const needsQuotes = step === 'shipping' || step === 'review';
@@ -168,11 +121,11 @@ export async function loader({ request, params }) {
   const [shippingQuotes, paymentProviders, totals, tenderBalances, slotBlocks] =
     await Promise.all([
       needsQuotes && shippingAddress
-        ? getAllQuotes({ cart, shippingAddress })
+        ? getAllQuotes({ cart: checkoutCart, shippingAddress })
         : Promise.resolve([]),
       Promise.resolve(listProvidersWithDetails()),
       step === 'review' || step === 'payment'
-        ? computeTotals(buildTotalsParams(session, cart, shippingAddress))
+        ? computeTotals(buildComputeTotalsParams(session, checkoutCart))
         : Promise.resolve(null),
       needsTenderBalances
         ? loadTenderBalances(effectiveCustomerId)
@@ -192,7 +145,7 @@ export async function loader({ request, params }) {
     {
       themeId,
       step,
-      session: normaliseSession(session),
+      session: normaliseCheckoutSessionForDisplay(session),
       cart,
       shippingQuotes,
       paymentProviders,
@@ -352,10 +305,9 @@ export async function action({ request, params }) {
   } else if (step === 'shipping') {
     // Look up the full shipping option so we can persist it as JSON
     const session = await getCheckoutSession(sessionId);
+    const { shippingAddress: shippingAddr } =
+      parseCheckoutSessionFields(session);
     const cartForQuotes = session?.cart ?? null;
-    const shippingAddr = session?.shippingAddressJson
-      ? JSON.parse(session.shippingAddressJson)
-      : null;
 
     let shippingOptionJson = null;
     if (cartForQuotes && shippingAddr && rawData.shippingOptionId) {
@@ -422,8 +374,8 @@ export async function action({ request, params }) {
     return { error: err.message };
   }
 
-  const currentIndex = VALID_STEPS.indexOf(step);
-  const nextStep = VALID_STEPS[currentIndex + 1];
+  const currentIndex = CHECKOUT_STEPS.indexOf(step);
+  const nextStep = CHECKOUT_STEPS[currentIndex + 1];
 
   return nextStep
     ? redirect(`/checkout/${nextStep}`)

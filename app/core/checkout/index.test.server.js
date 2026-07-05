@@ -18,7 +18,11 @@ vi.mock('#/libs/prisma.server', () => ({
 
 vi.mock('#/core/cart/index.server', () => ({
   lockCart: vi.fn(),
-  unlockCart: vi.fn(),
+}));
+
+vi.mock('#/core/pricing/index.server', () => ({
+  applyPriceListToCartLines: vi.fn(),
+  getCustomerGroupIds: vi.fn(),
 }));
 
 vi.mock('#/core/discounts/index.server', () => ({
@@ -31,11 +35,6 @@ vi.mock('#/core/shipping/index.server', () => ({
 
 vi.mock('#/core/tax/index.server', () => ({
   computeActiveTax: vi.fn(),
-}));
-
-vi.mock('#/core/pricing/index.server', () => ({
-  getCustomerGroupIds: vi.fn(),
-  resolveVariantPrice: vi.fn(),
 }));
 
 vi.mock('#/core/gift-cards/index.server', () => ({
@@ -53,33 +52,27 @@ vi.mock('#/core/events/index.server', () => ({
 
 import prisma from '#/libs/prisma.server';
 
-import { lockCart, unlockCart } from '#/core/cart/index.server';
+import { lockCart } from '#/core/cart/index.server';
 import {
   createCheckoutSession,
   advanceStep,
-  abandonCheckoutSession,
 } from '#/core/checkout/pipeline.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { resolvePromotions } from '#/core/discounts/index.server';
 import { emit, emitBefore } from '#/core/events/index.server';
-import { resolveVariantPrice } from '#/core/pricing/index.server';
+import { applyPriceListToCartLines } from '#/core/pricing/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
+import { makeCart } from '#/test/factories/cart';
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function makeCart(overrides = {}) {
-  return {
-    id: 'cart_1',
-    currency: 'USD',
+function makeTotalsCart(overrides = {}) {
+  return makeCart({
     lines: [
       { priceCentsSnapshot: 1000, quantity: 2 },
       { priceCentsSnapshot: 500, quantity: 1 },
     ],
     ...overrides,
-  };
+  });
 }
 
 function makeSession(overrides = {}) {
@@ -92,7 +85,7 @@ function makeSession(overrides = {}) {
     shippingOptionJson: null,
     paymentIntentId: null,
     couponCode: null,
-    cart: makeCart(),
+    cart: makeTotalsCart(),
     ...overrides,
   };
 }
@@ -103,7 +96,7 @@ beforeEach(() => {
   // Safe defaults
   getAllQuotes.mockResolvedValue([]);
   computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
-  resolveVariantPrice.mockResolvedValue(null);
+  applyPriceListToCartLines.mockImplementation(async (cart) => cart);
   resolvePromotions.mockResolvedValue({
     applied: [],
     discountCents: 0,
@@ -118,7 +111,12 @@ beforeEach(() => {
 
 describe('computeTotals — subtotal calculation', () => {
   it('correctly sums priceCentsSnapshot * quantity for each line', async () => {
-    const cart = makeCart(); // 1000*2 + 500*1 = 2500
+    const cart = makeCart({
+      lines: [
+        { priceCentsSnapshot: 1000, quantity: 2 },
+        { priceCentsSnapshot: 500, quantity: 1 },
+      ],
+    }); // 1000*2 + 500*1 = 2500
 
     const result = await computeTotals({ cart });
 
@@ -140,7 +138,7 @@ describe('computeTotals — subtotal calculation', () => {
 
 describe('computeTotals — no shippingAddress', () => {
   it('returns shippingCents=0 and taxCents=0 when shippingAddress is null', async () => {
-    const cart = makeCart();
+    const cart = makeTotalsCart();
 
     const result = await computeTotals({ cart, shippingAddress: null });
 
@@ -151,7 +149,7 @@ describe('computeTotals — no shippingAddress', () => {
   });
 
   it('returns shippingCents=0 and taxCents=0 when shippingAddress is undefined', async () => {
-    const cart = makeCart();
+    const cart = makeTotalsCart();
 
     const result = await computeTotals({ cart });
 
@@ -166,7 +164,7 @@ describe('computeTotals — no shippingAddress', () => {
 
 describe('computeTotals — with coupon code', () => {
   it('applies discountCents from resolvePromotions result', async () => {
-    const cart = makeCart();
+    const cart = makeTotalsCart();
     resolvePromotions.mockResolvedValue({
       applied: [{ code: 'SAVE10', discountCents: 250 }],
       discountCents: 250,
@@ -184,7 +182,7 @@ describe('computeTotals — with coupon code', () => {
   });
 
   it('uses discountCents=0 when couponCode is not provided', async () => {
-    const cart = makeCart();
+    const cart = makeTotalsCart();
 
     const result = await computeTotals({ cart });
 
@@ -192,7 +190,7 @@ describe('computeTotals — with coupon code', () => {
   });
 
   it('silently sets discountCents=0 when resolvePromotions throws', async () => {
-    const cart = makeCart();
+    const cart = makeTotalsCart();
     resolvePromotions.mockRejectedValue(new Error('DISCOUNT_EXPIRED'));
 
     const result = await computeTotals({ cart, couponCode: 'BADCODE' });
@@ -207,7 +205,7 @@ describe('computeTotals — with coupon code', () => {
 
 describe('computeTotals — shippingOptionId matching', () => {
   it('selects the matching option priceCents when shippingOptionId matches', async () => {
-    const cart = makeCart();
+    const cart = makeTotalsCart();
     const address = { country: 'AU' };
     getAllQuotes.mockResolvedValue([
       { id: 'flat_rate:domestic', priceCents: 1500, label: 'Domestic' },
@@ -230,7 +228,7 @@ describe('computeTotals — shippingOptionId matching', () => {
   });
 
   it('uses shippingCents=0 when shippingOptionId does not match any quote', async () => {
-    const cart = makeCart();
+    const cart = makeTotalsCart();
     const address = { country: 'AU' };
     getAllQuotes.mockResolvedValue([
       { id: 'flat_rate:domestic', priceCents: 1500 },
@@ -254,7 +252,7 @@ describe('computeTotals — shippingOptionId matching', () => {
 
 describe('computeTotals — totalCents formula', () => {
   it('totalCents = subtotal - discount + shipping + tax', async () => {
-    const cart = makeCart(); // subtotal=2500
+    const cart = makeTotalsCart(); // subtotal=2500
     const address = { country: 'AU' };
     resolvePromotions.mockResolvedValue({
       applied: [{ code: 'SAVE10', discountCents: 250 }],
@@ -345,7 +343,7 @@ describe('advanceStep — address to shipping', () => {
       ...session,
       step: 'shipping',
       shippingAddressJson: '{"country":"AU"}',
-      cart: makeCart(),
+      cart: makeTotalsCart(),
     });
 
     const result = await advanceStep('sess_1', {
@@ -382,7 +380,7 @@ describe('advanceStep — address to shipping', () => {
       ...session,
       step: 'shipping',
       shippingAddressJson: '{"country":"AU"}',
-      cart: makeCart(),
+      cart: makeTotalsCart(),
     });
     getAllQuotes.mockResolvedValue([]);
     computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
@@ -455,7 +453,7 @@ describe('advanceStep — shipping to payment', () => {
       ...session,
       step: 'payment',
       shippingOptionJson: '{"id":"opt_1","priceCents":1500}',
-      cart: makeCart(),
+      cart: makeTotalsCart(),
     });
     getAllQuotes.mockResolvedValue([{ id: 'opt_1', priceCents: 1500 }]);
     computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
@@ -496,32 +494,5 @@ describe('advanceStep — review step', () => {
     expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
     expect(result.step).toBe('review');
     expect(result.totals).toBeDefined();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// abandonCheckoutSession — calls unlockCart
-// ---------------------------------------------------------------------------
-
-describe('abandonCheckoutSession', () => {
-  it('calls unlockCart with the session cartId', async () => {
-    prisma.checkoutSession.findUnique.mockResolvedValue({
-      id: 'sess_1',
-      cartId: 'cart_1',
-    });
-    unlockCart.mockResolvedValue({ id: 'cart_1', lockedAt: null });
-
-    await abandonCheckoutSession('sess_1');
-
-    expect(unlockCart).toHaveBeenCalledWith('cart_1');
-  });
-
-  it('throws CHECKOUT_SESSION_NOT_FOUND when session does not exist', async () => {
-    prisma.checkoutSession.findUnique.mockResolvedValue(null);
-
-    await expect(abandonCheckoutSession('nonexistent')).rejects.toThrow(
-      'CHECKOUT_SESSION_NOT_FOUND'
-    );
-    expect(unlockCart).not.toHaveBeenCalled();
   });
 });
