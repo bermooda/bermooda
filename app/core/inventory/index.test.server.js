@@ -4,9 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('#/libs/prisma.server', () => ({
   default: {
-    productVariant: {
-      findUnique: vi.fn(),
-    },
     $transaction: vi.fn(),
   },
 }));
@@ -21,13 +18,15 @@ vi.mock('#/core/inventory/locations.server', () => ({
   incrementLocationLevels: vi.fn(),
 }));
 
+vi.mock('#/core/inventory/tracking.server', () => ({
+  filterTrackedInventoryItems: vi.fn(),
+}));
+
 import prisma from '#/libs/prisma.server';
 
 import { emit } from '#/core/events/index.server';
 import {
-  checkAvailability,
   decrementInventory,
-  getInventoryCount,
   incrementInventory,
 } from '#/core/inventory/index.server';
 import {
@@ -35,26 +34,18 @@ import {
   getTotalAvailableQuantity,
   incrementLocationLevels,
 } from '#/core/inventory/locations.server';
+import { filterTrackedInventoryItems } from '#/core/inventory/tracking.server';
 
-function makeTxClient() {
-  return {
-    productVariant: {
-      findUnique: vi.fn(),
-    },
-  };
-}
+const txClient = {};
 
 beforeEach(() => {
   vi.clearAllMocks();
-  prisma.$transaction.mockImplementation((fn) => fn(prisma));
+  prisma.$transaction.mockImplementation((fn) => fn(txClient));
 });
 
 describe('decrementInventory', () => {
-  it('skips variants with inventoryTracked = false', async () => {
-    const txClient = makeTxClient();
-    txClient.productVariant.findUnique.mockResolvedValue({
-      inventoryTracked: false,
-    });
+  it('skips when no tracked variants are returned', async () => {
+    filterTrackedInventoryItems.mockResolvedValue([]);
 
     await decrementInventory(
       [{ variantId: 'v-untracked', quantity: 5 }],
@@ -65,10 +56,9 @@ describe('decrementInventory', () => {
   });
 
   it('throws INSUFFICIENT_INVENTORY with details when stock is insufficient', async () => {
-    const txClient = makeTxClient();
-    txClient.productVariant.findUnique.mockResolvedValue({
-      inventoryTracked: true,
-    });
+    filterTrackedInventoryItems.mockResolvedValue([
+      { variantId: 'v-low', quantity: 5 },
+    ]);
     getTotalAvailableQuantity.mockResolvedValue(2);
 
     let caughtErr;
@@ -85,10 +75,9 @@ describe('decrementInventory', () => {
   });
 
   it('decrements tracked variants when stock is sufficient', async () => {
-    const txClient = makeTxClient();
-    txClient.productVariant.findUnique.mockResolvedValue({
-      inventoryTracked: true,
-    });
+    filterTrackedInventoryItems.mockResolvedValue([
+      { variantId: 'v-ok', quantity: 3 },
+    ]);
     getTotalAvailableQuantity.mockResolvedValue(10);
 
     await decrementInventory([{ variantId: 'v-ok', quantity: 3 }], txClient);
@@ -99,10 +88,9 @@ describe('decrementInventory', () => {
 
 describe('incrementInventory', () => {
   it('increments tracked variants and emits restock event', async () => {
-    const txClient = makeTxClient();
-    txClient.productVariant.findUnique.mockResolvedValue({
-      inventoryTracked: true,
-    });
+    filterTrackedInventoryItems.mockResolvedValue([
+      { variantId: 'v-tracked', quantity: 4 },
+    ]);
     incrementLocationLevels.mockResolvedValue({
       previousTotal: 0,
       newTotal: 4,
@@ -124,10 +112,7 @@ describe('incrementInventory', () => {
   });
 
   it('skips untracked variants during increment', async () => {
-    const txClient = makeTxClient();
-    txClient.productVariant.findUnique.mockResolvedValue({
-      inventoryTracked: false,
-    });
+    filterTrackedInventoryItems.mockResolvedValue([]);
 
     await incrementInventory(
       [{ variantId: 'v-untracked', quantity: 10 }],
@@ -135,40 +120,5 @@ describe('incrementInventory', () => {
     );
 
     expect(incrementLocationLevels).not.toHaveBeenCalled();
-  });
-});
-
-describe('checkAvailability', () => {
-  it('returns available true when stock is sufficient', async () => {
-    prisma.productVariant.findUnique.mockResolvedValue({
-      inventoryTracked: true,
-    });
-    getTotalAvailableQuantity.mockResolvedValue(20);
-
-    const result = await checkAvailability([{ variantId: 'v1', quantity: 5 }]);
-    expect(result).toEqual({ available: true });
-  });
-
-  it('returns insufficient details when stock is low', async () => {
-    prisma.productVariant.findUnique.mockResolvedValue({
-      inventoryTracked: true,
-    });
-    getTotalAvailableQuantity.mockResolvedValue(1);
-
-    const result = await checkAvailability([
-      { variantId: 'v-short', quantity: 3 },
-    ]);
-
-    expect(result.available).toBe(false);
-    expect(result.insufficient).toEqual([
-      { variantId: 'v-short', requested: 3, available: 1 },
-    ]);
-  });
-});
-
-describe('getInventoryCount', () => {
-  it('delegates to getTotalAvailableQuantity', async () => {
-    getTotalAvailableQuantity.mockResolvedValue(42);
-    expect(await getInventoryCount('v-exists')).toBe(42);
   });
 });
