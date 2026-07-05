@@ -8,40 +8,35 @@ import prisma from '#/libs/prisma.server';
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-function isDiscountActive(discount, now = new Date()) {
-  if (!discount.active) return false;
-  if (discount.startsAt && discount.startsAt > now) return false;
-  if (discount.expiresAt && discount.expiresAt <= now) return false;
+function getDiscountLifecycleError(discount, now = new Date()) {
+  if (!discount.active) return 'DISCOUNT_INACTIVE';
+  if (discount.startsAt && discount.startsAt > now) {
+    return 'DISCOUNT_NOT_STARTED';
+  }
+  if (discount.expiresAt !== null && discount.expiresAt <= now) {
+    return 'DISCOUNT_EXPIRED';
+  }
   if (
     discount.maxUsesCount !== null &&
     discount.usedCount >= discount.maxUsesCount
   ) {
-    return false;
+    return 'DISCOUNT_MAX_USES_REACHED';
   }
-  return true;
+  return null;
+}
+
+function isDiscountActive(discount, now = new Date()) {
+  return getDiscountLifecycleError(discount, now) === null;
 }
 
 function validateDiscountConstraints(
   discount,
-  { subtotalCents, currency, totalQuantity = 0, customerGroupId = null }
+  { subtotalCents, currency, totalQuantity = 0, customerGroupId = null },
+  now = new Date()
 ) {
-  if (!discount.active) {
-    throw new Error('DISCOUNT_INACTIVE');
-  }
-
-  if (discount.startsAt && discount.startsAt > new Date()) {
-    throw new Error('DISCOUNT_NOT_STARTED');
-  }
-
-  if (discount.expiresAt !== null && discount.expiresAt <= new Date()) {
-    throw new Error('DISCOUNT_EXPIRED');
-  }
-
-  if (
-    discount.maxUsesCount !== null &&
-    discount.usedCount >= discount.maxUsesCount
-  ) {
-    throw new Error('DISCOUNT_MAX_USES_REACHED');
+  const lifecycleError = getDiscountLifecycleError(discount, now);
+  if (lifecycleError) {
+    throw new Error(lifecycleError);
   }
 
   if (
@@ -66,6 +61,23 @@ function validateDiscountConstraints(
   ) {
     throw new Error('DISCOUNT_CUSTOMER_GROUP_MISMATCH');
   }
+}
+
+function summarizeCartLines(lines = []) {
+  return lines.reduce(
+    (acc, line) => {
+      acc.subtotalCents += line.priceCentsSnapshot * line.quantity;
+      acc.totalQuantity += line.quantity;
+      return acc;
+    },
+    { subtotalCents: 0, totalQuantity: 0 }
+  );
+}
+
+async function findDiscountByCode(code) {
+  return prisma.discount.findFirst({
+    where: { code: equalsFilter(code) },
+  });
 }
 
 /**
@@ -199,11 +211,7 @@ export async function resolvePromotions({
   customerGroupId = null,
 }) {
   const lines = cart?.lines ?? [];
-  const subtotalCents = lines.reduce(
-    (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-    0
-  );
-  const totalQuantity = lines.reduce((sum, line) => sum + line.quantity, 0);
+  const { subtotalCents, totalQuantity } = summarizeCartLines(lines);
   const currency = cart?.currency ?? 'USD';
 
   const codes = new Set(
@@ -302,19 +310,10 @@ export async function applyCouponToCart(cartId, code) {
   });
   if (!cart) throw new Error('CART_NOT_FOUND');
 
-  const discount = await prisma.discount.findFirst({
-    where: { code: equalsFilter(code) },
-  });
+  const discount = await findDiscountByCode(code);
   if (!discount) throw new Error('DISCOUNT_NOT_FOUND');
 
-  const subtotalCents = (cart.lines ?? []).reduce(
-    (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-    0
-  );
-  const totalQuantity = (cart.lines ?? []).reduce(
-    (sum, line) => sum + line.quantity,
-    0
-  );
+  const { subtotalCents, totalQuantity } = summarizeCartLines(cart.lines);
 
   validateDiscountConstraints(discount, {
     subtotalCents,
@@ -394,29 +393,20 @@ export async function persistOrderDiscounts(orderId, applied, tx) {
 // ---------------------------------------------------------------------------
 
 export async function applyDiscount(code, { subtotalCents, currency }) {
-  const discount = await prisma.discount.findFirst({
-    where: { code: equalsFilter(code) },
-  });
-
-  if (!discount) {
-    throw new Error('DISCOUNT_NOT_FOUND');
-  }
-
-  validateDiscountConstraints(discount, { subtotalCents, currency });
-
-  const { discountCents } = calculateDiscountAmount(discount, subtotalCents);
+  const {
+    discountCents,
+    code: resolvedCode,
+    type,
+    value,
+    id,
+  } = await validateDiscount(code, { subtotalCents, currency });
 
   await prisma.discount.update({
-    where: { id: discount.id },
+    where: { id },
     data: { usedCount: { increment: 1 } },
   });
 
-  return {
-    discountCents,
-    code: discount.code,
-    type: discount.type,
-    value: discount.value,
-  };
+  return { discountCents, code: resolvedCode, type, value };
 }
 
 // ---------------------------------------------------------------------------
@@ -424,10 +414,7 @@ export async function applyDiscount(code, { subtotalCents, currency }) {
 // ---------------------------------------------------------------------------
 
 export async function validateDiscount(code, { subtotalCents, currency }) {
-  const discount = await prisma.discount.findFirst({
-    where: { code: equalsFilter(code) },
-  });
-
+  const discount = await findDiscountByCode(code);
   if (!discount) {
     throw new Error('DISCOUNT_NOT_FOUND');
   }
@@ -444,13 +431,10 @@ export async function validateDiscount(code, { subtotalCents, currency }) {
 // ---------------------------------------------------------------------------
 
 export async function getDiscount(codeOrId) {
-  const byCode = await prisma.discount.findFirst({
-    where: { code: equalsFilter(codeOrId) },
-  });
+  const byCode = await findDiscountByCode(codeOrId);
   if (byCode) return byCode;
 
-  const byId = await prisma.discount.findUnique({ where: { id: codeOrId } });
-  return byId ?? null;
+  return prisma.discount.findUnique({ where: { id: codeOrId } }) ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -494,4 +478,6 @@ export {
   applyStackingRules,
   validateDiscountConstraints,
   isDiscountActive,
+  summarizeCartLines,
+  getDiscountLifecycleError,
 };
