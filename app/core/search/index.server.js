@@ -28,6 +28,7 @@ import logger from '#/utils/logger.server';
 import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
 
+import { localizeEntity } from '#/core/catalog/locale.server';
 import {
   applyChannelPricesToProducts,
   buildChannelPublishedWhere,
@@ -151,32 +152,8 @@ export function searchWith(providerId, params) {
 // Internal helpers shared with the built-in DB provider
 // ---------------------------------------------------------------------------
 
-function toTranslationMap(rows) {
-  return Object.fromEntries(rows.map((r) => [r.field, r.value]));
-}
-
-function withTranslations(base, map) {
-  return { ...base, ...map };
-}
-
 async function hydrateProduct(product, locale) {
-  const [translations, slugRow] = await Promise.all([
-    prisma.translation.findMany({
-      where: { entityType: 'product', entityId: product.id, locale },
-    }),
-    prisma.slug.findFirst({
-      where: {
-        entityType: 'product',
-        entityId: product.id,
-        locale,
-        canonical: true,
-      },
-    }),
-  ]);
-  return withTranslations(
-    { ...product, slug: slugRow?.slug ?? null },
-    toTranslationMap(translations)
-  );
+  return localizeEntity('product', product.id, locale, product);
 }
 
 async function hydrateProducts(rawProducts, locale) {

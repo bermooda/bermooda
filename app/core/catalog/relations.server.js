@@ -46,30 +46,3 @@ export async function setProductRelations(
     })),
   });
 }
-
-export async function assignProductTags(productId, tagNames = []) {
-  await prisma.productTagAssignment.deleteMany({ where: { productId } });
-
-  for (const name of tagNames) {
-    const trimmed = String(name).trim();
-    if (!trimmed) continue;
-
-    const tag = await prisma.productTag.upsert({
-      where: { name: trimmed },
-      create: { name: trimmed },
-      update: {},
-    });
-
-    await prisma.productTagAssignment.create({
-      data: { productId, tagId: tag.id },
-    });
-  }
-}
-
-export async function listProductTags(productId) {
-  const rows = await prisma.productTagAssignment.findMany({
-    where: { productId },
-    include: { tag: true },
-  });
-  return rows.map((r) => r.tag.name);
-}
