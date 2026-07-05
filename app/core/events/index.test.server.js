@@ -4,11 +4,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('#/utils/logger.server', () => ({
   default: {
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
 // Import after mock is registered.
-const { emit, on, off, _handlers } = await import('#/core/events/index.server');
+const {
+  emit,
+  emitBefore,
+  deny,
+  HookAbortError,
+  isHookAbort,
+  on,
+  off,
+  _handlers,
+} = await import('#/core/events/index.server');
 
 describe('event bus', () => {
   beforeEach(() => {
@@ -130,6 +140,100 @@ describe('event bus', () => {
 
     it('is a no-op for an unregistered event', () => {
       expect(() => off('nonexistent', () => {})).not.toThrow();
+    });
+  });
+
+  describe('emitBefore — blocking filter pipeline', () => {
+    it('calls registered handlers in registration order', async () => {
+      const calls = [];
+      on('before.shipment.create', () => calls.push('first'));
+      on('before.shipment.create', () => calls.push('second'));
+
+      const payload = { orderId: 'order_1' };
+      const result = await emitBefore('shipment.create', payload);
+
+      expect(calls).toEqual(['first', 'second']);
+      expect(result).toBe(payload);
+    });
+
+    it('resolves and returns the payload when no handlers are registered', async () => {
+      const payload = { orderId: 'order_1' };
+      await expect(emitBefore('shipment.create', payload)).resolves.toBe(
+        payload
+      );
+    });
+
+    it('propagates HookAbortError from deny() and stops later handlers', async () => {
+      const afterHandler = vi.fn();
+      on('before.shipment.ship', () => {
+        deny('Order is on fraud hold', { code: 'FRAUD_HOLD' });
+      });
+      on('before.shipment.ship', afterHandler);
+
+      await expect(
+        emitBefore('shipment.ship', { orderId: 'order_1' })
+      ).rejects.toBeInstanceOf(HookAbortError);
+      expect(afterHandler).not.toHaveBeenCalled();
+    });
+
+    it('logs a warning when a handler vetoes via deny()', async () => {
+      const { default: logger } = await import('#/utils/logger.server');
+
+      on('before.shipment.create', () => {
+        deny('Blocked', { code: 'FRAUD_HOLD', pluginId: 'fraud-guard' });
+      });
+
+      await expect(
+        emitBefore('shipment.create', { orderId: 'order_1' })
+      ).rejects.toBeInstanceOf(HookAbortError);
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: 'before.shipment.create',
+          code: 'FRAUD_HOLD',
+          pluginId: 'fraud-guard',
+          reason: 'Blocked',
+        }),
+        'action blocked by before-hook'
+      );
+    });
+
+    it('propagates a plain Error and stops later handlers (fail-closed)', async () => {
+      const afterHandler = vi.fn();
+      on('before.refund.create', () => {
+        throw new Error('filter crash');
+      });
+      on('before.refund.create', afterHandler);
+
+      await expect(
+        emitBefore('refund.create', { orderId: 'order_1' })
+      ).rejects.toThrow('filter crash');
+      expect(afterHandler).not.toHaveBeenCalled();
+    });
+
+    it('logs an error when a non-veto handler throws', async () => {
+      const { default: logger } = await import('#/utils/logger.server');
+
+      on('before.order.cancel', () => {
+        throw new Error('broken filter');
+      });
+
+      await expect(
+        emitBefore('order.cancel', { orderId: 'order_1' })
+      ).rejects.toThrow('broken filter');
+
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ event: 'before.order.cancel' }),
+        'before-hook handler error — aborting action'
+      );
+    });
+  });
+
+  describe('HookAbortError helpers', () => {
+    it('isHookAbort returns true for HookAbortError instances', () => {
+      expect(isHookAbort(new HookAbortError('blocked'))).toBe(true);
+      expect(isHookAbort({ blocked: true })).toBe(true);
+      expect(isHookAbort(new Error('nope'))).toBe(false);
     });
   });
 

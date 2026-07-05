@@ -17,14 +17,17 @@ vi.mock('#/utils/logger.server', () => ({
     })),
     info: vi.fn(),
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
-vi.mock('#/core/events/index.server', () => ({
-  emit: vi.fn(),
-  on: vi.fn(),
-  off: vi.fn(),
-}));
+vi.mock('#/core/events/index.server', async () => {
+  const actual = await vi.importActual('#/core/events/index.server');
+  return {
+    ...actual,
+    emit: vi.fn(),
+  };
+});
 
 const {
   registerPaymentProvider,
@@ -514,7 +517,65 @@ describe('enable', () => {
 
     // Hook registered
     const { on } = await import('#/core/events/index.server');
-    expect(on).toHaveBeenCalledWith('order.created', handler);
+    expect(on).toBeDefined();
+    const entry = _registry.get('plugin-a');
+    expect(entry.handlers.get('order.created')).toBe(handler);
+  });
+
+  it('registers before.* hooks with an attribution wrapper', async () => {
+    const { deny, emitBefore, _handlers } =
+      await import('#/core/events/index.server');
+
+    const manifest = validManifest({
+      id: 'plugin-before',
+      name: 'Plugin Before',
+      hooks: {
+        'before.shipment.create': () => {
+          deny('Blocked', { code: 'FRAUD_HOLD' });
+        },
+      },
+    });
+    register(manifest);
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _enable('plugin-before');
+
+    await expect(
+      emitBefore('shipment.create', { orderId: 'order_1' })
+    ).rejects.toMatchObject({
+      code: 'FRAUD_HOLD',
+      pluginId: 'plugin-before',
+      reason: 'Blocked',
+    });
+
+    _handlers.clear();
+  });
+
+  it('leaves an explicitly-set pluginId on HookAbortError untouched', async () => {
+    const { deny, emitBefore, _handlers } =
+      await import('#/core/events/index.server');
+
+    const manifest = validManifest({
+      id: 'plugin-before-2',
+      name: 'Plugin Before 2',
+      hooks: {
+        'before.shipment.ship': () => {
+          deny('Blocked', { code: 'FRAUD_HOLD', pluginId: 'custom-id' });
+        },
+      },
+    });
+    register(manifest);
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _enable('plugin-before-2');
+
+    await expect(
+      emitBefore('shipment.ship', { orderId: 'order_1' })
+    ).rejects.toMatchObject({
+      pluginId: 'custom-id',
+    });
+
+    _handlers.clear();
   });
 
   it('calls onEnable(ctx) when present', async () => {
@@ -683,16 +744,43 @@ describe('disable', () => {
 
     // Enable first so handlers are registered
     await _enable('plugin-e');
+    const wrappedHandler = _registry
+      .get('plugin-e')
+      .handlers.get('order.created');
 
-    const { off } = await import('#/core/events/index.server');
-    vi.clearAllMocks();
     mockSetting.upsert.mockResolvedValue({});
 
     await _disable('plugin-e');
 
-    expect(off).toHaveBeenCalledWith('order.created', handler);
-    // Registry entry's handlers map should be cleared
+    const { _handlers } = await import('#/core/events/index.server');
+    expect(_handlers.get('order.created') ?? []).not.toContain(wrappedHandler);
     expect(_registry.get('plugin-e').handlers.size).toBe(0);
+  });
+
+  it('deregisters wrapped before.* handlers so emitBefore runs no handler', async () => {
+    const { deny, emitBefore, _handlers } =
+      await import('#/core/events/index.server');
+
+    const manifest = validManifest({
+      id: 'plugin-before-disable',
+      name: 'Plugin Before Disable',
+      hooks: {
+        'before.shipment.create': () => {
+          deny('Blocked');
+        },
+      },
+    });
+    register(manifest);
+    mockSetting.upsert.mockResolvedValue({});
+
+    await _enable('plugin-before-disable');
+    await _disable('plugin-before-disable');
+
+    await expect(
+      emitBefore('shipment.create', { orderId: 'order_1' })
+    ).resolves.toEqual({ orderId: 'order_1' });
+
+    _handlers.clear();
   });
 
   it('calls onDisable(ctx) when present', async () => {

@@ -44,6 +44,7 @@ vi.mock('#/core/gift-cards/index.server', () => ({
 
 vi.mock('#/core/events/index.server', () => ({
   emit: vi.fn(),
+  emitBefore: vi.fn(),
 }));
 
 // ---------------------------------------------------------------------------
@@ -60,7 +61,7 @@ import {
 } from '#/core/checkout/pipeline.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { resolvePromotions } from '#/core/discounts/index.server';
-import { emit } from '#/core/events/index.server';
+import { emit, emitBefore } from '#/core/events/index.server';
 import { resolveVariantPrice } from '#/core/pricing/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
@@ -98,6 +99,7 @@ function makeSession(overrides = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  emitBefore.mockResolvedValue(undefined);
   // Safe defaults
   getAllQuotes.mockResolvedValue([]);
   computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
@@ -349,6 +351,17 @@ describe('advanceStep — address to shipping', () => {
     const result = await advanceStep('sess_1', {
       shippingAddressJson: '{"country":"AU"}',
     });
+
+    expect(emitBefore).toHaveBeenCalledWith('checkout.advance', {
+      sessionId: 'sess_1',
+      session,
+      fromStep: 'address',
+      toStep: 'shipping',
+      stepData: { shippingAddressJson: '{"country":"AU"}' },
+    });
+    expect(emitBefore.mock.invocationCallOrder[0]).toBeLessThan(
+      prisma.checkoutSession.update.mock.invocationCallOrder[0]
+    );
 
     expect(prisma.checkoutSession.update).toHaveBeenCalledWith(
       expect.objectContaining({

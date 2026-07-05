@@ -47,9 +47,14 @@ vi.mock('#/libs/prisma.server', () => ({
   },
 }));
 
-vi.mock('#/core/events/index.server', () => ({
-  emit: vi.fn(),
-}));
+vi.mock('#/core/events/index.server', async () => {
+  const actual = await vi.importActual('#/core/events/index.server');
+  return {
+    ...actual,
+    emit: vi.fn(),
+    emitBefore: vi.fn(),
+  };
+});
 
 vi.mock('#/core/inventory/index.server', () => ({
   decrementInventory: vi.fn(),
@@ -102,7 +107,7 @@ import {
   resolvePromotions,
   persistOrderDiscounts,
 } from '#/core/discounts/index.server';
-import { emit } from '#/core/events/index.server';
+import { emit, emitBefore } from '#/core/events/index.server';
 import {
   decrementInventory,
   incrementInventory,
@@ -208,6 +213,7 @@ function setupTransaction(capturedTx = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  emitBefore.mockResolvedValue(undefined);
   computeTotals.mockResolvedValue(defaultTotals());
   expandBundleInventoryItems.mockImplementation((items) =>
     Promise.resolve(items)
@@ -558,6 +564,41 @@ describe('updateOrderStatus', () => {
 // ---------------------------------------------------------------------------
 
 describe('addShipment', () => {
+  beforeEach(() => {
+    emitBefore.mockResolvedValue(undefined);
+  });
+
+  it('calls emitBefore before creating the shipment', async () => {
+    const order = {
+      id: 'order_1',
+      lines: [{ id: 'line_1', quantity: 1, fulfilledQuantity: 0 }],
+    };
+    prisma.order.findUnique.mockResolvedValue(order);
+    prisma.$transaction.mockImplementation(async (fn) => fn(prisma));
+    prisma.shipment.create.mockResolvedValue({
+      id: 'ship_1',
+      orderId: 'order_1',
+    });
+    prisma.shipment.findUnique.mockResolvedValue({
+      id: 'ship_1',
+      orderId: 'order_1',
+      lines: [],
+    });
+    emit.mockResolvedValue(undefined);
+
+    const data = { carrier: 'USPS', trackingNumber: 'TRK123' };
+    await addShipment('order_1', data);
+
+    expect(emitBefore).toHaveBeenCalledWith('shipment.create', {
+      orderId: 'order_1',
+      order,
+      data,
+    });
+    expect(emitBefore.mock.invocationCallOrder[0]).toBeLessThan(
+      prisma.$transaction.mock.invocationCallOrder[0]
+    );
+  });
+
   it('emits shipment.created after creating the shipment', async () => {
     const shipment = { id: 'ship_1', orderId: 'order_1', status: 'pending' };
     prisma.order.findUnique.mockResolvedValue({
@@ -586,6 +627,27 @@ describe('addShipment', () => {
       orderId: 'order_1',
     });
   });
+
+  it('does not write shipment rows when a before-hook vetoes', async () => {
+    const { HookAbortError } = await vi.importActual(
+      '#/core/events/index.server'
+    );
+    prisma.order.findUnique.mockResolvedValue({
+      id: 'order_1',
+      lines: [{ id: 'line_1', quantity: 1, fulfilledQuantity: 0 }],
+    });
+    emitBefore.mockRejectedValue(
+      new HookAbortError('Blocked', { code: 'FRAUD_HOLD' })
+    );
+
+    await expect(
+      addShipment('order_1', { carrier: 'USPS' })
+    ).rejects.toBeInstanceOf(HookAbortError);
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.shipment.create).not.toHaveBeenCalled();
+    expect(emit).not.toHaveBeenCalled();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -593,6 +655,10 @@ describe('addShipment', () => {
 // ---------------------------------------------------------------------------
 
 describe('markShipped', () => {
+  beforeEach(() => {
+    emitBefore.mockResolvedValue(undefined);
+  });
+
   it('sets status to shipped and emits shipment.shipped', async () => {
     const shipment = {
       id: 'ship_1',
@@ -632,6 +698,32 @@ describe('markShipped', () => {
       })
     );
   });
+
+  it('does not update shipment rows when a before-hook vetoes', async () => {
+    const { HookAbortError } = await vi.importActual(
+      '#/core/events/index.server'
+    );
+    prisma.shipment.findUnique.mockResolvedValue({
+      id: 'ship_1',
+      orderId: 'order_1',
+      lines: [],
+      order: {
+        id: 'order_1',
+        lines: [{ id: 'line_1', quantity: 1, fulfilledQuantity: 0 }],
+      },
+    });
+    emitBefore.mockRejectedValue(
+      new HookAbortError('Blocked', { code: 'FRAUD_HOLD' })
+    );
+
+    await expect(
+      markShipped('ship_1', { carrier: 'FedEx' })
+    ).rejects.toBeInstanceOf(HookAbortError);
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.shipment.update).not.toHaveBeenCalled();
+    expect(emit).not.toHaveBeenCalled();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -639,6 +731,10 @@ describe('markShipped', () => {
 // ---------------------------------------------------------------------------
 
 describe('markDelivered', () => {
+  beforeEach(() => {
+    emitBefore.mockResolvedValue(undefined);
+  });
+
   it('sets status to delivered and emits shipment.delivered', async () => {
     const shipment = {
       id: 'ship_1',
@@ -646,6 +742,11 @@ describe('markDelivered', () => {
       status: 'delivered',
       deliveredAt: new Date(),
     };
+    prisma.shipment.findUnique.mockResolvedValue({
+      id: 'ship_1',
+      orderId: 'order_1',
+      status: 'shipped',
+    });
     prisma.shipment.update.mockResolvedValue(shipment);
     emit.mockResolvedValue(undefined);
 
@@ -672,6 +773,10 @@ describe('markDelivered', () => {
 // ---------------------------------------------------------------------------
 
 describe('createRefund', () => {
+  beforeEach(() => {
+    emitBefore.mockResolvedValue(undefined);
+  });
+
   it('emits payment.refunded after creating the refund', async () => {
     const refund = {
       id: 'ref_1',
@@ -679,6 +784,10 @@ describe('createRefund', () => {
       amountCents: 500,
       status: 'pending',
     };
+    prisma.order.findUnique.mockResolvedValue({
+      id: 'order_1',
+      lines: [],
+    });
     prisma.refund.create.mockResolvedValue(refund);
     emit.mockResolvedValue(undefined);
 

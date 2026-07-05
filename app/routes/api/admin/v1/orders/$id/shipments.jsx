@@ -4,6 +4,7 @@
 import { requireApiKey } from '#/libs/auth/api.server';
 
 import { addShipment } from '#/core/orders/index.server';
+import { isHookAbort } from '#/core/plugins/index.server';
 
 export async function action({ request, params }) {
   await requireApiKey(request, ['admin']);
@@ -23,6 +24,17 @@ export async function action({ request, params }) {
     const shipment = await addShipment(params.id, body);
     return Response.json({ shipment }, { status: 201 });
   } catch (err) {
+    if (isHookAbort(err)) {
+      return Response.json(
+        {
+          error: err.reason,
+          code: err.code,
+          blockedBy: err.pluginId,
+        },
+        { status: 422 }
+      );
+    }
+
     return Response.json(
       { error: err.message, code: err.code },
       { status: 422 }
