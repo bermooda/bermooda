@@ -117,11 +117,11 @@ export async function resolveVariantPrice({
 /**
  * Re-price cart lines using resolved price lists.
  * @param {object} cart - cart with lines
- * @param {{ customerId?: string, customerGroupIds?: string[] }} options
+ * @param {{ customerId?: string, customerGroupIds?: string[], salesChannelId?: string }} options
  */
 export async function applyPriceListToCartLines(
   cart,
-  { customerId, customerGroupIds } = {}
+  { customerId, customerGroupIds, salesChannelId } = {}
 ) {
   if (!cart?.lines?.length) return cart;
 
@@ -136,6 +136,7 @@ export async function applyPriceListToCartLines(
         currency: cart.currency,
         quantity: line.quantity,
         customerGroupIds: groupIds,
+        salesChannelId,
       });
       if (!resolved) return line;
       return {

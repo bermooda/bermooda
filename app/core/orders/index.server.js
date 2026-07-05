@@ -6,6 +6,11 @@ import prisma from '#/libs/prisma.server';
 
 import { cartLineTotal } from '#/core/cart/lines';
 import { expandBundleInventoryItems } from '#/core/catalog/types.server';
+import {
+  buildComputeTotalsParams,
+  CHECKOUT_CART_INCLUDE,
+  parseCheckoutSessionFields,
+} from '#/core/checkout/session.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { persistOrderDiscounts } from '#/core/discounts/index.server';
 import { emit, emitBefore } from '#/core/events/index.server';
@@ -80,11 +85,7 @@ export async function placeOrder(
     where: { id: checkoutSessionId },
     include: {
       cart: {
-        include: {
-          lines: {
-            include: { variant: { include: { taxClass: true } } },
-          },
-        },
+        include: CHECKOUT_CART_INCLUDE,
       },
     },
   });
@@ -97,27 +98,9 @@ export async function placeOrder(
     throw new Error('CHECKOUT_SESSION_NOT_AT_REVIEW');
   }
 
-  const preShippingAddress = preSession.shippingAddressJson
-    ? JSON.parse(preSession.shippingAddressJson)
-    : null;
-
-  const preShippingOption = preSession.shippingOptionJson
-    ? JSON.parse(preSession.shippingOptionJson)
-    : null;
-
-  const preTotals = await computeTotals({
-    cart: preSession.cart,
-    shippingAddress: preShippingAddress,
-    couponCode: preSession.couponCode ?? undefined,
-    shippingOptionId: preShippingOption?.id ?? undefined,
-    taxExempt: preSession.taxExempt ?? false,
-    vatId: preSession.vatId ?? undefined,
-    customerId: preSession.customerId ?? undefined,
-    giftCardCode: preSession.giftCardCode ?? undefined,
-    storeCreditCents: preSession.storeCreditCents ?? 0,
-    loyaltyPointsCents: preSession.loyaltyPointsCents ?? 0,
-    salesChannelId: preSession.salesChannelId ?? undefined,
-  });
+  const preTotals = await computeTotals(
+    buildComputeTotalsParams(preSession, preSession.cart)
+  );
 
   await emitBefore('order.place', {
     checkoutSessionId,
@@ -134,11 +117,7 @@ export async function placeOrder(
       where: { id: checkoutSessionId },
       include: {
         cart: {
-          include: {
-            lines: {
-              include: { variant: { include: { taxClass: true } } },
-            },
-          },
+          include: CHECKOUT_CART_INCLUDE,
         },
       },
     });
@@ -157,27 +136,7 @@ export async function placeOrder(
 
     const orderNumber = 'ORD-' + Date.now();
 
-    const shippingAddress = session.shippingAddressJson
-      ? JSON.parse(session.shippingAddressJson)
-      : null;
-
-    const shippingOption = session.shippingOptionJson
-      ? JSON.parse(session.shippingOptionJson)
-      : null;
-
-    const totals = await computeTotals({
-      cart,
-      shippingAddress,
-      couponCode: session.couponCode ?? undefined,
-      shippingOptionId: shippingOption?.id ?? undefined,
-      taxExempt: session.taxExempt ?? false,
-      vatId: session.vatId ?? undefined,
-      customerId: session.customerId ?? undefined,
-      giftCardCode: session.giftCardCode ?? undefined,
-      storeCreditCents: session.storeCreditCents ?? 0,
-      loyaltyPointsCents: session.loyaltyPointsCents ?? 0,
-      salesChannelId: session.salesChannelId ?? undefined,
-    });
+    const totals = await computeTotals(buildComputeTotalsParams(session, cart));
 
     const {
       subtotalCents,
@@ -198,6 +157,7 @@ export async function placeOrder(
       paymentProvider ?? session.paymentProvider ?? null;
     const initialStatus =
       effectiveProvider === 'manual' ? 'pending_payment' : 'pending';
+    const { shippingOption } = parseCheckoutSessionFields(session);
     const pickupLocationId = shippingOption?.pickupLocationId ?? null;
 
     const rawInventoryItems = lines

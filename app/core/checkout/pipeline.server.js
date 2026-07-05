@@ -3,21 +3,14 @@
 
 import prisma from '#/libs/prisma.server';
 
-import { lockCart, unlockCart } from '#/core/cart/index.server';
+import { lockCart } from '#/core/cart/index.server';
+import {
+  buildComputeTotalsParams,
+  CHECKOUT_CART_INCLUDE,
+  nextCheckoutStep,
+} from '#/core/checkout/session.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { emit, emitBefore } from '#/core/events/index.server';
-
-// ---------------------------------------------------------------------------
-// Step order
-// ---------------------------------------------------------------------------
-
-const STEPS = ['address', 'shipping', 'payment', 'review'];
-
-function nextStep(current) {
-  const idx = STEPS.indexOf(current);
-  if (idx === -1 || idx === STEPS.length - 1) return current;
-  return STEPS[idx + 1];
-}
 
 // ---------------------------------------------------------------------------
 // createCheckoutSession
@@ -70,11 +63,7 @@ export async function getCheckoutSession(sessionId) {
     where: { id: sessionId },
     include: {
       cart: {
-        include: {
-          lines: {
-            include: { variant: { include: { taxClass: true } } },
-          },
-        },
+        include: CHECKOUT_CART_INCLUDE,
       },
     },
   });
@@ -145,7 +134,7 @@ export async function advanceStep(sessionId, stepData = {}) {
         ...(stepData.couponCode !== undefined
           ? { couponCode: stepData.couponCode }
           : {}),
-        step: nextStep(step),
+        step: nextCheckoutStep(step),
       };
       break;
     }
@@ -156,7 +145,7 @@ export async function advanceStep(sessionId, stepData = {}) {
       }
       updateData = {
         shippingOptionJson: stepData.shippingOptionJson ?? null,
-        step: nextStep(step),
+        step: nextCheckoutStep(step),
       };
       break;
     }
@@ -176,7 +165,7 @@ export async function advanceStep(sessionId, stepData = {}) {
         ...(stepData.loyaltyPointsCents !== undefined
           ? { loyaltyPointsCents: stepData.loyaltyPointsCents }
           : {}),
-        step: nextStep(step),
+        step: nextCheckoutStep(step),
       };
       break;
     }
@@ -208,60 +197,15 @@ export async function advanceStep(sessionId, stepData = {}) {
       data: updateData,
       include: {
         cart: {
-          include: {
-            lines: {
-              include: { variant: { include: { taxClass: true } } },
-            },
-          },
+          include: CHECKOUT_CART_INCLUDE,
         },
       },
     });
   }
 
-  // Re-compute totals from the latest session state
-  const shippingAddress = updatedSession.shippingAddressJson
-    ? JSON.parse(updatedSession.shippingAddressJson)
-    : null;
-
-  const shippingOption = updatedSession.shippingOptionJson
-    ? JSON.parse(updatedSession.shippingOptionJson)
-    : null;
-
-  const totals = await computeTotals({
-    cart: updatedSession.cart,
-    shippingAddress,
-    couponCode: updatedSession.couponCode ?? undefined,
-    shippingOptionId: shippingOption?.id ?? undefined,
-    taxExempt: updatedSession.taxExempt ?? false,
-    vatId: updatedSession.vatId ?? undefined,
-    customerId: updatedSession.customerId ?? undefined,
-    giftCardCode: updatedSession.giftCardCode ?? undefined,
-    storeCreditCents: updatedSession.storeCreditCents ?? 0,
-    loyaltyPointsCents: updatedSession.loyaltyPointsCents ?? 0,
-    salesChannelId: updatedSession.salesChannelId ?? undefined,
-  });
+  const totals = await computeTotals(
+    buildComputeTotalsParams(updatedSession, updatedSession.cart)
+  );
 
   return { ...updatedSession, totals };
-}
-
-// ---------------------------------------------------------------------------
-// abandonCheckoutSession
-// ---------------------------------------------------------------------------
-
-/**
- * Abandon a checkout session and unlock the associated cart.
- *
- * @param {string} sessionId
- * @returns {Promise<void>}
- */
-export async function abandonCheckoutSession(sessionId) {
-  const session = await prisma.checkoutSession.findUnique({
-    where: { id: sessionId },
-  });
-
-  if (!session) {
-    throw new Error('CHECKOUT_SESSION_NOT_FOUND');
-  }
-
-  await unlockCart(session.cartId);
 }

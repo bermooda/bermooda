@@ -6,8 +6,8 @@ import { resolvePromotions } from '#/core/discounts/index.server';
 import { resolveGiftCardRedemption } from '#/core/gift-cards/index.server';
 import { resolveLoyaltyRedemption } from '#/core/loyalty/index.server';
 import {
+  applyPriceListToCartLines,
   getCustomerGroupIds,
-  resolveVariantPrice,
 } from '#/core/pricing/index.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import { getStoreCreditBalance } from '#/core/store-credit/index.server';
@@ -24,7 +24,6 @@ import { computeActiveTax } from '#/core/tax/index.server';
  *   cart: object,
  *   shippingAddress?: object,
  *   couponCode?: string,
- *   couponCodes?: string[],
  *   shippingOptionId?: string,
  *   taxExempt?: boolean,
  *   vatId?: string,
@@ -56,7 +55,6 @@ export async function computeTotals({
   cart,
   shippingAddress,
   couponCode,
-  couponCodes,
   shippingOptionId,
   taxExempt = false,
   vatId,
@@ -74,22 +72,11 @@ export async function computeTotals({
       ? await getCustomerGroupIds(customerId)
       : [];
 
-  const pricedLines = await Promise.all(
-    (cart?.lines ?? []).map(async (line) => {
-      const resolved = await resolveVariantPrice({
-        variantId: line.variantId,
-        currency,
-        quantity: line.quantity,
-        customerGroupIds,
-        salesChannelId,
-      });
-      const priceCentsSnapshot =
-        resolved?.priceCents ?? line.priceCentsSnapshot;
-      return { ...line, priceCentsSnapshot };
-    })
-  );
-
-  const lines = pricedLines;
+  const pricedCart = await applyPriceListToCartLines(cart, {
+    customerGroupIds,
+    salesChannelId,
+  });
+  const lines = pricedCart.lines ?? [];
   const { subtotalCents } = summarizeCartLines(lines);
 
   let discountCents = 0;
@@ -99,9 +86,8 @@ export async function computeTotals({
 
   try {
     const promo = await resolvePromotions({
-      cart: { ...cart, lines },
+      cart: pricedCart,
       couponCode,
-      couponCodes,
       customerGroupId: customerGroupIds[0] ?? null,
     });
     discountCents = promo.discountCents;
@@ -118,7 +104,7 @@ export async function computeTotals({
 
   if (shippingAddress) {
     const quotes = await getAllQuotes({
-      cart: { ...cart, lines },
+      cart: pricedCart,
       shippingAddress,
     });
     if (shippingOptionId) {
