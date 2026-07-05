@@ -2,6 +2,7 @@
 // Shared checkout session parsing and computeTotals param building.
 
 export {
+  CHECKOUT_STEP,
   CHECKOUT_STEPS,
   isValidCheckoutStep,
   nextCheckoutStep,

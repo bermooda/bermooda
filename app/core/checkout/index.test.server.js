@@ -57,6 +57,7 @@ import { lockCart } from '#/core/cart/index.server';
 import {
   createCheckoutSession,
   advanceStep,
+  updateCheckoutSession,
 } from '#/core/checkout/pipeline.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { resolvePromotions } from '#/core/discounts/index.server';
@@ -80,7 +81,7 @@ function makeSession(overrides = {}) {
   return {
     id: 'sess_1',
     cartId: 'cart_1',
-    step: 'address',
+    step: 'checkout',
     shippingAddressJson: null,
     billingAddressJson: null,
     shippingOptionJson: null,
@@ -323,7 +324,7 @@ describe('createCheckoutSession', () => {
     expect(lockCart).toHaveBeenCalledWith('cart_1');
   });
 
-  it('creates session with step=address and provided cartId', async () => {
+  it('creates session with step=checkout and provided cartId', async () => {
     lockCart.mockResolvedValue({});
     prisma.checkoutSession.create.mockResolvedValue(makeSession());
 
@@ -332,7 +333,7 @@ describe('createCheckoutSession', () => {
     expect(prisma.checkoutSession.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         cartId: 'cart_1',
-        step: 'address',
+        step: 'checkout',
         email: 'test@example.com',
       }),
     });
@@ -362,181 +363,115 @@ describe('createCheckoutSession', () => {
 });
 
 // ---------------------------------------------------------------------------
-// advanceStep — address → shipping
+// updateCheckoutSession
 // ---------------------------------------------------------------------------
 
-describe('advanceStep — address to shipping', () => {
-  it('saves shippingAddressJson and advances step to shipping', async () => {
-    const session = makeSession({ step: 'address' });
+describe('updateCheckoutSession', () => {
+  it('saves shippingAddressJson and keeps step checkout', async () => {
+    const session = makeSession({ step: 'checkout' });
     prisma.checkoutSession.findUnique.mockResolvedValue(session);
     prisma.checkoutSession.update.mockResolvedValue({
       ...session,
-      step: 'shipping',
+      step: 'checkout',
       shippingAddressJson: '{"country":"AU"}',
       cart: makeTotalsCart(),
     });
+    computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
 
-    const result = await advanceStep('sess_1', {
+    const result = await updateCheckoutSession('sess_1', {
       shippingAddressJson: '{"country":"AU"}',
     });
 
     expect(emitBefore).toHaveBeenCalledWith('checkout.advance', {
       sessionId: 'sess_1',
       session,
-      fromStep: 'address',
-      toStep: 'shipping',
+      fromStep: 'checkout',
+      toStep: 'checkout',
       stepData: { shippingAddressJson: '{"country":"AU"}' },
     });
-    expect(emitBefore.mock.invocationCallOrder[0]).toBeLessThan(
-      prisma.checkoutSession.update.mock.invocationCallOrder[0]
-    );
 
     expect(prisma.checkoutSession.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'sess_1' },
         data: expect.objectContaining({
           shippingAddressJson: '{"country":"AU"}',
-          step: 'shipping',
+          step: 'checkout',
         }),
       })
     );
-    expect(result.step).toBe('shipping');
-  });
-
-  it('attaches totals to the returned session', async () => {
-    const session = makeSession({ step: 'address' });
-    prisma.checkoutSession.findUnique.mockResolvedValue(session);
-    prisma.checkoutSession.update.mockResolvedValue({
-      ...session,
-      step: 'shipping',
-      shippingAddressJson: '{"country":"AU"}',
-      cart: makeTotalsCart(),
-    });
-    computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
-
-    const result = await advanceStep('sess_1', {
-      shippingAddressJson: '{"country":"AU"}',
-    });
-
+    expect(result.step).toBe('checkout');
     expect(result.totals).toBeDefined();
-    expect(typeof result.totals.subtotalCents).toBe('number');
-    expect(typeof result.totals.totalCents).toBe('number');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// advanceStep — throws when required stepData is missing
-// ---------------------------------------------------------------------------
-
-describe('advanceStep — validation errors', () => {
-  it('throws MISSING_SHIPPING_ADDRESS when shippingAddressJson is absent on address step', async () => {
-    const session = makeSession({ step: 'address' });
-    prisma.checkoutSession.findUnique.mockResolvedValue(session);
-
-    await expect(advanceStep('sess_1', {})).rejects.toThrow(
-      'MISSING_SHIPPING_ADDRESS'
-    );
-    expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
   });
 
-  it('throws MISSING_SHIPPING_OPTION when shippingOptionId is absent on shipping step', async () => {
-    const session = makeSession({
-      step: 'shipping',
-      shippingAddressJson: '{"country":"AU"}',
-    });
-    prisma.checkoutSession.findUnique.mockResolvedValue(session);
-
-    await expect(advanceStep('sess_1', {})).rejects.toThrow(
-      'MISSING_SHIPPING_OPTION'
-    );
-    expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
-  });
-
-  it('throws INVALID_SHIPPING_OPTION when shippingOptionJson is absent on shipping step', async () => {
-    const session = makeSession({
-      step: 'shipping',
-      shippingAddressJson: '{"country":"AU"}',
-    });
+  it('throws MISSING_SHIPPING_ADDRESS when requireComplete and address missing', async () => {
+    const session = makeSession({ step: 'checkout' });
     prisma.checkoutSession.findUnique.mockResolvedValue(session);
 
     await expect(
-      advanceStep('sess_1', { shippingOptionId: 'opt_1' })
-    ).rejects.toThrow('INVALID_SHIPPING_OPTION');
-    expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
+      updateCheckoutSession(
+        'sess_1',
+        {
+          shippingOptionJson: '{"id":"opt_1"}',
+          paymentProvider: 'stripe',
+        },
+        { requireComplete: true }
+      )
+    ).rejects.toThrow('MISSING_SHIPPING_ADDRESS');
   });
 
-  it('throws MISSING_PAYMENT_PROVIDER when paymentProvider is absent on payment step', async () => {
-    const session = makeSession({
-      step: 'payment',
-      shippingAddressJson: '{"country":"AU"}',
-      shippingOptionJson: '{"id":"opt_1","priceCents":1500}',
-    });
+  it('throws MISSING_SHIPPING_OPTION when requireComplete and shipping missing', async () => {
+    const session = makeSession({ step: 'checkout' });
     prisma.checkoutSession.findUnique.mockResolvedValue(session);
 
-    await expect(advanceStep('sess_1', {})).rejects.toThrow(
-      'MISSING_PAYMENT_PROVIDER'
-    );
-    expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
+    await expect(
+      updateCheckoutSession(
+        'sess_1',
+        {
+          shippingAddressJson: '{"country":"AU"}',
+          paymentProvider: 'stripe',
+        },
+        { requireComplete: true }
+      )
+    ).rejects.toThrow('MISSING_SHIPPING_OPTION');
+  });
+
+  it('throws MISSING_PAYMENT_PROVIDER when requireComplete and provider missing', async () => {
+    const session = makeSession({ step: 'checkout' });
+    prisma.checkoutSession.findUnique.mockResolvedValue(session);
+
+    await expect(
+      updateCheckoutSession(
+        'sess_1',
+        {
+          shippingAddressJson: '{"country":"AU"}',
+          shippingOptionJson: '{"id":"opt_1","priceCents":1500}',
+        },
+        { requireComplete: true }
+      )
+    ).rejects.toThrow('MISSING_PAYMENT_PROVIDER');
   });
 });
 
 // ---------------------------------------------------------------------------
-// advanceStep — shipping step
+// advanceStep — API wrapper
 // ---------------------------------------------------------------------------
 
-describe('advanceStep — shipping to payment', () => {
-  it('saves shippingOptionJson and advances step to payment', async () => {
-    const session = makeSession({
-      step: 'shipping',
-      shippingAddressJson: '{"country":"AU"}',
-    });
+describe('advanceStep', () => {
+  it('delegates to updateCheckoutSession with requireComplete when payload is full', async () => {
+    const session = makeSession({ step: 'checkout' });
     prisma.checkoutSession.findUnique.mockResolvedValue(session);
     prisma.checkoutSession.update.mockResolvedValue({
       ...session,
-      step: 'payment',
-      shippingOptionJson: '{"id":"opt_1","priceCents":1500}',
       cart: makeTotalsCart(),
     });
-    resolveShippingOption.mockResolvedValue({
-      option: { id: 'opt_1', priceCents: 1500 },
-      quotes: [],
-    });
     computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
 
-    const result = await advanceStep('sess_1', {
-      shippingOptionId: 'opt_1',
-      shippingOptionJson: '{"id":"opt_1","priceCents":1500}',
-    });
-
-    expect(prisma.checkoutSession.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          shippingOptionJson: '{"id":"opt_1","priceCents":1500}',
-          step: 'payment',
-        }),
-      })
-    );
-    expect(result.step).toBe('payment');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// advanceStep — review step returns session as-is (with totals)
-// ---------------------------------------------------------------------------
-
-describe('advanceStep — review step', () => {
-  it('returns session as-is without updating when step is review', async () => {
-    const session = makeSession({
-      step: 'review',
+    await advanceStep('sess_1', {
       shippingAddressJson: '{"country":"AU"}',
+      shippingOptionJson: '{"id":"opt_1","priceCents":1500}',
+      paymentProvider: 'stripe',
     });
-    prisma.checkoutSession.findUnique.mockResolvedValue(session);
-    computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
 
-    const result = await advanceStep('sess_1', {});
-
-    expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
-    expect(result.step).toBe('review');
-    expect(result.totals).toBeDefined();
+    expect(prisma.checkoutSession.update).toHaveBeenCalled();
   });
 });

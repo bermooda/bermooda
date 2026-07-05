@@ -1,5 +1,5 @@
 // app/core/checkout/pipeline.server.js
-// 4-step checkout pipeline: address → shipping → payment → review
+// Single-page checkout session pipeline.
 
 import prisma from '#/libs/prisma.server';
 
@@ -7,7 +7,7 @@ import { lockCart } from '#/core/cart/index.server';
 import {
   buildComputeTotalsParams,
   CHECKOUT_CART_INCLUDE,
-  nextCheckoutStep,
+  CHECKOUT_STEP,
 } from '#/core/checkout/session.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { emit, emitBefore } from '#/core/events/index.server';
@@ -34,7 +34,7 @@ export async function createCheckoutSession(
       cartId,
       customerId: customerId ?? null,
       email: email ?? null,
-      step: 'address',
+      step: CHECKOUT_STEP,
     },
   });
 
@@ -91,108 +91,77 @@ export async function linkCheckoutCustomer(sessionId, customerId) {
 }
 
 // ---------------------------------------------------------------------------
-// advanceStep
+// updateCheckoutSession
 // ---------------------------------------------------------------------------
 
 /**
- * Advance the checkout session to the next step.
- * Validates step-specific data, persists it, re-computes totals,
- * and returns the updated session with a `totals` property attached.
- *
- * Expected stepData per step:
- *   address  → { shippingAddressJson, billingAddressJson?, email? }
- *   shipping → { shippingOptionId, shippingOptionJson? }
- *   payment  → { paymentProvider }
- *   review   → (no-op — caller handles order placement)
+ * Persist checkout fields for the single-page flow.
  *
  * @param {string} sessionId
- * @param {object} stepData
+ * @param {object} data
+ * @param {{ requireComplete?: boolean }} [options]
  * @returns {Promise<object>} updated session with `totals`
  */
-export async function advanceStep(sessionId, stepData = {}) {
+export async function updateCheckoutSession(
+  sessionId,
+  data = {},
+  { requireComplete = false } = {}
+) {
   const session = await getCheckoutSession(sessionId);
   if (!session) {
     throw new Error('CHECKOUT_SESSION_NOT_FOUND');
   }
 
-  const { step } = session;
-  let updateData = {};
-
-  switch (step) {
-    case 'address': {
-      if (!stepData.shippingAddressJson) {
-        throw new Error('MISSING_SHIPPING_ADDRESS');
-      }
-      updateData = {
-        shippingAddressJson: stepData.shippingAddressJson,
-        billingAddressJson: stepData.billingAddressJson ?? null,
-        ...(stepData.email ? { email: stepData.email } : {}),
-        ...(stepData.vatId !== undefined ? { vatId: stepData.vatId } : {}),
-        ...(stepData.taxExempt !== undefined
-          ? { taxExempt: stepData.taxExempt }
-          : {}),
-        ...(stepData.couponCode !== undefined
-          ? { couponCode: stepData.couponCode }
-          : {}),
-        step: nextCheckoutStep(step),
-      };
-      break;
+  if (requireComplete) {
+    if (!data.shippingAddressJson) {
+      throw new Error('MISSING_SHIPPING_ADDRESS');
     }
-
-    case 'shipping': {
-      if (!stepData.shippingOptionId) {
-        throw new Error('MISSING_SHIPPING_OPTION');
-      }
-      if (!stepData.shippingOptionJson) {
-        throw new Error('INVALID_SHIPPING_OPTION');
-      }
-      updateData = {
-        shippingOptionJson: stepData.shippingOptionJson,
-        step: nextCheckoutStep(step),
-      };
-      break;
+    if (!data.shippingOptionJson) {
+      throw new Error('MISSING_SHIPPING_OPTION');
     }
-
-    case 'payment': {
-      if (!stepData.paymentProvider) {
-        throw new Error('MISSING_PAYMENT_PROVIDER');
-      }
-      updateData = {
-        paymentProvider: stepData.paymentProvider,
-        ...(stepData.giftCardCode !== undefined
-          ? { giftCardCode: stepData.giftCardCode }
-          : {}),
-        ...(stepData.storeCreditCents !== undefined
-          ? { storeCreditCents: stepData.storeCreditCents }
-          : {}),
-        ...(stepData.loyaltyPointsCents !== undefined
-          ? { loyaltyPointsCents: stepData.loyaltyPointsCents }
-          : {}),
-        step: nextCheckoutStep(step),
-      };
-      break;
+    if (!data.paymentProvider) {
+      throw new Error('MISSING_PAYMENT_PROVIDER');
     }
-
-    case 'review': {
-      // The review step is handled separately in the route action (placeOrder +
-      // provider redirect). advanceStep is a no-op here; callers should not
-      // call advanceStep at the review step.
-      break;
-    }
-
-    default:
-      throw new Error(`UNKNOWN_STEP: ${step}`);
   }
+
+  const updateData = {
+    step: CHECKOUT_STEP,
+    ...(data.shippingAddressJson !== undefined
+      ? { shippingAddressJson: data.shippingAddressJson }
+      : {}),
+    ...(data.billingAddressJson !== undefined
+      ? { billingAddressJson: data.billingAddressJson }
+      : {}),
+    ...(data.shippingOptionJson !== undefined
+      ? { shippingOptionJson: data.shippingOptionJson }
+      : {}),
+    ...(data.email !== undefined ? { email: data.email } : {}),
+    ...(data.vatId !== undefined ? { vatId: data.vatId } : {}),
+    ...(data.taxExempt !== undefined ? { taxExempt: data.taxExempt } : {}),
+    ...(data.couponCode !== undefined ? { couponCode: data.couponCode } : {}),
+    ...(data.paymentProvider !== undefined
+      ? { paymentProvider: data.paymentProvider }
+      : {}),
+    ...(data.giftCardCode !== undefined
+      ? { giftCardCode: data.giftCardCode }
+      : {}),
+    ...(data.storeCreditCents !== undefined
+      ? { storeCreditCents: data.storeCreditCents }
+      : {}),
+    ...(data.loyaltyPointsCents !== undefined
+      ? { loyaltyPointsCents: data.loyaltyPointsCents }
+      : {}),
+  };
 
   let updatedSession = session;
 
-  if (Object.keys(updateData).length > 0) {
+  if (Object.keys(updateData).length > 1) {
     await emitBefore('checkout.advance', {
       sessionId,
       session,
-      fromStep: step,
-      toStep: updateData.step,
-      stepData,
+      fromStep: session.step ?? CHECKOUT_STEP,
+      toStep: CHECKOUT_STEP,
+      stepData: data,
     });
 
     updatedSession = await prisma.checkoutSession.update({
@@ -211,4 +180,25 @@ export async function advanceStep(sessionId, stepData = {}) {
   );
 
   return { ...updatedSession, totals };
+}
+
+// ---------------------------------------------------------------------------
+// advanceStep — API compatibility wrapper
+// ---------------------------------------------------------------------------
+
+/**
+ * @deprecated Prefer updateCheckoutSession. Accepts a full checkout payload.
+ *
+ * @param {string} sessionId
+ * @param {object} stepData
+ * @returns {Promise<object>} updated session with `totals`
+ */
+export async function advanceStep(sessionId, stepData = {}) {
+  return updateCheckoutSession(sessionId, stepData, {
+    requireComplete: Boolean(
+      stepData.shippingAddressJson &&
+      stepData.shippingOptionJson &&
+      stepData.paymentProvider
+    ),
+  });
 }

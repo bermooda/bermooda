@@ -1,6 +1,6 @@
-// POST /api/v1/checkout/:id/advance — advance the checkout pipeline one step
+// POST /api/v1/checkout/:id/advance — update checkout session fields
 
-import { advanceStep } from '#/core/checkout/index.server';
+import { updateCheckoutSession } from '#/core/checkout/index.server';
 
 export async function action({ request, params }) {
   if (request.method !== 'POST') {
@@ -15,7 +15,13 @@ export async function action({ request, params }) {
   }
 
   try {
-    const session = await advanceStep(params.id, stepData);
+    const session = await updateCheckoutSession(params.id, stepData, {
+      requireComplete: Boolean(
+        stepData.shippingAddressJson &&
+        stepData.shippingOptionJson &&
+        stepData.paymentProvider
+      ),
+    });
     return Response.json({ session });
   } catch (err) {
     return Response.json(
