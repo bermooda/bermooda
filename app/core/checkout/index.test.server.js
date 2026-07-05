@@ -56,7 +56,6 @@ import prisma from '#/libs/prisma.server';
 import { lockCart } from '#/core/cart/index.server';
 import {
   createCheckoutSession,
-  advanceStep,
   updateCheckoutSession,
 } from '#/core/checkout/pipeline.server';
 import { computeTotals } from '#/core/checkout/totals.server';
@@ -449,29 +448,5 @@ describe('updateCheckoutSession', () => {
         { requireComplete: true }
       )
     ).rejects.toThrow('MISSING_PAYMENT_PROVIDER');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// advanceStep — API wrapper
-// ---------------------------------------------------------------------------
-
-describe('advanceStep', () => {
-  it('delegates to updateCheckoutSession with requireComplete when payload is full', async () => {
-    const session = makeSession({ step: 'checkout' });
-    prisma.checkoutSession.findUnique.mockResolvedValue(session);
-    prisma.checkoutSession.update.mockResolvedValue({
-      ...session,
-      cart: makeTotalsCart(),
-    });
-    computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
-
-    await advanceStep('sess_1', {
-      shippingAddressJson: '{"country":"AU"}',
-      shippingOptionJson: '{"id":"opt_1","priceCents":1500}',
-      paymentProvider: 'stripe',
-    });
-
-    expect(prisma.checkoutSession.update).toHaveBeenCalled();
   });
 });

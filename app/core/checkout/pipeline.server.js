@@ -181,24 +181,3 @@ export async function updateCheckoutSession(
 
   return { ...updatedSession, totals };
 }
-
-// ---------------------------------------------------------------------------
-// advanceStep — API compatibility wrapper
-// ---------------------------------------------------------------------------
-
-/**
- * @deprecated Prefer updateCheckoutSession. Accepts a full checkout payload.
- *
- * @param {string} sessionId
- * @param {object} stepData
- * @returns {Promise<object>} updated session with `totals`
- */
-export async function advanceStep(sessionId, stepData = {}) {
-  return updateCheckoutSession(sessionId, stepData, {
-    requireComplete: Boolean(
-      stepData.shippingAddressJson &&
-      stepData.shippingOptionJson &&
-      stepData.paymentProvider
-    ),
-  });
-}

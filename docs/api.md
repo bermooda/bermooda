@@ -164,16 +164,9 @@ Create a checkout session from a cart.
 
 Get a checkout session.
 
-#### `POST /api/v1/checkout/:id/advance`
+#### `POST /api/v1/checkout/:id/update`
 
-Advance the checkout pipeline one step. The body shape depends on the current step:
-
-| Step       | Required fields                                           |
-| ---------- | --------------------------------------------------------- |
-| `address`  | `firstName`, `lastName`, `line1`, `city`, `country`, etc. |
-| `shipping` | `shippingOptionId`                                        |
-| `payment`  | `paymentProvider`, `paymentIntentId` (optional)           |
-| `review`   | (empty — submits the order)                               |
+Update checkout session fields (address, shipping option, payment provider, tenders, etc.). Pass a full payload with `shippingAddressJson`, `shippingOptionJson`, and `paymentProvider` to validate a complete checkout before order placement.
 
 ---
 
