@@ -5,7 +5,7 @@ import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import queue from '#/libs/queue.server';
 
-import { emit, off, on } from '#/core/events/index.server';
+import { emit, isHookAbort, off, on } from '#/core/events/index.server';
 import {
   registerProvider as registerPaymentProvider,
   unregisterProvider as unregisterPaymentProvider,
@@ -348,10 +348,23 @@ export async function enable(pluginId) {
   // Register hooks from the manifest.
   if (manifest.hooks) {
     for (const [event, handler] of Object.entries(manifest.hooks)) {
-      if (typeof handler === 'function') {
-        on(event, handler);
-        entry.handlers.set(event, handler);
-      }
+      if (typeof handler !== 'function') continue;
+
+      const wrapped = event.startsWith('before.')
+        ? async (payload) => {
+            try {
+              return await handler(payload);
+            } catch (err) {
+              if (isHookAbort(err) && !err.pluginId) {
+                err.pluginId = pluginId;
+              }
+              throw err;
+            }
+          }
+        : handler;
+
+      on(event, wrapped);
+      entry.handlers.set(event, wrapped);
     }
   }
 
@@ -624,5 +637,12 @@ export function resolvePluginStorefrontRoute(pluginId, path) {
 // ---------------------------------------------------------------------------
 // Exported for testing
 // ---------------------------------------------------------------------------
+
+export {
+  deny,
+  emitBefore,
+  HookAbortError,
+  isHookAbort,
+} from '#/core/events/index.server';
 
 export { registry as _registry, buildCtx as _buildCtx };

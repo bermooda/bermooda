@@ -7,6 +7,34 @@ import logger from '#/utils/logger.server';
 const handlers = new Map();
 
 /**
+ * Distinguished veto error. Not an operational error — a business decision.
+ */
+export class HookAbortError extends Error {
+  /**
+   * @param {string} reason
+   * @param {{ code?: string, pluginId?: string | null }} [opts]
+   */
+  constructor(reason, { code = 'HOOK_BLOCKED', pluginId = null } = {}) {
+    super(reason);
+    this.name = 'HookAbortError';
+    this.code = code;
+    this.reason = reason;
+    this.pluginId = pluginId;
+    this.blocked = true;
+  }
+}
+
+/** Throw a veto. Ergonomic sugar for plugin authors. */
+export function deny(reason, opts) {
+  throw new HookAbortError(reason, opts);
+}
+
+/** Type guard for route/core catch blocks. */
+export function isHookAbort(err) {
+  return err instanceof HookAbortError || err?.blocked === true;
+}
+
+/**
  * Register a handler for a named event.
  * Handlers are called in registration order.
  *
@@ -34,6 +62,58 @@ export function off(event, handler) {
   } else {
     handlers.set(event, updated);
   }
+}
+
+/**
+ * Run all before-filters for a domain action. Dispatches to handlers
+ * registered under `before.<event>` in registration order.
+ *
+ * Fail-closed veto semantics: if any handler throws, dispatch stops and the
+ * error propagates to the caller (the domain function), which MUST NOT have
+ * started its DB transaction yet.
+ *
+ * @param {string} event Bare action name WITHOUT the `before.` prefix.
+ * @param {object} payload Context for the decision (never mutated in MVP).
+ * @returns {Promise<object>} the payload (reserved for future transform phase).
+ * @throws {HookAbortError} when a filter vetoes the action.
+ */
+export async function emitBefore(event, payload) {
+  const key = `before.${event}`;
+  const eventHandlers = handlers.get(key) ?? [];
+
+  for (const handler of eventHandlers) {
+    try {
+      await handler(payload);
+    } catch (err) {
+      if (isHookAbort(err)) {
+        logger.warn(
+          {
+            event: key,
+            code: err.code,
+            pluginId: err.pluginId,
+            reason: err.reason,
+          },
+          'action blocked by before-hook'
+        );
+
+        await emit('hook.blocked', {
+          event: key,
+          code: err.code,
+          pluginId: err.pluginId,
+          reason: err.reason,
+          orderId: payload?.orderId ?? null,
+        });
+      } else {
+        logger.error(
+          { err, event: key },
+          'before-hook handler error — aborting action'
+        );
+      }
+      throw err;
+    }
+  }
+
+  return payload;
 }
 
 /**
