@@ -1,11 +1,25 @@
 import { requireApiKey } from '#/libs/auth/api.server';
 
-import { issueGiftCard, listGiftCards } from '#/core/gift-cards/index.server';
+import {
+  issueGiftCard,
+  listGiftCards,
+  parseIssueGiftCardInput,
+} from '#/core/gift-cards/index.server';
 
 export async function loader({ request }) {
   await requireApiKey(request, ['admin']);
-  const giftCards = await listGiftCards();
-  return Response.json({ giftCards });
+
+  const url = new URL(request.url);
+  const page = parseInt(url.searchParams.get('page') ?? '1', 10);
+  const limit = Math.min(
+    parseInt(url.searchParams.get('limit') ?? '20', 10),
+    100
+  );
+  const q = url.searchParams.get('q') ?? undefined;
+
+  const { giftCards, total } = await listGiftCards({ page, limit, q });
+
+  return Response.json({ giftCards, total, page, limit });
 }
 
 export async function action({ request }) {
@@ -22,11 +36,27 @@ export async function action({ request }) {
     return Response.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const giftCard = await issueGiftCard({
-    balanceCents: body.balanceCents,
-    currency: body.currency ?? 'USD',
-    code: body.code,
-  });
+  const input = parseIssueGiftCardInput(body);
+  if (!input.balanceCents || input.balanceCents <= 0) {
+    return Response.json(
+      { error: 'balanceCents must be greater than zero' },
+      { status: 400 }
+    );
+  }
 
-  return Response.json({ giftCard }, { status: 201 });
+  try {
+    const giftCard = await issueGiftCard(input);
+    return Response.json({ giftCard }, { status: 201 });
+  } catch (err) {
+    if (err.code === 'GIFT_CARD_CODE_EXISTS') {
+      return Response.json({ error: err.message }, { status: 409 });
+    }
+    if (err.message === 'INVALID_GIFT_CARD_AMOUNT') {
+      return Response.json(
+        { error: 'balanceCents must be greater than zero' },
+        { status: 400 }
+      );
+    }
+    throw err;
+  }
 }

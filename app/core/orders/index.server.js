@@ -14,10 +14,7 @@ import {
 import { computeTotals } from '#/core/checkout/totals.server';
 import { persistOrderDiscounts } from '#/core/discounts/index.server';
 import { emit, emitBefore } from '#/core/events/index.server';
-import {
-  getGiftCardByCode,
-  redeemGiftCard,
-} from '#/core/gift-cards/index.server';
+import { redeemGiftCard } from '#/core/gift-cards/index.server';
 import {
   decrementInventory,
   incrementInventory,
@@ -212,18 +209,9 @@ export async function placeOrder(
       );
     }
 
-    let resolvedGiftCardId = giftCardId;
-    if (!resolvedGiftCardId && giftCardCents > 0 && session.giftCardCode) {
-      const giftCard = await getGiftCardByCode(
-        session.giftCardCode,
-        cart.currency
-      );
-      resolvedGiftCardId = giftCard?.id ?? null;
-    }
-
-    if (giftCardCents > 0 && resolvedGiftCardId) {
+    if (giftCardCents > 0 && giftCardId) {
       await redeemGiftCard(
-        resolvedGiftCardId,
+        giftCardId,
         { amountCents: giftCardCents, orderId: order.id },
         tx
       );
