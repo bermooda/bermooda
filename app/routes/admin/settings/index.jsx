@@ -1022,7 +1022,12 @@ function TaxTab({ data }) {
 function ShippingTab({ data }) {
   const fetcher = useFetcher();
   const [zones, setZones] = useState(
-    data.shippingZones.map((z, i) => ({ ...z, _key: i }))
+    data.shippingZones.map((z, i) => ({
+      ...z,
+      name: z.name ?? z.label ?? '',
+      id: z.id ?? null,
+      _key: i,
+    }))
   );
 
   function addZone() {
@@ -1049,21 +1054,38 @@ function ShippingTab({ data }) {
   }
 
   const zonesForSubmit = zones.map(
-    ({ name, countries, rateCents, freeOverCents }) => ({
-      name,
-      countries:
-        typeof countries === 'string'
-          ? countries
-              .split(',')
-              .map((c) => c.trim().toUpperCase())
-              .filter(Boolean)
-          : countries,
-      rateCents: parseInt(rateCents, 10) || 0,
-      freeOverCents:
-        freeOverCents !== '' && freeOverCents != null
-          ? parseInt(freeOverCents, 10) || null
-          : null,
-    })
+    (
+      { id, name, countries, rateCents, freeOverCents, estimatedDays },
+      index
+    ) => {
+      const trimmedName = name?.trim() ?? '';
+      const slug =
+        trimmedName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_|_$/g, '') || `zone_${index}`;
+
+      return {
+        id: id || slug,
+        name: trimmedName,
+        countries:
+          typeof countries === 'string'
+            ? countries
+                .split(',')
+                .map((c) => c.trim().toUpperCase())
+                .filter(Boolean)
+            : countries,
+        rateCents: parseInt(rateCents, 10) || 0,
+        freeOverCents:
+          freeOverCents !== '' && freeOverCents != null
+            ? parseInt(freeOverCents, 10) || null
+            : null,
+        estimatedDays:
+          estimatedDays !== '' && estimatedDays != null
+            ? parseInt(estimatedDays, 10) || null
+            : null,
+      };
+    }
   );
 
   return (

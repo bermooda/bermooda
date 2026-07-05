@@ -31,6 +31,7 @@ vi.mock('#/core/discounts/index.server', () => ({
 
 vi.mock('#/core/shipping/index.server', () => ({
   getAllQuotes: vi.fn(),
+  resolveShippingOption: vi.fn(),
 }));
 
 vi.mock('#/core/tax/index.server', () => ({
@@ -61,7 +62,7 @@ import { computeTotals } from '#/core/checkout/totals.server';
 import { resolvePromotions } from '#/core/discounts/index.server';
 import { emit, emitBefore } from '#/core/events/index.server';
 import { applyPriceListToCartLines } from '#/core/pricing/index.server';
-import { getAllQuotes } from '#/core/shipping/index.server';
+import { resolveShippingOption } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
 import { makeCart } from '#/test/factories/cart';
 
@@ -94,7 +95,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   emitBefore.mockResolvedValue(undefined);
   // Safe defaults
-  getAllQuotes.mockResolvedValue([]);
+  resolveShippingOption.mockResolvedValue({ option: null, quotes: [] });
   computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
   applyPriceListToCartLines.mockImplementation(async (cart) => cart);
   resolvePromotions.mockResolvedValue({
@@ -144,7 +145,7 @@ describe('computeTotals — no shippingAddress', () => {
 
     expect(result.shippingCents).toBe(0);
     expect(result.taxCents).toBe(0);
-    expect(getAllQuotes).not.toHaveBeenCalled();
+    expect(resolveShippingOption).not.toHaveBeenCalled();
     expect(computeActiveTax).not.toHaveBeenCalled();
   });
 
@@ -207,14 +208,14 @@ describe('computeTotals — shippingOptionId matching', () => {
   it('selects the matching option priceCents when shippingOptionId matches', async () => {
     const cart = makeTotalsCart();
     const address = { country: 'AU' };
-    getAllQuotes.mockResolvedValue([
-      { id: 'flat_rate:domestic', priceCents: 1500, label: 'Domestic' },
-      {
-        id: 'flat_rate:international',
-        priceCents: 3000,
-        label: 'International',
+    resolveShippingOption.mockResolvedValue({
+      option: {
+        id: 'flat_rate:domestic',
+        priceCents: 1500,
+        name: 'Domestic',
       },
-    ]);
+      quotes: [],
+    });
     computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
 
     const result = await computeTotals({
@@ -227,12 +228,38 @@ describe('computeTotals — shippingOptionId matching', () => {
     expect(result.shippingOption).toMatchObject({ id: 'flat_rate:domestic' });
   });
 
+  it('falls back to persisted shipping option when live quote is missing', async () => {
+    const cart = makeTotalsCart();
+    const address = { country: 'AU' };
+    const persistedOption = {
+      id: 'flat_rate:domestic',
+      priceCents: 1500,
+      name: 'Domestic',
+    };
+    resolveShippingOption.mockResolvedValue({
+      option: persistedOption,
+      quotes: [],
+    });
+    computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
+
+    const result = await computeTotals({
+      cart,
+      shippingAddress: address,
+      shippingOptionId: 'flat_rate:domestic',
+      shippingOption: persistedOption,
+    });
+
+    expect(result.shippingCents).toBe(1500);
+    expect(result.shippingOption).toEqual(persistedOption);
+  });
+
   it('uses shippingCents=0 when shippingOptionId does not match any quote', async () => {
     const cart = makeTotalsCart();
     const address = { country: 'AU' };
-    getAllQuotes.mockResolvedValue([
-      { id: 'flat_rate:domestic', priceCents: 1500 },
-    ]);
+    resolveShippingOption.mockResolvedValue({
+      option: null,
+      quotes: [{ id: 'flat_rate:domestic', priceCents: 1500 }],
+    });
     computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
 
     const result = await computeTotals({
@@ -260,7 +287,10 @@ describe('computeTotals — totalCents formula', () => {
       freeShipping: false,
       primaryCode: 'SAVE10',
     });
-    getAllQuotes.mockResolvedValue([{ id: 'opt_1', priceCents: 1500 }]);
+    resolveShippingOption.mockResolvedValue({
+      option: { id: 'opt_1', priceCents: 1500 },
+      quotes: [],
+    });
     computeActiveTax.mockResolvedValue({ taxCents: 225, rate: 0.1 });
 
     const result = await computeTotals({
@@ -382,7 +412,6 @@ describe('advanceStep — address to shipping', () => {
       shippingAddressJson: '{"country":"AU"}',
       cart: makeTotalsCart(),
     });
-    getAllQuotes.mockResolvedValue([]);
     computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
 
     const result = await advanceStep('sess_1', {
@@ -423,6 +452,19 @@ describe('advanceStep — validation errors', () => {
     expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
   });
 
+  it('throws INVALID_SHIPPING_OPTION when shippingOptionJson is absent on shipping step', async () => {
+    const session = makeSession({
+      step: 'shipping',
+      shippingAddressJson: '{"country":"AU"}',
+    });
+    prisma.checkoutSession.findUnique.mockResolvedValue(session);
+
+    await expect(
+      advanceStep('sess_1', { shippingOptionId: 'opt_1' })
+    ).rejects.toThrow('INVALID_SHIPPING_OPTION');
+    expect(prisma.checkoutSession.update).not.toHaveBeenCalled();
+  });
+
   it('throws MISSING_PAYMENT_PROVIDER when paymentProvider is absent on payment step', async () => {
     const session = makeSession({
       step: 'payment',
@@ -455,7 +497,10 @@ describe('advanceStep — shipping to payment', () => {
       shippingOptionJson: '{"id":"opt_1","priceCents":1500}',
       cart: makeTotalsCart(),
     });
-    getAllQuotes.mockResolvedValue([{ id: 'opt_1', priceCents: 1500 }]);
+    resolveShippingOption.mockResolvedValue({
+      option: { id: 'opt_1', priceCents: 1500 },
+      quotes: [],
+    });
     computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
 
     const result = await advanceStep('sess_1', {
@@ -486,7 +531,6 @@ describe('advanceStep — review step', () => {
       shippingAddressJson: '{"country":"AU"}',
     });
     prisma.checkoutSession.findUnique.mockResolvedValue(session);
-    getAllQuotes.mockResolvedValue([]);
     computeActiveTax.mockResolvedValue({ taxCents: 0, rate: 0 });
 
     const result = await advanceStep('sess_1', {});

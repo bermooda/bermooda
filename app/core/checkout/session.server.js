@@ -65,6 +65,7 @@ export function buildComputeTotalsParams(session, cart, parsed = {}) {
     shippingAddress,
     couponCode: session.couponCode ?? undefined,
     shippingOptionId: shippingOption?.id ?? undefined,
+    shippingOption: shippingOption ?? undefined,
     taxExempt: session.taxExempt ?? false,
     vatId: session.vatId ?? undefined,
     customerId: session.customerId ?? undefined,

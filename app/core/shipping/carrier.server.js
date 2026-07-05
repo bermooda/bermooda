@@ -3,7 +3,6 @@
 import logger from '#/utils/logger.server';
 
 import { summarizeCartLines } from '#/core/cart/lines';
-import { registerProvider } from '#/core/shipping/index.server';
 
 const CARRIER_RATES = {
   domestic: { standard: 599, express: 1299 },
@@ -28,14 +27,16 @@ export const carrierProvider = {
       return [
         {
           id: `${zone}-standard`,
+          providerId: 'carrier',
           name: isDomestic ? 'Standard shipping' : 'International standard',
-          rateCents: CARRIER_RATES[zone].standard,
+          priceCents: CARRIER_RATES[zone].standard,
           estimatedDays: isDomestic ? 5 : 10,
         },
         {
           id: `${zone}-express`,
+          providerId: 'carrier',
           name: isDomestic ? 'Express shipping' : 'International express',
-          rateCents: CARRIER_RATES[zone].express,
+          priceCents: CARRIER_RATES[zone].express,
           estimatedDays: isDomestic ? 2 : 5,
         },
       ];
@@ -51,14 +52,11 @@ export const carrierProvider = {
     return [
       {
         id: `${zone}-carrier-standard`,
+        providerId: 'carrier',
         name: 'Carrier standard',
-        rateCents: CARRIER_RATES[zone].standard + weightFactor * 100,
+        priceCents: CARRIER_RATES[zone].standard + weightFactor * 100,
         estimatedDays: isDomestic ? 4 : 8,
       },
     ];
   },
 };
-
-export function registerCarrierProvider() {
-  registerProvider('carrier', carrierProvider);
-}
