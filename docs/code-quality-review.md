@@ -12,7 +12,7 @@ Incremental quality passes over the codebase. Each area gets a review of impleme
 | Area                  | Status | Notes                                                                                                                                                                                                                |
 | --------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `discounts/`          | ✅     | Lifecycle validation deduped; cart line summary helper; `applyDiscount` reuses `validateDiscount`. Cart-discount CRUD + legacy `applyDiscount` unused by routes — follow-up: wire cart coupons or remove dead paths. |
-| `cart/`               | ⬜     |                                                                                                                                                                                                                      |
+| `cart/`               | ✅     | Shared `summarizeCartLines` in `#/core/cart/lines`; deduped addLine emit, title lookup, token rotation, merge helpers; `CART_NOT_FOUND` guard.                                                                       |
 | `checkout/`           | ⬜     |                                                                                                                                                                                                                      |
 | `orders/`             | ⬜     |                                                                                                                                                                                                                      |
 | `catalog/`            | ⬜     |                                                                                                                                                                                                                      |
@@ -86,8 +86,8 @@ Incremental quality passes over the codebase. Each area gets a review of impleme
 
 ## Cross-cutting follow-ups (from reviews)
 
-| Item                                                                                                     | Source    | Priority                                                                |
-| -------------------------------------------------------------------------------------------------------- | --------- | ----------------------------------------------------------------------- |
-| Cart coupon persistence (`applyCouponToCart` / `CartDiscount` table) never wired to storefront           | discounts | Low — checkout uses session `couponCode` instead                        |
-| Legacy `applyDiscount` only used in tests; production uses `resolvePromotions` + `persistOrderDiscounts` | discounts | Low — keep for API stability or deprecate                               |
-| Repeated `lines.reduce(... priceCentsSnapshot * quantity)` across core/themes                            | discounts | Medium — consider shared `summarizeCartLines` in `#/core/cart` or utils |
+| Item                                                                                                     | Source    | Priority                                                                                        |
+| -------------------------------------------------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------- |
+| Cart coupon persistence (`applyCouponToCart` / `CartDiscount` table) never wired to storefront           | discounts | Low — checkout uses session `couponCode` instead                                                |
+| Legacy `applyDiscount` only used in tests; production uses `resolvePromotions` + `persistOrderDiscounts` | discounts | Low — keep for API stability or deprecate                                                       |
+| Repeated `lines.reduce(... priceCentsSnapshot * quantity)` across core/themes                            | discounts | Medium — `summarizeCartLines` now in `#/core/cart/lines`; checkout/shipping/themes still inline |

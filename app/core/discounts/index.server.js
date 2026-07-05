@@ -4,6 +4,8 @@
 import { equalsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
 
+import { summarizeCartLines } from '#/core/cart/lines';
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -61,17 +63,6 @@ function validateDiscountConstraints(
   ) {
     throw new Error('DISCOUNT_CUSTOMER_GROUP_MISMATCH');
   }
-}
-
-function summarizeCartLines(lines = []) {
-  return lines.reduce(
-    (acc, line) => {
-      acc.subtotalCents += line.priceCentsSnapshot * line.quantity;
-      acc.totalQuantity += line.quantity;
-      return acc;
-    },
-    { subtotalCents: 0, totalQuantity: 0 }
-  );
 }
 
 async function findDiscountByCode(code) {
@@ -478,6 +469,5 @@ export {
   applyStackingRules,
   validateDiscountConstraints,
   isDiscountActive,
-  summarizeCartLines,
   getDiscountLifecycleError,
 };

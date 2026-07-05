@@ -12,13 +12,62 @@ import {
   resolveVariantPrice,
 } from '#/core/pricing/index.server';
 
+export { summarizeCartLines } from '#/core/cart/lines';
+
+const CART_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
+
+async function resolveTitleSnapshot(variantId, locale) {
+  if (!locale) return variantId;
+
+  const translation = await prisma.translation.findUnique({
+    where: {
+      entityType_entityId_locale_field: {
+        entityType: 'variant',
+        entityId: variantId,
+        locale,
+        field: 'title',
+      },
+    },
+  });
+
+  return translation?.value ?? variantId;
+}
+
+async function rotateCartToken(cartId, extraData = {}) {
+  return prisma.cart.update({
+    where: { id: cartId },
+    data: { token: randomUUID(), ...extraData },
+  });
+}
+
+async function mergeLineIntoCart(cartId, guestLine, existingLines) {
+  const match = existingLines.find((l) => l.variantId === guestLine.variantId);
+
+  if (match) {
+    return prisma.cartLine.update({
+      where: { id: match.id },
+      data: { quantity: match.quantity + guestLine.quantity },
+    });
+  }
+
+  return prisma.cartLine.create({
+    data: {
+      cartId,
+      variantId: guestLine.variantId,
+      quantity: guestLine.quantity,
+      priceCentsSnapshot: guestLine.priceCentsSnapshot,
+      titleSnapshot: guestLine.titleSnapshot,
+    },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // createCart
 // ---------------------------------------------------------------------------
 
 export async function createCart({ currency = 'USD', customerId } = {}) {
   const token = randomUUID();
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+  const expiresAt = new Date(Date.now() + CART_EXPIRY_MS);
 
   const cart = await prisma.cart.create({
     data: { token, currency, customerId, expiresAt },
@@ -62,6 +111,9 @@ export async function addLine(
   { currency, locale, customerId } = {}
 ) {
   const cart = await prisma.cart.findUnique({ where: { id: cartId } });
+  if (!cart) {
+    throw new Error('CART_NOT_FOUND');
+  }
 
   // Enforce currency lock: caller-supplied currency must match the cart's currency.
   if (currency && cart.currency !== currency) {
@@ -82,52 +134,27 @@ export async function addLine(
     throw new Error('PRICE_NOT_FOUND');
   }
 
-  // Resolve title from Translation; fall back to variantId.
-  let titleSnapshot = variantId;
-  if (locale) {
-    const translation = await prisma.translation.findUnique({
-      where: {
-        entityType_entityId_locale_field: {
-          entityType: 'variant',
-          entityId: variantId,
-          locale,
-          field: 'title',
-        },
-      },
-    });
-    if (translation) titleSnapshot = translation.value;
-  }
+  const titleSnapshot = await resolveTitleSnapshot(variantId, locale);
 
   // Upsert: increment quantity if a line already exists for this variant.
   const existing = await prisma.cartLine.findFirst({
     where: { cartId, variantId },
   });
 
-  if (existing) {
-    const line = await prisma.cartLine.update({
-      where: { id: existing.id },
-      data: { quantity: { increment: quantity } },
-    });
-
-    await emit('cart.itemAdded', {
-      cartId,
-      variantId,
-      quantity,
-      lineId: line.id,
-    });
-
-    return line;
-  }
-
-  const line = await prisma.cartLine.create({
-    data: {
-      cartId,
-      variantId,
-      quantity,
-      priceCentsSnapshot: resolved.priceCents,
-      titleSnapshot,
-    },
-  });
+  const line = existing
+    ? await prisma.cartLine.update({
+        where: { id: existing.id },
+        data: { quantity: { increment: quantity } },
+      })
+    : await prisma.cartLine.create({
+        data: {
+          cartId,
+          variantId,
+          quantity,
+          priceCentsSnapshot: resolved.priceCents,
+          titleSnapshot,
+        },
+      });
 
   await emit('cart.itemAdded', {
     cartId,
@@ -198,11 +225,7 @@ export async function mergeGuestCart(guestToken, customerId) {
 
   if (!customerCart) {
     // No existing customer cart — reassign guest cart, rotate token.
-    const newToken = randomUUID();
-    return prisma.cart.update({
-      where: { id: guestCart.id },
-      data: { customerId, token: newToken },
-    });
+    return rotateCartToken(guestCart.id, { customerId });
   }
 
   // Customer already has a cart — merge guest lines into it, then delete guest cart.
@@ -213,35 +236,12 @@ export async function mergeGuestCart(guestToken, customerId) {
   }
 
   for (const guestLine of guestCart.lines) {
-    const match = customerCart.lines.find(
-      (l) => l.variantId === guestLine.variantId
-    );
-    if (match) {
-      await prisma.cartLine.update({
-        where: { id: match.id },
-        data: { quantity: match.quantity + guestLine.quantity },
-      });
-    } else {
-      await prisma.cartLine.create({
-        data: {
-          cartId: customerCart.id,
-          variantId: guestLine.variantId,
-          quantity: guestLine.quantity,
-          priceCentsSnapshot: guestLine.priceCentsSnapshot,
-          titleSnapshot: guestLine.titleSnapshot,
-        },
-      });
-    }
+    await mergeLineIntoCart(customerCart.id, guestLine, customerCart.lines);
   }
 
   await prisma.cart.delete({ where: { id: guestCart.id } });
 
-  // Rotate token on surviving customer cart.
-  const newToken = randomUUID();
-  return prisma.cart.update({
-    where: { id: customerCart.id },
-    data: { token: newToken },
-  });
+  return rotateCartToken(customerCart.id);
 }
 
 // ---------------------------------------------------------------------------
