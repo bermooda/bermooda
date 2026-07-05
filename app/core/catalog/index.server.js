@@ -5,6 +5,13 @@ import { getCachedResult, invalidateCachePrefix } from '#/utils/cache.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
+import { localizeEntity } from '#/core/catalog/locale.server';
+import {
+  getTranslations,
+  setTranslation,
+  toTranslationMap,
+  withTranslations,
+} from '#/core/catalog/translations.server';
 import {
   applyChannelPricesToProducts,
   buildChannelPublishedWhere,
@@ -12,19 +19,7 @@ import {
 } from '#/core/channels/index.server';
 import { emit } from '#/core/events/index.server';
 
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
-// Build a { [field]: value } map from a Translation query result.
-function toTranslationMap(rows) {
-  return Object.fromEntries(rows.map((r) => [r.field, r.value]));
-}
-
-// Merge translation fields into a base object when translations exist.
-function withTranslations(base, translationMap) {
-  return { ...base, ...translationMap };
-}
+export { getTranslations, setTranslation };
 
 function catalogCacheKey(prefix, params) {
   return `${prefix}:${JSON.stringify(params)}`;
@@ -32,33 +27,6 @@ function catalogCacheKey(prefix, params) {
 
 function invalidateCatalogCache() {
   invalidateCachePrefix('catalog:');
-}
-
-// ---------------------------------------------------------------------------
-// Translations
-// ---------------------------------------------------------------------------
-
-export async function setTranslation(
-  entityType,
-  entityId,
-  locale,
-  field,
-  value
-) {
-  await prisma.translation.upsert({
-    where: {
-      entityType_entityId_locale_field: { entityType, entityId, locale, field },
-    },
-    create: { entityType, entityId, locale, field, value },
-    update: { value },
-  });
-}
-
-export async function getTranslations(entityType, entityId, locale) {
-  const rows = await prisma.translation.findMany({
-    where: { entityType, entityId, locale },
-  });
-  return toTranslationMap(rows);
 }
 
 // ---------------------------------------------------------------------------
@@ -164,23 +132,9 @@ export async function listProducts({
       }
 
       const products = await Promise.all(
-        rawProducts.map(async (product) => {
-          const [translations, slugRow] = await Promise.all([
-            getTranslations('product', product.id, locale),
-            prisma.slug.findFirst({
-              where: {
-                entityType: 'product',
-                entityId: product.id,
-                locale,
-                canonical: true,
-              },
-            }),
-          ]);
-          return withTranslations(
-            { ...product, slug: slugRow?.slug ?? null },
-            translations
-          );
-        })
+        rawProducts.map((product) =>
+          localizeEntity('product', product.id, locale, product)
+        )
       );
 
       return {
@@ -238,20 +192,9 @@ export async function getProduct(id, { locale, currency, channelId } = {}) {
     return withPrices;
   }
 
-  const [translations, slugRow] = await Promise.all([
-    getTranslations('product', id, locale),
-    prisma.slug.findFirst({
-      where: { entityType: 'product', entityId: id, locale, canonical: true },
-    }),
-  ]);
-
+  const localized = await localizeEntity('product', id, locale, product);
   const [withPrices] = await applyChannelPricesToProducts(
-    [
-      withTranslations(
-        { ...product, slug: slugRow?.slug ?? null },
-        translations
-      ),
-    ],
+    [localized],
     channelId,
     currency
   );
@@ -265,12 +208,9 @@ export async function getProductBySlug(slug, opts = {}) {
 }
 
 export async function createProduct(data) {
-  // prices are managed per-variant via createVariant/updateVariant.
   const { title, description, locale, prices, ...productData } = data;
   if (prices !== undefined) {
-    throw new Error(
-      'prices must be set per-variant via createVariant/updateVariant, not createProduct'
-    );
+    throw new Error('prices must be set per-variant, not on createProduct');
   }
 
   const product = await prisma.product.create({ data: productData });
@@ -339,67 +279,6 @@ export async function unpublishProduct(id) {
   });
   invalidateCatalogCache();
   return product;
-}
-
-// ---------------------------------------------------------------------------
-// Variants
-// ---------------------------------------------------------------------------
-
-export async function createVariant(productId, data) {
-  const { prices, ...variantData } = data;
-
-  const variant = await prisma.productVariant.create({
-    data: { ...variantData, productId },
-  });
-
-  if (prices?.length) {
-    await prisma.$transaction(
-      prices.map(({ currency, priceCents, comparePriceCents }) =>
-        prisma.variantPrice.upsert({
-          where: { variantId_currency: { variantId: variant.id, currency } },
-          create: {
-            variantId: variant.id,
-            currency,
-            priceCents,
-            comparePriceCents,
-          },
-          update: { priceCents, comparePriceCents },
-        })
-      )
-    );
-  }
-
-  invalidateCatalogCache();
-  return variant;
-}
-
-export async function updateVariant(variantId, data) {
-  const { prices, ...variantData } = data;
-
-  const variant = await prisma.productVariant.update({
-    where: { id: variantId },
-    data: variantData,
-  });
-
-  if (prices?.length) {
-    await prisma.$transaction(
-      prices.map(({ currency, priceCents, comparePriceCents }) =>
-        prisma.variantPrice.upsert({
-          where: { variantId_currency: { variantId, currency } },
-          create: { variantId, currency, priceCents, comparePriceCents },
-          update: { priceCents, comparePriceCents },
-        })
-      )
-    );
-  }
-
-  invalidateCatalogCache();
-  return variant;
-}
-
-export async function deleteVariant(variantId) {
-  await prisma.productVariant.delete({ where: { id: variantId } });
-  invalidateCatalogCache();
 }
 
 // ---------------------------------------------------------------------------
@@ -493,17 +372,7 @@ export async function getCategory(id, { locale } = {}) {
   if (!category) return null;
   if (!locale) return category;
 
-  const [translations, slugRow] = await Promise.all([
-    getTranslations('category', id, locale),
-    prisma.slug.findFirst({
-      where: { entityType: 'category', entityId: id, locale, canonical: true },
-    }),
-  ]);
-
-  return withTranslations(
-    { ...category, slug: slugRow?.slug ?? null },
-    translations
-  );
+  return localizeEntity('category', id, locale, category);
 }
 
 export async function getCategoryBySlug(slug, opts = {}) {
@@ -558,17 +427,20 @@ export async function deleteCategory(id) {
 // ---------------------------------------------------------------------------
 
 export async function attachMedia(productId, mediaId, position = 0) {
-  return prisma.productMedia.upsert({
+  const result = await prisma.productMedia.upsert({
     where: { productId_mediaId: { productId, mediaId } },
     create: { productId, mediaId, position },
     update: { position },
   });
+  invalidateCatalogCache();
+  return result;
 }
 
 export async function detachMedia(productId, mediaId) {
   await prisma.productMedia.delete({
     where: { productId_mediaId: { productId, mediaId } },
   });
+  invalidateCatalogCache();
 }
 
 export async function reorderMedia(productId, mediaIds) {
@@ -580,4 +452,5 @@ export async function reorderMedia(productId, mediaIds) {
       })
     )
   );
+  invalidateCatalogCache();
 }

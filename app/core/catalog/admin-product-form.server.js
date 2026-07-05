@@ -3,6 +3,7 @@
 
 import prisma from '#/libs/prisma.server';
 
+import { publishProduct, unpublishProduct } from '#/core/catalog/index.server';
 import { get } from '#/core/settings/index.server';
 
 /**
@@ -79,15 +80,9 @@ export async function persistAdminProduct(productId, formData, options = {}) {
 
   const publish = data.get('publishedAt');
   if (publish === 'publish') {
-    await prisma.product.update({
-      where: { id: productId },
-      data: { publishedAt: new Date() },
-    });
+    await publishProduct(productId);
   } else if (publish === 'unpublish') {
-    await prisma.product.update({
-      where: { id: productId },
-      data: { publishedAt: null },
-    });
+    await unpublishProduct(productId);
   }
 
   for (const locale of locales) {

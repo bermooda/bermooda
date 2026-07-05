@@ -87,8 +87,6 @@ import {
   attachMedia,
   reorderMedia,
   detachMedia,
-  updateVariant,
-  deleteVariant,
   listCategories,
   getCategory,
   getCategoryBySlug,
@@ -623,58 +621,6 @@ describe('deleteProduct', () => {
 
     expect(emit).toHaveBeenCalledWith('product.deleted', {
       productId: 'prod_1',
-    });
-  });
-});
-
-// ---------------------------------------------------------------------------
-// updateVariant
-// ---------------------------------------------------------------------------
-
-describe('updateVariant', () => {
-  it('updates variant fields without prices', async () => {
-    prisma.productVariant.update.mockResolvedValue({ id: 'v_1' });
-
-    await updateVariant('v_1', { inventoryQuantity: 50 });
-
-    expect(prisma.productVariant.update).toHaveBeenCalledWith({
-      where: { id: 'v_1' },
-      data: { inventoryQuantity: 50 },
-    });
-    expect(prisma.$transaction).not.toHaveBeenCalled();
-  });
-
-  it('upserts prices when prices array is provided', async () => {
-    prisma.productVariant.update.mockResolvedValue({ id: 'v_1' });
-    prisma.variantPrice.upsert.mockResolvedValue({});
-    prisma.$transaction.mockImplementation((ops) => Promise.all(ops));
-
-    await updateVariant('v_1', {
-      prices: [{ currency: 'USD', priceCents: 2500, comparePriceCents: null }],
-    });
-
-    expect(prisma.$transaction).toHaveBeenCalled();
-    expect(prisma.variantPrice.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { variantId_currency: { variantId: 'v_1', currency: 'USD' } },
-        update: { priceCents: 2500, comparePriceCents: null },
-      })
-    );
-  });
-});
-
-// ---------------------------------------------------------------------------
-// deleteVariant
-// ---------------------------------------------------------------------------
-
-describe('deleteVariant', () => {
-  it('calls prisma.productVariant.delete', async () => {
-    prisma.productVariant.delete.mockResolvedValue({});
-
-    await deleteVariant('v_1');
-
-    expect(prisma.productVariant.delete).toHaveBeenCalledWith({
-      where: { id: 'v_1' },
     });
   });
 });

@@ -13,6 +13,11 @@ import {
   loadAdminProductEditorContext,
   persistAdminProduct,
 } from '#/core/catalog/admin-product-form.server';
+import {
+  attachMedia,
+  deleteProduct,
+  detachMedia,
+} from '#/core/catalog/index.server';
 import { uploadMedia } from '#/core/storage/index.server';
 
 // ---------------------------------------------------------------------------
@@ -134,22 +139,14 @@ export async function action({ request, params }) {
       orderBy: { position: 'desc' },
     });
 
-    await prisma.productMedia.create({
-      data: {
-        productId: id,
-        mediaId: media.id,
-        position: (lastMedia?.position ?? -1) + 1,
-      },
-    });
+    await attachMedia(id, media.id, (lastMedia?.position ?? -1) + 1);
 
     return { ok: true, intent: 'upload-media' };
   }
 
   if (intent === 'delete-media') {
     const mediaId = formData.get('mediaId');
-    await prisma.productMedia.deleteMany({
-      where: { productId: id, mediaId },
-    });
+    await detachMedia(id, mediaId);
     return { ok: true, intent: 'delete-media' };
   }
 
@@ -159,7 +156,7 @@ export async function action({ request, params }) {
   }
 
   if (intent === 'delete') {
-    await prisma.product.delete({ where: { id } });
+    await deleteProduct(id);
     return redirect('/admin/products');
   }
 
