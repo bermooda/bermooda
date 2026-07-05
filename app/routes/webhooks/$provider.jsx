@@ -73,7 +73,7 @@ export async function action({ request, params }) {
       data: {
         provider: params.provider,
         eventId: event.id,
-        type: event.type,
+        type: event.type ?? event.event_type ?? 'unknown',
         payload: rawBody,
         processedAt: new Date(),
       },

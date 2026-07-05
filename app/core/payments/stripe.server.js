@@ -16,12 +16,42 @@ const stripe = new Stripe(STRIPE_SECRET_KEY, {
 
 const log = logger.child({ provider: 'stripe' });
 
+function buildStripeLineItems(cart, amountCents, currency) {
+  const effectiveCurrency = (currency ?? cart?.currency ?? 'USD').toLowerCase();
+  const lineSubtotal = summarizeCartLines(cart?.lines).subtotalCents;
+  const chargeAmount = amountCents ?? lineSubtotal;
+
+  if (amountCents != null && amountCents !== lineSubtotal) {
+    return [
+      {
+        price_data: {
+          currency: effectiveCurrency,
+          unit_amount: chargeAmount,
+          product_data: { name: 'Order total' },
+        },
+        quantity: 1,
+      },
+    ];
+  }
+
+  return cart.lines.map((line) => ({
+    price_data: {
+      currency: effectiveCurrency,
+      unit_amount: line.priceCentsSnapshot,
+      product_data: {
+        name: line.titleSnapshot,
+      },
+    },
+    quantity: line.quantity,
+  }));
+}
+
 /**
  * Stripe payment provider adapter.
  *
  * Implements the payment provider interface:
  *   name
- *   createCheckoutSession({ cart, orderId?, successUrl, cancelUrl })
+ *   createCheckoutSession({ cart?, orderId?, amountCents?, currency?, successUrl, cancelUrl })
  *   verifyWebhook(request)
  *   handleWebhookEvent(event)
  *   createRefund({ paymentIntentId, amountCents, reason })
@@ -32,24 +62,21 @@ export const stripeProvider = {
   supportsPaymentElement: true,
 
   /**
-   * Create a Stripe Checkout session using dynamic price_data for each cart line.
-   * Pass orderId to include it in Stripe metadata so the webhook can reconcile
-   * the payment to the correct order (W0-3).
+   * Create a Stripe Checkout session.
+   * When amountCents is provided (placed order total), charges that exact amount.
    *
-   * @param {{ cart: Object, orderId?: string, successUrl: string, cancelUrl: string }} params
-   * @returns {Promise<Stripe.Checkout.Session>}
+   * @param {{ cart?: Object, orderId?: string, amountCents?: number, currency?: string, successUrl: string, cancelUrl: string }} params
+   * @returns {Promise<{ id: string, url: string }>}
    */
-  async createCheckoutSession({ cart, orderId, successUrl, cancelUrl }) {
-    const line_items = cart.lines.map((line) => ({
-      price_data: {
-        currency: cart.currency.toLowerCase(),
-        unit_amount: line.priceCentsSnapshot,
-        product_data: {
-          name: line.titleSnapshot,
-        },
-      },
-      quantity: line.quantity,
-    }));
+  async createCheckoutSession({
+    cart,
+    orderId,
+    amountCents,
+    currency,
+    successUrl,
+    cancelUrl,
+  }) {
+    const line_items = buildStripeLineItems(cart, amountCents, currency);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -60,16 +87,15 @@ export const stripeProvider = {
     });
 
     log.info(
-      { sessionId: session.id, orderId },
+      { sessionId: session.id, orderId, amountCents },
       'Stripe checkout session created'
     );
 
-    return session;
+    return { id: session.id, url: session.url };
   },
 
   /**
    * Verify a Stripe webhook request.
-   * Reads the raw body via request.text() and validates the stripe-signature header.
    *
    * @param {Request} request
    * @returns {Promise<{ event: Stripe.Event, rawBody: string }>}
@@ -99,10 +125,6 @@ export const stripeProvider = {
 
   /**
    * Handle a verified Stripe webhook event.
-   * Returns a normalised payload describing what happened.
-   *
-   * For checkout.session.completed, the orderId is in session.metadata.orderId
-   * (set by createCheckoutSession above — W0-3).
    *
    * @param {Stripe.Event} event
    * @returns {Promise<{ type: string, orderId?: string, amount?: number }>}
@@ -154,14 +176,14 @@ export const stripeProvider = {
   /**
    * Create a Stripe refund for a payment intent.
    *
-   * @param {{ paymentIntentId: string, amountCents: number, reason: string }} params
+   * @param {{ paymentIntentId: string, amountCents: number, reason?: string }} params
    * @returns {Promise<{ refundId: string, status: string }>}
    */
   async createRefund({ paymentIntentId, amountCents, reason }) {
     const refund = await stripe.refunds.create({
       payment_intent: paymentIntentId,
       amount: amountCents,
-      reason,
+      reason: reason ?? 'requested_by_customer',
     });
 
     log.info(
@@ -173,37 +195,20 @@ export const stripeProvider = {
   },
 
   /**
-   * Create a PaymentIntent for Stripe Payment Element / saved methods.
-   * Optional express checkout (Apple Pay / Google Pay) via automatic_payment_methods.
+   * Create a PaymentIntent for Stripe Payment Element.
    *
-   * @param {{ cart: object, orderId?: string, customerId?: string, savePaymentMethod?: boolean }} params
+   * @param {{ cart?: object, orderId?: string, amountCents?: number, currency?: string }} params
    * @returns {Promise<{ clientSecret: string, paymentIntentId: string }>}
    */
-  async createPaymentIntent({
-    cart,
-    orderId,
-    customerId,
-    amountCents,
-    currency,
-    savePaymentMethod = false,
-  }) {
+  async createPaymentIntent({ cart, orderId, amountCents, currency }) {
     const amount = amountCents ?? summarizeCartLines(cart?.lines).subtotalCents;
 
-    const intentParams = {
+    const intent = await stripe.paymentIntents.create({
       amount,
       currency: (currency ?? cart?.currency ?? 'USD').toLowerCase(),
       automatic_payment_methods: { enabled: true },
       metadata: orderId ? { orderId } : {},
-    };
-
-    if (customerId) {
-      intentParams.customer = customerId;
-      if (savePaymentMethod) {
-        intentParams.setup_future_usage = 'off_session';
-      }
-    }
-
-    const intent = await stripe.paymentIntents.create(intentParams);
+    });
 
     log.info({ intentId: intent.id, orderId }, 'Stripe PaymentIntent created');
 
@@ -212,18 +217,16 @@ export const stripeProvider = {
       paymentIntentId: intent.id,
     };
   },
+};
 
-  /**
-   * List saved payment methods for a Stripe customer.
-   *
-   * @param {string} stripeCustomerId
-   * @returns {Promise<object[]>}
-   */
-  async listSavedPaymentMethods(stripeCustomerId) {
-    const methods = await stripe.paymentMethods.list({
-      customer: stripeCustomerId,
-      type: 'card',
-    });
-    return methods.data;
-  },
+/** Stripe Payment Element — embedded checkout (no redirect). */
+export const stripeElementProvider = {
+  name: 'Card on site',
+  requiresRedirect: false,
+  supportsPaymentElement: true,
+  createCheckoutSession: stripeProvider.createCheckoutSession,
+  createPaymentIntent: stripeProvider.createPaymentIntent,
+  verifyWebhook: stripeProvider.verifyWebhook,
+  handleWebhookEvent: stripeProvider.handleWebhookEvent,
+  createRefund: stripeProvider.createRefund,
 };

@@ -28,8 +28,8 @@ import {
 } from '#/core/loyalty/index.server';
 import { attachPaymentIntent, placeOrder } from '#/core/orders/index.server';
 import {
-  createCheckoutSession as createPaymentSession,
   createPaymentIntent,
+  createPaymentSession,
   getProvider as getPaymentProvider,
   listProvidersWithDetails,
 } from '#/core/payments/index.server';
@@ -161,6 +161,7 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
+  const themeId = await preloadStorefrontTheme();
   const { step } = params;
   const formData = await request.formData();
   const sessionId = getCheckoutSessionId(request);
@@ -208,11 +209,10 @@ export async function action({ request, params }) {
     // Stripe Payment Element — return client secret for embedded checkout
     if (providerId === 'stripe_element') {
       try {
-        const intent = await createPaymentIntent('stripe', {
+        const intent = await createPaymentIntent(providerId, {
           amountCents: order.totalCents,
           currency: order.currency,
           orderId: order.id,
-          customerId: session.customerId ?? undefined,
         });
 
         await attachPaymentIntent(order.id, intent.paymentIntentId);
@@ -241,6 +241,8 @@ export async function action({ request, params }) {
       const paymentSession = await createPaymentSession(providerId, {
         cart: cartSnapshot,
         orderId: order.id,
+        amountCents: order.totalCents,
+        currency: order.currency,
         successUrl: `${origin}/thank-you/${order.orderNumber}`,
         cancelUrl: `${origin}/checkout/review`,
       });

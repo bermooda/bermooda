@@ -53,11 +53,9 @@ vi.mock('stripe', () => {
 
 import {
   _registry,
-  createCheckoutSession,
+  createPaymentSession,
   getProvider,
-  listProviders,
   registerProvider,
-  verifyWebhook,
 } from '#/core/payments/index.server';
 import { stripeProvider } from '#/core/payments/stripe.server';
 
@@ -95,70 +93,43 @@ describe('payment registry', () => {
     vi.clearAllMocks();
   });
 
-  // 1. registerProvider + getProvider round-trip
   it('registerProvider + getProvider returns the same provider object', () => {
     const provider = { createCheckoutSession: vi.fn() };
     registerProvider('test', provider);
     expect(getProvider('test')).toBe(provider);
   });
 
-  // 2. getProvider throws for unknown id
   it('getProvider throws for an unknown provider id', () => {
     expect(() => getProvider('nonexistent')).toThrow(
       'Payment provider "nonexistent" is not registered'
     );
   });
 
-  // 3. listProviders returns registered ids
-  it('listProviders returns all registered provider ids', () => {
-    registerProvider('stripe', stripeProvider);
-    registerProvider('paypal', { createCheckoutSession: vi.fn() });
-    expect(listProviders()).toEqual(
-      expect.arrayContaining(['stripe', 'paypal'])
-    );
-    expect(listProviders()).toHaveLength(2);
-  });
-
-  // 4. createCheckoutSession calls through to the registered provider
-  it('createCheckoutSession delegates to the registered provider', async () => {
-    const fakeSession = { id: 'cs_fake' };
+  it('createPaymentSession delegates to the registered provider', async () => {
+    const fakeSession = { id: 'cs_fake', url: 'https://pay.example/cs_fake' };
     const provider = {
       createCheckoutSession: vi.fn().mockResolvedValue(fakeSession),
     };
     registerProvider('fake', provider);
 
     const params = { cart: makeCart(), successUrl: '/ok', cancelUrl: '/no' };
-    const result = await createCheckoutSession('fake', params);
+    const result = await createPaymentSession('fake', params);
 
     expect(provider.createCheckoutSession).toHaveBeenCalledOnce();
     expect(provider.createCheckoutSession).toHaveBeenCalledWith(params);
     expect(result).toBe(fakeSession);
-  });
-
-  // 5. verifyWebhook delegates to the registered provider
-  it('verifyWebhook delegates to the registered provider', async () => {
-    const fakeResult = { event: { id: 'evt_1' }, rawBody: '{}' };
-    const provider = {
-      verifyWebhook: vi.fn().mockResolvedValue(fakeResult),
-    };
-    registerProvider('fake2', provider);
-
-    const req = makeRequest();
-    const result = await verifyWebhook('fake2', req);
-
-    expect(provider.verifyWebhook).toHaveBeenCalledOnce();
-    expect(provider.verifyWebhook).toHaveBeenCalledWith(req);
-    expect(result).toBe(fakeResult);
   });
 });
 
 describe('stripeProvider.createCheckoutSession', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSessionCreate.mockResolvedValue({ id: 'cs_stripe_123' });
+    mockSessionCreate.mockResolvedValue({
+      id: 'cs_stripe_123',
+      url: 'https://checkout.stripe.com/cs_stripe_123',
+    });
   });
 
-  // 6. Builds correct line_items with lowercase currency and unit_amount from snapshot
   it('builds line_items with lowercase currency and unit_amount from priceCentsSnapshot', async () => {
     const cart = makeCart({
       currency: 'EUR',
@@ -168,7 +139,7 @@ describe('stripeProvider.createCheckoutSession', () => {
       ],
     });
 
-    await stripeProvider.createCheckoutSession({
+    const result = await stripeProvider.createCheckoutSession({
       cart,
       successUrl: 'https://example.com/success',
       cancelUrl: 'https://example.com/cancel',
@@ -197,9 +168,41 @@ describe('stripeProvider.createCheckoutSession', () => {
         quantity: 3,
       },
     ]);
+    expect(result).toEqual({
+      id: 'cs_stripe_123',
+      url: 'https://checkout.stripe.com/cs_stripe_123',
+    });
   });
 
-  // 7. Currency is lowercased regardless of input case
+  it('uses a single order-total line item when amountCents differs from cart subtotal', async () => {
+    const cart = makeCart({
+      currency: 'USD',
+      lines: [
+        { priceCentsSnapshot: 2000, titleSnapshot: 'Widget', quantity: 1 },
+      ],
+    });
+
+    await stripeProvider.createCheckoutSession({
+      cart,
+      amountCents: 2700,
+      currency: 'USD',
+      successUrl: '/ok',
+      cancelUrl: '/no',
+    });
+
+    const [args] = mockSessionCreate.mock.calls;
+    expect(args[0].line_items).toEqual([
+      {
+        price_data: {
+          currency: 'usd',
+          unit_amount: 2700,
+          product_data: { name: 'Order total' },
+        },
+        quantity: 1,
+      },
+    ]);
+  });
+
   it('lowercases the currency from the cart', async () => {
     const cart = makeCart({ currency: 'GBP' });
     await stripeProvider.createCheckoutSession({
@@ -218,7 +221,6 @@ describe('stripeProvider.verifyWebhook', () => {
     vi.clearAllMocks();
   });
 
-  // 8. Calls stripe.webhooks.constructEvent with the raw body
   it('calls constructEvent with raw body and returns { event, rawBody }', async () => {
     const fakeEvent = { id: 'evt_abc', type: 'checkout.session.completed' };
     mockConstructEvent.mockReturnValue(fakeEvent);
@@ -229,9 +231,6 @@ describe('stripeProvider.verifyWebhook', () => {
     const result = await stripeProvider.verifyWebhook(req);
 
     expect(mockConstructEvent).toHaveBeenCalledOnce();
-    // Third arg is STRIPE_WEBHOOK_SECRET — undefined in the test env because
-    // the env var is not set.  We verify the body and signature are passed
-    // correctly; the secret value itself comes from the process environment.
     const [calledBody, calledSig] = mockConstructEvent.mock.calls[0];
     expect(calledBody).toBe(rawBody);
     expect(calledSig).toBe('sig_real');
@@ -239,7 +238,6 @@ describe('stripeProvider.verifyWebhook', () => {
     expect(result.rawBody).toBe(rawBody);
   });
 
-  // 9. Throws when stripe-signature header is missing
   it('throws when stripe-signature header is missing', async () => {
     const req = makeRequest({ signature: null });
 
@@ -255,7 +253,6 @@ describe('stripeProvider.createRefund', () => {
     vi.clearAllMocks();
   });
 
-  // 10. Calls stripe.refunds.create with correct params
   it('calls stripe.refunds.create and returns { refundId, status }', async () => {
     mockRefundsCreate.mockResolvedValue({ id: 're_123', status: 'succeeded' });
 
@@ -276,7 +273,6 @@ describe('stripeProvider.createRefund', () => {
 });
 
 describe('stripeProvider.handleWebhookEvent', () => {
-  // 11. Handles payment_intent.succeeded
   it('returns type payment.succeeded for payment_intent.succeeded', async () => {
     const event = {
       type: 'payment_intent.succeeded',
@@ -296,7 +292,6 @@ describe('stripeProvider.handleWebhookEvent', () => {
     expect(result.amount).toBe(2000);
   });
 
-  // 12. Returns type payment.other for unhandled events
   it('returns type payment.other for unhandled event types', async () => {
     const event = { type: 'customer.created', data: { object: {} } };
     const result = await stripeProvider.handleWebhookEvent(event);

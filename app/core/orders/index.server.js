@@ -24,6 +24,7 @@ import {
 } from '#/core/inventory/index.server';
 import { inventoryItemsFromLines } from '#/core/inventory/items';
 import { redeemLoyaltyPoints } from '#/core/loyalty/index.server';
+import { getProvider } from '#/core/payments/index.server';
 import { redeemStoreCredit } from '#/core/store-credit/index.server';
 
 // ---------------------------------------------------------------------------
@@ -747,12 +748,32 @@ export async function createRefund(
 
   await emitBefore('refund.create', { orderId, order, amountCents, reason });
 
+  let effectiveProviderRefundId = providerRefundId ?? null;
+
+  if (
+    !effectiveProviderRefundId &&
+    order.paymentIntentId &&
+    order.paymentProvider &&
+    order.paymentProvider !== 'manual'
+  ) {
+    const provider = getProvider(order.paymentProvider);
+    if (typeof provider.createRefund === 'function') {
+      const result = await provider.createRefund({
+        paymentIntentId: order.paymentIntentId,
+        amountCents,
+        reason: reason ?? 'requested_by_customer',
+        currency: order.currency,
+      });
+      effectiveProviderRefundId = result.refundId ?? null;
+    }
+  }
+
   const refund = await prisma.refund.create({
     data: {
       orderId,
       amountCents,
       reason: reason ?? null,
-      providerRefundId: providerRefundId ?? null,
+      providerRefundId: effectiveProviderRefundId,
     },
   });
 
