@@ -33,7 +33,10 @@ import {
   getProvider as getPaymentProvider,
   listProvidersWithDetails,
 } from '#/core/payments/index.server';
-import { getAllQuotes } from '#/core/shipping/index.server';
+import {
+  getAllQuotes,
+  resolveShippingOption,
+} from '#/core/shipping/index.server';
 import { getStoreCreditBalance } from '#/core/store-credit/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
@@ -305,35 +308,44 @@ export async function action({ request, params }) {
       couponCode: rawData.couponCode?.toString().trim().toUpperCase() || null,
     };
   } else if (step === 'shipping') {
-    // Look up the full shipping option so we can persist it as JSON
+    const shippingOptionId = rawData.shippingOptionId?.toString();
+    if (!shippingOptionId) {
+      return { error: 'Please select a shipping method.' };
+    }
+
     const session = await getCheckoutSession(sessionId);
     const { shippingAddress: shippingAddr } =
       parseCheckoutSessionFields(session);
     const cartForQuotes = session?.cart ?? null;
 
-    let shippingOptionJson = null;
-    if (cartForQuotes && shippingAddr && rawData.shippingOptionId) {
-      try {
-        const quotes = await getAllQuotes({
-          cart: cartForQuotes,
-          shippingAddress: shippingAddr,
-        });
-        const selected = quotes.find((q) => q.id === rawData.shippingOptionId);
-        if (selected) {
-          shippingOptionJson = JSON.stringify(selected);
-        }
-      } catch (err) {
-        logger.error(
-          { err },
-          'Failed to fetch shipping quotes during shipping step'
-        );
-      }
+    if (!cartForQuotes || !shippingAddr) {
+      return { error: 'Please complete your shipping address first.' };
     }
 
-    stepData = {
-      shippingOptionId: rawData.shippingOptionId,
-      shippingOptionJson,
-    };
+    try {
+      const { option } = await resolveShippingOption({
+        cart: cartForQuotes,
+        shippingAddress: shippingAddr,
+        optionId: shippingOptionId,
+      });
+
+      if (!option) {
+        return {
+          error: 'The selected shipping method is no longer available.',
+        };
+      }
+
+      stepData = {
+        shippingOptionId,
+        shippingOptionJson: JSON.stringify(option),
+      };
+    } catch (err) {
+      logger.error(
+        { err },
+        'Failed to fetch shipping quotes during shipping step'
+      );
+      return { error: 'Unable to load shipping options. Please try again.' };
+    }
   } else if (step === 'payment') {
     const session = await getCheckoutSession(sessionId);
     const useStoreCredit =

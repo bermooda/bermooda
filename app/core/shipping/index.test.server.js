@@ -32,12 +32,16 @@ vi.mock('#/libs/prisma.server', () => ({
 
 import {
   _registry,
+  computeZonePriceCents,
   flatRateProvider,
   getAllQuotes,
   getProvider,
   getQuotes,
   listProviders,
+  loadShippingZones,
+  normalizeShippingZone,
   registerProvider,
+  resolveShippingOption,
 } from '#/core/shipping/index.server';
 
 // ---------------------------------------------------------------------------
@@ -91,7 +95,7 @@ describe('shipping registry', () => {
     const fakeOption = {
       id: 'carrier_a:express',
       providerId: 'carrier_a',
-      label: 'Express',
+      name: 'Express',
       priceCents: 999,
       estimatedDays: 2,
     };
@@ -111,14 +115,14 @@ describe('shipping registry', () => {
     const optionA = {
       id: 'a:standard',
       providerId: 'a',
-      label: 'A Standard',
+      name: 'A Standard',
       priceCents: 500,
       estimatedDays: 3,
     };
     const optionB = {
       id: 'b:express',
       providerId: 'b',
-      label: 'B Express',
+      name: 'B Express',
       priceCents: 1200,
       estimatedDays: 1,
     };
@@ -266,5 +270,114 @@ describe('flatRateProvider.getQuotes', () => {
     });
 
     expect(result[0].priceCents).toBe(0);
+  });
+
+  // 13. Admin zone schema uses name + generated id
+  it('normalizes admin-configured zones saved with name instead of label', async () => {
+    mockSettingsGet.mockResolvedValue([
+      {
+        name: 'Local Delivery',
+        countries: ['DE'],
+        rateCents: 500,
+        freeOverCents: null,
+      },
+    ]);
+
+    const result = await flatRateProvider.getQuotes({
+      cart: makeCart([{ priceCentsSnapshot: 1000, quantity: 1 }]),
+      shippingAddress: makeAddress('DE'),
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: 'flat_rate:local_delivery',
+      name: 'Local Delivery',
+      priceCents: 500,
+    });
+  });
+
+  // 14. null freeOverCents does not make shipping free
+  it('charges full rate when freeOverCents is null', async () => {
+    mockSettingsGet.mockResolvedValue([
+      {
+        id: 'local',
+        name: 'Local Delivery',
+        countries: ['DE'],
+        rateCents: 500,
+        freeOverCents: null,
+      },
+    ]);
+
+    const result = await flatRateProvider.getQuotes({
+      cart: makeCart([{ priceCentsSnapshot: 50000, quantity: 1 }]),
+      shippingAddress: makeAddress('DE'),
+    });
+
+    expect(result[0].priceCents).toBe(500);
+  });
+
+  // 15. Empty configured zones array falls back to defaults
+  it('uses default zones when shipping.zones is an empty array', async () => {
+    mockSettingsGet.mockResolvedValue([]);
+
+    const result = await flatRateProvider.getQuotes({
+      cart: makeCart([{ priceCentsSnapshot: 1000, quantity: 1 }]),
+      shippingAddress: makeAddress('AU'),
+    });
+
+    expect(result[0]).toMatchObject({
+      id: 'flat_rate:domestic',
+      name: 'Domestic Shipping',
+      priceCents: 1500,
+    });
+  });
+});
+
+describe('shipping zone helpers', () => {
+  it('loadShippingZones falls back to defaults for empty input', () => {
+    expect(loadShippingZones([])).toHaveLength(2);
+    expect(loadShippingZones(null)).toHaveLength(2);
+  });
+
+  it('normalizeShippingZone accepts legacy label field', () => {
+    expect(
+      normalizeShippingZone({ label: 'Legacy Zone', countries: ['AU'] }, 0)
+    ).toMatchObject({
+      id: 'legacy_zone',
+      name: 'Legacy Zone',
+    });
+  });
+
+  it('computeZonePriceCents ignores null freeOverCents', () => {
+    expect(
+      computeZonePriceCents({ rateCents: 500, freeOverCents: null }, 100000)
+    ).toBe(500);
+  });
+});
+
+describe('resolveShippingOption', () => {
+  beforeEach(() => {
+    _registry.clear();
+    vi.clearAllMocks();
+  });
+
+  it('returns persisted option when live quote is missing', async () => {
+    const persistedOption = {
+      id: 'flat_rate:domestic',
+      priceCents: 1500,
+      name: 'Domestic',
+    };
+    registerProvider('flat_rate', {
+      getQuotes: vi.fn().mockResolvedValue([]),
+    });
+
+    const result = await resolveShippingOption({
+      cart: makeCart(),
+      shippingAddress: makeAddress('AU'),
+      optionId: 'flat_rate:domestic',
+      persistedOption,
+    });
+
+    expect(result.option).toEqual(persistedOption);
   });
 });

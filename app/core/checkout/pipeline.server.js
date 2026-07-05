@@ -143,8 +143,11 @@ export async function advanceStep(sessionId, stepData = {}) {
       if (!stepData.shippingOptionId) {
         throw new Error('MISSING_SHIPPING_OPTION');
       }
+      if (!stepData.shippingOptionJson) {
+        throw new Error('INVALID_SHIPPING_OPTION');
+      }
       updateData = {
-        shippingOptionJson: stepData.shippingOptionJson ?? null,
+        shippingOptionJson: stepData.shippingOptionJson,
         step: nextCheckoutStep(step),
       };
       break;

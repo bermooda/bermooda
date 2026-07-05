@@ -6,7 +6,10 @@ const { prismaMock } = vi.hoisted(() => ({
       findMany: vi.fn(),
     },
     inventoryLevel: {
-      findUnique: vi.fn(),
+      findMany: vi.fn(),
+    },
+    productVariant: {
+      findMany: vi.fn(),
     },
   },
 }));
@@ -36,10 +39,16 @@ describe('pickupProvider.getQuotes', () => {
       },
     ]);
 
-    prismaMock.inventoryLevel.findUnique.mockResolvedValue({
-      quantity: 5,
-      variant: { inventoryTracked: true },
-    });
+    prismaMock.productVariant.findMany.mockResolvedValue([
+      { id: 'var_1', inventoryTracked: true },
+    ]);
+    prismaMock.inventoryLevel.findMany.mockResolvedValue([
+      {
+        variantId: 'var_1',
+        quantity: 5,
+        variant: { inventoryTracked: true },
+      },
+    ]);
 
     const cart = {
       lines: [{ variantId: 'var_1', quantity: 2 }],
@@ -59,10 +68,33 @@ describe('pickupProvider.getQuotes', () => {
       { id: 'loc_1', name: 'Empty Store', addressJson: null },
     ]);
 
-    prismaMock.inventoryLevel.findUnique.mockResolvedValue({
-      quantity: 0,
-      variant: { inventoryTracked: true },
+    prismaMock.productVariant.findMany.mockResolvedValue([
+      { id: 'var_1', inventoryTracked: true },
+    ]);
+    prismaMock.inventoryLevel.findMany.mockResolvedValue([
+      {
+        variantId: 'var_1',
+        quantity: 0,
+        variant: { inventoryTracked: true },
+      },
+    ]);
+
+    const quotes = await pickupProvider.getQuotes({
+      cart: { lines: [{ variantId: 'var_1', quantity: 1 }] },
     });
+
+    expect(quotes).toHaveLength(0);
+  });
+
+  it('skips locations when tracked variants have no inventory record', async () => {
+    prismaMock.location.findMany.mockResolvedValue([
+      { id: 'loc_1', name: 'No Stock Record', addressJson: null },
+    ]);
+
+    prismaMock.productVariant.findMany.mockResolvedValue([
+      { id: 'var_1', inventoryTracked: true },
+    ]);
+    prismaMock.inventoryLevel.findMany.mockResolvedValue([]);
 
     const quotes = await pickupProvider.getQuotes({
       cart: { lines: [{ variantId: 'var_1', quantity: 1 }] },

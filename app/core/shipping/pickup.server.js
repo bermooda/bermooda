@@ -10,24 +10,34 @@ import prisma from '#/libs/prisma.server';
  * @param {string} locationId
  */
 async function cartAvailableAtLocation(cart, locationId) {
-  const lines = cart?.lines ?? [];
+  const lines = (cart?.lines ?? []).filter((line) => line.variantId);
   if (lines.length === 0) return false;
 
-  for (const line of lines) {
-    if (!line.variantId) continue;
-
-    const level = await prisma.inventoryLevel.findUnique({
+  const variantIds = lines.map((line) => line.variantId);
+  const [levels, variants] = await Promise.all([
+    prisma.inventoryLevel.findMany({
       where: {
-        variantId_locationId: {
-          variantId: line.variantId,
-          locationId,
-        },
+        locationId,
+        variantId: { in: variantIds },
       },
       include: { variant: { select: { inventoryTracked: true } } },
-    });
+    }),
+    prisma.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      select: { id: true, inventoryTracked: true },
+    }),
+  ]);
 
-    if (!level?.variant.inventoryTracked) continue;
+  const levelByVariant = new Map(
+    levels.map((level) => [level.variantId, level])
+  );
+  const variantById = new Map(variants.map((variant) => [variant.id, variant]));
 
+  for (const line of lines) {
+    const variant = variantById.get(line.variantId);
+    if (!variant?.inventoryTracked) continue;
+
+    const level = levelByVariant.get(line.variantId);
     if (!level || level.quantity < line.quantity) {
       return false;
     }

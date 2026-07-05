@@ -397,16 +397,7 @@ function ShippingStep({
   const addr = session?.shippingAddress ?? {};
 
   // getAllQuotes returns a flat array of ShippingOption objects
-  const options =
-    shippingQuotes?.length > 0
-      ? shippingQuotes
-      : [
-          {
-            id: 'standard',
-            name: 'Standard Shipping',
-            priceCents: 0,
-          },
-        ];
+  const options = shippingQuotes ?? [];
 
   return (
     <div className="space-y-6">
@@ -436,54 +427,60 @@ function ShippingStep({
           <legend className="mb-3 text-sm font-semibold text-stone-900">
             {t('checkout.shippingMethod')}
           </legend>
-          <div className="space-y-2">
-            {options.map((option) => (
-              <label
-                key={option.id}
-                className="flex cursor-pointer items-center justify-between rounded-xl border border-stone-200 bg-white p-4 shadow-sm transition-colors hover:border-stone-400 has-[:checked]:border-stone-900 has-[:checked]:bg-stone-50"
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="shippingOptionId"
-                    value={option.id}
-                    defaultChecked={
-                      session?.shippingOptionId === option.id ||
-                      (!session?.shippingOptionId &&
-                        option.id === options[0]?.id)
-                    }
-                    className="h-4 w-4 border-stone-300 text-stone-900 focus:ring-stone-500"
-                  />
-                  <span className="text-sm font-medium text-stone-900">
-                    {option.name}
+          {options.length === 0 ? (
+            <p className="text-sm text-stone-600">
+              No shipping methods are available for this address.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {options.map((option) => (
+                <label
+                  key={option.id}
+                  className="flex cursor-pointer items-center justify-between rounded-xl border border-stone-200 bg-white p-4 shadow-sm transition-colors hover:border-stone-400 has-[:checked]:border-stone-900 has-[:checked]:bg-stone-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="shippingOptionId"
+                      value={option.id}
+                      defaultChecked={
+                        session?.shippingOptionId === option.id ||
+                        (!session?.shippingOptionId &&
+                          option.id === options[0]?.id)
+                      }
+                      className="h-4 w-4 border-stone-300 text-stone-900 focus:ring-stone-500"
+                    />
+                    <span className="text-sm font-medium text-stone-900">
+                      {option.name}
+                    </span>
+                    {option.pickupAddress && (
+                      <p className="text-xs text-stone-500">
+                        {[
+                          option.pickupAddress.line1,
+                          option.pickupAddress.city,
+                          option.pickupAddress.state,
+                          option.pickupAddress.postalCode,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-sm text-stone-600">
+                    {option.priceCents === 0
+                      ? t('checkout.free')
+                      : formatPrice(option.priceCents, currency, locale)}
                   </span>
-                  {option.pickupAddress && (
-                    <p className="text-xs text-stone-500">
-                      {[
-                        option.pickupAddress.line1,
-                        option.pickupAddress.city,
-                        option.pickupAddress.state,
-                        option.pickupAddress.postalCode,
-                      ]
-                        .filter(Boolean)
-                        .join(', ')}
-                    </p>
-                  )}
-                </div>
-                <span className="text-sm text-stone-600">
-                  {option.priceCents === 0
-                    ? t('checkout.free')
-                    : formatPrice(option.priceCents, currency, locale)}
-                </span>
-              </label>
-            ))}
-          </div>
+                </label>
+              ))}
+            </div>
+          )}
         </fieldset>
 
         <input type="hidden" name="_action" value="shipping" />
 
         <div className="pt-2">
-          <SubmitButton disabled={isSubmitting}>
+          <SubmitButton disabled={isSubmitting || options.length === 0}>
             {isSubmitting
               ? t('common.loading')
               : t('checkout.continueToPayment')}
@@ -683,23 +680,19 @@ function ReviewStep({
   const addr = session?.shippingAddress ?? {};
   const lines = cart?.lines ?? [];
 
-  const selectedOption = (shippingQuotes ?? []).find(
-    (o) => o.id === session?.shippingOptionId
-  );
+  const selectedOption =
+    session?.shippingOption ??
+    (shippingQuotes ?? []).find((o) => o.id === session?.shippingOptionId);
   const shippingLabel = selectedOption?.name ?? t('checkout.standardShipping');
-  const shippingCents =
-    totals?.shippingCents ?? selectedOption?.priceCents ?? 0;
+  const shippingCents = totals?.shippingCents ?? 0;
 
-  const subtotalCents =
-    totals?.subtotalCents ?? summarizeCartLines(lines).subtotalCents;
+  const subtotalCents = totals?.subtotalCents ?? 0;
   const discountCents = totals?.discountCents ?? 0;
   const taxCents = totals?.taxCents ?? 0;
   const storeCreditCents = totals?.storeCreditCents ?? 0;
   const giftCardCents = totals?.giftCardCents ?? 0;
   const loyaltyPointsCents = totals?.loyaltyPointsCents ?? 0;
-  const totalCents =
-    totals?.totalCents ??
-    subtotalCents - discountCents + shippingCents + taxCents;
+  const totalCents = totals?.totalCents ?? 0;
 
   const selectedProvider = paymentProviders?.find(
     (p) => p.id === session?.paymentProvider
