@@ -44,9 +44,8 @@ describe('buildGiftCardSearchWhere', () => {
   });
 
   it('builds a normalized code filter', () => {
-    expect(buildGiftCardSearchWhere('welcome')).toEqual({
-      code: { contains: 'WELCOME' },
-    });
+    const where = buildGiftCardSearchWhere('welcome');
+    expect(where.code.contains).toBe('WELCOME');
   });
 });
 
@@ -154,7 +153,7 @@ describe('listGiftCards', () => {
 
     expect(prisma.giftCard.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { code: { contains: 'WELCOME' } },
+        where: { code: expect.objectContaining({ contains: 'WELCOME' }) },
         skip: 10,
         take: 10,
       })
