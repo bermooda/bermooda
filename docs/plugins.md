@@ -15,14 +15,15 @@ This document describes the bermooda plugin architecture and serves as the refer
 7. [Admin Routes](#admin-routes)
 8. [Storefront Routes](#storefront-routes)
 9. [Plugin Blocks for Storefront Slots](#plugin-blocks-for-storefront-slots)
-10. [Sample Plugin Walkthrough](#sample-plugin-walkthrough)
-11. [Plugin Folder Layout](#plugin-folder-layout)
+10. [Plugin Blocks for Admin Slots](#plugin-blocks-for-admin-slots)
+11. [Sample Plugin Walkthrough](#sample-plugin-walkthrough)
+12. [Plugin Folder Layout](#plugin-folder-layout)
 
 ---
 
 ## Overview
 
-Plugins extend the bermooda platform without modifying core code. Each plugin is a self-contained directory under `app/plugins/<plugin-id>/` that declares a manifest, registers event hook handlers, optionally contributes admin pages, and optionally renders UI blocks into storefront slots.
+Plugins extend the bermooda platform without modifying core code. Each plugin is a self-contained directory under `app/plugins/<plugin-id>/` that declares a manifest, registers event hook handlers, optionally contributes admin pages, and optionally renders UI blocks into storefront and admin slots.
 
 The plugin lifecycle is:
 
@@ -685,7 +686,62 @@ export default function ProductAfterDescriptionBlock({ product }) {
 }
 ```
 
-The theme renders slot blocks via `getSlotBlocks(slotName)` from `app/core/themes/index.server.js`. Full slot block resolution is wired in Phase 5.
+The theme renders slot blocks via `getSlotBlocks(slotName)` from `app/core/themes/index.server.js`.
+
+---
+
+## Plugin Blocks for Admin Slots
+
+Plugins can inject UI components into named slots in admin views. Each slot is a well-known insertion point that core admin routes render at a specific location on the page.
+
+Admin and storefront slots share the same manifest `blocks` map — use distinct slot names for each surface.
+
+### Available Slots
+
+| Slot name           | Location                                     |
+| ------------------- | -------------------------------------------- |
+| `dashboard.widgets` | Admin dashboard — below KPI tiles            |
+| `order.detail`      | Order detail page — below the page header    |
+| `customer.detail`   | Customer detail page — below the page header |
+| `product.editor`    | Product editor — below the page header       |
+
+The canonical list lives in `ADMIN_SLOT_NAMES` in `app/core/admin/slots.server.js`.
+
+### Contributing a Block
+
+Use the same `blocks/` file naming convention as storefront slots. For example, slot `dashboard.widgets` → `blocks/dashboard/widgets.jsx`:
+
+```
+app/plugins/my-plugin/blocks/dashboard/widgets.jsx
+```
+
+Register the component in your plugin's `index.server.js`:
+
+```js
+import DashboardWidgetsBlock from '#/plugins/my-plugin/blocks/dashboard/widgets.jsx';
+
+export const pluginManifest = definePlugin({
+  ...manifest,
+  blocks: {
+    'dashboard.widgets': DashboardWidgetsBlock,
+  },
+});
+```
+
+Admin route loaders resolve blocks server-side with `getAdminSlotBlocksMap()` from `app/core/admin/slots.server.js` and pass them to the shared `SlotBlocks` component in `app/components/admin/slot-blocks.jsx`.
+
+### Slot props
+
+Each admin page passes context to plugin blocks via `slotProps`:
+
+| Admin page      | `slotProps`                                                                           |
+| --------------- | ------------------------------------------------------------------------------------- |
+| Dashboard       | `{ totalOrders, totalRevenueCents, abandonedCheckouts, lowStockCount, recentOrders }` |
+| Order detail    | `{ order }`                                                                           |
+| Customer detail | `{ customer }`                                                                        |
+| Product editor  | `{ product, mode }` (`mode` is `'create'` or `'edit'`)                                |
+
+Blocks only render when the plugin is enabled. Render order follows the `pluginOrder` setting (same as storefront slots).
 
 ---
 
@@ -698,7 +754,8 @@ The `sample-analytics` plugin is the canonical reference implementation. It capt
 - Listens to `order.created` and appends a structured event record to `PluginData` under the key `recentEvents`, capped at 100 entries.
 - Exposes an admin page at `/admin/plugins/sample-analytics/` that reads and displays those events.
 - Exposes a storefront page at `/apps/sample-analytics/` that shows a public event summary when the plugin is enabled.
-- Contributes a UI block to the `product.afterDescription` slot.
+- Contributes a UI block to the `product.afterDescription` storefront slot.
+- Contributes a dashboard widget to the `dashboard.widgets` admin slot.
 
 ### Step 1 — The manifest
 

@@ -8,6 +8,7 @@ import ProductEditor, {
   NEW_VARIANT_ID,
 } from '#/components/admin/product-editor';
 
+import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import {
   createBlankProduct,
   loadAdminProductEditorContext,
@@ -20,10 +21,14 @@ import {
 // ---------------------------------------------------------------------------
 
 export async function loader() {
-  const context = await loadAdminProductEditorContext();
+  const [context, slotBlocks] = await Promise.all([
+    loadAdminProductEditorContext(),
+    getAdminSlotBlocksMap(['product.editor']),
+  ]);
 
   return {
     ...context,
+    slotBlocks,
     product: {
       id: null,
       publishedAt: null,
@@ -98,6 +103,7 @@ export default function AdminNewProductRoute() {
       allCategories={data.allCategories}
       actionData={actionData}
       isSaving={isSaving}
+      slotBlocks={data.slotBlocks}
     />
   );
 }

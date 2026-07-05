@@ -8,6 +8,7 @@ import { redirect } from 'react-router';
 import prisma from '#/libs/prisma.server';
 import ProductEditor from '#/components/admin/product-editor';
 
+import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import {
   loadAdminProductEditorContext,
   persistAdminProduct,
@@ -21,7 +22,7 @@ import { uploadMedia } from '#/core/storage/index.server';
 export async function loader({ params }) {
   const { id } = params;
 
-  const [product, context] = await Promise.all([
+  const [product, context, slotBlocks] = await Promise.all([
     prisma.product.findUniqueOrThrow({
       where: { id },
       include: {
@@ -46,6 +47,7 @@ export async function loader({ params }) {
       },
     }),
     loadAdminProductEditorContext(),
+    getAdminSlotBlocksMap(['product.editor']),
   ]);
 
   const translations = await prisma.translation.findMany({
@@ -64,6 +66,7 @@ export async function loader({ params }) {
 
   return {
     ...context,
+    slotBlocks,
     product: {
       id: product.id,
       publishedAt: product.publishedAt?.toISOString() ?? null,
@@ -186,6 +189,7 @@ export default function AdminProductRoute() {
       allCategories={data.allCategories}
       actionData={actionData}
       isSaving={isSaving}
+      slotBlocks={data.slotBlocks}
     />
   );
 }
