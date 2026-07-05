@@ -472,27 +472,58 @@ hooks: defineHooks({
 }),
 ```
 
-Handlers are invoked by the event bus when the corresponding event fires. If a post-hook handler throws, the error is contained by the event bus and does not affect other handlers or the caller, including `checkout.*` post-action events.
+Handlers are invoked by the event bus when the corresponding event fires. If a post-hook handler throws, the error is contained by the event bus and does not affect other handlers or the caller.
 
-### Before-hooks (planned, not implemented yet)
+### Before-hooks (blocking filters)
 
-Blocking `before.*` hooks are design-only today. bermooda does **not** currently expose `emitBefore()`, `deny()`, or vetoable plugin hooks in production. The design reference lives in [`docs/before-hooks-plan.md`](./before-hooks-plan.md).
+Before-hooks let a plugin **veto** a domain action before any database write occurs. Register them in your manifest's `hooks` field using keys that start with `before.`:
 
-Planned first-wave `before.*` event names:
+```js
+import { defineHooks, definePlugin, deny } from '#/core/plugins/index.server';
 
-- `before.shipment.create`
-- `before.shipment.ship`
-- `before.order.place`
-- `before.order.cancel`
-- `before.refund.create`
-- `before.shipment.deliver`
-- `before.checkout.advance`
+export const pluginManifest = definePlugin({
+  ...manifest,
+  hooks: defineHooks({
+    'before.shipment.ship': async ({ orderId, order }) => {
+      if (order.status === 'on_hold') {
+        deny('Order is on hold and cannot be shipped.', { code: 'FRAUD_HOLD' });
+      }
+    },
+    'order.created': async (payload) => {
+      // post-hook — unchanged
+    },
+  }),
+});
+```
 
-Design intent (not shipped yet):
+**Contract:**
 
-- Post-hooks stay fault-tolerant and never block the caller.
-- Before-hooks would run before the mutation starts and allow a plugin to veto the action.
-- A future `deny()` helper / veto error would propagate back to the caller instead of being swallowed, so the action can be rejected cleanly.
+| Aspect      | Behavior                                                                          |
+| ----------- | --------------------------------------------------------------------------------- |
+| Allow       | Return normally (return value ignored in MVP).                                    |
+| Block       | Call `deny(reason, { code })` — or throw any error (fail-closed).                 |
+| Ordering    | Registration order = plugin enable order. First veto wins.                        |
+| Performance | Filters run on the request critical path before the transaction — keep them fast. |
+
+Import `deny`, `emitBefore`, `HookAbortError`, and `isHookAbort` from `#/core/plugins/index.server` (re-exported from the event bus).
+
+When a plugin vetoes an action, core surfaces `HookAbortError.reason` to merchants. Admin API routes return `422` with `{ error, code, blockedBy }`. A veto is a business decision, not an operational error — it is not sent through `handleError` / `sendErrorAlert`.
+
+#### Before-hook catalog
+
+| Event                     | Payload                                              | Blocks                              |
+| ------------------------- | ---------------------------------------------------- | ----------------------------------- |
+| `before.shipment.create`  | `{ orderId, order, data }`                           | Creating a shipment record          |
+| `before.shipment.ship`    | `{ shipmentId, orderId, shipment, order, data }`     | Marking a shipment shipped          |
+| `before.shipment.deliver` | `{ shipmentId, orderId, shipment }`                  | Marking a shipment delivered        |
+| `before.order.place`      | `{ checkoutSessionId, session, cart, totals }`       | Order creation at checkout          |
+| `before.order.cancel`     | `{ orderId, order }`                                 | Cancelling an order                 |
+| `before.refund.create`    | `{ orderId, order, amountCents, reason }`            | Issuing a refund                    |
+| `before.checkout.advance` | `{ sessionId, session, fromStep, toStep, stepData }` | Advancing to the next checkout step |
+
+Reserved error codes (plugins may define their own): `HOOK_BLOCKED` (default), `FRAUD_HOLD`, `INVENTORY_HOLD`, `REFUND_POLICY`, `ADDRESS_INVALID`, `COMPLIANCE_HOLD`.
+
+See [`docs/before-hooks-plan.md`](./before-hooks-plan.md) for design rationale and the `fraud-guard` sample plugin under `app/plugins/fraud-guard/`.
 
 **Note:** Hook handlers do not receive `ctx`. If a handler needs database access or other services, import them directly at the top of your `index.server.js` file.
 

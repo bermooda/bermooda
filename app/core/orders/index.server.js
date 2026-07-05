@@ -7,7 +7,7 @@ import prisma from '#/libs/prisma.server';
 import { expandBundleInventoryItems } from '#/core/catalog/types.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { persistOrderDiscounts } from '#/core/discounts/index.server';
-import { emit } from '#/core/events/index.server';
+import { emit, emitBefore } from '#/core/events/index.server';
 import {
   getGiftCardByCode,
   redeemGiftCard,
@@ -75,6 +75,57 @@ export async function placeOrder(
   checkoutSessionId,
   { paymentProvider, paymentIntentId } = {}
 ) {
+  const preSession = await prisma.checkoutSession.findUnique({
+    where: { id: checkoutSessionId },
+    include: {
+      cart: {
+        include: {
+          lines: {
+            include: { variant: { include: { taxClass: true } } },
+          },
+        },
+      },
+    },
+  });
+
+  if (!preSession) {
+    throw new Error('CHECKOUT_SESSION_NOT_FOUND');
+  }
+
+  if (preSession.step !== 'review') {
+    throw new Error('CHECKOUT_SESSION_NOT_AT_REVIEW');
+  }
+
+  const preShippingAddress = preSession.shippingAddressJson
+    ? JSON.parse(preSession.shippingAddressJson)
+    : null;
+
+  const preShippingOption = preSession.shippingOptionJson
+    ? JSON.parse(preSession.shippingOptionJson)
+    : null;
+
+  const preTotals = await computeTotals({
+    cart: preSession.cart,
+    cartId: preSession.cart.id,
+    shippingAddress: preShippingAddress,
+    couponCode: preSession.couponCode ?? undefined,
+    shippingOptionId: preShippingOption?.id ?? undefined,
+    taxExempt: preSession.taxExempt ?? false,
+    vatId: preSession.vatId ?? undefined,
+    customerId: preSession.customerId ?? undefined,
+    giftCardCode: preSession.giftCardCode ?? undefined,
+    storeCreditCents: preSession.storeCreditCents ?? 0,
+    loyaltyPointsCents: preSession.loyaltyPointsCents ?? 0,
+    salesChannelId: preSession.salesChannelId ?? undefined,
+  });
+
+  await emitBefore('order.place', {
+    checkoutSessionId,
+    session: preSession,
+    cart: preSession.cart,
+    totals: preTotals,
+  });
+
   let createdOrder;
 
   await prisma.$transaction(async (tx) => {
@@ -407,6 +458,8 @@ export async function cancelOrder(orderId) {
     throw new Error('ORDER_NOT_FOUND');
   }
 
+  await emitBefore('order.cancel', { orderId, order });
+
   // Restore inventory for all tracked order lines (W0-5)
   const inventoryItems = (order.lines ?? [])
     .filter((line) => line.variantId != null)
@@ -520,6 +573,8 @@ export async function addShipment(orderId, data = {}) {
     validateShipmentLines(order.lines, shipmentLines);
   }
 
+  await emitBefore('shipment.create', { orderId, order, data });
+
   const shipment = await prisma.$transaction(async (tx) => {
     const created = await tx.shipment.create({
       data: {
@@ -595,6 +650,14 @@ export async function markShipped(
     throw new Error('SHIPMENT_NOT_FOUND');
   }
 
+  await emitBefore('shipment.ship', {
+    shipmentId,
+    orderId: shipment.orderId,
+    shipment,
+    order: shipment.order,
+    data: { carrier, trackingNumber, trackingUrl },
+  });
+
   const updateData = {
     status: 'shipped',
     shippedAt: new Date(),
@@ -666,6 +729,20 @@ export async function markShipped(
  * @returns {Promise<object>} updated Shipment
  */
 export async function markDelivered(shipmentId) {
+  const existing = await prisma.shipment.findUnique({
+    where: { id: shipmentId },
+  });
+
+  if (!existing) {
+    throw new Error('SHIPMENT_NOT_FOUND');
+  }
+
+  await emitBefore('shipment.deliver', {
+    shipmentId,
+    orderId: existing.orderId,
+    shipment: existing,
+  });
+
   const shipment = await prisma.shipment.update({
     where: { id: shipmentId },
     data: {
@@ -699,6 +776,17 @@ export async function createRefund(
   orderId,
   { amountCents, reason, providerRefundId, restoreInventory = true } = {}
 ) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { lines: true },
+  });
+
+  if (!order) {
+    throw new Error('ORDER_NOT_FOUND');
+  }
+
+  await emitBefore('refund.create', { orderId, order, amountCents, reason });
+
   const refund = await prisma.refund.create({
     data: {
       orderId,
@@ -709,22 +797,15 @@ export async function createRefund(
   });
 
   if (restoreInventory) {
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: { lines: true },
-    });
+    const inventoryItems = (order.lines ?? [])
+      .filter((line) => line.variantId != null)
+      .map((line) => ({
+        variantId: line.variantId,
+        quantity: line.quantity,
+      }));
 
-    if (order) {
-      const inventoryItems = (order.lines ?? [])
-        .filter((line) => line.variantId != null)
-        .map((line) => ({
-          variantId: line.variantId,
-          quantity: line.quantity,
-        }));
-
-      if (inventoryItems.length > 0) {
-        await incrementInventory(inventoryItems);
-      }
+    if (inventoryItems.length > 0) {
+      await incrementInventory(inventoryItems);
     }
   }
 
