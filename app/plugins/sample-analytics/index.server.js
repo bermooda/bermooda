@@ -2,6 +2,7 @@ import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
 import { defineHooks, definePlugin } from '#/core/plugins/index.server';
+import DashboardWidgetsBlock from '#/plugins/sample-analytics/blocks/dashboard/widgets.jsx';
 import ProductAfterDescriptionBlock from '#/plugins/sample-analytics/blocks/product/after-description.jsx';
 import manifest from '#/plugins/sample-analytics/manifest';
 
@@ -44,6 +45,7 @@ export const pluginManifest = definePlugin({
   }),
   blocks: {
     'product.afterDescription': ProductAfterDescriptionBlock,
+    'dashboard.widgets': DashboardWidgetsBlock,
   },
 });
 

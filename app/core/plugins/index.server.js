@@ -473,7 +473,7 @@ export async function enablePersistedPlugins() {
 }
 
 /**
- * Return storefront slot blocks contributed by enabled plugins.
+ * Return admin and storefront slot blocks contributed by enabled plugins.
  *
  * @param {string} slotName
  * @returns {Promise<Array<{ pluginId: string, component: unknown }>>}

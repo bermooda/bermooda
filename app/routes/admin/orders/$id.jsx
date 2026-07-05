@@ -15,9 +15,12 @@ import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
 import { controlClasses } from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
+import SlotBlocks from '#/components/admin/slot-blocks';
 import { Td, Th } from '#/components/admin/table';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
+
+import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 
 // Server-only core calls are dynamically imported in `action` to avoid a
 // circular bundle graph (returns → orders) in this route module.
@@ -29,24 +32,28 @@ import Button, { ButtonSubmit } from '#/components/ui/button';
 export async function loader({ params }) {
   const { id } = params;
 
-  const order = await prisma.order.findUniqueOrThrow({
-    where: { id },
-    include: {
-      lines: { orderBy: { createdAt: 'asc' } },
-      shipments: {
-        orderBy: { createdAt: 'asc' },
-        include: { lines: { include: { orderLine: true } } },
+  const [order, slotBlocks] = await Promise.all([
+    prisma.order.findUniqueOrThrow({
+      where: { id },
+      include: {
+        lines: { orderBy: { createdAt: 'asc' } },
+        shipments: {
+          orderBy: { createdAt: 'asc' },
+          include: { lines: { include: { orderLine: true } } },
+        },
+        refunds: { orderBy: { createdAt: 'asc' } },
+        returns: {
+          orderBy: { createdAt: 'asc' },
+          include: { lines: { include: { orderLine: true } } },
+        },
+        customer: { select: { email: true, name: true } },
       },
-      refunds: { orderBy: { createdAt: 'asc' } },
-      returns: {
-        orderBy: { createdAt: 'asc' },
-        include: { lines: { include: { orderLine: true } } },
-      },
-      customer: { select: { email: true, name: true } },
-    },
-  });
+    }),
+    getAdminSlotBlocksMap(['order.detail']),
+  ]);
 
   return {
+    slotBlocks,
     order: {
       id: order.id,
       orderNumber: order.orderNumber,
@@ -365,7 +372,7 @@ const STATUS_TRANSITIONS = {
 // ---------------------------------------------------------------------------
 
 export default function AdminOrderRoute() {
-  const { order } = useLoaderData();
+  const { order, slotBlocks } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === 'submitting';
@@ -404,6 +411,11 @@ export default function AdminOrderRoute() {
             Download invoice
           </a>
         }
+      />
+
+      <SlotBlocks
+        blocks={slotBlocks['order.detail'] ?? []}
+        slotProps={{ order }}
       />
 
       {/* Action feedback */}

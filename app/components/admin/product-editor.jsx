@@ -17,6 +17,7 @@ import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Textarea from '#/components/admin/form/textarea';
 import PageHeader from '#/components/admin/page-header';
+import SlotBlocks from '#/components/admin/slot-blocks';
 import { Th } from '#/components/admin/table';
 import Tabs from '#/components/admin/tabs';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
@@ -538,6 +539,7 @@ function CategoryPicker({ allCategories, selectedIds }) {
  * @param {{ id: string, title: string }[]} props.allCategories
  * @param {Object} [props.actionData]
  * @param {boolean} props.isSaving
+ * @param {Record<string, Array<{ pluginId: string, component: unknown }>>} [props.slotBlocks]
  * @returns {React.ReactElement}
  */
 export default function ProductEditor({
@@ -550,6 +552,7 @@ export default function ProductEditor({
   allCategories,
   actionData,
   isSaving,
+  slotBlocks = {},
 }) {
   const primaryLocale = locales[0] ?? 'en';
   const [activeLocale, setActiveLocale] = useState(primaryLocale);
@@ -613,6 +616,11 @@ export default function ProductEditor({
             </Form>
           )
         }
+      />
+
+      <SlotBlocks
+        blocks={slotBlocks['product.editor'] ?? []}
+        slotProps={{ product, mode }}
       />
 
       {actionData?.ok && actionData?.intent === 'save' && (
