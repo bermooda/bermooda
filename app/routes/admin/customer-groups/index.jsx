@@ -11,26 +11,21 @@ import Button from '#/components/ui/button';
 
 import {
   addCustomerToGroup,
+  listCustomerGroupMembers,
   listCustomerGroups,
   removeCustomerFromGroup,
 } from '#/core/pricing/index.server';
 
 export async function loader() {
-  const [groups, customers] = await Promise.all([
+  const [groups, customers, memberships] = await Promise.all([
     listCustomerGroups(),
     prisma.customer.findMany({
       take: 100,
       orderBy: { createdAt: 'desc' },
       select: { id: true, email: true, name: true },
     }),
+    listCustomerGroupMembers(),
   ]);
-
-  const memberships = await prisma.customerGroupMember.findMany({
-    include: {
-      customer: { select: { id: true, email: true, name: true } },
-      group: { select: { id: true, name: true } },
-    },
-  });
 
   return { groups, customers, memberships };
 }
