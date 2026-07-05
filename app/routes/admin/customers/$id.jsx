@@ -13,10 +13,12 @@ import Card, { CardHeader } from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
+import SlotBlocks from '#/components/admin/slot-blocks';
 import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 
+import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
 import {
   exportCustomerData,
@@ -32,34 +34,38 @@ import {
 export async function loader({ params }) {
   const { id } = params;
 
-  const customer = await prisma.customer.findUniqueOrThrow({
-    where: { id },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      phone: true,
-      preferredLocale: true,
-      consentJson: true,
-      erasedAt: true,
-      createdAt: true,
-      addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
-      orders: {
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-        select: {
-          id: true,
-          orderNumber: true,
-          status: true,
-          currency: true,
-          totalCents: true,
-          createdAt: true,
+  const [customer, slotBlocks] = await Promise.all([
+    prisma.customer.findUniqueOrThrow({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        preferredLocale: true,
+        consentJson: true,
+        erasedAt: true,
+        createdAt: true,
+        addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
+        orders: {
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            currency: true,
+            totalCents: true,
+            createdAt: true,
+          },
         },
       },
-    },
-  });
+    }),
+    getAdminSlotBlocksMap(['customer.detail']),
+  ]);
 
   return {
+    slotBlocks,
     customer: {
       id: customer.id,
       email: customer.email,
@@ -263,7 +269,7 @@ function SectionCard({ title, description, children }) {
 // ---------------------------------------------------------------------------
 
 export default function AdminCustomerRoute() {
-  const { customer } = useLoaderData();
+  const { customer, slotBlocks } = useLoaderData();
   const actionData = useActionData();
 
   const joinedDate = new Date(customer.createdAt).toLocaleDateString('en-US', {
@@ -290,6 +296,11 @@ export default function AdminCustomerRoute() {
             <span>Joined {joinedDate}</span>
           </span>
         }
+      />
+
+      <SlotBlocks
+        blocks={slotBlocks['customer.detail'] ?? []}
+        slotProps={{ customer }}
       />
 
       {/* Action feedback */}

@@ -11,7 +11,10 @@ import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
+import SlotBlocks from '#/components/admin/slot-blocks';
 import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+
+import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 
 // ---------------------------------------------------------------------------
 // Meta
@@ -42,6 +45,7 @@ export async function loader() {
     abandonedCheckouts,
     lowStockCount,
     recentOrders,
+    slotBlocks,
   ] = await Promise.all([
     // Total orders count
     prisma.order.count(),
@@ -84,6 +88,8 @@ export async function loader() {
         },
       },
     }),
+
+    getAdminSlotBlocksMap(['dashboard.widgets']),
   ]);
 
   const totalRevenueCents = revenueAgg._sum.totalCents ?? 0;
@@ -97,23 +103,8 @@ export async function loader() {
       ...o,
       createdAt: o.createdAt.toISOString(),
     })),
+    slotBlocks,
   };
-}
-
-// ---------------------------------------------------------------------------
-// Slot — renders plugin blocks for the named slot.
-// Inline definition to avoid importing from app/core/index.js which
-// re-exports server-only modules and would break the client bundle.
-// ---------------------------------------------------------------------------
-
-/**
- * Renders children (plugin blocks) for the named slot, if any.
- * Currently a no-op stub; real plugin wiring arrives in a later phase.
- *
- * @param {{ name: string, children?: React.ReactNode }} props
- */
-function Slot({ children }) {
-  return children ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -213,6 +204,7 @@ export default function AdminDashboardRoute() {
     abandonedCheckouts,
     lowStockCount,
     recentOrders,
+    slotBlocks,
   } = useLoaderData();
 
   return (
@@ -248,7 +240,16 @@ export default function AdminDashboardRoute() {
       </dl>
 
       {/* Plugin slot */}
-      <Slot name="dashboard.widgets" />
+      <SlotBlocks
+        blocks={slotBlocks['dashboard.widgets'] ?? []}
+        slotProps={{
+          totalOrders,
+          totalRevenueCents,
+          abandonedCheckouts,
+          lowStockCount,
+          recentOrders,
+        }}
+      />
 
       {/* Recent orders */}
       <div>
