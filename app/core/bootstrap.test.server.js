@@ -17,8 +17,6 @@ vi.mock('#/core/payments/paypal.server', () => ({
 }));
 vi.mock('#/core/payments/stripe.server', () => ({
   stripeProvider: { name: 'Stripe' },
-}));
-vi.mock('#/core/payments/stripe-element.server', () => ({
   stripeElementProvider: { name: 'Card on site' },
 }));
 vi.mock('#/core/payments/klarna.server', () => ({

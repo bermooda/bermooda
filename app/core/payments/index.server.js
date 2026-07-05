@@ -16,10 +16,10 @@ const _registry = new Map();
  * Register a payment provider under the given id.
  *
  * A provider must expose:
- *   createCheckoutSession({ cart, successUrl, cancelUrl })
+ *   createCheckoutSession({ cart?, orderId?, amountCents?, currency?, successUrl, cancelUrl })
  *   verifyWebhook(request)
  *   handleWebhookEvent(event)
- *   createRefund({ orderId, amount, reason })
+ *   createRefund({ paymentIntentId, amountCents, reason?, currency? }) — optional
  *
  * @param {string} id
  * @param {Object} provider
@@ -63,19 +63,6 @@ export function getProvider(id) {
 }
 
 // ---------------------------------------------------------------------------
-// listProviders — return all registered provider ids
-// ---------------------------------------------------------------------------
-
-/**
- * List all registered payment provider ids.
- *
- * @returns {string[]}
- */
-export function listProviders() {
-  return Array.from(_registry.keys());
-}
-
-// ---------------------------------------------------------------------------
 // listProvidersWithDetails — return { id, name }[] for UI consumption
 // ---------------------------------------------------------------------------
 
@@ -99,13 +86,13 @@ export function listProvidersWithDetails() {
 // ---------------------------------------------------------------------------
 
 /**
- * Create a checkout session via the named provider.
+ * Create a hosted payment session via the named provider.
  *
  * @param {string} providerId
- * @param {{ cart: Object, successUrl: string, cancelUrl: string }} params
- * @returns {Promise<Object>}
+ * @param {{ cart?: Object, orderId?: string, amountCents?: number, currency?: string, successUrl: string, cancelUrl: string }} params
+ * @returns {Promise<{ id: string, url: string, manual?: boolean }>}
  */
-export function createCheckoutSession(providerId, params) {
+export function createPaymentSession(providerId, params) {
   const provider = getProvider(providerId);
   return provider.createCheckoutSession(params);
 }
@@ -125,19 +112,6 @@ export function createPaymentIntent(providerId, params) {
     );
   }
   return provider.createPaymentIntent(params);
-}
-
-/**
- * Verify a webhook request via the named provider.
- * Returns { event, rawBody }.
- *
- * @param {string} providerId
- * @param {Request} request
- * @returns {Promise<{ event: Object, rawBody: string }>}
- */
-export function verifyWebhook(providerId, request) {
-  const provider = getProvider(providerId);
-  return provider.verifyWebhook(request);
 }
 
 // ---------------------------------------------------------------------------

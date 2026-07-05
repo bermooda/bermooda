@@ -15,6 +15,10 @@ const PAYPAL_API_BASE =
 let _accessToken = null;
 let _tokenExpiresAt = 0;
 
+function centsToMajorUnit(cents) {
+  return (cents / 100).toFixed(2);
+}
+
 async function getAccessToken() {
   if (_accessToken && Date.now() < _tokenExpiresAt) {
     return _accessToken;
@@ -57,11 +61,19 @@ export const paypalProvider = {
   requiresRedirect: true,
 
   /**
-   * @param {{ cart: object, orderId?: string, successUrl: string, cancelUrl: string }} params
+   * @param {{ cart?: object, orderId?: string, amountCents?: number, currency?: string, successUrl: string, cancelUrl: string }} params
    * @returns {Promise<{ id: string, url: string }>}
    */
-  async createCheckoutSession({ cart, orderId, successUrl, cancelUrl }) {
-    const totalCents = summarizeCartLines(cart?.lines).subtotalCents;
+  async createCheckoutSession({
+    cart,
+    orderId,
+    amountCents,
+    currency,
+    successUrl,
+    cancelUrl,
+  }) {
+    const totalCents =
+      amountCents ?? summarizeCartLines(cart?.lines).subtotalCents;
 
     if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
       log.warn('PayPal credentials missing — returning dev fallback session');
@@ -72,8 +84,8 @@ export const paypalProvider = {
     }
 
     const token = await getAccessToken();
-    const currency = (cart?.currency ?? 'USD').toUpperCase();
-    const value = (totalCents / 100).toFixed(2);
+    const currencyCode = (currency ?? cart?.currency ?? 'USD').toUpperCase();
+    const value = centsToMajorUnit(totalCents);
 
     const response = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
       method: 'POST',
@@ -85,7 +97,7 @@ export const paypalProvider = {
         intent: 'CAPTURE',
         purchase_units: [
           {
-            amount: { currency_code: currency, value },
+            amount: { currency_code: currencyCode, value },
             custom_id: orderId ?? undefined,
           },
         ],
@@ -111,7 +123,7 @@ export const paypalProvider = {
     const approveLink = (order.links ?? []).find((l) => l.rel === 'approve');
 
     log.info(
-      { orderId: order.id, bermoodaOrderId: orderId },
+      { orderId: order.id, bermoodaOrderId: orderId, amountCents: totalCents },
       'PayPal order created'
     );
 
@@ -180,14 +192,15 @@ export const paypalProvider = {
   },
 
   /**
-   * @param {{ paymentIntentId: string, amountCents: number, reason: string }} params
+   * @param {{ paymentIntentId: string, amountCents: number, currency?: string }} params
    */
-  async createRefund({ paymentIntentId, amountCents }) {
+  async createRefund({ paymentIntentId, amountCents, currency }) {
     if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
       throw new Error('PAYPAL_NOT_CONFIGURED');
     }
 
     const token = await getAccessToken();
+    const currencyCode = (currency ?? 'USD').toUpperCase();
     const response = await fetch(
       `${PAYPAL_API_BASE}/v2/payments/captures/${paymentIntentId}/refund`,
       {
@@ -198,8 +211,8 @@ export const paypalProvider = {
         },
         body: JSON.stringify({
           amount: {
-            value: (amountCents / 100).toFixed(2),
-            currency_code: 'USD',
+            value: centsToMajorUnit(amountCents),
+            currency_code: currencyCode,
           },
         }),
       }
