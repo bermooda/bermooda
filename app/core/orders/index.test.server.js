@@ -85,6 +85,10 @@ vi.mock('#/core/gift-cards/index.server', () => ({
   getGiftCardByCode: vi.fn(),
 }));
 
+vi.mock('#/core/payments/index.server', () => ({
+  getProvider: vi.fn(),
+}));
+
 vi.mock('#/utils/logger.server', () => ({
   default: {
     info: vi.fn(),
@@ -121,6 +125,7 @@ import {
   registerPaymentEventHandlers,
   deriveFulfillmentStatus,
 } from '#/core/orders/index.server';
+import { getProvider } from '#/core/payments/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -757,6 +762,7 @@ describe('markDelivered', () => {
 describe('createRefund', () => {
   beforeEach(() => {
     emitBefore.mockResolvedValue(undefined);
+    getProvider.mockReset();
   });
 
   it('emits payment.refunded after creating the refund', async () => {
@@ -789,6 +795,44 @@ describe('createRefund', () => {
       refundId: 'ref_1',
       orderId: 'order_1',
       amountCents: 500,
+    });
+  });
+
+  it('calls the payment provider when paymentIntentId is present', async () => {
+    const refund = {
+      id: 'ref_1',
+      orderId: 'order_1',
+      amountCents: 500,
+      status: 'pending',
+    };
+    const createRefundFn = vi.fn().mockResolvedValue({
+      refundId: 're_psp_1',
+      status: 'succeeded',
+    });
+
+    prisma.order.findUnique.mockResolvedValue({
+      id: 'order_1',
+      paymentProvider: 'stripe',
+      paymentIntentId: 'pi_123',
+      currency: 'USD',
+      lines: [],
+    });
+    getProvider.mockReturnValue({ createRefund: createRefundFn });
+    prisma.refund.create.mockResolvedValue(refund);
+    emit.mockResolvedValue(undefined);
+
+    await createRefund('order_1', { amountCents: 500, reason: 'Return' });
+
+    expect(createRefundFn).toHaveBeenCalledWith({
+      paymentIntentId: 'pi_123',
+      amountCents: 500,
+      reason: 'Return',
+      currency: 'USD',
+    });
+    expect(prisma.refund.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        providerRefundId: 're_psp_1',
+      }),
     });
   });
 });

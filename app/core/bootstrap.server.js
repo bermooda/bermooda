@@ -25,8 +25,10 @@ import { registerProvider as registerPayment } from '#/core/payments/index.serve
 import { klarnaProvider } from '#/core/payments/klarna.server';
 import { manualProvider } from '#/core/payments/manual.server';
 import { paypalProvider } from '#/core/payments/paypal.server';
-import { stripeElementProvider } from '#/core/payments/stripe-element.server';
-import { stripeProvider } from '#/core/payments/stripe.server';
+import {
+  stripeElementProvider,
+  stripeProvider,
+} from '#/core/payments/stripe.server';
 import {
   discoverPlugins,
   enablePersistedPlugins,
