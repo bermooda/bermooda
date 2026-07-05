@@ -6,7 +6,6 @@ import {
   useNavigation,
 } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -15,6 +14,8 @@ import Input from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
+
+import { createLocation } from '#/core/inventory/index.server';
 
 export async function action({ request }) {
   const formData = await request.formData();
@@ -29,9 +30,7 @@ export async function action({ request }) {
     formData.get('allowsPickup') === 'on' ||
     formData.get('allowsPickup') === 'true';
 
-  await prisma.location.create({
-    data: { name, code, active: true, allowsPickup },
-  });
+  await createLocation({ name, code, allowsPickup });
 
   return redirect('/admin/inventory');
 }

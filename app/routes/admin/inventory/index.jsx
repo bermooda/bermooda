@@ -4,7 +4,6 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import Card from '#/components/admin/card';
 import Input from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
@@ -12,29 +11,19 @@ import Button from '#/components/ui/button';
 
 import {
   ensureDefaultLocation,
+  listInventoryLevelsForVariants,
   listLocations,
-  listVariantInventoryLevels,
+  listRecentVariantsForInventory,
   setInventoryLevelQuantity,
 } from '#/core/inventory/index.server';
 
 export async function loader() {
   await ensureDefaultLocation();
-  const [locations, variants] = await Promise.all([
+  const variants = await listRecentVariantsForInventory();
+  const [locations, levelsByVariant] = await Promise.all([
     listLocations(),
-    prisma.productVariant.findMany({
-      take: 50,
-      orderBy: { updatedAt: 'desc' },
-      include: {
-        product: true,
-        prices: true,
-      },
-    }),
+    listInventoryLevelsForVariants(variants.map((variant) => variant.id)),
   ]);
-
-  const levelsByVariant = {};
-  for (const variant of variants) {
-    levelsByVariant[variant.id] = await listVariantInventoryLevels(variant.id);
-  }
 
   return { locations, variants, levelsByVariant };
 }

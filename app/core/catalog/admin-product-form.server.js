@@ -4,6 +4,7 @@
 import prisma from '#/libs/prisma.server';
 
 import { publishProduct, unpublishProduct } from '#/core/catalog/index.server';
+import { setDefaultLocationQuantity } from '#/core/inventory/locations.server';
 import { get } from '#/core/settings/index.server';
 
 /**
@@ -300,8 +301,10 @@ export async function persistAdminProduct(productId, formData, options = {}) {
 
     await prisma.productVariant.update({
       where: { id: varId },
-      data: { sku: sku || null, inventoryCount },
+      data: { sku: sku || null },
     });
+
+    await setDefaultLocationQuantity(varId, inventoryCount);
 
     for (const [currency, priceData] of Object.entries(
       priceDataMap[varId] ?? {}
