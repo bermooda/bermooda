@@ -5,7 +5,7 @@ import { Link, Form, useActionData, useNavigation } from 'react-router';
 import SlotBlocks from '#/components/storefront/slot-blocks';
 
 import { useT } from '#/core/i18n/index';
-import { formatPrice } from '#/core/index';
+import { cartLineTotal, formatPrice, summarizeCartLines } from '#/core/index';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';
@@ -116,10 +116,7 @@ function StepIndicator({ currentStep, t }) {
 
 function OrderSummary({ cart, currency, locale, t }) {
   const lines = cart?.lines ?? [];
-  const subtotalCents = lines.reduce(
-    (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-    0
-  );
+  const { subtotalCents } = summarizeCartLines(lines);
 
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-md ring-1 ring-stone-200/60">
@@ -145,11 +142,7 @@ function OrderSummary({ cart, currency, locale, t }) {
                 </p>
               </div>
               <p className="text-sm font-semibold text-stone-900">
-                {formatPrice(
-                  line.priceCentsSnapshot * line.quantity,
-                  currency,
-                  locale
-                )}
+                {formatPrice(cartLineTotal(line), currency, locale)}
               </p>
             </li>
           ))}
@@ -608,11 +601,7 @@ function PaymentStep({
     session?.paymentProvider ?? paymentProviders?.[0]?.id ?? 'stripe';
 
   const displayTotal =
-    totals?.totalCents ??
-    cart?.lines?.reduce(
-      (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-      0
-    );
+    totals?.totalCents ?? summarizeCartLines(cart?.lines).subtotalCents;
 
   return (
     <Form method="post" className="space-y-6">
@@ -703,11 +692,7 @@ function ReviewStep({
     totals?.shippingCents ?? selectedOption?.priceCents ?? 0;
 
   const subtotalCents =
-    totals?.subtotalCents ??
-    lines.reduce(
-      (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-      0
-    );
+    totals?.subtotalCents ?? summarizeCartLines(lines).subtotalCents;
   const discountCents = totals?.discountCents ?? 0;
   const taxCents = totals?.taxCents ?? 0;
   const storeCreditCents = totals?.storeCreditCents ?? 0;
@@ -787,11 +772,7 @@ function ReviewStep({
                 </p>
               </div>
               <p className="text-sm font-medium text-stone-900">
-                {formatPrice(
-                  line.priceCentsSnapshot * line.quantity,
-                  currency,
-                  locale
-                )}
+                {formatPrice(cartLineTotal(line), currency, locale)}
               </p>
             </li>
           ))}

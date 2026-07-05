@@ -4,6 +4,7 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 
+import { cartLineTotal } from '#/core/cart/lines';
 import { expandBundleInventoryItems } from '#/core/catalog/types.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { persistOrderDiscounts } from '#/core/discounts/index.server';
@@ -106,7 +107,6 @@ export async function placeOrder(
 
   const preTotals = await computeTotals({
     cart: preSession.cart,
-    cartId: preSession.cart.id,
     shippingAddress: preShippingAddress,
     couponCode: preSession.couponCode ?? undefined,
     shippingOptionId: preShippingOption?.id ?? undefined,
@@ -167,7 +167,6 @@ export async function placeOrder(
 
     const totals = await computeTotals({
       cart,
-      cartId,
       shippingAddress,
       couponCode: session.couponCode ?? undefined,
       shippingOptionId: shippingOption?.id ?? undefined,
@@ -294,7 +293,7 @@ export async function placeOrder(
 
     // 6. Create OrderLine rows from cart lines
     for (const line of lines) {
-      const lineTotalCents = line.priceCentsSnapshot * line.quantity;
+      const lineTotalCents = cartLineTotal(line);
       await tx.orderLine.create({
         data: {
           orderId: order.id,

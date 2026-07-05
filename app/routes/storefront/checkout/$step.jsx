@@ -77,7 +77,6 @@ function buildTotalsParams(session, cart, shippingAddress) {
 
   return {
     cart,
-    cartId: cart.id,
     shippingAddress,
     couponCode: session.couponCode ?? undefined,
     shippingOptionId: shippingOption?.id ?? undefined,

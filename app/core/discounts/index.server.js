@@ -4,6 +4,8 @@
 import { equalsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
 
+import { summarizeCartLines } from '#/core/cart/lines';
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -63,17 +65,6 @@ function validateDiscountConstraints(
   }
 }
 
-function summarizeCartLines(lines = []) {
-  return lines.reduce(
-    (acc, line) => {
-      acc.subtotalCents += line.priceCentsSnapshot * line.quantity;
-      acc.totalQuantity += line.quantity;
-      return acc;
-    },
-    { subtotalCents: 0, totalQuantity: 0 }
-  );
-}
-
 async function findDiscountByCode(code) {
   return prisma.discount.findFirst({
     where: { code: equalsFilter(code) },
@@ -102,7 +93,7 @@ function calculateDiscountAmount(discount, subtotalCents, lines = []) {
     const getQty = rules.getQuantity ?? 1;
     const getPercent = rules.getDiscountPercent ?? 100;
 
-    const totalQty = lines.reduce((sum, l) => sum + (l.quantity ?? 0), 0);
+    const { totalQuantity: totalQty } = summarizeCartLines(lines);
     const sets = Math.floor(totalQty / (buyQty + getQty));
     if (sets <= 0) return { discountCents: 0, freeShipping: false };
 
@@ -191,8 +182,6 @@ function applyStackingRules(candidates, subtotalCents) {
  *   cart: object,
  *   couponCodes?: string[],
  *   couponCode?: string,
- *   cartId?: string,
- *   customerId?: string,
  *   customerGroupId?: string,
  * }} params
  * @returns {Promise<{
@@ -206,8 +195,6 @@ export async function resolvePromotions({
   cart,
   couponCodes = [],
   couponCode,
-  cartId,
-  customerId: _customerId,
   customerGroupId = null,
 }) {
   const lines = cart?.lines ?? [];
@@ -218,7 +205,7 @@ export async function resolvePromotions({
     [...couponCodes, couponCode].filter(Boolean).map((c) => c.toUpperCase())
   );
 
-  const [automaticDiscounts, codeDiscounts, cartDiscounts] = await Promise.all([
+  const [automaticDiscounts, codeDiscounts] = await Promise.all([
     prisma.discount.findMany({
       where: { automatic: true, active: true },
       orderBy: { priority: 'desc' },
@@ -231,22 +218,12 @@ export async function resolvePromotions({
           },
         })
       : Promise.resolve([]),
-    cartId
-      ? prisma.cartDiscount.findMany({
-          where: { cartId },
-          include: { discount: true },
-        })
-      : Promise.resolve([]),
   ]);
 
   const seen = new Set();
   const candidates = [];
 
-  const allDiscounts = [
-    ...automaticDiscounts,
-    ...codeDiscounts,
-    ...cartDiscounts.map((cd) => cd.discount),
-  ];
+  const allDiscounts = [...automaticDiscounts, ...codeDiscounts];
 
   for (const discount of allDiscounts) {
     if (!discount || seen.has(discount.id)) continue;
@@ -294,73 +271,6 @@ export async function resolvePromotions({
   return { applied, discountCents, freeShipping, primaryCode };
 }
 
-// ---------------------------------------------------------------------------
-// Cart discount management
-// ---------------------------------------------------------------------------
-
-/**
- * Apply a coupon code to a cart (creates CartDiscount row).
- * @param {string} cartId
- * @param {string} code
- */
-export async function applyCouponToCart(cartId, code) {
-  const cart = await prisma.cart.findUnique({
-    where: { id: cartId },
-    include: { lines: true },
-  });
-  if (!cart) throw new Error('CART_NOT_FOUND');
-
-  const discount = await findDiscountByCode(code);
-  if (!discount) throw new Error('DISCOUNT_NOT_FOUND');
-
-  const { subtotalCents, totalQuantity } = summarizeCartLines(cart.lines);
-
-  validateDiscountConstraints(discount, {
-    subtotalCents,
-    currency: cart.currency,
-    totalQuantity,
-  });
-
-  const { discountCents } = calculateDiscountAmount(
-    discount,
-    subtotalCents,
-    cart.lines
-  );
-
-  return prisma.cartDiscount.upsert({
-    where: {
-      cartId_discountId: { cartId, discountId: discount.id },
-    },
-    create: {
-      cartId,
-      discountId: discount.id,
-      code: discount.code,
-      discountCents,
-    },
-    update: { code: discount.code, discountCents },
-  });
-}
-
-/**
- * @param {string} cartId
- * @param {string} discountId
- */
-export async function removeCouponFromCart(cartId, discountId) {
-  await prisma.cartDiscount.deleteMany({
-    where: { cartId, discountId },
-  });
-}
-
-/**
- * @param {string} cartId
- */
-export async function getCartDiscounts(cartId) {
-  return prisma.cartDiscount.findMany({
-    where: { cartId },
-    include: { discount: true },
-  });
-}
-
 /**
  * Persist applied promotions on an order inside a transaction.
  *
@@ -386,27 +296,6 @@ export async function persistOrderDiscounts(orderId, applied, tx) {
       data: { usedCount: { increment: 1 } },
     });
   }
-}
-
-// ---------------------------------------------------------------------------
-// applyDiscount (legacy single-coupon API)
-// ---------------------------------------------------------------------------
-
-export async function applyDiscount(code, { subtotalCents, currency }) {
-  const {
-    discountCents,
-    code: resolvedCode,
-    type,
-    value,
-    id,
-  } = await validateDiscount(code, { subtotalCents, currency });
-
-  await prisma.discount.update({
-    where: { id },
-    data: { usedCount: { increment: 1 } },
-  });
-
-  return { discountCents, code: resolvedCode, type, value };
 }
 
 // ---------------------------------------------------------------------------
@@ -478,6 +367,5 @@ export {
   applyStackingRules,
   validateDiscountConstraints,
   isDiscountActive,
-  summarizeCartLines,
   getDiscountLifecycleError,
 };

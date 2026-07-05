@@ -3,6 +3,8 @@
 
 import logger from '#/utils/logger.server';
 
+import { summarizeCartLines } from '#/core/cart/lines';
+
 const log = logger.child({ provider: 'paypal' });
 
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
@@ -59,10 +61,7 @@ export const paypalProvider = {
    * @returns {Promise<{ id: string, url: string }>}
    */
   async createCheckoutSession({ cart, orderId, successUrl, cancelUrl }) {
-    const totalCents = (cart?.lines ?? []).reduce(
-      (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-      0
-    );
+    const totalCents = summarizeCartLines(cart?.lines).subtotalCents;
 
     if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
       log.warn('PayPal credentials missing — returning dev fallback session');
