@@ -21,7 +21,7 @@ export { useT, translate } from '#/core/i18n/index';
 // formatPrice is a pure Intl helper — client-safe.
 export { formatPrice } from '#/core/currency/format';
 
-export { summarizeCartLines } from '#/core/cart/lines';
+export { cartLineTotal, summarizeCartLines } from '#/core/cart/lines';
 
 // -- Components -------------------------------------------------------------
 

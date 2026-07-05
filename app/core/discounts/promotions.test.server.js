@@ -8,9 +8,6 @@ vi.mock('#/libs/prisma.server', () => ({
       findMany: vi.fn(),
       findFirst: vi.fn(),
     },
-    cartDiscount: {
-      findMany: vi.fn(),
-    },
   },
 }));
 
@@ -48,7 +45,6 @@ function makeDiscount(overrides = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  prisma.cartDiscount.findMany.mockResolvedValue([]);
 });
 
 describe('isDiscountActive', () => {

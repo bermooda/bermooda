@@ -7,6 +7,8 @@ import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';
 
+import { cartLineTotal } from '#/core/cart/lines';
+
 const labels = {
   en: {
     preview: 'You left something behind',
@@ -78,7 +80,7 @@ export default function AbandonedCartEmail({
                   {line.title} × {line.quantity}
                 </Column>
                 <Column className="dark-mode-text text-right text-sm text-slate-700">
-                  {fmt(line.priceCentsSnapshot * line.quantity, currency)}
+                  {fmt(cartLineTotal(line), currency)}
                 </Column>
               </Row>
             ))}

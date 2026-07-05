@@ -12,7 +12,7 @@ import {
   resolveVariantPrice,
 } from '#/core/pricing/index.server';
 
-export { summarizeCartLines } from '#/core/cart/lines';
+export { cartLineTotal, summarizeCartLines } from '#/core/cart/lines';
 
 const CART_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
 

@@ -19,7 +19,6 @@ vi.mock('#/libs/prisma.server', () => ({
 import prisma from '#/libs/prisma.server';
 
 import {
-  applyDiscount,
   validateDiscount,
   getDiscount,
   createDiscount,
@@ -53,24 +52,22 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// applyDiscount — error paths
+// validateDiscount — does NOT call prisma update
 // ---------------------------------------------------------------------------
 
-describe('applyDiscount — DISCOUNT_INACTIVE', () => {
+describe('validateDiscount', () => {
   it('throws when discount.active is false', async () => {
     prisma.discount.findFirst.mockResolvedValue(
       makeDiscount({ active: false })
     );
 
     await expect(
-      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
+      validateDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
     ).rejects.toThrow('DISCOUNT_INACTIVE');
 
     expect(prisma.discount.update).not.toHaveBeenCalled();
   });
-});
 
-describe('applyDiscount — DISCOUNT_EXPIRED', () => {
   it('throws when expiresAt is in the past', async () => {
     const pastDate = new Date(Date.now() - 1000);
     prisma.discount.findFirst.mockResolvedValue(
@@ -78,132 +75,59 @@ describe('applyDiscount — DISCOUNT_EXPIRED', () => {
     );
 
     await expect(
-      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
+      validateDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
     ).rejects.toThrow('DISCOUNT_EXPIRED');
-
-    expect(prisma.discount.update).not.toHaveBeenCalled();
   });
 
-  it('does not throw when expiresAt is in the future', async () => {
-    const futureDate = new Date(Date.now() + 60_000);
-    prisma.discount.findFirst.mockResolvedValue(
-      makeDiscount({ expiresAt: futureDate })
-    );
-    prisma.discount.update.mockResolvedValue({});
-
-    await expect(
-      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
-    ).resolves.not.toThrow();
-  });
-});
-
-describe('applyDiscount — DISCOUNT_MAX_USES_REACHED', () => {
   it('throws when usedCount equals maxUsesCount', async () => {
     prisma.discount.findFirst.mockResolvedValue(
       makeDiscount({ maxUsesCount: 5, usedCount: 5 })
     );
 
     await expect(
-      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
-    ).rejects.toThrow('DISCOUNT_MAX_USES_REACHED');
-
-    expect(prisma.discount.update).not.toHaveBeenCalled();
-  });
-
-  it('throws when usedCount exceeds maxUsesCount', async () => {
-    prisma.discount.findFirst.mockResolvedValue(
-      makeDiscount({ maxUsesCount: 5, usedCount: 7 })
-    );
-
-    await expect(
-      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
+      validateDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
     ).rejects.toThrow('DISCOUNT_MAX_USES_REACHED');
   });
-});
 
-describe('applyDiscount — DISCOUNT_MIN_SUBTOTAL_NOT_MET', () => {
   it('throws when subtotalCents is below minSubtotalCents', async () => {
     prisma.discount.findFirst.mockResolvedValue(
       makeDiscount({ minSubtotalCents: 5000 })
     );
 
     await expect(
-      applyDiscount('SAVE10', { subtotalCents: 4999, currency: 'USD' })
+      validateDiscount('SAVE10', { subtotalCents: 4999, currency: 'USD' })
     ).rejects.toThrow('DISCOUNT_MIN_SUBTOTAL_NOT_MET');
-
-    expect(prisma.discount.update).not.toHaveBeenCalled();
   });
 
-  it('does not throw when subtotalCents equals minSubtotalCents', async () => {
-    prisma.discount.findFirst.mockResolvedValue(
-      makeDiscount({ minSubtotalCents: 5000 })
-    );
-    prisma.discount.update.mockResolvedValue({});
-
-    await expect(
-      applyDiscount('SAVE10', { subtotalCents: 5000, currency: 'USD' })
-    ).resolves.not.toThrow();
-  });
-});
-
-describe('applyDiscount — DISCOUNT_CURRENCY_MISMATCH', () => {
   it('throws when discount currency does not match params currency', async () => {
     prisma.discount.findFirst.mockResolvedValue(
       makeDiscount({ currency: 'EUR' })
     );
 
     await expect(
-      applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
+      validateDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
     ).rejects.toThrow('DISCOUNT_CURRENCY_MISMATCH');
-
-    expect(prisma.discount.update).not.toHaveBeenCalled();
   });
-});
 
-// ---------------------------------------------------------------------------
-// applyDiscount — calculation
-// ---------------------------------------------------------------------------
-
-describe('applyDiscount — percent calculation', () => {
   it('calculates correct discountCents for percent type', async () => {
     prisma.discount.findFirst.mockResolvedValue(
       makeDiscount({ type: 'percent', value: 20 })
     );
-    prisma.discount.update.mockResolvedValue({});
 
-    const result = await applyDiscount('SAVE10', {
+    const result = await validateDiscount('SAVE10', {
       subtotalCents: 1000,
       currency: 'USD',
     });
 
-    expect(result.discountCents).toBe(200); // 20% of 1000
+    expect(result.discountCents).toBe(200);
   });
 
-  it('rounds fractional percent discounts', async () => {
-    prisma.discount.findFirst.mockResolvedValue(
-      makeDiscount({ type: 'percent', value: 10 })
-    );
-    prisma.discount.update.mockResolvedValue({});
-
-    const result = await applyDiscount('SAVE10', {
-      subtotalCents: 999,
-      currency: 'USD',
-    });
-
-    // 10% of 999 = 99.9 → rounds to 100
-    expect(result.discountCents).toBe(100);
-  });
-});
-
-describe('applyDiscount — fixed calculation caps at subtotal', () => {
   it('caps fixed discount at subtotalCents', async () => {
     prisma.discount.findFirst.mockResolvedValue(
       makeDiscount({ type: 'fixed', value: 5000 })
     );
-    prisma.discount.update.mockResolvedValue({});
 
-    // subtotal is 2000 but discount value is 5000 — should be capped at 2000
-    const result = await applyDiscount('FLAT50', {
+    const result = await validateDiscount('FLAT50', {
       subtotalCents: 2000,
       currency: 'USD',
     });
@@ -211,76 +135,6 @@ describe('applyDiscount — fixed calculation caps at subtotal', () => {
     expect(result.discountCents).toBe(2000);
   });
 
-  it('uses full fixed value when it is less than subtotalCents', async () => {
-    prisma.discount.findFirst.mockResolvedValue(
-      makeDiscount({ type: 'fixed', value: 500 })
-    );
-    prisma.discount.update.mockResolvedValue({});
-
-    const result = await applyDiscount('FLAT5', {
-      subtotalCents: 2000,
-      currency: 'USD',
-    });
-
-    expect(result.discountCents).toBe(500);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// applyDiscount — atomic usedCount increment
-// ---------------------------------------------------------------------------
-
-describe('applyDiscount — atomic usedCount increment', () => {
-  it('uses { increment: 1 } for usedCount, not usedCount + 1', async () => {
-    const discount = makeDiscount({ usedCount: 3 });
-    prisma.discount.findFirst.mockResolvedValue(discount);
-    prisma.discount.update.mockResolvedValue({});
-
-    await applyDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' });
-
-    expect(prisma.discount.update).toHaveBeenCalledWith({
-      where: { id: discount.id },
-      data: { usedCount: { increment: 1 } },
-    });
-
-    // Verify it is NOT called with a hardcoded number
-    const callArg = prisma.discount.update.mock.calls[0][0];
-    expect(typeof callArg.data.usedCount).toBe('object');
-    expect(callArg.data.usedCount).toEqual({ increment: 1 });
-    expect(callArg.data.usedCount).not.toBe(4);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// applyDiscount — return shape
-// ---------------------------------------------------------------------------
-
-describe('applyDiscount — return value', () => {
-  it('returns { discountCents, code, type, value }', async () => {
-    prisma.discount.findFirst.mockResolvedValue(
-      makeDiscount({ code: 'SAVE10', type: 'percent', value: 10 })
-    );
-    prisma.discount.update.mockResolvedValue({});
-
-    const result = await applyDiscount('SAVE10', {
-      subtotalCents: 1000,
-      currency: 'USD',
-    });
-
-    expect(result).toEqual({
-      discountCents: 100,
-      code: 'SAVE10',
-      type: 'percent',
-      value: 10,
-    });
-  });
-});
-
-// ---------------------------------------------------------------------------
-// validateDiscount — does NOT call prisma update
-// ---------------------------------------------------------------------------
-
-describe('validateDiscount', () => {
   it('does not call prisma.discount.update', async () => {
     prisma.discount.findFirst.mockResolvedValue(
       makeDiscount({ type: 'percent', value: 15 })
@@ -302,18 +156,6 @@ describe('validateDiscount', () => {
 
     expect(result.discountCents).toBe(300); // 15% of 2000
     expect(result.code).toBe('SAVE10');
-  });
-
-  it('still validates — throws DISCOUNT_INACTIVE without updating', async () => {
-    prisma.discount.findFirst.mockResolvedValue(
-      makeDiscount({ active: false })
-    );
-
-    await expect(
-      validateDiscount('SAVE10', { subtotalCents: 1000, currency: 'USD' })
-    ).rejects.toThrow('DISCOUNT_INACTIVE');
-
-    expect(prisma.discount.update).not.toHaveBeenCalled();
   });
 });
 

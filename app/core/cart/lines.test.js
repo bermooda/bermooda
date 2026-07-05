@@ -2,7 +2,13 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { summarizeCartLines } from '#/core/cart/lines';
+import { cartLineTotal, summarizeCartLines } from '#/core/cart/lines';
+
+describe('cartLineTotal', () => {
+  it('returns priceCentsSnapshot multiplied by quantity', () => {
+    expect(cartLineTotal({ priceCentsSnapshot: 1000, quantity: 2 })).toBe(2000);
+  });
+});
 
 describe('summarizeCartLines', () => {
   it('returns subtotal and total quantity for cart lines', () => {

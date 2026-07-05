@@ -2,6 +2,7 @@
 
 import logger from '#/utils/logger.server';
 
+import { summarizeCartLines } from '#/core/cart/lines';
 import { registerProvider } from '#/core/shipping/index.server';
 
 const CARRIER_RATES = {
@@ -17,10 +18,7 @@ export const carrierProvider = {
     const country = shippingAddress?.country ?? 'US';
     const isDomestic = country === 'US';
     const zone = isDomestic ? 'domestic' : 'international';
-    const subtotalCents = cart.lines.reduce(
-      (sum, line) => sum + line.priceCentsSnapshot * line.quantity,
-      0
-    );
+    const { subtotalCents } = summarizeCartLines(cart.lines);
 
     const useLiveRates =
       process.env.CARRIER_LIVE_RATES === 'true' &&
