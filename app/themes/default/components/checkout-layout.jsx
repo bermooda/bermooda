@@ -4,6 +4,7 @@ import { Link, Form, useActionData, useNavigation } from 'react-router';
 
 import SlotBlocks from '#/components/storefront/slot-blocks';
 
+import { CHECKOUT_STEPS } from '#/core/checkout/session.js';
 import { useT } from '#/core/i18n/index';
 import { cartLineTotal, formatPrice, summarizeCartLines } from '#/core/index';
 import StorefrontShell, {
@@ -14,8 +15,6 @@ import StripePaymentElement from '#/themes/default/components/stripe-payment-ele
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-const STEPS = ['address', 'shipping', 'payment', 'review'];
 
 const STEP_BACK = {
   shipping: '/checkout/address',
@@ -44,12 +43,12 @@ function StepIndicator({ currentStep, t }) {
     t('checkout.steps.review'),
   ];
 
-  const currentIndex = STEPS.indexOf(currentStep);
+  const currentIndex = CHECKOUT_STEPS.indexOf(currentStep);
 
   return (
     <nav aria-label="Checkout steps" className="mb-10">
       <ol className="flex items-center">
-        {STEPS.map((step, index) => {
+        {CHECKOUT_STEPS.map((step, index) => {
           const isCompleted = index < currentIndex;
           const isCurrent = index === currentIndex;
 
@@ -91,7 +90,7 @@ function StepIndicator({ currentStep, t }) {
                   {stepLabels[index]}
                 </span>
               </div>
-              {index < STEPS.length - 1 && (
+              {index < CHECKOUT_STEPS.length - 1 && (
                 <div
                   className={clsx(
                     'mx-3 h-px flex-1',
