@@ -10,6 +10,7 @@ import {
   setSlug,
   setTranslation,
 } from '#/core/catalog/index.server';
+import { withTranslations } from '#/core/catalog/translations.server';
 
 export const RESERVED_PAGE_SLUGS = new Set([
   'search',
@@ -28,10 +29,6 @@ export const RESERVED_PAGE_SLUGS = new Set([
 ]);
 
 const PAGE_FIELDS = ['title', 'body', 'metaTitle', 'metaDescription'];
-
-function withTranslations(base, translationMap) {
-  return { ...base, ...translationMap };
-}
 
 async function attachPageLocale(page, locale) {
   const [translations, slugRow] = await Promise.all([
