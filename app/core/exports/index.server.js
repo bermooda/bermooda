@@ -4,7 +4,10 @@
 import prisma from '#/libs/prisma.server';
 import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
-import { parseDateRange } from '#/core/reporting/index.server';
+import {
+  buildCreatedAtFilter,
+  parseDateRange,
+} from '#/core/reporting/index.server';
 
 export const EXPORT_TYPES = ['orders', 'products', 'customers', 'inventory'];
 export const EXPORT_SCHEDULES = ['daily', 'weekly', 'monthly'];
@@ -269,7 +272,7 @@ export function serializeScheduledExport(
 export async function exportOrdersCsv(filters = {}) {
   const range = parseDateRange(filters);
   const orders = await prisma.order.findMany({
-    where: { createdAt: { gte: range.start, lte: range.end } },
+    where: { createdAt: buildCreatedAtFilter(range) },
     orderBy: { createdAt: 'desc' },
     select: {
       orderNumber: true,

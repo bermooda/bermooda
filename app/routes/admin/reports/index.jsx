@@ -13,7 +13,11 @@ import {
   deleteScheduledExport,
   queueScheduledExport,
 } from '#/core/exports/index.server';
-import { getDashboardReport } from '#/core/reporting/index.server';
+import {
+  getDashboardReport,
+  parseReportParams,
+} from '#/core/reporting/index.server';
+import { get } from '#/core/settings/index.server';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
@@ -31,18 +35,22 @@ export function meta() {
 export async function loader({ request }) {
   await authenticate(request);
   const url = new URL(request.url);
-  const startDate = url.searchParams.get('startDate') ?? undefined;
-  const endDate = url.searchParams.get('endDate') ?? undefined;
+  const params = parseReportParams(url.searchParams);
 
-  const [report, scheduledExportList] = await Promise.all([
-    getDashboardReport({ startDate, endDate }),
+  const [report, scheduledExportList, defaultCurrency] = await Promise.all([
+    getDashboardReport(params),
     listScheduledExports({ limit: 100 }),
+    get('defaultCurrency'),
   ]);
 
   return {
     report,
     scheduledExports: scheduledExportList.scheduledExports,
-    filters: { startDate: startDate ?? '', endDate: endDate ?? '' },
+    filters: {
+      startDate: params.startDate ?? '',
+      endDate: params.endDate ?? '',
+    },
+    defaultCurrency: defaultCurrency ?? 'USD',
     exportTypes: EXPORT_TYPES,
     exportSchedules: EXPORT_SCHEDULES,
   };
@@ -89,10 +97,10 @@ export async function action({ request }) {
   return { ok: false, error: 'Unknown intent.' };
 }
 
-function formatCents(cents) {
+function formatCents(cents, currency = 'USD') {
   return new Intl.NumberFormat('en', {
     style: 'currency',
-    currency: 'USD',
+    currency,
     minimumFractionDigits: 2,
   }).format(cents / 100);
 }
@@ -110,7 +118,8 @@ function MetricCard({ label, value, sub }) {
 }
 
 export default function AdminReportsRoute() {
-  const { report, scheduledExports, filters, exportTypes } = useLoaderData();
+  const { report, scheduledExports, filters, exportTypes, defaultCurrency } =
+    useLoaderData();
   const { overview, salesOverTime, salesByProduct, salesByCategory } = report;
 
   const exportQuery = new URLSearchParams();
@@ -152,24 +161,24 @@ export default function AdminReportsRoute() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Revenue"
-          value={formatCents(overview.revenueCents)}
+          value={formatCents(overview.revenueCents, defaultCurrency)}
           sub={`${overview.paidOrders} paid orders`}
         />
         <MetricCard
           label="Average order value"
-          value={formatCents(overview.aovCents)}
+          value={formatCents(overview.aovCents, defaultCurrency)}
         />
         <MetricCard
           label="Tax collected"
-          value={formatCents(overview.taxCents)}
+          value={formatCents(overview.taxCents, defaultCurrency)}
         />
         <MetricCard
           label="Discounts applied"
-          value={formatCents(overview.discountCents)}
+          value={formatCents(overview.discountCents, defaultCurrency)}
         />
         <MetricCard
           label="Refunds"
-          value={formatCents(overview.refundCents)}
+          value={formatCents(overview.refundCents, defaultCurrency)}
           sub={`${overview.refundCount} refunds`}
         />
         <MetricCard
@@ -190,9 +199,9 @@ export default function AdminReportsRoute() {
           rows={salesOverTime.map((row) => [
             row.date,
             row.orders,
-            formatCents(row.revenueCents),
-            formatCents(row.taxCents),
-            formatCents(row.discountCents),
+            formatCents(row.revenueCents, defaultCurrency),
+            formatCents(row.taxCents, defaultCurrency),
+            formatCents(row.discountCents, defaultCurrency),
           ])}
           empty="No sales in this period."
         />
@@ -202,7 +211,7 @@ export default function AdminReportsRoute() {
           rows={salesByProduct.map((row) => [
             row.title,
             row.quantity,
-            formatCents(row.revenueCents),
+            formatCents(row.revenueCents, defaultCurrency),
           ])}
           empty="No product sales in this period."
         />
@@ -211,7 +220,7 @@ export default function AdminReportsRoute() {
           headers={['Category', 'Revenue']}
           rows={salesByCategory.map((row) => [
             row.title,
-            formatCents(row.revenueCents),
+            formatCents(row.revenueCents, defaultCurrency),
           ])}
           empty="No category sales in this period."
         />
