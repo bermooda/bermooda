@@ -11,8 +11,16 @@ import {
 
 export async function loader({ request }) {
   await requireApiKey(request, ['admin']);
-  const subscriptions = await listSubscriptions();
-  return Response.json({ subscriptions, supportedEvents: WEBHOOK_EVENTS });
+
+  const url = new URL(request.url);
+  const page = parseInt(url.searchParams.get('page') ?? '1', 10);
+  const limit = Math.min(
+    parseInt(url.searchParams.get('limit') ?? '50', 10),
+    100
+  );
+
+  const result = await listSubscriptions({ page, limit });
+  return Response.json({ ...result, supportedEvents: WEBHOOK_EVENTS });
 }
 
 export async function action({ request }) {
@@ -33,9 +41,13 @@ export async function action({ request }) {
     const subscription = await createSubscription(body);
     return Response.json({ subscription }, { status: 201 });
   } catch (err) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 422 }
-    );
+    const status =
+      err.code === 'URL_REQUIRED' ||
+      err.code === 'SECRET_REQUIRED' ||
+      err.code === 'EVENTS_REQUIRED' ||
+      err.code === 'EVENTS_INVALID'
+        ? 422
+        : 422;
+    return Response.json({ error: err.message, code: err.code }, { status });
   }
 }
