@@ -4,6 +4,7 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { emit } from '#/core/events/index.server';
+import { hasMarketingConsent } from '#/core/gdpr/index.server';
 
 /**
  * @typedef {{ minOrders?: number, minSpentCents?: number, customerGroupId?: string }} SegmentRules
@@ -98,20 +99,10 @@ export async function resolveSegmentCustomers(segmentId) {
   const matched = [];
   for (const customer of customers) {
     if (!(await customerMatchesSegment(customer.id, rules))) continue;
-    const consent = parseConsent(customer.consentJson);
-    if (!consent.marketing) continue;
+    if (!hasMarketingConsent(customer.consentJson)) continue;
     matched.push(customer);
   }
   return matched;
-}
-
-function parseConsent(consentJson) {
-  try {
-    const parsed = JSON.parse(consentJson ?? '{}');
-    return { marketing: Boolean(parsed.marketing) };
-  } catch {
-    return { marketing: false };
-  }
 }
 
 export async function listCampaigns() {
@@ -293,8 +284,7 @@ export async function processAbandonedCarts() {
     const email = cart.customer?.email ?? cart.checkouts[0]?.email ?? null;
     if (!email) continue;
 
-    const consent = parseConsent(cart.customer?.consentJson);
-    if (!consent.marketing) continue;
+    if (!hasMarketingConsent(cart.customer?.consentJson)) continue;
 
     for (const sequence of sequences) {
       const sequenceCutoff = new Date(

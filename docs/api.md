@@ -252,6 +252,24 @@ Update customer details.
 
 **Body:** `{ "name": "Jane Doe", "phone": "+1555...", "preferredLocale": "en" }`
 
+#### `GET /api/admin/v1/customers/:id/consent`
+
+Get parsed consent flags and erasure state for a customer.
+
+#### `PATCH /api/admin/v1/customers/:id/consent`
+
+Update stored consent preferences.
+
+**Body:** `{ "analytics": true, "marketing": false }` — include only fields to change.
+
+#### `GET /api/admin/v1/customers/:id/data-export`
+
+Export all personal data for a customer as a portable JSON bundle.
+
+#### `POST /api/admin/v1/customers/:id/erase`
+
+Anonymize a customer's personal data while preserving order history. Returns `{ customerId, anonymizedEmail }`. Responds with `409` when the customer was already erased.
+
 ---
 
 ### Admin users
