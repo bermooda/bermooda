@@ -34,7 +34,7 @@ vi.mock('#/core/settings/index.server', () => ({
   get: mockSettingsGet,
 }));
 
-vi.mock('#/core/themes/resolve.server', () => ({
+vi.mock('#/core/themes/index.server', () => ({
   preloadStorefrontTheme: mockPreloadStorefrontTheme,
 }));
 

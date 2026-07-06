@@ -2,7 +2,7 @@ import { redirect } from 'react-router';
 import { Outlet, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
-import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { preloadStorefrontTheme } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {

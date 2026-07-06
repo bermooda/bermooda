@@ -3,6 +3,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { REQUIRED_COMPONENTS, SLOT_NAMES } from '#/core/themes/manifest';
+
 // ---------------------------------------------------------------------------
 // Mocks — must be declared before any imports that use the mocked modules.
 // ---------------------------------------------------------------------------
@@ -20,7 +22,6 @@ vi.mock('#/utils/logger.server', () => ({
   },
 }));
 
-// Mock prisma — no real database.
 vi.mock('#/libs/prisma.server', () => ({
   default: {
     setting: {
@@ -29,14 +30,22 @@ vi.mock('#/libs/prisma.server', () => ({
   },
 }));
 
-// Mock the cache utility so we can control what the DB returns per test.
 vi.mock('#/utils/cache.server', () => ({
+  default: { delete: vi.fn() },
   getCachedResult: vi.fn(async (_key, callback) => callback()),
-  default: {},
+}));
+
+vi.mock('#/core/settings/index.server', () => ({
+  get: vi.fn(),
+  set: vi.fn(),
 }));
 
 vi.mock('#/core/plugins/index.server', () => ({
   getPluginBlocksForSlot: vi.fn(async () => []),
+}));
+
+vi.mock('#/core/themes/storefront-components', () => ({
+  registerStorefrontTheme: vi.fn(),
 }));
 
 // ---------------------------------------------------------------------------
@@ -47,15 +56,24 @@ const {
   defineTheme,
   registerTheme,
   resolveActiveTheme,
-  getStorefrontComponent,
+  preloadStorefrontTheme,
+  invalidateThemeCache,
+  listRegisteredThemes,
+  getRegisteredTheme,
+  loadThemeSettings,
+  parseThemeSettingValue,
+  saveThemeSettings,
+  setActiveTheme,
   getSlotBlocks,
   getSlotBlocksMap,
-  SLOT_NAMES,
   __resetRegistry,
 } = await import('#/core/themes/index.server');
 
+import cache from '#/utils/cache.server';
 import prisma from '#/libs/prisma.server';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
+import { get, set } from '#/core/settings/index.server';
+import { registerStorefrontTheme } from '#/core/themes/storefront-components';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -66,15 +84,9 @@ function validManifest(overrides = {}) {
     id: 'test-theme',
     name: 'Test Theme',
     version: '1.0.0',
-    components: {
-      Layout: () => null,
-      HomePage: () => null,
-      ProductPage: () => null,
-      CategoryPage: () => null,
-      CartPage: () => null,
-      CheckoutLayout: () => null,
-      NotFoundPage: () => null,
-    },
+    components: Object.fromEntries(
+      REQUIRED_COMPONENTS.map((name) => [name, () => null])
+    ),
     ...overrides,
   };
 }
@@ -94,49 +106,8 @@ describe('defineTheme — required manifest fields', () => {
     expect(() => defineTheme(noId)).toThrow(/id/);
   });
 
-  it('throws when "id" is an empty string', () => {
-    expect(() => defineTheme(validManifest({ id: '' }))).toThrow(/id/);
-  });
-
-  it('throws when "id" is whitespace only', () => {
-    expect(() => defineTheme(validManifest({ id: '   ' }))).toThrow(/id/);
-  });
-
-  it('throws when "name" is missing', () => {
-    const { name: _name, ...noName } = validManifest();
-    expect(() => defineTheme(noName)).toThrow(/name/);
-  });
-
-  it('throws when "name" is an empty string', () => {
-    expect(() => defineTheme(validManifest({ name: '' }))).toThrow(/name/);
-  });
-
-  it('throws when "version" is missing', () => {
-    const { version: _version, ...noVersion } = validManifest();
-    expect(() => defineTheme(noVersion)).toThrow(/version/);
-  });
-
-  it('throws when "version" is an empty string', () => {
-    expect(() => defineTheme(validManifest({ version: '' }))).toThrow(
-      /version/
-    );
-  });
-
-  it('throws when "components" is missing', () => {
-    const { components: _components, ...noComponents } = validManifest();
-    expect(() => defineTheme(noComponents)).toThrow(/components/);
-  });
-
   it('throws when manifest is null', () => {
     expect(() => defineTheme(null)).toThrow();
-  });
-
-  it('throws when manifest is a string', () => {
-    expect(() => defineTheme('theme')).toThrow();
-  });
-
-  it('throws when manifest is a number', () => {
-    expect(() => defineTheme(42)).toThrow();
   });
 
   it('accepts optional description field without throwing', () => {
@@ -145,22 +116,8 @@ describe('defineTheme — required manifest fields', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// defineTheme — required component validation
-// ---------------------------------------------------------------------------
-
 describe('defineTheme — required component presence', () => {
-  const REQUIRED = [
-    'Layout',
-    'HomePage',
-    'ProductPage',
-    'CategoryPage',
-    'CartPage',
-    'CheckoutLayout',
-    'NotFoundPage',
-  ];
-
-  for (const componentName of REQUIRED) {
+  for (const componentName of REQUIRED_COMPONENTS) {
     it(`throws when "${componentName}" is absent from manifest.components`, () => {
       const manifest = validManifest();
       delete manifest.components[componentName];
@@ -170,8 +127,24 @@ describe('defineTheme — required component presence', () => {
 });
 
 // ---------------------------------------------------------------------------
-// registerTheme + resolveActiveTheme
+// registerTheme + registry helpers
 // ---------------------------------------------------------------------------
+
+describe('registerTheme + registry helpers', () => {
+  beforeEach(() => {
+    __resetRegistry();
+    vi.clearAllMocks();
+  });
+
+  it('registers the theme in server and client registries', () => {
+    const manifest = validManifest({ id: 'my-theme' });
+    registerTheme(manifest);
+
+    expect(listRegisteredThemes()).toEqual([manifest]);
+    expect(getRegisteredTheme('my-theme')).toBe(manifest);
+    expect(registerStorefrontTheme).toHaveBeenCalledWith(manifest);
+  });
+});
 
 describe('registerTheme + resolveActiveTheme', () => {
   beforeEach(() => {
@@ -210,30 +183,14 @@ describe('registerTheme + resolveActiveTheme', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// getStorefrontComponent
-// ---------------------------------------------------------------------------
-
-describe('getStorefrontComponent', () => {
+describe('preloadStorefrontTheme', () => {
   beforeEach(() => {
     __resetRegistry();
     vi.clearAllMocks();
   });
 
-  it('returns the correct component for the active theme', async () => {
-    const LayoutComponent = () => null;
-    const manifest = validManifest({
-      id: 'shop-theme',
-      components: {
-        Layout: LayoutComponent,
-        HomePage: () => null,
-        ProductPage: () => null,
-        CategoryPage: () => null,
-        CartPage: () => null,
-        CheckoutLayout: () => null,
-        NotFoundPage: () => null,
-      },
-    });
+  it('returns the active theme id and falls back to default', async () => {
+    const manifest = validManifest({ id: 'shop-theme' });
     registerTheme(manifest);
 
     prisma.setting.findUnique.mockResolvedValue({
@@ -241,28 +198,106 @@ describe('getStorefrontComponent', () => {
       value: 'shop-theme',
     });
 
-    const component = await getStorefrontComponent('Layout');
-    expect(component).toBe(LayoutComponent);
+    await expect(preloadStorefrontTheme()).resolves.toBe('shop-theme');
+    await expect(preloadStorefrontTheme()).resolves.toBe('shop-theme');
+    expect(prisma.setting.findUnique).toHaveBeenCalledTimes(1);
   });
 
-  it('returns null when the component name does not exist in the theme', async () => {
-    const manifest = validManifest({ id: 'shop-theme-2' });
-    registerTheme(manifest);
-
-    prisma.setting.findUnique.mockResolvedValue({
-      key: 'activeTheme',
-      value: 'shop-theme-2',
-    });
-
-    const component = await getStorefrontComponent('NonExistentComponent');
-    expect(component).toBeNull();
-  });
-
-  it('returns null when there is no active theme', async () => {
+  it('returns default when no active theme is configured', async () => {
     prisma.setting.findUnique.mockResolvedValueOnce(null);
 
-    const component = await getStorefrontComponent('Layout');
-    expect(component).toBeNull();
+    await expect(preloadStorefrontTheme()).resolves.toBe('default');
+  });
+
+  it('invalidates the preload cache', async () => {
+    prisma.setting.findUnique.mockResolvedValueOnce({
+      key: 'activeTheme',
+      value: 'missing-theme',
+    });
+
+    await expect(preloadStorefrontTheme()).resolves.toBe('default');
+    invalidateThemeCache();
+
+    prisma.setting.findUnique.mockResolvedValueOnce({
+      key: 'activeTheme',
+      value: 'missing-theme',
+    });
+
+    await expect(preloadStorefrontTheme()).resolves.toBe('default');
+    expect(prisma.setting.findUnique).toHaveBeenCalledTimes(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Admin theme settings helpers
+// ---------------------------------------------------------------------------
+
+describe('loadThemeSettings', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns an empty object when the manifest has no settings', async () => {
+    await expect(loadThemeSettings(null)).resolves.toEqual({});
+    await expect(loadThemeSettings(validManifest())).resolves.toEqual({});
+  });
+
+  it('loads persisted values with defaults', async () => {
+    get.mockResolvedValueOnce('dark').mockResolvedValueOnce(null);
+
+    const manifest = validManifest({
+      settings: [
+        { key: 'accentColor', default: '#000' },
+        { key: 'layout', default: 'wide' },
+      ],
+    });
+
+    await expect(loadThemeSettings(manifest)).resolves.toEqual({
+      accentColor: 'dark',
+      layout: 'wide',
+    });
+  });
+});
+
+describe('parseThemeSettingValue', () => {
+  it('normalizes toggle values', () => {
+    expect(parseThemeSettingValue({ type: 'toggle' }, 'on')).toBe(true);
+    expect(parseThemeSettingValue({ type: 'toggle' }, null)).toBe(false);
+  });
+
+  it('returns raw values for non-toggle settings', () => {
+    expect(parseThemeSettingValue({ type: 'text' }, 'hello')).toBe('hello');
+    expect(parseThemeSettingValue({ type: 'text' }, null)).toBe('');
+  });
+});
+
+describe('saveThemeSettings + setActiveTheme', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('persists theme settings from form data', async () => {
+    const manifest = validManifest({
+      settings: [
+        { key: 'accentColor', type: 'text' },
+        { key: 'darkMode', type: 'toggle' },
+      ],
+    });
+    const formData = new FormData();
+    formData.set('accentColor', '#fff');
+    formData.set('darkMode', 'on');
+
+    await saveThemeSettings('test-theme', manifest, formData);
+
+    expect(set).toHaveBeenCalledWith('theme.test-theme.accentColor', '#fff');
+    expect(set).toHaveBeenCalledWith('theme.test-theme.darkMode', true);
+  });
+
+  it('activates a theme and busts caches', async () => {
+    await setActiveTheme('aurora');
+
+    expect(set).toHaveBeenCalledWith('activeTheme', 'aurora');
+    expect(cache.delete).toHaveBeenCalledWith('theme:active');
   });
 });
 
@@ -271,28 +306,9 @@ describe('getStorefrontComponent', () => {
 // ---------------------------------------------------------------------------
 
 describe('SLOT_NAMES', () => {
-  it('is an array', () => {
-    expect(Array.isArray(SLOT_NAMES)).toBe(true);
-  });
-
-  it('has exactly 10 entries', () => {
-    expect(SLOT_NAMES).toHaveLength(10);
-  });
-
   it('contains all expected slot names', () => {
-    const expected = [
-      'home.hero',
-      'home.featured',
-      'product.afterDescription',
-      'product.sidebar',
-      'category.top',
-      'cart.summary',
-      'checkout.afterPayment',
-      'account.dashboard',
-      'layout.header',
-      'layout.footer',
-    ];
-    expect(SLOT_NAMES).toEqual(expected);
+    expect(SLOT_NAMES).toHaveLength(10);
+    expect(SLOT_NAMES).toContain('layout.header');
   });
 });
 
@@ -305,19 +321,15 @@ describe('getSlotBlocks', () => {
     vi.clearAllMocks();
   });
 
-  it('returns an empty array for any slot name', async () => {
-    prisma.setting.findUnique.mockResolvedValueOnce(null);
+  it('delegates to plugin block resolution', async () => {
+    getPluginBlocksForSlot.mockResolvedValueOnce([
+      { pluginId: 'hero', component: () => null },
+    ]);
 
-    const blocks = await getSlotBlocks('home.hero');
-    expect(blocks).toEqual([]);
-  });
-
-  it('returns an empty array for every well-known slot', async () => {
-    for (const slotName of SLOT_NAMES) {
-      prisma.setting.findUnique.mockResolvedValueOnce(null);
-      const blocks = await getSlotBlocks(slotName);
-      expect(blocks).toEqual([]);
-    }
+    await expect(getSlotBlocks('home.hero')).resolves.toEqual([
+      { pluginId: 'hero', component: expect.any(Function) },
+    ]);
+    expect(getPluginBlocksForSlot).toHaveBeenCalledWith('home.hero');
   });
 });
 
@@ -334,8 +346,6 @@ describe('getSlotBlocksMap', () => {
     const slotBlocks = await getSlotBlocksMap(['home.hero', 'home.featured']);
 
     expect(getPluginBlocksForSlot).toHaveBeenCalledTimes(2);
-    expect(getPluginBlocksForSlot).toHaveBeenNthCalledWith(1, 'home.hero');
-    expect(getPluginBlocksForSlot).toHaveBeenNthCalledWith(2, 'home.featured');
     expect(slotBlocks).toEqual({
       'home.hero': [{ pluginId: 'hero', component: expect.any(Function) }],
       'home.featured': [

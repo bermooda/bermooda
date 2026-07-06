@@ -1,45 +1,19 @@
 // app/core/themes/index.server.js
 // Theme loader: define, register, and resolve storefront themes.
 
-import { getCachedResult } from '#/utils/cache.server';
+import cache, { getCachedResult } from '#/utils/cache.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
+import { get, set } from '#/core/settings/index.server';
+import {
+  REQUIRED_COMPONENTS,
+  REQUIRED_MANIFEST_FIELDS,
+  SLOT_NAMES,
+} from '#/core/themes/manifest';
+import { registerStorefrontTheme } from '#/core/themes/storefront-components';
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-/**
- * Well-known slot names available for plugin blocks.
- * @type {string[]}
- */
-export const SLOT_NAMES = [
-  'home.hero',
-  'home.featured',
-  'product.afterDescription',
-  'product.sidebar',
-  'category.top',
-  'cart.summary',
-  'checkout.afterPayment',
-  'account.dashboard',
-  'layout.header',
-  'layout.footer',
-];
-
-/** Required top-level fields in a theme manifest. */
-const REQUIRED_FIELDS = ['id', 'name', 'version', 'components'];
-
-/** Required component names that every theme must supply. */
-const REQUIRED_COMPONENTS = [
-  'Layout',
-  'HomePage',
-  'ProductPage',
-  'CategoryPage',
-  'CartPage',
-  'CheckoutLayout',
-  'NotFoundPage',
-];
+export { SLOT_NAMES };
 
 // ---------------------------------------------------------------------------
 // In-memory theme registry
@@ -47,6 +21,10 @@ const REQUIRED_COMPONENTS = [
 
 /** @type {Map<string, object>} theme id → validated manifest */
 const _registry = new Map();
+
+let cachedThemeId = null;
+let cachedAt = 0;
+const PRELOAD_CACHE_TTL_MS = 60_000;
 
 // ---------------------------------------------------------------------------
 // defineTheme
@@ -64,7 +42,7 @@ export function defineTheme(manifest) {
     throw new TypeError('defineTheme: manifest must be a non-null object');
   }
 
-  for (const field of REQUIRED_FIELDS) {
+  for (const field of REQUIRED_MANIFEST_FIELDS) {
     if (!manifest[field]) {
       throw new Error(
         `defineTheme: manifest is missing required field "${field}"`
@@ -72,7 +50,6 @@ export function defineTheme(manifest) {
     }
   }
 
-  // Validate string fields are non-empty
   for (const field of ['id', 'name', 'version']) {
     if (typeof manifest[field] !== 'string' || !manifest[field].trim()) {
       throw new Error(
@@ -106,8 +83,32 @@ export function defineTheme(manifest) {
 export function registerTheme(manifest) {
   const validated = defineTheme(manifest);
   _registry.set(validated.id, validated);
+  registerStorefrontTheme(validated);
   logger.info({ themeId: validated.id }, 'Theme registered');
   return validated;
+}
+
+// ---------------------------------------------------------------------------
+// Registry helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns all registered theme manifests.
+ *
+ * @returns {object[]}
+ */
+export function listRegisteredThemes() {
+  return Array.from(_registry.values());
+}
+
+/**
+ * Returns a registered theme manifest by id, or null.
+ *
+ * @param {string} themeId
+ * @returns {object|null}
+ */
+export function getRegisteredTheme(themeId) {
+  return _registry.get(themeId) ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -137,20 +138,99 @@ export async function resolveActiveTheme() {
   return _registry.get(themeId) ?? null;
 }
 
+/**
+ * Resolve and cache the active theme id for the current process.
+ * @returns {Promise<string>}
+ */
+export async function preloadStorefrontTheme() {
+  if (cachedThemeId && Date.now() - cachedAt < PRELOAD_CACHE_TTL_MS) {
+    return cachedThemeId;
+  }
+
+  const theme = await resolveActiveTheme();
+  cachedThemeId = theme?.id ?? 'default';
+  cachedAt = Date.now();
+  return cachedThemeId;
+}
+
+export function invalidateThemeCache() {
+  cachedThemeId = null;
+  cachedAt = 0;
+}
+
 // ---------------------------------------------------------------------------
-// getStorefrontComponent
+// Admin theme settings
 // ---------------------------------------------------------------------------
 
 /**
- * Resolves a component by name from the active theme.
+ * Loads persisted values for a theme's manifest-driven settings.
  *
- * @param {string} name - component name (e.g. "Layout")
- * @returns {Promise<unknown|null>} the component value or null
+ * @param {object|null} manifest
+ * @returns {Promise<Record<string, unknown>>}
  */
-export async function getStorefrontComponent(name) {
-  const theme = await resolveActiveTheme();
-  if (!theme) return null;
-  return theme.components[name] ?? null;
+export async function loadThemeSettings(manifest) {
+  if (!manifest?.settings?.length) return {};
+
+  const entries = await Promise.all(
+    manifest.settings.map(async (setting) => {
+      const value = await get(`theme.${manifest.id}.${setting.key}`);
+      return [setting.key, value ?? setting.default ?? ''];
+    })
+  );
+
+  return Object.fromEntries(entries);
+}
+
+/**
+ * Normalizes a single theme setting value from form data.
+ *
+ * @param {object} setting
+ * @param {FormDataEntryValue|null} raw
+ * @returns {unknown}
+ */
+export function parseThemeSettingValue(setting, raw) {
+  if (setting.type === 'toggle') {
+    return raw === 'on';
+  }
+
+  return raw ?? '';
+}
+
+/**
+ * Persists theme settings from an admin form submission.
+ *
+ * @param {string} themeId
+ * @param {object} manifest
+ * @param {FormData} formData
+ * @returns {Promise<void>}
+ */
+export async function saveThemeSettings(themeId, manifest, formData) {
+  if (!manifest?.settings?.length) {
+    throw new Error('No settings for theme');
+  }
+
+  await Promise.all(
+    manifest.settings.map(async (setting) => {
+      const value = parseThemeSettingValue(setting, formData.get(setting.key));
+      await set(`theme.${themeId}.${setting.key}`, value);
+    })
+  );
+}
+
+/**
+ * Activates a theme by id and busts resolution caches.
+ *
+ * @param {string} themeId
+ * @returns {Promise<void>}
+ */
+export async function setActiveTheme(themeId) {
+  if (!themeId) {
+    throw new Error('Missing themeId');
+  }
+
+  await set('activeTheme', themeId);
+  cache.delete('theme:active');
+  invalidateThemeCache();
 }
 
 // ---------------------------------------------------------------------------
@@ -159,12 +239,8 @@ export async function getStorefrontComponent(name) {
 
 /**
  * Returns the ordered list of plugin blocks for a given slot.
- * Reads `Setting.pluginOrder` (TTL-cached) and filters to plugins that
- * contribute to the requested slot. Returns `{ pluginId, component }[]`.
  *
- * Phase 5 will wire in real plugin block resolution; for now returns [].
- *
- * @param {string} _slotName
+ * @param {string} slotName
  * @returns {Promise<Array<{ pluginId: string, component: unknown }>>}
  */
 export async function getSlotBlocks(slotName) {
@@ -189,10 +265,9 @@ export async function getSlotBlocksMap(slotNames = []) {
 // Internal exports (for testing)
 // ---------------------------------------------------------------------------
 
-// Exported only for testing — never call in production code.
 export function __resetRegistry() {
   _registry.clear();
+  invalidateThemeCache();
 }
 
-// Admin-only export: exposes all registered themes for the admin UI.
 export { _registry };
