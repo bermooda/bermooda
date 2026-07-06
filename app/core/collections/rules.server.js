@@ -10,6 +10,68 @@
  * @param {string|CollectionRules|null|undefined} rulesJson
  * @returns {CollectionRules}
  */
+function normalizeCollectionCondition(condition) {
+  const { type, value } = condition ?? {};
+  if (type === 'price_min' || type === 'price_max') {
+    return { type, value: Number(value) };
+  }
+  if (type === 'in_stock') {
+    return {
+      type,
+      value: value === true || value === 'true' || value === '1' || value === 1,
+    };
+  }
+  return { type, value: String(value) };
+}
+
+/**
+ * Parse structured rules input from admin forms or API payloads.
+ *
+ * @param {CollectionRules|null|undefined} rules
+ * @returns {CollectionRules}
+ */
+export function parseCollectionRulesInput(rules) {
+  if (!rules || typeof rules !== 'object') {
+    return { match: 'all', conditions: [] };
+  }
+
+  const match = rules.match === 'any' ? 'any' : 'all';
+  const conditions = Array.isArray(rules.conditions)
+    ? rules.conditions
+        .filter(
+          (condition) =>
+            condition?.type && condition.value !== '' && condition.value != null
+        )
+        .map(normalizeCollectionCondition)
+    : [];
+
+  return { match, conditions };
+}
+
+/**
+ * Parse smart collection rules from an admin form submission.
+ *
+ * @param {FormData} formData
+ * @returns {CollectionRules}
+ */
+export function parseCollectionRulesFromForm(formData) {
+  const match =
+    formData.get('rulesMatch')?.toString() === 'any' ? 'any' : 'all';
+  const conditions = [];
+  let index = 0;
+
+  while (formData.has(`ruleType[${index}]`)) {
+    const type = formData.get(`ruleType[${index}]`)?.toString();
+    const value = formData.get(`ruleValue[${index}]`)?.toString();
+    if (type && value !== '') {
+      conditions.push(normalizeCollectionCondition({ type, value }));
+    }
+    index += 1;
+  }
+
+  return { match, conditions };
+}
+
 export function parseCollectionRules(rulesJson) {
   try {
     const parsed =
