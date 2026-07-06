@@ -8,7 +8,6 @@ import {
   ADMIN_ROLES,
   ADMIN_WILDCARD,
   DEFAULT_ROLE_PERMISSIONS,
-  SETTINGS_MANAGE_PERMISSION,
 } from '#/core/rbac/defaults';
 
 export {

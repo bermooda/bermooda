@@ -80,9 +80,9 @@ describe('rbac', () => {
     expect(() => parseCreateAdminUserInput({ email: '' })).toThrow(
       /Email is required/
     );
-    expect(() =>
-      parseCreateAdminUserInput({ email: 'not-an-email' })
-    ).toThrow(/valid email/);
+    expect(() => parseCreateAdminUserInput({ email: 'not-an-email' })).toThrow(
+      /valid email/
+    );
     expect(parseCreateAdminUserInput({ email: 'admin@example.com' })).toEqual({
       email: 'admin@example.com',
       name: null,
@@ -141,9 +141,9 @@ describe('rbac', () => {
   it('updateAdminUserRole returns 404 when user missing', async () => {
     prisma.user.findUnique.mockResolvedValue(null);
 
-    await expect(
-      updateAdminUserRole('missing', 'admin')
-    ).rejects.toMatchObject({ code: 'USER_NOT_FOUND', status: 404 });
+    await expect(updateAdminUserRole('missing', 'admin')).rejects.toMatchObject(
+      { code: 'USER_NOT_FOUND', status: 404 }
+    );
   });
 
   it('updateAdminUserRole updates role', async () => {
