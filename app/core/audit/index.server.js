@@ -3,7 +3,7 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import { WEBHOOK_EVENTS } from '#/core/webhooks/index.server';
+import { DOMAIN_EVENTS } from '#/core/events/names';
 
 const ENTITY_TYPE_BY_EVENT = {
   'order.created': 'order',
@@ -174,7 +174,7 @@ export async function listAuditLogs({
  * @param {{ on: Function }} bus
  */
 export function registerAuditSubscribers({ on }) {
-  for (const event of WEBHOOK_EVENTS) {
+  for (const event of DOMAIN_EVENTS) {
     on(event, async (payload) => {
       await recordAuditLog({
         actorType: 'system',

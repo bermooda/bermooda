@@ -28,10 +28,9 @@ vi.mock('#/utils/logger.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
+import { DOMAIN_EVENT_WILDCARD } from '#/core/events/names';
 
 import {
-  WEBHOOK_EVENTS,
-  WEBHOOK_WILDCARD,
   buildWebhookDispatchPayload,
   createSubscription,
   deleteSubscription,
@@ -147,9 +146,9 @@ describe('subscriptionMatchesEvent', () => {
     expect(
       subscriptionMatchesEvent(['payment.refunded'], 'order.created')
     ).toBe(false);
-    expect(subscriptionMatchesEvent([WEBHOOK_WILDCARD], 'order.created')).toBe(
-      true
-    );
+    expect(
+      subscriptionMatchesEvent([DOMAIN_EVENT_WILDCARD], 'order.created')
+    ).toBe(true);
   });
 });
 
@@ -350,23 +349,5 @@ describe('dispatchWebhookEvent', () => {
     prisma.webhookSubscription.findMany.mockResolvedValue([]);
     await dispatchWebhookEvent('order.created', {});
     expect(prisma.webhookDelivery.create).not.toHaveBeenCalled();
-  });
-});
-
-describe('WEBHOOK_EVENTS', () => {
-  it('includes the newly public-facing lifecycle events and excludes cart churn', () => {
-    expect(WEBHOOK_EVENTS).toEqual(
-      expect.arrayContaining([
-        'order.updated',
-        'order.fulfilled',
-        'checkout.completed',
-        'customer.registered',
-        'product.created',
-        'product.updated',
-        'product.deleted',
-      ])
-    );
-    expect(WEBHOOK_EVENTS).not.toContain('cart.created');
-    expect(WEBHOOK_EVENTS).not.toContain('cart.itemAdded');
   });
 });

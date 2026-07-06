@@ -7,11 +7,11 @@ import { Link, useFetcher, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import { revokeApiKey, listApiKeys } from '#/core/api-keys/index.server';
+import { DOMAIN_EVENTS } from '#/core/events/names';
 import {
   deleteSubscription,
   listSubscriptions,
   updateSubscription,
-  WEBHOOK_EVENTS,
 } from '#/core/webhooks/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
@@ -29,7 +29,7 @@ export async function loader({ request }) {
     listApiKeys(),
     listSubscriptions(),
   ]);
-  return { apiKeys, subscriptions, supportedEvents: WEBHOOK_EVENTS };
+  return { apiKeys, subscriptions, supportedEvents: DOMAIN_EVENTS };
 }
 
 // ---------------------------------------------------------------------------
