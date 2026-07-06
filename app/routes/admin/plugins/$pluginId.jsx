@@ -5,7 +5,7 @@ import { useLoaderData } from 'react-router';
 
 import { resolvePluginAdminRoute } from '#/core/plugins/admin-routes.client';
 import {
-  _registry,
+  getRegisteredPlugin,
   resolvePluginAdminRoute as resolveAdminRoute,
 } from '#/core/plugins/index.server';
 
@@ -20,13 +20,11 @@ export async function loader({ params, request }) {
   const { pluginId } = params;
   const splatPath = params['*'] ?? '';
 
-  const entry = _registry.get(pluginId);
+  const manifest = getRegisteredPlugin(pluginId);
 
-  if (!entry) {
+  if (!manifest) {
     return { status: 'not-found', pluginId };
   }
-
-  const { manifest } = entry;
 
   if (!manifest.adminRoutes && !resolveAdminRoute(pluginId, splatPath)) {
     return { status: 'no-admin-routes', pluginId, manifest };

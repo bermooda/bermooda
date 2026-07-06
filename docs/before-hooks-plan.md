@@ -591,7 +591,7 @@ alerts, per `.cursor/rules/alerting.mdc`).
 ### Admin route
 
 - Toggling enable/disable in the plugins action registers/deregisters live
-  (spy on `on`/`off` or assert via `loadPlugins().hooks`).
+  (spy on `on`/`off` or assert handlers via the event bus after `enable()`).
 
 Run targeted: `npm run test -- orders events plugins` (or the server project).
 Full preflight before any PR: `npm run lint` → `npm run build` → `npm run test`

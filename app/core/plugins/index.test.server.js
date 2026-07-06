@@ -21,6 +21,10 @@ vi.mock('#/utils/logger.server', () => ({
   },
 }));
 
+vi.mock('#/core/i18n/index.server', () => ({
+  loadMessages: vi.fn().mockResolvedValue({}),
+}));
+
 vi.mock('#/core/events/index.server', async () => {
   const actual = await vi.importActual('#/core/events/index.server');
   return {
@@ -104,10 +108,11 @@ const {
   defineProvider,
   defineProviders,
   register,
-  loadPlugins,
+  listRegisteredPlugins,
   resolvePluginAdminRoute,
-  resolvePluginRoute,
   resolvePluginStorefrontRoute,
+  sortPluginsByOrder,
+  buildFullPluginOrder,
   enable: _enable,
   disable: _disable,
   _registry,
@@ -404,24 +409,54 @@ describe('Plugin ctx — plugin.get / plugin.set / plugin.delete', () => {
 });
 
 // ---------------------------------------------------------------------------
-// loadPlugins — stable return shape
+// listRegisteredPlugins
 // ---------------------------------------------------------------------------
 
-describe('loadPlugins', () => {
+describe('listRegisteredPlugins', () => {
   beforeEach(() => {
     _registry.clear();
   });
 
-  it('returns { plugins: [], hooks: {} } when no plugins are registered', () => {
-    const result = loadPlugins();
-    expect(result).toEqual({ plugins: [], hooks: {} });
+  it('returns an empty array when no plugins are registered', () => {
+    expect(listRegisteredPlugins()).toEqual([]);
   });
 
   it('returns registered plugins after register()', () => {
     register(validManifest({ id: 'plugin-a', name: 'Plugin A' }));
-    const { plugins } = loadPlugins();
+    const plugins = listRegisteredPlugins();
     expect(plugins).toHaveLength(1);
     expect(plugins[0].id).toBe('plugin-a');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Plugin ordering helpers
+// ---------------------------------------------------------------------------
+
+describe('sortPluginsByOrder', () => {
+  it('orders plugins by stored pluginOrder with untracked ids last', () => {
+    const plugins = [
+      { id: 'b', name: 'B', version: '1.0.0' },
+      { id: 'a', name: 'A', version: '1.0.0' },
+      { id: 'c', name: 'C', version: '1.0.0' },
+    ];
+
+    expect(sortPluginsByOrder(plugins, ['c', 'a'])).toEqual([
+      { id: 'c', name: 'C', version: '1.0.0' },
+      { id: 'a', name: 'A', version: '1.0.0' },
+      { id: 'b', name: 'B', version: '1.0.0' },
+    ]);
+  });
+});
+
+describe('buildFullPluginOrder', () => {
+  it('appends untracked plugin ids after stored order', () => {
+    expect(
+      buildFullPluginOrder(
+        ['sample-analytics'],
+        ['meilisearch', 'sample-analytics']
+      )
+    ).toEqual(['sample-analytics', 'meilisearch']);
   });
 });
 
@@ -448,14 +483,6 @@ describe('resolvePluginAdminRoute', () => {
 
   it('returns null when no admin route matches', () => {
     expect(resolvePluginAdminRoute('sample-analytics', 'missing')).toBeNull();
-  });
-});
-
-describe('resolvePluginRoute', () => {
-  it('keeps the deprecated admin alias working', () => {
-    expect(resolvePluginRoute('sample-analytics', '')).toBe(
-      resolvePluginAdminRoute('sample-analytics', '')
-    );
   });
 });
 
@@ -493,7 +520,7 @@ describe('enable', () => {
     );
   });
 
-  it('persists enabled=true in settings and calls on() for each hook', async () => {
+  it('registers hooks and marks the plugin enabled', async () => {
     const handler = vi.fn();
     const manifest = validManifest({
       id: 'plugin-a',
@@ -501,24 +528,11 @@ describe('enable', () => {
       hooks: { 'order.created': handler },
     });
     register(manifest);
-    mockSetting.upsert.mockResolvedValue({});
 
     await _enable('plugin-a');
 
-    // Setting persisted
-    expect(mockSetting.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        create: expect.objectContaining({
-          key: 'plugin.plugin-a.enabled',
-          value: 'true',
-        }),
-      })
-    );
-
-    // Hook registered
-    const { on } = await import('#/core/events/index.server');
-    expect(on).toBeDefined();
     const entry = _registry.get('plugin-a');
+    expect(entry.isEnabled).toBe(true);
     expect(entry.handlers.get('order.created')).toBe(handler);
   });
 
@@ -536,7 +550,6 @@ describe('enable', () => {
       },
     });
     register(manifest);
-    mockSetting.upsert.mockResolvedValue({});
 
     await _enable('plugin-before');
 
@@ -565,7 +578,6 @@ describe('enable', () => {
       },
     });
     register(manifest);
-    mockSetting.upsert.mockResolvedValue({});
 
     await _enable('plugin-before-2');
 
@@ -586,7 +598,6 @@ describe('enable', () => {
       onEnable,
     });
     register(manifest);
-    mockSetting.upsert.mockResolvedValue({});
 
     await _enable('plugin-b');
 
@@ -612,7 +623,6 @@ describe('enable', () => {
         },
       })
     );
-    mockSetting.upsert.mockResolvedValue({});
 
     await _enable('plugin-payment');
 
@@ -642,7 +652,6 @@ describe('enable', () => {
         onEnable,
       })
     );
-    mockSetting.upsert.mockResolvedValue({});
 
     await _enable('plugin-search');
 
@@ -657,8 +666,6 @@ describe('enable', () => {
   });
 
   it('is idempotent — second call does nothing when already enabled', async () => {
-    // The guard is `handlers.size > 0`, so the plugin must have at least one
-    // hook so the first enable() populates handlers and the second no-ops.
     const handler = vi.fn();
     const manifest = validManifest({
       id: 'plugin-c',
@@ -666,13 +673,12 @@ describe('enable', () => {
       hooks: { 'order.created': handler },
     });
     register(manifest);
-    mockSetting.upsert.mockResolvedValue({});
 
     await _enable('plugin-c');
-    await _enable('plugin-c'); // second call — should be a no-op
+    await _enable('plugin-c');
 
-    // upsert called only once (on first enable)
-    expect(mockSetting.upsert).toHaveBeenCalledOnce();
+    const entry = _registry.get('plugin-c');
+    expect(entry.handlers.size).toBe(1);
   });
 
   it('is idempotent for plugins that only register providers', async () => {
@@ -688,12 +694,10 @@ describe('enable', () => {
         },
       })
     );
-    mockSetting.upsert.mockResolvedValue({});
 
     await _enable('plugin-providers-only');
     await _enable('plugin-providers-only');
 
-    expect(mockSetting.upsert).toHaveBeenCalledOnce();
     expect(registerSearchProvider).toHaveBeenCalledOnce();
   });
 });
@@ -715,21 +719,13 @@ describe('disable', () => {
     );
   });
 
-  it('persists enabled=false in settings', async () => {
+  it('marks the plugin disabled and clears handlers', async () => {
     const manifest = validManifest({ id: 'plugin-d', name: 'Plugin D' });
     register(manifest);
-    mockSetting.upsert.mockResolvedValue({});
 
     await _disable('plugin-d');
 
-    expect(mockSetting.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        create: expect.objectContaining({
-          key: 'plugin.plugin-d.enabled',
-          value: 'false',
-        }),
-      })
-    );
+    expect(_registry.get('plugin-d').isEnabled).toBe(false);
   });
 
   it('calls off() for each registered handler and clears handlers', async () => {
@@ -740,15 +736,11 @@ describe('disable', () => {
       hooks: { 'order.created': handler },
     });
     register(manifest);
-    mockSetting.upsert.mockResolvedValue({});
 
-    // Enable first so handlers are registered
     await _enable('plugin-e');
     const wrappedHandler = _registry
       .get('plugin-e')
       .handlers.get('order.created');
-
-    mockSetting.upsert.mockResolvedValue({});
 
     await _disable('plugin-e');
 
@@ -771,7 +763,6 @@ describe('disable', () => {
       },
     });
     register(manifest);
-    mockSetting.upsert.mockResolvedValue({});
 
     await _enable('plugin-before-disable');
     await _disable('plugin-before-disable');
@@ -791,7 +782,6 @@ describe('disable', () => {
       onDisable,
     });
     register(manifest);
-    mockSetting.upsert.mockResolvedValue({});
 
     await _disable('plugin-f');
 
@@ -817,11 +807,9 @@ describe('disable', () => {
         },
       })
     );
-    mockSetting.upsert.mockResolvedValue({});
 
     await _enable('plugin-search-disable');
     vi.clearAllMocks();
-    mockSetting.upsert.mockResolvedValue({});
 
     await _disable('plugin-search-disable');
 
@@ -844,7 +832,6 @@ describe('disable', () => {
         },
       })
     );
-    mockSetting.upsert.mockResolvedValue({});
 
     await _enable('meilisearch-style');
 
@@ -855,7 +842,6 @@ describe('disable', () => {
     );
 
     vi.clearAllMocks();
-    mockSetting.upsert.mockResolvedValue({});
 
     await _disable('meilisearch-style');
 
