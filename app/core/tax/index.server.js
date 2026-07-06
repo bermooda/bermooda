@@ -68,6 +68,30 @@ export async function getTaxConfig() {
 }
 
 /**
+ * Parse admin/API tax settings payload.
+ *
+ * @param {object} input
+ * @returns {{ mode: string, regions: object[] }}
+ */
+export function parseTaxSettingsInput(input = {}) {
+  const rawRegions = input.taxRegions ?? input.regions;
+  let regions = [];
+
+  if (Array.isArray(rawRegions)) {
+    regions = rawRegions;
+  } else if (typeof rawRegions === 'string') {
+    try {
+      const parsed = JSON.parse(rawRegions);
+      if (Array.isArray(parsed)) regions = parsed;
+    } catch {
+      regions = [];
+    }
+  }
+
+  return loadTaxConfig(input.taxMode ?? input.mode, regions);
+}
+
+/**
  * @param {string|null|undefined} vatId
  */
 export function isVatExempt(vatId) {

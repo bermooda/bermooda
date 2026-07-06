@@ -2,6 +2,11 @@ import 'dotenv/config';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import bcrypt from 'bcryptjs';
 
+import {
+  DEFAULT_ENABLED_PLUGINS,
+  DEFAULT_PLUGIN_ORDER,
+  SETTING_DEFAULTS,
+} from '../app/core/settings/defaults.js';
 import { PrismaClient } from './generated/client.ts';
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL });
@@ -168,12 +173,21 @@ async function main() {
 
   console.log(`Admin user: ${admin.email} (id: ${admin.id})`);
 
-  await upsertSetting('defaultCurrency', 'USD');
-  await upsertSetting('currencies', ['USD', 'EUR', 'AUD']);
-  await upsertSetting('defaultLocale', 'en');
-  await upsertSetting('activeTheme', 'default');
-  await upsertSetting('pluginOrder', ['sample-analytics']);
-  await upsertSetting('enabledPlugins', ['sample-analytics']);
+  await upsertSetting('defaultCurrency', SETTING_DEFAULTS.defaultCurrency);
+  await upsertSetting('currencies', SETTING_DEFAULTS.currencies);
+  await upsertSetting('defaultLocale', SETTING_DEFAULTS.defaultLocale);
+  await upsertSetting('locales', SETTING_DEFAULTS.locales);
+  await upsertSetting('activeTheme', SETTING_DEFAULTS.activeTheme);
+  await upsertSetting(
+    'pluginOrder',
+    DEFAULT_PLUGIN_ORDER.length ? DEFAULT_PLUGIN_ORDER : ['sample-analytics']
+  );
+  await upsertSetting(
+    'enabledPlugins',
+    DEFAULT_ENABLED_PLUGINS.length
+      ? DEFAULT_ENABLED_PLUGINS
+      : ['sample-analytics']
+  );
 
   console.log('Settings seeded.');
 

@@ -40,6 +40,7 @@ import {
   listProviders,
   loadShippingZones,
   normalizeShippingZone,
+  parseAdminShippingZonesInput,
   registerProvider,
   resolveShippingOption,
 } from '#/core/shipping/index.server';
@@ -352,6 +353,27 @@ describe('shipping zone helpers', () => {
     expect(
       computeZonePriceCents({ rateCents: 500, freeOverCents: null }, 100000)
     ).toBe(500);
+  });
+
+  it('parseAdminShippingZonesInput normalizes admin form zones', () => {
+    expect(
+      parseAdminShippingZonesInput([
+        {
+          name: 'US Domestic',
+          countries: 'us, ca',
+          rateCents: '999',
+          freeOverCents: '5000',
+        },
+      ])
+    ).toEqual([
+      expect.objectContaining({
+        id: 'us_domestic',
+        name: 'US Domestic',
+        countries: ['US', 'CA'],
+        rateCents: 999,
+        freeOverCents: 5000,
+      }),
+    ]);
   });
 });
 
