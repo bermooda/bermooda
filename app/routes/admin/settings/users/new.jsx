@@ -1,9 +1,11 @@
-import bcrypt from 'bcryptjs';
 import { Form, Link, useActionData, useNavigation } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
-import prisma from '#/libs/prisma.server';
-import { hasPermission } from '#/core/rbac/index.server';
+import {
+  createAdminStaffUser,
+  requirePermission,
+  SETTINGS_MANAGE_PERMISSION,
+} from '#/core/rbac/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -15,40 +17,21 @@ import { ButtonSubmit } from '#/components/ui/button';
 
 export async function action({ request }) {
   const session = await authenticate(request);
-  if (!(await hasPermission(session.user.role, 'settings:manage'))) {
-    return { error: 'Forbidden' };
+
+  try {
+    await requirePermission(session.user, SETTINGS_MANAGE_PERMISSION);
+    const formData = await request.formData();
+    const { temporaryPassword } = await createAdminStaffUser({
+      email: formData.get('email'),
+      name: formData.get('name'),
+    });
+    return { ok: true, temporaryPassword };
+  } catch (err) {
+    if (err.code === 'FORBIDDEN') {
+      return { error: 'Forbidden' };
+    }
+    return { error: err.message };
   }
-
-  const formData = await request.formData();
-  const email = formData.get('email')?.toString().trim() ?? '';
-  const name = formData.get('name')?.toString().trim() ?? '';
-
-  if (!email) return { error: 'Email is required.' };
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return { error: 'A user with that email already exists.' };
-  }
-
-  const hashedPassword = await bcrypt.hash('ChangeMe123!', 10);
-  const user = await prisma.user.create({
-    data: {
-      email,
-      name: name || email,
-      role: 'staff',
-      emailVerified: false,
-    },
-  });
-  await prisma.account.create({
-    data: {
-      accountId: user.id,
-      providerId: 'credential',
-      userId: user.id,
-      password: hashedPassword,
-    },
-  });
-
-  return { ok: true };
 }
 
 export default function AdminNewAdminUserRoute() {
@@ -76,8 +59,10 @@ export default function AdminNewAdminUserRoute() {
         <div className="bg-success/10 border-success/30 mb-6 rounded-md border p-4">
           <p className="text-success text-sm">
             User created. Temporary password:{' '}
-            <code className="font-mono font-bold">ChangeMe123!</code> — ask them
-            to change it on first login.
+            <code className="font-mono font-bold">
+              {actionData.temporaryPassword}
+            </code>{' '}
+            — ask them to change it on first login.
           </p>
         </div>
       )}

@@ -1,60 +1,32 @@
 // app/core/rbac/index.server.js
 // Granular role-based access control for admin users and API keys.
 
+import bcrypt from 'bcryptjs';
+
 import prisma from '#/libs/prisma.server';
+import {
+  ADMIN_ROLES,
+  ADMIN_WILDCARD,
+  DEFAULT_ROLE_PERMISSIONS,
+  SETTINGS_MANAGE_PERMISSION,
+} from '#/core/rbac/defaults';
+
+export {
+  ADMIN_ROLES,
+  ADMIN_WILDCARD,
+  DEFAULT_ROLE_PERMISSIONS,
+  SETTINGS_MANAGE_PERMISSION,
+} from '#/core/rbac/defaults';
 
 /** @typedef {'read' | 'write' | 'delete' | 'manage'} PermissionAction */
 
-const ADMIN_WILDCARD = '*';
-
-const FALLBACK_PERMISSIONS = {
-  admin: [ADMIN_WILDCARD],
-  staff: [
-    'dashboard:read',
-    'reports:read',
-    'products:read',
-    'products:write',
-    'categories:read',
-    'categories:write',
-    'pages:read',
-    'pages:write',
-    'menus:read',
-    'menus:write',
-    'reviews:read',
-    'reviews:write',
-    'orders:read',
-    'orders:write',
-    'customers:read',
-    'customers:write',
-    'customer-groups:read',
-    'price-lists:read',
-    'inventory:read',
-    'inventory:write',
-    'gift-cards:read',
-    'loyalty:read',
-    'loyalty:write',
-    'marketing:read',
-    'marketing:write',
-    'channels:read',
-    'channels:write',
-    'discounts:read',
-    'discounts:write',
-    'returns:read',
-    'returns:write',
-    'shipments:read',
-    'shipments:write',
-    'media:read',
-    'media:write',
-    'plugins:read',
-    'themes:read',
-    'audit-log:read',
-    'exports:read',
-  ],
-};
+const CACHE_TTL_MS = 60_000;
+const MAX_LIST_RESULTS = 100;
+const STAFF_TEMP_PASSWORD = 'ChangeMe123!';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 let _permissionCache = null;
 let _cacheLoadedAt = 0;
-const CACHE_TTL_MS = 60_000;
 
 function permissionKey(resource, action) {
   return `${resource}:${action}`;
@@ -66,6 +38,13 @@ function parsePermission(permission) {
     throw new Error(`Invalid permission "${permission}"`);
   }
   return { resource, action };
+}
+
+function serializeAdminUser(user) {
+  return {
+    ...user,
+    createdAt: user.createdAt?.toISOString?.() ?? user.createdAt,
+  };
 }
 
 async function loadRolePermissions() {
@@ -82,7 +61,7 @@ async function loadRolePermissions() {
     map[row.role].add(permissionKey(row.resource, row.action));
   }
 
-  for (const [role, permissions] of Object.entries(FALLBACK_PERMISSIONS)) {
+  for (const [role, permissions] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
     if (!map[role] || map[role].size === 0) {
       map[role] = new Set(permissions);
     }
@@ -94,6 +73,22 @@ async function loadRolePermissions() {
 }
 
 /**
+ * Validate an admin role string.
+ *
+ * @param {unknown} role
+ * @returns {string}
+ */
+export function parseAdminRole(role) {
+  const value = role?.toString().trim();
+  if (!value || !ADMIN_ROLES.includes(value)) {
+    throw Object.assign(new Error('Invalid admin role'), {
+      code: 'ROLE_INVALID',
+    });
+  }
+  return value;
+}
+
+/**
  * Seed default role permissions when the table is empty.
  */
 export async function seedRolePermissions() {
@@ -101,7 +96,7 @@ export async function seedRolePermissions() {
   if (count > 0) return;
 
   const rows = [];
-  for (const [role, permissions] of Object.entries(FALLBACK_PERMISSIONS)) {
+  for (const [role, permissions] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
     if (role === 'admin') continue;
     for (const permission of permissions) {
       const { resource, action } = parsePermission(permission);
@@ -114,6 +109,21 @@ export async function seedRolePermissions() {
   }
 
   _permissionCache = null;
+}
+
+/**
+ * List default and persisted permissions grouped by role.
+ *
+ * @returns {Promise<Record<string, string[]>>}
+ */
+export async function listRolePermissions() {
+  const map = await loadRolePermissions();
+  return Object.fromEntries(
+    Object.entries(map).map(([role, permissions]) => [
+      role,
+      [...permissions].sort(),
+    ])
+  );
 }
 
 /**
@@ -130,7 +140,7 @@ export async function hasPermission(role, permission) {
 }
 
 /**
- * Assert permission or throw a Response/Error suitable for routes.
+ * Assert permission or throw a structured error suitable for routes.
  *
  * @param {{ role: string }} user
  * @param {string} permission
@@ -146,15 +156,164 @@ export async function requirePermission(user, permission) {
 }
 
 /**
- * Map an admin API path segment to a required permission.
+ * List admin/staff users for the settings page and admin API.
  *
- * @param {string} resource
- * @param {string} method
+ * @returns {Promise<object[]>}
  */
-export function resolveApiPermission(resource, method) {
-  const writeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
-  const action = writeMethods.has(method.toUpperCase()) ? 'write' : 'read';
-  return `${resource}:${action}`;
+export async function listAdminUsers() {
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: 'asc' },
+    take: MAX_LIST_RESULTS,
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+      emailVerified: true,
+    },
+  });
+
+  return users.map(serializeAdminUser);
+}
+
+/**
+ * Get a single admin/staff user by id.
+ *
+ * @param {string} id
+ * @returns {Promise<object|null>}
+ */
+export async function getAdminUser(id) {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+      emailVerified: true,
+    },
+  });
+
+  return user ? serializeAdminUser(user) : null;
+}
+
+/**
+ * Parse create-admin-user input from forms or API payloads.
+ *
+ * @param {object} input
+ * @returns {{ email: string, name: string|null }}
+ */
+export function parseCreateAdminUserInput(input = {}) {
+  const email = input.email?.toString().trim() ?? '';
+  const name = input.name?.toString().trim() || null;
+
+  if (!email) {
+    throw Object.assign(new Error('Email is required'), {
+      code: 'EMAIL_REQUIRED',
+    });
+  }
+
+  if (!EMAIL_RE.test(email)) {
+    throw Object.assign(new Error('Enter a valid email address'), {
+      code: 'EMAIL_INVALID',
+    });
+  }
+
+  return { email, name };
+}
+
+/**
+ * Create a new staff admin user with a temporary password.
+ *
+ * @param {{ email: string, name?: string|null }} input
+ * @returns {Promise<{ user: object, temporaryPassword: string }>}
+ */
+export async function createAdminStaffUser(input) {
+  const { email, name } = parseCreateAdminUserInput(input);
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    throw Object.assign(new Error('A user with that email already exists'), {
+      code: 'EMAIL_TAKEN',
+    });
+  }
+
+  const hashedPassword = await bcrypt.hash(STAFF_TEMP_PASSWORD, 10);
+  const user = await prisma.user.create({
+    data: {
+      email,
+      name: name || email,
+      role: 'staff',
+      emailVerified: false,
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+      emailVerified: true,
+    },
+  });
+
+  await prisma.account.create({
+    data: {
+      accountId: user.id,
+      providerId: 'credential',
+      userId: user.id,
+      password: hashedPassword,
+    },
+  });
+
+  return {
+    user: serializeAdminUser(user),
+    temporaryPassword: STAFF_TEMP_PASSWORD,
+  };
+}
+
+/**
+ * Update an admin/staff user's role.
+ *
+ * @param {string} userId
+ * @param {unknown} role
+ * @returns {Promise<object>}
+ */
+export async function updateAdminUserRole(userId, role) {
+  if (!userId?.toString().trim()) {
+    throw Object.assign(new Error('userId is required'), {
+      code: 'USER_ID_REQUIRED',
+    });
+  }
+
+  const nextRole = parseAdminRole(role);
+  const existing = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    throw Object.assign(new Error('Admin user not found'), {
+      code: 'USER_NOT_FOUND',
+      status: 404,
+    });
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { role: nextRole },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+      emailVerified: true,
+    },
+  });
+
+  return serializeAdminUser(user);
 }
 
 /** Test-only reset. */
