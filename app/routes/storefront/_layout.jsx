@@ -20,7 +20,7 @@ import {
   resolveRequestLocale,
 } from '#/core/i18n/index.server';
 import { trackReferral } from '#/core/loyalty/index.server';
-import { get as settingsGet } from '#/core/settings/index.server';
+import { getEnabledCurrencies } from '#/core/settings/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 
 export async function loader({ request }) {
@@ -50,7 +50,7 @@ export async function loader({ request }) {
 
   const [
     messages,
-    currencies,
+    availableCurrencies,
     availableLocales,
     mainMenu,
     footerMenu,
@@ -58,16 +58,13 @@ export async function loader({ request }) {
     slotBlocks,
   ] = await Promise.all([
     loadMessages(locale),
-    settingsGet('currencies'),
+    getEnabledCurrencies(),
     getAvailableLocales(),
     getMenuByHandle('main', { locale }),
     getMenuByHandle('footer', { locale }),
     getMenuByHandle('sub-header', { locale }),
     getSlotBlocksMap(['layout.header', 'layout.footer']),
   ]);
-  const availableCurrencies = Array.isArray(currencies)
-    ? currencies
-    : ['USD', 'EUR', 'AUD'];
 
   if (refCode) {
     headers.append(

@@ -1,6 +1,7 @@
 // app/core/currency/index.server.js
 
 import prisma from '#/libs/prisma.server';
+import { DEFAULT_CURRENCY } from '#/core/settings/defaults';
 import { get as settingsGet } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
@@ -28,7 +29,7 @@ export async function getRequestCurrency(request) {
   const fromSettings = await settingsGet('defaultCurrency');
   if (fromSettings) return fromSettings;
 
-  return 'USD';
+  return DEFAULT_CURRENCY;
 }
 
 // ---------------------------------------------------------------------------
@@ -72,7 +73,8 @@ export async function lookupVariantPriceForBrowsing(variantId, currency) {
   const exact = await lookupVariantPrice(variantId, currency);
   if (exact) return { ...exact, isFallback: false };
 
-  const defaultCurrency = (await settingsGet('defaultCurrency')) ?? 'USD';
+  const defaultCurrency =
+    (await settingsGet('defaultCurrency')) ?? DEFAULT_CURRENCY;
   if (defaultCurrency === currency) return null;
   const fallback = await lookupVariantPrice(variantId, defaultCurrency);
   if (fallback) return { ...fallback, isFallback: true };

@@ -35,6 +35,7 @@ import {
 import { seedRolePermissions } from '#/core/rbac/index.server';
 import { dbProvider as dbSearchProvider } from '#/core/search/index.server';
 import { registerProvider as registerSearch } from '#/core/search/index.server';
+import { seedDefaults } from '#/core/settings/index.server';
 import { carrierProvider } from '#/core/shipping/carrier.server';
 import { registerProvider as registerShipping } from '#/core/shipping/index.server';
 import { flatRateProvider } from '#/core/shipping/index.server';
@@ -128,6 +129,7 @@ export function registerBuiltins() {
  */
 export async function initializeAsync() {
   try {
+    await seedDefaults();
     await seedRolePermissions();
     await enablePersistedPlugins();
     await seedDefaultChannel();

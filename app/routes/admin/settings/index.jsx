@@ -27,7 +27,18 @@ import {
 } from '#/core/i18n/index';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { hasPermission } from '#/core/rbac/index.server';
-import { get, set } from '#/core/settings/index.server';
+import { parseSeoSettingsInput } from '#/core/seo/input';
+import { AVAILABLE_CURRENCIES } from '#/core/settings/defaults';
+import {
+  getAdminSettingsSnapshot,
+  saveGeneralSettings,
+  saveCurrencySettings,
+  saveLocaleSettings,
+  saveSeoSettings,
+  saveShippingSettings,
+  saveTaxSettings,
+  set,
+} from '#/core/settings/index.server';
 import { uploadMedia } from '#/core/storage/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
@@ -44,8 +55,6 @@ const RADIO_CLASS = 'border-border text-accent focus:ring-accent h-4 w-4';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-const ALL_CURRENCIES = ['USD', 'EUR', 'AUD', 'GBP', 'CAD', 'JPY'];
 
 const TABS = [
   'General',
@@ -93,43 +102,8 @@ const EMAIL_TEMPLATES = [
 export async function loader({ request }) {
   const adminLocale = await getRequestLocale(request);
 
-  const [
-    shopName,
-    contactEmail,
-    defaultCurrency,
-    defaultLocale,
-    currencies,
-    locales,
-    taxMode,
-    taxRegions,
-    shippingZones,
-    seoMetaTitle,
-    seoMetaDescription,
-    seoOgImageUrl,
-    seoTitleTemplate,
-    seoAllowIndexing,
-    seoGoogleSiteVerification,
-    seoBingSiteVerification,
-    seoTwitterHandle,
-    users,
-  ] = await Promise.all([
-    get('shopName'),
-    get('contactEmail'),
-    get('defaultCurrency'),
-    get('defaultLocale'),
-    get('currencies'),
-    get('locales'),
-    get('tax.mode'),
-    get('tax.regions'),
-    get('shipping.zones'),
-    get('seo.metaTitle'),
-    get('seo.metaDescription'),
-    get('seo.ogImageUrl'),
-    get('seo.titleTemplate'),
-    get('seo.allowIndexing'),
-    get('seo.googleSiteVerification'),
-    get('seo.bingSiteVerification'),
-    get('seo.twitterHandle'),
+  const [settings, users] = await Promise.all([
+    getAdminSettingsSnapshot(),
     prisma.user.findMany({
       orderBy: { createdAt: 'asc' },
       select: {
@@ -144,23 +118,7 @@ export async function loader({ request }) {
   ]);
 
   return {
-    shopName: shopName ?? '',
-    contactEmail: contactEmail ?? '',
-    defaultCurrency: defaultCurrency ?? 'USD',
-    defaultLocale: defaultLocale ?? 'en',
-    currencies: currencies ?? ['USD', 'EUR', 'AUD'],
-    locales: locales ?? ['en'],
-    taxMode: taxMode ?? 'exclusive',
-    taxRegions: taxRegions ?? [],
-    shippingZones: shippingZones ?? [],
-    seoMetaTitle: seoMetaTitle ?? '',
-    seoMetaDescription: seoMetaDescription ?? '',
-    seoOgImageUrl: seoOgImageUrl ?? '',
-    seoTitleTemplate: seoTitleTemplate ?? '{pageTitle} | {shopName}',
-    seoAllowIndexing: seoAllowIndexing !== false,
-    seoGoogleSiteVerification: seoGoogleSiteVerification ?? '',
-    seoBingSiteVerification: seoBingSiteVerification ?? '',
-    seoTwitterHandle: seoTwitterHandle ?? '',
+    ...settings,
     adminLocale,
     adminAvailableLocales: ADMIN_AVAILABLE_LOCALES,
     users: users.map((u) => ({
@@ -180,40 +138,26 @@ export async function action({ request }) {
 
   // ── General ────────────────────────────────────────────────────────────────
   if (intent === 'save-general') {
-    const shopName = formData.get('shopName')?.toString().trim() ?? '';
-    const contactEmail = formData.get('contactEmail')?.toString().trim() ?? '';
-    await Promise.all([
-      set('shopName', shopName),
-      set('contactEmail', contactEmail),
-    ]);
+    await saveGeneralSettings({
+      shopName: formData.get('shopName'),
+      contactEmail: formData.get('contactEmail'),
+    });
     return { ok: true, intent };
   }
 
   // ── SEO ────────────────────────────────────────────────────────────────────
   if (intent === 'save-seo') {
-    const metaTitle = formData.get('metaTitle')?.toString().trim() ?? '';
-    const metaDescription =
-      formData.get('metaDescription')?.toString().trim() ?? '';
-    const titleTemplate =
-      formData.get('titleTemplate')?.toString().trim() ??
-      '{pageTitle} | {shopName}';
-    const allowIndexing = formData.get('allowIndexing') === 'on';
-    const googleSiteVerification =
-      formData.get('googleSiteVerification')?.toString().trim() ?? '';
-    const bingSiteVerification =
-      formData.get('bingSiteVerification')?.toString().trim() ?? '';
-    const twitterHandle =
-      formData.get('twitterHandle')?.toString().trim() ?? '';
-
-    await Promise.all([
-      set('seo.metaTitle', metaTitle),
-      set('seo.metaDescription', metaDescription),
-      set('seo.titleTemplate', titleTemplate),
-      set('seo.allowIndexing', allowIndexing),
-      set('seo.googleSiteVerification', googleSiteVerification),
-      set('seo.bingSiteVerification', bingSiteVerification),
-      set('seo.twitterHandle', twitterHandle),
-    ]);
+    await saveSeoSettings(
+      parseSeoSettingsInput({
+        metaTitle: formData.get('metaTitle'),
+        metaDescription: formData.get('metaDescription'),
+        titleTemplate: formData.get('titleTemplate'),
+        allowIndexing: formData.get('allowIndexing') === 'on',
+        googleSiteVerification: formData.get('googleSiteVerification'),
+        bingSiteVerification: formData.get('bingSiteVerification'),
+        twitterHandle: formData.get('twitterHandle'),
+      })
+    );
     return { ok: true, intent };
   }
 
@@ -235,51 +179,36 @@ export async function action({ request }) {
 
   // ── Currencies ─────────────────────────────────────────────────────────────
   if (intent === 'save-currencies') {
-    const enabled = formData.getAll('currencies').map(String);
-    const defaultCurrency =
-      formData.get('defaultCurrency')?.toString() ?? 'USD';
-    await Promise.all([
-      set('currencies', enabled),
-      set('defaultCurrency', defaultCurrency),
-    ]);
+    await saveCurrencySettings({
+      currencies: formData.getAll('currencies').map(String),
+      defaultCurrency: formData.get('defaultCurrency'),
+    });
     return { ok: true, intent };
   }
 
   // ── Locales ────────────────────────────────────────────────────────────────
   if (intent === 'save-locales') {
-    const enabled = formData.getAll('locales').map(String);
-    const defaultLocale = formData.get('defaultLocale')?.toString() ?? 'en';
-    await Promise.all([
-      set('locales', enabled),
-      set('defaultLocale', defaultLocale),
-    ]);
+    await saveLocaleSettings({
+      locales: formData.getAll('locales').map(String),
+      defaultLocale: formData.get('defaultLocale'),
+    });
     return { ok: true, intent };
   }
 
   // ── Tax ────────────────────────────────────────────────────────────────────
   if (intent === 'save-tax') {
-    const taxMode = formData.get('taxMode')?.toString() ?? 'exclusive';
-    const regionsJson = formData.get('taxRegions')?.toString() ?? '[]';
-    let regions = [];
-    try {
-      regions = JSON.parse(regionsJson);
-    } catch {
-      // ignore malformed
-    }
-    await Promise.all([set('tax.mode', taxMode), set('tax.regions', regions)]);
+    await saveTaxSettings({
+      taxMode: formData.get('taxMode'),
+      taxRegions: formData.get('taxRegions'),
+    });
     return { ok: true, intent };
   }
 
   // ── Shipping ───────────────────────────────────────────────────────────────
   if (intent === 'save-shipping') {
-    const zonesJson = formData.get('shippingZones')?.toString() ?? '[]';
-    let zones = [];
-    try {
-      zones = JSON.parse(zonesJson);
-    } catch {
-      // ignore malformed
-    }
-    await set('shipping.zones', zones);
+    await saveShippingSettings({
+      shippingZones: formData.get('shippingZones'),
+    });
     return { ok: true, intent };
   }
 
@@ -451,7 +380,7 @@ function GeneralTab({ data }) {
             >
               {(data.currencies.length > 0
                 ? data.currencies
-                : ALL_CURRENCIES
+                : AVAILABLE_CURRENCIES
               ).map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -771,7 +700,7 @@ function CurrenciesTab({ data }) {
             </tr>
           </THead>
           <TBody>
-            {ALL_CURRENCIES.map((c) => {
+            {AVAILABLE_CURRENCIES.map((c) => {
               const isEnabled = enabled.includes(c);
               const isDefault = defaultCurrency === c;
               return (
@@ -1071,19 +1000,12 @@ function ShippingTab({ data }) {
         countries:
           typeof countries === 'string'
             ? countries
-                .split(',')
-                .map((c) => c.trim().toUpperCase())
-                .filter(Boolean)
-            : countries,
-        rateCents: parseInt(rateCents, 10) || 0,
-        freeOverCents:
-          freeOverCents !== '' && freeOverCents != null
-            ? parseInt(freeOverCents, 10) || null
-            : null,
-        estimatedDays:
-          estimatedDays !== '' && estimatedDays != null
-            ? parseInt(estimatedDays, 10) || null
-            : null,
+            : Array.isArray(countries)
+              ? countries.join(', ')
+              : '',
+        rateCents,
+        freeOverCents,
+        estimatedDays,
       };
     }
   );

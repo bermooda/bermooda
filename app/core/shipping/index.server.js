@@ -75,6 +75,59 @@ export function loadShippingZones(raw) {
 }
 
 /**
+ * Parse admin/API shipping zone payload into normalized zone objects.
+ *
+ * @param {object[]|string} raw
+ * @returns {object[]}
+ */
+export function parseAdminShippingZonesInput(raw) {
+  let zones = [];
+
+  if (Array.isArray(raw)) {
+    zones = raw;
+  } else if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) zones = parsed;
+    } catch {
+      zones = [];
+    }
+  }
+
+  return zones.map((zone, index) => {
+    const trimmedName = zone.name?.trim() ?? zone.label?.trim() ?? '';
+    const slug = slugifyZoneName(trimmedName) || `zone_${index}`;
+
+    const countries =
+      typeof zone.countries === 'string'
+        ? zone.countries
+            .split(',')
+            .map((country) => country.trim().toUpperCase())
+            .filter(Boolean)
+        : zone.countries;
+
+    return normalizeShippingZone(
+      {
+        ...zone,
+        id: zone.id || slug,
+        name: trimmedName,
+        countries,
+        rateCents: parseInt(zone.rateCents, 10) || 0,
+        freeOverCents:
+          zone.freeOverCents !== '' && zone.freeOverCents != null
+            ? parseInt(zone.freeOverCents, 10) || null
+            : null,
+        estimatedDays:
+          zone.estimatedDays !== '' && zone.estimatedDays != null
+            ? parseInt(zone.estimatedDays, 10) || null
+            : null,
+      },
+      index
+    );
+  });
+}
+
+/**
  * Compute flat-rate shipping cents for a zone and cart subtotal.
  *
  * @param {object} zone

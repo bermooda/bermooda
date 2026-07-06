@@ -18,15 +18,25 @@ vi.mock('#/utils/cache.server', () => ({
 
 import cache, { getCachedResult } from '#/utils/cache.server';
 import prisma from '#/libs/prisma.server';
-import { get, set, seedDefaults } from '#/core/settings/index.server';
+import { SETTING_DEFAULTS } from '#/core/settings/defaults';
+import {
+  applyAdminSettingsPatch,
+  get,
+  getAdminSettingsSnapshot,
+  getEnabledCurrencies,
+  getMany,
+  parseAdminSettingsPatch,
+  parseCurrencySettingsInput,
+  parseGeneralSettingsInput,
+  parseLocaleSettingsInput,
+  seedDefaults,
+  set,
+  setMany,
+} from '#/core/settings/index.server';
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
-
-// ---------------------------------------------------------------------------
-// get
-// ---------------------------------------------------------------------------
 
 describe('get', () => {
   it('calls getCachedResult with key "setting:<key>" and returns parsed JSON value', async () => {
@@ -64,9 +74,25 @@ describe('get', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// set
-// ---------------------------------------------------------------------------
+describe('getMany', () => {
+  it('returns a map of parsed values', async () => {
+    prisma.setting.findUnique.mockImplementation(({ where: { key } }) => {
+      if (key === 'shopName') return Promise.resolve({ key, value: '"Acme"' });
+      if (key === 'defaultCurrency') {
+        return Promise.resolve({ key, value: '"EUR"' });
+      }
+      return Promise.resolve(null);
+    });
+
+    const result = await getMany(['shopName', 'defaultCurrency', 'missing']);
+
+    expect(result).toEqual({
+      shopName: 'Acme',
+      defaultCurrency: 'EUR',
+      missing: null,
+    });
+  });
+});
 
 describe('set', () => {
   it('calls prisma.setting.upsert with JSON.stringify(value) and invalidates cache', async () => {
@@ -83,41 +109,154 @@ describe('set', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// seedDefaults
-// ---------------------------------------------------------------------------
+describe('setMany', () => {
+  it('persists each key/value pair', async () => {
+    prisma.setting.upsert.mockResolvedValue({});
+
+    await setMany({ shopName: 'Acme', defaultCurrency: 'USD' });
+
+    expect(prisma.setting.upsert).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('getEnabledCurrencies', () => {
+  it('returns normalized enabled currencies', async () => {
+    prisma.setting.findUnique.mockResolvedValue({
+      key: 'currencies',
+      value: '["USD","EUR"]',
+    });
+
+    await expect(getEnabledCurrencies()).resolves.toEqual(['USD', 'EUR']);
+  });
+
+  it('falls back to defaults when unset', async () => {
+    prisma.setting.findUnique.mockResolvedValue(null);
+
+    await expect(getEnabledCurrencies()).resolves.toEqual(
+      SETTING_DEFAULTS.currencies
+    );
+  });
+});
+
+describe('getAdminSettingsSnapshot', () => {
+  it('returns normalized admin settings with defaults', async () => {
+    prisma.setting.findUnique.mockResolvedValue(null);
+
+    const snapshot = await getAdminSettingsSnapshot();
+
+    expect(snapshot.shopName).toBe('');
+    expect(snapshot.defaultCurrency).toBe('USD');
+    expect(snapshot.currencies).toEqual(['USD', 'EUR', 'AUD']);
+    expect(snapshot.locales).toEqual(['en']);
+    expect(snapshot.taxMode).toBe('exclusive');
+    expect(snapshot.seoAllowIndexing).toBe(true);
+  });
+});
+
+describe('parseGeneralSettingsInput', () => {
+  it('trims shop fields', () => {
+    expect(
+      parseGeneralSettingsInput({
+        shopName: '  Acme  ',
+        contactEmail: ' hello@example.com ',
+      })
+    ).toEqual({
+      shopName: 'Acme',
+      contactEmail: 'hello@example.com',
+    });
+  });
+});
+
+describe('parseCurrencySettingsInput', () => {
+  it('keeps default currency within enabled list', () => {
+    expect(
+      parseCurrencySettingsInput({
+        currencies: ['EUR'],
+        defaultCurrency: 'USD',
+      })
+    ).toEqual({
+      currencies: ['EUR'],
+      defaultCurrency: 'EUR',
+    });
+  });
+});
+
+describe('parseLocaleSettingsInput', () => {
+  it('keeps default locale within enabled list', () => {
+    expect(
+      parseLocaleSettingsInput({
+        locales: ['de'],
+        defaultLocale: 'en',
+      })
+    ).toEqual({
+      locales: ['de'],
+      defaultLocale: 'de',
+    });
+  });
+});
+
+describe('parseAdminSettingsPatch', () => {
+  it('parses grouped API payloads', () => {
+    expect(parseAdminSettingsPatch({ general: { shopName: 'Acme' } })).toEqual({
+      section: 'general',
+      values: { shopName: 'Acme', contactEmail: '' },
+    });
+
+    expect(
+      parseAdminSettingsPatch({
+        tax: { mode: 'inclusive', regions: [{ country: 'US', percent: 8 }] },
+      })
+    ).toMatchObject({
+      section: 'tax',
+      values: { mode: 'inclusive' },
+    });
+  });
+
+  it('returns null for empty payloads', () => {
+    expect(parseAdminSettingsPatch({})).toBeNull();
+    expect(parseAdminSettingsPatch({ seo: {} })).toBeNull();
+  });
+});
+
+describe('applyAdminSettingsPatch', () => {
+  it('writes general settings', async () => {
+    prisma.setting.upsert.mockResolvedValue({});
+
+    await applyAdminSettingsPatch({
+      section: 'general',
+      values: { shopName: 'Acme', contactEmail: 'hello@example.com' },
+    });
+
+    expect(prisma.setting.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'shopName' },
+        create: expect.objectContaining({ value: '"Acme"' }),
+      })
+    );
+  });
+});
 
 describe('seedDefaults', () => {
-  it('writes all 6 defaults when none exist', async () => {
+  it('writes all defaults when none exist', async () => {
     prisma.setting.findUnique.mockResolvedValue(null);
     prisma.setting.upsert.mockResolvedValue({});
 
     await seedDefaults();
 
-    expect(prisma.setting.upsert).toHaveBeenCalledTimes(6);
-
-    const keys = prisma.setting.upsert.mock.calls.map((c) => c[0].where.key);
-    expect(keys).toEqual(
-      expect.arrayContaining([
-        'defaultCurrency',
-        'currencies',
-        'defaultLocale',
-        'locales',
-        'activeTheme',
-        'pluginOrder',
-      ])
+    expect(prisma.setting.upsert).toHaveBeenCalledTimes(
+      Object.keys(SETTING_DEFAULTS).length
     );
 
-    // Scalar string defaults must be JSON.stringify'd (value: '"USD"', not 'USD').
+    const keys = prisma.setting.upsert.mock.calls.map((c) => c[0].where.key);
+    expect(keys).toEqual(expect.arrayContaining(Object.keys(SETTING_DEFAULTS)));
+
     const currencyCall = prisma.setting.upsert.mock.calls.find(
       (c) => c[0].where.key === 'defaultCurrency'
     );
     expect(currencyCall[0].create.value).toBe('"USD"');
-    expect(currencyCall[0].update.value).toBe('"USD"');
   });
 
   it('skips keys that already exist', async () => {
-    // Only 'defaultCurrency' exists; the rest return null.
     prisma.setting.findUnique.mockImplementation(({ where: { key } }) => {
       if (key === 'defaultCurrency') {
         return Promise.resolve({ key, value: '"USD"' });
@@ -128,8 +267,9 @@ describe('seedDefaults', () => {
 
     await seedDefaults();
 
-    // 5 writes: all defaults except the already-existing defaultCurrency.
-    expect(prisma.setting.upsert).toHaveBeenCalledTimes(5);
+    expect(prisma.setting.upsert).toHaveBeenCalledTimes(
+      Object.keys(SETTING_DEFAULTS).length - 1
+    );
 
     const keys = prisma.setting.upsert.mock.calls.map((c) => c[0].where.key);
     expect(keys).not.toContain('defaultCurrency');
