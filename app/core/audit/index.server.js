@@ -5,6 +5,9 @@ import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { DOMAIN_EVENTS } from '#/core/events/names';
 
+const MAX_LIST_RESULTS = 100;
+const DEFAULT_LIST_LIMIT = 50;
+
 const ENTITY_TYPE_BY_EVENT = {
   'order.created': 'order',
   'order.confirmed': 'order',
@@ -30,13 +33,82 @@ const ENTITY_TYPE_BY_EVENT = {
   'return.cancelled': 'return',
 };
 
+// ---------------------------------------------------------------------------
+// Input + entity helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse audit list query params from URLSearchParams or a plain object.
+ *
+ * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ * @returns {{ page: number, limit: number, action?: string, entityType?: string, actorId?: string }}
+ */
+export function parseAuditListParams(source = {}) {
+  const get = (key) => {
+    if (source instanceof URLSearchParams) {
+      const value = source.get(key);
+      return value === null || value === '' ? undefined : value;
+    }
+    const value = source[key];
+    if (value === null || value === undefined || value === '') return undefined;
+    return value.toString();
+  };
+
+  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
+  const limit = Math.min(
+    Math.max(
+      1,
+      parseInt(get('limit') ?? String(DEFAULT_LIST_LIMIT), 10) ||
+        DEFAULT_LIST_LIMIT
+    ),
+    MAX_LIST_RESULTS
+  );
+
+  const action = get('action')?.trim();
+  const entityType = get('entityType')?.trim();
+  const actorId = get('actorId')?.trim();
+
+  return {
+    page,
+    limit,
+    ...(action ? { action } : {}),
+    ...(entityType ? { entityType } : {}),
+    ...(actorId ? { actorId } : {}),
+  };
+}
+
+/**
+ * Build a Prisma where clause for audit log list filters.
+ *
+ * @param {{ action?: string, entityType?: string, actorId?: string }} filters
+ * @returns {object}
+ */
+export function buildAuditLogWhere({ action, entityType, actorId } = {}) {
+  const where = {};
+  if (action) where.action = action;
+  if (entityType) where.entityType = entityType;
+  if (actorId) where.actorId = actorId;
+  return where;
+}
+
+/**
+ * Resolve entity type for a domain event.
+ *
+ * @param {string} event
+ * @returns {string|null}
+ */
+export function entityTypeFromEvent(event) {
+  return ENTITY_TYPE_BY_EVENT[event] ?? null;
+}
+
 /**
  * Resolve the primary entity id from a domain-event payload.
- * @param {string} event
+ *
+ * @param {string} _event
  * @param {object} payload
  * @returns {string|undefined}
  */
-function entityIdFromPayload(event, payload) {
+export function entityIdFromPayload(_event, payload) {
   if (!payload || typeof payload !== 'object') return undefined;
   if (payload.orderId) return payload.orderId;
   if (payload.shipmentId) return payload.shipmentId;
@@ -47,6 +119,24 @@ function entityIdFromPayload(event, payload) {
   if (payload.id) return payload.id;
   return undefined;
 }
+
+/**
+ * Resolve audit entity fields from a domain event and payload.
+ *
+ * @param {string} event
+ * @param {object} payload
+ * @returns {{ entityType: string|null, entityId: string|undefined }}
+ */
+export function resolveAuditEntity(event, payload) {
+  return {
+    entityType: entityTypeFromEvent(event),
+    entityId: entityIdFromPayload(event, payload),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Persistence
+// ---------------------------------------------------------------------------
 
 /**
  * Persist an audit log entry.
@@ -126,6 +216,23 @@ export async function recordAdminAudit({
 }
 
 /**
+ * Get a single audit log entry by id.
+ *
+ * @param {string} id
+ * @returns {Promise<object>}
+ */
+export async function getAuditLog(id) {
+  const entry = await prisma.auditLog.findUnique({ where: { id } });
+  if (!entry) {
+    throw Object.assign(new Error('Audit log entry not found'), {
+      code: 'NOT_FOUND',
+      status: 404,
+    });
+  }
+  return serializeAuditLog(entry);
+}
+
+/**
  * List audit log entries with optional filters.
  *
  * @param {{
@@ -138,33 +245,32 @@ export async function recordAdminAudit({
  */
 export async function listAuditLogs({
   page = 1,
-  limit = 50,
+  limit = DEFAULT_LIST_LIMIT,
   action,
   entityType,
   actorId,
 } = {}) {
-  const skip = (page - 1) * limit;
-  const where = {};
-  if (action) where.action = action;
-  if (entityType) where.entityType = entityType;
-  if (actorId) where.actorId = actorId;
+  const safePage = Math.max(1, page);
+  const safeLimit = Math.min(Math.max(1, limit), MAX_LIST_RESULTS);
+  const skip = (safePage - 1) * safeLimit;
+  const where = buildAuditLogWhere({ action, entityType, actorId });
 
   const [items, total] = await Promise.all([
     prisma.auditLog.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: limit,
+      take: safeLimit,
     }),
     prisma.auditLog.count({ where }),
   ]);
 
   return {
-    items: items.map(serializeAuditLog),
+    auditLogs: items.map(serializeAuditLog),
     total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit) || 1,
+    page: safePage,
+    limit: safeLimit,
+    totalPages: Math.ceil(total / safeLimit) || 1,
   };
 }
 
@@ -176,11 +282,12 @@ export async function listAuditLogs({
 export function registerAuditSubscribers({ on }) {
   for (const event of DOMAIN_EVENTS) {
     on(event, async (payload) => {
+      const { entityType, entityId } = resolveAuditEntity(event, payload);
       await recordAuditLog({
         actorType: 'system',
         action: event,
-        entityType: ENTITY_TYPE_BY_EVENT[event] ?? null,
-        entityId: entityIdFromPayload(event, payload),
+        entityType,
+        entityId: entityId ?? null,
         metadata: payload ?? null,
       });
     });

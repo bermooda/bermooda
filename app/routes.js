@@ -140,6 +140,8 @@ export default [
       route('settings', 'routes/api/admin/v1/settings.jsx'),
       route('admin-users', 'routes/api/admin/v1/admin-users.jsx'),
       route('admin-users/:id', 'routes/api/admin/v1/admin-users/$id.jsx'),
+      route('audit-logs', 'routes/api/admin/v1/audit-logs.jsx'),
+      route('audit-logs/:id', 'routes/api/admin/v1/audit-logs/$id.jsx'),
       route('wishlists', 'routes/api/admin/v1/wishlists.jsx'),
       route('pos', 'routes/api/admin/v1/pos.jsx'),
       route(

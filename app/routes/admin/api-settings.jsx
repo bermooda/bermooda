@@ -7,6 +7,7 @@ import { Link, useFetcher, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import { revokeApiKey, listApiKeys } from '#/core/api-keys/index.server';
+import { recordAdminAudit } from '#/core/audit/index.server';
 import { DOMAIN_EVENTS } from '#/core/events/names';
 import {
   deleteSubscription,
@@ -37,7 +38,7 @@ export async function loader({ request }) {
 // ---------------------------------------------------------------------------
 
 export async function action({ request }) {
-  await authenticate(request);
+  const { user } = await authenticate(request);
   const formData = await request.formData();
   const intent = formData.get('intent');
 
@@ -47,6 +48,12 @@ export async function action({ request }) {
     if (!id) return { ok: false, intent, error: 'Missing id' };
     try {
       await revokeApiKey(id);
+      await recordAdminAudit({
+        user,
+        action: 'api_key.revoked',
+        entityType: 'api_key',
+        entityId: id,
+      });
       return { ok: true, intent };
     } catch (err) {
       return { ok: false, intent, error: err.message };
@@ -59,6 +66,12 @@ export async function action({ request }) {
     if (!id) return { ok: false, intent, error: 'Missing id' };
     try {
       await deleteSubscription(id);
+      await recordAdminAudit({
+        user,
+        action: 'webhook.deleted',
+        entityType: 'webhook_subscription',
+        entityId: id,
+      });
       return { ok: true, intent };
     } catch (err) {
       return { ok: false, intent, error: err.message };
@@ -72,6 +85,13 @@ export async function action({ request }) {
     if (!id) return { ok: false, intent, error: 'Missing id' };
     try {
       await updateSubscription(id, { active: !active });
+      await recordAdminAudit({
+        user,
+        action: 'webhook.updated',
+        entityType: 'webhook_subscription',
+        entityId: id,
+        metadata: { active: !active },
+      });
       return { ok: true, intent };
     } catch (err) {
       return { ok: false, intent, error: err.message };
