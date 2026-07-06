@@ -88,13 +88,13 @@ describe('set', () => {
 // ---------------------------------------------------------------------------
 
 describe('seedDefaults', () => {
-  it('writes all 5 defaults when none exist', async () => {
+  it('writes all 6 defaults when none exist', async () => {
     prisma.setting.findUnique.mockResolvedValue(null);
     prisma.setting.upsert.mockResolvedValue({});
 
     await seedDefaults();
 
-    expect(prisma.setting.upsert).toHaveBeenCalledTimes(5);
+    expect(prisma.setting.upsert).toHaveBeenCalledTimes(6);
 
     const keys = prisma.setting.upsert.mock.calls.map((c) => c[0].where.key);
     expect(keys).toEqual(
@@ -102,6 +102,7 @@ describe('seedDefaults', () => {
         'defaultCurrency',
         'currencies',
         'defaultLocale',
+        'locales',
         'activeTheme',
         'pluginOrder',
       ])
@@ -127,8 +128,8 @@ describe('seedDefaults', () => {
 
     await seedDefaults();
 
-    // 4 writes: all defaults except the already-existing defaultCurrency.
-    expect(prisma.setting.upsert).toHaveBeenCalledTimes(4);
+    // 5 writes: all defaults except the already-existing defaultCurrency.
+    expect(prisma.setting.upsert).toHaveBeenCalledTimes(5);
 
     const keys = prisma.setting.upsert.mock.calls.map((c) => c[0].where.key);
     expect(keys).not.toContain('defaultCurrency');
