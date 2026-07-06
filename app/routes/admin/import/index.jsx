@@ -1,40 +1,73 @@
 import { Form, useActionData, useLoaderData } from 'react-router';
 
+import { authenticate } from '#/libs/auth/admin.server';
+import { handleError } from '#/libs/error.server';
 import {
   IMPORT_TYPES,
-  importCustomersCsv,
-  importProductsCsv,
+  resolveImportTemplate,
+  runImport,
+  serializeImportResult,
+  validateImportType,
 } from '#/core/imports/index.server';
 import Field from '#/components/admin/form/field';
 import PageHeader from '#/components/admin/page-header';
 import { ButtonSubmit } from '#/components/ui/button';
 
-export async function loader() {
+export async function loader({ request }) {
+  await authenticate(request);
+
+  const url = new URL(request.url);
+  const template = url.searchParams.get('template')?.trim();
+
+  if (template) {
+    try {
+      validateImportType(template);
+      const { csv, filename } = resolveImportTemplate(template);
+      return new Response(csv, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Cache-Control': 'no-store',
+        },
+      });
+    } catch (err) {
+      if (err.code === 'INVALID_IMPORT_TYPE') {
+        throw new Response(err.message, { status: 400 });
+      }
+      throw err;
+    }
+  }
+
   return { types: IMPORT_TYPES };
 }
 
 export async function action({ request }) {
-  const formData = await request.formData();
-  const type = formData.get('type')?.toString();
-  const file = formData.get('file');
+  await authenticate(request);
 
-  if (!file || typeof file === 'string') {
-    return { error: 'CSV file is required' };
+  try {
+    const formData = await request.formData();
+    const type = formData.get('type')?.toString();
+    const file = formData.get('file');
+
+    if (!file || typeof file === 'string') {
+      return { error: 'CSV file is required' };
+    }
+
+    const csvText = await file.text();
+    const result = await runImport(type, csvText);
+
+    return {
+      ok: true,
+      type,
+      result: serializeImportResult(result),
+    };
+  } catch (err) {
+    if (err.code === 'INVALID_IMPORT_TYPE') {
+      return { error: err.message };
+    }
+    return handleError(err, { context: 'admin.import' });
   }
-
-  const csvText = await file.text();
-
-  if (type === 'products') {
-    const result = await importProductsCsv(csvText);
-    return { ok: true, type, result };
-  }
-
-  if (type === 'customers') {
-    const result = await importCustomersCsv(csvText);
-    return { ok: true, type, result };
-  }
-
-  return { error: 'Invalid import type' };
 }
 
 export function meta() {
@@ -51,6 +84,17 @@ export default function AdminImportRoute() {
         title="Import"
         subtitle="Upload CSV files matching export column formats."
       />
+      <div className="mb-4 flex flex-wrap gap-3 text-sm">
+        {types.map((type) => (
+          <a
+            key={type}
+            href={`/admin/import?template=${type}`}
+            className="text-stone-700 underline decoration-stone-300 underline-offset-2 hover:text-stone-900"
+          >
+            Download {type} template
+          </a>
+        ))}
+      </div>
       <Form
         method="post"
         encType="multipart/form-data"

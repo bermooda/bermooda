@@ -107,10 +107,15 @@ export async function updateCustomer(id, data) {
 /**
  * Create a customer profile.
  *
- * @param {{ email: string, name?: string|null, phone?: string|null }} data
+ * @param {{ email: string, name?: string|null, phone?: string|null, preferredLocale?: string|null }} data
  * @returns {Promise<object>}
  */
-export async function createCustomer({ email, name = null, phone = null }) {
+export async function createCustomer({
+  email,
+  name = null,
+  phone = null,
+  preferredLocale = null,
+}) {
   const existing = await prisma.customer.findUnique({ where: { email } });
   if (existing) {
     throw Object.assign(
@@ -120,7 +125,12 @@ export async function createCustomer({ email, name = null, phone = null }) {
   }
 
   return prisma.customer.create({
-    data: { email, name, phone },
+    data: {
+      email,
+      name,
+      phone,
+      ...(preferredLocale ? { preferredLocale } : {}),
+    },
   });
 }
 
