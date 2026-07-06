@@ -2,7 +2,29 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
-import { requestReturn } from '#/core/returns/index.server';
+import {
+  parseRequestReturnInput,
+  requestReturn,
+} from '#/core/returns/index.server';
+
+function returnErrorResponse(err) {
+  if (err.code === 'NOT_FOUND') {
+    return Response.json(
+      { error: err.message, code: err.code },
+      { status: 404 }
+    );
+  }
+  if (
+    err.code === 'RETURN_LINES_REQUIRED' ||
+    err.code === 'INVALID_RETURN_LINE'
+  ) {
+    return Response.json(
+      { error: err.message, code: err.code },
+      { status: 400 }
+    );
+  }
+  return Response.json({ error: err.message, code: err.code }, { status: 422 });
+}
 
 export async function action({ request, params }) {
   await requireApiKey(request, ['admin']);
@@ -18,18 +40,11 @@ export async function action({ request, params }) {
     return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { reason, lines } = body;
-  if (!Array.isArray(lines) || lines.length === 0) {
-    return Response.json({ error: 'lines array is required' }, { status: 400 });
-  }
-
   try {
-    const returnRecord = await requestReturn(params.id, { reason, lines });
+    const input = parseRequestReturnInput(body);
+    const returnRecord = await requestReturn(params.id, input);
     return Response.json({ return: returnRecord }, { status: 201 });
   } catch (err) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 422 }
-    );
+    return returnErrorResponse(err);
   }
 }

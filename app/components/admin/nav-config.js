@@ -29,6 +29,7 @@ import {
   DocumentDuplicateIcon,
   DeviceTabletIcon,
   ArrowPathIcon,
+  ArrowUturnLeftIcon,
 } from '@heroicons/react/24/outline';
 
 /**
@@ -88,6 +89,7 @@ export const NAV_GROUPS = [
     Icon: ShoppingBagIcon,
     items: [
       { name: 'Orders', href: '/admin/orders', Icon: ShoppingBagIcon },
+      { name: 'Returns', href: '/admin/returns', Icon: ArrowUturnLeftIcon },
       { name: 'Discounts', href: '/admin/discounts', Icon: ReceiptPercentIcon },
       {
         name: 'Gift Cards',

@@ -4,7 +4,10 @@ import { Form, redirect, useActionData, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
 import { getOrder } from '#/core/customers/index.server';
-import { requestReturn } from '#/core/returns/index.server';
+import {
+  parseReturnLinesFromForm,
+  requestReturn,
+} from '#/core/returns/index.server';
 
 export async function loader({ request, params }) {
   const session = await getCustomerSession(request);
@@ -42,17 +45,7 @@ export async function action({ request, params }) {
 
   const formData = await request.formData();
   const reason = formData.get('reason')?.toString().trim() || undefined;
-
-  const lines = [];
-  for (const [key, value] of formData.entries()) {
-    if (key.startsWith('qty-')) {
-      const orderLineId = key.slice(4);
-      const quantity = parseInt(String(value), 10);
-      if (quantity > 0) {
-        lines.push({ orderLineId, quantity });
-      }
-    }
-  }
+  const lines = parseReturnLinesFromForm(formData);
 
   try {
     const returnRecord = await requestReturn(params.id, {
