@@ -33,14 +33,10 @@ export async function loader({ request }) {
 export async function action({ request }) {
   await authenticate(request);
   const formData = await request.formData();
-  const url = formData.get('url')?.toString().trim() ?? '';
-  const secret = formData.get('secret')?.toString().trim() ?? '';
-  const label = formData.get('label')?.toString().trim() || undefined;
+  const url = formData.get('url')?.toString();
+  const secret = formData.get('secret')?.toString();
+  const label = formData.get('label')?.toString();
   const events = formData.getAll('events').map(String);
-
-  if (!url) return { error: 'URL is required.' };
-  if (!secret) return { error: 'Secret is required.' };
-  if (events.length === 0) return { error: 'Select at least one event.' };
 
   try {
     await createSubscription({ url, events, secret, label });

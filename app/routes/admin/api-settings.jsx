@@ -10,6 +10,7 @@ import { revokeApiKey, listApiKeys } from '#/core/api-keys/index.server';
 import {
   deleteSubscription,
   listSubscriptions,
+  updateSubscription,
   WEBHOOK_EVENTS,
 } from '#/core/webhooks/index.server';
 import Badge from '#/components/admin/badge';
@@ -24,7 +25,7 @@ import Tabs from '#/components/admin/tabs';
 
 export async function loader({ request }) {
   await authenticate(request);
-  const [apiKeys, subscriptions] = await Promise.all([
+  const [apiKeys, { subscriptions }] = await Promise.all([
     listApiKeys(),
     listSubscriptions(),
   ]);
@@ -58,6 +59,19 @@ export async function action({ request }) {
     if (!id) return { ok: false, intent, error: 'Missing id' };
     try {
       await deleteSubscription(id);
+      return { ok: true, intent };
+    } catch (err) {
+      return { ok: false, intent, error: err.message };
+    }
+  }
+
+  // ── Toggle webhook active ──────────────────────────────────────────────────
+  if (intent === 'toggle-webhook') {
+    const id = formData.get('id')?.toString();
+    const active = formData.get('active') === 'true';
+    if (!id) return { ok: false, intent, error: 'Missing id' };
+    try {
+      await updateSubscription(id, { active: !active });
       return { ok: true, intent };
     } catch (err) {
       return { ok: false, intent, error: err.message };
@@ -186,6 +200,7 @@ function ApiKeysSection({ data }) {
 
 function WebhooksSection({ data }) {
   const deleteFetcher = useFetcher();
+  const toggleFetcher = useFetcher();
 
   return (
     <SectionCard
@@ -238,9 +253,25 @@ function WebhooksSection({ data }) {
                 </div>
               </Td>
               <Td>
-                <Badge tone={sub.active ? 'success' : 'neutral'}>
-                  {sub.active ? 'Active' : 'Paused'}
-                </Badge>
+                <toggleFetcher.Form method="post">
+                  <input type="hidden" name="intent" value="toggle-webhook" />
+                  <input type="hidden" name="id" value={sub.id} />
+                  <input
+                    type="hidden"
+                    name="active"
+                    value={String(sub.active)}
+                  />
+                  <button
+                    type="submit"
+                    disabled={toggleFetcher.state !== 'idle'}
+                    className="disabled:opacity-50"
+                    title={sub.active ? 'Pause webhook' : 'Activate webhook'}
+                  >
+                    <Badge tone={sub.active ? 'success' : 'neutral'}>
+                      {sub.active ? 'Active' : 'Paused'}
+                    </Badge>
+                  </button>
+                </toggleFetcher.Form>
               </Td>
               <Td>{new Date(sub.createdAt).toLocaleDateString()}</Td>
               <Td>

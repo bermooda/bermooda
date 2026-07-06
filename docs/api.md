@@ -294,7 +294,9 @@ List all API keys (key hashes are never returned).
 
 #### `GET /api/admin/v1/webhook-subscriptions`
 
-List all webhook subscriptions. Also returns `supportedEvents`.
+List webhook subscriptions with pagination. Also returns `supportedEvents`.
+
+Query params: `page` (default 1), `limit` (default 50, max 100).
 
 #### `POST /api/admin/v1/webhook-subscriptions`
 
@@ -316,6 +318,10 @@ Use `"*"` in the `events` array to receive all domain events.
 #### `GET /api/admin/v1/webhook-subscriptions/:id`
 
 Get a subscription plus its recent delivery history.
+
+#### `PATCH /api/admin/v1/webhook-subscriptions/:id`
+
+Update a subscription. Supported fields: `active`, `label`, `url`, `events`, `secret`.
 
 #### `DELETE /api/admin/v1/webhook-subscriptions/:id`
 
