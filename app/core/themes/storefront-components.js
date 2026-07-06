@@ -24,5 +24,3 @@ export function getStorefrontComponent(name, themeId = 'default') {
 export function registerStorefrontTheme(manifest) {
   THEMES[manifest.id] = manifest;
 }
-
-export { THEMES as storefrontThemes };

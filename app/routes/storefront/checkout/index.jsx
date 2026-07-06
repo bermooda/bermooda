@@ -32,7 +32,7 @@ import {
 } from '#/core/shipping/index.server';
 import { getCustomerStoreCreditSummary } from '#/core/store-credit/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { preloadStorefrontTheme } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 function getCheckoutSessionId(request) {

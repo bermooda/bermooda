@@ -27,9 +27,6 @@ vi.mock('#/core/seo/index.server', () => ({
 
 vi.mock('#/core/themes/index.server', () => ({
   getSlotBlocksMap: vi.fn(),
-}));
-
-vi.mock('#/core/themes/resolve.server', () => ({
   preloadStorefrontTheme: vi.fn().mockResolvedValue('default'),
 }));
 
