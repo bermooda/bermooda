@@ -361,6 +361,48 @@ Delete a webhook subscription and all its delivery records.
 
 ---
 
+### Scheduled exports
+
+#### `GET /api/admin/v1/scheduled-exports`
+
+List scheduled CSV exports with pagination. Also returns `exportTypes` and `exportSchedules`.
+
+Query params: `page` (default 1), `limit` (default 50, max 100).
+
+#### `POST /api/admin/v1/scheduled-exports`
+
+Create a scheduled export.
+
+**Body:**
+
+```json
+{
+  "label": "Weekly orders",
+  "exportType": "orders",
+  "schedule": "weekly",
+  "recipientEmail": "ops@example.com",
+  "filters": { "startDate": "2026-01-01", "endDate": "2026-01-31" }
+}
+```
+
+#### `GET /api/admin/v1/scheduled-exports/:id`
+
+Get a scheduled export plus its recent runs.
+
+#### `DELETE /api/admin/v1/scheduled-exports/:id`
+
+Delete a scheduled export.
+
+#### `POST /api/admin/v1/scheduled-exports/:id/run`
+
+Queue an immediate run of a scheduled export.
+
+#### `GET /api/admin/v1/export-runs/:id`
+
+Get export run metadata. Pass `includeContent=true` to include the CSV payload.
+
+---
+
 ## Outbound webhooks
 
 ### Payload format
