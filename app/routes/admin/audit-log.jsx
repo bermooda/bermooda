@@ -4,7 +4,10 @@
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
-import { listAuditLogs } from '#/core/audit/index.server';
+import {
+  listAuditLogs,
+  parseAuditListParams,
+} from '#/core/audit/index.server';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
@@ -26,17 +29,14 @@ export function meta() {
 export async function loader({ request }) {
   await authenticate(request);
   const url = new URL(request.url);
-  const page = parseInt(url.searchParams.get('page') ?? '1', 10);
-  const action = url.searchParams.get('action') ?? undefined;
-  const entityType = url.searchParams.get('entityType') ?? undefined;
-
-  const result = await listAuditLogs({ page, action, entityType });
+  const params = parseAuditListParams(url.searchParams);
+  const result = await listAuditLogs(params);
 
   return result;
 }
 
 export default function AdminAuditLogRoute() {
-  const { items, total, page, totalPages } = useLoaderData();
+  const { auditLogs, total, page, totalPages } = useLoaderData();
   const [searchParams, setSearchParams] = useSearchParams();
 
   function goToPage(p) {
@@ -85,14 +85,14 @@ export default function AdminAuditLogRoute() {
           </tr>
         </THead>
         <TBody>
-          {items.length === 0 ? (
+          {auditLogs.length === 0 ? (
             <tr>
               <Td colSpan={5} className="py-8 text-center">
                 No audit entries yet.
               </Td>
             </tr>
           ) : (
-            items.map((entry) => (
+            auditLogs.map((entry) => (
               <tr key={entry.id}>
                 <Td>{new Date(entry.createdAt).toLocaleString('en')}</Td>
                 <Td className="text-text">

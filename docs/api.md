@@ -272,6 +272,20 @@ Update an admin/staff user's role.
 
 ---
 
+### Audit log
+
+#### `GET /api/admin/v1/audit-logs`
+
+List audit log entries with pagination. Also returns `supportedEvents` (domain events recorded by the system subscriber).
+
+**Query params:** `page` (default 1), `limit` (default 50, max 100), `action`, `entityType`, `actorId`
+
+#### `GET /api/admin/v1/audit-logs/:id`
+
+Get a single audit log entry.
+
+---
+
 ### Discounts
 
 #### `GET /api/admin/v1/discounts`
