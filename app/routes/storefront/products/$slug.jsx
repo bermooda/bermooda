@@ -17,7 +17,7 @@ import {
   buildProductMeta,
 } from '#/core/seo/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { preloadStorefrontTheme } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import {
   addToWishlist,

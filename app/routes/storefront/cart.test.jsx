@@ -20,7 +20,7 @@ vi.mock('#/libs/auth/customer.server', () => ({
   getCustomerSession: vi.fn().mockResolvedValue(null),
 }));
 
-vi.mock('#/core/themes/resolve.server', () => ({
+vi.mock('#/core/themes/index.server', () => ({
   preloadStorefrontTheme: vi.fn().mockResolvedValue('default'),
 }));
 

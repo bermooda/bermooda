@@ -5,10 +5,15 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef } from 'react';
 import { Form, useActionData, useLoaderData } from 'react-router';
 
-import cache from '#/utils/cache.server';
-import { get, set } from '#/core/settings/index.server';
-import { _registry, resolveActiveTheme } from '#/core/themes/index.server';
-import { invalidateThemeCache } from '#/core/themes/resolve.server';
+import { get } from '#/core/settings/index.server';
+import {
+  getRegisteredTheme,
+  listRegisteredThemes,
+  loadThemeSettings,
+  resolveActiveTheme,
+  saveThemeSettings,
+  setActiveTheme,
+} from '#/core/themes/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
@@ -38,26 +43,12 @@ export function meta() {
  * Loads all registered themes and the active theme manifest + settings.
  */
 export async function loader() {
-  // All registered themes (may be empty at Phase 5)
-  const themes = Array.from(_registry.values());
-
-  // Raw active theme ID from settings
-  const activeThemeId = await get('activeTheme');
-
-  // Active theme manifest (null if registry is empty or ID not found)
-  const activeTheme = await resolveActiveTheme();
-
-  // If the active theme has settings, load their current values
-  let themeSettings = {};
-  if (activeTheme?.settings?.length) {
-    const entries = await Promise.all(
-      activeTheme.settings.map(async (s) => {
-        const val = await get(`theme.${activeTheme.id}.${s.key}`);
-        return [s.key, val ?? s.default ?? ''];
-      })
-    );
-    themeSettings = Object.fromEntries(entries);
-  }
+  const [themes, activeThemeId, activeTheme] = await Promise.all([
+    Promise.resolve(listRegisteredThemes()),
+    get('activeTheme'),
+    resolveActiveTheme(),
+  ]);
+  const themeSettings = await loadThemeSettings(activeTheme);
 
   return { themes, activeThemeId, activeTheme, themeSettings };
 }
@@ -79,10 +70,11 @@ export async function action({ request }) {
     const themeId = formData.get('themeId');
     if (!themeId) return { error: 'Missing themeId' };
 
-    await set('activeTheme', themeId);
-    // Also bust the TTL cache entry used by resolveActiveTheme
-    cache.delete('theme:active');
-    invalidateThemeCache();
+    try {
+      await setActiveTheme(themeId);
+    } catch (err) {
+      return { error: err.message };
+    }
 
     return { success: true, activated: themeId };
   }
@@ -91,17 +83,14 @@ export async function action({ request }) {
     const themeId = formData.get('themeId');
     if (!themeId) return { error: 'Missing themeId' };
 
-    const manifest = _registry.get(themeId);
-    if (!manifest?.settings?.length) return { error: 'No settings for theme' };
+    const manifest = getRegisteredTheme(themeId);
+    if (!manifest) return { error: 'Theme not found' };
 
-    await Promise.all(
-      manifest.settings.map(async (s) => {
-        const raw = formData.get(s.key);
-        // Toggles arrive as 'on' or null; normalise to boolean
-        const value = s.type === 'toggle' ? raw === 'on' : (raw ?? '');
-        await set(`theme.${themeId}.${s.key}`, value);
-      })
-    );
+    try {
+      await saveThemeSettings(themeId, manifest, formData);
+    } catch (err) {
+      return { error: err.message };
+    }
 
     return { success: true, savedSettings: true };
   }

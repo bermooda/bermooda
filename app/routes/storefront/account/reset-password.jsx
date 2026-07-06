@@ -1,6 +1,6 @@
 import { useLoaderData } from 'react-router';
 
-import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { preloadStorefrontTheme } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {

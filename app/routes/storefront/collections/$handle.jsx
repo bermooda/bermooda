@@ -11,7 +11,7 @@ import {
   buildBreadcrumbJsonLd,
   buildCollectionMeta,
 } from '#/core/seo/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { preloadStorefrontTheme } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import { JsonLd } from '#/components/seo/json-ld';
 

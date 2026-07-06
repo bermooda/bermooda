@@ -9,7 +9,7 @@ import {
   setDefaultAddress,
 } from '#/core/customers/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+import { preloadStorefrontTheme } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
@@ -67,7 +67,10 @@ export function meta() {
 export default function AccountAddressesRoute() {
   const data = useLoaderData();
   const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
-  const AccountAddressesPage = getStorefrontComponent('AccountAddressesPage');
+  const AccountAddressesPage = getStorefrontComponent(
+    'AccountAddressesPage',
+    data.themeId
+  );
   if (!AccountAddressesPage) {
     throw new Error('AccountAddressesPage theme component not found');
   }
