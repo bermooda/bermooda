@@ -10,23 +10,60 @@ vi.mock('#/libs/prisma.server', () => ({
 
 vi.mock('#/core/settings/index.server', () => ({
   get: vi.fn(),
+  getMany: vi.fn(),
+}));
+
+vi.mock('#/core/catalog/index.server', () => ({
+  listProducts: vi.fn(),
+}));
+
+vi.mock('#/core/collections/index.server', () => ({
+  listCollections: vi.fn(),
+}));
+
+vi.mock('#/core/content/index.server', () => ({
+  listPublishedPages: vi.fn(),
 }));
 
 import prisma from '#/libs/prisma.server';
+import { listProducts } from '#/core/catalog/index.server';
+import { listCollections } from '#/core/collections/index.server';
+import { listPublishedPages } from '#/core/content/index.server';
 import {
   buildCanonicalUrl,
   buildProductJsonLd,
   buildMeta,
   buildRobotsTxt,
   buildSiteMeta,
+  buildSitemapXml,
   formatPageTitle,
   normalizeTwitterHandle,
   resolveRobotsMeta,
-  serializeJsonLd,
 } from '#/core/seo/index.server';
-import { get as settingsGet } from '#/core/settings/index.server';
+import { serializeJsonLd } from '#/core/seo/input';
+import {
+  get as settingsGet,
+  getMany as settingsGetMany,
+} from '#/core/settings/index.server';
+import { SETTING_KEYS } from '#/core/settings/keys';
 
 const request = new Request('https://shop.example/products/foo');
+
+function mockSeoSettings(overrides = {}) {
+  settingsGetMany.mockResolvedValue({
+    [SETTING_KEYS.SEO_META_TITLE]: overrides.metaTitle ?? null,
+    [SETTING_KEYS.SEO_META_DESCRIPTION]: overrides.metaDescription ?? null,
+    [SETTING_KEYS.SEO_OG_IMAGE_URL]: overrides.ogImageUrl ?? null,
+    [SETTING_KEYS.SEO_TITLE_TEMPLATE]: overrides.titleTemplate ?? null,
+    [SETTING_KEYS.SEO_ALLOW_INDEXING]: overrides.allowIndexing ?? null,
+    [SETTING_KEYS.SEO_GOOGLE_SITE_VERIFICATION]:
+      overrides.googleSiteVerification ?? null,
+    [SETTING_KEYS.SEO_BING_SITE_VERIFICATION]:
+      overrides.bingSiteVerification ?? null,
+    [SETTING_KEYS.SEO_TWITTER_HANDLE]: overrides.twitterHandle ?? null,
+    [SETTING_KEYS.SHOP_NAME]: overrides.shopName ?? 'My Shop',
+  });
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -137,11 +174,7 @@ describe('normalizeTwitterHandle', () => {
 
 describe('buildRobotsTxt', () => {
   it('disallows all crawlers when indexing is disabled', async () => {
-    settingsGet.mockImplementation(async (key) => {
-      if (key === 'seo.allowIndexing') return false;
-      if (key === 'shopName') return 'My Shop';
-      return null;
-    });
+    mockSeoSettings({ allowIndexing: false });
 
     const body = await buildRobotsTxt(request);
 
@@ -150,11 +183,7 @@ describe('buildRobotsTxt', () => {
   });
 
   it('includes sitemap and storefront disallow rules when indexing is enabled', async () => {
-    settingsGet.mockImplementation(async (key) => {
-      if (key === 'seo.allowIndexing') return true;
-      if (key === 'shopName') return 'My Shop';
-      return null;
-    });
+    mockSeoSettings({ allowIndexing: true });
 
     const body = await buildRobotsTxt(request);
 
@@ -203,13 +232,11 @@ describe('serializeJsonLd', () => {
 
 describe('buildSiteMeta', () => {
   it('uses shop SEO settings with fallbacks', async () => {
-    settingsGet.mockImplementation(async (key) => {
-      if (key === 'seo.metaTitle') return 'My Shop';
-      if (key === 'seo.metaDescription') return 'Best products online';
-      if (key === 'seo.ogImageUrl') return 'https://cdn.example/og.jpg';
-      if (key === 'seo.allowIndexing') return true;
-      if (key === 'shopName') return 'Fallback Shop';
-      return null;
+    mockSeoSettings({
+      metaTitle: 'My Shop',
+      metaDescription: 'Best products online',
+      ogImageUrl: 'https://cdn.example/og.jpg',
+      allowIndexing: true,
     });
 
     const tags = await buildSiteMeta({ request, path: '/' });
@@ -239,5 +266,50 @@ describe('buildAlternateLinks', () => {
 
     expect(links).toHaveLength(2);
     expect(links[0].hrefLang).toBe('en');
+  });
+});
+
+describe('buildSitemapXml', () => {
+  it('returns empty output when indexing is disabled', async () => {
+    mockSeoSettings({ allowIndexing: false });
+
+    const result = await buildSitemapXml({ request });
+
+    expect(result.allowIndexing).toBe(false);
+    expect(result.xml).toBe('');
+    expect(listProducts).not.toHaveBeenCalled();
+  });
+
+  it('includes products, categories, collections, and CMS pages', async () => {
+    mockSeoSettings({ allowIndexing: true });
+    settingsGet.mockResolvedValue('en');
+    listPublishedPages.mockResolvedValue([
+      { slug: 'about', updatedAt: new Date('2026-01-02') },
+    ]);
+    listProducts.mockResolvedValue({
+      products: [
+        {
+          slug: 'mug',
+          updatedAt: new Date('2026-01-03'),
+        },
+      ],
+    });
+    listCollections.mockResolvedValue({
+      collections: [
+        {
+          handle: 'summer',
+          updatedAt: new Date('2026-01-04'),
+        },
+      ],
+    });
+    prisma.slug.findMany.mockResolvedValue([{ slug: 'drinkware' }]);
+
+    const result = await buildSitemapXml({ request });
+
+    expect(result.allowIndexing).toBe(true);
+    expect(result.xml).toContain('http://shop.example/products/mug');
+    expect(result.xml).toContain('http://shop.example/categories/drinkware');
+    expect(result.xml).toContain('http://shop.example/collections/summer');
+    expect(result.xml).toContain('http://shop.example/about');
   });
 });
