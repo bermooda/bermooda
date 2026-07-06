@@ -9,6 +9,10 @@ import {
   set as settingsSet,
 } from '#/core/settings/index.server';
 
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
 const DEFAULT_CONFIG = {
   enabled: true,
   pointsPerDollar: 1,
@@ -16,19 +20,69 @@ const DEFAULT_CONFIG = {
   referralBonusPoints: 500,
 };
 
+// ---------------------------------------------------------------------------
+// Config helpers
+// ---------------------------------------------------------------------------
+
 export async function getLoyaltyConfig() {
   const stored = await settingsGet('loyalty');
   return { ...DEFAULT_CONFIG, ...(stored ?? {}) };
 }
 
-export async function getLoyaltyBalance(customerId) {
-  const latest = await prisma.loyaltyTransaction.findFirst({
-    where: { customerId },
-    orderBy: { createdAt: 'desc' },
-    select: { balanceAfter: true },
-  });
-  return latest?.balanceAfter ?? 0;
+/**
+ * Parse admin/API loyalty settings payload.
+ *
+ * @param {object} input
+ * @returns {object}
+ */
+export function parseLoyaltySettingsInput(input = {}) {
+  const parsed = {};
+
+  if ('enabled' in input) {
+    parsed.enabled =
+      input.enabled === true ||
+      input.enabled === 'on' ||
+      input.enabled === 'true';
+  }
+
+  if (input.pointsPerDollar !== undefined && input.pointsPerDollar !== null) {
+    const pointsPerDollar = parseInt(String(input.pointsPerDollar), 10);
+    if (Number.isFinite(pointsPerDollar) && pointsPerDollar >= 0) {
+      parsed.pointsPerDollar = pointsPerDollar;
+    }
+  }
+
+  if (
+    input.redemptionRateCents !== undefined &&
+    input.redemptionRateCents !== null
+  ) {
+    const redemptionRateCents = parseInt(String(input.redemptionRateCents), 10);
+    if (Number.isFinite(redemptionRateCents) && redemptionRateCents > 0) {
+      parsed.redemptionRateCents = redemptionRateCents;
+    }
+  }
+
+  if (
+    input.referralBonusPoints !== undefined &&
+    input.referralBonusPoints !== null
+  ) {
+    const referralBonusPoints = parseInt(String(input.referralBonusPoints), 10);
+    if (Number.isFinite(referralBonusPoints) && referralBonusPoints >= 0) {
+      parsed.referralBonusPoints = referralBonusPoints;
+    }
+  }
+
+  return parsed;
 }
+
+export async function updateLoyaltySettings(settings) {
+  const current = await getLoyaltyConfig();
+  await settingsSet('loyalty', { ...current, ...settings });
+}
+
+// ---------------------------------------------------------------------------
+// Conversion helpers
+// ---------------------------------------------------------------------------
 
 export function pointsToCents(points, redemptionRateCents) {
   return Math.floor((points * redemptionRateCents) / 100);
@@ -38,30 +92,98 @@ export function centsToPoints(cents, pointsPerDollar) {
   return Math.floor((cents / 100) * pointsPerDollar);
 }
 
-export async function listLoyaltyTransactions(
-  customerId,
-  { page = 1, limit = 50 } = {}
-) {
-  const skip = (page - 1) * limit;
-  return prisma.loyaltyTransaction.findMany({
-    where: { customerId },
-    orderBy: { createdAt: 'desc' },
-    skip,
-    take: limit,
-  });
-}
+// ---------------------------------------------------------------------------
+// Balance + ledger
+// ---------------------------------------------------------------------------
 
 /**
- * @param {import('@prisma/client').Prisma.TransactionClient} tx
+ * @param {import('@prisma/client').Prisma.TransactionClient | typeof prisma} client
  * @param {string} customerId
  */
-async function getBalanceInTransaction(tx, customerId) {
-  const latest = await tx.loyaltyTransaction.findFirst({
+async function resolveCurrentBalance(client, customerId) {
+  const latest = await client.loyaltyTransaction.findFirst({
     where: { customerId },
     orderBy: { createdAt: 'desc' },
     select: { balanceAfter: true },
   });
   return latest?.balanceAfter ?? 0;
+}
+
+export async function getLoyaltyBalance(customerId) {
+  return resolveCurrentBalance(prisma, customerId);
+}
+
+/**
+ * Load a customer's loyalty balance and redeemable value.
+ *
+ * @param {string} [customerId]
+ * @returns {Promise<{ config: object, balance: number, enabled: boolean, valueCents: number }>}
+ */
+export async function getCustomerLoyaltySummary(customerId) {
+  const config = await getLoyaltyConfig();
+  if (!customerId) {
+    return { config, balance: 0, enabled: false, valueCents: 0 };
+  }
+
+  const balance = await getLoyaltyBalance(customerId);
+  const enabled = config.enabled;
+  const valueCents = enabled
+    ? pointsToCents(balance, config.redemptionRateCents)
+    : 0;
+
+  return { config, balance, enabled, valueCents };
+}
+
+/**
+ * @param {import('@prisma/client').Prisma.TransactionClient | typeof prisma} client
+ * @param {string} customerId
+ * @param {{ points: number, reason?: string, referenceType?: string, referenceId?: string }} params
+ */
+async function appendLoyaltyTransaction(
+  client,
+  customerId,
+  { points, reason, referenceType, referenceId }
+) {
+  const balanceAfter =
+    (await resolveCurrentBalance(client, customerId)) + points;
+
+  return client.loyaltyTransaction.create({
+    data: {
+      customerId,
+      points,
+      balanceAfter,
+      reason: reason ?? null,
+      referenceType: referenceType ?? null,
+      referenceId: referenceId ?? null,
+    },
+  });
+}
+
+/**
+ * List loyalty transactions with pagination.
+ *
+ * @param {string} customerId
+ * @param {{ page?: number, limit?: number }} [options]
+ * @returns {Promise<{ transactions: object[], total: number }>}
+ */
+export async function listLoyaltyTransactions(
+  customerId,
+  { page = 1, limit = 50 } = {}
+) {
+  const skip = (page - 1) * limit;
+  const where = { customerId };
+
+  const [transactions, total] = await Promise.all([
+    prisma.loyaltyTransaction.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.loyaltyTransaction.count({ where }),
+  ]);
+
+  return { transactions, total };
 }
 
 export async function earnLoyaltyPoints(
@@ -74,23 +196,17 @@ export async function earnLoyaltyPoints(
   }
 
   const client = tx ?? prisma;
-  const currentBalance = tx
-    ? await getBalanceInTransaction(client, customerId)
-    : await getLoyaltyBalance(customerId);
-  const balanceAfter = currentBalance + points;
-
-  const entry = await client.loyaltyTransaction.create({
-    data: {
-      customerId,
-      points,
-      balanceAfter,
-      reason: reason ?? null,
-      referenceType: referenceType ?? null,
-      referenceId: referenceId ?? null,
-    },
+  const entry = await appendLoyaltyTransaction(client, customerId, {
+    points,
+    reason,
+    referenceType,
+    referenceId,
   });
 
-  logger.info({ customerId, points, balanceAfter }, 'Loyalty points earned');
+  logger.info(
+    { customerId, points, balanceAfter: entry.balanceAfter },
+    'Loyalty points earned'
+  );
   return entry;
 }
 
@@ -104,30 +220,29 @@ export async function redeemLoyaltyPoints(
   }
 
   const client = tx ?? prisma;
-  const currentBalance = tx
-    ? await getBalanceInTransaction(client, customerId)
-    : await getLoyaltyBalance(customerId);
+  const currentBalance = await resolveCurrentBalance(client, customerId);
 
   if (currentBalance < points) {
     throw new Error('INSUFFICIENT_LOYALTY_POINTS');
   }
 
-  const balanceAfter = currentBalance - points;
-
-  const entry = await client.loyaltyTransaction.create({
-    data: {
-      customerId,
-      points: -points,
-      balanceAfter,
-      reason: reason ?? null,
-      referenceType: referenceType ?? null,
-      referenceId: referenceId ?? null,
-    },
+  const entry = await appendLoyaltyTransaction(client, customerId, {
+    points: -points,
+    reason,
+    referenceType,
+    referenceId,
   });
 
-  logger.info({ customerId, points, balanceAfter }, 'Loyalty points redeemed');
+  logger.info(
+    { customerId, points, balanceAfter: entry.balanceAfter },
+    'Loyalty points redeemed'
+  );
   return entry;
 }
+
+// ---------------------------------------------------------------------------
+// Checkout redemption
+// ---------------------------------------------------------------------------
 
 /**
  * Resolve loyalty discount cents from requested points.
@@ -158,6 +273,20 @@ export async function resolveLoyaltyRedemption(
   return { loyaltyPointsCents, pointsRedeemed };
 }
 
+// ---------------------------------------------------------------------------
+// Referrals
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalize a referral code for lookup and storage.
+ *
+ * @param {string} code
+ * @returns {string}
+ */
+export function normalizeReferralCode(code) {
+  return code.trim().toUpperCase();
+}
+
 function generateCodeFromId(customerId) {
   return customerId.slice(-8).toUpperCase();
 }
@@ -180,10 +309,10 @@ export async function getOrCreateReferralCode(customerId) {
   });
 }
 
-export async function getReferralCodeByCode(code) {
+async function getReferralCodeByCode(code) {
   if (!code) return null;
   return prisma.referralCode.findUnique({
-    where: { code: code.trim().toUpperCase() },
+    where: { code: normalizeReferralCode(code) },
     include: { customer: { select: { id: true, email: true } } },
   });
 }
@@ -256,6 +385,10 @@ async function earnOrderLoyaltyPoints(orderId, customerId, totalCents) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Event subscribers
+// ---------------------------------------------------------------------------
+
 /**
  * Register loyalty event subscribers.
  * @param {{ on: Function }} bus
@@ -279,9 +412,4 @@ export function registerLoyaltySubscribers({ on }) {
       logger.error({ err, orderId }, 'Loyalty earn on order.confirmed failed');
     }
   });
-}
-
-export async function updateLoyaltySettings(settings) {
-  const current = await getLoyaltyConfig();
-  await settingsSet('loyalty', { ...current, ...settings });
 }

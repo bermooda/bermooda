@@ -19,11 +19,7 @@ import {
 import { computeTotals } from '#/core/checkout/totals.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
-import {
-  getLoyaltyBalance,
-  getLoyaltyConfig,
-  pointsToCents,
-} from '#/core/loyalty/index.server';
+import { getCustomerLoyaltySummary } from '#/core/loyalty/index.server';
 import { attachPaymentIntent, placeOrder } from '#/core/orders/index.server';
 import {
   createPaymentIntent,
@@ -51,22 +47,17 @@ async function loadTenderBalances(customerId) {
     return { isLoggedIn: false };
   }
 
-  const [storeCreditBalanceCents, loyaltyBalance, loyaltyConfig] =
-    await Promise.all([
-      getStoreCreditBalance(customerId),
-      getLoyaltyBalance(customerId),
-      getLoyaltyConfig(),
-    ]);
+  const [storeCreditBalanceCents, loyalty] = await Promise.all([
+    getStoreCreditBalance(customerId),
+    getCustomerLoyaltySummary(customerId),
+  ]);
 
   return {
     isLoggedIn: true,
     storeCreditBalanceCents,
-    loyaltyBalance,
-    loyaltyEnabled: loyaltyConfig.enabled,
-    loyaltyValueCents: pointsToCents(
-      loyaltyBalance,
-      loyaltyConfig.redemptionRateCents
-    ),
+    loyaltyBalance: loyalty.balance,
+    loyaltyEnabled: loyalty.enabled,
+    loyaltyValueCents: loyalty.valueCents,
   };
 }
 
@@ -112,14 +103,10 @@ async function resolveTenderAmounts(payload) {
   }
 
   if (payload.effectiveCustomerId && payload.useLoyalty) {
-    const loyaltyConfig = await getLoyaltyConfig();
-    if (loyaltyConfig.enabled) {
-      const balance = await getLoyaltyBalance(payload.effectiveCustomerId);
-      loyaltyPointsCents = pointsToCents(
-        balance,
-        loyaltyConfig.redemptionRateCents
-      );
-    }
+    const loyalty = await getCustomerLoyaltySummary(
+      payload.effectiveCustomerId
+    );
+    loyaltyPointsCents = loyalty.valueCents;
   }
 
   return { storeCreditCents, loyaltyPointsCents };

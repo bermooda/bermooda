@@ -5,8 +5,7 @@ import { redirect, useLoaderData } from 'react-router';
 import { getCustomerSession } from '#/libs/auth/customer.server';
 
 import {
-  getLoyaltyBalance,
-  getLoyaltyConfig,
+  getCustomerLoyaltySummary,
   getOrCreateReferralCode,
   listLoyaltyTransactions,
 } from '#/core/loyalty/index.server';
@@ -16,16 +15,16 @@ export async function loader({ request }) {
   if (!session?.user) return redirect('/account/login');
 
   const customerId = session.user.id;
-  const [config, balance, transactions, referralCode] = await Promise.all([
-    getLoyaltyConfig(),
-    getLoyaltyBalance(customerId),
+  const [loyalty, { transactions }, referralCode] = await Promise.all([
+    getCustomerLoyaltySummary(customerId),
     listLoyaltyTransactions(customerId, { limit: 20 }),
     getOrCreateReferralCode(customerId),
   ]);
 
   return {
-    config,
-    balance,
+    config: loyalty.config,
+    balance: loyalty.balance,
+    valueCents: loyalty.valueCents,
     transactions,
     referralCode: referralCode.code,
   };
@@ -36,7 +35,8 @@ export function meta() {
 }
 
 export default function AccountLoyaltyRoute() {
-  const { config, balance, transactions, referralCode } = useLoaderData();
+  const { config, balance, valueCents, transactions, referralCode } =
+    useLoaderData();
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -60,7 +60,7 @@ export default function AccountLoyaltyRoute() {
           {new Intl.NumberFormat('en', {
             style: 'currency',
             currency: 'USD',
-          }).format((balance * config.redemptionRateCents) / 10000)}
+          }).format(valueCents / 100)}
         </p>
       </section>
 
