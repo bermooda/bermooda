@@ -46,6 +46,10 @@ vi.mock('#/core/search/index.server', () => ({
   getDefaultProviderId: vi.fn(() => 'db'),
 }));
 
+vi.mock('#/core/i18n/index.server', () => ({
+  loadMessages: vi.fn().mockResolvedValue({}),
+}));
+
 import { deny, emitBefore, _handlers } from '#/core/events/index.server';
 import { enable, register, _registry } from '#/core/plugins/index.server';
 
