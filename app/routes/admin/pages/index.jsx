@@ -12,7 +12,7 @@ import {
   useSearchParams,
 } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
+import { listPagesAdmin } from '#/core/content/index.server';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import { controlClasses } from '#/components/admin/form/input';
@@ -22,93 +22,9 @@ import Stat from '#/components/admin/stat';
 import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
 
-const PAGE_SIZE = 20;
-
 export async function loader({ request }) {
   const url = new URL(request.url);
-  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10));
-  const status = url.searchParams.get('status') || undefined;
-  const q = url.searchParams.get('q')?.trim() ?? '';
-
-  let pageIds = null;
-  if (q) {
-    const slugRows = await prisma.slug.findMany({
-      where: {
-        entityType: 'page',
-        slug: { contains: q },
-      },
-      select: { entityId: true },
-    });
-    pageIds = slugRows.map((r) => r.entityId);
-  }
-
-  const whereClause = {
-    ...(status ? { status } : {}),
-    ...(pageIds !== null ? { id: { in: pageIds } } : {}),
-  };
-
-  const [total, publishedCount, draftCount, pages] = await Promise.all([
-    prisma.page.count({ where: whereClause }),
-    prisma.page.count({
-      where: { ...whereClause, status: 'published' },
-    }),
-    prisma.page.count({
-      where: { ...whereClause, status: 'draft' },
-    }),
-    prisma.page.findMany({
-      where: whereClause,
-      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-  ]);
-
-  const ids = pages.map((p) => p.id);
-  const [translations, slugs] =
-    ids.length > 0
-      ? await Promise.all([
-          prisma.translation.findMany({
-            where: {
-              entityType: 'page',
-              entityId: { in: ids },
-              locale: 'en',
-              field: 'title',
-            },
-          }),
-          prisma.slug.findMany({
-            where: {
-              entityType: 'page',
-              entityId: { in: ids },
-              locale: 'en',
-            },
-          }),
-        ])
-      : [[], []];
-
-  const titleMap = Object.fromEntries(
-    translations.map((t) => [t.entityId, t.value])
-  );
-  const slugMap = Object.fromEntries(slugs.map((s) => [s.entityId, s.slug]));
-
-  return {
-    pages: pages.map((p) => ({
-      id: p.id,
-      idPrefix: p.id.slice(0, 8),
-      title: titleMap[p.id] ?? null,
-      slug: slugMap[p.id] ?? null,
-      status: p.status,
-      publishedAt: p.publishedAt?.toISOString() ?? null,
-      updatedAt: p.updatedAt.toISOString(),
-    })),
-    total,
-    publishedCount,
-    draftCount,
-    page,
-    pageSize: PAGE_SIZE,
-    totalPages: Math.ceil(total / PAGE_SIZE),
-    status: status ?? 'all',
-    q,
-  };
+  return listPagesAdmin(url.searchParams);
 }
 
 function StatusBadge({ status }) {
@@ -267,10 +183,10 @@ export default function AdminPagesIndexRoute() {
                 <Td className="whitespace-normal">
                   <span className="block min-w-0">
                     <span className="text-text group-hover:text-accent block truncate font-medium transition-colors">
-                      {row.title || row.slug || `${row.idPrefix}…`}
+                      {row.title || row.slug || `${row.id.slice(0, 8)}…`}
                     </span>
                     <span className="text-text-muted mt-0.5 block truncate font-mono text-xs">
-                      {row.slug ?? row.idPrefix}
+                      {row.slug ?? row.id.slice(0, 8)}
                     </span>
                   </span>
                 </Td>
@@ -305,10 +221,10 @@ export default function AdminPagesIndexRoute() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-text truncate text-sm font-medium">
-                      {row.title || row.slug || `${row.idPrefix}…`}
+                      {row.title || row.slug || `${row.id.slice(0, 8)}…`}
                     </p>
                     <p className="text-text-muted mt-0.5 truncate font-mono text-xs">
-                      {row.slug ?? row.idPrefix}
+                      {row.slug ?? row.id.slice(0, 8)}
                     </p>
                   </div>
                   <StatusBadge status={row.status} />
