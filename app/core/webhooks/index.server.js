@@ -4,36 +4,13 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import {
+  DOMAIN_EVENT_WILDCARD,
+  DOMAIN_EVENTS,
+  isDomainEventOrWildcard,
+} from '#/core/events/names';
 
-// All domain events fanned out to webhook subscribers.
-export const WEBHOOK_EVENTS = [
-  'order.created',
-  'order.confirmed',
-  'order.updated',
-  'order.fulfilled',
-  'order.cancelled',
-  'order.returned',
-  'checkout.completed',
-  'shipment.created',
-  'shipment.shipped',
-  'shipment.delivered',
-  'payment.succeeded',
-  'payment.failed',
-  'payment.refunded',
-  'customer.registered',
-  'product.created',
-  'product.updated',
-  'product.deleted',
-  'return.requested',
-  'return.approved',
-  'return.received',
-  'return.completed',
-  'return.cancelled',
-];
-
-export const WEBHOOK_WILDCARD = '*';
 const MAX_LIST_RESULTS = 100;
-const SUPPORTED_EVENT_SET = new Set(WEBHOOK_EVENTS);
 
 // Enqueuer set by job.server.js to avoid a circular import.
 let _enqueuer = null;
@@ -86,9 +63,7 @@ export function validateSubscriptionEvents(events) {
     });
   }
 
-  const invalid = events.filter(
-    (event) => event !== WEBHOOK_WILDCARD && !SUPPORTED_EVENT_SET.has(event)
-  );
+  const invalid = events.filter((event) => !isDomainEventOrWildcard(event));
   if (invalid.length > 0) {
     throw Object.assign(
       new Error(`Unsupported webhook events: ${invalid.join(', ')}`),
@@ -179,7 +154,9 @@ export function parseUpdateSubscriptionInput(input = {}) {
  * @returns {boolean}
  */
 export function subscriptionMatchesEvent(subEvents, eventName) {
-  return subEvents.includes(WEBHOOK_WILDCARD) || subEvents.includes(eventName);
+  return (
+    subEvents.includes(DOMAIN_EVENT_WILDCARD) || subEvents.includes(eventName)
+  );
 }
 
 /**
@@ -392,11 +369,11 @@ export async function dispatchWebhookEvent(event, payload) {
  * @param {{ on: Function }} bus
  */
 export function registerWebhookSubscribers({ on: busOn }) {
-  for (const eventName of WEBHOOK_EVENTS) {
+  for (const eventName of DOMAIN_EVENTS) {
     busOn(eventName, (payload) => dispatchWebhookEvent(eventName, payload));
   }
   logger.info(
-    { count: WEBHOOK_EVENTS.length },
+    { count: DOMAIN_EVENTS.length },
     'Webhook subscribers registered'
   );
 }

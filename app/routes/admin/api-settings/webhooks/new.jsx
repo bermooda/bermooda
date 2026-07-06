@@ -9,10 +9,8 @@ import {
 } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
-import {
-  createSubscription,
-  WEBHOOK_EVENTS,
-} from '#/core/webhooks/index.server';
+import { DOMAIN_EVENTS } from '#/core/events/names';
+import { createSubscription } from '#/core/webhooks/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -27,7 +25,7 @@ const CHECKBOX_CLASS =
 
 export async function loader({ request }) {
   await authenticate(request);
-  return { supportedEvents: WEBHOOK_EVENTS };
+  return { supportedEvents: DOMAIN_EVENTS };
 }
 
 export async function action({ request }) {

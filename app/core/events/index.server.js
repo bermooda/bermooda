@@ -2,6 +2,7 @@
 // In-process domain event bus. No external broker required.
 
 import logger from '#/utils/logger.server';
+import { beforeHookKey } from '#/core/events/names';
 
 /** @type {Map<string, Function[]>} */
 const handlers = new Map();
@@ -78,7 +79,7 @@ export function off(event, handler) {
  * @throws {HookAbortError} when a filter vetoes the action.
  */
 export async function emitBefore(event, payload) {
-  const key = `before.${event}`;
+  const key = beforeHookKey(event);
   const eventHandlers = handlers.get(key) ?? [];
 
   for (const handler of eventHandlers) {

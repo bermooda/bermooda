@@ -2,8 +2,8 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
+import { isHookAbort } from '#/core/events/index.server';
 import { addShipment } from '#/core/orders/index.server';
-import { isHookAbort } from '#/core/plugins/index.server';
 
 export async function action({ request, params }) {
   await requireApiKey(request, ['admin']);

@@ -5,6 +5,7 @@ import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import queue from '#/libs/queue.server';
 import { emit, isHookAbort, off, on } from '#/core/events/index.server';
+import { isBeforeHookEvent } from '#/core/events/names';
 import { translate } from '#/core/i18n/index';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import {
@@ -556,7 +557,7 @@ export async function enable(pluginId) {
     for (const [event, handler] of Object.entries(manifest.hooks)) {
       if (typeof handler !== 'function') continue;
 
-      const wrapped = event.startsWith('before.')
+      const wrapped = isBeforeHookEvent(event)
         ? async (payload) => {
             try {
               return await handler(payload);

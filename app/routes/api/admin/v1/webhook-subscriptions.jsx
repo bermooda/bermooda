@@ -3,10 +3,10 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
+import { DOMAIN_EVENTS } from '#/core/events/names';
 import {
   listSubscriptions,
   createSubscription,
-  WEBHOOK_EVENTS,
 } from '#/core/webhooks/index.server';
 
 export async function loader({ request }) {
@@ -20,7 +20,7 @@ export async function loader({ request }) {
   );
 
   const result = await listSubscriptions({ page, limit });
-  return Response.json({ ...result, supportedEvents: WEBHOOK_EVENTS });
+  return Response.json({ ...result, supportedEvents: DOMAIN_EVENTS });
 }
 
 export async function action({ request }) {
