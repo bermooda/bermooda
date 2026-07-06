@@ -3,10 +3,6 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// ---------------------------------------------------------------------------
-// Mocks — must be declared before any imports that use the mocked modules.
-// ---------------------------------------------------------------------------
-
 vi.mock('#/utils/cache.server', () => ({
   getCachedResult: vi.fn(async (_k, cb) => cb()),
   default: { delete: vi.fn() },
@@ -16,18 +12,28 @@ vi.mock('#/core/settings/index.server', () => ({
   get: vi.fn(),
 }));
 
-// We mock the 'fs' module to avoid real filesystem reads in loadMessages tests.
+vi.mock('#/libs/auth/customer.server', () => ({
+  getCustomerSession: vi.fn(),
+}));
+
+vi.mock('#/libs/prisma.server', () => ({
+  default: {
+    customer: {
+      findUnique: vi.fn(),
+    },
+  },
+}));
+
 vi.mock('fs', () => ({
   readFileSync: vi.fn(),
 }));
 
-// ---------------------------------------------------------------------------
-// Import modules AFTER mocks are registered.
-// ---------------------------------------------------------------------------
-
 import { readFileSync } from 'fs';
 
+import { getCustomerSession } from '#/libs/auth/customer.server';
+import prisma from '#/libs/prisma.server';
 import {
+  getAvailableLocales,
   getRequestLocale,
   loadMessages,
   resolveLocale,
@@ -36,10 +42,6 @@ import {
 } from '#/core/i18n/index.server';
 import { get as settingsGet } from '#/core/settings/index.server';
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function makeRequest({ cookie = '', acceptLanguage = '' } = {}) {
   const headers = new Headers();
   if (cookie) headers.set('cookie', cookie);
@@ -47,51 +49,84 @@ function makeRequest({ cookie = '', acceptLanguage = '' } = {}) {
   return { headers };
 }
 
-// ---------------------------------------------------------------------------
-// beforeEach
-// ---------------------------------------------------------------------------
+function mockLocaleSettings({
+  defaultLocale = 'en',
+  locales = ['en', 'de', 'fr'],
+} = {}) {
+  settingsGet.mockImplementation(async (key) => {
+    if (key === 'defaultLocale') return defaultLocale;
+    if (key === 'locales') return locales;
+    if (key === 'activeTheme') return null;
+    if (key === 'pluginOrder') return [];
+    return null;
+  });
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Default: settings return null (no theme, no plugins, no defaultLocale).
-  settingsGet.mockResolvedValue(null);
+  getCustomerSession.mockResolvedValue(null);
+  prisma.customer.findUnique.mockResolvedValue(null);
+  mockLocaleSettings();
 });
 
-// ---------------------------------------------------------------------------
-// 1. getRequestLocale — locale cookie
-// ---------------------------------------------------------------------------
+describe('getAvailableLocales', () => {
+  it('returns enabled locales from settings', async () => {
+    settingsGet.mockImplementation(async (key) =>
+      key === 'locales' ? ['en', 'ja'] : null
+    );
+    await expect(getAvailableLocales()).resolves.toEqual(['en', 'ja']);
+  });
+
+  it('falls back when settings locales are empty', async () => {
+    settingsGet.mockImplementation(async (key) =>
+      key === 'locales' ? [] : null
+    );
+    await expect(getAvailableLocales()).resolves.toEqual(['en', 'de', 'fr']);
+  });
+});
 
 describe('getRequestLocale', () => {
-  it('returns locale from locale cookie when present', async () => {
+  it('returns locale from locale cookie when present and enabled', async () => {
     const request = makeRequest({ cookie: 'session=abc; locale=de; foo=bar' });
-    const locale = await getRequestLocale(request);
-    expect(locale).toBe('de');
+    await expect(getRequestLocale(request)).resolves.toBe('de');
+  });
+
+  it('ignores cookie locale when it is not enabled', async () => {
+    mockLocaleSettings({ locales: ['en'] });
+    const request = makeRequest({
+      cookie: 'locale=de',
+      acceptLanguage: 'en-US',
+    });
+    await expect(getRequestLocale(request)).resolves.toBe('en');
   });
 
   it('falls back to Accept-Language when no cookie is set', async () => {
     const request = makeRequest({ acceptLanguage: 'fr-FR,fr;q=0.9,en;q=0.8' });
-    const locale = await getRequestLocale(request);
-    expect(locale).toBe('fr');
+    await expect(getRequestLocale(request)).resolves.toBe('fr');
   });
 
   it('falls back to defaultLocale setting when no cookie and no Accept-Language', async () => {
-    settingsGet.mockResolvedValue('es');
+    mockLocaleSettings({ defaultLocale: 'es', locales: ['en', 'es'] });
     const request = makeRequest();
-    const locale = await getRequestLocale(request);
-    expect(locale).toBe('es');
+    await expect(getRequestLocale(request)).resolves.toBe('es');
+  });
+
+  it('returns enabled default when defaultLocale setting is disabled', async () => {
+    mockLocaleSettings({ defaultLocale: 'ja', locales: ['en', 'de'] });
+    const request = makeRequest();
+    await expect(getRequestLocale(request)).resolves.toBe('en');
   });
 
   it('returns "en" when no cookie, no Accept-Language, and no defaultLocale setting', async () => {
-    settingsGet.mockResolvedValue(null);
+    mockLocaleSettings({ defaultLocale: null, locales: ['en'] });
     const request = makeRequest();
-    const locale = await getRequestLocale(request);
-    expect(locale).toBe('en');
+    await expect(getRequestLocale(request)).resolves.toBe('en');
   });
 
   it('normalises Accept-Language tag to primary subtag only', async () => {
+    mockLocaleSettings({ locales: ['en', 'zh'] });
     const request = makeRequest({ acceptLanguage: 'zh-TW,zh;q=0.9' });
-    const locale = await getRequestLocale(request);
-    expect(locale).toBe('zh');
+    await expect(getRequestLocale(request)).resolves.toBe('zh');
   });
 
   it('prefers cookie over Accept-Language', async () => {
@@ -99,14 +134,24 @@ describe('getRequestLocale', () => {
       cookie: 'locale=ja',
       acceptLanguage: 'en-US',
     });
-    const locale = await getRequestLocale(request);
-    expect(locale).toBe('ja');
+    mockLocaleSettings({ locales: ['en', 'ja'] });
+    await expect(getRequestLocale(request)).resolves.toBe('ja');
+  });
+
+  it('uses customer preferredLocale when logged in and no cookie', async () => {
+    getCustomerSession.mockResolvedValue({ user: { id: 'cust_1' } });
+    prisma.customer.findUnique.mockResolvedValue({ preferredLocale: 'fr' });
+    const request = makeRequest();
+    await expect(getRequestLocale(request)).resolves.toBe('fr');
+  });
+
+  it('prefers cookie over customer preferredLocale', async () => {
+    getCustomerSession.mockResolvedValue({ user: { id: 'cust_1' } });
+    prisma.customer.findUnique.mockResolvedValue({ preferredLocale: 'fr' });
+    const request = makeRequest({ cookie: 'locale=de' });
+    await expect(getRequestLocale(request)).resolves.toBe('de');
   });
 });
-
-// ---------------------------------------------------------------------------
-// 4. loadMessages — merge from core + theme + plugin files
-// ---------------------------------------------------------------------------
 
 describe('loadMessages', () => {
   it('returns merged messages from core + theme + plugin files', async () => {
@@ -117,22 +162,16 @@ describe('loadMessages', () => {
     });
 
     readFileSync
-      // core messages
       .mockReturnValueOnce(JSON.stringify({ common: { save: 'Save' } }))
-      // theme overrides
       .mockReturnValueOnce(
         JSON.stringify({ common: { save: 'Speichern', cancel: 'Abbrechen' } })
       )
-      // plugin additions
       .mockReturnValueOnce(JSON.stringify({ plugin: { hello: 'Hello' } }));
 
     const messages = await loadMessages('en');
 
-    // Theme overrides core for 'common.save'.
     expect(messages.common.save).toBe('Speichern');
-    // Theme adds 'common.cancel'.
     expect(messages.common.cancel).toBe('Abbrechen');
-    // Plugin adds its own namespace.
     expect(messages.plugin.hello).toBe('Hello');
   });
 
@@ -149,7 +188,6 @@ describe('loadMessages', () => {
       throw enoent;
     });
 
-    // All three files are missing — should return an empty object, not throw.
     await expect(loadMessages('en')).resolves.toEqual({});
   });
 
@@ -166,14 +204,9 @@ describe('loadMessages', () => {
 
     const messages = await loadMessages('en');
     expect(messages.common.loading).toBe('Loading...');
-    // readFileSync called exactly once (only core file).
     expect(readFileSync).toHaveBeenCalledTimes(1);
   });
 });
-
-// ---------------------------------------------------------------------------
-// 6. t — dot-notation key resolution
-// ---------------------------------------------------------------------------
 
 describe('t', () => {
   const messages = {
@@ -206,10 +239,6 @@ describe('t', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// setLocaleCookie
-// ---------------------------------------------------------------------------
-
 describe('setLocaleCookie', () => {
   it('appends a Set-Cookie header to the response', () => {
     const response = new Response();
@@ -232,10 +261,6 @@ describe('setLocaleCookie', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// resolveLocale
-// ---------------------------------------------------------------------------
-
 describe('resolveLocale', () => {
   it('sets the cookie when no locale cookie is present and returns the locale', async () => {
     const request = makeRequest({ acceptLanguage: 'de-DE,de;q=0.9' });
@@ -252,6 +277,7 @@ describe('resolveLocale', () => {
       cookie: 'locale=ja',
       acceptLanguage: 'en-US',
     });
+    mockLocaleSettings({ locales: ['en', 'ja'] });
     const response = new Response();
     const locale = await resolveLocale(request, response);
     expect(locale).toBe('ja');

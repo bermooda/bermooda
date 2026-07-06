@@ -12,6 +12,7 @@ const DEFAULTS = {
   defaultCurrency: JSON.stringify('USD'),
   currencies: JSON.stringify(['USD', 'EUR', 'AUD']),
   defaultLocale: JSON.stringify('en'),
+  locales: JSON.stringify(['en', 'de', 'fr']),
   activeTheme: JSON.stringify('default'),
   pluginOrder: JSON.stringify([]),
 };
