@@ -29,8 +29,8 @@ The plugin lifecycle is:
 
 1. **Define** — the plugin calls `definePlugin(manifest)` at module load time to validate its manifest.
 2. **Register** — `register(manifest)` adds the plugin to the in-memory registry. This is typically done at application startup when the plugin's `index.server.js` is imported.
-3. **Enable** — `enable(pluginId)` persists the enabled state, wires hook handlers onto the event bus, auto-registers any providers declared in `manifest.providers`, and calls the plugin's `onEnable` lifecycle hook.
-4. **Disable** — `disable(pluginId)` calls `onDisable`, unregisters any providers declared in `manifest.providers`, removes hook handlers from the event bus, and persists the disabled state.
+3. **Enable** — `enable(pluginId)` wires hook handlers onto the event bus, registers providers from `manifest.providers`, and calls `onEnable(ctx)`. Admin toggles persist the `enabledPlugins` array via `setPluginEnabledState()` and call `enable()` immediately.
+4. **Disable** — `disable(pluginId)` calls `onDisable(ctx)`, unregisters providers, and removes hook handlers. Admin toggles use `setPluginEnabledState()` to update `enabledPlugins` and call `disable()` immediately.
 
 In the admin plugins screen, toggling a plugin updates the persisted `enabledPlugins` array for startup and also calls `enable()` or `disable()` immediately so hooks, providers, and lifecycle callbacks are wired live without waiting for a restart.
 
@@ -234,12 +234,11 @@ Calling `register()` does not enable the plugin or wire any handlers. Call `enab
 
 ### `enable(pluginId)`
 
-Enables a registered plugin. This is an async function that:
+Enables a registered plugin in-process. This is an async function that:
 
-1. Persists `plugin.<pluginId>.enabled = true` in the `Setting` table.
-2. Registers all hook handlers from `manifest.hooks` onto the event bus via `on(event, handler)`.
-3. Registers all providers from `manifest.providers` into the matching core provider registries.
-4. Calls `manifest.onEnable(ctx)` if defined.
+1. Registers all hook handlers from `manifest.hooks` onto the event bus via `on(event, handler)`.
+2. Registers all providers from `manifest.providers` into the matching core provider registries.
+3. Calls `manifest.onEnable(ctx)` if defined.
 
 ```js
 import { enable } from '#/core/plugins/index.server';
@@ -251,16 +250,17 @@ await enable('my-plugin');
 
 If the plugin is already enabled, `enable()` returns immediately without re-registering hooks/providers or calling `onEnable` again.
 
+Admin UI toggles should call `setPluginEnabledState(pluginId, true)` instead of `enable()` directly so the `enabledPlugins` setting stays in sync.
+
 ---
 
 ### `disable(pluginId)`
 
-Disables a registered plugin. This is an async function that:
+Disables a registered plugin in-process. This is an async function that:
 
-1. Persists `plugin.<pluginId>.enabled = false` in the `Setting` table.
-2. Calls `manifest.onDisable(ctx)` if defined.
-3. Unregisters all providers previously registered from `manifest.providers`. Search providers that temporarily became the default restore the previous default provider automatically.
-4. Removes all hook handlers from the event bus via `off(event, handler)` and clears the handlers map.
+1. Calls `manifest.onDisable(ctx)` if defined.
+2. Unregisters all providers previously registered from `manifest.providers`. Search providers that temporarily became the default restore the previous default provider automatically.
+3. Removes all hook handlers from the event bus via `off(event, handler)` and clears the handlers map.
 
 ```js
 import { disable } from '#/core/plugins/index.server';
@@ -270,23 +270,56 @@ await disable('my-plugin');
 
 **Throws:** `Error` if the plugin is not in the registry.
 
+Admin UI toggles should call `setPluginEnabledState(pluginId, false)` instead of `disable()` directly so the `enabledPlugins` setting stays in sync.
+
 ---
 
-### `loadPlugins()`
+### `setPluginEnabledState(pluginId, enabled)`
 
-Returns a snapshot of the current plugin registry. Useful for admin UIs and diagnostics.
+Persists the plugin in the `enabledPlugins` setting array and wires or unwires the plugin live by calling `enable()` or `disable()`. Rolls back the setting if live wiring fails.
 
 ```js
-import { loadPlugins } from '#/core/plugins/index.server';
+import { setPluginEnabledState } from '#/core/plugins/index.server';
 
-const { plugins, hooks } = loadPlugins();
-// plugins — array of all registered PluginManifest objects
-// hooks   — { [eventName]: Function[] } of currently active handlers
+await setPluginEnabledState('my-plugin', true);
+await setPluginEnabledState('my-plugin', false);
 ```
 
-**Returns:** `{ plugins: PluginManifest[], hooks: Record<string, Function[]> }`
+---
 
-Only handlers that were registered via `enable()` and have not yet been removed by `disable()` appear in `hooks`.
+### `listRegisteredPlugins()`
+
+Returns all registered plugin manifests from the in-memory registry.
+
+```js
+import { listRegisteredPlugins } from '#/core/plugins/index.server';
+
+const plugins = listRegisteredPlugins();
+```
+
+---
+
+### `getRegisteredPlugin(pluginId)`
+
+Returns a registered plugin manifest by id, or `null`.
+
+---
+
+### `getEnabledPluginIds()` / `isPluginEnabled(pluginId)`
+
+Read helpers for the persisted `enabledPlugins` setting array.
+
+---
+
+### `loadPluginSettings(manifest)` / `savePluginSettings(pluginId, manifest, formData)`
+
+Load and persist manifest-driven plugin settings stored under `plugin.<pluginId>.<key>`.
+
+---
+
+### `reorderPlugin(pluginId, direction)`
+
+Moves a plugin earlier or later in the persisted `pluginOrder` array. `direction` is `'up'` or `'down'`.
 
 ---
 
@@ -297,10 +330,6 @@ Resolves an admin route descriptor for a plugin using the splat path relative to
 ### `resolvePluginStorefrontRoute(pluginId, path)`
 
 Resolves a storefront route descriptor for a plugin using the splat path relative to `/apps/<pluginId>/`.
-
-### `resolvePluginRoute(pluginId, path)`
-
-Deprecated alias for `resolvePluginAdminRoute(pluginId, path)`.
 
 ---
 
@@ -392,10 +421,11 @@ Use a namespaced event name (prefixed with your plugin id) to avoid collisions w
 
 ### `ctx.t`
 
-An i18n translation function. Accepts a translation key and returns the localized string. In v1, this is a pass-through stub that returns the key unchanged; real i18n integration arrives later.
+An i18n translation function backed by the default-locale message catalog. Accepts a translation key and optional interpolation params.
 
 ```js
 const label = ctx.t('myPlugin.admin.title');
+const greeting = ctx.t('myPlugin.welcome', { name: 'Ada' });
 ```
 
 Translation keys are contributed via your plugin's `i18n/en.json` file (see [Plugin Folder Layout](#plugin-folder-layout)).

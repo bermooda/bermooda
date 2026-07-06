@@ -202,13 +202,13 @@ describe('plugin contract end-to-end', () => {
       set: vi.fn().mockResolvedValue(undefined),
     }));
 
-    const { register, loadPlugins } =
+    const { register, listRegisteredPlugins } =
       await import('#/core/plugins/index.server');
     const { pluginManifest: manifest } =
       await import('#/plugins/sample-analytics/index.server');
 
     register(manifest);
-    const { plugins } = loadPlugins();
+    const plugins = listRegisteredPlugins();
 
     expect(plugins.some((p) => p.id === PLUGIN_ID)).toBe(true);
   });

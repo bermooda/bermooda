@@ -10,8 +10,16 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { _registry, disable, enable } from '#/core/plugins/index.server';
-import { get, set } from '#/core/settings/index.server';
+import {
+  getRegisteredPlugin,
+  listRegisteredPlugins,
+  loadAllPluginSettings,
+  reorderPlugin,
+  savePluginSettings,
+  setPluginEnabledState,
+  sortPluginsByOrder,
+} from '#/core/plugins/index.server';
+import { get } from '#/core/settings/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
@@ -42,46 +50,19 @@ export function meta() {
  * and any per-plugin setting values.
  */
 export async function loader() {
-  // All plugins from the in-memory registry
-  const allPlugins = Array.from(_registry.values()).map((e) => e.manifest);
-
-  // enabledPlugins: JSON array of plugin IDs
-  const enabledPluginsRaw = await get('enabledPlugins');
-  const enabledPlugins = Array.isArray(enabledPluginsRaw)
-    ? enabledPluginsRaw
-    : [];
-
-  // pluginOrder: JSON array of plugin IDs for display order
-  const pluginOrderRaw = await get('pluginOrder');
+  const allPlugins = listRegisteredPlugins();
+  const [enabledPlugins, pluginOrderRaw] = await Promise.all([
+    get('enabledPlugins'),
+    get('pluginOrder'),
+  ]);
+  const enabledPluginIds = Array.isArray(enabledPlugins) ? enabledPlugins : [];
   const pluginOrder = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
-
-  // Sort plugins by pluginOrder; any not in order appear at the end
-  const orderedPlugins = [...allPlugins].sort((a, b) => {
-    const ai = pluginOrder.indexOf(a.id);
-    const bi = pluginOrder.indexOf(b.id);
-    if (ai === -1 && bi === -1) return 0;
-    if (ai === -1) return 1;
-    if (bi === -1) return -1;
-    return ai - bi;
-  });
-
-  // Per-plugin settings values
-  const pluginSettings = {};
-  for (const plugin of allPlugins) {
-    if (plugin.settings?.length) {
-      const entries = await Promise.all(
-        plugin.settings.map(async (s) => {
-          const val = await get(`plugin.${plugin.id}.${s.key}`);
-          return [s.key, val ?? s.default ?? ''];
-        })
-      );
-      pluginSettings[plugin.id] = Object.fromEntries(entries);
-    }
-  }
+  const plugins = sortPluginsByOrder(allPlugins, pluginOrder);
+  const pluginSettings = await loadAllPluginSettings(allPlugins);
 
   return {
-    plugins: orderedPlugins,
-    enabledPlugins,
+    plugins,
+    enabledPlugins: enabledPluginIds,
     pluginOrder,
     pluginSettings,
   };
@@ -106,28 +87,10 @@ export async function action({ request }) {
   if (intent === 'enable' || intent === 'disable') {
     const pluginId = formData.get('pluginId');
     if (!pluginId) return { error: 'Missing pluginId' };
-    if (!_registry.has(pluginId)) return { error: 'Plugin not found' };
 
-    const enabledRaw = await get('enabledPlugins');
-    const previousEnabled = Array.isArray(enabledRaw) ? [...enabledRaw] : [];
-    const enabled = [...previousEnabled];
-
-    if (intent === 'enable') {
-      if (!enabled.includes(pluginId)) enabled.push(pluginId);
-    } else {
-      const idx = enabled.indexOf(pluginId);
-      if (idx !== -1) enabled.splice(idx, 1);
-    }
-
-    await set('enabledPlugins', enabled);
     try {
-      if (intent === 'enable') {
-        await enable(pluginId);
-      } else {
-        await disable(pluginId);
-      }
+      await setPluginEnabledState(pluginId, intent === 'enable');
     } catch (err) {
-      await set('enabledPlugins', previousEnabled);
       return {
         error:
           err instanceof Error ? err.message : 'Failed to update plugin state',
@@ -141,32 +104,14 @@ export async function action({ request }) {
     const pluginId = formData.get('pluginId');
     if (!pluginId) return { error: 'Missing pluginId' };
 
-    // Build current order from all registered plugins
-    const allPlugins = Array.from(_registry.values()).map((e) => e.manifest);
-    const pluginOrderRaw = await get('pluginOrder');
-    const storedOrder = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
-
-    // Build a full ordered list: stored order first, then any untracked plugins
-    const trackedIds = storedOrder.filter((id) =>
-      allPlugins.some((p) => p.id === id)
-    );
-    const untrackedIds = allPlugins
-      .map((p) => p.id)
-      .filter((id) => !trackedIds.includes(id));
-    const fullOrder = [...trackedIds, ...untrackedIds];
-
-    const idx = fullOrder.indexOf(pluginId);
-    if (idx === -1) return { error: 'Plugin not found' };
-
-    const swapIdx = intent === 'reorder-up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= fullOrder.length) {
-      return { success: true, intent }; // already at boundary
+    try {
+      await reorderPlugin(pluginId, intent === 'reorder-up' ? 'up' : 'down');
+    } catch (err) {
+      return {
+        error: err instanceof Error ? err.message : 'Failed to reorder plugin',
+      };
     }
 
-    // Swap
-    [fullOrder[idx], fullOrder[swapIdx]] = [fullOrder[swapIdx], fullOrder[idx]];
-
-    await set('pluginOrder', fullOrder);
     return { success: true, intent };
   }
 
@@ -174,18 +119,16 @@ export async function action({ request }) {
     const pluginId = formData.get('pluginId');
     if (!pluginId) return { error: 'Missing pluginId' };
 
-    const entry = _registry.get(pluginId);
-    if (!entry?.manifest?.settings?.length) {
-      return { error: 'No settings for plugin' };
-    }
+    const manifest = getRegisteredPlugin(pluginId);
+    if (!manifest) return { error: 'Plugin not found' };
 
-    await Promise.all(
-      entry.manifest.settings.map(async (s) => {
-        const raw = formData.get(s.key);
-        const value = s.type === 'toggle' ? raw === 'on' : (raw ?? '');
-        await set(`plugin.${pluginId}.${s.key}`, value);
-      })
-    );
+    try {
+      await savePluginSettings(pluginId, manifest, formData);
+    } catch (err) {
+      return {
+        error: err instanceof Error ? err.message : 'Failed to save settings',
+      };
+    }
 
     return { success: true, intent, savedSettings: pluginId };
   }
