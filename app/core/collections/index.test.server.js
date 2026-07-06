@@ -15,6 +15,7 @@ vi.mock('#/libs/prisma.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
+import { containsFilter } from '#/utils/prisma-filters.server';
 
 import {
   buildCollectionSearchWhere,
@@ -110,7 +111,19 @@ describe('collections helpers', () => {
       prisma.translation.findMany.mockResolvedValue([{ entityId: 'col-1' }]);
 
       expect(await buildCollectionSearchWhere('summer')).toEqual({
-        OR: [{ handle: { contains: 'summer' } }, { id: { in: ['col-1'] } }],
+        OR: [
+          { handle: containsFilter('summer') },
+          { id: { in: ['col-1'] } },
+        ],
+      });
+
+      expect(prisma.translation.findMany).toHaveBeenCalledWith({
+        where: {
+          entityType: 'collection',
+          field: 'title',
+          value: containsFilter('summer'),
+        },
+        select: { entityId: true },
       });
     });
   });
