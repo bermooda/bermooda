@@ -3,53 +3,42 @@
 
 import { authenticate } from '#/libs/auth/admin.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
-import { generateExport, getExportRun } from '#/core/exports/index.server';
+import {
+  parseExportDownloadParams,
+  resolveExportDownload,
+} from '#/core/exports/index.server';
 
 export async function loader({ request }) {
   const { user } = await authenticate(request);
   const url = new URL(request.url);
-  const runId = url.searchParams.get('runId');
-  const type = url.searchParams.get('type');
-  const startDate = url.searchParams.get('startDate') ?? undefined;
-  const endDate = url.searchParams.get('endDate') ?? undefined;
 
-  let csv;
-  let filename;
-  let rowCount = 0;
+  try {
+    const params = parseExportDownloadParams(url.searchParams);
+    const { csv, filename, auditEntityId, auditMetadata } =
+      await resolveExportDownload(params);
 
-  if (runId) {
-    const run = await getExportRun(runId);
-    if (!run || run.status !== 'completed' || !run.fileContent) {
-      throw new Response('Export not found', { status: 404 });
+    await recordAdminAudit({
+      user,
+      action: 'export.downloaded',
+      entityType: 'export',
+      entityId: auditEntityId,
+      metadata: auditMetadata,
+    });
+
+    return new Response(csv, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-store',
+      },
+    });
+  } catch (err) {
+    if (err.code === 'NOT_FOUND' || err.code === 'INVALID_REQUEST') {
+      throw new Response(err.message, { status: err.status ?? 404 });
     }
-    csv = run.fileContent;
-    filename = `${run.exportType}-export-${run.id}.csv`;
-    rowCount = run.rowCount;
-  } else if (type) {
-    const result = await generateExport(type, { startDate, endDate });
-    csv = result.csv;
-    rowCount = result.rowCount;
-    filename = `${type}-export-${new Date().toISOString().slice(0, 10)}.csv`;
-  } else {
-    throw new Response('Missing export type or run id', { status: 400 });
+    throw err;
   }
-
-  await recordAdminAudit({
-    user,
-    action: 'export.downloaded',
-    entityType: 'export',
-    entityId: runId ?? type,
-    metadata: { type: type ?? runId, rowCount },
-  });
-
-  return new Response(csv, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-      'Cache-Control': 'no-store',
-    },
-  });
 }
 
 export default function AdminReportsExportRoute() {

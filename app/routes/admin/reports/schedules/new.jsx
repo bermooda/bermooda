@@ -13,6 +13,7 @@ import {
   EXPORT_SCHEDULES,
   EXPORT_TYPES,
   createScheduledExport,
+  parseCreateScheduledExportInput,
 } from '#/core/exports/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
@@ -46,12 +47,13 @@ export async function action({ request }) {
   }
 
   try {
-    const created = await createScheduledExport({
+    const input = parseCreateScheduledExportInput({
       label,
       exportType,
       schedule,
       recipientEmail,
     });
+    const created = await createScheduledExport(input);
     await recordAdminAudit({
       user,
       action: 'scheduled_export.created',
@@ -61,6 +63,9 @@ export async function action({ request }) {
     });
     return redirect('/admin/reports');
   } catch (err) {
+    if (err.code === 'FIELDS_REQUIRED') {
+      return { error: err.message };
+    }
     return { error: err.message };
   }
 }

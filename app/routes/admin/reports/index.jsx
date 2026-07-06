@@ -34,24 +34,14 @@ export async function loader({ request }) {
   const startDate = url.searchParams.get('startDate') ?? undefined;
   const endDate = url.searchParams.get('endDate') ?? undefined;
 
-  const [report, scheduledExports] = await Promise.all([
+  const [report, scheduledExportList] = await Promise.all([
     getDashboardReport({ startDate, endDate }),
-    listScheduledExports(),
+    listScheduledExports({ limit: 100 }),
   ]);
 
   return {
     report,
-    scheduledExports: scheduledExports.map((s) => ({
-      ...s,
-      createdAt: s.createdAt.toISOString(),
-      updatedAt: s.updatedAt.toISOString(),
-      lastRunAt: s.lastRunAt?.toISOString() ?? null,
-      runs: s.runs.map((r) => ({
-        ...r,
-        createdAt: r.createdAt.toISOString(),
-        completedAt: r.completedAt?.toISOString() ?? null,
-      })),
-    })),
+    scheduledExports: scheduledExportList.scheduledExports,
     filters: { startDate: startDate ?? '', endDate: endDate ?? '' },
     exportTypes: EXPORT_TYPES,
     exportSchedules: EXPORT_SCHEDULES,
@@ -79,7 +69,14 @@ export async function action({ request }) {
   if (intent === 'delete-scheduled-export') {
     const id = formData.get('id')?.toString();
     if (!id) return { ok: false, error: 'Missing export id.' };
-    await deleteScheduledExport(id);
+    try {
+      await deleteScheduledExport(id);
+    } catch (err) {
+      if (err.code === 'NOT_FOUND') {
+        return { ok: false, error: 'Scheduled export not found.' };
+      }
+      throw err;
+    }
     await recordAdminAudit({
       user,
       action: 'scheduled_export.deleted',

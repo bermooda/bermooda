@@ -2,10 +2,23 @@
 // CSV data exports and scheduled export management.
 
 import prisma from '#/libs/prisma.server';
+import { loadProductTitleMap } from '#/core/catalog/translations.server';
+import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import { parseDateRange } from '#/core/reporting/index.server';
 
 export const EXPORT_TYPES = ['orders', 'products', 'customers', 'inventory'];
 export const EXPORT_SCHEDULES = ['daily', 'weekly', 'monthly'];
+
+const MAX_LIST_RESULTS = 100;
+const DEFAULT_LIST_LIMIT = 50;
+const RECENT_RUNS_LIMIT = 3;
+
+// Enqueuer set by job.server.js to avoid circular imports.
+let _enqueuer = null;
+
+// ---------------------------------------------------------------------------
+// CSV helpers
+// ---------------------------------------------------------------------------
 
 /**
  * Escape a CSV cell value.
@@ -34,6 +47,156 @@ export function buildCsv(headers, rows) {
   ];
   return lines.join('\n');
 }
+
+// ---------------------------------------------------------------------------
+// Input + validation helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate an export type.
+ * @param {string} exportType
+ */
+export function validateExportType(exportType) {
+  if (!EXPORT_TYPES.includes(exportType)) {
+    throw Object.assign(new Error('Invalid export type'), {
+      code: 'INVALID_EXPORT_TYPE',
+    });
+  }
+}
+
+/**
+ * Validate an export schedule.
+ * @param {string} schedule
+ */
+export function validateExportSchedule(schedule) {
+  if (!EXPORT_SCHEDULES.includes(schedule)) {
+    throw Object.assign(new Error('Invalid schedule'), {
+      code: 'INVALID_SCHEDULE',
+    });
+  }
+}
+
+/**
+ * Parse export download query params from URLSearchParams or a plain object.
+ *
+ * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ * @returns {{ runId?: string, type?: string, startDate?: string, endDate?: string }}
+ */
+export function parseExportDownloadParams(source = {}) {
+  const get = (key) => {
+    if (source instanceof URLSearchParams) {
+      const value = source.get(key);
+      return value === null || value === '' ? undefined : value;
+    }
+    const value = source[key];
+    if (value === null || value === undefined || value === '') return undefined;
+    return value.toString();
+  };
+
+  const runId = get('runId')?.trim();
+  const type = get('type')?.trim();
+  const startDate = get('startDate')?.trim();
+  const endDate = get('endDate')?.trim();
+
+  return {
+    ...(runId ? { runId } : {}),
+    ...(type ? { type } : {}),
+    ...(startDate ? { startDate } : {}),
+    ...(endDate ? { endDate } : {}),
+  };
+}
+
+/**
+ * Parse admin/API create payload into normalized scheduled export fields.
+ *
+ * @param {object} input
+ * @returns {{ label: string, exportType: string, schedule: string, filters: object|null, recipientEmail: string|null }}
+ */
+export function parseCreateScheduledExportInput(input = {}) {
+  const label = input.label?.toString().trim() ?? '';
+  const exportType = input.exportType?.toString().trim() ?? '';
+  const schedule = input.schedule?.toString().trim() ?? '';
+  const recipientEmail = input.recipientEmail?.toString().trim() || null;
+
+  if (!label || !exportType || !schedule) {
+    throw Object.assign(
+      new Error('Label, export type, and schedule are required'),
+      { code: 'FIELDS_REQUIRED' }
+    );
+  }
+
+  validateExportType(exportType);
+  validateExportSchedule(schedule);
+
+  let filters = null;
+  if (input.filters !== undefined && input.filters !== null) {
+    if (typeof input.filters === 'string' && input.filters.trim()) {
+      filters = JSON.parse(input.filters);
+    } else if (typeof input.filters === 'object') {
+      filters = input.filters;
+    }
+  }
+
+  return { label, exportType, schedule, filters, recipientEmail };
+}
+
+/**
+ * Serialize an export run for admin/API responses.
+ *
+ * @param {object} run
+ * @param {{ includeFileContent?: boolean }} [opts]
+ */
+export function serializeExportRun(run, { includeFileContent = false } = {}) {
+  const serialized = {
+    id: run.id,
+    scheduledExportId: run.scheduledExportId,
+    exportType: run.exportType,
+    status: run.status,
+    rowCount: run.rowCount,
+    error: run.error,
+    createdAt: run.createdAt.toISOString(),
+    completedAt: run.completedAt?.toISOString() ?? null,
+  };
+
+  if (includeFileContent && run.fileContent) {
+    serialized.fileContent = run.fileContent;
+  } else {
+    serialized.hasFileContent = Boolean(run.fileContent);
+  }
+
+  return serialized;
+}
+
+/**
+ * Serialize a scheduled export for admin/API responses.
+ *
+ * @param {object} scheduledExport
+ * @param {{ includeFileContent?: boolean }} [opts]
+ */
+export function serializeScheduledExport(
+  scheduledExport,
+  { includeFileContent = false } = {}
+) {
+  return {
+    id: scheduledExport.id,
+    label: scheduledExport.label,
+    exportType: scheduledExport.exportType,
+    schedule: scheduledExport.schedule,
+    filtersJson: scheduledExport.filtersJson,
+    recipientEmail: scheduledExport.recipientEmail,
+    active: scheduledExport.active,
+    lastRunAt: scheduledExport.lastRunAt?.toISOString() ?? null,
+    createdAt: scheduledExport.createdAt.toISOString(),
+    updatedAt: scheduledExport.updatedAt.toISOString(),
+    runs: scheduledExport.runs?.map((run) =>
+      serializeExportRun(run, { includeFileContent })
+    ),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// CSV generators
+// ---------------------------------------------------------------------------
 
 /**
  * @param {{ startDate?: string, endDate?: string }} filters
@@ -89,7 +252,7 @@ export async function exportOrdersCsv(filters = {}) {
   return { csv: buildCsv(headers, rows), rowCount: orders.length };
 }
 
-export async function exportProductsCsv() {
+export async function exportProductsCsv(locale = DEFAULT_LOCALE) {
   const variants = await prisma.productVariant.findMany({
     orderBy: [{ product: { position: 'asc' } }, { position: 'asc' }],
     select: {
@@ -102,20 +265,10 @@ export async function exportProductsCsv() {
     },
   });
 
-  const productIds = [...new Set(variants.map((v) => v.productId))];
-  const titles =
-    productIds.length > 0
-      ? await prisma.translation.findMany({
-          where: {
-            entityType: 'product',
-            entityId: { in: productIds },
-            locale: 'en',
-            field: 'title',
-          },
-          select: { entityId: true, value: true },
-        })
-      : [];
-  const titleByProduct = new Map(titles.map((t) => [t.entityId, t.value]));
+  const titleByProduct = await loadProductTitleMap(
+    variants.map((variant) => variant.productId),
+    locale
+  );
 
   const headers = [
     'variant_id',
@@ -175,7 +328,7 @@ export async function exportCustomersCsv() {
   return { csv: buildCsv(headers, rows), rowCount: customers.length };
 }
 
-export async function exportInventoryCsv() {
+export async function exportInventoryCsv(locale = DEFAULT_LOCALE) {
   const variants = await prisma.productVariant.findMany({
     where: { inventoryTracked: true },
     orderBy: { inventoryCount: 'asc' },
@@ -187,20 +340,10 @@ export async function exportInventoryCsv() {
     },
   });
 
-  const productIds = [...new Set(variants.map((v) => v.productId))];
-  const titles =
-    productIds.length > 0
-      ? await prisma.translation.findMany({
-          where: {
-            entityType: 'product',
-            entityId: { in: productIds },
-            locale: 'en',
-            field: 'title',
-          },
-          select: { entityId: true, value: true },
-        })
-      : [];
-  const titleByProduct = new Map(titles.map((t) => [t.entityId, t.value]));
+  const titleByProduct = await loadProductTitleMap(
+    variants.map((variant) => variant.productId),
+    locale
+  );
 
   const headers = [
     'variant_id',
@@ -227,15 +370,17 @@ export async function exportInventoryCsv() {
  * @param {object} [filters]
  */
 export async function generateExport(exportType, filters = {}) {
+  validateExportType(exportType);
+
   switch (exportType) {
     case 'orders':
       return exportOrdersCsv(filters);
     case 'products':
-      return exportProductsCsv();
+      return exportProductsCsv(filters.locale);
     case 'customers':
       return exportCustomersCsv();
     case 'inventory':
-      return exportInventoryCsv();
+      return exportInventoryCsv(filters.locale);
     default:
       throw Object.assign(new Error(`Unknown export type: ${exportType}`), {
         code: 'INVALID_EXPORT_TYPE',
@@ -244,52 +389,155 @@ export async function generateExport(exportType, filters = {}) {
 }
 
 /**
- * Create a scheduled export definition.
+ * Resolve CSV download payload for admin export route.
+ *
+ * @param {{ runId?: string, type?: string, startDate?: string, endDate?: string }} params
  */
-export async function createScheduledExport({
-  label,
-  exportType,
-  schedule,
-  filters = null,
-  recipientEmail = null,
-}) {
-  if (!EXPORT_TYPES.includes(exportType)) {
-    throw Object.assign(new Error('Invalid export type'), {
-      code: 'INVALID_EXPORT_TYPE',
-    });
-  }
-  if (!EXPORT_SCHEDULES.includes(schedule)) {
-    throw Object.assign(new Error('Invalid schedule'), {
-      code: 'INVALID_SCHEDULE',
-    });
+export async function resolveExportDownload({
+  runId,
+  type,
+  startDate,
+  endDate,
+} = {}) {
+  if (runId) {
+    const run = await getExportRun(runId, { includeFileContent: true });
+    if (run.status !== 'completed' || !run.fileContent) {
+      throw Object.assign(new Error('Export not found or not ready'), {
+        code: 'NOT_FOUND',
+        status: 404,
+      });
+    }
+
+    return {
+      csv: run.fileContent,
+      filename: `${run.exportType}-export-${run.id}.csv`,
+      rowCount: run.rowCount ?? 0,
+      auditEntityId: runId,
+      auditMetadata: { type: run.exportType, rowCount: run.rowCount ?? 0 },
+    };
   }
 
-  return prisma.scheduledExport.create({
+  if (type) {
+    const result = await generateExport(type, { startDate, endDate });
+    return {
+      csv: result.csv,
+      filename: `${type}-export-${new Date().toISOString().slice(0, 10)}.csv`,
+      rowCount: result.rowCount,
+      auditEntityId: type,
+      auditMetadata: { type, rowCount: result.rowCount },
+    };
+  }
+
+  throw Object.assign(new Error('Missing export type or run id'), {
+    code: 'INVALID_REQUEST',
+    status: 400,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Scheduled export CRUD
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a scheduled export definition.
+ */
+export async function createScheduledExport(input) {
+  const { label, exportType, schedule, filters, recipientEmail } =
+    parseCreateScheduledExportInput(input);
+
+  const created = await prisma.scheduledExport.create({
     data: {
-      label: label.trim(),
+      label,
       exportType,
       schedule,
       filtersJson: filters ? JSON.stringify(filters) : null,
-      recipientEmail: recipientEmail?.trim() || null,
+      recipientEmail,
       active: true,
     },
   });
+
+  return serializeScheduledExport(created);
 }
 
-export async function listScheduledExports() {
-  return prisma.scheduledExport.findMany({
-    orderBy: { createdAt: 'desc' },
+/**
+ * List scheduled exports with pagination.
+ *
+ * @param {{ page?: number, limit?: number }} [opts]
+ * @returns {Promise<{ scheduledExports: object[], total: number, page: number, limit: number }>}
+ */
+export async function listScheduledExports({
+  page = 1,
+  limit = DEFAULT_LIST_LIMIT,
+} = {}) {
+  const safePage = Math.max(1, page);
+  const safeLimit = Math.min(Math.max(1, limit), MAX_LIST_RESULTS);
+  const skip = (safePage - 1) * safeLimit;
+
+  const [items, total] = await Promise.all([
+    prisma.scheduledExport.findMany({
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: safeLimit,
+      include: {
+        runs: {
+          orderBy: { createdAt: 'desc' },
+          take: RECENT_RUNS_LIMIT,
+        },
+      },
+    }),
+    prisma.scheduledExport.count(),
+  ]);
+
+  return {
+    scheduledExports: items.map((item) => serializeScheduledExport(item)),
+    total,
+    page: safePage,
+    limit: safeLimit,
+  };
+}
+
+/**
+ * Get a scheduled export by id.
+ *
+ * @param {string} id
+ */
+export async function getScheduledExport(id) {
+  const scheduledExport = await prisma.scheduledExport.findUnique({
+    where: { id },
     include: {
       runs: {
         orderBy: { createdAt: 'desc' },
-        take: 3,
+        take: RECENT_RUNS_LIMIT,
       },
     },
   });
+
+  if (!scheduledExport) {
+    throw Object.assign(new Error('Scheduled export not found'), {
+      code: 'NOT_FOUND',
+      status: 404,
+    });
+  }
+
+  return serializeScheduledExport(scheduledExport);
 }
 
+/**
+ * Delete a scheduled export by id.
+ *
+ * @param {string} id
+ */
 export async function deleteScheduledExport(id) {
-  return prisma.scheduledExport.delete({ where: { id } });
+  const existing = await prisma.scheduledExport.findUnique({ where: { id } });
+  if (!existing) {
+    throw Object.assign(new Error('Scheduled export not found'), {
+      code: 'NOT_FOUND',
+      status: 404,
+    });
+  }
+
+  await prisma.scheduledExport.delete({ where: { id } });
+  return { deleted: true };
 }
 
 /**
@@ -355,15 +603,22 @@ export async function runScheduledExport(scheduledExportId) {
 }
 
 /**
- * Return export run CSV content for download.
+ * Return export run by id.
+ *
  * @param {string} runId
+ * @param {{ includeFileContent?: boolean }} [opts]
  */
-export async function getExportRun(runId) {
-  return prisma.exportRun.findUnique({ where: { id: runId } });
-}
+export async function getExportRun(runId, { includeFileContent = false } = {}) {
+  const run = await prisma.exportRun.findUnique({ where: { id: runId } });
+  if (!run) {
+    throw Object.assign(new Error('Export run not found'), {
+      code: 'NOT_FOUND',
+      status: 404,
+    });
+  }
 
-// Enqueuer set by job.server.js to avoid circular imports.
-let _enqueuer = null;
+  return serializeExportRun(run, { includeFileContent });
+}
 
 export function setExportJobEnqueuer(fn) {
   _enqueuer = fn;
