@@ -128,6 +128,10 @@ export default [
       route('customers', 'routes/api/admin/v1/customers.jsx'),
       route('customers/:id', 'routes/api/admin/v1/customers/$id.jsx'),
       route(
+        'customers/:id/store-credit',
+        'routes/api/admin/v1/customers/$id/store-credit.jsx'
+      ),
+      route(
         'inventory/locations',
         'routes/api/admin/v1/inventory/locations.jsx'
       ),
