@@ -1,14 +1,36 @@
 // POST /api/admin/v1/returns/:id/approve
 // POST /api/admin/v1/returns/:id/receive
 // POST /api/admin/v1/returns/:id/complete
+// POST /api/admin/v1/returns/:id/cancel
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
 import {
   approveReturn,
-  receiveReturn,
+  cancelReturn,
   completeReturn,
+  parseCompleteReturnInput,
+  receiveReturn,
 } from '#/core/returns/index.server';
+
+function returnErrorResponse(err) {
+  if (err.code === 'NOT_FOUND') {
+    return Response.json(
+      { error: err.message, code: err.code },
+      { status: 404 }
+    );
+  }
+  if (
+    err.code === 'INVALID_REFUND_AMOUNT' ||
+    err.code === 'INVALID_RESOLUTION'
+  ) {
+    return Response.json(
+      { error: err.message, code: err.code },
+      { status: 400 }
+    );
+  }
+  return Response.json({ error: err.message, code: err.code }, { status: 422 });
+}
 
 export async function action({ request, params }) {
   await requireApiKey(request, ['admin']);
@@ -43,18 +65,18 @@ export async function action({ request, params }) {
     }
 
     if (actionName === 'complete') {
-      const returnRecord = await completeReturn(params.id, {
-        resolution: body.resolution,
-        refundAmountCents: body.refundAmountCents,
-      });
+      const options = parseCompleteReturnInput(body);
+      const returnRecord = await completeReturn(params.id, options);
+      return Response.json({ return: returnRecord });
+    }
+
+    if (actionName === 'cancel') {
+      const returnRecord = await cancelReturn(params.id);
       return Response.json({ return: returnRecord });
     }
 
     return Response.json({ error: 'Unknown action' }, { status: 404 });
   } catch (err) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 422 }
-    );
+    return returnErrorResponse(err);
   }
 }

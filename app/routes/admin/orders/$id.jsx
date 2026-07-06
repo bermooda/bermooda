@@ -138,6 +138,7 @@ export async function action({ request, params }) {
     'approve-return',
     'receive-return',
     'complete-return',
+    'cancel-return',
   ].includes(intent);
 
   const ordersCore = needsOrdersCore
@@ -258,6 +259,16 @@ export async function action({ request, params }) {
     const resolution = formData.get('resolution')?.toString() || undefined;
     try {
       await returnsCore.completeReturn(returnId, { resolution });
+      return { ok: true, intent };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  }
+
+  if (intent === 'cancel-return') {
+    const returnId = formData.get('returnId')?.toString();
+    try {
+      await returnsCore.cancelReturn(returnId);
       return { ok: true, intent };
     } catch (err) {
       return { ok: false, error: err.message };
@@ -760,6 +771,20 @@ export default function AdminOrderRoute() {
                       <input type="hidden" name="resolution" value="refund" />
                       <Button type="submit" variant="primary">
                         Approve (Refund)
+                      </Button>
+                    </Form>
+                  )}
+                  {(ret.status === 'requested' ||
+                    ret.status === 'approved') && (
+                    <Form method="post" className="inline">
+                      <input
+                        type="hidden"
+                        name="intent"
+                        value="cancel-return"
+                      />
+                      <input type="hidden" name="returnId" value={ret.id} />
+                      <Button type="submit" variant="secondary">
+                        Cancel
                       </Button>
                     </Form>
                   )}

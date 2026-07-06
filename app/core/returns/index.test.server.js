@@ -10,6 +10,7 @@ vi.mock('#/libs/prisma.server', () => ({
       update: vi.fn(),
       findUnique: vi.fn(),
       findMany: vi.fn(),
+      count: vi.fn(),
     },
     returnLine: { create: vi.fn(), update: vi.fn() },
     orderLine: { update: vi.fn() },
@@ -36,11 +37,21 @@ import { emit } from '#/core/events/index.server';
 import { incrementInventory } from '#/core/inventory/index.server';
 import { createRefund } from '#/core/orders/index.server';
 import {
-  requestReturn,
   approveReturn,
-  receiveReturn,
-  completeReturn,
+  buildReturnWhere,
   cancelReturn,
+  computeReturnAmountCents,
+  completeReturn,
+  getReturn,
+  listReturns,
+  parseCompleteReturnInput,
+  parseRequestReturnInput,
+  parseReturnLinesFromForm,
+  parseReturnLinesInput,
+  parseReturnListParams,
+  receiveReturn,
+  requestReturn,
+  serializeReturn,
 } from '#/core/returns/index.server';
 import { issueStoreCredit } from '#/core/store-credit/index.server';
 
@@ -59,7 +70,123 @@ const ORDER = {
   ],
 };
 
-describe('returns', () => {
+const RETURN_RECORD = {
+  id: 'ret-1',
+  orderId: 'order-1',
+  customerId: 'cust-1',
+  status: 'requested',
+  reason: 'Too small',
+  resolution: null,
+  storeCreditCents: null,
+  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+  order: { orderNumber: '1001', email: 'a@example.com', customerId: 'cust-1' },
+  lines: [
+    {
+      id: 'rl-1',
+      orderLineId: 'line-1',
+      quantity: 1,
+      restocked: false,
+      orderLine: {
+        title: 'Shirt',
+        sku: 'SH-1',
+        priceCents: 1000,
+        variantId: 'var-1',
+      },
+    },
+  ],
+};
+
+describe('returns helpers', () => {
+  it('parseReturnListParams applies defaults and caps limit', () => {
+    expect(parseReturnListParams(new URLSearchParams())).toEqual({
+      page: 1,
+      limit: 20,
+    });
+    expect(parseReturnListParams(new URLSearchParams('limit=999'))).toEqual({
+      page: 1,
+      limit: 100,
+    });
+    expect(
+      parseReturnListParams(new URLSearchParams('status=requested&orderId=o1'))
+    ).toEqual({
+      page: 1,
+      limit: 20,
+      status: 'requested',
+      orderId: 'o1',
+    });
+  });
+
+  it('parseReturnListParams rejects invalid status', () => {
+    expect(() =>
+      parseReturnListParams(new URLSearchParams('status=invalid'))
+    ).toThrow('Invalid return status filter.');
+  });
+
+  it('buildReturnWhere maps filters', () => {
+    expect(buildReturnWhere({ orderId: 'o1', status: 'requested' })).toEqual({
+      orderId: 'o1',
+      status: 'requested',
+    });
+  });
+
+  it('parseReturnLinesInput validates lines', () => {
+    expect(parseReturnLinesInput([{ orderLineId: 'l1', quantity: 1 }])).toEqual(
+      [{ orderLineId: 'l1', quantity: 1 }]
+    );
+    expect(() => parseReturnLinesInput([])).toThrow(
+      'Return lines are required.'
+    );
+  });
+
+  it('parseRequestReturnInput normalizes reason and lines', () => {
+    expect(
+      parseRequestReturnInput({
+        reason: '  damaged ',
+        lines: [{ orderLineId: 'l1', quantity: '2' }],
+      })
+    ).toEqual({
+      reason: 'damaged',
+      lines: [{ orderLineId: 'l1', quantity: 2 }],
+    });
+  });
+
+  it('parseReturnLinesFromForm reads qty fields', () => {
+    const formData = new FormData();
+    formData.set('qty-line-1', '2');
+    formData.set('qty-line-2', '0');
+    expect(parseReturnLinesFromForm(formData)).toEqual([
+      { orderLineId: 'line-1', quantity: 2 },
+    ]);
+  });
+
+  it('parseCompleteReturnInput validates refund amount', () => {
+    expect(parseCompleteReturnInput({ resolution: 'refund' })).toEqual({
+      resolution: 'refund',
+      refundAmountCents: undefined,
+    });
+    expect(() => parseCompleteReturnInput({ refundAmountCents: -1 })).toThrow(
+      'refundAmountCents must be a number.'
+    );
+  });
+
+  it('computeReturnAmountCents sums line totals', () => {
+    expect(
+      computeReturnAmountCents([
+        { quantity: 2, orderLine: { priceCents: 500 } },
+        { quantity: 1, orderLine: { priceCents: 1000 } },
+      ])
+    ).toBe(2000);
+  });
+
+  it('serializeReturn formats dates and nested lines', () => {
+    const serialized = serializeReturn(RETURN_RECORD);
+    expect(serialized.createdAt).toBe('2026-01-01T00:00:00.000Z');
+    expect(serialized.lines[0].title).toBe('Shirt');
+  });
+});
+
+describe('returns workflows', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -67,12 +194,7 @@ describe('returns', () => {
   it('requestReturn creates return with lines', async () => {
     prisma.order.findUnique.mockResolvedValue(ORDER);
     prisma.return.create.mockResolvedValue({ id: 'ret-1', orderId: 'order-1' });
-    prisma.return.findUnique.mockResolvedValue({
-      id: 'ret-1',
-      orderId: 'order-1',
-      customerId: 'cust-1',
-      lines: [{ orderLineId: 'line-1', quantity: 1 }],
-    });
+    prisma.return.findUnique.mockResolvedValue(RETURN_RECORD);
 
     const result = await requestReturn('order-1', {
       customerId: 'cust-1',
@@ -90,23 +212,42 @@ describe('returns', () => {
       requestReturn('order-1', {
         lines: [{ orderLineId: 'line-1', quantity: 5 }],
       })
-    ).rejects.toThrow('INVALID_RETURN_QUANTITY');
+    ).rejects.toMatchObject({ code: 'INVALID_RETURN_QUANTITY' });
+  });
+
+  it('getReturn throws NOT_FOUND for missing return', async () => {
+    prisma.return.findUnique.mockResolvedValue(null);
+    await expect(getReturn('missing')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('listReturns returns paginated payload', async () => {
+    prisma.return.findMany.mockResolvedValue([RETURN_RECORD]);
+    prisma.return.count.mockResolvedValue(1);
+
+    const result = await listReturns({
+      page: 1,
+      limit: 20,
+      status: 'requested',
+    });
+
+    expect(result.returns).toHaveLength(1);
+    expect(result.total).toBe(1);
+    expect(result.totalPages).toBe(1);
+    expect(prisma.return.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { status: 'requested' },
+      })
+    );
   });
 
   it('approveReturn updates status', async () => {
-    prisma.return.findUnique.mockResolvedValue({
-      id: 'ret-1',
-      orderId: 'order-1',
-      status: 'requested',
-      resolution: null,
-      lines: [],
-    });
+    prisma.return.findUnique.mockResolvedValue(RETURN_RECORD);
     prisma.return.update.mockResolvedValue({
-      id: 'ret-1',
-      orderId: 'order-1',
+      ...RETURN_RECORD,
       status: 'approved',
       resolution: 'refund',
-      lines: [],
     });
 
     const result = await approveReturn('ret-1', { resolution: 'refund' });
@@ -117,23 +258,12 @@ describe('returns', () => {
   it('receiveReturn restocks inventory', async () => {
     prisma.return.findUnique
       .mockResolvedValueOnce({
-        id: 'ret-1',
-        orderId: 'order-1',
+        ...RETURN_RECORD,
         status: 'approved',
-        lines: [
-          {
-            id: 'rl-1',
-            orderLineId: 'line-1',
-            quantity: 1,
-            orderLine: { variantId: 'var-1' },
-          },
-        ],
       })
       .mockResolvedValueOnce({
-        id: 'ret-1',
-        orderId: 'order-1',
+        ...RETURN_RECORD,
         status: 'received',
-        lines: [],
       });
 
     await receiveReturn('ret-1');
@@ -149,19 +279,13 @@ describe('returns', () => {
   it('completeReturn issues refund without inventory restore', async () => {
     prisma.return.findUnique
       .mockResolvedValueOnce({
-        id: 'ret-1',
-        orderId: 'order-1',
+        ...RETURN_RECORD,
         status: 'received',
         resolution: 'refund',
-        customerId: 'cust-1',
-        reason: 'Damaged',
-        lines: [{ quantity: 1, orderLine: { priceCents: 1000 } }],
       })
       .mockResolvedValueOnce({
-        id: 'ret-1',
-        orderId: 'order-1',
+        ...RETURN_RECORD,
         status: 'refunded',
-        lines: [],
       });
     prisma.return.update.mockResolvedValue({ id: 'ret-1', status: 'refunded' });
 
@@ -177,19 +301,22 @@ describe('returns', () => {
   it('completeReturn issues store credit', async () => {
     prisma.return.findUnique
       .mockResolvedValueOnce({
-        id: 'ret-1',
-        orderId: 'order-1',
+        ...RETURN_RECORD,
         status: 'received',
         resolution: 'store_credit',
-        customerId: 'cust-1',
-        reason: 'Changed mind',
-        lines: [{ quantity: 1, orderLine: { priceCents: 500 } }],
+        lines: [
+          {
+            id: 'rl-1',
+            orderLineId: 'line-1',
+            quantity: 1,
+            orderLine: { priceCents: 500, variantId: 'var-1' },
+          },
+        ],
       })
       .mockResolvedValueOnce({
-        id: 'ret-1',
-        orderId: 'order-1',
+        ...RETURN_RECORD,
         status: 'refunded',
-        lines: [],
+        storeCreditCents: 500,
       });
     prisma.return.update.mockResolvedValue({
       id: 'ret-1',
@@ -207,16 +334,10 @@ describe('returns', () => {
   });
 
   it('cancelReturn cancels requested return', async () => {
-    prisma.return.findUnique.mockResolvedValue({
-      id: 'ret-1',
-      orderId: 'order-1',
-      status: 'requested',
-      lines: [],
-    });
+    prisma.return.findUnique.mockResolvedValue(RETURN_RECORD);
     prisma.return.update.mockResolvedValue({
-      id: 'ret-1',
+      ...RETURN_RECORD,
       status: 'cancelled',
-      lines: [],
     });
 
     const result = await cancelReturn('ret-1');
