@@ -91,15 +91,6 @@ export function getProvider(id) {
 }
 
 /**
- * List all registered search provider ids.
- *
- * @returns {string[]}
- */
-export function listProviders() {
-  return Array.from(_registry.keys());
-}
-
-/**
  * Override the active default search provider.
  *
  * @param {string} id
@@ -135,16 +126,6 @@ export function search(params) {
     throw new Error('No search provider registered');
   }
   return getProvider(_defaultProviderId).search(params);
-}
-
-/**
- * Search using an explicitly named provider (for plugin integrations).
- *
- * @param {string} providerId
- * @param {Object} params
- */
-export function searchWith(providerId, params) {
-  return getProvider(providerId).search(params);
 }
 
 // ---------------------------------------------------------------------------

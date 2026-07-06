@@ -26,3 +26,21 @@ export function parseCatalogSearchParams(url) {
     filters: { priceMin, priceMax, inStock, attributes },
   };
 }
+
+/**
+ * Parse storefront search page params (query + catalog filters).
+ *
+ * @param {URL} url
+ */
+export function parseStorefrontSearchParams(url) {
+  const query = url.searchParams.get('q') ?? '';
+  const categoryId = url.searchParams.get('category') || undefined;
+  const { sort, page, filters } = parseCatalogSearchParams(url);
+
+  return {
+    query,
+    sort,
+    page,
+    filters: { ...filters, categoryId },
+  };
+}
