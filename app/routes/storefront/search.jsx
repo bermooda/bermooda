@@ -1,5 +1,6 @@
 import { useLoaderData } from 'react-router';
 
+import { parseStorefrontSearchParams } from '#/core/catalog/filter-params';
 import { listCategories } from '#/core/catalog/index.server';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
@@ -11,25 +12,7 @@ import { getStorefrontComponent } from '#/core/themes/storefront-components';
 export async function loader({ request }) {
   const themeId = await preloadStorefrontTheme();
   const url = new URL(request.url);
-  const query = url.searchParams.get('q') ?? '';
-  const categoryId = url.searchParams.get('category') || undefined;
-  const sort = url.searchParams.get('sort') ?? 'relevance';
-  const page = Math.max(1, Number(url.searchParams.get('page') ?? 1));
-  const inStock = url.searchParams.get('inStock') === '1' ? true : undefined;
-
-  const priceMinRaw = url.searchParams.get('priceMin');
-  const priceMaxRaw = url.searchParams.get('priceMax');
-  const priceMin = priceMinRaw ? Number(priceMinRaw) : undefined;
-  const priceMax = priceMaxRaw ? Number(priceMaxRaw) : undefined;
-
-  // Collect attribute filters: attr_Color=Red,Blue → { Color: ['Red', 'Blue'] }
-  const attributes = {};
-  for (const [key, value] of url.searchParams.entries()) {
-    if (key.startsWith('attr_')) {
-      const name = key.slice(5);
-      attributes[name] = value.split(',').filter(Boolean);
-    }
-  }
+  const { query, sort, page, filters } = parseStorefrontSearchParams(url);
 
   const locale = await getRequestLocale(request);
   const currency = await getRequestCurrency(request);
@@ -38,14 +21,7 @@ export async function loader({ request }) {
   const [{ products, total, facets }, categories] = await Promise.all([
     search({
       query,
-      filters: {
-        categoryId,
-        priceMin,
-        priceMax,
-        inStock,
-        attributes,
-        channelId: channel.id,
-      },
+      filters: { ...filters, channelId: channel.id },
       sort,
       page,
       limit: 24,
@@ -60,7 +36,7 @@ export async function loader({ request }) {
     query,
     sort,
     page,
-    filters: { categoryId, priceMin, priceMax, inStock, attributes },
+    filters,
     products,
     total,
     facets,
