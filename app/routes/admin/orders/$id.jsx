@@ -10,6 +10,7 @@ import {
 } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -19,8 +20,6 @@ import SlotBlocks from '#/components/admin/slot-blocks';
 import { Td, Th } from '#/components/admin/table';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
-
-import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 
 // Server-only core calls are dynamically imported in `action` to avoid a
 // circular bundle graph (returns → orders) in this route module.

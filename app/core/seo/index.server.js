@@ -3,7 +3,6 @@
 
 import { getDomainUrl } from '#/utils/misc';
 import prisma from '#/libs/prisma.server';
-
 import { get as settingsGet } from '#/core/settings/index.server';
 
 /**

@@ -1,7 +1,5 @@
 import { useLoaderData } from 'react-router';
 
-import { JsonLd } from '#/components/seo/json-ld';
-
 import { parseCatalogSearchParams } from '#/core/catalog/filter-params';
 import { getCategoryBySlug } from '#/core/catalog/index.server';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
@@ -16,6 +14,7 @@ import {
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { JsonLd } from '#/components/seo/json-ld';
 
 export async function loader({ request, params }) {
   const themeId = await preloadStorefrontTheme();

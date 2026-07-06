@@ -4,7 +4,6 @@
 import logger from '#/utils/logger.server';
 import { handleError } from '#/libs/error.server';
 import queue from '#/libs/queue.server';
-
 import { processAbandonedCarts } from '#/core/marketing/index.server';
 
 const abandonedCartSequenceJob = queue.createJob('abandoned_cart_sequence');

@@ -1,7 +1,6 @@
 import { useLoaderData, useRouteLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
-
 import {
   listAddresses,
   addAddress,

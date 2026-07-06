@@ -1,13 +1,12 @@
 import { redirect } from 'react-router';
 import { Form } from 'react-router';
 
+import { createCollection } from '#/core/collections/index.server';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import Button, { ButtonSubmit } from '#/components/ui/button';
-
-import { createCollection } from '#/core/collections/index.server';
 
 export async function action({ request }) {
   const formData = await request.formData();

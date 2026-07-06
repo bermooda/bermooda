@@ -6,8 +6,6 @@ import { useActionData, useLoaderData, useNavigation } from 'react-router';
 import { redirect } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
-import ProductEditor from '#/components/admin/product-editor';
-
 import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import {
   loadAdminProductEditorContext,
@@ -19,6 +17,7 @@ import {
   detachMedia,
 } from '#/core/catalog/index.server';
 import { uploadMedia } from '#/core/storage/index.server';
+import ProductEditor from '#/components/admin/product-editor';
 
 // ---------------------------------------------------------------------------
 // Loader

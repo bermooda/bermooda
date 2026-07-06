@@ -21,6 +21,7 @@ import {
 } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import { get } from '#/core/settings/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
@@ -29,8 +30,6 @@ import Textarea from '#/components/admin/form/textarea';
 import PageHeader from '#/components/admin/page-header';
 import { SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
-
-import { get } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
 // Loader

@@ -2,7 +2,6 @@
 // B2B price lists and customer-group-aware variant pricing.
 
 import prisma from '#/libs/prisma.server';
-
 import { getChannelPriceOverride } from '#/core/channels/index.server';
 
 /**

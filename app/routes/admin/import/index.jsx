@@ -1,14 +1,13 @@
 import { Form, useActionData, useLoaderData } from 'react-router';
 
-import Field from '#/components/admin/form/field';
-import PageHeader from '#/components/admin/page-header';
-import { ButtonSubmit } from '#/components/ui/button';
-
 import {
   IMPORT_TYPES,
   importCustomersCsv,
   importProductsCsv,
 } from '#/core/imports/index.server';
+import Field from '#/components/admin/form/field';
+import PageHeader from '#/components/admin/page-header';
+import { ButtonSubmit } from '#/components/ui/button';
 
 export async function loader() {
   return { types: IMPORT_TYPES };

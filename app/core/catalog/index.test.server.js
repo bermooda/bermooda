@@ -60,7 +60,6 @@ vi.mock('#/core/events/index.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-
 import { emit } from '#/core/events/index.server';
 
 // Build a transaction mock that delegates to the same mock fns.

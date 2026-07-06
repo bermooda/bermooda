@@ -4,7 +4,6 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
-
 import {
   deleteCollection,
   getCollection,

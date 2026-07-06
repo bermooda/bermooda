@@ -23,7 +23,6 @@ vi.mock('#/core/inventory/tracking.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-
 import { emit } from '#/core/events/index.server';
 import {
   decrementInventory,

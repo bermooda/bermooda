@@ -3,6 +3,7 @@ import { Form, Link, useActionData, useNavigation } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import prisma from '#/libs/prisma.server';
+import { hasPermission } from '#/core/rbac/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -11,8 +12,6 @@ import Input from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
-
-import { hasPermission } from '#/core/rbac/index.server';
 
 export async function action({ request }) {
   const session = await authenticate(request);

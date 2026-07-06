@@ -39,6 +39,7 @@ vi.mock('#/core/themes/storefront-components', () => ({
 
 import { listCategories, listProducts } from '#/core/catalog/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
+
 import { loader } from '#/routes/storefront/index';
 
 describe('storefront home loader', () => {

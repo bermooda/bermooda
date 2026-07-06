@@ -2,7 +2,6 @@ import { redirect } from 'react-router';
 import { useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
-
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 

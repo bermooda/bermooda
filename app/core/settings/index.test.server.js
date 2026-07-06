@@ -18,7 +18,6 @@ vi.mock('#/utils/cache.server', () => ({
 
 import cache, { getCachedResult } from '#/utils/cache.server';
 import prisma from '#/libs/prisma.server';
-
 import { get, set, seedDefaults } from '#/core/settings/index.server';
 
 beforeEach(() => {

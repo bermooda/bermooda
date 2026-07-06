@@ -1,7 +1,6 @@
 // POST /api/v1/checkout — create a checkout session from a cart
 
 import prisma from '#/libs/prisma.server';
-
 import { createCheckoutSession } from '#/core/checkout/index.server';
 
 export async function action({ request }) {

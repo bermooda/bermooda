@@ -6,7 +6,6 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 import { getCachedResult } from '#/utils/cache.server';
-
 import { get as settingsGet } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------

@@ -13,14 +13,13 @@ import config from '#/config';
 import logger from '#/utils/logger.server';
 import { adminAuthClient } from '#/libs/auth/admin-client';
 import { adminAuth } from '#/libs/auth/admin.server';
-import AuthLayout from '#/components/auth/auth-layout';
-import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
-import { ButtonSubmit } from '#/components/ui/button';
-
 import {
   createFirstAdmin,
   isOnboardingAvailable,
 } from '#/core/admin-onboarding/index.server';
+import AuthLayout from '#/components/auth/auth-layout';
+import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
+import { ButtonSubmit } from '#/components/ui/button';
 
 export const handle = {
   htmlClass: 'h-full bg-bg',

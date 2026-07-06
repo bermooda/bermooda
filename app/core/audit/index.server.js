@@ -3,7 +3,6 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-
 import { WEBHOOK_EVENTS } from '#/core/webhooks/index.server';
 
 const ENTITY_TYPE_BY_EVENT = {

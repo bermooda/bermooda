@@ -2,11 +2,6 @@ import { redirect } from 'react-router';
 import { Form, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
-import Field from '#/components/admin/form/field';
-import Input from '#/components/admin/form/input';
-import PageHeader from '#/components/admin/page-header';
-import { ButtonSubmit } from '#/components/ui/button';
-
 import {
   listProductAttributes,
   createProductAttribute,
@@ -17,6 +12,10 @@ import {
   listProductRelations,
   setProductRelations,
 } from '#/core/catalog/relations.server';
+import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import PageHeader from '#/components/admin/page-header';
+import { ButtonSubmit } from '#/components/ui/button';
 
 export async function loader({ request, params }) {
   await authenticate(request);

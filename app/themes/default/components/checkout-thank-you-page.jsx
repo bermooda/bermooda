@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
 import { cartLineTotal, formatPrice } from '#/core/index';
+
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';

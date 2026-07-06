@@ -1,5 +1,4 @@
 import { requireApiKey } from '#/libs/auth/api.server';
-
 import { listLocationsWithInventory } from '#/core/inventory/index.server';
 
 export async function loader({ request }) {

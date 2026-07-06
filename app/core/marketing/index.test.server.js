@@ -39,7 +39,6 @@ vi.mock('#/emails/job.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-
 import {
   customerMatchesSegment,
   parseSegmentRules,

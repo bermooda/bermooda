@@ -2,7 +2,6 @@
 // PayPal payment provider adapter (Orders API v2).
 
 import logger from '#/utils/logger.server';
-
 import { summarizeCartLines } from '#/core/cart/lines';
 
 const log = logger.child({ provider: 'paypal' });

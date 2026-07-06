@@ -7,6 +7,7 @@ import {
 import { resolvePluginStorefrontRoute as resolveClientRoute } from '#/core/plugins/storefront-routes.client';
 import { get } from '#/core/settings/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
+
 import StorefrontShell from '#/themes/default/components/storefront-chrome';
 
 function StorefrontMessage({ title, children }) {

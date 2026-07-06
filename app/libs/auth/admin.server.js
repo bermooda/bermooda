@@ -12,13 +12,12 @@ import { getBetterAuthProvider } from '#/utils/database.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { enforceRateLimit } from '#/libs/rate-limit.server';
+import { requirePermission } from '#/core/rbac/index.server';
 import {
   queuePasswordResetEmail,
   queueTwoFactorOtp,
   queueVerifyEmail,
 } from '#/emails/job.server';
-
-import { requirePermission } from '#/core/rbac/index.server';
 
 const IS_DEV = process.env.NODE_ENV === 'development';
 const ADMIN_AUTH_BASE_URL = config.baseUrl + config.auth.adminBasePath;

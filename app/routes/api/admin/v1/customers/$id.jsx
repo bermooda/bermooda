@@ -3,7 +3,6 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
-
 import { getCustomer, updateCustomer } from '#/core/customers/index.server';
 
 export async function loader({ request, params }) {

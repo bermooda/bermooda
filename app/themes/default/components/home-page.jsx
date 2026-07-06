@@ -8,9 +8,9 @@ import {
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { Link } from 'react-router';
 
+import { formatPrice } from '#/core/index';
 import SlotBlocks from '#/components/storefront/slot-blocks';
 
-import { formatPrice } from '#/core/index';
 import StorefrontShell, {
   STOREFRONT_CREAM as CREAM,
   STOREFRONT_GREEN as GREEN,

@@ -2,7 +2,6 @@
 // Meilisearch search provider — uses REST API (no SDK required).
 
 import logger from '#/utils/logger.server';
-
 import { dbProvider } from '#/core/search/index.server';
 
 const INDEX_NAME = 'products';

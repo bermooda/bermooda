@@ -1,7 +1,6 @@
 // Canonical slug lookup and localized entity hydration.
 
 import prisma from '#/libs/prisma.server';
-
 import {
   getTranslations,
   withTranslations,

@@ -18,12 +18,11 @@ vi.mock('#/emails/index.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-import { sendBackInStockEmail } from '#/emails/index.server';
-
 import {
   notifyBackInStockSubscribers,
   subscribeBackInStock,
 } from '#/core/back-in-stock/index.server';
+import { sendBackInStockEmail } from '#/emails/index.server';
 
 beforeEach(() => {
   vi.clearAllMocks();

@@ -10,6 +10,8 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { _registry, disable, enable } from '#/core/plugins/index.server';
+import { get, set } from '#/core/settings/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
@@ -19,9 +21,6 @@ import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
-
-import { _registry, disable, enable } from '#/core/plugins/index.server';
-import { get, set } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
 // Meta

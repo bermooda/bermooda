@@ -33,7 +33,6 @@ vi.mock('bcryptjs', () => ({
 import bcrypt from 'bcryptjs';
 
 import prisma from '#/libs/prisma.server';
-
 import {
   isOnboardingAvailable,
   validateOnboardingInput,

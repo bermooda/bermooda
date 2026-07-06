@@ -11,7 +11,6 @@ vi.mock('#/libs/prisma.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-
 import { filterTrackedInventoryItems } from '#/core/inventory/tracking.server';
 
 beforeEach(() => {

@@ -3,7 +3,6 @@
 import { redirect, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
-
 import {
   getCustomerLoyaltySummary,
   getOrCreateReferralCode,

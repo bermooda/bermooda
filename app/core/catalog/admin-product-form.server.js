@@ -2,7 +2,6 @@
 // Shared admin product form persistence for create and edit routes.
 
 import prisma from '#/libs/prisma.server';
-
 import { publishProduct, unpublishProduct } from '#/core/catalog/index.server';
 import { setDefaultLocationQuantity } from '#/core/inventory/locations.server';
 import { get } from '#/core/settings/index.server';

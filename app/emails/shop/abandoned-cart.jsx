@@ -1,13 +1,12 @@
 import { Column, Row, Section, Text } from '@react-email/components';
 
 import config from '#/config';
+import { cartLineTotal } from '#/core/cart/lines';
 import EmailButton from '#/emails/components/button';
 import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';
-
-import { cartLineTotal } from '#/core/cart/lines';
 
 const labels = {
   en: {

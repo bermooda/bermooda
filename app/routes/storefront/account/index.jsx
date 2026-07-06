@@ -1,7 +1,6 @@
 import { useLoaderData, useRouteLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
-
 import { listOrders } from '#/core/customers/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';

@@ -15,7 +15,6 @@ vi.mock('#/config', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-
 import {
   generateInvoicePdf,
   generatePackingSlipPdf,

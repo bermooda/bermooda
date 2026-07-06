@@ -4,6 +4,12 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import {
+  listChannels,
+  setChannelPriceOverride,
+  setChannelProductPublished,
+  updateChannel,
+} from '#/core/channels/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import Input from '#/components/admin/form/input';
@@ -11,13 +17,6 @@ import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 import Button from '#/components/ui/button';
-
-import {
-  listChannels,
-  setChannelPriceOverride,
-  setChannelProductPublished,
-  updateChannel,
-} from '#/core/channels/index.server';
 
 export async function loader() {
   const { channels, total } = await listChannels({ limit: 100 });

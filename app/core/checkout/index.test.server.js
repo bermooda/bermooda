@@ -52,7 +52,6 @@ vi.mock('#/core/events/index.server', () => ({
 // ---------------------------------------------------------------------------
 
 import prisma from '#/libs/prisma.server';
-
 import { lockCart } from '#/core/cart/index.server';
 import {
   createCheckoutSession,
@@ -67,6 +66,7 @@ import {
 } from '#/core/pricing/index.server';
 import { resolveShippingOption } from '#/core/shipping/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
+
 import { makeCart } from '#/test/factories/cart';
 
 function makeTotalsCart(overrides = {}) {

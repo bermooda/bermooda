@@ -1,5 +1,4 @@
 import { requireApiKey } from '#/libs/auth/api.server';
-
 import {
   addToWishlist,
   listWishlistItems,

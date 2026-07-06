@@ -5,16 +5,15 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import {
+  createSubscriptionPlan,
+  listSubscriptionPlans,
+} from '#/core/subscriptions/index.server';
 import Card from '#/components/admin/card';
 import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import Button from '#/components/ui/button';
-
-import {
-  createSubscriptionPlan,
-  listSubscriptionPlans,
-} from '#/core/subscriptions/index.server';
 
 export async function loader() {
   const [plans, variants] = await Promise.all([

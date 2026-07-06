@@ -7,7 +7,6 @@ import logger from '#/utils/logger.server';
 import { handleError } from '#/libs/error.server';
 import prisma from '#/libs/prisma.server';
 import queue from '#/libs/queue.server';
-
 import { setWebhookJobEnqueuer } from '#/core/webhooks/index.server';
 
 const MAX_ATTEMPTS = 5;

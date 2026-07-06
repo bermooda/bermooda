@@ -1,7 +1,6 @@
 // app/core/currency/index.server.js
 
 import prisma from '#/libs/prisma.server';
-
 import { get as settingsGet } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------

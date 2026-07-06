@@ -4,10 +4,6 @@
 import { useActionData, useLoaderData, useNavigation } from 'react-router';
 import { redirect } from 'react-router';
 
-import ProductEditor, {
-  NEW_VARIANT_ID,
-} from '#/components/admin/product-editor';
-
 import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import {
   createBlankProduct,
@@ -15,6 +11,9 @@ import {
   persistAdminProduct,
   validatePrimarySlug,
 } from '#/core/catalog/admin-product-form.server';
+import ProductEditor, {
+  NEW_VARIANT_ID,
+} from '#/components/admin/product-editor';
 
 // ---------------------------------------------------------------------------
 // Loader

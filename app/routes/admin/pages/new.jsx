@@ -1,9 +1,8 @@
 import { useActionData, useNavigation } from 'react-router';
 import { redirect } from 'react-router';
 
-import PageEditor from '#/components/admin/page-editor';
-
 import { createPage } from '#/core/content/index.server';
+import PageEditor from '#/components/admin/page-editor';
 
 export async function action({ request }) {
   const formData = await request.formData();

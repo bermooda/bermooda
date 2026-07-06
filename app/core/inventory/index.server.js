@@ -2,7 +2,6 @@
 // Inventory service: atomic decrement/increment and availability.
 
 import prisma from '#/libs/prisma.server';
-
 import { emit } from '#/core/events/index.server';
 import {
   decrementLocationLevels,

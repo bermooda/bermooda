@@ -20,6 +20,10 @@ import {
 
 import { authenticate } from '#/libs/auth/admin.server';
 import prisma from '#/libs/prisma.server';
+import { getRequestLocale } from '#/core/i18n/index.server';
+import { hasPermission } from '#/core/rbac/index.server';
+import { get, set } from '#/core/settings/index.server';
+import { uploadMedia } from '#/core/storage/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import { controlClasses } from '#/components/admin/form/input';
@@ -27,11 +31,6 @@ import PageHeader from '#/components/admin/page-header';
 import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
 import Tabs from '#/components/admin/tabs';
 import Button from '#/components/ui/button';
-
-import { getRequestLocale } from '#/core/i18n/index.server';
-import { hasPermission } from '#/core/rbac/index.server';
-import { get, set } from '#/core/settings/index.server';
-import { uploadMedia } from '#/core/storage/index.server';
 
 const ADMIN_AVAILABLE_LOCALES = ['en', 'de', 'fr'];
 const ADMIN_LOCALE_LABELS = { en: 'English', de: 'Deutsch', fr: 'Français' };

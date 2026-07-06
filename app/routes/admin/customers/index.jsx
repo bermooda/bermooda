@@ -12,6 +12,7 @@ import {
 } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import { buildCustomerSearchWhere } from '#/core/customers/index.server';
 import EmptyState from '#/components/admin/empty-state';
 import { controlClasses } from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
@@ -19,8 +20,6 @@ import Pagination from '#/components/admin/pagination';
 import Stat from '#/components/admin/stat';
 import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
-
-import { buildCustomerSearchWhere } from '#/core/customers/index.server';
 
 const PAGE_SIZE = 20;
 
