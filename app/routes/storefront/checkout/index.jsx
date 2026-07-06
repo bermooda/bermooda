@@ -31,7 +31,7 @@ import {
   getAllQuotes,
   resolveShippingOption,
 } from '#/core/shipping/index.server';
-import { getStoreCreditBalance } from '#/core/store-credit/index.server';
+import { getCustomerStoreCreditSummary } from '#/core/store-credit/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
@@ -47,14 +47,14 @@ async function loadTenderBalances(customerId) {
     return { isLoggedIn: false };
   }
 
-  const [storeCreditBalanceCents, loyalty] = await Promise.all([
-    getStoreCreditBalance(customerId),
+  const [storeCredit, loyalty] = await Promise.all([
+    getCustomerStoreCreditSummary(customerId),
     getCustomerLoyaltySummary(customerId),
   ]);
 
   return {
     isLoggedIn: true,
-    storeCreditBalanceCents,
+    storeCreditBalanceCents: storeCredit.balance,
     loyaltyBalance: loyalty.balance,
     loyaltyEnabled: loyalty.enabled,
     loyaltyValueCents: loyalty.valueCents,
@@ -99,7 +99,10 @@ async function resolveTenderAmounts(payload) {
   let loyaltyPointsCents = 0;
 
   if (payload.effectiveCustomerId && payload.useStoreCredit) {
-    storeCreditCents = await getStoreCreditBalance(payload.effectiveCustomerId);
+    const storeCredit = await getCustomerStoreCreditSummary(
+      payload.effectiveCustomerId
+    );
+    storeCreditCents = storeCredit.balance;
   }
 
   if (payload.effectiveCustomerId && payload.useLoyalty) {
