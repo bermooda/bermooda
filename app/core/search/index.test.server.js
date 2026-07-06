@@ -31,10 +31,8 @@ import {
   _registry,
   dbProvider,
   getProvider,
-  listProviders,
   registerProvider,
   search,
-  searchWith,
   setDefaultProvider,
 } from '#/core/search/index.server';
 
@@ -80,13 +78,6 @@ describe('search registry', () => {
     );
   });
 
-  it('listProviders returns all registered ids', () => {
-    registerProvider('a', makeProvider());
-    registerProvider('b', makeProvider());
-    expect(listProviders()).toEqual(expect.arrayContaining(['a', 'b']));
-    expect(listProviders()).toHaveLength(2);
-  });
-
   it('first registered provider becomes default', () => {
     const p = makeProvider();
     p.search.mockResolvedValue({ products: [], total: 0, facets: {} });
@@ -127,21 +118,10 @@ describe('search registry', () => {
     expect(p.search).toHaveBeenCalledWith(params);
   });
 
-  it('searchWith delegates to the named provider', () => {
-    const p1 = makeProvider('p1');
-    const p2 = makeProvider('p2');
-    p2.search.mockResolvedValue({ products: [], total: 0, facets: {} });
-    registerProvider('p1', p1);
-    registerProvider('p2', p2);
-    searchWith('p2', { query: 'test' });
-    expect(p2.search).toHaveBeenCalledWith({ query: 'test' });
-    expect(p1.search).not.toHaveBeenCalled();
-  });
-
   it('__resetRegistry clears all providers and resets default', () => {
     registerProvider('a', makeProvider());
     __resetRegistry();
-    expect(listProviders()).toHaveLength(0);
+    expect(_registry.size).toBe(0);
     expect(() => search({})).toThrow('No search provider registered');
   });
 
