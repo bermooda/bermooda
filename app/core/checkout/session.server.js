@@ -1,11 +1,7 @@
 // app/core/checkout/session.server.js
 // Shared checkout session parsing and computeTotals param building.
 
-export {
-  CHECKOUT_STEPS,
-  isValidCheckoutStep,
-  nextCheckoutStep,
-} from '#/core/checkout/session.js';
+export { CHECKOUT_STEP } from '#/core/checkout/session.js';
 
 /** Prisma include for checkout cart + tax-aware lines. */
 export const CHECKOUT_CART_INCLUDE = {
