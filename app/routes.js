@@ -137,6 +137,7 @@ export default [
       ),
       route('gift-cards', 'routes/api/admin/v1/gift-cards.jsx'),
       route('loyalty', 'routes/api/admin/v1/loyalty.jsx'),
+      route('settings', 'routes/api/admin/v1/settings.jsx'),
       route('wishlists', 'routes/api/admin/v1/wishlists.jsx'),
       route('pos', 'routes/api/admin/v1/pos.jsx'),
       route(

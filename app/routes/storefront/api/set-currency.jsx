@@ -1,15 +1,22 @@
 import { redirect } from 'react-router';
 
 import { setCurrencyCookie } from '#/core/currency/index.server';
-
-const SUPPORTED = ['USD', 'EUR', 'AUD'];
+import {
+  getEnabledCurrencies,
+  isValidCurrencyCode,
+} from '#/core/settings/index.server';
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const currency = formData.get('currency');
+  const currency = formData.get('currency')?.toString().trim().toUpperCase();
   const returnTo = formData.get('returnTo') ?? '/';
 
-  if (!currency || !SUPPORTED.includes(currency)) {
+  const enabled = await getEnabledCurrencies();
+  if (
+    !currency ||
+    !isValidCurrencyCode(currency) ||
+    !enabled.includes(currency)
+  ) {
     return redirect(returnTo);
   }
 

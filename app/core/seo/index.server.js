@@ -3,6 +3,7 @@
 
 import { getDomainUrl } from '#/utils/misc';
 import prisma from '#/libs/prisma.server';
+import { DEFAULT_TITLE_TEMPLATE } from '#/core/seo/input';
 import { get as settingsGet } from '#/core/settings/index.server';
 
 /**
@@ -98,8 +99,6 @@ export function buildMeta({
 
   return [...tags, ...alternates];
 }
-
-const DEFAULT_TITLE_TEMPLATE = '{pageTitle} | {shopName}';
 
 /**
  * Strip a leading @ from a Twitter/X handle.

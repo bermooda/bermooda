@@ -17,6 +17,7 @@ import {
   computeTaxCents,
   getProvider,
   loadTaxConfig,
+  parseTaxSettingsInput,
   registerProvider,
   resolveRegionRate,
   simplePercentProvider,
@@ -96,6 +97,18 @@ describe('loadTaxConfig + resolveRegionRate', () => {
   it('supports legacy decimal rate values', () => {
     const config = loadTaxConfig('exclusive', [{ country: 'AU', rate: 0.1 }]);
     expect(resolveRegionRate(config, makeAddress('AU'))).toBe(0.1);
+  });
+});
+
+describe('parseTaxSettingsInput', () => {
+  it('parses JSON region payloads from admin forms', () => {
+    const config = parseTaxSettingsInput({
+      taxMode: 'inclusive',
+      taxRegions: JSON.stringify([{ country: 'US', percent: 8 }]),
+    });
+
+    expect(config.mode).toBe('inclusive');
+    expect(config.regions[0].country).toBe('US');
   });
 });
 
