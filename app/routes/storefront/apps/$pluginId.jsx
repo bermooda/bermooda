@@ -1,11 +1,11 @@
 import { useLoaderData } from 'react-router';
 
 import {
-  _registry,
+  getRegisteredPlugin,
+  isPluginEnabled,
   resolvePluginStorefrontRoute as resolveServerRoute,
 } from '#/core/plugins/index.server';
 import { resolvePluginStorefrontRoute as resolveClientRoute } from '#/core/plugins/storefront-routes.client';
-import { get } from '#/core/settings/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
 
 import StorefrontShell from '#/themes/default/components/storefront-chrome';
@@ -44,19 +44,13 @@ export async function loader({ request, params }) {
   const { pluginId } = params;
   const splatPath = params['*'] ?? '';
 
-  const entry = _registry.get(pluginId);
+  const manifest = getRegisteredPlugin(pluginId);
 
-  if (!entry) {
+  if (!manifest) {
     return { status: 'not-found', pluginId, themeId };
   }
 
-  const { manifest } = entry;
-  const enabledPluginsRaw = await get('enabledPlugins');
-  const enabledPlugins = Array.isArray(enabledPluginsRaw)
-    ? enabledPluginsRaw
-    : [];
-
-  if (!enabledPlugins.includes(pluginId)) {
+  if (!(await isPluginEnabled(pluginId))) {
     return { status: 'disabled', pluginId, manifest, themeId };
   }
 

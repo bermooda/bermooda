@@ -1,24 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockDisable, mockEnable, mockGet, mockSet, mockRegistry } = vi.hoisted(
-  () => ({
-    mockDisable: vi.fn(),
-    mockEnable: vi.fn(),
-    mockGet: vi.fn(),
-    mockSet: vi.fn(),
-    mockRegistry: new Map(),
-  })
-);
+const { mockReorderPlugin, mockSetPluginEnabledState } = vi.hoisted(() => ({
+  mockReorderPlugin: vi.fn(),
+  mockSetPluginEnabledState: vi.fn(),
+}));
 
 vi.mock('#/core/plugins/index.server', () => ({
-  _registry: mockRegistry,
-  disable: mockDisable,
-  enable: mockEnable,
+  getRegisteredPlugin: vi.fn(),
+  listRegisteredPlugins: vi.fn(() => []),
+  loadAllPluginSettings: vi.fn(async () => ({})),
+  reorderPlugin: mockReorderPlugin,
+  savePluginSettings: vi.fn(),
+  setPluginEnabledState: mockSetPluginEnabledState,
+  sortPluginsByOrder: vi.fn((plugins) => plugins),
 }));
 
 vi.mock('#/core/settings/index.server', () => ({
-  get: mockGet,
-  set: mockSet,
+  get: vi.fn(),
 }));
 
 import { action } from '#/routes/admin/plugins/index';
@@ -37,84 +35,56 @@ function buildRequest(intent, pluginId) {
 describe('admin plugins action', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRegistry.clear();
-    mockRegistry.set('sample-analytics', {
-      manifest: {
-        id: 'sample-analytics',
-        name: 'Sample Analytics',
-        version: '1.0.0',
-      },
-    });
   });
 
-  it('persists enabledPlugins before live-enabling a plugin', async () => {
-    mockGet.mockResolvedValue([]);
-    mockSet.mockResolvedValue(undefined);
-    mockEnable.mockResolvedValue(undefined);
+  it('enables a plugin through the core helper', async () => {
+    mockSetPluginEnabledState.mockResolvedValue(undefined);
 
     const result = await action({
       request: buildRequest('enable', 'sample-analytics'),
     });
 
     expect(result).toEqual({ success: true, intent: 'enable' });
-    expect(mockSet).toHaveBeenCalledWith('enabledPlugins', [
+    expect(mockSetPluginEnabledState).toHaveBeenCalledWith(
       'sample-analytics',
-    ]);
-    expect(mockEnable).toHaveBeenCalledWith('sample-analytics');
-    expect(mockSet.mock.invocationCallOrder[0]).toBeLessThan(
-      mockEnable.mock.invocationCallOrder[0]
+      true
     );
   });
 
-  it('persists enabledPlugins before live-disabling a plugin', async () => {
-    mockGet.mockResolvedValue(['sample-analytics', 'other-plugin']);
-    mockSet.mockResolvedValue(undefined);
-    mockDisable.mockResolvedValue(undefined);
+  it('disables a plugin through the core helper', async () => {
+    mockSetPluginEnabledState.mockResolvedValue(undefined);
 
     const result = await action({
       request: buildRequest('disable', 'sample-analytics'),
     });
 
     expect(result).toEqual({ success: true, intent: 'disable' });
-    expect(mockSet).toHaveBeenCalledWith('enabledPlugins', ['other-plugin']);
-    expect(mockDisable).toHaveBeenCalledWith('sample-analytics');
-    expect(mockSet.mock.invocationCallOrder[0]).toBeLessThan(
-      mockDisable.mock.invocationCallOrder[0]
+    expect(mockSetPluginEnabledState).toHaveBeenCalledWith(
+      'sample-analytics',
+      false
     );
   });
 
-  it('returns an error for unknown plugins without mutating settings', async () => {
-    const result = await action({
-      request: buildRequest('enable', 'missing-plugin'),
-    });
-
-    expect(result).toEqual({ error: 'Plugin not found' });
-    expect(mockGet).not.toHaveBeenCalled();
-    expect(mockSet).not.toHaveBeenCalled();
-    expect(mockEnable).not.toHaveBeenCalled();
-    expect(mockDisable).not.toHaveBeenCalled();
-  });
-
-  it('rolls back enabledPlugins when live enable fails', async () => {
-    mockGet.mockResolvedValue(['other-plugin']);
-    mockSet.mockResolvedValue(undefined);
-    mockEnable.mockRejectedValue(new Error('Live wiring failed'));
+  it('returns an error when enable fails', async () => {
+    mockSetPluginEnabledState.mockRejectedValue(
+      new Error('Live wiring failed')
+    );
 
     const result = await action({
       request: buildRequest('enable', 'sample-analytics'),
     });
 
     expect(result).toEqual({ error: 'Live wiring failed' });
-    expect(mockSet).toHaveBeenNthCalledWith(1, 'enabledPlugins', [
-      'other-plugin',
-      'sample-analytics',
-    ]);
-    expect(mockEnable).toHaveBeenCalledWith('sample-analytics');
-    expect(mockSet).toHaveBeenNthCalledWith(2, 'enabledPlugins', [
-      'other-plugin',
-    ]);
-    expect(mockEnable.mock.invocationCallOrder[0]).toBeLessThan(
-      mockSet.mock.invocationCallOrder[1]
-    );
+  });
+
+  it('reorders plugins through the core helper', async () => {
+    mockReorderPlugin.mockResolvedValue(['sample-analytics']);
+
+    const result = await action({
+      request: buildRequest('reorder-up', 'sample-analytics'),
+    });
+
+    expect(result).toEqual({ success: true, intent: 'reorder-up' });
+    expect(mockReorderPlugin).toHaveBeenCalledWith('sample-analytics', 'up');
   });
 });

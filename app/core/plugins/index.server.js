@@ -5,10 +5,16 @@ import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import queue from '#/libs/queue.server';
 import { emit, isHookAbort, off, on } from '#/core/events/index.server';
+import { translate } from '#/core/i18n/index';
+import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import {
   registerProvider as registerPaymentProvider,
   unregisterProvider as unregisterPaymentProvider,
 } from '#/core/payments/index.server';
+import {
+  buildPluginRouteRegistry,
+  resolvePluginRouteDescriptor,
+} from '#/core/plugins/routes';
 import {
   getDefaultProviderId as getDefaultSearchProviderId,
   registerProvider as registerSearchProvider,
@@ -27,14 +33,6 @@ import {
   registerProvider as registerTaxProvider,
   unregisterProvider as unregisterTaxProvider,
 } from '#/core/tax/index.server';
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-function getValidProviderTypes() {
-  return ['payment', 'shipping', 'tax', 'search'];
-}
 
 // ---------------------------------------------------------------------------
 // Registry — in-memory store of loaded plugins and their handlers
@@ -76,8 +74,7 @@ export function definePlugin(manifest) {
     throw new Error('Plugin manifest must be an object');
   }
 
-  const required = ['id', 'name', 'version'];
-  for (const field of required) {
+  for (const field of ['id', 'name', 'version']) {
     const value = manifest[field];
     if (!value || typeof value !== 'string' || value.trim() === '') {
       throw new Error(`Plugin manifest missing required field: "${field}"`);
@@ -123,17 +120,16 @@ export function defineHooks(hookMap) {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns a typed provider spec.
+ * Returns a typed provider spec object.
  *
- * @param {'payment' | 'shipping' | 'tax'} type
+ * @param {'payment' | 'shipping' | 'tax' | 'search'} type
  * @param {Object} spec
  * @returns {{ type: string } & Object}
  */
 export function defineProvider(type, spec) {
-  const validProviderTypes = getValidProviderTypes();
-  if (!validProviderTypes.includes(type)) {
+  if (!['payment', 'shipping', 'tax', 'search'].includes(type)) {
     throw new Error(
-      `Invalid provider type "${type}". Must be one of: ${validProviderTypes.join(', ')}`
+      `Invalid provider type "${type}". Must be one of: payment, shipping, tax, search`
     );
   }
 
@@ -160,20 +156,234 @@ export function defineProviders(providerMap) {
     throw new Error('providerMap must be an object');
   }
 
-  const validProviderTypes = getValidProviderTypes();
-
   for (const [providerId, spec] of Object.entries(providerMap)) {
     if (!spec || typeof spec !== 'object') {
       throw new Error(`Provider "${providerId}" must be an object`);
     }
-    if (!validProviderTypes.includes(spec.type)) {
+    if (!['payment', 'shipping', 'tax', 'search'].includes(spec.type)) {
       throw new Error(
-        `Provider "${providerId}" has invalid type "${spec.type}". Must be one of: ${validProviderTypes.join(', ')}`
+        `Provider "${providerId}" has invalid type "${spec.type}". Must be one of: payment, shipping, tax, search`
       );
     }
   }
 
   return providerMap;
+}
+
+// ---------------------------------------------------------------------------
+// Registry helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns all registered plugin manifests.
+ *
+ * @returns {PluginManifest[]}
+ */
+export function listRegisteredPlugins() {
+  return Array.from(registry.values()).map((entry) => entry.manifest);
+}
+
+/**
+ * Returns a registered plugin manifest by id, or null.
+ *
+ * @param {string} pluginId
+ * @returns {PluginManifest|null}
+ */
+export function getRegisteredPlugin(pluginId) {
+  return registry.get(pluginId)?.manifest ?? null;
+}
+
+/**
+ * Returns persisted enabled plugin ids.
+ *
+ * @returns {Promise<string[]>}
+ */
+export async function getEnabledPluginIds() {
+  const enabledRaw = await settingsGet('enabledPlugins');
+  return Array.isArray(enabledRaw) ? enabledRaw : [];
+}
+
+/**
+ * Returns whether a plugin id is in the persisted enabled list.
+ *
+ * @param {string} pluginId
+ * @returns {Promise<boolean>}
+ */
+export async function isPluginEnabled(pluginId) {
+  const enabled = await getEnabledPluginIds();
+  return enabled.includes(pluginId);
+}
+
+/**
+ * Sorts plugin manifests by persisted display order.
+ *
+ * @param {PluginManifest[]} plugins
+ * @param {string[]} pluginOrder
+ * @returns {PluginManifest[]}
+ */
+export function sortPluginsByOrder(plugins, pluginOrder) {
+  const order = Array.isArray(pluginOrder) ? pluginOrder : [];
+
+  return [...plugins].sort((a, b) => {
+    const ai = order.indexOf(a.id);
+    const bi = order.indexOf(b.id);
+    if (ai === -1 && bi === -1) return 0;
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+}
+
+/**
+ * Builds a full plugin order list from stored order plus untracked ids.
+ *
+ * @param {string[]} storedOrder
+ * @param {string[]} pluginIds
+ * @returns {string[]}
+ */
+export function buildFullPluginOrder(storedOrder, pluginIds) {
+  const order = Array.isArray(storedOrder) ? storedOrder : [];
+  const trackedIds = order.filter((id) => pluginIds.includes(id));
+  const untrackedIds = pluginIds.filter((id) => !trackedIds.includes(id));
+  return [...trackedIds, ...untrackedIds];
+}
+
+/**
+ * Loads persisted values for a plugin's manifest-driven settings.
+ *
+ * @param {PluginManifest|null|undefined} manifest
+ * @returns {Promise<Record<string, unknown>>}
+ */
+export async function loadPluginSettings(manifest) {
+  if (!manifest?.settings?.length) return {};
+
+  const entries = await Promise.all(
+    manifest.settings.map(async (setting) => {
+      const value = await settingsGet(`plugin.${manifest.id}.${setting.key}`);
+      return [setting.key, value ?? setting.default ?? ''];
+    })
+  );
+
+  return Object.fromEntries(entries);
+}
+
+/**
+ * Loads persisted settings for all plugins that declare settings fields.
+ *
+ * @param {PluginManifest[]} plugins
+ * @returns {Promise<Record<string, Record<string, unknown>>>}
+ */
+export async function loadAllPluginSettings(plugins) {
+  const entries = await Promise.all(
+    plugins.map(async (manifest) => [
+      manifest.id,
+      await loadPluginSettings(manifest),
+    ])
+  );
+
+  return Object.fromEntries(entries);
+}
+
+/**
+ * Normalizes a single plugin setting value from form data.
+ *
+ * @param {object} setting
+ * @param {FormDataEntryValue|null} raw
+ * @returns {unknown}
+ */
+export function parsePluginSettingValue(setting, raw) {
+  if (setting.type === 'toggle') {
+    return raw === 'on';
+  }
+
+  return raw ?? '';
+}
+
+/**
+ * Persists plugin settings from an admin form submission.
+ *
+ * @param {string} pluginId
+ * @param {PluginManifest} manifest
+ * @param {FormData} formData
+ * @returns {Promise<void>}
+ */
+export async function savePluginSettings(pluginId, manifest, formData) {
+  if (!manifest?.settings?.length) {
+    throw new Error('No settings for plugin');
+  }
+
+  await Promise.all(
+    manifest.settings.map(async (setting) => {
+      const value = parsePluginSettingValue(setting, formData.get(setting.key));
+      await settingsSet(`plugin.${pluginId}.${setting.key}`, value);
+    })
+  );
+}
+
+/**
+ * Persists enabled state and wires or unwires the plugin live.
+ *
+ * @param {string} pluginId
+ * @param {boolean} enabled
+ * @returns {Promise<void>}
+ */
+export async function setPluginEnabledState(pluginId, enabled) {
+  if (!registry.has(pluginId)) {
+    throw new Error('Plugin not found');
+  }
+
+  const previousEnabled = await getEnabledPluginIds();
+  const nextEnabled = [...previousEnabled];
+
+  if (enabled) {
+    if (!nextEnabled.includes(pluginId)) nextEnabled.push(pluginId);
+  } else {
+    const idx = nextEnabled.indexOf(pluginId);
+    if (idx !== -1) nextEnabled.splice(idx, 1);
+  }
+
+  await settingsSet('enabledPlugins', nextEnabled);
+
+  try {
+    if (enabled) {
+      await enable(pluginId);
+    } else {
+      await disable(pluginId);
+    }
+  } catch (err) {
+    await settingsSet('enabledPlugins', previousEnabled);
+    throw err;
+  }
+}
+
+/**
+ * Moves a plugin one position earlier or later in pluginOrder.
+ *
+ * @param {string} pluginId
+ * @param {'up' | 'down'} direction
+ * @returns {Promise<string[]>}
+ */
+export async function reorderPlugin(pluginId, direction) {
+  const pluginIds = listRegisteredPlugins().map((manifest) => manifest.id);
+  const storedOrderRaw = await settingsGet('pluginOrder');
+  const fullOrder = buildFullPluginOrder(
+    Array.isArray(storedOrderRaw) ? storedOrderRaw : [],
+    pluginIds
+  );
+
+  const idx = fullOrder.indexOf(pluginId);
+  if (idx === -1) {
+    throw new Error('Plugin not found');
+  }
+
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= fullOrder.length) {
+    return fullOrder;
+  }
+
+  [fullOrder[idx], fullOrder[swapIdx]] = [fullOrder[swapIdx], fullOrder[idx]];
+  await settingsSet('pluginOrder', fullOrder);
+  return fullOrder;
 }
 
 // ---------------------------------------------------------------------------
@@ -184,18 +394,18 @@ export function defineProviders(providerMap) {
  * Builds the plugin ctx object for a given pluginId.
  *
  * @param {string} pluginId
+ * @param {{ messages?: Record<string, unknown> }} [options]
  * @returns {Object}
  */
-function buildCtx(pluginId) {
+function buildCtx(pluginId, options = {}) {
+  const { messages = {} } = options;
   const pluginLogger = logger.child({ plugin: pluginId });
 
-  // Settings — delegates to the real settings service (P3-6).
   const settings = {
     get: (key) => settingsGet(key),
     set: (key, value) => settingsSet(key, value),
   };
 
-  // PluginData — namespaced by pluginId.
   const plugin = {
     get: async (key) => {
       const row = await prisma.pluginData.findUnique({
@@ -223,7 +433,6 @@ function buildCtx(pluginId) {
     },
   };
 
-  // Queue — exposes LiteQuu job creation to plugins.
   const pluginQueue = {
     add: (jobName, data) => {
       const job = queue.createJob(jobName);
@@ -235,8 +444,7 @@ function buildCtx(pluginId) {
     },
   };
 
-  // i18n stub — real translation wired in P3-7.
-  const t = (key) => key;
+  const t = (key, params) => translate(key, params, messages);
 
   return {
     db: prisma,
@@ -247,6 +455,12 @@ function buildCtx(pluginId) {
     emit,
     t,
   };
+}
+
+async function buildLifecycleCtx(pluginId) {
+  const { loadMessages } = await import('#/core/i18n/index.server');
+  const messages = await loadMessages(DEFAULT_LOCALE);
+  return buildCtx(pluginId, { messages });
 }
 
 function registerProvidersForPlugin(entry) {
@@ -326,10 +540,7 @@ function unregisterProvidersForPlugin(entry) {
 // ---------------------------------------------------------------------------
 
 /**
- * Enables a plugin by:
- * 1. Persisting `plugin.{pluginId}.enabled = "true"` in Settings.
- * 2. Registering any hooks declared in the manifest.
- * 3. Calling `onEnable(ctx)` if present.
+ * Enables a plugin by registering hooks/providers and calling onEnable.
  *
  * @param {string} pluginId
  */
@@ -339,12 +550,8 @@ export async function enable(pluginId) {
   if (entry.isEnabled) return;
 
   const { manifest } = entry;
-  const settingKey = `plugin.${pluginId}.enabled`;
-
-  await settingsSet(settingKey, true);
   entry.isEnabled = true;
 
-  // Register hooks from the manifest.
   if (manifest.hooks) {
     for (const [event, handler] of Object.entries(manifest.hooks)) {
       if (typeof handler !== 'function') continue;
@@ -369,7 +576,7 @@ export async function enable(pluginId) {
 
   registerProvidersForPlugin(entry);
 
-  const ctx = buildCtx(pluginId);
+  const ctx = await buildLifecycleCtx(pluginId);
 
   if (typeof manifest.onEnable === 'function') {
     await manifest.onEnable(ctx);
@@ -379,10 +586,7 @@ export async function enable(pluginId) {
 }
 
 /**
- * Disables a plugin by:
- * 1. Persisting `plugin.{pluginId}.enabled = "false"` in Settings.
- * 2. Calling `onDisable(ctx)` if present.
- * 3. Removing all hook handlers the plugin registered via `off()`.
+ * Disables a plugin by calling onDisable and removing hooks/providers.
  *
  * @param {string} pluginId
  */
@@ -393,11 +597,7 @@ export async function disable(pluginId) {
   }
 
   const { manifest } = entry;
-  const settingKey = `plugin.${pluginId}.enabled`;
-
-  await settingsSet(settingKey, false);
-
-  const ctx = buildCtx(pluginId);
+  const ctx = await buildLifecycleCtx(pluginId);
 
   if (typeof manifest.onDisable === 'function') {
     await manifest.onDisable(ctx);
@@ -405,7 +605,6 @@ export async function disable(pluginId) {
 
   unregisterProvidersForPlugin(entry);
 
-  // Deregister all hooks this plugin registered.
   for (const [event, handler] of entry.handlers) {
     off(event, handler);
   }
@@ -459,8 +658,7 @@ export function discoverPlugins() {
  * Enable plugins persisted in settings (called during async bootstrap).
  */
 export async function enablePersistedPlugins() {
-  const enabledRaw = await settingsGet('enabledPlugins');
-  const enabled = Array.isArray(enabledRaw) ? enabledRaw : [];
+  const enabled = await getEnabledPluginIds();
   for (const pluginId of enabled) {
     if (!registry.has(pluginId)) continue;
     try {
@@ -478,19 +676,23 @@ export async function enablePersistedPlugins() {
  * @returns {Promise<Array<{ pluginId: string, component: unknown }>>}
  */
 export async function getPluginBlocksForSlot(slotName) {
-  const pluginOrderRaw = await settingsGet('pluginOrder');
+  const [pluginOrderRaw, enabled] = await Promise.all([
+    settingsGet('pluginOrder'),
+    getEnabledPluginIds(),
+  ]);
   const pluginOrder = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
-  const enabledRaw = await settingsGet('enabledPlugins');
-  const enabled = new Set(Array.isArray(enabledRaw) ? enabledRaw : []);
+  const enabledSet = new Set(enabled);
 
   const orderedIds =
     pluginOrder.length > 0
       ? pluginOrder
-      : Array.from(registry.keys()).filter((id) => enabled.has(id));
+      : listRegisteredPlugins()
+          .map((manifest) => manifest.id)
+          .filter((id) => enabledSet.has(id));
 
   const blocks = [];
   for (const pluginId of orderedIds) {
-    if (!enabled.has(pluginId)) continue;
+    if (!enabledSet.has(pluginId)) continue;
     const entry = registry.get(pluginId);
     const component = entry?.manifest?.blocks?.[slotName];
     if (component) {
@@ -502,103 +704,20 @@ export async function getPluginBlocksForSlot(slotName) {
 }
 
 // ---------------------------------------------------------------------------
-// loadPlugins — stable export
-// ---------------------------------------------------------------------------
-
-/**
- * Returns the current plugin registry.
- * Phase 5 will implement real plugin discovery from app/plugins/*.
- *
- * @returns {{ plugins: PluginManifest[], hooks: Record<string, Function[]> }}
- */
-export function loadPlugins() {
-  const plugins = Array.from(registry.values()).map((e) => e.manifest);
-
-  // Aggregate hooks from all registered plugins (only active/registered handlers).
-  const hooks = {};
-  for (const { handlers } of registry.values()) {
-    for (const [event, handler] of handlers) {
-      if (!hooks[event]) hooks[event] = [];
-      hooks[event].push(handler);
-    }
-  }
-
-  return { plugins, hooks };
-}
-
-// ---------------------------------------------------------------------------
 // Plugin route modules
 // ---------------------------------------------------------------------------
 
-const adminRouteModules = import.meta.glob(
-  '#/plugins/*/admin/routes.server.js',
-  {
-    eager: true,
-  }
+const adminRoutesByPlugin = buildPluginRouteRegistry(
+  import.meta.glob('#/plugins/*/admin/routes.server.js', { eager: true }),
+  /\/plugins\/([^/]+)\/admin\/routes\.server\.js$/
 );
 
-/** @type {Map<string, Array<{ path: string, loader?: Function, Component: Function }>>} */
-const adminRoutesByPlugin = new Map();
-
-for (const [modulePath, mod] of Object.entries(adminRouteModules)) {
-  const match = modulePath.match(
-    /\/plugins\/([^/]+)\/admin\/routes\.server\.js$/
-  );
-  if (!match) continue;
-  const pluginId = match[1];
-  const routes = mod.routes ?? mod.default;
-  if (Array.isArray(routes)) {
-    adminRoutesByPlugin.set(pluginId, routes);
-  }
-}
-
-const storefrontRouteModules = import.meta.glob(
-  '#/plugins/*/storefront/routes.server.js',
-  {
+const storefrontRoutesByPlugin = buildPluginRouteRegistry(
+  import.meta.glob('#/plugins/*/storefront/routes.server.js', {
     eager: true,
-  }
+  }),
+  /\/plugins\/([^/]+)\/storefront\/routes\.server\.js$/
 );
-
-/** @type {Map<string, Array<{ path: string, loader?: Function, Component: Function }>>} */
-const storefrontRoutesByPlugin = new Map();
-
-for (const [modulePath, mod] of Object.entries(storefrontRouteModules)) {
-  const match = modulePath.match(
-    /\/plugins\/([^/]+)\/storefront\/routes\.server\.js$/
-  );
-  if (!match) continue;
-  const pluginId = match[1];
-  const routes = mod.routes ?? mod.default;
-  if (Array.isArray(routes)) {
-    storefrontRoutesByPlugin.set(pluginId, routes);
-  }
-}
-
-function normalizePluginRoutePath(path) {
-  return String(path ?? '')
-    .replace(/^\/+|\/+$/g, '')
-    .split('?')[0];
-}
-
-function resolvePluginRouteDescriptor(routesByPlugin, pluginId, path) {
-  const routes = routesByPlugin.get(pluginId);
-  if (!routes?.length) return null;
-
-  const normalized = normalizePluginRoutePath(path);
-
-  for (const route of routes) {
-    const routePath = normalizePluginRoutePath(route.path);
-    if (routePath === normalized) {
-      return route;
-    }
-  }
-
-  if (!normalized && routes[0]) {
-    return routes[0];
-  }
-
-  return null;
-}
 
 /**
  * Resolves an admin route descriptor for a plugin path.
@@ -609,17 +728,6 @@ function resolvePluginRouteDescriptor(routesByPlugin, pluginId, path) {
  */
 export function resolvePluginAdminRoute(pluginId, path) {
   return resolvePluginRouteDescriptor(adminRoutesByPlugin, pluginId, path);
-}
-
-/**
- * Deprecated alias for admin route resolution.
- *
- * @param {string} pluginId
- * @param {string} path
- * @returns {{ path: string, loader?: Function, Component: Function } | null}
- */
-export function resolvePluginRoute(pluginId, path) {
-  return resolvePluginAdminRoute(pluginId, path);
 }
 
 /**
@@ -643,5 +751,9 @@ export {
   HookAbortError,
   isHookAbort,
 } from '#/core/events/index.server';
+
+export function __resetRegistry() {
+  registry.clear();
+}
 
 export { registry as _registry, buildCtx as _buildCtx };

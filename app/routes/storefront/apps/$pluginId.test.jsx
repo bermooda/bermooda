@@ -3,18 +3,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   mockClientResolve,
+  mockGetRegisteredPlugin,
+  mockIsPluginEnabled,
   mockPreloadStorefrontTheme,
   mockServerResolve,
-  mockSettingsGet,
   mockUseLoaderData,
-  mockRegistry,
 } = vi.hoisted(() => ({
   mockClientResolve: vi.fn(),
+  mockGetRegisteredPlugin: vi.fn(),
+  mockIsPluginEnabled: vi.fn(),
   mockPreloadStorefrontTheme: vi.fn(),
   mockServerResolve: vi.fn(),
-  mockSettingsGet: vi.fn(),
   mockUseLoaderData: vi.fn(),
-  mockRegistry: new Map(),
 }));
 
 vi.mock('react-router', () => ({
@@ -26,12 +26,9 @@ vi.mock('#/core/plugins/storefront-routes.client', () => ({
 }));
 
 vi.mock('#/core/plugins/index.server', () => ({
-  _registry: mockRegistry,
+  getRegisteredPlugin: mockGetRegisteredPlugin,
+  isPluginEnabled: mockIsPluginEnabled,
   resolvePluginStorefrontRoute: mockServerResolve,
-}));
-
-vi.mock('#/core/settings/index.server', () => ({
-  get: mockSettingsGet,
 }));
 
 vi.mock('#/core/themes/index.server', () => ({
@@ -49,12 +46,18 @@ import StorefrontPluginDispatcher, {
   meta,
 } from '#/routes/storefront/apps/$pluginId';
 
+const sampleManifest = {
+  id: 'sample-analytics',
+  name: 'Sample Analytics',
+  storefrontRoutes: '#/plugins/sample-analytics/storefront/routes.server',
+};
+
 describe('storefront plugin dispatcher', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRegistry.clear();
     mockPreloadStorefrontTheme.mockResolvedValue('default');
-    mockSettingsGet.mockResolvedValue(['sample-analytics']);
+    mockGetRegisteredPlugin.mockReturnValue(sampleManifest);
+    mockIsPluginEnabled.mockResolvedValue(true);
   });
 
   it('builds meta tags from the resolved plugin manifest', () => {
@@ -78,13 +81,6 @@ describe('storefront plugin dispatcher', () => {
   it('uses the splat path and returns loader data for a matched plugin route', async () => {
     const pluginLoaderData = { eventCount: 3 };
 
-    mockRegistry.set('sample-analytics', {
-      manifest: {
-        id: 'sample-analytics',
-        name: 'Sample Analytics',
-        storefrontRoutes: '#/plugins/sample-analytics/storefront/routes.server',
-      },
-    });
     mockServerResolve.mockReturnValue({
       path: 'reports/daily',
       loader: vi.fn().mockResolvedValue(pluginLoaderData),
@@ -99,6 +95,8 @@ describe('storefront plugin dispatcher', () => {
     });
 
     expect(mockPreloadStorefrontTheme).toHaveBeenCalledOnce();
+    expect(mockGetRegisteredPlugin).toHaveBeenCalledWith('sample-analytics');
+    expect(mockIsPluginEnabled).toHaveBeenCalledWith('sample-analytics');
     expect(mockServerResolve).toHaveBeenCalledWith(
       'sample-analytics',
       'reports/daily'
@@ -113,14 +111,7 @@ describe('storefront plugin dispatcher', () => {
   });
 
   it('returns a disabled state when the plugin is not enabled', async () => {
-    mockRegistry.set('sample-analytics', {
-      manifest: {
-        id: 'sample-analytics',
-        name: 'Sample Analytics',
-        storefrontRoutes: '#/plugins/sample-analytics/storefront/routes.server',
-      },
-    });
-    mockSettingsGet.mockResolvedValue([]);
+    mockIsPluginEnabled.mockResolvedValue(false);
 
     const result = await loader({
       request: new Request('http://localhost/apps/sample-analytics'),
