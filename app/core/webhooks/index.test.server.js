@@ -13,6 +13,7 @@ vi.mock('#/libs/prisma.server', () => {
     findUnique: vi.fn(),
     delete: vi.fn(),
     update: vi.fn(),
+    count: vi.fn(),
   };
   const webhookDelivery = {
     create: vi.fn(),
@@ -30,12 +31,21 @@ import prisma from '#/libs/prisma.server';
 
 import {
   WEBHOOK_EVENTS,
+  WEBHOOK_WILDCARD,
+  buildWebhookDispatchPayload,
   createSubscription,
   deleteSubscription,
   dispatchWebhookEvent,
   getSubscription,
+  listDeliveries,
   listSubscriptions,
+  parseCreateSubscriptionInput,
+  parseSubscriptionEvents,
+  parseUpdateSubscriptionInput,
   setWebhookJobEnqueuer,
+  subscriptionMatchesEvent,
+  updateSubscription,
+  validateSubscriptionEvents,
 } from './index.server';
 
 beforeEach(() => {
@@ -62,6 +72,97 @@ function makeSub(overrides = {}) {
 }
 
 // ---------------------------------------------------------------------------
+
+describe('parseSubscriptionEvents', () => {
+  it('parses JSON strings and arrays', () => {
+    expect(parseSubscriptionEvents('["order.created"]')).toEqual([
+      'order.created',
+    ]);
+    expect(parseSubscriptionEvents(['payment.refunded'])).toEqual([
+      'payment.refunded',
+    ]);
+  });
+
+  it('returns an empty array for blank input', () => {
+    expect(parseSubscriptionEvents('')).toEqual([]);
+    expect(parseSubscriptionEvents(null)).toEqual([]);
+  });
+});
+
+describe('validateSubscriptionEvents', () => {
+  it('accepts supported events and wildcard', () => {
+    expect(() =>
+      validateSubscriptionEvents(['order.created', 'payment.refunded'])
+    ).not.toThrow();
+    expect(() => validateSubscriptionEvents(['*'])).not.toThrow();
+  });
+
+  it('throws EVENTS_REQUIRED for empty arrays', () => {
+    expect(() => validateSubscriptionEvents([])).toThrow(
+      expect.objectContaining({ code: 'EVENTS_REQUIRED' })
+    );
+  });
+
+  it('throws EVENTS_INVALID for unknown events', () => {
+    expect(() => validateSubscriptionEvents(['cart.created'])).toThrow(
+      expect.objectContaining({ code: 'EVENTS_INVALID' })
+    );
+  });
+});
+
+describe('parseCreateSubscriptionInput', () => {
+  it('normalizes create payload fields', () => {
+    expect(
+      parseCreateSubscriptionInput({
+        url: ' https://example.com/hook ',
+        secret: ' whsec_test ',
+        label: ' ERP ',
+        events: ['order.created'],
+      })
+    ).toEqual({
+      url: 'https://example.com/hook',
+      secret: 'whsec_test',
+      label: 'ERP',
+      events: ['order.created'],
+    });
+  });
+});
+
+describe('parseUpdateSubscriptionInput', () => {
+  it('parses active and label updates', () => {
+    expect(
+      parseUpdateSubscriptionInput({ active: 'on', label: '  Prod ' })
+    ).toEqual({
+      active: true,
+      label: 'Prod',
+    });
+  });
+});
+
+describe('subscriptionMatchesEvent', () => {
+  it('matches explicit events and wildcard subscriptions', () => {
+    expect(subscriptionMatchesEvent(['order.created'], 'order.created')).toBe(
+      true
+    );
+    expect(
+      subscriptionMatchesEvent(['payment.refunded'], 'order.created')
+    ).toBe(false);
+    expect(subscriptionMatchesEvent([WEBHOOK_WILDCARD], 'order.created')).toBe(
+      true
+    );
+  });
+});
+
+describe('buildWebhookDispatchPayload', () => {
+  it('builds a JSON payload with event, data, and timestamp', () => {
+    const payload = JSON.parse(
+      buildWebhookDispatchPayload('order.created', { orderId: '123' })
+    );
+    expect(payload.event).toBe('order.created');
+    expect(payload.data).toEqual({ orderId: '123' });
+    expect(payload.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+});
 
 describe('createSubscription', () => {
   it('creates and returns a serialized subscription', async () => {
@@ -103,20 +204,34 @@ describe('createSubscription', () => {
       })
     ).rejects.toMatchObject({ code: 'SECRET_REQUIRED' });
   });
+
+  it('throws EVENTS_INVALID for unsupported events', async () => {
+    await expect(
+      createSubscription({
+        url: 'https://x.com',
+        events: ['cart.created'],
+        secret: 'secret',
+      })
+    ).rejects.toMatchObject({ code: 'EVENTS_INVALID' });
+  });
 });
 
 // ---------------------------------------------------------------------------
 
 describe('listSubscriptions', () => {
-  it('returns subscriptions with events parsed as arrays', async () => {
+  it('returns paginated subscriptions with events parsed as arrays', async () => {
     prisma.webhookSubscription.findMany.mockResolvedValue([
       makeSub({ id: '1', events: '["order.created"]' }),
       makeSub({ id: '2', events: '["payment.refunded"]' }),
     ]);
+    prisma.webhookSubscription.count.mockResolvedValue(2);
 
-    const subs = await listSubscriptions();
-    expect(subs).toHaveLength(2);
-    for (const sub of subs) {
+    const result = await listSubscriptions({ page: 1, limit: 20 });
+    expect(result.subscriptions).toHaveLength(2);
+    expect(result.total).toBe(2);
+    expect(result.page).toBe(1);
+    expect(result.limit).toBe(20);
+    for (const sub of result.subscriptions) {
       expect(Array.isArray(sub.events)).toBe(true);
     }
   });
@@ -141,14 +256,48 @@ describe('getSubscription', () => {
   });
 });
 
+describe('updateSubscription', () => {
+  it('updates active state and returns serialized subscription', async () => {
+    prisma.webhookSubscription.findUnique.mockResolvedValue(makeSub());
+    prisma.webhookSubscription.update.mockResolvedValue(
+      makeSub({ active: false })
+    );
+
+    const result = await updateSubscription('sub-1', { active: false });
+    expect(result.active).toBe(false);
+    expect(prisma.webhookSubscription.update).toHaveBeenCalledWith({
+      where: { id: 'sub-1' },
+      data: { active: false },
+    });
+  });
+});
+
 // ---------------------------------------------------------------------------
 
 describe('deleteSubscription', () => {
-  it('calls prisma.webhookSubscription.delete', async () => {
+  it('calls prisma.webhookSubscription.delete after lookup', async () => {
+    prisma.webhookSubscription.findUnique.mockResolvedValue(makeSub());
     prisma.webhookSubscription.delete.mockResolvedValue({});
     await deleteSubscription('sub-1');
     expect(prisma.webhookSubscription.delete).toHaveBeenCalledWith({
       where: { id: 'sub-1' },
+    });
+  });
+
+  it('throws NOT_FOUND when subscription does not exist', async () => {
+    prisma.webhookSubscription.findUnique.mockResolvedValue(null);
+    await expect(deleteSubscription('missing')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+    expect(prisma.webhookSubscription.delete).not.toHaveBeenCalled();
+  });
+});
+
+describe('listDeliveries', () => {
+  it('throws NOT_FOUND when subscription does not exist', async () => {
+    prisma.webhookSubscription.findUnique.mockResolvedValue(null);
+    await expect(listDeliveries('missing')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
     });
   });
 });

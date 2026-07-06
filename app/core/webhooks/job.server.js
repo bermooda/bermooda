@@ -131,11 +131,7 @@ webhookDeliveryJob.on('failed', async (event) => {
   });
 });
 
-/**
- * Queue a webhook delivery attempt.
- * @param {{ deliveryId: string }} taskData
- */
-export function queueWebhookDelivery(taskData) {
+function queueWebhookDelivery(taskData) {
   logger.info({ deliveryId: taskData.deliveryId }, 'Queueing webhook delivery');
   webhookDeliveryJob.add(taskData);
 }
