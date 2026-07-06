@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { redirect } from 'react-router';
 import { Form, Link, useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import Badge from '#/components/admin/badge';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
@@ -13,6 +12,9 @@ import Button, { ButtonSubmit } from '#/components/ui/button';
 
 import {
   getCollection,
+  listCollectionRuleOptions,
+  listProductsForCollectionPicker,
+  parseCollectionRulesFromForm,
   updateCollection,
   deleteCollection,
 } from '#/core/collections/index.server';
@@ -169,93 +171,19 @@ export async function loader({ params }) {
     throw new Response('Collection not found', { status: 404 });
   }
 
-  const [products, categories, tags] = await Promise.all([
-    prisma.product.findMany({
-      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
-      include: {
-        variants: { select: { sku: true }, take: 1 },
-      },
+  const [products, ruleOptions] = await Promise.all([
+    listProductsForCollectionPicker({
+      selectedProductIds: collection.productIds ?? [],
     }),
-    prisma.category.findMany({ orderBy: { position: 'asc' } }),
-    prisma.productTag.findMany({ orderBy: { name: 'asc' } }),
+    listCollectionRuleOptions(),
   ]);
-
-  const productIds = collection.productIds ?? [];
-  const titleMap = {};
-  const slugRows = await prisma.slug.findMany({
-    where: {
-      entityType: 'product',
-      entityId: { in: products.map((p) => p.id) },
-    },
-  });
-  const slugMap = Object.fromEntries(
-    slugRows.map((row) => [row.entityId, row.slug])
-  );
-  const translations = await prisma.translation.findMany({
-    where: {
-      entityType: 'product',
-      entityId: { in: products.map((p) => p.id) },
-      locale: 'en',
-      field: 'title',
-    },
-  });
-  for (const row of translations) {
-    titleMap[row.entityId] = row.value;
-  }
-
-  const categoryTitles = await prisma.translation.findMany({
-    where: {
-      entityType: 'category',
-      entityId: { in: categories.map((c) => c.id) },
-      locale: 'en',
-      field: 'title',
-    },
-  });
-  const categoryTitleMap = Object.fromEntries(
-    categoryTitles.map((row) => [row.entityId, row.value])
-  );
 
   return {
     collection,
-    products: products.map((product) => ({
-      id: product.id,
-      title: titleMap[product.id] || slugMap[product.id] || product.id,
-      sku: product.variants[0]?.sku ?? '',
-      selected: productIds.includes(product.id),
-    })),
-    categories: categories.map((category) => ({
-      id: category.id,
-      title: categoryTitleMap[category.id] || category.id,
-    })),
-    tags,
+    products,
+    categories: ruleOptions.categories,
+    tags: ruleOptions.tags,
   };
-}
-
-function parseRulesFromForm(formData) {
-  const match =
-    formData.get('rulesMatch')?.toString() === 'any' ? 'any' : 'all';
-  const conditions = [];
-  let index = 0;
-
-  while (formData.has(`ruleType[${index}]`)) {
-    const type = formData.get(`ruleType[${index}]`)?.toString();
-    const value = formData.get(`ruleValue[${index}]`)?.toString();
-    if (type && value !== '') {
-      if (type === 'price_min' || type === 'price_max') {
-        conditions.push({ type, value: Number(value) });
-      } else if (type === 'in_stock') {
-        conditions.push({
-          type,
-          value: value === 'true' || value === '1',
-        });
-      } else {
-        conditions.push({ type, value });
-      }
-    }
-    index += 1;
-  }
-
-  return { match, conditions };
 }
 
 export async function action({ request, params }) {
@@ -267,31 +195,32 @@ export async function action({ request, params }) {
     return redirect('/admin/collections');
   }
 
-  const handle = formData.get('handle')?.toString().trim();
-  const title = formData.get('title')?.toString().trim();
-  const description = formData.get('description')?.toString().trim() ?? '';
   const collectionType = formData.get('collectionType')?.toString() ?? 'manual';
-  const published = formData.get('published') === 'on';
-
-  if (!handle || !title) {
-    return { error: 'Handle and title are required' };
-  }
-
   const productIds = formData.getAll('productIds[]').map((id) => id.toString());
-  const rules =
-    collectionType === 'smart' ? parseRulesFromForm(formData) : undefined;
 
-  await updateCollection(params.id, {
-    handle,
-    title,
-    description,
-    collectionType,
-    rules,
-    productIds: collectionType === 'manual' ? productIds : undefined,
-    published,
-  });
-
-  return redirect('/admin/collections');
+  try {
+    await updateCollection(params.id, {
+      handle: formData.get('handle'),
+      title: formData.get('title'),
+      description: formData.get('description'),
+      collectionType,
+      rules:
+        collectionType === 'smart'
+          ? parseCollectionRulesFromForm(formData)
+          : undefined,
+      productIds: collectionType === 'manual' ? productIds : undefined,
+      published: formData.get('published') === 'on',
+    });
+    return redirect('/admin/collections');
+  } catch (err) {
+    if (err.code === 'COLLECTION_NOT_FOUND') {
+      throw new Response('Collection not found', { status: 404 });
+    }
+    if (err.code === 'COLLECTION_INVALID') {
+      return { error: err.message };
+    }
+    throw err;
+  }
 }
 
 export function meta({ loaderData }) {

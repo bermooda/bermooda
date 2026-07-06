@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   parseCollectionRules,
+  parseCollectionRulesFromForm,
+  parseCollectionRulesInput,
   productMatchesCollectionRules,
 } from '#/core/collections/rules.server';
 
@@ -16,6 +18,46 @@ const baseProduct = {
     },
   ],
 };
+
+describe('parseCollectionRulesInput', () => {
+  it('normalizes structured rules payloads', () => {
+    expect(
+      parseCollectionRulesInput({
+        match: 'any',
+        conditions: [
+          { type: 'price_min', value: '1500' },
+          { type: 'in_stock', value: 'true' },
+          { type: 'tag', value: '' },
+        ],
+      })
+    ).toEqual({
+      match: 'any',
+      conditions: [
+        { type: 'price_min', value: 1500 },
+        { type: 'in_stock', value: true },
+      ],
+    });
+  });
+});
+
+describe('parseCollectionRulesFromForm', () => {
+  it('parses admin form rule fields', () => {
+    const formData = new FormData();
+    formData.set('rulesMatch', 'any');
+    formData.set('ruleType[0]', 'tag');
+    formData.set('ruleValue[0]', 'sale');
+    formData.set('ruleType[1]', 'price_max');
+    formData.set('ruleValue[1]', '5000');
+
+    expect(parseCollectionRulesFromForm(formData)).toEqual({
+      match: 'any',
+      conditions: [
+        { type: 'tag', value: 'sale' },
+        { type: 'price_max', value: 5000 },
+      ],
+    });
+  });
+});
 
 describe('parseCollectionRules', () => {
   it('returns defaults for invalid JSON', () => {
