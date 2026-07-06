@@ -162,6 +162,16 @@ export default [
         'webhook-subscriptions/:id',
         'routes/api/admin/v1/webhook-subscriptions/$id.jsx'
       ),
+      route('scheduled-exports', 'routes/api/admin/v1/scheduled-exports.jsx'),
+      route(
+        'scheduled-exports/:id',
+        'routes/api/admin/v1/scheduled-exports/$id.jsx'
+      ),
+      route(
+        'scheduled-exports/:id/run',
+        'routes/api/admin/v1/scheduled-exports/$id/run.jsx'
+      ),
+      route('export-runs/:id', 'routes/api/admin/v1/export-runs/$id.jsx'),
     ]),
   ]),
 

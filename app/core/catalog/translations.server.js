@@ -32,3 +32,27 @@ export async function getTranslations(entityType, entityId, locale) {
   });
   return toTranslationMap(rows);
 }
+
+/**
+ * Batch-load product title translations for CSV exports and reports.
+ *
+ * @param {string[]} productIds
+ * @param {string} [locale='en']
+ * @returns {Promise<Map<string, string>>}
+ */
+export async function loadProductTitleMap(productIds, locale = 'en') {
+  const uniqueIds = [...new Set(productIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return new Map();
+
+  const rows = await prisma.translation.findMany({
+    where: {
+      entityType: 'product',
+      entityId: { in: uniqueIds },
+      locale,
+      field: 'title',
+    },
+    select: { entityId: true, value: true },
+  });
+
+  return new Map(rows.map((row) => [row.entityId, row.value]));
+}
