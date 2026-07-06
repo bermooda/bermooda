@@ -7,7 +7,11 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { createSegment } from '#/core/marketing/index.server';
+import {
+  createSegment,
+  parseCreateSegmentInput,
+  parseSegmentRulesFromForm,
+} from '#/core/marketing/index.server';
 import { listCustomerGroups } from '#/core/pricing/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
@@ -26,20 +30,20 @@ export async function loader() {
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const name = formData.get('name')?.toString().trim();
-  const minOrders = formData.get('minOrders')?.toString();
-  const minSpentCents = formData.get('minSpentCents')?.toString();
-  const customerGroupId = formData.get('customerGroupId')?.toString();
-
-  if (!name) return { error: 'Segment name is required.' };
-
-  const rules = {};
-  if (minOrders) rules.minOrders = parseInt(minOrders, 10);
-  if (minSpentCents) rules.minSpentCents = parseInt(minSpentCents, 10);
-  if (customerGroupId) rules.customerGroupId = customerGroupId;
-
-  await createSegment({ name, rules });
-  return redirect('/admin/marketing');
+  try {
+    await createSegment(
+      parseCreateSegmentInput({
+        name: formData.get('name'),
+        rules: parseSegmentRulesFromForm(formData),
+      })
+    );
+    return redirect('/admin/marketing');
+  } catch (err) {
+    if (err.code === 'NAME_REQUIRED') {
+      return { error: err.message };
+    }
+    throw err;
+  }
 }
 
 export default function AdminNewMarketingSegmentRoute() {

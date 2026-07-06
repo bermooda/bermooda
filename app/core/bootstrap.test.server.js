@@ -44,6 +44,12 @@ vi.mock('#/core/rbac/index.server', () => ({
 vi.mock('#/core/webhooks/job.server', () => ({}));
 vi.mock('#/core/exports/job.server', () => ({}));
 vi.mock('#/core/marketing/job.server', () => ({}));
+vi.mock('#/emails/index.server', () => ({
+  sendCampaignEmail: vi.fn(),
+}));
+vi.mock('#/emails/job.server', () => ({
+  queueAbandonedCart: vi.fn(),
+}));
 vi.mock('#/core/shipping/index.server', () => ({
   registerProvider: vi.fn(),
   flatRateProvider: { name: 'Flat Rate' },

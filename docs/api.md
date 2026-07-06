@@ -379,6 +379,93 @@ Delete a webhook subscription and all its delivery records.
 
 ---
 
+### Marketing
+
+#### `GET /api/admin/v1/marketing/segments`
+
+List marketing segments with pagination.
+
+Query params: `page` (default 1), `limit` (default 50, max 100).
+
+#### `POST /api/admin/v1/marketing/segments`
+
+Create a marketing segment.
+
+```json
+{
+  "name": "VIP customers",
+  "rules": {
+    "minOrders": 3,
+    "minSpentCents": 10000,
+    "customerGroupId": "..."
+  }
+}
+```
+
+#### `GET /api/admin/v1/marketing/segments/:id`
+
+Get a segment by id (includes parsed `rules`).
+
+#### `PATCH /api/admin/v1/marketing/segments/:id`
+
+Update a segment name and/or rules.
+
+#### `DELETE /api/admin/v1/marketing/segments/:id`
+
+Delete a segment and its campaigns.
+
+#### `GET /api/admin/v1/marketing/campaigns`
+
+List email campaigns with pagination.
+
+#### `POST /api/admin/v1/marketing/campaigns`
+
+Create a campaign for a segment.
+
+```json
+{
+  "segmentId": "...",
+  "name": "Summer sale",
+  "subject": "Don't miss out",
+  "bodyHtml": "<p>Hi {{name}}, ...</p>"
+}
+```
+
+#### `GET /api/admin/v1/marketing/campaigns/:id`
+
+Get a campaign by id.
+
+#### `POST /api/admin/v1/marketing/campaigns/:id/send`
+
+Send a draft or scheduled campaign to matching segment customers with marketing consent.
+
+#### `GET /api/admin/v1/marketing/abandoned-cart-sequences`
+
+List abandoned-cart sequence steps with pagination.
+
+#### `POST /api/admin/v1/marketing/abandoned-cart-sequences`
+
+Create a sequence step.
+
+```json
+{
+  "name": "First reminder",
+  "stepNumber": 1,
+  "delayMinutes": 60,
+  "subject": "You left items in your cart"
+}
+```
+
+#### `GET /api/admin/v1/marketing/abandoned-cart-sequences/:id`
+
+Get a sequence step by id.
+
+#### `PATCH /api/admin/v1/marketing/abandoned-cart-sequences/:id`
+
+Update a sequence step (including `active` toggle).
+
+---
+
 ### Scheduled exports
 
 #### `GET /api/admin/v1/scheduled-exports`
