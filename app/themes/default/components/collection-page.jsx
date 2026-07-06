@@ -2,6 +2,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigation } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
+
 import {
   CatalogActiveFilters,
   CatalogFilterSidebar,

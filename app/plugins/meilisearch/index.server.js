@@ -1,4 +1,5 @@
 import { definePlugin, defineProvider } from '#/core/plugins/index.server';
+
 import manifest from '#/plugins/meilisearch/manifest';
 import { meilisearchProvider } from '#/plugins/meilisearch/provider.server';
 

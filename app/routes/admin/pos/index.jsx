@@ -5,17 +5,16 @@ import { Form, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import prisma from '#/libs/prisma.server';
-import Card from '#/components/admin/card';
-import Select from '#/components/admin/form/select';
-import PageHeader from '#/components/admin/page-header';
-import Button from '#/components/ui/button';
-
 import { listLocations } from '#/core/inventory/index.server';
 import {
   closePosSession,
   createPosDraftOrder,
   openPosSession,
 } from '#/core/pos/index.server';
+import Card from '#/components/admin/card';
+import Select from '#/components/admin/form/select';
+import PageHeader from '#/components/admin/page-header';
+import Button from '#/components/ui/button';
 
 export async function loader({ request }) {
   const { user } = await authenticate(request);

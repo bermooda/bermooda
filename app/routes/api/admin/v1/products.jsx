@@ -3,7 +3,6 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
-
 import { listProducts, createProduct } from '#/core/catalog/index.server';
 
 export async function loader({ request }) {

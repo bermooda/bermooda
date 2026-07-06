@@ -4,6 +4,7 @@
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
+import { listAuditLogs } from '#/core/audit/index.server';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
@@ -11,8 +12,6 @@ import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
 import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 import Button from '#/components/ui/button';
-
-import { listAuditLogs } from '#/core/audit/index.server';
 
 export function meta() {
   return [

@@ -2,7 +2,6 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
-
 import { generatePackingSlipPdf } from '#/core/documents/index.server';
 
 export async function loader({ request, params }) {

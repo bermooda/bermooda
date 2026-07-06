@@ -5,9 +5,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { Form, Link, useRouteLoaderData } from 'react-router';
 
+import { useT } from '#/core/i18n/index';
 import SlotBlocks from '#/components/storefront/slot-blocks';
 
-import { useT } from '#/core/i18n/index';
 import CurrencySwitcher from '#/themes/default/components/currency-switcher';
 import LocaleSwitcher from '#/themes/default/components/locale-switcher';
 

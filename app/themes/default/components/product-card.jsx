@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 
 import { formatPrice } from '#/core/index';
+
 import {
   STOREFRONT_CREAM as CREAM,
   STOREFRONT_SAND as SAND,

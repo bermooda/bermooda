@@ -4,11 +4,6 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
-import Card from '#/components/admin/card';
-import Input from '#/components/admin/form/input';
-import PageHeader from '#/components/admin/page-header';
-import Button from '#/components/ui/button';
-
 import {
   ensureDefaultLocation,
   listInventoryLevelsForVariants,
@@ -16,6 +11,10 @@ import {
   listRecentVariantsForInventory,
   setInventoryLevelQuantity,
 } from '#/core/inventory/index.server';
+import Card from '#/components/admin/card';
+import Input from '#/components/admin/form/input';
+import PageHeader from '#/components/admin/page-header';
+import Button from '#/components/ui/button';
 
 export async function loader() {
   await ensureDefaultLocation();

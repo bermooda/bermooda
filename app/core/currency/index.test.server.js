@@ -12,7 +12,6 @@ vi.mock('#/core/settings/index.server', () => ({
 
 // Import after mocks are registered
 import prisma from '#/libs/prisma.server';
-
 import {
   getRequestCurrency,
   lookupVariantPrice,

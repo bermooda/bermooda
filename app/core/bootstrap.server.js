@@ -11,7 +11,6 @@
 // registerBuiltins() only if they must run before any request.
 
 import logger from '#/utils/logger.server';
-
 import { registerProvider as registerAddressValidation } from '#/core/address-validation/index.server';
 import { noopProvider } from '#/core/address-validation/index.server';
 import { registerAuditSubscribers } from '#/core/audit/index.server';
@@ -54,6 +53,7 @@ import '#/core/webhooks/job.server';
 import '#/core/exports/job.server';
 // W9: marketing automation worker
 import '#/core/marketing/job.server';
+
 import defaultThemeManifest from '#/themes/default/manifest';
 
 let _bootstrapped = false;

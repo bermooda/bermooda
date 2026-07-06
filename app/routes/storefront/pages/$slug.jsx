@@ -1,7 +1,5 @@
 import { useLoaderData } from 'react-router';
 
-import { JsonLd } from '#/components/seo/json-ld';
-
 import { getPageBySlug } from '#/core/content/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import {
@@ -11,6 +9,7 @@ import {
 } from '#/core/seo/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { JsonLd } from '#/components/seo/json-ld';
 
 export async function loader({ request, params }) {
   const themeId = await preloadStorefrontTheme();

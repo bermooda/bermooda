@@ -1,9 +1,9 @@
 import { getDomainUrl } from '#/utils/misc';
 import prisma from '#/libs/prisma.server';
-
 import { listProducts } from '#/core/catalog/index.server';
 import { listPublishedPages } from '#/core/content/index.server';
 import { get as settingsGet } from '#/core/settings/index.server';
+
 import { INDEXED_ROUTES } from '#/routes';
 
 /**

@@ -3,7 +3,6 @@
 
 import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
-
 import {
   getTranslations,
   setSlug,

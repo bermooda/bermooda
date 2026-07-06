@@ -4,7 +4,6 @@ import { useLoaderData } from 'react-router';
 import { getCartTokenFromRequest } from '#/utils/cart-cookie.server';
 import logger from '#/utils/logger.server';
 import { getCustomerSession } from '#/libs/auth/customer.server';
-
 import { validateAddress } from '#/core/address-validation/index.server';
 import { getCart } from '#/core/cart/index.server';
 import {

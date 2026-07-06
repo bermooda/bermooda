@@ -3,15 +3,14 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
-import Card from '#/components/admin/card';
-import PageHeader from '#/components/admin/page-header';
-
 import {
   listAbandonedCartSequences,
   listCampaigns,
   listSegments,
   sendCampaign,
 } from '#/core/marketing/index.server';
+import Card from '#/components/admin/card';
+import PageHeader from '#/components/admin/page-header';
 
 export async function loader() {
   const [segments, campaigns, sequences] = await Promise.all([

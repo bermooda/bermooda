@@ -6,7 +6,6 @@ import {
   getCartTokenFromRequest,
 } from '#/utils/cart-cookie.server';
 import { getCustomerSession } from '#/libs/auth/customer.server';
-
 import {
   addLine,
   createCart,

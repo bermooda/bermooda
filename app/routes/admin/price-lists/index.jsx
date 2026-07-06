@@ -4,6 +4,10 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
+import {
+  listPriceLists,
+  upsertPriceListEntry,
+} from '#/core/pricing/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
@@ -11,11 +15,6 @@ import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import Button from '#/components/ui/button';
-
-import {
-  listPriceLists,
-  upsertPriceListEntry,
-} from '#/core/pricing/index.server';
 
 export async function loader() {
   const [priceLists, variants] = await Promise.all([

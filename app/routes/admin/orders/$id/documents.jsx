@@ -1,7 +1,6 @@
 // GET /admin/orders/:id/documents — download invoice PDF
 
 import { authenticate } from '#/libs/auth/admin.server';
-
 import { generateInvoicePdf } from '#/core/documents/index.server';
 
 export async function loader({ params, request }) {

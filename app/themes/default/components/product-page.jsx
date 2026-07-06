@@ -4,10 +4,10 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { Link, Form, useFetcher } from 'react-router';
 
-import SlotBlocks from '#/components/storefront/slot-blocks';
-
 import { useT } from '#/core/i18n/index';
 import { formatPrice } from '#/core/index';
+import SlotBlocks from '#/components/storefront/slot-blocks';
+
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';

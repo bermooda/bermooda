@@ -2,10 +2,9 @@ import { useActionData, useLoaderData, useNavigation } from 'react-router';
 import { redirect } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
-import PageEditor from '#/components/admin/page-editor';
-
 import { deletePage, updatePage } from '#/core/content/index.server';
 import { get } from '#/core/settings/index.server';
+import PageEditor from '#/components/admin/page-editor';
 
 export async function loader({ params }) {
   const { id } = params;

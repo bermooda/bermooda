@@ -6,6 +6,9 @@ import { useEffect, useRef } from 'react';
 import { Form, useActionData, useLoaderData } from 'react-router';
 
 import cache from '#/utils/cache.server';
+import { get, set } from '#/core/settings/index.server';
+import { _registry, resolveActiveTheme } from '#/core/themes/index.server';
+import { invalidateThemeCache } from '#/core/themes/resolve.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
@@ -15,10 +18,6 @@ import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
-
-import { get, set } from '#/core/settings/index.server';
-import { _registry, resolveActiveTheme } from '#/core/themes/index.server';
-import { invalidateThemeCache } from '#/core/themes/resolve.server';
 
 // ---------------------------------------------------------------------------
 // Meta

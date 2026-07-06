@@ -13,7 +13,6 @@ vi.mock('#/core/settings/index.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-
 import {
   buildCanonicalUrl,
   buildProductJsonLd,

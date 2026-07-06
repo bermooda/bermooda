@@ -7,6 +7,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { createCampaign, listSegments } from '#/core/marketing/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -17,8 +18,6 @@ import Textarea from '#/components/admin/form/textarea';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
-
-import { createCampaign, listSegments } from '#/core/marketing/index.server';
 
 export async function loader() {
   const segments = await listSegments();

@@ -9,7 +9,6 @@
 import { Outlet, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
-
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { getMenuByHandle } from '#/core/content/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';

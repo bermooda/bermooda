@@ -10,9 +10,8 @@ import config from '#/config';
 import { getBetterAuthProvider } from '#/utils/database.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import { queuePasswordResetEmail, queueVerifyEmail } from '#/emails/job.server';
-
 import { emit } from '#/core/events/index.server';
+import { queuePasswordResetEmail, queueVerifyEmail } from '#/emails/job.server';
 
 const IS_DEV = process.env.NODE_ENV === 'development';
 const CUSTOMER_AUTH_BASE_URL = config.baseUrl + config.auth.customerBasePath;

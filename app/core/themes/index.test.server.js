@@ -55,7 +55,6 @@ const {
 } = await import('#/core/themes/index.server');
 
 import prisma from '#/libs/prisma.server';
-
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
 
 // ---------------------------------------------------------------------------

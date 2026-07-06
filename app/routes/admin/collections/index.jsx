@@ -1,10 +1,9 @@
 import { Link, useLoaderData } from 'react-router';
 
+import { listCollections } from '#/core/collections/index.server';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
 import Button from '#/components/ui/button';
-
-import { listCollections } from '#/core/collections/index.server';
 
 const PAGE_SIZE = 20;
 

@@ -24,6 +24,11 @@
         "elementNamePattern": ["#/libs/**"]
       },
       {
+        "groupName": "internal-core",
+        "selector": "import",
+        "elementNamePattern": ["#/core/**"]
+      },
+      {
         "groupName": "internal-emails",
         "selector": "import",
         "elementNamePattern": ["#/emails/**"]
@@ -52,6 +57,7 @@
       "internal-config",
       "internal-utils",
       "internal-libs",
+      "internal-core",
       "internal-emails",
       "internal-hooks",
       "internal-components",

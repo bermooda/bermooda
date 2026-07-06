@@ -4,7 +4,6 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import queue from '#/libs/queue.server';
-
 import { emit, isHookAbort, off, on } from '#/core/events/index.server';
 import {
   registerProvider as registerPaymentProvider,

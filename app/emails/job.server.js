@@ -3,6 +3,7 @@ import logger from '#/utils/logger.server';
 import { handleError } from '#/libs/error.server';
 import prisma from '#/libs/prisma.server';
 import queue, { createThrottledJob } from '#/libs/queue.server';
+import { on } from '#/core/events/index.server';
 import {
   sendPasswordResetEmail,
   sendTwoFactorOtpEmail,
@@ -15,8 +16,6 @@ import {
   sendCustomerWelcomeEmail,
   sendAbandonedCartEmail,
 } from '#/emails/index.server';
-
-import { on } from '#/core/events/index.server';
 
 const verifyEmailJob = queue.createJob('verify_email');
 const passwordResetEmailJob = queue.createJob('password_reset_email');

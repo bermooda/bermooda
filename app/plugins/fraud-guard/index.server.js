@@ -1,7 +1,7 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-
 import { defineHooks, definePlugin, deny } from '#/core/plugins/index.server';
+
 import manifest from '#/plugins/fraud-guard/manifest';
 
 const HOLD_KEY = 'holds';

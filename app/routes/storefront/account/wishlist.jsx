@@ -3,7 +3,6 @@
 import { Form, Link, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
-
 import {
   addToWishlist,
   listWishlistItems,

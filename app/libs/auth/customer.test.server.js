@@ -120,7 +120,6 @@ import {
   customerAuthMiddleware,
   getCustomerSession,
 } from '#/libs/auth/customer.server';
-
 import { emit } from '#/core/events/index.server';
 
 // ---------------------------------------------------------------------------

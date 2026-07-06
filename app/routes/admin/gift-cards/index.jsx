@@ -3,6 +3,7 @@
 import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData, useSearchParams } from 'react-router';
 
+import { listGiftCards } from '#/core/gift-cards/index.server';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import { controlClasses } from '#/components/admin/form/input';
@@ -10,8 +11,6 @@ import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
 import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
-
-import { listGiftCards } from '#/core/gift-cards/index.server';
 
 const PAGE_SIZE = 20;
 

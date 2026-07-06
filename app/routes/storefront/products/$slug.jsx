@@ -1,8 +1,6 @@
 import { useActionData, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
-import { JsonLd } from '#/components/seo/json-ld';
-
 import { subscribeBackInStock } from '#/core/back-in-stock/index.server';
 import { getProductBySlug } from '#/core/catalog/index.server';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
@@ -26,6 +24,7 @@ import {
   getWishlistedVariantIds,
   removeFromWishlist,
 } from '#/core/wishlists/index.server';
+import { JsonLd } from '#/components/seo/json-ld';
 
 export async function loader({ request, params }) {
   const themeId = await preloadStorefrontTheme();

@@ -2,7 +2,6 @@
 // Single-page checkout session pipeline.
 
 import prisma from '#/libs/prisma.server';
-
 import { lockCart } from '#/core/cart/index.server';
 import {
   buildComputeTotalsParams,

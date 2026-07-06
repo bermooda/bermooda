@@ -2,17 +2,16 @@ import clsx from 'clsx';
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
 import prisma from '#/libs/prisma.server';
-import Badge from '#/components/admin/badge';
-import PageHeader from '#/components/admin/page-header';
-import Pagination from '#/components/admin/pagination';
-import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
-
 import {
   countPendingReviews,
   deleteReview,
   listReviewsForAdmin,
   moderateReview,
 } from '#/core/reviews/index.server';
+import Badge from '#/components/admin/badge';
+import PageHeader from '#/components/admin/page-header';
+import Pagination from '#/components/admin/pagination';
+import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 
 const PAGE_SIZE = 20;
 

@@ -4,7 +4,6 @@
 import { getCachedResult, invalidateCachePrefix } from '#/utils/cache.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-
 import { localizeEntity } from '#/core/catalog/locale.server';
 import {
   getTranslations,

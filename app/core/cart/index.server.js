@@ -5,7 +5,6 @@ import { randomUUID } from 'crypto';
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-
 import { emit } from '#/core/events/index.server';
 import {
   getCustomerGroupIds,

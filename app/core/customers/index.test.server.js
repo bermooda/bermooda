@@ -45,7 +45,6 @@ vi.mock('#/libs/prisma.server', () => {
 });
 
 import prisma from '#/libs/prisma.server';
-
 import {
   buildCustomerSearchWhere,
   pickCustomerProfileFields,

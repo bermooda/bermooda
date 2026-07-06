@@ -39,7 +39,6 @@ vi.mock('#/core/catalog/index.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-
 import {
   getTranslations,
   resolveSlug,

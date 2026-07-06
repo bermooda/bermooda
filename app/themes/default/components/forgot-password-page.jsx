@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { customerAuthClient } from '#/libs/auth/customer-client';
-
 import { useT } from '#/core/i18n/index';
+
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';

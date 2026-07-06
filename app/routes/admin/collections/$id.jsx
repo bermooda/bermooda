@@ -2,14 +2,6 @@ import { useState } from 'react';
 import { redirect } from 'react-router';
 import { Form, Link, useLoaderData } from 'react-router';
 
-import Badge from '#/components/admin/badge';
-import Field from '#/components/admin/form/field';
-import Input from '#/components/admin/form/input';
-import Select from '#/components/admin/form/select';
-import Textarea from '#/components/admin/form/textarea';
-import PageHeader from '#/components/admin/page-header';
-import Button, { ButtonSubmit } from '#/components/ui/button';
-
 import {
   getCollection,
   listCollectionRuleOptions,
@@ -18,6 +10,13 @@ import {
   updateCollection,
   deleteCollection,
 } from '#/core/collections/index.server';
+import Badge from '#/components/admin/badge';
+import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
+import Textarea from '#/components/admin/form/textarea';
+import PageHeader from '#/components/admin/page-header';
+import Button, { ButtonSubmit } from '#/components/ui/button';
 
 const RULE_TYPES = [
   { value: 'tag', label: 'Product tag' },

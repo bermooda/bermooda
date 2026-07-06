@@ -2,18 +2,17 @@
 
 import { Form, useActionData, useLoaderData } from 'react-router';
 
+import {
+  getLoyaltyConfig,
+  parseLoyaltySettingsInput,
+  updateLoyaltySettings,
+} from '#/core/loyalty/index.server';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
 import { SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
-
-import {
-  getLoyaltyConfig,
-  parseLoyaltySettingsInput,
-  updateLoyaltySettings,
-} from '#/core/loyalty/index.server';
 
 export async function loader() {
   const config = await getLoyaltyConfig();

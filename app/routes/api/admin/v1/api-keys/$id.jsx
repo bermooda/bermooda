@@ -2,7 +2,6 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
-
 import { revokeApiKey } from '#/core/api-keys/index.server';
 
 export async function action({ request, params }) {

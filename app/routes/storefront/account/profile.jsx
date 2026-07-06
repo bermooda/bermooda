@@ -1,7 +1,6 @@
 import { useLoaderData, useRouteLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
-
 import { updateCustomer } from '#/core/customers/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';

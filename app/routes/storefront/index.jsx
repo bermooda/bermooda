@@ -1,7 +1,5 @@
 import { useLoaderData } from 'react-router';
 
-import { JsonLd } from '#/components/seo/json-ld';
-
 import { listProducts, listCategories } from '#/core/catalog/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
@@ -14,6 +12,7 @@ import {
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/resolve.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { JsonLd } from '#/components/seo/json-ld';
 
 export async function loader({ request }) {
   const themeId = await preloadStorefrontTheme();

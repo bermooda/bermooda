@@ -29,6 +29,7 @@ vi.mock('#/core/themes/storefront-components', () => ({
 }));
 
 import { createCart, getCart, addLine } from '#/core/cart/index.server';
+
 import { action } from '#/routes/storefront/cart';
 
 describe('storefront cart action', () => {

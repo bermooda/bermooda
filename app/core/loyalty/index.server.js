@@ -3,7 +3,6 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-
 import {
   get as settingsGet,
   set as settingsSet,

@@ -3,7 +3,6 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
-
 import { listDiscounts, createDiscount } from '#/core/discounts/index.server';
 
 export async function loader({ request }) {
