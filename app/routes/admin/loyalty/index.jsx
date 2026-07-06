@@ -11,6 +11,7 @@ import { ButtonSubmit } from '#/components/ui/button';
 
 import {
   getLoyaltyConfig,
+  parseLoyaltySettingsInput,
   updateLoyaltySettings,
 } from '#/core/loyalty/index.server';
 
@@ -24,21 +25,14 @@ export async function action({ request }) {
   const intent = formData.get('intent');
 
   if (intent === 'save-settings') {
-    await updateLoyaltySettings({
-      enabled: formData.get('enabled') === 'on',
-      pointsPerDollar: parseInt(
-        formData.get('pointsPerDollar')?.toString() ?? '1',
-        10
-      ),
-      redemptionRateCents: parseInt(
-        formData.get('redemptionRateCents')?.toString() ?? '100',
-        10
-      ),
-      referralBonusPoints: parseInt(
-        formData.get('referralBonusPoints')?.toString() ?? '500',
-        10
-      ),
-    });
+    await updateLoyaltySettings(
+      parseLoyaltySettingsInput({
+        enabled: formData.get('enabled'),
+        pointsPerDollar: formData.get('pointsPerDollar'),
+        redemptionRateCents: formData.get('redemptionRateCents'),
+        referralBonusPoints: formData.get('referralBonusPoints'),
+      })
+    );
     return { ok: true };
   }
 
