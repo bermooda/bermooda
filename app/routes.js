@@ -174,10 +174,7 @@ export default [
         'webhook-subscriptions/:id',
         'routes/api/admin/v1/webhook-subscriptions/$id.jsx'
       ),
-      route(
-        'marketing/segments',
-        'routes/api/admin/v1/marketing/segments.jsx'
-      ),
+      route('marketing/segments', 'routes/api/admin/v1/marketing/segments.jsx'),
       route(
         'marketing/segments/:id',
         'routes/api/admin/v1/marketing/segments/$id.jsx'

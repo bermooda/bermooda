@@ -50,7 +50,10 @@ export async function action({ request, params }) {
       );
     }
     if (err.code === 'SEQUENCE_INVALID' || err.code === 'NO_CHANGES') {
-      return Response.json({ error: err.message, code: err.code }, { status: 422 });
+      return Response.json(
+        { error: err.message, code: err.code },
+        { status: 422 }
+      );
     }
     throw err;
   }

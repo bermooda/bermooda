@@ -41,7 +41,10 @@ export async function action({ request }) {
     return Response.json({ sequence }, { status: 201 });
   } catch (err) {
     if (err.code === 'SEQUENCE_INVALID') {
-      return Response.json({ error: err.message, code: err.code }, { status: 422 });
+      return Response.json(
+        { error: err.message, code: err.code },
+        { status: 422 }
+      );
     }
     throw err;
   }

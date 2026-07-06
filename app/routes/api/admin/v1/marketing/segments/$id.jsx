@@ -55,7 +55,10 @@ export async function action({ request, params }) {
         return Response.json({ error: 'Segment not found' }, { status: 404 });
       }
       if (err.code === 'NAME_REQUIRED' || err.code === 'NO_CHANGES') {
-        return Response.json({ error: err.message, code: err.code }, { status: 422 });
+        return Response.json(
+          { error: err.message, code: err.code },
+          { status: 422 }
+        );
       }
       throw err;
     }

@@ -3,10 +3,10 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import { sendCampaignEmail } from '#/emails/index.server';
-import { queueAbandonedCart } from '#/emails/job.server';
 import { emit } from '#/core/events/index.server';
 import { hasMarketingConsent } from '#/core/gdpr/index.server';
+import { sendCampaignEmail } from '#/emails/index.server';
+import { queueAbandonedCart } from '#/emails/job.server';
 
 const MAX_LIST_RESULTS = 100;
 
@@ -605,7 +605,10 @@ export async function sendCampaign(campaignId) {
  *
  * @param {{ page?: number, limit?: number }} [opts]
  */
-export async function listAbandonedCartSequences({ page = 1, limit = 50 } = {}) {
+export async function listAbandonedCartSequences({
+  page = 1,
+  limit = 50,
+} = {}) {
   const safePage = Math.max(1, page);
   const safeLimit = Math.min(Math.max(1, limit), MAX_LIST_RESULTS);
   const skip = (safePage - 1) * safeLimit;

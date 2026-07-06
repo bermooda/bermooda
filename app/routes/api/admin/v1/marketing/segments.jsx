@@ -3,10 +3,7 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
-import {
-  createSegment,
-  listSegments,
-} from '#/core/marketing/index.server';
+import { createSegment, listSegments } from '#/core/marketing/index.server';
 
 export async function loader({ request }) {
   await requireApiKey(request, ['admin']);
@@ -41,7 +38,10 @@ export async function action({ request }) {
     return Response.json({ segment }, { status: 201 });
   } catch (err) {
     if (err.code === 'NAME_REQUIRED') {
-      return Response.json({ error: err.message, code: err.code }, { status: 422 });
+      return Response.json(
+        { error: err.message, code: err.code },
+        { status: 422 }
+      );
     }
     throw err;
   }
