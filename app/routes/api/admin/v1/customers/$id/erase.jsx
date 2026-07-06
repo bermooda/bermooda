@@ -19,7 +19,10 @@ export async function action({ request, params }) {
       return Response.json({ error: err.message }, { status: 404 });
     }
     if (err.code === 'ALREADY_ERASED') {
-      return Response.json({ error: err.message, code: err.code }, { status: 409 });
+      return Response.json(
+        { error: err.message, code: err.code },
+        { status: 409 }
+      );
     }
     throw err;
   }

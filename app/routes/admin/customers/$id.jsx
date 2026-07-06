@@ -45,37 +45,42 @@ import Button, { ButtonSubmit } from '#/components/ui/button';
 export async function loader({ params }) {
   const { id } = params;
 
-  const [customer, consentSummary, slotBlocks, storeCreditSummary, storeCreditLedger] =
-    await Promise.all([
-      prisma.customer.findUniqueOrThrow({
-        where: { id },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          phone: true,
-          preferredLocale: true,
-          createdAt: true,
-          addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
-          orders: {
-            orderBy: { createdAt: 'desc' },
-            take: 20,
-            select: {
-              id: true,
-              orderNumber: true,
-              status: true,
-              currency: true,
-              totalCents: true,
-              createdAt: true,
-            },
+  const [
+    customer,
+    consentSummary,
+    slotBlocks,
+    storeCreditSummary,
+    storeCreditLedger,
+  ] = await Promise.all([
+    prisma.customer.findUniqueOrThrow({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        preferredLocale: true,
+        createdAt: true,
+        addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
+        orders: {
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            currency: true,
+            totalCents: true,
+            createdAt: true,
           },
         },
-      }),
-      getCustomerConsentSummary(id),
-      getAdminSlotBlocksMap(['customer.detail']),
-      getCustomerStoreCreditSummary(id),
-      listLedgerEntries(id, { limit: 20 }),
-    ]);
+      },
+    }),
+    getCustomerConsentSummary(id),
+    getAdminSlotBlocksMap(['customer.detail']),
+    getCustomerStoreCreditSummary(id),
+    listLedgerEntries(id, { limit: 20 }),
+  ]);
 
   return {
     slotBlocks,
