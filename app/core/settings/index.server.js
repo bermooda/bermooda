@@ -5,9 +5,9 @@ import cache, { getCachedResult } from '#/utils/cache.server';
 import prisma from '#/libs/prisma.server';
 import { normalizeLocaleList } from '#/core/i18n/locales';
 import {
-  DEFAULT_TITLE_TEMPLATE,
   parseSeoSettingsInput,
   seoSettingsToKeyValues,
+  serializeSeoSettings,
 } from '#/core/seo/input';
 import {
   DEFAULT_CURRENCIES,
@@ -179,17 +179,7 @@ export async function getAdminSettingsSnapshot() {
     shippingZones: Array.isArray(values[SETTING_KEYS.SHIPPING_ZONES])
       ? values[SETTING_KEYS.SHIPPING_ZONES]
       : [],
-    seoMetaTitle: values[SETTING_KEYS.SEO_META_TITLE] ?? '',
-    seoMetaDescription: values[SETTING_KEYS.SEO_META_DESCRIPTION] ?? '',
-    seoOgImageUrl: values[SETTING_KEYS.SEO_OG_IMAGE_URL] ?? '',
-    seoTitleTemplate:
-      values[SETTING_KEYS.SEO_TITLE_TEMPLATE] ?? DEFAULT_TITLE_TEMPLATE,
-    seoAllowIndexing: values[SETTING_KEYS.SEO_ALLOW_INDEXING] !== false,
-    seoGoogleSiteVerification:
-      values[SETTING_KEYS.SEO_GOOGLE_SITE_VERIFICATION] ?? '',
-    seoBingSiteVerification:
-      values[SETTING_KEYS.SEO_BING_SITE_VERIFICATION] ?? '',
-    seoTwitterHandle: values[SETTING_KEYS.SEO_TWITTER_HANDLE] ?? '',
+    ...serializeSeoSettings(values),
   };
 }
 

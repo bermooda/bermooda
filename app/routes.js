@@ -340,7 +340,8 @@ export default [
 ];
 
 /**
- * Routes that should be indexed by search engines (SEO)
+ * Routes that should be indexed by search engines (SEO).
+ * Kept in routes.js because this module is loaded outside the app alias.
  */
 export const INDEXED_ROUTES = [
   'account/login',
