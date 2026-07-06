@@ -11,24 +11,21 @@ import { createCollection } from '#/core/collections/index.server';
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const handle = formData.get('handle')?.toString().trim();
-  const title = formData.get('title')?.toString().trim();
-  const collectionType = formData.get('collectionType')?.toString() ?? 'manual';
-  const productIdsRaw = formData.get('productIds')?.toString().trim();
 
-  if (!handle || !title) {
-    return { error: 'Handle and title are required' };
+  try {
+    await createCollection({
+      handle: formData.get('handle'),
+      title: formData.get('title'),
+      collectionType: formData.get('collectionType'),
+      productIds: formData.get('productIds'),
+    });
+    return redirect('/admin/collections');
+  } catch (err) {
+    if (err.code === 'COLLECTION_INVALID') {
+      return { error: err.message };
+    }
+    throw err;
   }
-
-  const productIds = productIdsRaw
-    ? productIdsRaw
-        .split(',')
-        .map((id) => id.trim())
-        .filter(Boolean)
-    : [];
-
-  await createCollection({ handle, title, collectionType, productIds });
-  return redirect('/admin/collections');
 }
 
 export function meta() {

@@ -1,29 +1,24 @@
 import { Link, useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import PageHeader from '#/components/admin/page-header';
+import Pagination from '#/components/admin/pagination';
 import Button from '#/components/ui/button';
 
 import { listCollections } from '#/core/collections/index.server';
 
-export async function loader() {
-  const collections = await listCollections();
-  const titles = await prisma.translation.findMany({
-    where: {
-      entityType: 'collection',
-      entityId: { in: collections.map((c) => c.id) },
-      locale: 'en',
-      field: 'title',
-    },
-  });
-  const titleMap = Object.fromEntries(titles.map((t) => [t.entityId, t.value]));
+const PAGE_SIZE = 20;
 
-  return {
-    collections: collections.map((collection) => ({
-      ...collection,
-      title: titleMap[collection.id] ?? collection.handle,
-    })),
-  };
+export async function loader({ request }) {
+  const url = new URL(request.url);
+  const rawPage = parseInt(url.searchParams.get('page') ?? '1', 10);
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+
+  const { collections, total } = await listCollections({
+    page,
+    limit: PAGE_SIZE,
+  });
+
+  return { collections, total, page };
 }
 
 export function meta() {
@@ -31,7 +26,8 @@ export function meta() {
 }
 
 export default function AdminCollectionsRoute() {
-  const { collections } = useLoaderData();
+  const { collections, total, page } = useLoaderData();
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
@@ -76,6 +72,11 @@ export default function AdminCollectionsRoute() {
           </li>
         )}
       </ul>
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination page={page} totalPages={totalPages} />
+        </div>
+      )}
     </div>
   );
 }
