@@ -27,9 +27,14 @@ vi.mock('#/libs/prisma.server', () => ({
 
 import prisma from '#/libs/prisma.server';
 import {
+  DEFAULT_CONSENT,
   parseConsent,
   parseConsentCookie,
   buildConsentCookieValue,
+  hasMarketingConsent,
+  parseUpdateConsentInput,
+  parseUpdateConsentFormData,
+  getCustomerConsentSummary,
   exportCustomerData,
   eraseCustomer,
   updateCustomerConsent,
@@ -41,11 +46,30 @@ describe('gdpr', () => {
   });
 
   it('parseConsent returns defaults when empty', () => {
-    expect(parseConsent(null)).toEqual({
-      necessary: true,
-      analytics: false,
+    expect(parseConsent(null)).toEqual(DEFAULT_CONSENT);
+  });
+
+  it('hasMarketingConsent reads stored consent', () => {
+    expect(hasMarketingConsent('{"marketing":true}')).toBe(true);
+    expect(hasMarketingConsent(null)).toBe(false);
+  });
+
+  it('parseUpdateConsentInput only includes provided fields', () => {
+    expect(parseUpdateConsentInput({ analytics: true })).toEqual({
+      analytics: true,
+    });
+    expect(parseUpdateConsentInput({ marketing: 'true' })).toEqual({
+      marketing: true,
+    });
+  });
+
+  it('parseUpdateConsentFormData treats missing checkboxes as false', () => {
+    const formData = new FormData();
+    formData.set('analytics', 'on');
+
+    expect(parseUpdateConsentFormData(formData)).toEqual({
+      analytics: true,
       marketing: false,
-      updatedAt: null,
     });
   });
 
@@ -58,6 +82,28 @@ describe('gdpr', () => {
     expect(parsed.analytics).toBe(true);
     expect(parsed.marketing).toBe(false);
     expect(parsed.updatedAt).toBeTruthy();
+  });
+
+  it('getCustomerConsentSummary returns parsed consent', async () => {
+    prisma.customer.findUnique.mockResolvedValue({
+      id: 'c1',
+      consentJson: '{"analytics":true}',
+      erasedAt: null,
+    });
+
+    const summary = await getCustomerConsentSummary('c1');
+
+    expect(summary.customerId).toBe('c1');
+    expect(summary.consent.analytics).toBe(true);
+    expect(summary.erasedAt).toBeNull();
+  });
+
+  it('getCustomerConsentSummary throws when customer missing', async () => {
+    prisma.customer.findUnique.mockResolvedValue(null);
+
+    await expect(getCustomerConsentSummary('missing')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
   });
 
   it('exportCustomerData bundles customer records', async () => {
@@ -133,5 +179,13 @@ describe('gdpr', () => {
 
     expect(next.analytics).toBe(true);
     expect(prisma.customer.update).toHaveBeenCalled();
+  });
+
+  it('updateCustomerConsent throws when customer missing', async () => {
+    prisma.customer.findUnique.mockResolvedValue(null);
+
+    await expect(
+      updateCustomerConsent('missing', { analytics: true })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

@@ -16,8 +16,9 @@ import {
 import {
   exportCustomerData,
   eraseCustomer,
+  getCustomerConsentSummary,
+  parseUpdateConsentFormData,
   updateCustomerConsent,
-  parseConsent,
 } from '#/core/gdpr/index.server';
 import {
   getCustomerStoreCreditSummary,
@@ -44,38 +45,42 @@ import Button, { ButtonSubmit } from '#/components/ui/button';
 export async function loader({ params }) {
   const { id } = params;
 
-  const [customer, slotBlocks, storeCreditSummary, storeCreditLedger] =
-    await Promise.all([
-      prisma.customer.findUniqueOrThrow({
-        where: { id },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          phone: true,
-          preferredLocale: true,
-          consentJson: true,
-          erasedAt: true,
-          createdAt: true,
-          addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
-          orders: {
-            orderBy: { createdAt: 'desc' },
-            take: 20,
-            select: {
-              id: true,
-              orderNumber: true,
-              status: true,
-              currency: true,
-              totalCents: true,
-              createdAt: true,
-            },
+  const [
+    customer,
+    consentSummary,
+    slotBlocks,
+    storeCreditSummary,
+    storeCreditLedger,
+  ] = await Promise.all([
+    prisma.customer.findUniqueOrThrow({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        preferredLocale: true,
+        createdAt: true,
+        addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
+        orders: {
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            currency: true,
+            totalCents: true,
+            createdAt: true,
           },
         },
-      }),
-      getAdminSlotBlocksMap(['customer.detail']),
-      getCustomerStoreCreditSummary(id),
-      listLedgerEntries(id, { limit: 20 }),
-    ]);
+      },
+    }),
+    getCustomerConsentSummary(id),
+    getAdminSlotBlocksMap(['customer.detail']),
+    getCustomerStoreCreditSummary(id),
+    listLedgerEntries(id, { limit: 20 }),
+  ]);
 
   return {
     slotBlocks,
@@ -108,8 +113,8 @@ export async function loader({ params }) {
         totalCents: o.totalCents,
         createdAt: o.createdAt.toISOString(),
       })),
-      consent: parseConsent(customer.consentJson),
-      erasedAt: customer.erasedAt?.toISOString() ?? null,
+      consent: consentSummary.consent,
+      erasedAt: consentSummary.erasedAt,
     },
     storeCredit: {
       balanceCents: storeCreditSummary.balance,
@@ -230,15 +235,14 @@ export async function action({ request, params }) {
   }
 
   if (intent === 'update-consent') {
-    const analytics = formData.get('analytics') === 'on';
-    const marketing = formData.get('marketing') === 'on';
-    await updateCustomerConsent(id, { analytics, marketing });
+    const consents = parseUpdateConsentFormData(formData);
+    await updateCustomerConsent(id, consents);
     await recordAdminAudit({
       user,
       action: 'customer.consent.updated',
       entityType: 'customer',
       entityId: id,
-      metadata: { analytics, marketing },
+      metadata: consents,
     });
     return { ok: true, intent };
   }
