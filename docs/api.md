@@ -98,6 +98,36 @@ Search products.
 
 ---
 
+### Product reviews
+
+#### `GET /api/v1/products/:productId/reviews`
+
+List approved reviews for a product.
+
+**Query params:** `page` (default 1), `limit` (default 10, max 100)
+
+**Response:**
+
+```json
+{
+  "reviews": [...],
+  "total": 12,
+  "page": 1,
+  "limit": 10,
+  "totalPages": 2
+}
+```
+
+#### `POST /api/v1/products/:productId/reviews`
+
+Submit a product review (status starts as `pending` until moderated).
+
+**Body:** `{ "customerId": "...", "rating": 5, "title": "Optional", "body": "Great product" }`
+
+**Response:** `201` with `{ "review": { ... } }`
+
+---
+
 ### Cart
 
 #### `POST /api/v1/cart`
@@ -267,6 +297,30 @@ Complete a received return with refund, store credit, or exchange.
 #### `POST /api/admin/v1/returns/:id/cancel`
 
 Cancel a return before it is received.
+
+---
+
+### Reviews
+
+#### `GET /api/admin/v1/reviews`
+
+List reviews with pagination. Also returns `reviewStatuses`.
+
+**Query params:** `page`, `limit`, `status` (`pending`, `approved`, `rejected`, or `all`), `productId`, `customerId`
+
+#### `GET /api/admin/v1/reviews/:id`
+
+Get a single review with product title and customer summary.
+
+#### `PATCH /api/admin/v1/reviews/:id`
+
+Moderate a review.
+
+**Body:** `{ "status": "approved" }` — one of `pending`, `approved`, or `rejected`.
+
+#### `DELETE /api/admin/v1/reviews/:id`
+
+Delete a review permanently.
 
 ---
 
