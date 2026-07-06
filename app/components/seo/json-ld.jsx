@@ -1,3 +1,5 @@
+import { serializeJsonLd } from '#/core/seo/input';
+
 export function JsonLd({ data }) {
   if (!data) return null;
   const items = Array.isArray(data) ? data : [data];
@@ -5,7 +7,7 @@ export function JsonLd({ data }) {
     <script
       key={index}
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(item) }}
     />
   ));
 }

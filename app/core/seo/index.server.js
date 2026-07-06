@@ -1,10 +1,44 @@
 // app/core/seo/index.server.js
-// SEO helpers: meta tags, canonical URLs, hreflang, JSON-LD.
+// SEO helpers: meta tags, canonical URLs, hreflang, JSON-LD, sitemap.
 
 import { getDomainUrl } from '#/utils/misc';
 import prisma from '#/libs/prisma.server';
-import { DEFAULT_TITLE_TEMPLATE } from '#/core/seo/input';
-import { get as settingsGet } from '#/core/settings/index.server';
+import { listProducts } from '#/core/catalog/index.server';
+import { listCollections } from '#/core/collections/index.server';
+import { listPublishedPages } from '#/core/content/index.server';
+import {
+  DEFAULT_TITLE_TEMPLATE,
+  normalizeTwitterHandle,
+  resolveEntityMediaUrl,
+  STATIC_SITEMAP_ROUTES,
+  truncateMetaDescription,
+} from '#/core/seo/input';
+import {
+  get as settingsGet,
+  getMany as settingsGetMany,
+} from '#/core/settings/index.server';
+import { SETTING_KEYS } from '#/core/settings/keys';
+
+export {
+  DEFAULT_TITLE_TEMPLATE,
+  normalizeTwitterHandle,
+  resolveEntityMediaUrl,
+  serializeJsonLd,
+  STATIC_SITEMAP_ROUTES,
+  truncateMetaDescription,
+} from '#/core/seo/input';
+
+const SEO_SETTING_KEYS = [
+  SETTING_KEYS.SEO_META_TITLE,
+  SETTING_KEYS.SEO_META_DESCRIPTION,
+  SETTING_KEYS.SEO_OG_IMAGE_URL,
+  SETTING_KEYS.SEO_TITLE_TEMPLATE,
+  SETTING_KEYS.SEO_ALLOW_INDEXING,
+  SETTING_KEYS.SEO_GOOGLE_SITE_VERIFICATION,
+  SETTING_KEYS.SEO_BING_SITE_VERIFICATION,
+  SETTING_KEYS.SEO_TWITTER_HANDLE,
+  SETTING_KEYS.SHOP_NAME,
+];
 
 /**
  * Build absolute URL for a path on this site.
@@ -101,18 +135,6 @@ export function buildMeta({
 }
 
 /**
- * Strip a leading @ from a Twitter/X handle.
- *
- * @param {string|null|undefined} handle
- * @returns {string}
- */
-export function normalizeTwitterHandle(handle) {
-  const trimmed = String(handle ?? '').trim();
-  if (!trimmed) return '';
-  return trimmed.replace(/^@+/, '');
-}
-
-/**
  * Apply the shop title template to a page title.
  *
  * @param {string} pageTitle
@@ -163,39 +185,55 @@ function siteMetaExtras(seo) {
  * Load shop-level SEO settings used as defaults for the storefront.
  */
 export async function getSiteSeoSettings() {
-  const [
-    metaTitle,
-    metaDescription,
-    ogImageUrl,
-    shopName,
-    titleTemplate,
-    allowIndexing,
-    googleSiteVerification,
-    bingSiteVerification,
-    twitterHandle,
-  ] = await Promise.all([
-    settingsGet('seo.metaTitle'),
-    settingsGet('seo.metaDescription'),
-    settingsGet('seo.ogImageUrl'),
-    settingsGet('shopName'),
-    settingsGet('seo.titleTemplate'),
-    settingsGet('seo.allowIndexing'),
-    settingsGet('seo.googleSiteVerification'),
-    settingsGet('seo.bingSiteVerification'),
-    settingsGet('seo.twitterHandle'),
-  ]);
+  const values = await settingsGetMany(SEO_SETTING_KEYS);
 
   return {
-    metaTitle: metaTitle ?? '',
-    metaDescription: metaDescription ?? '',
-    ogImageUrl: ogImageUrl ?? '',
-    shopName: shopName ?? 'bermooda',
-    titleTemplate: titleTemplate ?? DEFAULT_TITLE_TEMPLATE,
-    allowIndexing: allowIndexing !== false,
-    googleSiteVerification: googleSiteVerification ?? '',
-    bingSiteVerification: bingSiteVerification ?? '',
-    twitterHandle: normalizeTwitterHandle(twitterHandle),
+    metaTitle: values[SETTING_KEYS.SEO_META_TITLE] ?? '',
+    metaDescription: values[SETTING_KEYS.SEO_META_DESCRIPTION] ?? '',
+    ogImageUrl: values[SETTING_KEYS.SEO_OG_IMAGE_URL] ?? '',
+    shopName: values[SETTING_KEYS.SHOP_NAME] ?? 'bermooda',
+    titleTemplate:
+      values[SETTING_KEYS.SEO_TITLE_TEMPLATE] ?? DEFAULT_TITLE_TEMPLATE,
+    allowIndexing: values[SETTING_KEYS.SEO_ALLOW_INDEXING] !== false,
+    googleSiteVerification:
+      values[SETTING_KEYS.SEO_GOOGLE_SITE_VERIFICATION] ?? '',
+    bingSiteVerification: values[SETTING_KEYS.SEO_BING_SITE_VERIFICATION] ?? '',
+    twitterHandle: normalizeTwitterHandle(
+      values[SETTING_KEYS.SEO_TWITTER_HANDLE]
+    ),
   };
+}
+
+async function buildEntityMeta({
+  entityType,
+  entityId,
+  pageTitle,
+  description,
+  image,
+  type = 'website',
+  request,
+  path,
+}) {
+  const seo = await getSiteSeoSettings();
+  const title = formatPageTitle(pageTitle, seo);
+  const canonical = buildCanonicalUrl(request, path);
+  const alternates = await buildAlternateLinks({
+    entityType,
+    entityId,
+    request,
+    path,
+  });
+
+  return buildMeta({
+    title,
+    description,
+    canonical,
+    alternates,
+    image: image ?? (seo.ogImageUrl || null),
+    type,
+    robots: resolveRobotsMeta(seo),
+    ...siteMetaExtras(seo),
+  });
 }
 
 /**
@@ -218,115 +256,69 @@ export async function buildSiteMeta({ request, path = '/' }) {
 }
 
 export async function buildPageMeta({ page, request, path }) {
-  const seo = await getSiteSeoSettings();
   const pageTitle = page.metaTitle || page.title || 'Page';
-  const title = formatPageTitle(pageTitle, seo);
   const description = page.metaDescription || page.title || '';
-  const canonical = buildCanonicalUrl(request, path);
-  const alternates = await buildAlternateLinks({
+
+  return buildEntityMeta({
     entityType: 'page',
     entityId: page.id,
+    pageTitle,
+    description,
     request,
     path,
-  });
-  const image = seo.ogImageUrl || null;
-
-  return buildMeta({
-    title,
-    description,
-    canonical,
-    alternates,
-    image,
-    robots: resolveRobotsMeta(seo),
-    ...siteMetaExtras(seo),
   });
 }
 
 export async function buildProductMeta({ product, request, path }) {
-  const seo = await getSiteSeoSettings();
   const pageTitle =
     product.metaTitle || product.seoTitle || product.title || 'Product';
-  const title = formatPageTitle(pageTitle, seo);
   const description =
     product.metaDescription ||
     product.seoDescription ||
-    product.description?.slice(0, 160) ||
+    truncateMetaDescription(product.description) ||
     pageTitle;
-  const canonical = buildCanonicalUrl(request, path);
-  const alternates = await buildAlternateLinks({
+
+  return buildEntityMeta({
     entityType: 'product',
     entityId: product.id,
+    pageTitle,
+    description,
+    image: resolveEntityMediaUrl(product),
+    type: 'product',
     request,
     path,
-  });
-  const image =
-    product.media?.[0]?.media?.url ??
-    product.media?.[0]?.url ??
-    (seo.ogImageUrl || null);
-
-  return buildMeta({
-    title,
-    description,
-    canonical,
-    alternates,
-    image,
-    type: 'product',
-    robots: resolveRobotsMeta(seo),
-    ...siteMetaExtras(seo),
   });
 }
 
 export async function buildCategoryMeta({ category, request, path }) {
-  const seo = await getSiteSeoSettings();
   const pageTitle = category.metaTitle || category.title || 'Category';
-  const title = formatPageTitle(pageTitle, seo);
   const description =
     category.metaDescription ||
-    category.description?.slice(0, 160) ||
+    truncateMetaDescription(category.description) ||
     pageTitle;
-  const canonical = buildCanonicalUrl(request, path);
-  const alternates = await buildAlternateLinks({
+
+  return buildEntityMeta({
     entityType: 'category',
     entityId: category.id,
+    pageTitle,
+    description,
     request,
     path,
-  });
-  const image = seo.ogImageUrl || null;
-
-  return buildMeta({
-    title,
-    description,
-    canonical,
-    alternates,
-    image,
-    robots: resolveRobotsMeta(seo),
-    ...siteMetaExtras(seo),
   });
 }
 
 export async function buildCollectionMeta({ collection, request, path }) {
-  const seo = await getSiteSeoSettings();
   const pageTitle = collection.title || collection.handle || 'Collection';
-  const title = formatPageTitle(pageTitle, seo);
   const description =
-    collection.description?.slice(0, 160) || `Shop ${pageTitle}`;
-  const canonical = buildCanonicalUrl(request, path);
-  const alternates = await buildAlternateLinks({
+    truncateMetaDescription(collection.description) || `Shop ${pageTitle}`;
+
+  return buildEntityMeta({
     entityType: 'collection',
     entityId: collection.id,
+    pageTitle,
+    description,
     request,
     path,
-  });
-  const image = seo.ogImageUrl || null;
-
-  return buildMeta({
-    title,
-    description,
-    canonical,
-    alternates,
-    image,
-    robots: resolveRobotsMeta(seo),
-    ...siteMetaExtras(seo),
   });
 }
 
@@ -355,6 +347,101 @@ export async function buildRobotsTxt(request) {
     `Sitemap: ${sitemapUrl}`,
     '',
   ].join('\n');
+}
+
+/**
+ * Build sitemap.xml body from catalog, CMS, and static routes.
+ *
+ * @returns {Promise<{ xml: string, allowIndexing: boolean }>}
+ */
+export async function buildSitemapXml({ request }) {
+  const seo = await getSiteSeoSettings();
+  if (!seo.allowIndexing) {
+    return { xml: '', allowIndexing: false };
+  }
+
+  const baseUrl = buildCanonicalUrl(request, '/');
+  const defaultLocale =
+    (await settingsGet(SETTING_KEYS.DEFAULT_LOCALE)) ?? 'en';
+
+  const [pages, { products }, { collections }, categorySlugs] =
+    await Promise.all([
+      listPublishedPages({ locale: defaultLocale }),
+      listProducts({ locale: defaultLocale, published: true, limit: 10000 }),
+      listCollections({
+        publishedOnly: true,
+        locale: defaultLocale,
+        limit: 10000,
+      }),
+      prisma.slug.findMany({
+        where: {
+          entityType: 'category',
+          locale: defaultLocale,
+          canonical: true,
+        },
+        select: { slug: true },
+      }),
+    ]);
+
+  const staticRoutes = [
+    '',
+    ...STATIC_SITEMAP_ROUTES.filter((route) => route !== ''),
+  ];
+  const today = new Date().toISOString().split('T')[0];
+
+  const entries = [
+    ...staticRoutes.map((route) => ({
+      loc: route === '' ? baseUrl : `${baseUrl}/${route}`,
+      lastmod: today,
+      priority: route === '' ? '1.0' : '0.8',
+    })),
+    ...products
+      .filter((product) => product.slug)
+      .map((product) => ({
+        loc: `${baseUrl}/products/${product.slug}`,
+        lastmod: product.updatedAt?.toISOString?.().split('T')[0] ?? today,
+        priority: '0.8',
+      })),
+    ...categorySlugs.map((category) => ({
+      loc: `${baseUrl}/categories/${category.slug}`,
+      lastmod: today,
+      priority: '0.7',
+    })),
+    ...collections
+      .filter((collection) => collection.handle)
+      .map((collection) => ({
+        loc: `${baseUrl}/collections/${collection.handle}`,
+        lastmod: collection.updatedAt?.toISOString?.().split('T')[0] ?? today,
+        priority: '0.7',
+      })),
+    ...pages
+      .filter((page) => page.slug)
+      .map((page) => ({
+        loc: `${baseUrl}/${page.slug}`,
+        lastmod: page.updatedAt?.toISOString?.().split('T')[0] ?? today,
+        priority: '0.6',
+      })),
+  ];
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"
+>
+${entries
+  .map(
+    (entry) => `  <url>
+    <loc>${entry.loc}</loc>
+    <lastmod>${entry.lastmod}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>${entry.priority}</priority>
+  </url>`
+  )
+  .join('\n')}
+</urlset>`;
+
+  return { xml, allowIndexing: true };
 }
 
 export function buildBreadcrumbJsonLd(items, request) {
@@ -414,7 +501,7 @@ export function buildProductJsonLd(
 ) {
   const variant = product.variants?.[0];
   const priceEntry =
-    variant?.prices?.find((p) => p.currency === currency) ??
+    variant?.prices?.find((price) => price.currency === currency) ??
     variant?.prices?.[0];
 
   const jsonLd = {
@@ -436,8 +523,7 @@ export function buildProductJsonLd(
       : undefined,
   };
 
-  const imageUrl =
-    product.media?.[0]?.media?.url ?? product.media?.[0]?.url ?? null;
+  const imageUrl = resolveEntityMediaUrl(product);
   if (imageUrl) jsonLd.image = imageUrl;
 
   if (reviewSummary?.count > 0) {
@@ -459,8 +545,4 @@ export function buildWebPageJsonLd(page, { request, path }) {
     'description': page.metaDescription || page.title,
     'url': buildCanonicalUrl(request, path),
   };
-}
-
-export function serializeJsonLd(data) {
-  return JSON.stringify(data).replace(/</g, '\\u003c');
 }

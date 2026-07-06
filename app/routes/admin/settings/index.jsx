@@ -31,7 +31,7 @@ import {
   SETTINGS_MANAGE_PERMISSION,
   updateAdminUserRole,
 } from '#/core/rbac/index.server';
-import { parseSeoSettingsInput } from '#/core/seo/input';
+import { parseSeoSettingsFormData } from '#/core/seo/input';
 import { AVAILABLE_CURRENCIES } from '#/core/settings/defaults';
 import {
   getAdminSettingsSnapshot,
@@ -138,17 +138,7 @@ export async function action({ request }) {
 
   // ── SEO ────────────────────────────────────────────────────────────────────
   if (intent === 'save-seo') {
-    await saveSeoSettings(
-      parseSeoSettingsInput({
-        metaTitle: formData.get('metaTitle'),
-        metaDescription: formData.get('metaDescription'),
-        titleTemplate: formData.get('titleTemplate'),
-        allowIndexing: formData.get('allowIndexing') === 'on',
-        googleSiteVerification: formData.get('googleSiteVerification'),
-        bingSiteVerification: formData.get('bingSiteVerification'),
-        twitterHandle: formData.get('twitterHandle'),
-      })
-    );
+    await saveSeoSettings(parseSeoSettingsFormData(formData));
     return { ok: true, intent };
   }
 
