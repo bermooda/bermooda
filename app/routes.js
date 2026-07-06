@@ -199,6 +199,7 @@ export default [
         'marketing/abandoned-cart-sequences/:id',
         'routes/api/admin/v1/marketing/abandoned-cart-sequences/$id.jsx'
       ),
+      route('reports/dashboard', 'routes/api/admin/v1/reports/dashboard.jsx'),
       route('scheduled-exports', 'routes/api/admin/v1/scheduled-exports.jsx'),
       route(
         'scheduled-exports/:id',

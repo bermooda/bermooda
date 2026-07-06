@@ -2,8 +2,14 @@
 // Sales analytics and operational reports for the admin dashboard.
 
 import prisma from '#/libs/prisma.server';
+import { loadCategoryTitleMap } from '#/core/catalog/translations.server';
+import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 
-const PAID_STATUSES = ['paid', 'fulfilled', 'refunded'];
+export const PAID_ORDER_STATUSES = ['paid', 'fulfilled', 'refunded'];
+const REFUND_COMPLETED_STATUSES = ['completed', 'succeeded', 'paid'];
+
+export const DEFAULT_REPORT_LIMIT = 20;
+export const MAX_REPORT_LIMIT = 100;
 
 /**
  * Parse a date-range filter with sensible defaults (last 30 days).
@@ -21,10 +27,70 @@ export function parseDateRange({ startDate, endDate } = {}) {
 
 /**
  * Build a Prisma createdAt filter for the given range.
+ *
  * @param {{ start: Date, end: Date }} range
  */
-function createdAtFilter(range) {
+export function buildCreatedAtFilter(range) {
   return { gte: range.start, lte: range.end };
+}
+
+/**
+ * Prisma where clause for paid orders in a date range.
+ *
+ * @param {{ startDate?: string, endDate?: string }} params
+ */
+export function buildPaidOrderWhere(params = {}) {
+  const range = parseDateRange(params);
+  return {
+    createdAt: buildCreatedAtFilter(range),
+    status: { in: PAID_ORDER_STATUSES },
+  };
+}
+
+/**
+ * Prisma where clause for order lines on paid orders in a date range.
+ *
+ * @param {{ startDate?: string, endDate?: string }} params
+ */
+function buildPaidOrderLineWhere(params = {}) {
+  return { order: buildPaidOrderWhere(params) };
+}
+
+/**
+ * Parse report query params from URLSearchParams or a plain object.
+ *
+ * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ * @returns {{ startDate?: string, endDate?: string, locale: string, limit: number }}
+ */
+export function parseReportParams(source = {}) {
+  const get = (key) => {
+    if (source instanceof URLSearchParams) {
+      const value = source.get(key);
+      return value === null || value === '' ? undefined : value;
+    }
+    const value = source[key];
+    if (value === null || value === undefined || value === '') return undefined;
+    return value.toString();
+  };
+
+  const startDate = get('startDate')?.trim();
+  const endDate = get('endDate')?.trim();
+  const locale = get('locale')?.trim() || DEFAULT_LOCALE;
+  const limit = Math.min(
+    Math.max(
+      1,
+      parseInt(get('limit') ?? String(DEFAULT_REPORT_LIMIT), 10) ||
+        DEFAULT_REPORT_LIMIT
+    ),
+    MAX_REPORT_LIMIT
+  );
+
+  return {
+    ...(startDate ? { startDate } : {}),
+    ...(endDate ? { endDate } : {}),
+    locale,
+    limit,
+  };
 }
 
 /**
@@ -34,7 +100,7 @@ function createdAtFilter(range) {
  */
 export async function getOverviewMetrics(params = {}) {
   const range = parseDateRange(params);
-  const dateFilter = createdAtFilter(range);
+  const dateFilter = buildCreatedAtFilter(range);
 
   const [
     orderAgg,
@@ -44,7 +110,7 @@ export async function getOverviewMetrics(params = {}) {
     startedCheckouts,
   ] = await Promise.all([
     prisma.order.aggregate({
-      where: { createdAt: dateFilter, status: { in: PAID_STATUSES } },
+      where: { createdAt: dateFilter, status: { in: PAID_ORDER_STATUSES } },
       _sum: {
         totalCents: true,
         taxCents: true,
@@ -57,7 +123,7 @@ export async function getOverviewMetrics(params = {}) {
     prisma.refund.aggregate({
       where: {
         createdAt: dateFilter,
-        status: { in: ['completed', 'succeeded', 'paid'] },
+        status: { in: REFUND_COMPLETED_STATUSES },
       },
       _sum: { amountCents: true },
       _count: true,
@@ -107,12 +173,8 @@ export async function getOverviewMetrics(params = {}) {
  * @param {{ startDate?: string, endDate?: string }} params
  */
 export async function getSalesOverTime(params = {}) {
-  const range = parseDateRange(params);
   const orders = await prisma.order.findMany({
-    where: {
-      createdAt: createdAtFilter(range),
-      status: { in: PAID_STATUSES },
-    },
+    where: buildPaidOrderWhere(params),
     select: {
       createdAt: true,
       totalCents: true,
@@ -150,16 +212,13 @@ export async function getSalesOverTime(params = {}) {
  * @param {{ startDate?: string, endDate?: string, limit?: number }} params
  */
 export async function getSalesByProduct(params = {}) {
-  const range = parseDateRange(params);
-  const limit = params.limit ?? 20;
+  const limit = Math.min(
+    Math.max(1, params.limit ?? DEFAULT_REPORT_LIMIT),
+    MAX_REPORT_LIMIT
+  );
 
   const lines = await prisma.orderLine.findMany({
-    where: {
-      order: {
-        createdAt: createdAtFilter(range),
-        status: { in: PAID_STATUSES },
-      },
-    },
+    where: buildPaidOrderLineWhere(params),
     select: {
       title: true,
       sku: true,
@@ -192,20 +251,20 @@ export async function getSalesByProduct(params = {}) {
 }
 
 /**
- * Revenue grouped by category.
+ * Revenue grouped by category. Lines with multiple categories split revenue evenly.
  *
- * @param {{ startDate?: string, endDate?: string, limit?: number }} params
+ * @param {{ startDate?: string, endDate?: string, limit?: number, locale?: string }} params
  */
 export async function getSalesByCategory(params = {}) {
-  const range = parseDateRange(params);
-  const limit = params.limit ?? 20;
+  const limit = Math.min(
+    Math.max(1, params.limit ?? DEFAULT_REPORT_LIMIT),
+    MAX_REPORT_LIMIT
+  );
+  const locale = params.locale ?? DEFAULT_LOCALE;
 
   const lines = await prisma.orderLine.findMany({
     where: {
-      order: {
-        createdAt: createdAtFilter(range),
-        status: { in: PAID_STATUSES },
-      },
+      ...buildPaidOrderLineWhere(params),
       variantId: { not: null },
     },
     select: {
@@ -236,20 +295,7 @@ export async function getSalesByCategory(params = {}) {
     ),
   ];
 
-  const titles =
-    categoryIds.length > 0
-      ? await prisma.translation.findMany({
-          where: {
-            entityType: 'category',
-            entityId: { in: categoryIds },
-            locale: 'en',
-            field: 'title',
-          },
-          select: { entityId: true, value: true },
-        })
-      : [];
-
-  const titleById = new Map(titles.map((t) => [t.entityId, t.value]));
+  const titleById = await loadCategoryTitleMap(categoryIds, locale);
 
   /** @type {Map<string, { categoryId: string, title: string, revenueCents: number }>} */
   const byCategory = new Map();
@@ -287,7 +333,7 @@ export async function getSalesByCategory(params = {}) {
 /**
  * Full dashboard report payload.
  *
- * @param {{ startDate?: string, endDate?: string }} params
+ * @param {{ startDate?: string, endDate?: string, limit?: number, locale?: string }} params
  */
 export async function getDashboardReport(params = {}) {
   const [overview, salesOverTime, salesByProduct, salesByCategory] =

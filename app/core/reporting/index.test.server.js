@@ -27,9 +27,12 @@ vi.mock('#/libs/prisma.server', () => ({
 import prisma from '#/libs/prisma.server';
 import {
   parseDateRange,
+  parseReportParams,
   getOverviewMetrics,
   getSalesOverTime,
   getSalesByProduct,
+  getSalesByCategory,
+  getDashboardReport,
 } from '#/core/reporting/index.server';
 
 describe('reporting', () => {
@@ -42,6 +45,30 @@ describe('reporting', () => {
     expect(end.getTime()).toBeGreaterThan(start.getTime());
     const days = (end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000);
     expect(days).toBeCloseTo(30, 0);
+  });
+
+  it('parseDateRange honors explicit dates', () => {
+    const { start, end } = parseDateRange({
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    });
+    expect(start.toISOString()).toBe('2026-01-01T00:00:00.000Z');
+    expect(end.toISOString()).toBe('2026-01-31T23:59:59.999Z');
+  });
+
+  it('parseReportParams normalizes filters and caps limit', () => {
+    const params = new URLSearchParams({
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      limit: '500',
+      locale: 'de',
+    });
+    expect(parseReportParams(params)).toEqual({
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      locale: 'de',
+      limit: 100,
+    });
   });
 
   it('getOverviewMetrics computes AOV and conversion', async () => {
@@ -151,6 +178,90 @@ describe('reporting', () => {
       title: 'Hat',
       quantity: 1,
       revenueCents: 1500,
+    });
+  });
+
+  it('getSalesByCategory splits revenue across categories and labels uncategorized', async () => {
+    prisma.orderLine.findMany.mockResolvedValue([
+      {
+        totalCents: 3000,
+        variant: {
+          product: {
+            categories: [
+              { category: { id: 'c1' } },
+              { category: { id: 'c2' } },
+            ],
+          },
+        },
+      },
+      {
+        totalCents: 1000,
+        variant: {
+          product: {
+            categories: [],
+          },
+        },
+      },
+    ]);
+    prisma.translation.findMany.mockResolvedValue([
+      { entityId: 'c1', value: 'Shirts' },
+      { entityId: 'c2', value: 'Sale' },
+    ]);
+
+    const rows = await getSalesByCategory({ limit: 10, locale: 'en' });
+
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          categoryId: 'c1',
+          title: 'Shirts',
+          revenueCents: 1500,
+        }),
+        expect.objectContaining({
+          categoryId: 'c2',
+          title: 'Sale',
+          revenueCents: 1500,
+        }),
+        expect.objectContaining({
+          categoryId: 'uncategorized',
+          title: 'Uncategorized',
+          revenueCents: 1000,
+        }),
+      ])
+    );
+  });
+
+  it('getDashboardReport composes all sections', async () => {
+    prisma.order.aggregate.mockResolvedValue({
+      _sum: {
+        totalCents: 1000,
+        taxCents: 100,
+        discountCents: 0,
+        subtotalCents: 900,
+      },
+      _count: 1,
+    });
+    prisma.order.count.mockResolvedValue(1);
+    prisma.refund.aggregate.mockResolvedValue({
+      _sum: { amountCents: 0 },
+      _count: 0,
+    });
+    prisma.checkoutSession.count
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(1);
+    prisma.order.findMany.mockResolvedValue([]);
+    prisma.orderLine.findMany.mockResolvedValue([]);
+
+    const report = await getDashboardReport({
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    });
+
+    expect(report).toEqual({
+      overview: expect.objectContaining({ revenueCents: 1000 }),
+      salesOverTime: [],
+      salesByProduct: [],
+      salesByCategory: [],
     });
   });
 });

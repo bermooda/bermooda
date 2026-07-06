@@ -466,6 +466,16 @@ Update a sequence step (including `active` toggle).
 
 ---
 
+### Reports
+
+#### `GET /api/admin/v1/reports/dashboard`
+
+Sales analytics dashboard payload: overview KPIs, sales over time, top products, and sales by category.
+
+**Query params:** `startDate`, `endDate` (ISO date strings), `limit` (default 20, max 100 for product/category breakdowns), `locale` (default shop locale)
+
+---
+
 ### Scheduled exports
 
 #### `GET /api/admin/v1/scheduled-exports`

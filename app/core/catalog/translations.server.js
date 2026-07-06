@@ -56,3 +56,27 @@ export async function loadProductTitleMap(productIds, locale = 'en') {
 
   return new Map(rows.map((row) => [row.entityId, row.value]));
 }
+
+/**
+ * Batch-load category title translations for reports and exports.
+ *
+ * @param {string[]} categoryIds
+ * @param {string} [locale='en']
+ * @returns {Promise<Map<string, string>>}
+ */
+export async function loadCategoryTitleMap(categoryIds, locale = 'en') {
+  const uniqueIds = [...new Set(categoryIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return new Map();
+
+  const rows = await prisma.translation.findMany({
+    where: {
+      entityType: 'category',
+      entityId: { in: uniqueIds },
+      locale,
+      field: 'title',
+    },
+    select: { entityId: true, value: true },
+  });
+
+  return new Map(rows.map((row) => [row.entityId, row.value]));
+}
