@@ -7,6 +7,7 @@ vi.mock('#/libs/prisma.server', () => ({
     storeCreditLedger: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
+      count: vi.fn(),
       create: vi.fn(),
     },
   },
@@ -19,15 +20,45 @@ vi.mock('#/utils/logger.server', () => ({
 import prisma from '#/libs/prisma.server';
 
 import {
+  getCustomerStoreCreditSummary,
   getStoreCreditBalance,
   issueStoreCredit,
-  redeemStoreCredit,
   listLedgerEntries,
+  parseIssueStoreCreditInput,
+  redeemStoreCredit,
+  resolveStoreCreditRedemption,
 } from '#/core/store-credit/index.server';
 
 describe('store-credit', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe('parseIssueStoreCreditInput', () => {
+    it('parses admin form values', () => {
+      expect(
+        parseIssueStoreCreditInput({
+          amountCents: '2500',
+          reason: ' Goodwill ',
+          referenceType: 'admin',
+          referenceId: 'user-1',
+        })
+      ).toEqual({
+        amountCents: 2500,
+        reason: 'Goodwill',
+        referenceType: 'admin',
+        referenceId: 'user-1',
+      });
+    });
+
+    it('defaults missing fields to null', () => {
+      expect(parseIssueStoreCreditInput({ amountCents: 100 })).toEqual({
+        amountCents: 100,
+        reason: null,
+        referenceType: null,
+        referenceId: null,
+      });
+    });
   });
 
   it('getStoreCreditBalance returns 0 when no entries', async () => {
@@ -40,6 +71,19 @@ describe('store-credit', () => {
       balanceAfterCents: 1500,
     });
     expect(await getStoreCreditBalance('cust-1')).toBe(1500);
+  });
+
+  it('getCustomerStoreCreditSummary returns zero without customer', async () => {
+    expect(await getCustomerStoreCreditSummary()).toEqual({ balance: 0 });
+  });
+
+  it('getCustomerStoreCreditSummary returns balance', async () => {
+    prisma.storeCreditLedger.findFirst.mockResolvedValue({
+      balanceAfterCents: 900,
+    });
+    expect(await getCustomerStoreCreditSummary('cust-1')).toEqual({
+      balance: 900,
+    });
   });
 
   it('issueStoreCredit creates positive ledger entry', async () => {
@@ -100,9 +144,31 @@ describe('store-credit', () => {
     ).rejects.toThrow('INSUFFICIENT_STORE_CREDIT');
   });
 
-  it('listLedgerEntries returns entries', async () => {
+  it('listLedgerEntries returns paginated entries', async () => {
     prisma.storeCreditLedger.findMany.mockResolvedValue([{ id: 'e1' }]);
-    const entries = await listLedgerEntries('cust-1');
-    expect(entries).toHaveLength(1);
+    prisma.storeCreditLedger.count.mockResolvedValue(1);
+
+    const result = await listLedgerEntries('cust-1');
+    expect(result).toEqual({ entries: [{ id: 'e1' }], total: 1 });
+  });
+
+  describe('resolveStoreCreditRedemption', () => {
+    it('caps redemption by balance and remaining total', async () => {
+      prisma.storeCreditLedger.findFirst.mockResolvedValue({
+        balanceAfterCents: 2000,
+      });
+
+      const result = await resolveStoreCreditRedemption('cust-1', 1500, 1000);
+      expect(result).toEqual({ storeCreditCents: 1000 });
+    });
+
+    it('returns zero when no customer or remaining total', async () => {
+      expect(await resolveStoreCreditRedemption(null, 500, 1000)).toEqual({
+        storeCreditCents: 0,
+      });
+      expect(await resolveStoreCreditRedemption('cust-1', 500, 0)).toEqual({
+        storeCreditCents: 0,
+      });
+    });
   });
 });

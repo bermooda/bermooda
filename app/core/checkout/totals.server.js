@@ -10,7 +10,7 @@ import {
   resolveCustomerGroupIds,
 } from '#/core/pricing/index.server';
 import { resolveShippingOption } from '#/core/shipping/index.server';
-import { getStoreCreditBalance } from '#/core/store-credit/index.server';
+import { resolveStoreCreditRedemption } from '#/core/store-credit/index.server';
 import { computeActiveTax } from '#/core/tax/index.server';
 
 // ---------------------------------------------------------------------------
@@ -142,12 +142,12 @@ export async function computeTotals({
 
   let storeCreditCents = 0;
   if (customerId && requestedStoreCreditCents > 0) {
-    const balance = await getStoreCreditBalance(customerId);
-    storeCreditCents = Math.min(
-      balance,
+    const redemption = await resolveStoreCreditRedemption(
+      customerId,
       requestedStoreCreditCents,
-      Math.max(0, remaining)
+      remaining
     );
+    storeCreditCents = redemption.storeCreditCents;
     remaining -= storeCreditCents;
   }
 

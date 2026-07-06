@@ -31,6 +31,12 @@ import {
   updateCustomerConsent,
   parseConsent,
 } from '#/core/gdpr/index.server';
+import {
+  getCustomerStoreCreditSummary,
+  issueStoreCredit,
+  listLedgerEntries,
+  parseIssueStoreCreditInput,
+} from '#/core/store-credit/index.server';
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -39,35 +45,38 @@ import {
 export async function loader({ params }) {
   const { id } = params;
 
-  const [customer, slotBlocks] = await Promise.all([
-    prisma.customer.findUniqueOrThrow({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        preferredLocale: true,
-        consentJson: true,
-        erasedAt: true,
-        createdAt: true,
-        addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
-        orders: {
-          orderBy: { createdAt: 'desc' },
-          take: 20,
-          select: {
-            id: true,
-            orderNumber: true,
-            status: true,
-            currency: true,
-            totalCents: true,
-            createdAt: true,
+  const [customer, slotBlocks, storeCreditSummary, storeCreditLedger] =
+    await Promise.all([
+      prisma.customer.findUniqueOrThrow({
+        where: { id },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+          preferredLocale: true,
+          consentJson: true,
+          erasedAt: true,
+          createdAt: true,
+          addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
+          orders: {
+            orderBy: { createdAt: 'desc' },
+            take: 20,
+            select: {
+              id: true,
+              orderNumber: true,
+              status: true,
+              currency: true,
+              totalCents: true,
+              createdAt: true,
+            },
           },
         },
-      },
-    }),
-    getAdminSlotBlocksMap(['customer.detail']),
-  ]);
+      }),
+      getAdminSlotBlocksMap(['customer.detail']),
+      getCustomerStoreCreditSummary(id),
+      listLedgerEntries(id, { limit: 20 }),
+    ]);
 
   return {
     slotBlocks,
@@ -102,6 +111,19 @@ export async function loader({ params }) {
       })),
       consent: parseConsent(customer.consentJson),
       erasedAt: customer.erasedAt?.toISOString() ?? null,
+    },
+    storeCredit: {
+      balanceCents: storeCreditSummary.balance,
+      entries: storeCreditLedger.entries.map((entry) => ({
+        id: entry.id,
+        amountCents: entry.amountCents,
+        balanceAfterCents: entry.balanceAfterCents,
+        reason: entry.reason ?? null,
+        referenceType: entry.referenceType ?? null,
+        referenceId: entry.referenceId ?? null,
+        createdAt: entry.createdAt.toISOString(),
+      })),
+      total: storeCreditLedger.total,
     },
   };
 }
@@ -172,6 +194,40 @@ export async function action({ request, params }) {
     });
 
     return { ok: true, intent };
+  }
+
+  if (intent === 'issue-store-credit') {
+    const input = parseIssueStoreCreditInput({
+      amountCents: formData.get('amountCents'),
+      reason: formData.get('reason'),
+    });
+
+    if (!input.amountCents || input.amountCents <= 0) {
+      return { ok: false, error: 'Enter a credit amount greater than zero.' };
+    }
+
+    try {
+      await issueStoreCredit(id, {
+        ...input,
+        referenceType: 'admin',
+        referenceId: user.id,
+      });
+
+      await recordAdminAudit({
+        user,
+        action: 'customer.store_credit.issued',
+        entityType: 'customer',
+        entityId: id,
+        metadata: {
+          amountCents: input.amountCents,
+          reason: input.reason,
+        },
+      });
+
+      return { ok: true, intent };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
   }
 
   if (intent === 'update-consent') {
@@ -262,7 +318,7 @@ function SectionCard({ title, description, children }) {
 // ---------------------------------------------------------------------------
 
 export default function AdminCustomerRoute() {
-  const { customer, slotBlocks } = useLoaderData();
+  const { customer, slotBlocks, storeCredit } = useLoaderData();
   const actionData = useActionData();
 
   const joinedDate = new Date(customer.createdAt).toLocaleDateString('en-US', {
@@ -427,6 +483,89 @@ export default function AdminCustomerRoute() {
               </div>
             ))}
           </div>
+        )}
+      </SectionCard>
+
+      {/* Store credit */}
+      <SectionCard
+        title="Store credit"
+        description="Issue credit redeemable at checkout. Returns and refunds may also add credit automatically."
+      >
+        <div className="border-border bg-surface-2 mb-6 rounded-lg border p-4">
+          <p className="text-text-muted text-sm">Current balance</p>
+          <p className="text-text text-2xl font-semibold">
+            {formatCents(storeCredit.balanceCents)}
+          </p>
+        </div>
+
+        {!customer.erasedAt && (
+          <Form
+            method="post"
+            className="mb-6 grid gap-4 sm:grid-cols-[1fr_2fr_auto]"
+          >
+            <input type="hidden" name="intent" value="issue-store-credit" />
+            <Field label="Amount (USD cents)">
+              <Input
+                type="number"
+                name="amountCents"
+                min="1"
+                step="1"
+                placeholder="2500"
+                required
+              />
+            </Field>
+            <Field label="Reason">
+              <Input
+                type="text"
+                name="reason"
+                placeholder="Goodwill credit, return adjustment…"
+              />
+            </Field>
+            <div className="flex items-end">
+              <ButtonSubmit>Issue credit</ButtonSubmit>
+            </div>
+          </Form>
+        )}
+
+        {storeCredit.entries.length === 0 ? (
+          <p className="text-text-muted text-sm">No ledger activity yet.</p>
+        ) : (
+          <Table>
+            <THead>
+              <tr>
+                <Th>Date</Th>
+                <Th>Reason</Th>
+                <Th className="text-right">Amount</Th>
+                <Th className="text-right">Balance</Th>
+              </tr>
+            </THead>
+            <TBody>
+              {storeCredit.entries.map((entry) => (
+                <tr key={entry.id}>
+                  <Td>
+                    {new Date(entry.createdAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </Td>
+                  <Td>{entry.reason ?? entry.referenceType ?? 'Adjustment'}</Td>
+                  <Td
+                    className={clsx(
+                      'text-right font-medium',
+                      entry.amountCents >= 0 ? 'text-success' : 'text-danger'
+                    )}
+                  >
+                    {entry.amountCents >= 0 ? '+' : ''}
+                    {formatCents(entry.amountCents)}
+                  </Td>
+                  <Td className="text-text text-right">
+                    {formatCents(entry.balanceAfterCents)}
+                  </Td>
+                </tr>
+              ))}
+            </TBody>
+          </Table>
         )}
       </SectionCard>
 
