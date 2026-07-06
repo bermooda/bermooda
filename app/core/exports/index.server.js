@@ -48,6 +48,71 @@ export function buildCsv(headers, rows) {
   return lines.join('\n');
 }
 
+/**
+ * Parse a single CSV line into cell values.
+ *
+ * @param {string} line
+ * @returns {string[]}
+ */
+function parseCsvLine(line) {
+  const cells = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') {
+        current += '"';
+        i += 1;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        current += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      cells.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  cells.push(current);
+  return cells;
+}
+
+/**
+ * Parse CSV text into headers and row arrays.
+ *
+ * @param {string} text
+ * @returns {{ headers: string[], rows: string[][] }}
+ */
+export function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (!lines.length) return { headers: [], rows: [] };
+
+  const headers = parseCsvLine(lines[0]);
+  const rows = lines.slice(1).filter(Boolean).map(parseCsvLine);
+  return { headers, rows };
+}
+
+/**
+ * Map a CSV row array to an object keyed by header names.
+ *
+ * @param {string[]} headers
+ * @param {string[]} row
+ * @returns {Record<string, string>}
+ */
+export function rowToObject(headers, row) {
+  const obj = {};
+  headers.forEach((header, index) => {
+    obj[header] = row[index] ?? '';
+  });
+  return obj;
+}
+
 // ---------------------------------------------------------------------------
 // Input + validation helpers
 // ---------------------------------------------------------------------------

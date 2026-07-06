@@ -172,6 +172,7 @@ export default [
         'routes/api/admin/v1/scheduled-exports/$id/run.jsx'
       ),
       route('export-runs/:id', 'routes/api/admin/v1/export-runs/$id.jsx'),
+      route('imports', 'routes/api/admin/v1/imports.jsx'),
     ]),
   ]),
 
