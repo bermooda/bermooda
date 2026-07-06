@@ -1,12 +1,14 @@
 import clsx from 'clsx';
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import {
   countPendingReviews,
   deleteReview,
-  listReviewsForAdmin,
+  listReviews,
   moderateReview,
+  parseReviewListParams,
+  parseReviewModerationFromForm,
+  REVIEW_STATUSES,
 } from '#/core/reviews/index.server';
 import Badge from '#/components/admin/badge';
 import PageHeader from '#/components/admin/page-header';
@@ -18,62 +20,48 @@ const PAGE_SIZE = 20;
 export async function loader({ request }) {
   const url = new URL(request.url);
   const status = url.searchParams.get('status') ?? 'pending';
-  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10));
+  const params = parseReviewListParams({
+    ...Object.fromEntries(url.searchParams.entries()),
+    status,
+    limit: String(PAGE_SIZE),
+  });
 
-  const [{ reviews, total }, pendingCount] = await Promise.all([
-    listReviewsForAdmin({ status, page, limit: PAGE_SIZE }),
+  const [{ reviews, total, page }, pendingCount] = await Promise.all([
+    listReviews(params),
     countPendingReviews(),
   ]);
 
-  const productIds = [...new Set(reviews.map((r) => r.productId))];
-  const productTitles =
-    productIds.length > 0
-      ? await prisma.translation.findMany({
-          where: {
-            entityType: 'product',
-            entityId: { in: productIds },
-            locale: 'en',
-            field: 'title',
-          },
-        })
-      : [];
-  const titleMap = Object.fromEntries(
-    productTitles.map((t) => [t.entityId, t.value])
-  );
-
   return {
-    reviews: reviews.map((r) => ({
-      id: r.id,
-      rating: r.rating,
-      title: r.title,
-      body: r.body,
-      status: r.status,
-      verifiedPurchase: r.verifiedPurchase,
-      createdAt: r.createdAt.toISOString(),
-      productTitle: titleMap[r.productId] ?? r.productId.slice(0, 8),
-      customerName: r.customer.name || r.customer.email,
-    })),
+    reviews,
     total,
     page,
     pageSize: PAGE_SIZE,
     status,
     pendingCount,
+    reviewStatuses: REVIEW_STATUSES,
   };
 }
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const intent = formData.get('intent');
-  const id = formData.get('id')?.toString();
 
-  if (!id) return { error: 'Missing review id' };
+  try {
+    const {
+      id,
+      status,
+      delete: shouldDelete,
+    } = parseReviewModerationFromForm(formData);
 
-  if (intent === 'approve') await moderateReview(id, { status: 'approved' });
-  else if (intent === 'reject')
-    await moderateReview(id, { status: 'rejected' });
-  else if (intent === 'delete') await deleteReview(id);
+    if (shouldDelete) {
+      await deleteReview(id);
+    } else {
+      await moderateReview(id, { status });
+    }
 
-  return { ok: true };
+    return { ok: true };
+  } catch (err) {
+    return { error: err.message ?? 'Could not update review.' };
+  }
 }
 
 export default function AdminReviewsRoute() {
