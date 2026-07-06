@@ -26,8 +26,8 @@ export default [
     // Cart
     route('cart', 'routes/storefront/cart.jsx'),
 
-    // Checkout — 4-step flow (:step = address | shipping | payment | review)
-    route('checkout/:step', 'routes/storefront/checkout/$step.jsx'),
+    // Checkout — single-page flow
+    route('checkout', 'routes/storefront/checkout/index.jsx'),
     route(
       'thank-you/:orderNumber',
       'routes/storefront/thank-you/$orderNumber.jsx'
@@ -94,7 +94,7 @@ export default [
       ),
       route('checkout', 'routes/api/v1/checkout.jsx'),
       route('checkout/:id', 'routes/api/v1/checkout/$id.jsx'),
-      route('checkout/:id/advance', 'routes/api/v1/checkout/$id/advance.jsx'),
+      route('checkout/:id/update', 'routes/api/v1/checkout/$id/update.jsx'),
     ]),
   ]),
 

@@ -9,7 +9,7 @@ export const routeComponents = {
   '/categories/:slug': 'CategoryPage',
   '/collections/:handle': 'CollectionPage',
   '/cart': 'CartPage',
-  '/checkout/:step': 'CheckoutLayout',
+  '/checkout': 'CheckoutLayout',
   '/thank-you/:orderNumber': 'CheckoutThankYouPage',
   '/account': 'AccountDashboard',
   '/account/orders': 'AccountOrdersPage',

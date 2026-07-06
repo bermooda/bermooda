@@ -99,7 +99,7 @@ export async function action({ request }) {
     const quantity = Number(formData.get('quantity'));
     await updateQuantity(cart.id, lineId, quantity);
   } else if (intent === 'checkout') {
-    return redirect('/checkout/address');
+    return redirect('/checkout');
   }
 
   return null;
