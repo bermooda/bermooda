@@ -39,8 +39,10 @@ import {
   getScheduledExport,
   listScheduledExports,
   parseCreateScheduledExportInput,
+  parseCsv,
   parseExportDownloadParams,
   resolveExportDownload,
+  rowToObject,
   runScheduledExport,
   validateExportType,
 } from '#/core/exports/index.server';
@@ -65,6 +67,22 @@ describe('exports', () => {
       ]
     );
     expect(csv).toBe('a,b\n1,2\n3,4');
+  });
+
+  it('parseCsv reads headers and rows', () => {
+    const parsed = parseCsv('a,b\n1,2\n"quoted,cell",3');
+    expect(parsed.headers).toEqual(['a', 'b']);
+    expect(parsed.rows).toEqual([
+      ['1', '2'],
+      ['quoted,cell', '3'],
+    ]);
+  });
+
+  it('rowToObject maps headers to row values', () => {
+    expect(rowToObject(['email', 'name'], ['a@b.com', 'Ada'])).toEqual({
+      email: 'a@b.com',
+      name: 'Ada',
+    });
   });
 
   it('validateExportType rejects unknown types', () => {
