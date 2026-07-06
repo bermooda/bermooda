@@ -6,7 +6,10 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { createAbandonedCartSequence } from '#/core/marketing/index.server';
+import {
+  createAbandonedCartSequence,
+  parseCreateAbandonedCartSequenceInput,
+} from '#/core/marketing/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -18,29 +21,23 @@ import { ButtonSubmit } from '#/components/ui/button';
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const name = formData.get('name')?.toString().trim();
-  const stepNumber = parseInt(
-    formData.get('stepNumber')?.toString() ?? '1',
-    10
-  );
-  const delayMinutes = parseInt(
-    formData.get('delayMinutes')?.toString() ?? '60',
-    10
-  );
-  const subject = formData.get('subject')?.toString().trim();
 
-  if (!name || !subject) {
-    return { error: 'Sequence name and subject are required.' };
+  try {
+    await createAbandonedCartSequence(
+      parseCreateAbandonedCartSequenceInput({
+        name: formData.get('name'),
+        stepNumber: formData.get('stepNumber'),
+        delayMinutes: formData.get('delayMinutes'),
+        subject: formData.get('subject'),
+      })
+    );
+    return redirect('/admin/marketing');
+  } catch (err) {
+    if (err.code === 'SEQUENCE_INVALID') {
+      return { error: err.message };
+    }
+    throw err;
   }
-
-  await createAbandonedCartSequence({
-    name,
-    stepNumber,
-    delayMinutes,
-    subject,
-  });
-
-  return redirect('/admin/marketing');
 }
 
 export default function AdminNewMarketingSequenceRoute() {

@@ -174,6 +174,31 @@ export default [
         'webhook-subscriptions/:id',
         'routes/api/admin/v1/webhook-subscriptions/$id.jsx'
       ),
+      route('marketing/segments', 'routes/api/admin/v1/marketing/segments.jsx'),
+      route(
+        'marketing/segments/:id',
+        'routes/api/admin/v1/marketing/segments/$id.jsx'
+      ),
+      route(
+        'marketing/campaigns',
+        'routes/api/admin/v1/marketing/campaigns.jsx'
+      ),
+      route(
+        'marketing/campaigns/:id',
+        'routes/api/admin/v1/marketing/campaigns/$id.jsx'
+      ),
+      route(
+        'marketing/campaigns/:id/send',
+        'routes/api/admin/v1/marketing/campaigns/$id/send.jsx'
+      ),
+      route(
+        'marketing/abandoned-cart-sequences',
+        'routes/api/admin/v1/marketing/abandoned-cart-sequences.jsx'
+      ),
+      route(
+        'marketing/abandoned-cart-sequences/:id',
+        'routes/api/admin/v1/marketing/abandoned-cart-sequences/$id.jsx'
+      ),
       route('scheduled-exports', 'routes/api/admin/v1/scheduled-exports.jsx'),
       route(
         'scheduled-exports/:id',

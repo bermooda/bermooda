@@ -7,7 +7,11 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { createCampaign, listSegments } from '#/core/marketing/index.server';
+import {
+  createCampaign,
+  listSegments,
+  parseCreateCampaignInput,
+} from '#/core/marketing/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -20,23 +24,32 @@ import { ErrorAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
 export async function loader() {
-  const segments = await listSegments();
+  const { segments } = await listSegments({ limit: 100 });
   return { segments };
 }
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const segmentId = formData.get('segmentId')?.toString();
-  const name = formData.get('name')?.toString().trim();
-  const subject = formData.get('subject')?.toString().trim();
-  const bodyHtml = formData.get('bodyHtml')?.toString().trim();
 
-  if (!segmentId || !name || !subject || !bodyHtml) {
-    return { error: 'All campaign fields are required.' };
+  try {
+    await createCampaign(
+      parseCreateCampaignInput({
+        segmentId: formData.get('segmentId'),
+        name: formData.get('name'),
+        subject: formData.get('subject'),
+        bodyHtml: formData.get('bodyHtml'),
+      })
+    );
+    return redirect('/admin/marketing');
+  } catch (err) {
+    if (err.code === 'CAMPAIGN_INVALID') {
+      return { error: err.message };
+    }
+    if (err.code === 'NOT_FOUND') {
+      return { error: 'Selected segment was not found.' };
+    }
+    throw err;
   }
-
-  await createCampaign({ segmentId, name, subject, bodyHtml });
-  return redirect('/admin/marketing');
 }
 
 export default function AdminNewMarketingCampaignRoute() {

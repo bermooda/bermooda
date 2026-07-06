@@ -13,12 +13,16 @@ import Card from '#/components/admin/card';
 import PageHeader from '#/components/admin/page-header';
 
 export async function loader() {
-  const [segments, campaigns, sequences] = await Promise.all([
-    listSegments(),
-    listCampaigns(),
-    listAbandonedCartSequences(),
+  const [segmentsResult, campaignsResult, sequencesResult] = await Promise.all([
+    listSegments({ limit: 100 }),
+    listCampaigns({ limit: 100 }),
+    listAbandonedCartSequences({ limit: 100 }),
   ]);
-  return { segments, campaigns, sequences };
+  return {
+    segments: segmentsResult.segments,
+    campaigns: campaignsResult.campaigns,
+    sequences: sequencesResult.sequences,
+  };
 }
 
 export async function action({ request }) {
@@ -28,8 +32,19 @@ export async function action({ request }) {
   if (intent === 'send-campaign') {
     const campaignId = formData.get('campaignId')?.toString();
     if (!campaignId) return { ok: false, error: 'Campaign required.' };
-    const result = await sendCampaign(campaignId);
-    return { ok: true, sent: result.sent };
+
+    try {
+      const result = await sendCampaign(campaignId);
+      return { ok: true, sent: result.sent };
+    } catch (err) {
+      if (err.code === 'NOT_FOUND') {
+        return { ok: false, error: 'Campaign not found.' };
+      }
+      if (err.code === 'CAMPAIGN_ALREADY_SENT') {
+        return { ok: false, error: 'Campaign was already sent.' };
+      }
+      throw err;
+    }
   }
 
   return { ok: false, error: 'Unknown action.' };
