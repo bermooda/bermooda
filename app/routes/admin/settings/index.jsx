@@ -19,14 +19,18 @@ import {
 } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
-import prisma from '#/libs/prisma.server';
 import {
   ADMIN_AVAILABLE_LOCALES,
   LOCALE_LABELS,
   LOCALE_OPTIONS,
 } from '#/core/i18n/index';
 import { getRequestLocale } from '#/core/i18n/index.server';
-import { hasPermission } from '#/core/rbac/index.server';
+import {
+  listAdminUsers,
+  requirePermission,
+  SETTINGS_MANAGE_PERMISSION,
+  updateAdminUserRole,
+} from '#/core/rbac/index.server';
 import { parseSeoSettingsInput } from '#/core/seo/input';
 import { AVAILABLE_CURRENCIES } from '#/core/settings/defaults';
 import {
@@ -104,27 +108,14 @@ export async function loader({ request }) {
 
   const [settings, users] = await Promise.all([
     getAdminSettingsSnapshot(),
-    prisma.user.findMany({
-      orderBy: { createdAt: 'asc' },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-        emailVerified: true,
-      },
-    }),
+    listAdminUsers(),
   ]);
 
   return {
     ...settings,
     adminLocale,
     adminAvailableLocales: ADMIN_AVAILABLE_LOCALES,
-    users: users.map((u) => ({
-      ...u,
-      createdAt: u.createdAt.toISOString(),
-    })),
+    users,
   };
 }
 
@@ -215,19 +206,19 @@ export async function action({ request }) {
   // ── Change Role ────────────────────────────────────────────────────────────
   if (intent === 'change-role') {
     const session = await authenticate(request);
-    if (!(await hasPermission(session.user.role, 'settings:manage'))) {
-      return { ok: false, error: 'Forbidden', intent };
+    try {
+      await requirePermission(session.user, SETTINGS_MANAGE_PERMISSION);
+      await updateAdminUserRole(
+        formData.get('userId')?.toString(),
+        formData.get('role')?.toString()
+      );
+      return { ok: true, intent };
+    } catch (err) {
+      if (err.code === 'FORBIDDEN') {
+        return { ok: false, error: 'Forbidden', intent };
+      }
+      return { ok: false, error: err.message, intent };
     }
-
-    const userId = formData.get('userId')?.toString();
-    const newRole = formData.get('role')?.toString();
-    if (!userId || !newRole)
-      return { ok: false, error: 'Missing userId or role.', intent };
-    await prisma.user.update({
-      where: { id: userId },
-      data: { role: newRole },
-    });
-    return { ok: true, intent };
   }
 
   return { ok: false, error: 'Unknown intent.' };

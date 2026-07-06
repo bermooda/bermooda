@@ -254,6 +254,24 @@ Update customer details.
 
 ---
 
+### Admin users
+
+#### `GET /api/admin/v1/admin-users`
+
+List admin and staff users.
+
+#### `GET /api/admin/v1/admin-users/:id`
+
+Get an admin/staff user.
+
+#### `PATCH /api/admin/v1/admin-users/:id`
+
+Update an admin/staff user's role.
+
+**Body:** `{ "role": "admin" }` or `{ "role": "staff" }`
+
+---
+
 ### Discounts
 
 #### `GET /api/admin/v1/discounts`
