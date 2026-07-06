@@ -4,10 +4,7 @@
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
-import {
-  listAuditLogs,
-  parseAuditListParams,
-} from '#/core/audit/index.server';
+import { listAuditLogs, parseAuditListParams } from '#/core/audit/index.server';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';

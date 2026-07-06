@@ -173,7 +173,11 @@ describe('audit', () => {
     ]);
     prisma.auditLog.count.mockResolvedValue(1);
 
-    const result = await listAuditLogs({ page: 1, limit: 10, action: 'order.created' });
+    const result = await listAuditLogs({
+      page: 1,
+      limit: 10,
+      action: 'order.created',
+    });
 
     expect(result.auditLogs).toHaveLength(1);
     expect(result.total).toBe(1);

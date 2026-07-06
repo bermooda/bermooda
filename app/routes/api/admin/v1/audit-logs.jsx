@@ -2,11 +2,8 @@
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
+import { listAuditLogs, parseAuditListParams } from '#/core/audit/index.server';
 import { DOMAIN_EVENTS } from '#/core/events/names';
-import {
-  listAuditLogs,
-  parseAuditListParams,
-} from '#/core/audit/index.server';
 
 export async function loader({ request }) {
   await requireApiKey(request, ['admin']);
