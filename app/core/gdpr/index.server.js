@@ -4,12 +4,38 @@
 import prisma from '#/libs/prisma.server';
 
 const ANONYMIZED_EMAIL_DOMAIN = 'anonymized.invalid';
-const DEFAULT_CONSENT = {
+
+export const DEFAULT_CONSENT = {
   necessary: true,
   analytics: false,
   marketing: false,
   updatedAt: null,
 };
+
+const CUSTOMER_DATA_EXPORT_INCLUDE = {
+  addresses: true,
+  orders: {
+    include: {
+      lines: true,
+      refunds: true,
+      discounts: true,
+    },
+  },
+  carts: {
+    include: { lines: true },
+  },
+  sessions: {
+    select: {
+      id: true,
+      expiresAt: true,
+      createdAt: true,
+    },
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Consent parsing
+// ---------------------------------------------------------------------------
 
 /**
  * Parse a consent JSON blob from the customer record.
@@ -23,6 +49,15 @@ export function parseConsent(consentJson) {
   } catch {
     return { ...DEFAULT_CONSENT };
   }
+}
+
+/**
+ * Whether stored consent allows marketing communications.
+ *
+ * @param {string|null|undefined} consentJson
+ */
+export function hasMarketingConsent(consentJson) {
+  return parseConsent(consentJson).marketing;
 }
 
 /**
@@ -63,6 +98,71 @@ export function buildConsentCookieValue(consents) {
 }
 
 /**
+ * Parse admin/API consent update payload.
+ *
+ * @param {object} input
+ * @returns {{ analytics?: boolean, marketing?: boolean }}
+ */
+export function parseUpdateConsentInput(input = {}) {
+  const result = {};
+
+  if (input.analytics !== undefined) {
+    result.analytics =
+      input.analytics === true ||
+      input.analytics === 'on' ||
+      input.analytics === 'true';
+  }
+
+  if (input.marketing !== undefined) {
+    result.marketing =
+      input.marketing === true ||
+      input.marketing === 'on' ||
+      input.marketing === 'true';
+  }
+
+  return result;
+}
+
+/**
+ * Parse consent flags from an HTML form submission.
+ *
+ * @param {FormData} formData
+ * @returns {{ analytics: boolean, marketing: boolean }}
+ */
+export function parseUpdateConsentFormData(formData) {
+  return {
+    analytics: formData.get('analytics') === 'on',
+    marketing: formData.get('marketing') === 'on',
+  };
+}
+
+/**
+ * Load parsed consent and erasure state for a customer.
+ *
+ * @param {string} customerId
+ */
+export async function getCustomerConsentSummary(customerId) {
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    select: { id: true, consentJson: true, erasedAt: true },
+  });
+
+  if (!customer) {
+    throw Object.assign(new Error('Customer not found'), { code: 'NOT_FOUND' });
+  }
+
+  return {
+    customerId: customer.id,
+    consent: parseConsent(customer.consentJson),
+    erasedAt: customer.erasedAt?.toISOString() ?? null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Data export
+// ---------------------------------------------------------------------------
+
+/**
  * Export all personal data for a customer as a portable JSON bundle.
  *
  * @param {string} customerId
@@ -70,26 +170,7 @@ export function buildConsentCookieValue(consents) {
 export async function exportCustomerData(customerId) {
   const customer = await prisma.customer.findUnique({
     where: { id: customerId },
-    include: {
-      addresses: true,
-      orders: {
-        include: {
-          lines: true,
-          refunds: true,
-          discounts: true,
-        },
-      },
-      carts: {
-        include: { lines: true },
-      },
-      sessions: {
-        select: {
-          id: true,
-          expiresAt: true,
-          createdAt: true,
-        },
-      },
-    },
+    include: CUSTOMER_DATA_EXPORT_INCLUDE,
   });
 
   if (!customer) {
@@ -120,6 +201,10 @@ export async function exportCustomerData(customerId) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Consent updates
+// ---------------------------------------------------------------------------
+
 /**
  * Update stored consent preferences for a customer.
  *
@@ -127,15 +212,16 @@ export async function exportCustomerData(customerId) {
  * @param {{ analytics?: boolean, marketing?: boolean }} consents
  */
 export async function updateCustomerConsent(customerId, consents) {
-  const current = parseConsent(
-    (
-      await prisma.customer.findUnique({
-        where: { id: customerId },
-        select: { consentJson: true },
-      })
-    )?.consentJson
-  );
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    select: { consentJson: true },
+  });
 
+  if (!customer) {
+    throw Object.assign(new Error('Customer not found'), { code: 'NOT_FOUND' });
+  }
+
+  const current = parseConsent(customer.consentJson);
   const next = {
     ...current,
     analytics:
@@ -156,6 +242,10 @@ export async function updateCustomerConsent(customerId, consents) {
 
   return next;
 }
+
+// ---------------------------------------------------------------------------
+// Erasure
+// ---------------------------------------------------------------------------
 
 /**
  * Strip PII from a JSON address blob while preserving structure.

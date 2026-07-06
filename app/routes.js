@@ -132,6 +132,18 @@ export default [
         'routes/api/admin/v1/customers/$id/store-credit.jsx'
       ),
       route(
+        'customers/:id/consent',
+        'routes/api/admin/v1/customers/$id/consent.jsx'
+      ),
+      route(
+        'customers/:id/data-export',
+        'routes/api/admin/v1/customers/$id/data-export.jsx'
+      ),
+      route(
+        'customers/:id/erase',
+        'routes/api/admin/v1/customers/$id/erase.jsx'
+      ),
+      route(
         'inventory/locations',
         'routes/api/admin/v1/inventory/locations.jsx'
       ),
