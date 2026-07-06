@@ -14,13 +14,18 @@ import { getMenuByHandle } from '#/core/content/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { I18nContext } from '#/core/i18n/context';
 import { translate } from '#/core/i18n/index';
-import { getRequestLocale, loadMessages } from '#/core/i18n/index.server';
+import {
+  getAvailableLocales,
+  loadMessages,
+  resolveRequestLocale,
+} from '#/core/i18n/index.server';
 import { trackReferral } from '#/core/loyalty/index.server';
 import { get as settingsGet } from '#/core/settings/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 
 export async function loader({ request }) {
-  const locale = await getRequestLocale(request);
+  const headers = new Headers();
+  const locale = await resolveRequestLocale(request, headers);
   const channel = await resolveChannelFromRequest(request);
   const currency =
     (await getRequestCurrency(request)) ?? channel.currency ?? 'USD';
@@ -46,6 +51,7 @@ export async function loader({ request }) {
   const [
     messages,
     currencies,
+    availableLocales,
     mainMenu,
     footerMenu,
     subHeaderMenu,
@@ -53,18 +59,16 @@ export async function loader({ request }) {
   ] = await Promise.all([
     loadMessages(locale),
     settingsGet('currencies'),
+    getAvailableLocales(),
     getMenuByHandle('main', { locale }),
     getMenuByHandle('footer', { locale }),
     getMenuByHandle('sub-header', { locale }),
     getSlotBlocksMap(['layout.header', 'layout.footer']),
   ]);
-
-  const availableLocales = ['en', 'de', 'fr'];
   const availableCurrencies = Array.isArray(currencies)
     ? currencies
     : ['USD', 'EUR', 'AUD'];
 
-  const headers = new Headers();
   if (refCode) {
     headers.append(
       'Set-Cookie',

@@ -20,6 +20,11 @@ import {
 
 import { authenticate } from '#/libs/auth/admin.server';
 import prisma from '#/libs/prisma.server';
+import {
+  ADMIN_AVAILABLE_LOCALES,
+  LOCALE_LABELS,
+  LOCALE_OPTIONS,
+} from '#/core/i18n/index';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { hasPermission } from '#/core/rbac/index.server';
 import { get, set } from '#/core/settings/index.server';
@@ -32,9 +37,6 @@ import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
 import Tabs from '#/components/admin/tabs';
 import Button from '#/components/ui/button';
 
-const ADMIN_AVAILABLE_LOCALES = ['en', 'de', 'fr'];
-const ADMIN_LOCALE_LABELS = { en: 'English', de: 'Deutsch', fr: 'Français' };
-
 const CHECKBOX_CLASS =
   'border-border text-accent focus:ring-accent bg-surface h-4 w-4 rounded';
 const RADIO_CLASS = 'border-border text-accent focus:ring-accent h-4 w-4';
@@ -44,7 +46,6 @@ const RADIO_CLASS = 'border-border text-accent focus:ring-accent h-4 w-4';
 // ---------------------------------------------------------------------------
 
 const ALL_CURRENCIES = ['USD', 'EUR', 'AUD', 'GBP', 'CAD', 'JPY'];
-const ALL_LOCALES = ['en', 'de', 'fr', 'es', 'pt', 'ja'];
 
 const TABS = [
   'General',
@@ -386,7 +387,7 @@ function AdminLocaleField({ adminLocale, availableLocales }) {
       >
         {availableLocales.map((locale) => (
           <option key={locale} value={locale}>
-            {ADMIN_LOCALE_LABELS[locale] ?? locale}
+            {LOCALE_LABELS[locale] ?? locale}
           </option>
         ))}
       </select>
@@ -432,7 +433,7 @@ function GeneralTab({ data }) {
               defaultValue={data.defaultLocale}
               className={selectClass()}
             >
-              {(data.locales.length > 0 ? data.locales : ALL_LOCALES).map(
+              {(data.locales.length > 0 ? data.locales : LOCALE_OPTIONS).map(
                 (l) => (
                   <option key={l} value={l}>
                     {l}
@@ -843,7 +844,7 @@ function LocalesTab({ data }) {
             </tr>
           </THead>
           <TBody>
-            {ALL_LOCALES.map((l) => {
+            {LOCALE_OPTIONS.map((l) => {
               const isEnabled = enabled.includes(l);
               const isDefault = defaultLocale === l;
               return (

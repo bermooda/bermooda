@@ -1,15 +1,14 @@
 import { redirect } from 'react-router';
 
-import { setLocaleCookie } from '#/core/i18n/index.server';
-
-const SUPPORTED = ['en', 'de', 'fr'];
+import { getAvailableLocales, setLocaleCookie } from '#/core/i18n/index.server';
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const locale = formData.get('locale');
-  const returnTo = formData.get('returnTo') ?? '/';
+  const locale = formData.get('locale')?.toString();
+  const returnTo = formData.get('returnTo')?.toString() ?? '/';
+  const enabledLocales = await getAvailableLocales();
 
-  if (!locale || !SUPPORTED.includes(locale)) {
+  if (!locale || !enabledLocales.includes(locale)) {
     return redirect(returnTo);
   }
 

@@ -76,14 +76,14 @@ describe('translate', () => {
     ).toBe('Switch locale');
   });
 
-  it('prefers flat-dotted keys over nested traversal', () => {
+  it('prefers nested keys over flat dotted keys', () => {
     expect(
       translate(
         'nav.home',
         {},
-        { 'nav.home': 'Home', 'nav': { home: 'WRONG' } }
+        { 'nav.home': 'Flat', 'nav': { home: 'Nested' } }
       )
-    ).toBe('Home');
+    ).toBe('Nested');
   });
 
   it('returns the key when nested traversal lands on a non-string', () => {
