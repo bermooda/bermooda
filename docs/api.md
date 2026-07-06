@@ -232,6 +232,42 @@ Create a shipment.
 
 **Body:** `{ "carrier": "FedEx", "trackingNumber": "...", "trackingUrl": "..." }`
 
+#### `POST /api/admin/v1/orders/:id/returns`
+
+Create a return request for an order.
+
+**Body:** `{ "reason": "Damaged item", "lines": [{ "orderLineId": "...", "quantity": 1 }] }`
+
+#### `GET /api/admin/v1/returns`
+
+List returns with pagination. Also returns `returnStatuses` and `returnResolutions`.
+
+**Query params:** `page`, `limit`, `status`, `orderId`, `customerId`
+
+#### `GET /api/admin/v1/returns/:id`
+
+Get a single return with lines and order summary.
+
+#### `POST /api/admin/v1/returns/:id/approve`
+
+Approve a requested return.
+
+**Body:** `{ "resolution": "refund" }` — optional; defaults to `refund`.
+
+#### `POST /api/admin/v1/returns/:id/receive`
+
+Mark an approved return as received and restock inventory.
+
+#### `POST /api/admin/v1/returns/:id/complete`
+
+Complete a received return with refund, store credit, or exchange.
+
+**Body:** `{ "resolution": "refund", "refundAmountCents": 1000 }` — `refundAmountCents` is optional; defaults to line totals.
+
+#### `POST /api/admin/v1/returns/:id/cancel`
+
+Cancel a return before it is received.
+
 ---
 
 ### Customers

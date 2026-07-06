@@ -125,6 +125,8 @@ export default [
         'returns/:id/:action',
         'routes/api/admin/v1/returns/$id/$action.jsx'
       ),
+      route('returns/:id', 'routes/api/admin/v1/returns/$id.jsx'),
+      route('returns', 'routes/api/admin/v1/returns.jsx'),
       route('customers', 'routes/api/admin/v1/customers.jsx'),
       route('customers/:id', 'routes/api/admin/v1/customers/$id.jsx'),
       route(
@@ -269,6 +271,7 @@ export default [
       // Orders (P5-5)
       route('orders', 'routes/admin/orders/index.jsx'),
       route('orders/:id', 'routes/admin/orders/$id.jsx'),
+      route('returns', 'routes/admin/returns/index.jsx'),
       route('orders/:id/documents', 'routes/admin/orders/$id/documents.jsx'),
       // Customers (P5-6)
       route('customers', 'routes/admin/customers/index.jsx'),

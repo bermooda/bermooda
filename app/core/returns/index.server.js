@@ -5,19 +5,286 @@ import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { emit } from '#/core/events/index.server';
 import { incrementInventory } from '#/core/inventory/index.server';
+import { inventoryItemsFromLines } from '#/core/inventory/items';
 import { createRefund } from '#/core/orders/index.server';
 import { issueStoreCredit } from '#/core/store-credit/index.server';
 
-const VALID_RETURN_STATUSES = new Set([
+export const RETURN_STATUSES = [
   'requested',
   'approved',
   'received',
   'refunded',
   'exchanged',
   'cancelled',
-]);
+];
 
-const VALID_RESOLUTIONS = new Set(['refund', 'store_credit', 'exchange']);
+export const RETURN_RESOLUTIONS = ['refund', 'store_credit', 'exchange'];
+
+export const DEFAULT_RETURN_LIST_LIMIT = 20;
+export const MAX_RETURN_LIST_RESULTS = 100;
+
+const RETURN_STATUS_SET = new Set(RETURN_STATUSES);
+const RETURN_RESOLUTION_SET = new Set(RETURN_RESOLUTIONS);
+
+const RETURN_DETAIL_INCLUDE = {
+  lines: { include: { orderLine: true } },
+  order: { select: { orderNumber: true, email: true, customerId: true } },
+};
+
+const RETURN_LIST_INCLUDE = {
+  lines: { include: { orderLine: { select: { title: true, sku: true } } } },
+  order: { select: { id: true, orderNumber: true, email: true } },
+};
+
+// ---------------------------------------------------------------------------
+// Input parsing
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse return list query params from URLSearchParams or a plain object.
+ *
+ * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ */
+export function parseReturnListParams(source = {}) {
+  const get = (key) => {
+    if (source instanceof URLSearchParams) {
+      const value = source.get(key);
+      return value === null || value === '' ? undefined : value;
+    }
+    const value = source[key];
+    if (value === null || value === undefined || value === '') return undefined;
+    return value.toString();
+  };
+
+  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
+  const limit = Math.min(
+    Math.max(
+      1,
+      parseInt(get('limit') ?? String(DEFAULT_RETURN_LIST_LIMIT), 10) ||
+        DEFAULT_RETURN_LIST_LIMIT
+    ),
+    MAX_RETURN_LIST_RESULTS
+  );
+
+  const orderId = get('orderId')?.trim();
+  const customerId = get('customerId')?.trim();
+  const status = get('status')?.trim();
+
+  if (status && !RETURN_STATUS_SET.has(status)) {
+    throw Object.assign(new Error('Invalid return status filter.'), {
+      code: 'INVALID_RETURN_STATUS',
+    });
+  }
+
+  return {
+    page,
+    limit,
+    ...(orderId ? { orderId } : {}),
+    ...(customerId ? { customerId } : {}),
+    ...(status ? { status } : {}),
+  };
+}
+
+/**
+ * Build a Prisma where clause for return list filters.
+ *
+ * @param {{ orderId?: string, customerId?: string, status?: string }} filters
+ */
+export function buildReturnWhere({ orderId, customerId, status } = {}) {
+  const where = {};
+  if (orderId) where.orderId = orderId;
+  if (customerId) where.customerId = customerId;
+  if (status) where.status = status;
+  return where;
+}
+
+/**
+ * Parse and normalize return line payloads.
+ *
+ * @param {Array<{ orderLineId: string, quantity: number }>} lines
+ */
+export function parseReturnLinesInput(lines) {
+  if (!Array.isArray(lines) || lines.length === 0) {
+    throw Object.assign(new Error('Return lines are required.'), {
+      code: 'RETURN_LINES_REQUIRED',
+    });
+  }
+
+  return lines.map((line) => {
+    const orderLineId = line.orderLineId?.toString().trim();
+    const quantity =
+      typeof line.quantity === 'number'
+        ? line.quantity
+        : parseInt(String(line.quantity ?? '0'), 10);
+
+    if (!orderLineId || !Number.isFinite(quantity)) {
+      throw Object.assign(new Error('Invalid return line.'), {
+        code: 'INVALID_RETURN_LINE',
+      });
+    }
+
+    return { orderLineId, quantity };
+  });
+}
+
+/**
+ * Parse admin/API create payload for a return request.
+ *
+ * @param {object} input
+ */
+export function parseRequestReturnInput(input = {}) {
+  const reason = input.reason?.toString().trim() || undefined;
+  const lines = parseReturnLinesInput(input.lines);
+  return { reason, lines };
+}
+
+/**
+ * Parse return line quantities from a storefront form submission.
+ *
+ * @param {FormData} formData
+ */
+export function parseReturnLinesFromForm(formData) {
+  const lines = [];
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith('qty-')) {
+      const orderLineId = key.slice(4);
+      const quantity = parseInt(String(value), 10);
+      if (quantity > 0) {
+        lines.push({ orderLineId, quantity });
+      }
+    }
+  }
+  return lines;
+}
+
+/**
+ * Parse complete-return options from admin/API input.
+ *
+ * @param {object} input
+ */
+export function parseCompleteReturnInput(input = {}) {
+  const resolution = input.resolution?.toString().trim() || undefined;
+  const refundAmountCents =
+    input.refundAmountCents == null || input.refundAmountCents === ''
+      ? undefined
+      : typeof input.refundAmountCents === 'number'
+        ? input.refundAmountCents
+        : parseInt(String(input.refundAmountCents), 10);
+
+  if (
+    refundAmountCents != null &&
+    (!Number.isFinite(refundAmountCents) || refundAmountCents < 0)
+  ) {
+    throw Object.assign(new Error('refundAmountCents must be a number.'), {
+      code: 'INVALID_REFUND_AMOUNT',
+    });
+  }
+
+  if (resolution && !RETURN_RESOLUTION_SET.has(resolution)) {
+    throw Object.assign(new Error('Invalid resolution.'), {
+      code: 'INVALID_RESOLUTION',
+    });
+  }
+
+  return { resolution, refundAmountCents };
+}
+
+/**
+ * Compute refund/credit amount from return lines.
+ *
+ * @param {Array<{ quantity: number, orderLine?: { priceCents: number } }>} lines
+ * @returns {number}
+ */
+export function computeReturnAmountCents(lines) {
+  return lines.reduce((sum, line) => {
+    const unitPrice = line.orderLine?.priceCents ?? 0;
+    return sum + unitPrice * line.quantity;
+  }, 0);
+}
+
+/**
+ * Serialize a return record for admin/API responses.
+ *
+ * @param {object} record
+ */
+export function serializeReturn(record) {
+  return {
+    id: record.id,
+    orderId: record.orderId,
+    customerId: record.customerId ?? null,
+    status: record.status,
+    reason: record.reason ?? null,
+    resolution: record.resolution ?? null,
+    storeCreditCents: record.storeCreditCents ?? null,
+    createdAt: record.createdAt?.toISOString?.() ?? record.createdAt,
+    updatedAt: record.updatedAt?.toISOString?.() ?? record.updatedAt,
+    order: record.order
+      ? {
+          id: record.order.id ?? record.orderId,
+          orderNumber: record.order.orderNumber,
+          email: record.order.email ?? null,
+        }
+      : undefined,
+    lines: (record.lines ?? []).map((line) => ({
+      id: line.id,
+      orderLineId: line.orderLineId,
+      quantity: line.quantity,
+      restocked: line.restocked ?? false,
+      title: line.orderLine?.title ?? null,
+      sku: line.orderLine?.sku ?? null,
+      priceCents: line.orderLine?.priceCents ?? null,
+    })),
+  };
+}
+
+function throwReturnNotFound(returnId) {
+  throw Object.assign(new Error('Return not found.'), {
+    code: 'NOT_FOUND',
+    status: 404,
+    returnId,
+  });
+}
+
+function throwOrderNotFound() {
+  throw Object.assign(new Error('Order not found.'), {
+    code: 'NOT_FOUND',
+    status: 404,
+  });
+}
+
+async function requireReturnRecord(returnId) {
+  const returnRecord = await prisma.return.findUnique({
+    where: { id: returnId },
+    include: RETURN_DETAIL_INCLUDE,
+  });
+  if (!returnRecord) throwReturnNotFound(returnId);
+  return returnRecord;
+}
+
+/**
+ * @param {object[]} orderLines
+ * @param {Array<{ orderLineId: string, quantity: number }>} requestedLines
+ */
+function validateReturnLines(orderLines, requestedLines) {
+  const lineMap = new Map(orderLines.map((l) => [l.id, l]));
+
+  for (const req of requestedLines) {
+    const orderLine = lineMap.get(req.orderLineId);
+    if (!orderLine) {
+      throw Object.assign(new Error('Invalid order line.'), {
+        code: 'INVALID_ORDER_LINE',
+      });
+    }
+
+    const available = orderLine.quantity - (orderLine.returnedQuantity ?? 0);
+
+    if (req.quantity <= 0 || req.quantity > available) {
+      throw Object.assign(new Error('Invalid return quantity.'), {
+        code: 'INVALID_RETURN_QUANTITY',
+      });
+    }
+  }
+}
 
 // ---------------------------------------------------------------------------
 // requestReturn
@@ -32,24 +299,20 @@ const VALID_RESOLUTIONS = new Set(['refund', 'store_credit', 'exchange']);
  *   reason?: string,
  *   lines: Array<{ orderLineId: string, quantity: number }>,
  * }} params
- * @returns {Promise<object>}
  */
-export async function requestReturn(orderId, { customerId, reason, lines }) {
-  if (!lines?.length) {
-    throw new Error('RETURN_LINES_REQUIRED');
-  }
+export async function requestReturn(orderId, params = {}) {
+  const customerId = params.customerId?.toString().trim() || undefined;
+  const { reason, lines } = parseRequestReturnInput(params);
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: { lines: true },
   });
 
-  if (!order) {
-    throw new Error('ORDER_NOT_FOUND');
-  }
+  if (!order) throwOrderNotFound();
 
   if (customerId && order.customerId !== customerId) {
-    throw new Error('ORDER_NOT_FOUND');
+    throwOrderNotFound();
   }
 
   validateReturnLines(order.lines, lines);
@@ -76,7 +339,7 @@ export async function requestReturn(orderId, { customerId, reason, lines }) {
 
     return tx.return.findUnique({
       where: { id: created.id },
-      include: { lines: { include: { orderLine: true } } },
+      include: RETURN_DETAIL_INCLUDE,
     });
   });
 
@@ -88,7 +351,7 @@ export async function requestReturn(orderId, { customerId, reason, lines }) {
 
   logger.info({ returnId: returnRecord.id, orderId }, 'Return requested');
 
-  return returnRecord;
+  return serializeReturn(returnRecord);
 }
 
 // ---------------------------------------------------------------------------
@@ -97,19 +360,22 @@ export async function requestReturn(orderId, { customerId, reason, lines }) {
 
 /**
  * Admin approves a return request.
+ *
  * @param {string} returnId
  * @param {{ resolution?: string }} options
- * @returns {Promise<object>}
  */
 export async function approveReturn(returnId, { resolution } = {}) {
-  const returnRecord = await getReturn(returnId);
-  if (!returnRecord) throw new Error('RETURN_NOT_FOUND');
+  const returnRecord = await requireReturnRecord(returnId);
   if (returnRecord.status !== 'requested') {
-    throw new Error('INVALID_RETURN_STATUS');
+    throw Object.assign(new Error('Invalid return status.'), {
+      code: 'INVALID_RETURN_STATUS',
+    });
   }
 
-  if (resolution && !VALID_RESOLUTIONS.has(resolution)) {
-    throw new Error('INVALID_RESOLUTION');
+  if (resolution && !RETURN_RESOLUTION_SET.has(resolution)) {
+    throw Object.assign(new Error('Invalid resolution.'), {
+      code: 'INVALID_RESOLUTION',
+    });
   }
 
   const updated = await prisma.return.update({
@@ -118,7 +384,7 @@ export async function approveReturn(returnId, { resolution } = {}) {
       status: 'approved',
       resolution: resolution ?? returnRecord.resolution ?? 'refund',
     },
-    include: { lines: { include: { orderLine: true } } },
+    include: RETURN_DETAIL_INCLUDE,
   });
 
   await emit('return.approved', {
@@ -127,7 +393,7 @@ export async function approveReturn(returnId, { resolution } = {}) {
     resolution: updated.resolution,
   });
 
-  return updated;
+  return serializeReturn(updated);
 }
 
 // ---------------------------------------------------------------------------
@@ -136,22 +402,23 @@ export async function approveReturn(returnId, { resolution } = {}) {
 
 /**
  * Mark return as received and restock inventory.
+ *
  * @param {string} returnId
- * @returns {Promise<object>}
  */
 export async function receiveReturn(returnId) {
-  const returnRecord = await getReturn(returnId);
-  if (!returnRecord) throw new Error('RETURN_NOT_FOUND');
+  const returnRecord = await requireReturnRecord(returnId);
   if (returnRecord.status !== 'approved') {
-    throw new Error('INVALID_RETURN_STATUS');
+    throw Object.assign(new Error('Invalid return status.'), {
+      code: 'INVALID_RETURN_STATUS',
+    });
   }
 
-  const inventoryItems = returnRecord.lines
-    .filter((line) => line.orderLine?.variantId)
-    .map((line) => ({
-      variantId: line.orderLine.variantId,
+  const inventoryItems = inventoryItemsFromLines(
+    returnRecord.lines.map((line) => ({
+      variantId: line.orderLine?.variantId,
       quantity: line.quantity,
-    }));
+    }))
+  );
 
   await prisma.$transaction(async (tx) => {
     if (inventoryItems.length > 0) {
@@ -180,7 +447,7 @@ export async function receiveReturn(returnId) {
     });
   });
 
-  const updated = await getReturn(returnId);
+  const updated = await requireReturnRecord(returnId);
 
   await emit('return.received', {
     returnId,
@@ -193,7 +460,7 @@ export async function receiveReturn(returnId) {
 
   logger.info({ returnId, orderId: updated.orderId }, 'Return received');
 
-  return updated;
+  return serializeReturn(updated);
 }
 
 // ---------------------------------------------------------------------------
@@ -205,26 +472,28 @@ export async function receiveReturn(returnId) {
  *
  * @param {string} returnId
  * @param {{ resolution?: string, refundAmountCents?: number }} options
- * @returns {Promise<object>}
  */
-export async function completeReturn(
-  returnId,
-  { resolution, refundAmountCents } = {}
-) {
-  const returnRecord = await getReturn(returnId);
-  if (!returnRecord) throw new Error('RETURN_NOT_FOUND');
+export async function completeReturn(returnId, options = {}) {
+  const parsed = parseCompleteReturnInput(options);
+  const returnRecord = await requireReturnRecord(returnId);
+
   if (returnRecord.status !== 'received') {
-    throw new Error('INVALID_RETURN_STATUS');
+    throw Object.assign(new Error('Invalid return status.'), {
+      code: 'INVALID_RETURN_STATUS',
+    });
   }
 
-  const effectiveResolution = resolution ?? returnRecord.resolution ?? 'refund';
+  const effectiveResolution =
+    parsed.resolution ?? returnRecord.resolution ?? 'refund';
 
-  if (!VALID_RESOLUTIONS.has(effectiveResolution)) {
-    throw new Error('INVALID_RESOLUTION');
+  if (!RETURN_RESOLUTION_SET.has(effectiveResolution)) {
+    throw Object.assign(new Error('Invalid resolution.'), {
+      code: 'INVALID_RESOLUTION',
+    });
   }
 
   const creditAmount =
-    refundAmountCents ?? computeReturnAmountCents(returnRecord.lines);
+    parsed.refundAmountCents ?? computeReturnAmountCents(returnRecord.lines);
 
   if (effectiveResolution === 'refund') {
     await createRefund(returnRecord.orderId, {
@@ -239,7 +508,10 @@ export async function completeReturn(
     });
   } else if (effectiveResolution === 'store_credit') {
     if (!returnRecord.customerId) {
-      throw new Error('CUSTOMER_REQUIRED_FOR_STORE_CREDIT');
+      throw Object.assign(
+        new Error('Customer is required for store credit resolution.'),
+        { code: 'CUSTOMER_REQUIRED_FOR_STORE_CREDIT' }
+      );
     }
 
     await prisma.$transaction(async (tx) => {
@@ -270,7 +542,7 @@ export async function completeReturn(
     });
   }
 
-  const updated = await getReturn(returnId);
+  const updated = await requireReturnRecord(returnId);
 
   await emit('return.completed', {
     returnId,
@@ -279,7 +551,7 @@ export async function completeReturn(
     amountCents: creditAmount,
   });
 
-  return updated;
+  return serializeReturn(updated);
 }
 
 // ---------------------------------------------------------------------------
@@ -288,26 +560,27 @@ export async function completeReturn(
 
 /**
  * Cancel a return request (before received).
+ *
  * @param {string} returnId
- * @returns {Promise<object>}
  */
 export async function cancelReturn(returnId) {
-  const returnRecord = await getReturn(returnId);
-  if (!returnRecord) throw new Error('RETURN_NOT_FOUND');
+  const returnRecord = await requireReturnRecord(returnId);
 
   if (!['requested', 'approved'].includes(returnRecord.status)) {
-    throw new Error('INVALID_RETURN_STATUS');
+    throw Object.assign(new Error('Invalid return status.'), {
+      code: 'INVALID_RETURN_STATUS',
+    });
   }
 
   const updated = await prisma.return.update({
     where: { id: returnId },
     data: { status: 'cancelled' },
-    include: { lines: { include: { orderLine: true } } },
+    include: RETURN_DETAIL_INCLUDE,
   });
 
   await emit('return.cancelled', { returnId, orderId: updated.orderId });
 
-  return updated;
+  return serializeReturn(updated);
 }
 
 // ---------------------------------------------------------------------------
@@ -315,80 +588,56 @@ export async function cancelReturn(returnId) {
 // ---------------------------------------------------------------------------
 
 /**
+ * Get a single return by id.
+ *
  * @param {string} returnId
- * @returns {Promise<object|null>}
  */
 export async function getReturn(returnId) {
-  return prisma.return.findUnique({
-    where: { id: returnId },
-    include: {
-      lines: { include: { orderLine: true } },
-      order: { select: { orderNumber: true, email: true, customerId: true } },
-    },
-  });
+  const returnRecord = await requireReturnRecord(returnId);
+  return serializeReturn(returnRecord);
 }
 
 /**
- * @param {{ orderId?: string, customerId?: string, status?: string, page?: number, limit?: number }} options
- * @returns {Promise<object[]>}
+ * List returns with optional filters and pagination.
+ *
+ * @param {{
+ *   orderId?: string,
+ *   customerId?: string,
+ *   status?: string,
+ *   page?: number,
+ *   limit?: number,
+ * }} options
  */
-export async function listReturns({
-  orderId,
-  customerId,
-  status,
-  page = 1,
-  limit = 20,
-} = {}) {
-  const where = {};
-  if (orderId) where.orderId = orderId;
-  if (customerId) where.customerId = customerId;
-  if (status) where.status = status;
+export async function listReturns(options = {}) {
+  const params =
+    options.page != null || options.limit != null
+      ? options
+      : parseReturnListParams(options);
 
-  const skip = (page - 1) * limit;
+  const safePage = Math.max(1, params.page ?? 1);
+  const safeLimit = Math.min(
+    Math.max(1, params.limit ?? DEFAULT_RETURN_LIST_LIMIT),
+    MAX_RETURN_LIST_RESULTS
+  );
+  const skip = (safePage - 1) * safeLimit;
+  const where = buildReturnWhere(params);
 
-  return prisma.return.findMany({
-    where,
-    include: { lines: true },
-    orderBy: { createdAt: 'desc' },
-    skip,
-    take: limit,
-  });
+  const [items, total] = await Promise.all([
+    prisma.return.findMany({
+      where,
+      include: RETURN_LIST_INCLUDE,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: safeLimit,
+    }),
+    prisma.return.count({ where }),
+  ]);
+
+  return {
+    returns: items.map(serializeReturn),
+    total,
+    page: safePage,
+    limit: safeLimit,
+    totalPages: Math.ceil(total / safeLimit) || 1,
+  };
 }
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * @param {object[]} orderLines
- * @param {Array<{ orderLineId: string, quantity: number }>} requestedLines
- */
-function validateReturnLines(orderLines, requestedLines) {
-  const lineMap = new Map(orderLines.map((l) => [l.id, l]));
-
-  for (const req of requestedLines) {
-    const orderLine = lineMap.get(req.orderLineId);
-    if (!orderLine) {
-      throw new Error('INVALID_ORDER_LINE');
-    }
-
-    const available = orderLine.quantity - (orderLine.returnedQuantity ?? 0);
-
-    if (req.quantity <= 0 || req.quantity > available) {
-      throw new Error('INVALID_RETURN_QUANTITY');
-    }
-  }
-}
-
-/**
- * @param {Array<{ quantity: number, orderLine?: { priceCents: number } }>} lines
- * @returns {number}
- */
-function computeReturnAmountCents(lines) {
-  return lines.reduce((sum, line) => {
-    const unitPrice = line.orderLine?.priceCents ?? 0;
-    return sum + unitPrice * line.quantity;
-  }, 0);
-}
-
-export { VALID_RETURN_STATUSES, VALID_RESOLUTIONS };
