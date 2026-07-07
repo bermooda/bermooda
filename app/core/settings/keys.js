@@ -25,4 +25,5 @@ export const SETTING_KEYS = {
   SEO_BING_SITE_VERIFICATION: 'seo.bingSiteVerification',
   SEO_TWITTER_HANDLE: 'seo.twitterHandle',
   LOYALTY: 'loyalty',
+  ADMIN_SETUP_COMPLETE: 'adminSetupComplete',
 };

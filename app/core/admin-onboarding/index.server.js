@@ -3,11 +3,11 @@
 
 import bcrypt from 'bcryptjs';
 
+import { isValidEmail, normalizeEmail } from '#/utils/email';
 import prisma from '#/libs/prisma.server';
+import { SETTING_KEYS } from '#/core/settings/keys';
 
-const SETUP_COMPLETE_KEY = 'adminSetupComplete';
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 12;
+export const ADMIN_ONBOARDING_MIN_PASSWORD_LENGTH = 12;
 
 // ---------------------------------------------------------------------------
 // isOnboardingAvailable
@@ -22,7 +22,7 @@ const MIN_PASSWORD_LENGTH = 12;
  */
 export async function isOnboardingAvailable() {
   const flag = await prisma.setting.findUnique({
-    where: { key: SETUP_COMPLETE_KEY },
+    where: { key: SETTING_KEYS.ADMIN_SETUP_COMPLETE },
   });
   if (flag !== null) return false;
 
@@ -30,9 +30,44 @@ export async function isOnboardingAvailable() {
   return adminCount === 0;
 }
 
+/**
+ * Resolve the admin entry page mode for unauthenticated visitors.
+ *
+ * @returns {Promise<'onboarding' | 'login'>}
+ */
+export async function resolveAdminEntryMode() {
+  return (await isOnboardingAvailable()) ? 'onboarding' : 'login';
+}
+
 // ---------------------------------------------------------------------------
-// validateOnboardingInput
+// Form parsing and validation
 // ---------------------------------------------------------------------------
+
+/**
+ * Parse onboarding form fields from a FormData submission.
+ *
+ * @param {FormData} formData
+ * @returns {{ intent: string, name: string, email: string, password: string, confirmPassword: string }}
+ */
+export function parseOnboardingFormData(formData) {
+  return {
+    intent: String(formData.get('_intent') ?? ''),
+    name: String(formData.get('name') ?? ''),
+    email: String(formData.get('email') ?? ''),
+    password: String(formData.get('password') ?? ''),
+    confirmPassword: String(formData.get('confirmPassword') ?? ''),
+  };
+}
+
+/**
+ * Non-sensitive fields to repopulate after a validation error.
+ *
+ * @param {{ name?: string, email?: string }} input
+ * @returns {{ name: string, email: string }}
+ */
+export function onboardingFormFieldsForReplay({ name = '', email = '' } = {}) {
+  return { name, email };
+}
 
 /**
  * Validates the first-admin creation form fields.
@@ -53,17 +88,17 @@ export function validateOnboardingInput({
     errors.name = 'Name is required.';
   }
 
-  const normalizedEmail = email ? email.trim().toLowerCase() : '';
+  const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) {
     errors.email = 'Email is required.';
-  } else if (!EMAIL_RE.test(normalizedEmail)) {
+  } else if (!isValidEmail(email)) {
     errors.email = 'Enter a valid email address.';
   }
 
   if (!password) {
     errors.password = 'Password is required.';
-  } else if (password.length < MIN_PASSWORD_LENGTH) {
-    errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+  } else if (password.length < ADMIN_ONBOARDING_MIN_PASSWORD_LENGTH) {
+    errors.password = `Password must be at least ${ADMIN_ONBOARDING_MIN_PASSWORD_LENGTH} characters.`;
   }
 
   if (!confirmPassword) {
@@ -73,6 +108,39 @@ export function validateOnboardingInput({
   }
 
   return Object.keys(errors).length > 0 ? errors : null;
+}
+
+// ---------------------------------------------------------------------------
+// Action error mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Map a createFirstAdmin failure to an HTTP action payload.
+ * Returns null when the caller should treat the error as unexpected.
+ *
+ * @param {Error & { code?: string, errors?: Record<string, string> }} error
+ * @param {{ name: string, email: string }} fields
+ * @returns {{ status: number, body: object } | null}
+ */
+export function mapOnboardingActionError(error, fields) {
+  if (error.code === 'ONBOARDING_UNAVAILABLE') {
+    return {
+      status: 409,
+      body: { error: 'Setup is already complete. Please sign in.' },
+    };
+  }
+
+  if (error.code === 'VALIDATION_ERROR') {
+    return {
+      status: 422,
+      body: {
+        fieldErrors: error.errors,
+        fields: onboardingFormFieldsForReplay(fields),
+      },
+    };
+  }
+
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -95,9 +163,9 @@ export async function createFirstAdmin({
 }) {
   const available = await isOnboardingAvailable();
   if (!available) {
-    const err = new Error('Onboarding is not available.');
-    err.code = 'ONBOARDING_UNAVAILABLE';
-    throw err;
+    throw Object.assign(new Error('Onboarding is not available.'), {
+      code: 'ONBOARDING_UNAVAILABLE',
+    });
   }
 
   const errors = validateOnboardingInput({
@@ -107,13 +175,13 @@ export async function createFirstAdmin({
     confirmPassword,
   });
   if (errors) {
-    const err = new Error('Validation failed.');
-    err.code = 'VALIDATION_ERROR';
-    err.errors = errors;
-    throw err;
+    throw Object.assign(new Error('Validation failed.'), {
+      code: 'VALIDATION_ERROR',
+      errors,
+    });
   }
 
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = normalizeEmail(email);
   const passwordHash = await bcrypt.hash(password, 12);
 
   return prisma.$transaction(async (tx) => {
@@ -134,7 +202,10 @@ export async function createFirstAdmin({
     });
 
     await tx.setting.create({
-      data: { key: SETUP_COMPLETE_KEY, value: JSON.stringify(true) },
+      data: {
+        key: SETTING_KEYS.ADMIN_SETUP_COMPLETE,
+        value: JSON.stringify(true),
+      },
     });
 
     return user;
