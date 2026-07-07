@@ -2,30 +2,27 @@
 // PATCH /api/admin/v1/orders/:id — update order status
 // Requires admin-scoped API key.
 
+import {
+  jsonDomainError,
+  jsonResourceOr404,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
 import { getOrder, updateOrderStatus } from '#/core/orders/index.server';
 
 export async function loader({ params }) {
-  try {
-    const order = await getOrder(params.id);
-    return Response.json({ order });
-  } catch {
-    return Response.json({ error: 'Order not found' }, { status: 404 });
-  }
+  const order = await getOrder(params.id);
+  return jsonResourceOr404('order', order, { message: 'Order not found' });
 }
 
 export async function action({ request, params }) {
-  if (request.method !== 'PATCH') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'PATCH');
+  if (methodError) return methodError;
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request);
+  if (parsed.error) return parsed.error;
 
-  const { status } = body;
+  const { status } = parsed.body;
   if (!status) {
     return Response.json({ error: 'status is required' }, { status: 400 });
   }
@@ -34,9 +31,6 @@ export async function action({ request, params }) {
     const order = await updateOrderStatus(params.id, status);
     return Response.json({ order });
   } catch (err) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 422 }
-    );
+    return jsonDomainError(err);
   }
 }

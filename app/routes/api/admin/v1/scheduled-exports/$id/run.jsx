@@ -2,14 +2,28 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   getScheduledExport,
   queueScheduledExport,
 } from '#/core/exports/index.server';
 
+const mapScheduledExportError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+});
+
+function scheduledExportNotFoundResponse() {
+  return Response.json(
+    { error: 'Scheduled export not found' },
+    { status: 404 }
+  );
+}
+
 export async function action({ request, params }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
   try {
     await getScheduledExport(params.id);
@@ -17,11 +31,8 @@ export async function action({ request, params }) {
     return Response.json({ queued: true }, { status: 202 });
   } catch (err) {
     if (err.code === 'NOT_FOUND') {
-      return Response.json(
-        { error: 'Scheduled export not found' },
-        { status: 404 }
-      );
+      return scheduledExportNotFoundResponse();
     }
-    throw err;
+    return mapScheduledExportError(err);
   }
 }

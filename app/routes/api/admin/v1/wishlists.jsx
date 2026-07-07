@@ -2,6 +2,11 @@
 // POST /api/admin/v1/wishlists — add or remove wishlist item
 // Requires admin-scoped API key.
 
+import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
 import { getCustomer } from '#/core/customers/index.server';
 import {
   addToWishlist,
@@ -11,25 +16,14 @@ import {
   removeFromWishlist,
 } from '#/core/wishlists/index.server';
 
-function wishlistErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  if (
-    err.code === 'CUSTOMER_ID_REQUIRED' ||
-    err.code === 'VARIANT_ID_REQUIRED' ||
-    err.code === 'INVALID_WISHLIST_ACTION'
-  ) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 400 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapWishlistError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+  badRequest: [
+    'CUSTOMER_ID_REQUIRED',
+    'VARIANT_ID_REQUIRED',
+    'INVALID_WISHLIST_ACTION',
+  ],
+});
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -47,15 +41,18 @@ export async function loader({ request }) {
     const result = await listWishlistItems(params);
     return Response.json(result);
   } catch (err) {
-    return wishlistErrorResponse(err);
+    return mapWishlistError(err);
   }
 }
 
 export async function action({ request }) {
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
+
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) {
     return Response.json(
       { error: 'Invalid JSON', code: 'INVALID_JSON' },
       { status: 400 }
@@ -63,8 +60,9 @@ export async function action({ request }) {
   }
 
   try {
-    const { customerId, variantId, intent } =
-      parseWishlistMutationFromJson(body);
+    const { customerId, variantId, intent } = parseWishlistMutationFromJson(
+      parsed.body
+    );
     const customer = await getCustomer(customerId);
     if (!customer) {
       return Response.json(
@@ -82,6 +80,6 @@ export async function action({ request }) {
     const result = await listWishlistItems({ customerId });
     return Response.json(result);
   } catch (err) {
-    return wishlistErrorResponse(err);
+    return mapWishlistError(err);
   }
 }

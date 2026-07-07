@@ -2,36 +2,33 @@
 // DELETE /api/admin/v1/api-keys/:id — revoke API key
 // Requires admin-scoped API key.
 
+import {
+  createDomainErrorMapper,
+  requireMethod,
+} from '#/libs/api/admin.server';
 import { getApiKey, revokeApiKey } from '#/core/api-keys/index.server';
 
-function apiKeyErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapApiKeyError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+});
 
 export async function loader({ params }) {
   try {
     const apiKey = await getApiKey(params.id);
     return Response.json({ apiKey });
   } catch (err) {
-    return apiKeyErrorResponse(err);
+    return mapApiKeyError(err);
   }
 }
 
 export async function action({ request, params }) {
-  if (request.method !== 'DELETE') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'DELETE');
+  if (methodError) return methodError;
 
   try {
     await revokeApiKey(params.id);
     return Response.json({ revoked: true });
   } catch (err) {
-    return apiKeyErrorResponse(err);
+    return mapApiKeyError(err);
   }
 }

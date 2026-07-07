@@ -2,21 +2,23 @@
 // POST /api/admin/v1/products — create product
 // Requires admin-scoped API key.
 
+import {
+  jsonDomainError,
+  jsonListResponse,
+  parseAdminListPagination,
+  parseBooleanQueryParam,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
 import { listProducts, createProduct } from '#/core/catalog/index.server';
 
 export async function loader({ request }) {
   const url = new URL(request.url);
-  const page = parseInt(url.searchParams.get('page') ?? '1', 10);
-  const limit = Math.min(
-    parseInt(url.searchParams.get('limit') ?? '20', 10),
-    100
-  );
+  const { page, limit } = parseAdminListPagination(url.searchParams);
   const locale = url.searchParams.get('locale') ?? 'en';
   const currency = url.searchParams.get('currency') ?? 'USD';
   const categoryId = url.searchParams.get('categoryId') ?? undefined;
-  const published = url.searchParams.has('published')
-    ? url.searchParams.get('published') === 'true'
-    : undefined;
+  const published = parseBooleanQueryParam(url.searchParams, 'published');
 
   const { products, total } = await listProducts({
     page,
@@ -27,28 +29,20 @@ export async function loader({ request }) {
     published,
   });
 
-  return Response.json({ products, total, page, limit });
+  return jsonListResponse('products', { items: products, total, page, limit });
 }
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request);
+  if (parsed.error) return parsed.error;
 
   try {
-    const product = await createProduct(body);
+    const product = await createProduct(parsed.body);
     return Response.json({ product }, { status: 201 });
   } catch (err) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 422 }
-    );
+    return jsonDomainError(err);
   }
 }

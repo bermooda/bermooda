@@ -1,6 +1,11 @@
 // GET /api/admin/v1/customers/:id/store-credit — balance + ledger
 // POST /api/admin/v1/customers/:id/store-credit — issue store credit
 
+import {
+  parseAdminListPagination,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
 import { getCustomer } from '#/core/customers/index.server';
 import {
   getCustomerStoreCreditSummary,
@@ -24,11 +29,7 @@ export async function loader({ request, params }) {
   if (result.error) return result.error;
 
   const url = new URL(request.url);
-  const page = parseInt(url.searchParams.get('page') ?? '1', 10);
-  const limit = Math.min(
-    parseInt(url.searchParams.get('limit') ?? '20', 10),
-    100
-  );
+  const { page, limit } = parseAdminListPagination(url.searchParams);
 
   const [{ balance }, { entries, total }] = await Promise.all([
     getCustomerStoreCreditSummary(params.id),
@@ -39,19 +40,17 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
   const result = await loadCustomerOr404(params.id);
   if (result.error) return result.error;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   const input = parseIssueStoreCreditInput(body);
   if (!input.amountCents || input.amountCents <= 0) {

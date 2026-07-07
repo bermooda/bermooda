@@ -3,34 +3,28 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   createCompany,
   listCompanies,
   parseCompanyListParams,
 } from '#/core/b2b/index.server';
 
-function companyErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  if (
-    err.code === 'NAME_REQUIRED' ||
-    err.code === 'NET_TERMS_INVALID' ||
-    err.code === 'COMPANY_ID_REQUIRED' ||
-    err.code === 'CUSTOMER_ID_REQUIRED' ||
-    err.code === 'ROLE_INVALID' ||
-    err.code === 'CUSTOMER_NOT_FOUND' ||
-    err.code === 'MEMBER_EXISTS'
-  ) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 400 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapCompanyError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+  badRequest: [
+    'NAME_REQUIRED',
+    'NET_TERMS_INVALID',
+    'COMPANY_ID_REQUIRED',
+    'CUSTOMER_ID_REQUIRED',
+    'ROLE_INVALID',
+    'CUSTOMER_NOT_FOUND',
+    'MEMBER_EXISTS',
+  ],
+});
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -40,26 +34,24 @@ export async function loader({ request }) {
     const result = await listCompanies(params);
     return Response.json(result);
   } catch (err) {
-    return companyErrorResponse(err);
+    return mapCompanyError(err);
   }
 }
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     const company = await createCompany(body);
     return Response.json({ company }, { status: 201 });
   } catch (err) {
-    return companyErrorResponse(err);
+    return mapCompanyError(err);
   }
 }

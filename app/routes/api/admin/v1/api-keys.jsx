@@ -1,14 +1,13 @@
 // GET /api/admin/v1/api-keys — list API keys
 // Requires admin-scoped API key. (Key creation is via the admin UI only.)
 
+import { createDomainErrorMapper } from '#/libs/api/admin.server';
 import {
   listApiKeys,
   parseApiKeyListParams,
 } from '#/core/api-keys/index.server';
 
-function apiKeyErrorResponse(err) {
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapApiKeyError = createDomainErrorMapper({});
 
 export async function loader({ request }) {
   try {
@@ -16,6 +15,6 @@ export async function loader({ request }) {
     const result = await listApiKeys(params);
     return Response.json(result);
   } catch (err) {
-    return apiKeyErrorResponse(err);
+    return mapApiKeyError(err);
   }
 }

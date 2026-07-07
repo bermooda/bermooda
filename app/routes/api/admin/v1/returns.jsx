@@ -1,12 +1,17 @@
 // GET /api/admin/v1/returns — list returns
 // Requires admin-scoped API key.
 
+import { createDomainErrorMapper } from '#/libs/api/admin.server';
 import {
   listReturns,
   parseReturnListParams,
   RETURN_RESOLUTIONS,
   RETURN_STATUSES,
 } from '#/core/returns/index.server';
+
+const mapReturnListError = createDomainErrorMapper({
+  badRequest: ['INVALID_RETURN_STATUS'],
+});
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -20,12 +25,6 @@ export async function loader({ request }) {
       returnResolutions: RETURN_RESOLUTIONS,
     });
   } catch (err) {
-    if (err.code === 'INVALID_RETURN_STATUS') {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 400 }
-      );
-    }
-    throw err;
+    return mapReturnListError(err);
   }
 }

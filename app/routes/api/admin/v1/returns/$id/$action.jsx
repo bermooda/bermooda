@@ -5,6 +5,11 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseOptionalJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   approveReturn,
   cancelReturn,
   completeReturn,
@@ -12,41 +17,21 @@ import {
   receiveReturn,
 } from '#/core/returns/index.server';
 
-function returnErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  if (
-    err.code === 'INVALID_REFUND_AMOUNT' ||
-    err.code === 'INVALID_RESOLUTION'
-  ) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 400 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapReturnError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+  badRequest: ['INVALID_REFUND_AMOUNT', 'INVALID_RESOLUTION'],
+});
 
 export async function action({ request, params }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
   const url = new URL(request.url);
   const actionName = url.pathname.split('/').pop();
 
-  let body = {};
-  try {
-    if (request.headers.get('content-length') !== '0') {
-      body = await request.json();
-    }
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const parsed = await parseOptionalJsonBody(request);
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     if (actionName === 'approve') {
@@ -74,6 +59,6 @@ export async function action({ request, params }) {
 
     return Response.json({ error: 'Unknown action' }, { status: 404 });
   } catch (err) {
-    return returnErrorResponse(err);
+    return mapReturnError(err);
   }
 }

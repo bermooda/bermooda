@@ -3,6 +3,11 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   createSubscription,
   listSubscriptions,
   parseCreateSubscriptionInput,
@@ -10,25 +15,14 @@ import {
   SUBSCRIPTION_STATUSES,
 } from '#/core/subscriptions/index.server';
 
-function subscriptionErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  if (
-    err.code === 'CUSTOMER_ID_REQUIRED' ||
-    err.code === 'PLAN_ID_REQUIRED' ||
-    err.code === 'INVALID_SUBSCRIPTION_STATUS'
-  ) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 400 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapSubscriptionError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+  badRequest: [
+    'CUSTOMER_ID_REQUIRED',
+    'PLAN_ID_REQUIRED',
+    'INVALID_SUBSCRIPTION_STATUS',
+  ],
+});
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -41,27 +35,25 @@ export async function loader({ request }) {
       subscriptionStatuses: SUBSCRIPTION_STATUSES,
     });
   } catch (err) {
-    return subscriptionErrorResponse(err);
+    return mapSubscriptionError(err);
   }
 }
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     parseCreateSubscriptionInput(body);
     const subscription = await createSubscription(body);
     return Response.json({ subscription }, { status: 201 });
   } catch (err) {
-    return subscriptionErrorResponse(err);
+    return mapSubscriptionError(err);
   }
 }

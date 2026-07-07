@@ -3,6 +3,11 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   createSubscriptionPlan,
   listSubscriptionPlans,
   parseCreatePlanInput,
@@ -10,25 +15,14 @@ import {
   SUBSCRIPTION_INTERVALS,
 } from '#/core/subscriptions/index.server';
 
-function planErrorResponse(err) {
-  if (err.code === 'NOT_FOUND' || err.code === 'VARIANT_NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  if (
-    err.code === 'PLAN_NAME_REQUIRED' ||
-    err.code === 'INVALID_SUBSCRIPTION_INTERVAL' ||
-    err.code === 'INVALID_INTERVAL_COUNT'
-  ) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 400 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapPlanError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND', 'VARIANT_NOT_FOUND'],
+  badRequest: [
+    'PLAN_NAME_REQUIRED',
+    'INVALID_SUBSCRIPTION_INTERVAL',
+    'INVALID_INTERVAL_COUNT',
+  ],
+});
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -44,27 +38,25 @@ export async function loader({ request }) {
       subscriptionIntervals: SUBSCRIPTION_INTERVALS,
     });
   } catch (err) {
-    return planErrorResponse(err);
+    return mapPlanError(err);
   }
 }
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     parseCreatePlanInput(body);
     const plan = await createSubscriptionPlan(body);
     return Response.json({ plan }, { status: 201 });
   } catch (err) {
-    return planErrorResponse(err);
+    return mapPlanError(err);
   }
 }
