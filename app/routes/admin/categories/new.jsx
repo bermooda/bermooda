@@ -7,7 +7,12 @@ import {
   useNavigation,
 } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
+import { handleAdminActionError } from '#/libs/api/admin-ui.server';
+import {
+  createCategoryFromAdminInput,
+  loadCategoryAdminSelectOptions,
+  parseCategoryCreateInput,
+} from '#/core/catalog/admin.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -19,81 +24,27 @@ import { ErrorAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
 export async function loader() {
-  const categories = await prisma.category.findMany({
-    orderBy: { position: 'asc' },
-  });
-
-  const catIds = categories.map((c) => c.id);
-  const translations =
-    catIds.length > 0
-      ? await prisma.translation.findMany({
-          where: { entityType: 'category', entityId: { in: catIds } },
-        })
-      : [];
-
-  const translationMap = {};
-  for (const t of translations) {
-    if (!translationMap[t.entityId]) translationMap[t.entityId] = {};
-    if (!translationMap[t.entityId][t.locale]) {
-      translationMap[t.entityId][t.locale] = {};
-    }
-    translationMap[t.entityId][t.locale][t.field] = t.value;
-  }
-
-  const allForSelect = categories.map((c) => ({
-    id: c.id,
-    title: translationMap[c.id]?.en?.title ?? `(${c.id.slice(0, 6)})`,
-  }));
-
-  return { allForSelect };
+  return loadCategoryAdminSelectOptions();
 }
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const title = formData.get('title')?.toString().trim() ?? '';
-  const slugValue = formData.get('slug')?.toString().trim() ?? '';
-  const parentId = formData.get('parentId')?.toString().trim() || null;
+  const parsed = parseCategoryCreateInput(formData);
 
-  if (!title) {
-    return { error: 'Name is required.' };
+  if (parsed.error) {
+    return { error: parsed.error };
   }
 
-  const lastSibling = await prisma.category.findFirst({
-    where: { parentId },
-    orderBy: { position: 'desc' },
-  });
-  const position = (lastSibling?.position ?? -1) + 1;
-
-  const category = await prisma.category.create({
-    data: { parentId, position },
-  });
-
-  await prisma.translation.create({
-    data: {
-      entityType: 'category',
-      entityId: category.id,
-      locale: 'en',
-      field: 'title',
-      value: title,
-    },
-  });
-
-  if (slugValue) {
-    try {
-      await prisma.slug.create({
-        data: {
-          entityType: 'category',
-          entityId: category.id,
-          locale: 'en',
-          slug: slugValue,
-        },
-      });
-    } catch {
-      // Slug collision — category still created
-    }
+  try {
+    await createCategoryFromAdminInput(parsed.data);
+    return redirect('/admin/categories');
+  } catch (err) {
+    return handleAdminActionError(err, {
+      source: 'admin.categories.create',
+      shape: 'error',
+      userMessage: 'Could not create category.',
+    });
   }
-
-  return redirect('/admin/categories');
 }
 
 export default function AdminNewCategoryRoute() {

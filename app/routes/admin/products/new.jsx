@@ -4,6 +4,7 @@
 import { useActionData, useLoaderData, useNavigation } from 'react-router';
 import { redirect } from 'react-router';
 
+import { handleAdminActionError } from '#/libs/api/admin-ui.server';
 import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import {
   createBlankProduct,
@@ -62,20 +63,28 @@ export async function action({ request }) {
     return { error: 'Invalid request.' };
   }
 
-  const context = await loadAdminProductEditorContext();
-  const primaryLocale = context.locales[0] ?? 'en';
-  const slugError = await validatePrimarySlug(formData, primaryLocale);
-  if (slugError.error) {
-    return slugError;
+  try {
+    const context = await loadAdminProductEditorContext();
+    const primaryLocale = context.locales[0] ?? 'en';
+    const slugError = await validatePrimarySlug(formData, primaryLocale);
+    if (slugError.error) {
+      return slugError;
+    }
+
+    const { id, defaultVariantId } = await createBlankProduct();
+
+    await persistAdminProduct(id, formData, {
+      variantIdMap: { [NEW_VARIANT_ID]: defaultVariantId },
+    });
+
+    return redirect(`/admin/products/${id}`);
+  } catch (err) {
+    return handleAdminActionError(err, {
+      source: 'admin.products.create',
+      shape: 'error',
+      userMessage: 'Could not create product.',
+    });
   }
-
-  const { id, defaultVariantId } = await createBlankProduct();
-
-  await persistAdminProduct(id, formData, {
-    variantIdMap: { [NEW_VARIANT_ID]: defaultVariantId },
-  });
-
-  return redirect(`/admin/products/${id}`);
 }
 
 // ---------------------------------------------------------------------------

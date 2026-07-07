@@ -5,12 +5,13 @@
 import { useActionData, useLoaderData, useNavigation } from 'react-router';
 import { redirect } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
+import { handleAdminActionError } from '#/libs/api/admin-ui.server';
 import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import {
   loadAdminProductEditorContext,
   persistAdminProduct,
 } from '#/core/catalog/admin-product-form.server';
+import { loadAdminProductEditorData } from '#/core/catalog/admin.server';
 import {
   deleteProduct,
   detachMedia,
@@ -25,88 +26,16 @@ import ProductEditor from '#/components/admin/product-editor';
 export async function loader({ params }) {
   const { id } = params;
 
-  const [product, context, slotBlocks] = await Promise.all([
-    prisma.product.findUniqueOrThrow({
-      where: { id },
-      include: {
-        variants: {
-          orderBy: { position: 'asc' },
-          include: { prices: true },
-        },
-        options: {
-          orderBy: { position: 'asc' },
-          include: {
-            values: { orderBy: { position: 'asc' } },
-          },
-        },
-        categories: {
-          orderBy: { position: 'asc' },
-          select: { categoryId: true },
-        },
-        media: {
-          orderBy: { position: 'asc' },
-          include: { media: true },
-        },
-      },
-    }),
+  const [editorData, context, slotBlocks] = await Promise.all([
+    loadAdminProductEditorData(id),
     loadAdminProductEditorContext(),
     getAdminSlotBlocksMap(['product.editor']),
   ]);
 
-  const translations = await prisma.translation.findMany({
-    where: { entityType: 'product', entityId: id },
-  });
-  const translationMap = {};
-  for (const t of translations) {
-    if (!translationMap[t.locale]) translationMap[t.locale] = {};
-    translationMap[t.locale][t.field] = t.value;
-  }
-
-  const slugRows = await prisma.slug.findMany({
-    where: { entityType: 'product', entityId: id },
-  });
-  const slugMap = Object.fromEntries(slugRows.map((s) => [s.locale, s.slug]));
-
   return {
     ...context,
+    ...editorData,
     slotBlocks,
-    product: {
-      id: product.id,
-      publishedAt: product.publishedAt?.toISOString() ?? null,
-      createdAt: product.createdAt.toISOString(),
-      variants: product.variants.map((v) => ({
-        id: v.id,
-        sku: v.sku ?? '',
-        inventoryCount: v.inventoryCount,
-        inventoryTracked: v.inventoryTracked,
-        position: v.position,
-        prices: Object.fromEntries(
-          v.prices.map((p) => [
-            p.currency,
-            {
-              priceCents: p.priceCents,
-              comparePriceCents: p.comparePriceCents ?? '',
-            },
-          ])
-        ),
-      })),
-      options: product.options.map((o) => ({
-        id: o.id,
-        name: o.name,
-        position: o.position,
-        values: o.values.map((v) => ({ id: v.id, value: v.value })),
-      })),
-      selectedCategoryIds: product.categories.map((c) => c.categoryId),
-      media: product.media.map((pm) => ({
-        productMediaId: pm.id,
-        mediaId: pm.mediaId,
-        url: pm.media.url,
-        altText: pm.media.altText ?? '',
-        position: pm.position,
-      })),
-    },
-    translationMap,
-    slugMap,
   };
 }
 
@@ -124,28 +53,52 @@ export async function action({ request, params }) {
       await uploadProductMedia(id, formData.get('file'));
       return { ok: true, intent: 'upload-media' };
     } catch (err) {
-      return {
-        ok: false,
-        error: err.message,
+      return handleAdminActionError(err, {
+        source: 'admin.products.upload-media',
         intent: 'upload-media',
-      };
+        userMessage: err instanceof Error ? err.message : 'Upload failed.',
+      });
     }
   }
 
   if (intent === 'delete-media') {
     const mediaId = formData.get('mediaId');
-    await detachMedia(id, mediaId);
-    return { ok: true, intent: 'delete-media' };
+    try {
+      await detachMedia(id, mediaId);
+      return { ok: true, intent: 'delete-media' };
+    } catch (err) {
+      return handleAdminActionError(err, {
+        source: 'admin.products.delete-media',
+        intent: 'delete-media',
+        userMessage: 'Could not remove media.',
+      });
+    }
   }
 
   if (intent === 'save') {
-    await persistAdminProduct(id, formData);
-    return { ok: true, intent: 'save' };
+    try {
+      await persistAdminProduct(id, formData);
+      return { ok: true, intent: 'save' };
+    } catch (err) {
+      return handleAdminActionError(err, {
+        source: 'admin.products.save',
+        intent: 'save',
+        userMessage: 'Could not save product.',
+      });
+    }
   }
 
   if (intent === 'delete') {
-    await deleteProduct(id);
-    return redirect('/admin/products');
+    try {
+      await deleteProduct(id);
+      return redirect('/admin/products');
+    } catch (err) {
+      return handleAdminActionError(err, {
+        source: 'admin.products.delete',
+        intent: 'delete',
+        userMessage: 'Could not delete product.',
+      });
+    }
   }
 
   return { ok: false, error: 'Unknown intent.' };
