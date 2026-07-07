@@ -3,9 +3,25 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   getAbandonedCartSequence,
   updateAbandonedCartSequence,
 } from '#/core/marketing/index.server';
+
+const mapSequenceError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+});
+
+function sequenceNotFoundResponse() {
+  return Response.json(
+    { error: 'Abandoned cart sequence not found' },
+    { status: 404 }
+  );
+}
 
 export async function loader({ params }) {
   try {
@@ -13,43 +29,26 @@ export async function loader({ params }) {
     return Response.json({ sequence });
   } catch (err) {
     if (err.code === 'NOT_FOUND') {
-      return Response.json(
-        { error: 'Abandoned cart sequence not found' },
-        { status: 404 }
-      );
+      return sequenceNotFoundResponse();
     }
     throw err;
   }
 }
 
 export async function action({ request, params }) {
-  if (request.method !== 'PATCH') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'PATCH');
+  if (methodError) return methodError;
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request);
+  if (parsed.error) return parsed.error;
 
   try {
-    const sequence = await updateAbandonedCartSequence(params.id, body);
+    const sequence = await updateAbandonedCartSequence(params.id, parsed.body);
     return Response.json({ sequence });
   } catch (err) {
     if (err.code === 'NOT_FOUND') {
-      return Response.json(
-        { error: 'Abandoned cart sequence not found' },
-        { status: 404 }
-      );
+      return sequenceNotFoundResponse();
     }
-    if (err.code === 'SEQUENCE_INVALID' || err.code === 'NO_CHANGES') {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 422 }
-      );
-    }
-    throw err;
+    return mapSequenceError(err);
   }
 }

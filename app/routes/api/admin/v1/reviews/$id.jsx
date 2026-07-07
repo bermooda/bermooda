@@ -4,63 +4,52 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireOneOfMethods,
+} from '#/libs/api/admin.server';
+import {
   deleteReview,
   getReview,
   moderateReview,
   parseModerateReviewInput,
 } from '#/core/reviews/index.server';
 
-function reviewErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  if (err.code === 'INVALID_REVIEW_STATUS') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 400 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapReviewError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+  badRequest: ['INVALID_REVIEW_STATUS'],
+});
 
 export async function loader({ params }) {
   try {
     const review = await getReview(params.id);
     return Response.json({ review });
   } catch (err) {
-    return reviewErrorResponse(err);
+    return mapReviewError(err);
   }
 }
 
 export async function action({ request, params }) {
+  const methodError = requireOneOfMethods(request, ['PATCH', 'DELETE']);
+  if (methodError) return methodError;
+
   if (request.method === 'DELETE') {
     try {
       await deleteReview(params.id);
       return Response.json({ deleted: true });
     } catch (err) {
-      return reviewErrorResponse(err);
+      return mapReviewError(err);
     }
   }
 
-  if (request.method === 'PATCH') {
-    let body = {};
-    try {
-      body = await request.json();
-    } catch {
-      return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-    }
+  const parsed = await parseJsonBody(request);
+  if (parsed.error) return parsed.error;
 
-    try {
-      parseModerateReviewInput(body);
-      const review = await moderateReview(params.id, body);
-      return Response.json({ review });
-    } catch (err) {
-      return reviewErrorResponse(err);
-    }
+  try {
+    parseModerateReviewInput(parsed.body);
+    const review = await moderateReview(params.id, parsed.body);
+    return Response.json({ review });
+  } catch (err) {
+    return mapReviewError(err);
   }
-
-  return Response.json({ error: 'Method not allowed' }, { status: 405 });
 }

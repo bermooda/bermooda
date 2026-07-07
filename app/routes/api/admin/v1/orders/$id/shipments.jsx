@@ -1,39 +1,25 @@
 // POST /api/admin/v1/orders/:id/shipments — create a shipment
 // Requires admin-scoped API key.
 
-import { isHookAbort } from '#/core/events/index.server';
+import {
+  jsonActionError,
+  jsonDomainError,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
 import { addShipment } from '#/core/orders/index.server';
 
 export async function action({ request, params }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request);
+  if (parsed.error) return parsed.error;
 
   try {
-    const shipment = await addShipment(params.id, body);
+    const shipment = await addShipment(params.id, parsed.body);
     return Response.json({ shipment }, { status: 201 });
   } catch (err) {
-    if (isHookAbort(err)) {
-      return Response.json(
-        {
-          error: err.reason,
-          code: err.code,
-          blockedBy: err.pluginId,
-        },
-        { status: 422 }
-      );
-    }
-
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 422 }
-    );
+    return jsonActionError(err, jsonDomainError);
   }
 }

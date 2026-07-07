@@ -2,6 +2,11 @@
 // PATCH /api/admin/v1/customers/:id — update customer
 // Requires admin-scoped API key.
 
+import {
+  jsonDomainError,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
 import { getCustomer, updateCustomer } from '#/core/customers/index.server';
 
 export async function loader({ params }) {
@@ -14,24 +19,17 @@ export async function loader({ params }) {
 }
 
 export async function action({ request, params }) {
-  if (request.method !== 'PATCH') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'PATCH');
+  if (methodError) return methodError;
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request);
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     const customer = await updateCustomer(params.id, body);
     return Response.json({ customer });
   } catch (err) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 422 }
-    );
+    return jsonDomainError(err);
   }
 }

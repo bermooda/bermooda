@@ -2,34 +2,37 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   parseImportInput,
   runImport,
   serializeImportResult,
 } from '#/core/imports/index.server';
 
+const mapImportError = createDomainErrorMapper({
+  badRequest: ['FIELDS_REQUIRED', 'INVALID_IMPORT_TYPE'],
+});
+
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
 
   try {
-    const { type, csv } = parseImportInput(body);
+    const { type, csv } = parseImportInput(parsed.body);
     const result = await runImport(type, csv);
     return Response.json({
       type,
       result: serializeImportResult(result),
     });
   } catch (err) {
-    if (err.code === 'FIELDS_REQUIRED' || err.code === 'INVALID_IMPORT_TYPE') {
-      return Response.json({ error: err.message }, { status: 400 });
-    }
-    throw err;
+    return mapImportError(err);
   }
 }

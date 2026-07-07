@@ -3,22 +3,28 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  jsonListResponse,
+  parseAdminListPagination,
+  parseBooleanQueryParam,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   createCollection,
   getCollection,
   listCollections,
 } from '#/core/collections/index.server';
 
+const mapCollectionError = createDomainErrorMapper({
+  badRequest: ['COLLECTION_INVALID'],
+});
+
 export async function loader({ request }) {
   const url = new URL(request.url);
-  const page = parseInt(url.searchParams.get('page') ?? '1', 10);
-  const limit = Math.min(
-    parseInt(url.searchParams.get('limit') ?? '20', 10),
-    100
-  );
+  const { page, limit } = parseAdminListPagination(url.searchParams);
   const q = url.searchParams.get('q') ?? undefined;
-  const publishedOnly = url.searchParams.has('published')
-    ? url.searchParams.get('published') === 'true'
-    : undefined;
+  const publishedOnly = parseBooleanQueryParam(url.searchParams, 'published');
 
   const { collections, total } = await listCollections({
     page,
@@ -27,20 +33,23 @@ export async function loader({ request }) {
     publishedOnly,
   });
 
-  return Response.json({ collections, total, page, limit });
+  return jsonListResponse('collections', {
+    items: collections,
+    total,
+    page,
+    limit,
+  });
 }
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     const collection = await createCollection(body);
@@ -50,12 +59,9 @@ export async function action({ request }) {
       { status: 201 }
     );
   } catch (err) {
-    if (err.code === 'COLLECTION_INVALID') {
-      return Response.json({ error: err.message }, { status: 400 });
-    }
     if (err.message === 'Slug already taken') {
       return Response.json({ error: err.message }, { status: 409 });
     }
-    throw err;
+    return mapCollectionError(err);
   }
 }

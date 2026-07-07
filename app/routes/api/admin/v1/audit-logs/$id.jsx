@@ -1,7 +1,12 @@
 // GET /api/admin/v1/audit-logs/:id — get a single audit log entry
 // Requires admin-scoped API key.
 
+import { createDomainErrorMapper } from '#/libs/api/admin.server';
 import { getAuditLog } from '#/core/audit/index.server';
+
+const mapAuditLogError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+});
 
 export async function loader({ params }) {
   try {
@@ -14,6 +19,6 @@ export async function loader({ params }) {
         { status: 404 }
       );
     }
-    throw err;
+    return mapAuditLogError(err);
   }
 }

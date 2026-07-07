@@ -1,3 +1,4 @@
+import { parseJsonBody, requireMethod } from '#/libs/api/admin.server';
 import {
   getLoyaltyConfig,
   parseLoyaltySettingsInput,
@@ -10,16 +11,14 @@ export async function loader() {
 }
 
 export async function action({ request }) {
-  if (request.method !== 'PATCH') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'PATCH');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   const settings = parseLoyaltySettingsInput(body);
   if (Object.keys(settings).length === 0) {

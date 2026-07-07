@@ -3,21 +3,20 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireOneOfMethods,
+} from '#/libs/api/admin.server';
+import {
   getMenuForAdmin,
   getMenuOrThrow,
   serializeMenu,
   upsertMenu,
 } from '#/core/content/index.server';
 
-function menuErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapMenuError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+});
 
 export async function loader({ params }) {
   const menu = await getMenuForAdmin(params.handle);
@@ -32,16 +31,12 @@ export async function loader({ params }) {
 }
 
 export async function action({ request, params }) {
-  if (request.method !== 'PUT' && request.method !== 'PATCH') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireOneOfMethods(request, ['PUT', 'PATCH']);
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request);
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     await upsertMenu(params.handle, {
@@ -51,6 +46,6 @@ export async function action({ request, params }) {
     const menu = await getMenuOrThrow(params.handle);
     return Response.json({ menu: serializeMenu(menu) });
   } catch (err) {
-    return menuErrorResponse(err);
+    return mapMenuError(err);
   }
 }
