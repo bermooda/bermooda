@@ -28,6 +28,7 @@ vi.mock('#/core/catalog/translations.server', () => ({
   loadProductTitleMap: vi.fn(),
 }));
 
+import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
 import {
   buildSubscriptionWhere,
@@ -101,7 +102,7 @@ describe('buildSubscriptionWhere', () => {
   it('searches by normalized email', () => {
     expect(buildSubscriptionWhere({ q: 'Shop@Example.com' })).toEqual({
       notifiedAt: null,
-      email: { contains: 'shop@example.com' },
+      email: containsFilter('shop@example.com'),
     });
   });
 });
