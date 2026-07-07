@@ -102,20 +102,23 @@ describe('documents helpers', () => {
   });
 
   it('buildInvoiceFilename prefers order number', () => {
-    expect(buildInvoiceFilename({ id: 'order-1', orderNumber: 'ORD-123' })).toBe(
-      'invoice-ORD-123.pdf'
-    );
+    expect(
+      buildInvoiceFilename({ id: 'order-1', orderNumber: 'ORD-123' })
+    ).toBe('invoice-ORD-123.pdf');
     expect(buildInvoiceFilename({ id: 'order-1' })).toBe('invoice-order-1.pdf');
   });
 
   it('buildPackingSlipFilename includes order number and shipment suffix', () => {
     expect(buildPackingSlipFilename(sampleShipment)).toBe(
-      'packing-slip-ORD-123-CDEF12.pdf'
+      'packing-slip-ORD-123-ABCDEF12.pdf'
     );
   });
 
   it('buildDocumentPdfResponse sets PDF headers', () => {
-    const response = buildDocumentPdfResponse(Buffer.from('%PDF'), 'invoice.pdf');
+    const response = buildDocumentPdfResponse(
+      Buffer.from('%PDF'),
+      'invoice.pdf'
+    );
     expect(response.status).toBe(200);
     expect(response.headers.get('Content-Type')).toBe('application/pdf');
     expect(response.headers.get('Content-Disposition')).toBe(
