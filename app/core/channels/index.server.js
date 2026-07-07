@@ -3,8 +3,290 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import { getAvailableLocales } from '#/core/i18n/index.server';
+import { getEnabledCurrencies } from '#/core/settings/index.server';
+
+export const DEFAULT_CHANNEL_LIST_LIMIT = 20;
+export const MAX_CHANNEL_LIST_RESULTS = 100;
+export const CHANNEL_HANDLE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const CHANNEL_PRICE_OVERRIDE_PRODUCT_LIMIT = 50;
 
 let _defaultChannelId = null;
+
+// ---------------------------------------------------------------------------
+// Input parsing
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse channel list query params from URLSearchParams or a plain object.
+ *
+ * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ */
+export function parseChannelListParams(source = {}) {
+  const get = (key) => {
+    if (source instanceof URLSearchParams) {
+      const value = source.get(key);
+      return value === null || value === '' ? undefined : value;
+    }
+    const value = source[key];
+    if (value === null || value === undefined || value === '') return undefined;
+    return value.toString();
+  };
+
+  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
+  const limit = Math.min(
+    Math.max(
+      1,
+      parseInt(get('limit') ?? String(DEFAULT_CHANNEL_LIST_LIMIT), 10) ||
+        DEFAULT_CHANNEL_LIST_LIMIT
+    ),
+    MAX_CHANNEL_LIST_RESULTS
+  );
+
+  return { page, limit };
+}
+
+/**
+ * Normalize a sales channel handle.
+ *
+ * @param {string} handle
+ */
+export function normalizeChannelHandle(handle) {
+  return handle?.toString().trim().toLowerCase() ?? '';
+}
+
+/**
+ * Validate a sales channel handle.
+ *
+ * @param {string} handle
+ */
+export function validateChannelHandle(handle) {
+  const normalized = normalizeChannelHandle(handle);
+  if (!normalized) {
+    throw Object.assign(new Error('Handle is required.'), {
+      code: 'HANDLE_REQUIRED',
+    });
+  }
+  if (!CHANNEL_HANDLE_PATTERN.test(normalized)) {
+    throw Object.assign(
+      new Error('Handle must be lowercase letters, numbers and hyphens only.'),
+      { code: 'HANDLE_INVALID' }
+    );
+  }
+  return normalized;
+}
+
+/**
+ * Parse admin/API create payload into normalized channel fields.
+ *
+ * @param {object} input
+ */
+export async function parseCreateChannelInput(input = {}) {
+  const name = input.name?.toString().trim();
+  const handle = validateChannelHandle(input.handle);
+  const domain = input.domain?.toString().trim() || null;
+  const currency = input.currency?.toString().trim().toUpperCase() || 'USD';
+  const locale = input.locale?.toString().trim() || 'en';
+  const active =
+    input.active === undefined
+      ? true
+      : input.active === true ||
+        input.active === 'on' ||
+        input.active === 'true';
+  const isDefault =
+    input.isDefault === true ||
+    input.isDefault === 'on' ||
+    input.isDefault === 'true';
+
+  if (!name) {
+    throw Object.assign(new Error('Name is required.'), {
+      code: 'NAME_REQUIRED',
+    });
+  }
+
+  const [enabledCurrencies, availableLocales] = await Promise.all([
+    getEnabledCurrencies(),
+    getAvailableLocales(),
+  ]);
+
+  if (!enabledCurrencies.includes(currency)) {
+    throw Object.assign(new Error('Currency is not enabled for this shop.'), {
+      code: 'CURRENCY_INVALID',
+    });
+  }
+
+  if (!availableLocales.includes(locale)) {
+    throw Object.assign(new Error('Locale is not enabled for this shop.'), {
+      code: 'LOCALE_INVALID',
+    });
+  }
+
+  return { name, handle, domain, currency, locale, active, isDefault };
+}
+
+/**
+ * Parse admin/API update payload into normalized channel fields.
+ *
+ * @param {object} input
+ */
+export async function parseUpdateChannelInput(input = {}) {
+  const parsed = {};
+
+  if ('name' in input) {
+    const name = input.name?.toString().trim();
+    if (!name) {
+      throw Object.assign(new Error('Name is required.'), {
+        code: 'NAME_REQUIRED',
+      });
+    }
+    parsed.name = name;
+  }
+
+  if ('handle' in input) {
+    parsed.handle = validateChannelHandle(input.handle);
+  }
+
+  if ('domain' in input) {
+    parsed.domain = input.domain?.toString().trim() || null;
+  }
+
+  if ('currency' in input) {
+    const currency = input.currency?.toString().trim().toUpperCase();
+    const enabledCurrencies = await getEnabledCurrencies();
+    if (!currency || !enabledCurrencies.includes(currency)) {
+      throw Object.assign(new Error('Currency is not enabled for this shop.'), {
+        code: 'CURRENCY_INVALID',
+      });
+    }
+    parsed.currency = currency;
+  }
+
+  if ('locale' in input) {
+    const locale = input.locale?.toString().trim();
+    const availableLocales = await getAvailableLocales();
+    if (!locale || !availableLocales.includes(locale)) {
+      throw Object.assign(new Error('Locale is not enabled for this shop.'), {
+        code: 'LOCALE_INVALID',
+      });
+    }
+    parsed.locale = locale;
+  }
+
+  if ('active' in input) {
+    parsed.active =
+      input.active === true || input.active === 'on' || input.active === 'true';
+  }
+
+  if ('isDefault' in input) {
+    parsed.isDefault =
+      input.isDefault === true ||
+      input.isDefault === 'on' ||
+      input.isDefault === 'true';
+  }
+
+  return parsed;
+}
+
+/**
+ * Parse channel price override payload from admin/API input.
+ *
+ * @param {object} input
+ */
+export async function parseSetChannelPriceOverrideInput(input = {}) {
+  const channelId = input.channelId?.toString().trim();
+  const variantId = input.variantId?.toString().trim();
+  const currency = input.currency?.toString().trim().toUpperCase() || 'USD';
+  const priceCents =
+    typeof input.priceCents === 'number'
+      ? input.priceCents
+      : parseInt(String(input.priceCents ?? '0'), 10);
+
+  if (!channelId) {
+    throw Object.assign(new Error('Channel is required.'), {
+      code: 'CHANNEL_REQUIRED',
+    });
+  }
+  if (!variantId) {
+    throw Object.assign(new Error('Variant is required.'), {
+      code: 'VARIANT_REQUIRED',
+    });
+  }
+  if (!Number.isFinite(priceCents) || priceCents <= 0) {
+    throw Object.assign(
+      new Error('Price must be a positive integer in cents.'),
+      {
+        code: 'PRICE_INVALID',
+      }
+    );
+  }
+
+  const enabledCurrencies = await getEnabledCurrencies();
+  if (!enabledCurrencies.includes(currency)) {
+    throw Object.assign(new Error('Currency is not enabled for this shop.'), {
+      code: 'CURRENCY_INVALID',
+    });
+  }
+
+  return { channelId, variantId, currency, priceCents };
+}
+
+/**
+ * Parse admin form action payloads for the channels index page.
+ *
+ * @param {FormData} formData
+ */
+export async function parseChannelAdminAction(formData) {
+  const intent = formData.get('intent')?.toString();
+
+  if (intent === 'set-default') {
+    const channelId = formData.get('channelId')?.toString().trim();
+    if (!channelId) {
+      throw Object.assign(new Error('Channel is required.'), {
+        code: 'CHANNEL_REQUIRED',
+      });
+    }
+    return { intent, channelId };
+  }
+
+  if (intent === 'set-price') {
+    const parsed = await parseSetChannelPriceOverrideInput({
+      channelId: formData.get('channelId')?.toString(),
+      variantId: formData.get('variantId')?.toString(),
+      currency: formData.get('currency')?.toString(),
+      priceCents: formData.get('priceCents')?.toString(),
+    });
+    return { intent, ...parsed };
+  }
+
+  throw Object.assign(new Error('Unknown action.'), { code: 'ACTION_INVALID' });
+}
+
+/**
+ * Serialize a sales channel for admin/API responses.
+ *
+ * @param {object|null|undefined} channel
+ */
+export function serializeChannel(channel) {
+  if (!channel) return null;
+
+  return {
+    id: channel.id,
+    name: channel.name,
+    handle: channel.handle,
+    domain: channel.domain,
+    isDefault: channel.isDefault,
+    currency: channel.currency,
+    locale: channel.locale,
+    active: channel.active,
+    createdAt: channel.createdAt?.toISOString?.() ?? channel.createdAt,
+    updatedAt: channel.updatedAt?.toISOString?.() ?? channel.updatedAt,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Channel resolution
+// ---------------------------------------------------------------------------
 
 export async function getDefaultChannel() {
   if (_defaultChannelId) {
@@ -65,7 +347,12 @@ export async function resolveChannelFromRequest(request) {
   return getDefaultChannel();
 }
 
-export async function listChannels({ page = 1, limit = 50 } = {}) {
+// ---------------------------------------------------------------------------
+// Channel CRUD
+// ---------------------------------------------------------------------------
+
+export async function listChannels(params = {}) {
+  const { page, limit } = parseChannelListParams(params);
   const skip = (page - 1) * limit;
   const [channels, total] = await Promise.all([
     prisma.salesChannel.findMany({
@@ -75,14 +362,22 @@ export async function listChannels({ page = 1, limit = 50 } = {}) {
     }),
     prisma.salesChannel.count(),
   ]);
-  return { channels, total };
+  return { channels, total, page, limit };
 }
 
-export async function getChannelById(id) {
-  return prisma.salesChannel.findUnique({ where: { id } });
+export async function getChannel(id) {
+  const channel = await prisma.salesChannel.findUnique({ where: { id } });
+  if (!channel) {
+    throw Object.assign(new Error('Channel not found.'), {
+      code: 'CHANNEL_NOT_FOUND',
+    });
+  }
+  return channel;
 }
 
-export async function createChannel(data) {
+export async function createChannel(input) {
+  const data = await parseCreateChannelInput(input);
+
   if (data.isDefault) {
     await prisma.salesChannel.updateMany({
       where: { isDefault: true },
@@ -90,23 +385,35 @@ export async function createChannel(data) {
     });
   }
 
-  const channel = await prisma.salesChannel.create({
-    data: {
-      name: data.name,
-      handle: data.handle,
-      domain: data.domain ?? null,
-      isDefault: data.isDefault ?? false,
-      currency: data.currency ?? 'USD',
-      locale: data.locale ?? 'en',
-      active: data.active ?? true,
-    },
-  });
+  try {
+    const channel = await prisma.salesChannel.create({
+      data: {
+        name: data.name,
+        handle: data.handle,
+        domain: data.domain,
+        isDefault: data.isDefault,
+        currency: data.currency,
+        locale: data.locale,
+        active: data.active,
+      },
+    });
 
-  if (channel.isDefault) _defaultChannelId = channel.id;
-  return channel;
+    if (channel.isDefault) _defaultChannelId = channel.id;
+    return channel;
+  } catch (err) {
+    if (err.code === 'P2002') {
+      throw Object.assign(new Error('Handle or domain already in use.'), {
+        code: 'CHANNEL_CONFLICT',
+      });
+    }
+    throw err;
+  }
 }
 
-export async function updateChannel(id, data) {
+export async function updateChannel(id, input) {
+  await getChannel(id);
+  const data = await parseUpdateChannelInput(input);
+
   if (data.isDefault) {
     await prisma.salesChannel.updateMany({
       where: { isDefault: true, NOT: { id } },
@@ -114,28 +421,69 @@ export async function updateChannel(id, data) {
     });
   }
 
-  const channel = await prisma.salesChannel.update({
-    where: { id },
-    data: {
-      ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(data.handle !== undefined ? { handle: data.handle } : {}),
-      ...(data.domain !== undefined ? { domain: data.domain || null } : {}),
-      ...(data.isDefault !== undefined ? { isDefault: data.isDefault } : {}),
-      ...(data.currency !== undefined ? { currency: data.currency } : {}),
-      ...(data.locale !== undefined ? { locale: data.locale } : {}),
-      ...(data.active !== undefined ? { active: data.active } : {}),
-    },
-  });
+  try {
+    const channel = await prisma.salesChannel.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined ? { name: data.name } : {}),
+        ...(data.handle !== undefined ? { handle: data.handle } : {}),
+        ...(data.domain !== undefined ? { domain: data.domain } : {}),
+        ...(data.isDefault !== undefined ? { isDefault: data.isDefault } : {}),
+        ...(data.currency !== undefined ? { currency: data.currency } : {}),
+        ...(data.locale !== undefined ? { locale: data.locale } : {}),
+        ...(data.active !== undefined ? { active: data.active } : {}),
+      },
+    });
 
-  if (channel.isDefault) _defaultChannelId = channel.id;
-  return channel;
+    if (channel.isDefault) _defaultChannelId = channel.id;
+    return channel;
+  } catch (err) {
+    if (err.code === 'P2002') {
+      throw Object.assign(new Error('Handle or domain already in use.'), {
+        code: 'CHANNEL_CONFLICT',
+      });
+    }
+    throw err;
+  }
 }
+
+/**
+ * Load data for the admin channels index page.
+ *
+ * @param {{ page?: number, limit?: number }} [params]
+ */
+export async function loadChannelAdminIndexData(params = {}) {
+  const [{ channels, total, page, limit }, products] = await Promise.all([
+    listChannels({ ...params, limit: params.limit ?? 100 }),
+    listProductsForChannelPriceOverrides(),
+  ]);
+
+  return { channels, total, page, limit, products };
+}
+
+/**
+ * Products for the channel price override form in admin.
+ */
+export async function listProductsForChannelPriceOverrides({
+  limit = CHANNEL_PRICE_OVERRIDE_PRODUCT_LIMIT,
+} = {}) {
+  return prisma.product.findMany({
+    take: limit,
+    orderBy: { createdAt: 'desc' },
+    include: { variants: { include: { prices: true } } },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Channel catalog overrides
+// ---------------------------------------------------------------------------
 
 export async function setChannelProductPublished(
   channelId,
   productId,
   published
 ) {
+  await getChannel(channelId);
   return prisma.channelProduct.upsert({
     where: {
       channelId_productId: { channelId, productId },
@@ -168,25 +516,18 @@ export async function getChannelPriceOverride(channelId, variantId, currency) {
   });
 }
 
-export async function setChannelPriceOverride(
-  channelId,
-  variantId,
-  currency,
-  priceCents
-) {
+export async function setChannelPriceOverride(input) {
+  const { channelId, variantId, currency, priceCents } =
+    await parseSetChannelPriceOverrideInput(input);
+
+  await getChannel(channelId);
+
   return prisma.channelPriceOverride.upsert({
     where: {
       channelId_variantId_currency: { channelId, variantId, currency },
     },
     create: { channelId, variantId, currency, priceCents },
     update: { priceCents },
-  });
-}
-
-export async function listChannelProducts(channelId) {
-  return prisma.channelProduct.findMany({
-    where: { channelId },
-    include: { product: { include: { variants: true } } },
   });
 }
 
