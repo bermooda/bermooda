@@ -52,6 +52,12 @@ vi.mock('#/libs/prisma.server', () => ({
 
 vi.mock('#/libs/rate-limit.server', () => ({
   enforceRateLimit: vi.fn(),
+  rateLimitMiddleware: vi.fn((policy) => {
+    return async function rateLimitMiddlewareHandler({ request }) {
+      const { enforceRateLimit } = await import('#/libs/rate-limit.server');
+      enforceRateLimit(request, policy);
+    };
+  }),
 }));
 
 vi.mock('#/utils/logger.server', () => ({

@@ -96,17 +96,22 @@ GET/POST  /admin/auth/*    app/routes/auth/admin.jsx     (adminAuth)
 GET/POST  /account/auth/*  app/routes/auth/customer.jsx  (customerAuth)
 ```
 
-Each file is a thin React Router route that proxies the request to the
-corresponding better-auth handler:
+Each file is a thin React Router route that applies middleware before proxying
+to the corresponding better-auth handler:
 
 ```js
-export async function loader({ request }) {
-  return auth.handler(request);
-}
-export async function action({ request }) {
-  return auth.handler(request);
-}
+import { adminAuthHandlerMiddleware } from '#/libs/auth/admin.server';
+import { rateLimitMiddleware } from '#/libs/rate-limit.server';
+
+export const middleware = [
+  rateLimitMiddleware('auth'),
+  adminAuthHandlerMiddleware,
+];
 ```
+
+`rateLimitMiddleware('auth')` applies the auth policy (20 requests/min per
+IP+path). `adminAuthHandlerMiddleware` / `customerAuthHandlerMiddleware` throw
+the better-auth handler response without calling `next()`.
 
 ---
 
@@ -117,13 +122,14 @@ pattern in the nearest sibling route.
 
 ### Middleware (optional)
 
-- **Admin routes** — `adminAuthMiddleware` from `admin.server.js`. On success
-  it sets `adminAuthContext` so child routes can read the current admin user
-  via `context.get(adminAuthContext)`.
+- **Admin routes** — `adminAuthMiddleware` from `admin.server.js`. Applies the
+  `auth` rate limit, then verifies the session. On success it sets
+  `adminAuthContext` so child routes can read the current admin user via
+  `context.get(adminAuthContext)`.
 
 - **Customer routes** — `customerAuthMiddleware` from `customer.server.js`.
-  On success it sets `customerAuthContext`. Unauthenticated requests redirect
-  to `/account/login`.
+  Applies the `auth` rate limit, then verifies the session. On success it sets
+  `customerAuthContext`. Unauthenticated requests redirect to `/account/login`.
 
 ### Loader-based (current default in layouts)
 
