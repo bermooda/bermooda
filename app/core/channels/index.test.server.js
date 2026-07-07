@@ -25,10 +25,7 @@ vi.mock('#/libs/prisma.server', () => ({
 
 vi.mock('#/core/settings/index.server', () => ({
   getEnabledCurrencies: vi.fn().mockResolvedValue(['USD', 'EUR']),
-}));
-
-vi.mock('#/core/i18n/index.server', () => ({
-  getAvailableLocales: vi.fn().mockResolvedValue(['en', 'de']),
+  getEnabledLocales: vi.fn().mockResolvedValue(['en', 'de']),
 }));
 
 import prisma from '#/libs/prisma.server';

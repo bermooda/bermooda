@@ -3,8 +3,10 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import { getAvailableLocales } from '#/core/i18n/index.server';
-import { getEnabledCurrencies } from '#/core/settings/index.server';
+import {
+  getEnabledCurrencies,
+  getEnabledLocales,
+} from '#/core/settings/index.server';
 
 export const DEFAULT_CHANNEL_LIST_LIMIT = 20;
 export const MAX_CHANNEL_LIST_RESULTS = 100;
@@ -107,7 +109,7 @@ export async function parseCreateChannelInput(input = {}) {
 
   const [enabledCurrencies, availableLocales] = await Promise.all([
     getEnabledCurrencies(),
-    getAvailableLocales(),
+    getEnabledLocales(),
   ]);
 
   if (!enabledCurrencies.includes(currency)) {
@@ -164,7 +166,7 @@ export async function parseUpdateChannelInput(input = {}) {
 
   if ('locale' in input) {
     const locale = input.locale?.toString().trim();
-    const availableLocales = await getAvailableLocales();
+    const availableLocales = await getEnabledLocales();
     if (!locale || !availableLocales.includes(locale)) {
       throw Object.assign(new Error('Locale is not enabled for this shop.'), {
         code: 'LOCALE_INVALID',
