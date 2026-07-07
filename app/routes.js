@@ -165,6 +165,14 @@ export default [
       route('audit-logs', 'routes/api/admin/v1/audit-logs.jsx'),
       route('audit-logs/:id', 'routes/api/admin/v1/audit-logs/$id.jsx'),
       route('wishlists', 'routes/api/admin/v1/wishlists.jsx'),
+      route(
+        'back-in-stock-subscriptions/:id',
+        'routes/api/admin/v1/back-in-stock-subscriptions/$id.jsx'
+      ),
+      route(
+        'back-in-stock-subscriptions',
+        'routes/api/admin/v1/back-in-stock-subscriptions.jsx'
+      ),
       route('pos/sessions/:id', 'routes/api/admin/v1/pos/sessions/$id.jsx'),
       route('pos', 'routes/api/admin/v1/pos.jsx'),
       route(
@@ -307,6 +315,7 @@ export default [
       route('discounts/new', 'routes/admin/discounts/new.jsx'),
       route('inventory', 'routes/admin/inventory/index.jsx'),
       route('inventory/new', 'routes/admin/inventory/new.jsx'),
+      route('back-in-stock', 'routes/admin/back-in-stock/index.jsx'),
       route('customer-groups', 'routes/admin/customer-groups/index.jsx'),
       route('customer-groups/new', 'routes/admin/customer-groups/new.jsx'),
       route('price-lists', 'routes/admin/price-lists/index.jsx'),

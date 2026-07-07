@@ -1,7 +1,10 @@
 import { useActionData, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
-import { subscribeBackInStock } from '#/core/back-in-stock/index.server';
+import {
+  parseSubscribeFromForm,
+  subscribeBackInStock,
+} from '#/core/back-in-stock/index.server';
 import { getProductBySlug } from '#/core/catalog/index.server';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
@@ -162,22 +165,19 @@ export async function action({ request, params }) {
   }
 
   if (intent === 'back-in-stock') {
-    const variantId = formData.get('variantId')?.toString();
-    const email = formData.get('email')?.toString() ?? '';
-    if (!variantId) {
-      return { backInStockError: 'Select a variant first.' };
-    }
-
     const session = await getCustomerSession(request);
+
     try {
-      await subscribeBackInStock({
-        variantId,
-        email,
+      const input = parseSubscribeFromForm(formData, {
         customerId: session?.user?.id ?? null,
       });
+      await subscribeBackInStock(input);
       return { backInStockOk: true };
     } catch (err) {
-      if (err.message === 'EMAIL_REQUIRED') {
+      if (err.code === 'VARIANT_ID_REQUIRED') {
+        return { backInStockError: 'Select a variant first.' };
+      }
+      if (err.code === 'EMAIL_REQUIRED') {
         return { backInStockError: 'Enter your email address.' };
       }
       return { backInStockError: 'Could not subscribe. Try again.' };
