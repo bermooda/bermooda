@@ -1,22 +1,24 @@
 // POST /api/v1/checkout/:id/update — persist checkout session fields
 
 import {
+  jsonDomainError,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/public.server';
+import {
   normalizeAddressForSession,
   parseAddressJson,
 } from '#/core/address-validation/index.server';
 import { updateCheckoutSession } from '#/core/checkout/index.server';
 
 export async function action({ request, params }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request);
+  if (parsed.error) return parsed.error;
+
+  let body = parsed.body;
 
   try {
     if (body.shippingAddressJson) {
@@ -36,9 +38,6 @@ export async function action({ request, params }) {
     });
     return Response.json({ session });
   } catch (err) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 422 }
-    );
+    return jsonDomainError(err);
   }
 }

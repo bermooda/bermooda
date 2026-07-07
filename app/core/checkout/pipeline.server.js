@@ -47,6 +47,28 @@ export async function createCheckoutSession(
   return session;
 }
 
+/**
+ * Create a checkout session from a cart token.
+ *
+ * @param {string} cartToken
+ * @param {{ customerId?: string, email?: string }} [options]
+ * @returns {Promise<object>}
+ */
+export async function createCheckoutSessionFromCartToken(
+  cartToken,
+  { customerId, email } = {}
+) {
+  const cart = await prisma.cart.findUnique({ where: { token: cartToken } });
+  if (!cart) {
+    throw Object.assign(new Error('Cart not found'), {
+      code: 'CART_NOT_FOUND',
+      status: 404,
+    });
+  }
+
+  return createCheckoutSession(cart.id, { customerId, email });
+}
+
 // ---------------------------------------------------------------------------
 // getCheckoutSession
 // ---------------------------------------------------------------------------

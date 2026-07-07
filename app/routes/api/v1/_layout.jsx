@@ -2,12 +2,9 @@
 
 import { Outlet } from 'react-router';
 
-import { enforcePublicApiRateLimit } from '#/libs/auth/api.server';
+import { rateLimitMiddleware } from '#/libs/rate-limit.server';
 
-export async function loader({ request }) {
-  enforcePublicApiRateLimit(request);
-  return null;
-}
+export const middleware = [rateLimitMiddleware('api-public')];
 
 export default function ApiV1LayoutRoute() {
   return <Outlet />;

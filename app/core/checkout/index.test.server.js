@@ -8,6 +8,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('#/libs/prisma.server', () => ({
   default: {
+    cart: {
+      findUnique: vi.fn(),
+    },
     checkoutSession: {
       create: vi.fn(),
       findUnique: vi.fn(),
@@ -55,6 +58,7 @@ import prisma from '#/libs/prisma.server';
 import { lockCart } from '#/core/cart/index.server';
 import {
   createCheckoutSession,
+  createCheckoutSessionFromCartToken,
   updateCheckoutSession,
 } from '#/core/checkout/pipeline.server';
 import { computeTotals } from '#/core/checkout/totals.server';
@@ -361,6 +365,37 @@ describe('createCheckoutSession', () => {
       cartId: 'cart_1',
       customerId: 'cust_1',
       email: 'checkout@example.com',
+    });
+  });
+});
+
+describe('createCheckoutSessionFromCartToken', () => {
+  it('throws when the cart token is not found', async () => {
+    prisma.cart.findUnique.mockResolvedValue(null);
+
+    await expect(
+      createCheckoutSessionFromCartToken('missing-token')
+    ).rejects.toMatchObject({
+      code: 'CART_NOT_FOUND',
+      status: 404,
+    });
+  });
+
+  it('creates a checkout session for a valid cart token', async () => {
+    prisma.cart.findUnique.mockResolvedValue({ id: 'cart_1', token: 'tok_1' });
+    lockCart.mockResolvedValue({});
+    prisma.checkoutSession.create.mockResolvedValue(makeSession());
+
+    await createCheckoutSessionFromCartToken('tok_1', {
+      email: 'buyer@example.com',
+    });
+
+    expect(lockCart).toHaveBeenCalledWith('cart_1');
+    expect(prisma.checkoutSession.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        cartId: 'cart_1',
+        email: 'buyer@example.com',
+      }),
     });
   });
 });

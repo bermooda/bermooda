@@ -121,6 +121,23 @@ export function hasMinimumAddressFields(addr) {
 }
 
 /**
+ * Parse and validate address payload shape from a public/admin API body.
+ *
+ * @param {object} body
+ * @returns {object}
+ */
+export function parseValidatedAddressInput(body = {}) {
+  const address = body.address ?? body;
+  if (!hasMinimumAddressFields(address)) {
+    throw Object.assign(
+      new Error('Address must include line1, city, and country'),
+      { code: 'ADDRESS_FIELDS_REQUIRED', status: 400 }
+    );
+  }
+  return address;
+}
+
+/**
  * @param {string|object|null|undefined} json
  */
 export function parseAddressJson(json) {
