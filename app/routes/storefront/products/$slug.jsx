@@ -25,6 +25,7 @@ import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import {
   addToWishlist,
   getWishlistedVariantIds,
+  parseWishlistFromForm,
   removeFromWishlist,
 } from '#/core/wishlists/index.server';
 import { JsonLd } from '#/components/seo/json-ld';
@@ -150,18 +151,28 @@ export async function action({ request, params }) {
       return { wishlistError: 'Sign in to save items to your wishlist.' };
     }
 
-    const variantId = formData.get('variantId')?.toString();
-    if (!variantId) {
-      return { wishlistError: 'Select a variant first.' };
-    }
+    try {
+      const { variantId, intent: wishlistIntent } = parseWishlistFromForm(
+        formData,
+        { customerId: session.user.id }
+      );
 
-    if (intent === 'wishlist-add') {
-      await addToWishlist(session.user.id, variantId);
-      return { wishlistOk: true, wishlistAdded: true, variantId };
-    }
+      if (wishlistIntent === 'add') {
+        await addToWishlist(session.user.id, variantId);
+        return { wishlistOk: true, wishlistAdded: true, variantId };
+      }
 
-    await removeFromWishlist(session.user.id, variantId);
-    return { wishlistOk: true, wishlistAdded: false, variantId };
+      await removeFromWishlist(session.user.id, variantId);
+      return { wishlistOk: true, wishlistAdded: false, variantId };
+    } catch (err) {
+      if (err.code === 'VARIANT_ID_REQUIRED') {
+        return { wishlistError: 'Select a variant first.' };
+      }
+      if (err.code === 'NOT_FOUND') {
+        return { wishlistError: 'Variant not found.' };
+      }
+      return { wishlistError: 'Could not update wishlist. Try again.' };
+    }
   }
 
   if (intent === 'back-in-stock') {

@@ -69,6 +69,8 @@
   "account.dashboard": "Dashboard",
   "account.orders": "Orders",
   "account.wishlist": "Wishlist",
+  "account.noWishlist": "Your wishlist is empty.",
+  "account.removeFromWishlist": "Remove",
   "account.loyalty": "Loyalty",
   "account.addresses": "Addresses",
   "account.profile": "Profile",
