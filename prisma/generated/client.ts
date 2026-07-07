@@ -476,3 +476,23 @@ export type PosSession = Prisma.PosSessionModel
  * 
  */
 export type PosOrder = Prisma.PosOrderModel
+/**
+ * Model Company
+ * 
+ */
+export type Company = Prisma.CompanyModel
+/**
+ * Model CompanyMember
+ * 
+ */
+export type CompanyMember = Prisma.CompanyMemberModel
+/**
+ * Model Quote
+ * 
+ */
+export type Quote = Prisma.QuoteModel
+/**
+ * Model QuoteLine
+ * 
+ */
+export type QuoteLine = Prisma.QuoteLineModel

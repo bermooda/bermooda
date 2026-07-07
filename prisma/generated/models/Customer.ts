@@ -249,6 +249,8 @@ export type CustomerWhereInput = {
   referredBy?: Prisma.XOR<Prisma.ReferralNullableScalarRelationFilter, Prisma.ReferralWhereInput> | null
   campaignDeliveries?: Prisma.CampaignDeliveryListRelationFilter
   subscriptions?: Prisma.SubscriptionListRelationFilter
+  companyMemberships?: Prisma.CompanyMemberListRelationFilter
+  quotes?: Prisma.QuoteListRelationFilter
 }
 
 export type CustomerOrderByWithRelationInput = {
@@ -282,6 +284,8 @@ export type CustomerOrderByWithRelationInput = {
   referredBy?: Prisma.ReferralOrderByWithRelationInput
   campaignDeliveries?: Prisma.CampaignDeliveryOrderByRelationAggregateInput
   subscriptions?: Prisma.SubscriptionOrderByRelationAggregateInput
+  companyMemberships?: Prisma.CompanyMemberOrderByRelationAggregateInput
+  quotes?: Prisma.QuoteOrderByRelationAggregateInput
 }
 
 export type CustomerWhereUniqueInput = Prisma.AtLeast<{
@@ -318,6 +322,8 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   referredBy?: Prisma.XOR<Prisma.ReferralNullableScalarRelationFilter, Prisma.ReferralWhereInput> | null
   campaignDeliveries?: Prisma.CampaignDeliveryListRelationFilter
   subscriptions?: Prisma.SubscriptionListRelationFilter
+  companyMemberships?: Prisma.CompanyMemberListRelationFilter
+  quotes?: Prisma.QuoteListRelationFilter
 }, "id" | "email">
 
 export type CustomerOrderByWithAggregationInput = {
@@ -385,6 +391,8 @@ export type CustomerCreateInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateInput = {
@@ -418,6 +426,8 @@ export type CustomerUncheckedCreateInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUpdateInput = {
@@ -451,6 +461,8 @@ export type CustomerUpdateInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateInput = {
@@ -484,6 +496,8 @@ export type CustomerUncheckedUpdateInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateManyInput = {
@@ -858,6 +872,36 @@ export type CustomerUpdateOneRequiredWithoutSubscriptionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CustomerUpdateToOneWithWhereWithoutSubscriptionsInput, Prisma.CustomerUpdateWithoutSubscriptionsInput>, Prisma.CustomerUncheckedUpdateWithoutSubscriptionsInput>
 }
 
+export type CustomerCreateNestedOneWithoutCompanyMembershipsInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutCompanyMembershipsInput, Prisma.CustomerUncheckedCreateWithoutCompanyMembershipsInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutCompanyMembershipsInput
+  connect?: Prisma.CustomerWhereUniqueInput
+}
+
+export type CustomerUpdateOneRequiredWithoutCompanyMembershipsNestedInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutCompanyMembershipsInput, Prisma.CustomerUncheckedCreateWithoutCompanyMembershipsInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutCompanyMembershipsInput
+  upsert?: Prisma.CustomerUpsertWithoutCompanyMembershipsInput
+  connect?: Prisma.CustomerWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CustomerUpdateToOneWithWhereWithoutCompanyMembershipsInput, Prisma.CustomerUpdateWithoutCompanyMembershipsInput>, Prisma.CustomerUncheckedUpdateWithoutCompanyMembershipsInput>
+}
+
+export type CustomerCreateNestedOneWithoutQuotesInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutQuotesInput, Prisma.CustomerUncheckedCreateWithoutQuotesInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutQuotesInput
+  connect?: Prisma.CustomerWhereUniqueInput
+}
+
+export type CustomerUpdateOneWithoutQuotesNestedInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutQuotesInput, Prisma.CustomerUncheckedCreateWithoutQuotesInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutQuotesInput
+  upsert?: Prisma.CustomerUpsertWithoutQuotesInput
+  disconnect?: Prisma.CustomerWhereInput | boolean
+  delete?: Prisma.CustomerWhereInput | boolean
+  connect?: Prisma.CustomerWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CustomerUpdateToOneWithWhereWithoutQuotesInput, Prisma.CustomerUpdateWithoutQuotesInput>, Prisma.CustomerUncheckedUpdateWithoutQuotesInput>
+}
+
 export type CustomerCreateWithoutSessionsInput = {
   id?: string
   email: string
@@ -888,6 +932,8 @@ export type CustomerCreateWithoutSessionsInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutSessionsInput = {
@@ -920,6 +966,8 @@ export type CustomerUncheckedCreateWithoutSessionsInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutSessionsInput = {
@@ -968,6 +1016,8 @@ export type CustomerUpdateWithoutSessionsInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutSessionsInput = {
@@ -1000,6 +1050,8 @@ export type CustomerUncheckedUpdateWithoutSessionsInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutAccountsInput = {
@@ -1032,6 +1084,8 @@ export type CustomerCreateWithoutAccountsInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutAccountsInput = {
@@ -1064,6 +1118,8 @@ export type CustomerUncheckedCreateWithoutAccountsInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutAccountsInput = {
@@ -1112,6 +1168,8 @@ export type CustomerUpdateWithoutAccountsInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutAccountsInput = {
@@ -1144,6 +1202,8 @@ export type CustomerUncheckedUpdateWithoutAccountsInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutTwoFactorInput = {
@@ -1176,6 +1236,8 @@ export type CustomerCreateWithoutTwoFactorInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutTwoFactorInput = {
@@ -1208,6 +1270,8 @@ export type CustomerUncheckedCreateWithoutTwoFactorInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutTwoFactorInput = {
@@ -1256,6 +1320,8 @@ export type CustomerUpdateWithoutTwoFactorInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutTwoFactorInput = {
@@ -1288,6 +1354,8 @@ export type CustomerUncheckedUpdateWithoutTwoFactorInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutAddressesInput = {
@@ -1320,6 +1388,8 @@ export type CustomerCreateWithoutAddressesInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutAddressesInput = {
@@ -1352,6 +1422,8 @@ export type CustomerUncheckedCreateWithoutAddressesInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutAddressesInput = {
@@ -1400,6 +1472,8 @@ export type CustomerUpdateWithoutAddressesInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutAddressesInput = {
@@ -1432,6 +1506,8 @@ export type CustomerUncheckedUpdateWithoutAddressesInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutCartsInput = {
@@ -1464,6 +1540,8 @@ export type CustomerCreateWithoutCartsInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutCartsInput = {
@@ -1496,6 +1574,8 @@ export type CustomerUncheckedCreateWithoutCartsInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutCartsInput = {
@@ -1544,6 +1624,8 @@ export type CustomerUpdateWithoutCartsInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutCartsInput = {
@@ -1576,6 +1658,8 @@ export type CustomerUncheckedUpdateWithoutCartsInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutCheckoutsInput = {
@@ -1608,6 +1692,8 @@ export type CustomerCreateWithoutCheckoutsInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutCheckoutsInput = {
@@ -1640,6 +1726,8 @@ export type CustomerUncheckedCreateWithoutCheckoutsInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutCheckoutsInput = {
@@ -1688,6 +1776,8 @@ export type CustomerUpdateWithoutCheckoutsInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutCheckoutsInput = {
@@ -1720,6 +1810,8 @@ export type CustomerUncheckedUpdateWithoutCheckoutsInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutOrdersInput = {
@@ -1752,6 +1844,8 @@ export type CustomerCreateWithoutOrdersInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutOrdersInput = {
@@ -1784,6 +1878,8 @@ export type CustomerUncheckedCreateWithoutOrdersInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutOrdersInput = {
@@ -1832,6 +1928,8 @@ export type CustomerUpdateWithoutOrdersInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutOrdersInput = {
@@ -1864,6 +1962,8 @@ export type CustomerUncheckedUpdateWithoutOrdersInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutReturnsInput = {
@@ -1896,6 +1996,8 @@ export type CustomerCreateWithoutReturnsInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutReturnsInput = {
@@ -1928,6 +2030,8 @@ export type CustomerUncheckedCreateWithoutReturnsInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutReturnsInput = {
@@ -1976,6 +2080,8 @@ export type CustomerUpdateWithoutReturnsInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutReturnsInput = {
@@ -2008,6 +2114,8 @@ export type CustomerUncheckedUpdateWithoutReturnsInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutStoreCreditLedgerInput = {
@@ -2040,6 +2148,8 @@ export type CustomerCreateWithoutStoreCreditLedgerInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutStoreCreditLedgerInput = {
@@ -2072,6 +2182,8 @@ export type CustomerUncheckedCreateWithoutStoreCreditLedgerInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutStoreCreditLedgerInput = {
@@ -2120,6 +2232,8 @@ export type CustomerUpdateWithoutStoreCreditLedgerInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutStoreCreditLedgerInput = {
@@ -2152,6 +2266,8 @@ export type CustomerUncheckedUpdateWithoutStoreCreditLedgerInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutReviewsInput = {
@@ -2184,6 +2300,8 @@ export type CustomerCreateWithoutReviewsInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutReviewsInput = {
@@ -2216,6 +2334,8 @@ export type CustomerUncheckedCreateWithoutReviewsInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutReviewsInput = {
@@ -2264,6 +2384,8 @@ export type CustomerUpdateWithoutReviewsInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutReviewsInput = {
@@ -2296,6 +2418,8 @@ export type CustomerUncheckedUpdateWithoutReviewsInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutGroupMembershipsInput = {
@@ -2328,6 +2452,8 @@ export type CustomerCreateWithoutGroupMembershipsInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutGroupMembershipsInput = {
@@ -2360,6 +2486,8 @@ export type CustomerUncheckedCreateWithoutGroupMembershipsInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutGroupMembershipsInput = {
@@ -2408,6 +2536,8 @@ export type CustomerUpdateWithoutGroupMembershipsInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutGroupMembershipsInput = {
@@ -2440,6 +2570,8 @@ export type CustomerUncheckedUpdateWithoutGroupMembershipsInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutGiftCardsInput = {
@@ -2472,6 +2604,8 @@ export type CustomerCreateWithoutGiftCardsInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutGiftCardsInput = {
@@ -2504,6 +2638,8 @@ export type CustomerUncheckedCreateWithoutGiftCardsInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutGiftCardsInput = {
@@ -2552,6 +2688,8 @@ export type CustomerUpdateWithoutGiftCardsInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutGiftCardsInput = {
@@ -2584,6 +2722,8 @@ export type CustomerUncheckedUpdateWithoutGiftCardsInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutWishlistsInput = {
@@ -2616,6 +2756,8 @@ export type CustomerCreateWithoutWishlistsInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutWishlistsInput = {
@@ -2648,6 +2790,8 @@ export type CustomerUncheckedCreateWithoutWishlistsInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutWishlistsInput = {
@@ -2696,6 +2840,8 @@ export type CustomerUpdateWithoutWishlistsInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutWishlistsInput = {
@@ -2728,6 +2874,8 @@ export type CustomerUncheckedUpdateWithoutWishlistsInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutBackInStockSubscriptionsInput = {
@@ -2760,6 +2908,8 @@ export type CustomerCreateWithoutBackInStockSubscriptionsInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutBackInStockSubscriptionsInput = {
@@ -2792,6 +2942,8 @@ export type CustomerUncheckedCreateWithoutBackInStockSubscriptionsInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutBackInStockSubscriptionsInput = {
@@ -2840,6 +2992,8 @@ export type CustomerUpdateWithoutBackInStockSubscriptionsInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutBackInStockSubscriptionsInput = {
@@ -2872,6 +3026,8 @@ export type CustomerUncheckedUpdateWithoutBackInStockSubscriptionsInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutLoyaltyTransactionsInput = {
@@ -2904,6 +3060,8 @@ export type CustomerCreateWithoutLoyaltyTransactionsInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutLoyaltyTransactionsInput = {
@@ -2936,6 +3094,8 @@ export type CustomerUncheckedCreateWithoutLoyaltyTransactionsInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutLoyaltyTransactionsInput = {
@@ -2984,6 +3144,8 @@ export type CustomerUpdateWithoutLoyaltyTransactionsInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutLoyaltyTransactionsInput = {
@@ -3016,6 +3178,8 @@ export type CustomerUncheckedUpdateWithoutLoyaltyTransactionsInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutReferralCodeInput = {
@@ -3048,6 +3212,8 @@ export type CustomerCreateWithoutReferralCodeInput = {
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutReferralCodeInput = {
@@ -3080,6 +3246,8 @@ export type CustomerUncheckedCreateWithoutReferralCodeInput = {
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutReferralCodeInput = {
@@ -3128,6 +3296,8 @@ export type CustomerUpdateWithoutReferralCodeInput = {
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutReferralCodeInput = {
@@ -3160,6 +3330,8 @@ export type CustomerUncheckedUpdateWithoutReferralCodeInput = {
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutReferredByInput = {
@@ -3192,6 +3364,8 @@ export type CustomerCreateWithoutReferredByInput = {
   referralCode?: Prisma.ReferralCodeCreateNestedOneWithoutCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutReferredByInput = {
@@ -3224,6 +3398,8 @@ export type CustomerUncheckedCreateWithoutReferredByInput = {
   referralCode?: Prisma.ReferralCodeUncheckedCreateNestedOneWithoutCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutReferredByInput = {
@@ -3272,6 +3448,8 @@ export type CustomerUpdateWithoutReferredByInput = {
   referralCode?: Prisma.ReferralCodeUpdateOneWithoutCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutReferredByInput = {
@@ -3304,6 +3482,8 @@ export type CustomerUncheckedUpdateWithoutReferredByInput = {
   referralCode?: Prisma.ReferralCodeUncheckedUpdateOneWithoutCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutCampaignDeliveriesInput = {
@@ -3336,6 +3516,8 @@ export type CustomerCreateWithoutCampaignDeliveriesInput = {
   referralCode?: Prisma.ReferralCodeCreateNestedOneWithoutCustomerInput
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutCampaignDeliveriesInput = {
@@ -3368,6 +3550,8 @@ export type CustomerUncheckedCreateWithoutCampaignDeliveriesInput = {
   referralCode?: Prisma.ReferralCodeUncheckedCreateNestedOneWithoutCustomerInput
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutCampaignDeliveriesInput = {
@@ -3416,6 +3600,8 @@ export type CustomerUpdateWithoutCampaignDeliveriesInput = {
   referralCode?: Prisma.ReferralCodeUpdateOneWithoutCustomerNestedInput
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutCampaignDeliveriesInput = {
@@ -3448,6 +3634,8 @@ export type CustomerUncheckedUpdateWithoutCampaignDeliveriesInput = {
   referralCode?: Prisma.ReferralCodeUncheckedUpdateOneWithoutCustomerNestedInput
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutSubscriptionsInput = {
@@ -3480,6 +3668,8 @@ export type CustomerCreateWithoutSubscriptionsInput = {
   referralCode?: Prisma.ReferralCodeCreateNestedOneWithoutCustomerInput
   referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutSubscriptionsInput = {
@@ -3512,6 +3702,8 @@ export type CustomerUncheckedCreateWithoutSubscriptionsInput = {
   referralCode?: Prisma.ReferralCodeUncheckedCreateNestedOneWithoutCustomerInput
   referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutSubscriptionsInput = {
@@ -3560,6 +3752,8 @@ export type CustomerUpdateWithoutSubscriptionsInput = {
   referralCode?: Prisma.ReferralCodeUpdateOneWithoutCustomerNestedInput
   referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutSubscriptionsInput = {
@@ -3592,6 +3786,312 @@ export type CustomerUncheckedUpdateWithoutSubscriptionsInput = {
   referralCode?: Prisma.ReferralCodeUncheckedUpdateOneWithoutCustomerNestedInput
   referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
   campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
+}
+
+export type CustomerCreateWithoutCompanyMembershipsInput = {
+  id?: string
+  email: string
+  emailVerified?: boolean
+  name?: string | null
+  phone?: string | null
+  preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
+  twoFactorEnabled?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.CustomerSessionCreateNestedManyWithoutCustomerInput
+  accounts?: Prisma.CustomerAccountCreateNestedManyWithoutCustomerInput
+  twoFactor?: Prisma.CustomerTwoFactorCreateNestedOneWithoutCustomerInput
+  addresses?: Prisma.AddressCreateNestedManyWithoutCustomerInput
+  carts?: Prisma.CartCreateNestedManyWithoutCustomerInput
+  checkouts?: Prisma.CheckoutSessionCreateNestedManyWithoutCustomerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  groupMemberships?: Prisma.CustomerGroupMemberCreateNestedManyWithoutCustomerInput
+  wishlists?: Prisma.WishlistCreateNestedManyWithoutCustomerInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutCustomerInput
+  giftCards?: Prisma.GiftCardCreateNestedManyWithoutCustomerInput
+  loyaltyTransactions?: Prisma.LoyaltyTransactionCreateNestedManyWithoutCustomerInput
+  referralCode?: Prisma.ReferralCodeCreateNestedOneWithoutCustomerInput
+  referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
+  campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteCreateNestedManyWithoutCustomerInput
+}
+
+export type CustomerUncheckedCreateWithoutCompanyMembershipsInput = {
+  id?: string
+  email: string
+  emailVerified?: boolean
+  name?: string | null
+  phone?: string | null
+  preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
+  twoFactorEnabled?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.CustomerSessionUncheckedCreateNestedManyWithoutCustomerInput
+  accounts?: Prisma.CustomerAccountUncheckedCreateNestedManyWithoutCustomerInput
+  twoFactor?: Prisma.CustomerTwoFactorUncheckedCreateNestedOneWithoutCustomerInput
+  addresses?: Prisma.AddressUncheckedCreateNestedManyWithoutCustomerInput
+  carts?: Prisma.CartUncheckedCreateNestedManyWithoutCustomerInput
+  checkouts?: Prisma.CheckoutSessionUncheckedCreateNestedManyWithoutCustomerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  groupMemberships?: Prisma.CustomerGroupMemberUncheckedCreateNestedManyWithoutCustomerInput
+  wishlists?: Prisma.WishlistUncheckedCreateNestedManyWithoutCustomerInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  giftCards?: Prisma.GiftCardUncheckedCreateNestedManyWithoutCustomerInput
+  loyaltyTransactions?: Prisma.LoyaltyTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  referralCode?: Prisma.ReferralCodeUncheckedCreateNestedOneWithoutCustomerInput
+  referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
+  campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  quotes?: Prisma.QuoteUncheckedCreateNestedManyWithoutCustomerInput
+}
+
+export type CustomerCreateOrConnectWithoutCompanyMembershipsInput = {
+  where: Prisma.CustomerWhereUniqueInput
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutCompanyMembershipsInput, Prisma.CustomerUncheckedCreateWithoutCompanyMembershipsInput>
+}
+
+export type CustomerUpsertWithoutCompanyMembershipsInput = {
+  update: Prisma.XOR<Prisma.CustomerUpdateWithoutCompanyMembershipsInput, Prisma.CustomerUncheckedUpdateWithoutCompanyMembershipsInput>
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutCompanyMembershipsInput, Prisma.CustomerUncheckedCreateWithoutCompanyMembershipsInput>
+  where?: Prisma.CustomerWhereInput
+}
+
+export type CustomerUpdateToOneWithWhereWithoutCompanyMembershipsInput = {
+  where?: Prisma.CustomerWhereInput
+  data: Prisma.XOR<Prisma.CustomerUpdateWithoutCompanyMembershipsInput, Prisma.CustomerUncheckedUpdateWithoutCompanyMembershipsInput>
+}
+
+export type CustomerUpdateWithoutCompanyMembershipsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.CustomerSessionUpdateManyWithoutCustomerNestedInput
+  accounts?: Prisma.CustomerAccountUpdateManyWithoutCustomerNestedInput
+  twoFactor?: Prisma.CustomerTwoFactorUpdateOneWithoutCustomerNestedInput
+  addresses?: Prisma.AddressUpdateManyWithoutCustomerNestedInput
+  carts?: Prisma.CartUpdateManyWithoutCustomerNestedInput
+  checkouts?: Prisma.CheckoutSessionUpdateManyWithoutCustomerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  groupMemberships?: Prisma.CustomerGroupMemberUpdateManyWithoutCustomerNestedInput
+  wishlists?: Prisma.WishlistUpdateManyWithoutCustomerNestedInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutCustomerNestedInput
+  giftCards?: Prisma.GiftCardUpdateManyWithoutCustomerNestedInput
+  loyaltyTransactions?: Prisma.LoyaltyTransactionUpdateManyWithoutCustomerNestedInput
+  referralCode?: Prisma.ReferralCodeUpdateOneWithoutCustomerNestedInput
+  referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
+  campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUpdateManyWithoutCustomerNestedInput
+}
+
+export type CustomerUncheckedUpdateWithoutCompanyMembershipsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.CustomerSessionUncheckedUpdateManyWithoutCustomerNestedInput
+  accounts?: Prisma.CustomerAccountUncheckedUpdateManyWithoutCustomerNestedInput
+  twoFactor?: Prisma.CustomerTwoFactorUncheckedUpdateOneWithoutCustomerNestedInput
+  addresses?: Prisma.AddressUncheckedUpdateManyWithoutCustomerNestedInput
+  carts?: Prisma.CartUncheckedUpdateManyWithoutCustomerNestedInput
+  checkouts?: Prisma.CheckoutSessionUncheckedUpdateManyWithoutCustomerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  groupMemberships?: Prisma.CustomerGroupMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  wishlists?: Prisma.WishlistUncheckedUpdateManyWithoutCustomerNestedInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  giftCards?: Prisma.GiftCardUncheckedUpdateManyWithoutCustomerNestedInput
+  loyaltyTransactions?: Prisma.LoyaltyTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  referralCode?: Prisma.ReferralCodeUncheckedUpdateOneWithoutCustomerNestedInput
+  referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
+  campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  quotes?: Prisma.QuoteUncheckedUpdateManyWithoutCustomerNestedInput
+}
+
+export type CustomerCreateWithoutQuotesInput = {
+  id?: string
+  email: string
+  emailVerified?: boolean
+  name?: string | null
+  phone?: string | null
+  preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
+  twoFactorEnabled?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.CustomerSessionCreateNestedManyWithoutCustomerInput
+  accounts?: Prisma.CustomerAccountCreateNestedManyWithoutCustomerInput
+  twoFactor?: Prisma.CustomerTwoFactorCreateNestedOneWithoutCustomerInput
+  addresses?: Prisma.AddressCreateNestedManyWithoutCustomerInput
+  carts?: Prisma.CartCreateNestedManyWithoutCustomerInput
+  checkouts?: Prisma.CheckoutSessionCreateNestedManyWithoutCustomerInput
+  orders?: Prisma.OrderCreateNestedManyWithoutCustomerInput
+  returns?: Prisma.ReturnCreateNestedManyWithoutCustomerInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutCustomerInput
+  groupMemberships?: Prisma.CustomerGroupMemberCreateNestedManyWithoutCustomerInput
+  wishlists?: Prisma.WishlistCreateNestedManyWithoutCustomerInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionCreateNestedManyWithoutCustomerInput
+  giftCards?: Prisma.GiftCardCreateNestedManyWithoutCustomerInput
+  loyaltyTransactions?: Prisma.LoyaltyTransactionCreateNestedManyWithoutCustomerInput
+  referralCode?: Prisma.ReferralCodeCreateNestedOneWithoutCustomerInput
+  referredBy?: Prisma.ReferralCreateNestedOneWithoutReferredCustomerInput
+  campaignDeliveries?: Prisma.CampaignDeliveryCreateNestedManyWithoutCustomerInput
+  subscriptions?: Prisma.SubscriptionCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberCreateNestedManyWithoutCustomerInput
+}
+
+export type CustomerUncheckedCreateWithoutQuotesInput = {
+  id?: string
+  email: string
+  emailVerified?: boolean
+  name?: string | null
+  phone?: string | null
+  preferredLocale?: string | null
+  consentJson?: string | null
+  erasedAt?: Date | string | null
+  twoFactorEnabled?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.CustomerSessionUncheckedCreateNestedManyWithoutCustomerInput
+  accounts?: Prisma.CustomerAccountUncheckedCreateNestedManyWithoutCustomerInput
+  twoFactor?: Prisma.CustomerTwoFactorUncheckedCreateNestedOneWithoutCustomerInput
+  addresses?: Prisma.AddressUncheckedCreateNestedManyWithoutCustomerInput
+  carts?: Prisma.CartUncheckedCreateNestedManyWithoutCustomerInput
+  checkouts?: Prisma.CheckoutSessionUncheckedCreateNestedManyWithoutCustomerInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutCustomerInput
+  returns?: Prisma.ReturnUncheckedCreateNestedManyWithoutCustomerInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedCreateNestedManyWithoutCustomerInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutCustomerInput
+  groupMemberships?: Prisma.CustomerGroupMemberUncheckedCreateNestedManyWithoutCustomerInput
+  wishlists?: Prisma.WishlistUncheckedCreateNestedManyWithoutCustomerInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  giftCards?: Prisma.GiftCardUncheckedCreateNestedManyWithoutCustomerInput
+  loyaltyTransactions?: Prisma.LoyaltyTransactionUncheckedCreateNestedManyWithoutCustomerInput
+  referralCode?: Prisma.ReferralCodeUncheckedCreateNestedOneWithoutCustomerInput
+  referredBy?: Prisma.ReferralUncheckedCreateNestedOneWithoutReferredCustomerInput
+  campaignDeliveries?: Prisma.CampaignDeliveryUncheckedCreateNestedManyWithoutCustomerInput
+  subscriptions?: Prisma.SubscriptionUncheckedCreateNestedManyWithoutCustomerInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedCreateNestedManyWithoutCustomerInput
+}
+
+export type CustomerCreateOrConnectWithoutQuotesInput = {
+  where: Prisma.CustomerWhereUniqueInput
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutQuotesInput, Prisma.CustomerUncheckedCreateWithoutQuotesInput>
+}
+
+export type CustomerUpsertWithoutQuotesInput = {
+  update: Prisma.XOR<Prisma.CustomerUpdateWithoutQuotesInput, Prisma.CustomerUncheckedUpdateWithoutQuotesInput>
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutQuotesInput, Prisma.CustomerUncheckedCreateWithoutQuotesInput>
+  where?: Prisma.CustomerWhereInput
+}
+
+export type CustomerUpdateToOneWithWhereWithoutQuotesInput = {
+  where?: Prisma.CustomerWhereInput
+  data: Prisma.XOR<Prisma.CustomerUpdateWithoutQuotesInput, Prisma.CustomerUncheckedUpdateWithoutQuotesInput>
+}
+
+export type CustomerUpdateWithoutQuotesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.CustomerSessionUpdateManyWithoutCustomerNestedInput
+  accounts?: Prisma.CustomerAccountUpdateManyWithoutCustomerNestedInput
+  twoFactor?: Prisma.CustomerTwoFactorUpdateOneWithoutCustomerNestedInput
+  addresses?: Prisma.AddressUpdateManyWithoutCustomerNestedInput
+  carts?: Prisma.CartUpdateManyWithoutCustomerNestedInput
+  checkouts?: Prisma.CheckoutSessionUpdateManyWithoutCustomerNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutCustomerNestedInput
+  returns?: Prisma.ReturnUpdateManyWithoutCustomerNestedInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutCustomerNestedInput
+  groupMemberships?: Prisma.CustomerGroupMemberUpdateManyWithoutCustomerNestedInput
+  wishlists?: Prisma.WishlistUpdateManyWithoutCustomerNestedInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionUpdateManyWithoutCustomerNestedInput
+  giftCards?: Prisma.GiftCardUpdateManyWithoutCustomerNestedInput
+  loyaltyTransactions?: Prisma.LoyaltyTransactionUpdateManyWithoutCustomerNestedInput
+  referralCode?: Prisma.ReferralCodeUpdateOneWithoutCustomerNestedInput
+  referredBy?: Prisma.ReferralUpdateOneWithoutReferredCustomerNestedInput
+  campaignDeliveries?: Prisma.CampaignDeliveryUpdateManyWithoutCustomerNestedInput
+  subscriptions?: Prisma.SubscriptionUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUpdateManyWithoutCustomerNestedInput
+}
+
+export type CustomerUncheckedUpdateWithoutQuotesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredLocale?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  consentJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  erasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  twoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.CustomerSessionUncheckedUpdateManyWithoutCustomerNestedInput
+  accounts?: Prisma.CustomerAccountUncheckedUpdateManyWithoutCustomerNestedInput
+  twoFactor?: Prisma.CustomerTwoFactorUncheckedUpdateOneWithoutCustomerNestedInput
+  addresses?: Prisma.AddressUncheckedUpdateManyWithoutCustomerNestedInput
+  carts?: Prisma.CartUncheckedUpdateManyWithoutCustomerNestedInput
+  checkouts?: Prisma.CheckoutSessionUncheckedUpdateManyWithoutCustomerNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutCustomerNestedInput
+  returns?: Prisma.ReturnUncheckedUpdateManyWithoutCustomerNestedInput
+  storeCreditLedger?: Prisma.StoreCreditLedgerUncheckedUpdateManyWithoutCustomerNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutCustomerNestedInput
+  groupMemberships?: Prisma.CustomerGroupMemberUncheckedUpdateManyWithoutCustomerNestedInput
+  wishlists?: Prisma.WishlistUncheckedUpdateManyWithoutCustomerNestedInput
+  backInStockSubscriptions?: Prisma.BackInStockSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  giftCards?: Prisma.GiftCardUncheckedUpdateManyWithoutCustomerNestedInput
+  loyaltyTransactions?: Prisma.LoyaltyTransactionUncheckedUpdateManyWithoutCustomerNestedInput
+  referralCode?: Prisma.ReferralCodeUncheckedUpdateOneWithoutCustomerNestedInput
+  referredBy?: Prisma.ReferralUncheckedUpdateOneWithoutReferredCustomerNestedInput
+  campaignDeliveries?: Prisma.CampaignDeliveryUncheckedUpdateManyWithoutCustomerNestedInput
+  subscriptions?: Prisma.SubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
+  companyMemberships?: Prisma.CompanyMemberUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 
@@ -3616,6 +4116,8 @@ export type CustomerCountOutputType = {
   loyaltyTransactions: number
   campaignDeliveries: number
   subscriptions: number
+  companyMemberships: number
+  quotes: number
 }
 
 export type CustomerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3635,6 +4137,8 @@ export type CustomerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   loyaltyTransactions?: boolean | CustomerCountOutputTypeCountLoyaltyTransactionsArgs
   campaignDeliveries?: boolean | CustomerCountOutputTypeCountCampaignDeliveriesArgs
   subscriptions?: boolean | CustomerCountOutputTypeCountSubscriptionsArgs
+  companyMemberships?: boolean | CustomerCountOutputTypeCountCompanyMembershipsArgs
+  quotes?: boolean | CustomerCountOutputTypeCountQuotesArgs
 }
 
 /**
@@ -3759,6 +4263,20 @@ export type CustomerCountOutputTypeCountSubscriptionsArgs<ExtArgs extends runtim
   where?: Prisma.SubscriptionWhereInput
 }
 
+/**
+ * CustomerCountOutputType without action
+ */
+export type CustomerCountOutputTypeCountCompanyMembershipsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CompanyMemberWhereInput
+}
+
+/**
+ * CustomerCountOutputType without action
+ */
+export type CustomerCountOutputTypeCountQuotesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.QuoteWhereInput
+}
+
 
 export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -3791,6 +4309,8 @@ export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   referredBy?: boolean | Prisma.Customer$referredByArgs<ExtArgs>
   campaignDeliveries?: boolean | Prisma.Customer$campaignDeliveriesArgs<ExtArgs>
   subscriptions?: boolean | Prisma.Customer$subscriptionsArgs<ExtArgs>
+  companyMemberships?: boolean | Prisma.Customer$companyMembershipsArgs<ExtArgs>
+  quotes?: boolean | Prisma.Customer$quotesArgs<ExtArgs>
   _count?: boolean | Prisma.CustomerCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["customer"]>
 
@@ -3857,6 +4377,8 @@ export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   referredBy?: boolean | Prisma.Customer$referredByArgs<ExtArgs>
   campaignDeliveries?: boolean | Prisma.Customer$campaignDeliveriesArgs<ExtArgs>
   subscriptions?: boolean | Prisma.Customer$subscriptionsArgs<ExtArgs>
+  companyMemberships?: boolean | Prisma.Customer$companyMembershipsArgs<ExtArgs>
+  quotes?: boolean | Prisma.Customer$quotesArgs<ExtArgs>
   _count?: boolean | Prisma.CustomerCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CustomerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -3884,6 +4406,8 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     referredBy: Prisma.$ReferralPayload<ExtArgs> | null
     campaignDeliveries: Prisma.$CampaignDeliveryPayload<ExtArgs>[]
     subscriptions: Prisma.$SubscriptionPayload<ExtArgs>[]
+    companyMemberships: Prisma.$CompanyMemberPayload<ExtArgs>[]
+    quotes: Prisma.$QuotePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -4310,6 +4834,8 @@ export interface Prisma__CustomerClient<T, Null = never, ExtArgs extends runtime
   referredBy<T extends Prisma.Customer$referredByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$referredByArgs<ExtArgs>>): Prisma.Prisma__ReferralClient<runtime.Types.Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   campaignDeliveries<T extends Prisma.Customer$campaignDeliveriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$campaignDeliveriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CampaignDeliveryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   subscriptions<T extends Prisma.Customer$subscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$subscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  companyMemberships<T extends Prisma.Customer$companyMembershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$companyMembershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CompanyMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  quotes<T extends Prisma.Customer$quotesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$quotesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QuotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5179,6 +5705,54 @@ export type Customer$subscriptionsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.SubscriptionScalarFieldEnum | Prisma.SubscriptionScalarFieldEnum[]
+}
+
+/**
+ * Customer.companyMemberships
+ */
+export type Customer$companyMembershipsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CompanyMember
+   */
+  select?: Prisma.CompanyMemberSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CompanyMember
+   */
+  omit?: Prisma.CompanyMemberOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CompanyMemberInclude<ExtArgs> | null
+  where?: Prisma.CompanyMemberWhereInput
+  orderBy?: Prisma.CompanyMemberOrderByWithRelationInput | Prisma.CompanyMemberOrderByWithRelationInput[]
+  cursor?: Prisma.CompanyMemberWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CompanyMemberScalarFieldEnum | Prisma.CompanyMemberScalarFieldEnum[]
+}
+
+/**
+ * Customer.quotes
+ */
+export type Customer$quotesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Quote
+   */
+  select?: Prisma.QuoteSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Quote
+   */
+  omit?: Prisma.QuoteOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.QuoteInclude<ExtArgs> | null
+  where?: Prisma.QuoteWhereInput
+  orderBy?: Prisma.QuoteOrderByWithRelationInput | Prisma.QuoteOrderByWithRelationInput[]
+  cursor?: Prisma.QuoteWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.QuoteScalarFieldEnum | Prisma.QuoteScalarFieldEnum[]
 }
 
 /**

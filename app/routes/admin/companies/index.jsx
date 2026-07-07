@@ -4,11 +4,12 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import {
   addCompanyMember,
   createCompany,
-  listCompanies,
+  loadCompanyAdminIndexData,
+  parseAddCompanyMemberForm,
+  parseCreateCompanyForm,
 } from '#/core/b2b/index.server';
 import Card from '#/components/admin/card';
 import Input from '#/components/admin/form/input';
@@ -17,52 +18,28 @@ import PageHeader from '#/components/admin/page-header';
 import Button from '#/components/ui/button';
 
 export async function loader() {
-  const [companies, customers] = await Promise.all([
-    listCompanies(),
-    prisma.customer.findMany({
-      take: 100,
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, email: true, name: true },
-    }),
-  ]);
-
-  return { companies, customers };
+  return loadCompanyAdminIndexData();
 }
 
 export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get('intent');
 
-  if (intent === 'create-company') {
-    const name = formData.get('name')?.toString().trim();
-    const taxId = formData.get('taxId')?.toString().trim() || null;
-    const netTermsDays = parseInt(
-      formData.get('netTermsDays')?.toString() ?? '30',
-      10
-    );
-
-    if (!name) return { ok: false, error: 'Company name is required.' };
-
-    await createCompany({
-      name,
-      taxId,
-      netTermsDays: Number.isNaN(netTermsDays) ? 30 : netTermsDays,
-    });
-
-    return { ok: true };
-  }
-
-  if (intent === 'add-member') {
-    const companyId = formData.get('companyId')?.toString();
-    const customerId = formData.get('customerId')?.toString();
-    if (!companyId || !customerId) {
-      return { ok: false, error: 'Company and customer are required.' };
+  try {
+    if (intent === 'create-company') {
+      await createCompany(parseCreateCompanyForm(formData));
+      return { ok: true };
     }
-    await addCompanyMember(companyId, customerId);
-    return { ok: true };
-  }
 
-  return { ok: false, error: 'Unknown action.' };
+    if (intent === 'add-member') {
+      await addCompanyMember(parseAddCompanyMemberForm(formData));
+      return { ok: true };
+    }
+
+    return { ok: false, error: 'Unknown action.' };
+  } catch (err) {
+    return { ok: false, error: err.message ?? 'Could not save company.' };
+  }
 }
 
 export default function AdminCompaniesRoute() {
@@ -132,8 +109,8 @@ export default function AdminCompaniesRoute() {
                       <p className="text-text font-medium">{company.name}</p>
                       <p className="text-text-muted text-xs">
                         Net {company.netTermsDays} days ·{' '}
-                        {company._count.members} member(s) ·{' '}
-                        {company._count.quotes} quote(s)
+                        {company.memberCount ?? 0} member(s) ·{' '}
+                        {company.quoteCount ?? 0} quote(s)
                       </p>
                     </div>
                   </div>

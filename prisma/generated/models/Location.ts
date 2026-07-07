@@ -30,6 +30,7 @@ export type LocationMinAggregateOutputType = {
   code: string | null
   isDefault: boolean | null
   addressJson: string | null
+  allowsPickup: boolean | null
   active: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -41,6 +42,7 @@ export type LocationMaxAggregateOutputType = {
   code: string | null
   isDefault: boolean | null
   addressJson: string | null
+  allowsPickup: boolean | null
   active: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -52,6 +54,7 @@ export type LocationCountAggregateOutputType = {
   code: number
   isDefault: number
   addressJson: number
+  allowsPickup: number
   active: number
   createdAt: number
   updatedAt: number
@@ -65,6 +68,7 @@ export type LocationMinAggregateInputType = {
   code?: true
   isDefault?: true
   addressJson?: true
+  allowsPickup?: true
   active?: true
   createdAt?: true
   updatedAt?: true
@@ -76,6 +80,7 @@ export type LocationMaxAggregateInputType = {
   code?: true
   isDefault?: true
   addressJson?: true
+  allowsPickup?: true
   active?: true
   createdAt?: true
   updatedAt?: true
@@ -87,6 +92,7 @@ export type LocationCountAggregateInputType = {
   code?: true
   isDefault?: true
   addressJson?: true
+  allowsPickup?: true
   active?: true
   createdAt?: true
   updatedAt?: true
@@ -171,6 +177,7 @@ export type LocationGroupByOutputType = {
   code: string
   isDefault: boolean
   addressJson: string | null
+  allowsPickup: boolean
   active: boolean
   createdAt: Date
   updatedAt: Date
@@ -203,11 +210,13 @@ export type LocationWhereInput = {
   code?: Prisma.StringFilter<"Location"> | string
   isDefault?: Prisma.BoolFilter<"Location"> | boolean
   addressJson?: Prisma.StringNullableFilter<"Location"> | string | null
+  allowsPickup?: Prisma.BoolFilter<"Location"> | boolean
   active?: Prisma.BoolFilter<"Location"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Location"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Location"> | Date | string
   inventoryLevels?: Prisma.InventoryLevelListRelationFilter
   posSessions?: Prisma.PosSessionListRelationFilter
+  pickupOrders?: Prisma.OrderListRelationFilter
 }
 
 export type LocationOrderByWithRelationInput = {
@@ -216,11 +225,13 @@ export type LocationOrderByWithRelationInput = {
   code?: Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   addressJson?: Prisma.SortOrderInput | Prisma.SortOrder
+  allowsPickup?: Prisma.SortOrder
   active?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   inventoryLevels?: Prisma.InventoryLevelOrderByRelationAggregateInput
   posSessions?: Prisma.PosSessionOrderByRelationAggregateInput
+  pickupOrders?: Prisma.OrderOrderByRelationAggregateInput
 }
 
 export type LocationWhereUniqueInput = Prisma.AtLeast<{
@@ -232,11 +243,13 @@ export type LocationWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Location"> | string
   isDefault?: Prisma.BoolFilter<"Location"> | boolean
   addressJson?: Prisma.StringNullableFilter<"Location"> | string | null
+  allowsPickup?: Prisma.BoolFilter<"Location"> | boolean
   active?: Prisma.BoolFilter<"Location"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Location"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Location"> | Date | string
   inventoryLevels?: Prisma.InventoryLevelListRelationFilter
   posSessions?: Prisma.PosSessionListRelationFilter
+  pickupOrders?: Prisma.OrderListRelationFilter
 }, "id" | "code">
 
 export type LocationOrderByWithAggregationInput = {
@@ -245,6 +258,7 @@ export type LocationOrderByWithAggregationInput = {
   code?: Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   addressJson?: Prisma.SortOrderInput | Prisma.SortOrder
+  allowsPickup?: Prisma.SortOrder
   active?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -262,6 +276,7 @@ export type LocationScalarWhereWithAggregatesInput = {
   code?: Prisma.StringWithAggregatesFilter<"Location"> | string
   isDefault?: Prisma.BoolWithAggregatesFilter<"Location"> | boolean
   addressJson?: Prisma.StringNullableWithAggregatesFilter<"Location"> | string | null
+  allowsPickup?: Prisma.BoolWithAggregatesFilter<"Location"> | boolean
   active?: Prisma.BoolWithAggregatesFilter<"Location"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Location"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Location"> | Date | string
@@ -273,11 +288,13 @@ export type LocationCreateInput = {
   code: string
   isDefault?: boolean
   addressJson?: string | null
+  allowsPickup?: boolean
   active?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   inventoryLevels?: Prisma.InventoryLevelCreateNestedManyWithoutLocationInput
   posSessions?: Prisma.PosSessionCreateNestedManyWithoutLocationInput
+  pickupOrders?: Prisma.OrderCreateNestedManyWithoutPickupLocationInput
 }
 
 export type LocationUncheckedCreateInput = {
@@ -286,11 +303,13 @@ export type LocationUncheckedCreateInput = {
   code: string
   isDefault?: boolean
   addressJson?: string | null
+  allowsPickup?: boolean
   active?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   inventoryLevels?: Prisma.InventoryLevelUncheckedCreateNestedManyWithoutLocationInput
   posSessions?: Prisma.PosSessionUncheckedCreateNestedManyWithoutLocationInput
+  pickupOrders?: Prisma.OrderUncheckedCreateNestedManyWithoutPickupLocationInput
 }
 
 export type LocationUpdateInput = {
@@ -299,11 +318,13 @@ export type LocationUpdateInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   addressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  allowsPickup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inventoryLevels?: Prisma.InventoryLevelUpdateManyWithoutLocationNestedInput
   posSessions?: Prisma.PosSessionUpdateManyWithoutLocationNestedInput
+  pickupOrders?: Prisma.OrderUpdateManyWithoutPickupLocationNestedInput
 }
 
 export type LocationUncheckedUpdateInput = {
@@ -312,11 +333,13 @@ export type LocationUncheckedUpdateInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   addressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  allowsPickup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inventoryLevels?: Prisma.InventoryLevelUncheckedUpdateManyWithoutLocationNestedInput
   posSessions?: Prisma.PosSessionUncheckedUpdateManyWithoutLocationNestedInput
+  pickupOrders?: Prisma.OrderUncheckedUpdateManyWithoutPickupLocationNestedInput
 }
 
 export type LocationCreateManyInput = {
@@ -325,6 +348,7 @@ export type LocationCreateManyInput = {
   code: string
   isDefault?: boolean
   addressJson?: string | null
+  allowsPickup?: boolean
   active?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -336,6 +360,7 @@ export type LocationUpdateManyMutationInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   addressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  allowsPickup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -347,9 +372,15 @@ export type LocationUncheckedUpdateManyInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   addressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  allowsPickup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type LocationNullableScalarRelationFilter = {
+  is?: Prisma.LocationWhereInput | null
+  isNot?: Prisma.LocationWhereInput | null
 }
 
 export type LocationCountOrderByAggregateInput = {
@@ -358,6 +389,7 @@ export type LocationCountOrderByAggregateInput = {
   code?: Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   addressJson?: Prisma.SortOrder
+  allowsPickup?: Prisma.SortOrder
   active?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -369,6 +401,7 @@ export type LocationMaxOrderByAggregateInput = {
   code?: Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   addressJson?: Prisma.SortOrder
+  allowsPickup?: Prisma.SortOrder
   active?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -380,6 +413,7 @@ export type LocationMinOrderByAggregateInput = {
   code?: Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   addressJson?: Prisma.SortOrder
+  allowsPickup?: Prisma.SortOrder
   active?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -390,9 +424,20 @@ export type LocationScalarRelationFilter = {
   isNot?: Prisma.LocationWhereInput
 }
 
-export type LocationNullableScalarRelationFilter = {
-  is?: Prisma.LocationWhereInput | null
-  isNot?: Prisma.LocationWhereInput | null
+export type LocationCreateNestedOneWithoutPickupOrdersInput = {
+  create?: Prisma.XOR<Prisma.LocationCreateWithoutPickupOrdersInput, Prisma.LocationUncheckedCreateWithoutPickupOrdersInput>
+  connectOrCreate?: Prisma.LocationCreateOrConnectWithoutPickupOrdersInput
+  connect?: Prisma.LocationWhereUniqueInput
+}
+
+export type LocationUpdateOneWithoutPickupOrdersNestedInput = {
+  create?: Prisma.XOR<Prisma.LocationCreateWithoutPickupOrdersInput, Prisma.LocationUncheckedCreateWithoutPickupOrdersInput>
+  connectOrCreate?: Prisma.LocationCreateOrConnectWithoutPickupOrdersInput
+  upsert?: Prisma.LocationUpsertWithoutPickupOrdersInput
+  disconnect?: Prisma.LocationWhereInput | boolean
+  delete?: Prisma.LocationWhereInput | boolean
+  connect?: Prisma.LocationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.LocationUpdateToOneWithWhereWithoutPickupOrdersInput, Prisma.LocationUpdateWithoutPickupOrdersInput>, Prisma.LocationUncheckedUpdateWithoutPickupOrdersInput>
 }
 
 export type LocationCreateNestedOneWithoutInventoryLevelsInput = {
@@ -425,16 +470,90 @@ export type LocationUpdateOneWithoutPosSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.LocationUpdateToOneWithWhereWithoutPosSessionsInput, Prisma.LocationUpdateWithoutPosSessionsInput>, Prisma.LocationUncheckedUpdateWithoutPosSessionsInput>
 }
 
+export type LocationCreateWithoutPickupOrdersInput = {
+  id?: string
+  name: string
+  code: string
+  isDefault?: boolean
+  addressJson?: string | null
+  allowsPickup?: boolean
+  active?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  inventoryLevels?: Prisma.InventoryLevelCreateNestedManyWithoutLocationInput
+  posSessions?: Prisma.PosSessionCreateNestedManyWithoutLocationInput
+}
+
+export type LocationUncheckedCreateWithoutPickupOrdersInput = {
+  id?: string
+  name: string
+  code: string
+  isDefault?: boolean
+  addressJson?: string | null
+  allowsPickup?: boolean
+  active?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  inventoryLevels?: Prisma.InventoryLevelUncheckedCreateNestedManyWithoutLocationInput
+  posSessions?: Prisma.PosSessionUncheckedCreateNestedManyWithoutLocationInput
+}
+
+export type LocationCreateOrConnectWithoutPickupOrdersInput = {
+  where: Prisma.LocationWhereUniqueInput
+  create: Prisma.XOR<Prisma.LocationCreateWithoutPickupOrdersInput, Prisma.LocationUncheckedCreateWithoutPickupOrdersInput>
+}
+
+export type LocationUpsertWithoutPickupOrdersInput = {
+  update: Prisma.XOR<Prisma.LocationUpdateWithoutPickupOrdersInput, Prisma.LocationUncheckedUpdateWithoutPickupOrdersInput>
+  create: Prisma.XOR<Prisma.LocationCreateWithoutPickupOrdersInput, Prisma.LocationUncheckedCreateWithoutPickupOrdersInput>
+  where?: Prisma.LocationWhereInput
+}
+
+export type LocationUpdateToOneWithWhereWithoutPickupOrdersInput = {
+  where?: Prisma.LocationWhereInput
+  data: Prisma.XOR<Prisma.LocationUpdateWithoutPickupOrdersInput, Prisma.LocationUncheckedUpdateWithoutPickupOrdersInput>
+}
+
+export type LocationUpdateWithoutPickupOrdersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  addressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  allowsPickup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inventoryLevels?: Prisma.InventoryLevelUpdateManyWithoutLocationNestedInput
+  posSessions?: Prisma.PosSessionUpdateManyWithoutLocationNestedInput
+}
+
+export type LocationUncheckedUpdateWithoutPickupOrdersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  addressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  allowsPickup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inventoryLevels?: Prisma.InventoryLevelUncheckedUpdateManyWithoutLocationNestedInput
+  posSessions?: Prisma.PosSessionUncheckedUpdateManyWithoutLocationNestedInput
+}
+
 export type LocationCreateWithoutInventoryLevelsInput = {
   id?: string
   name: string
   code: string
   isDefault?: boolean
   addressJson?: string | null
+  allowsPickup?: boolean
   active?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   posSessions?: Prisma.PosSessionCreateNestedManyWithoutLocationInput
+  pickupOrders?: Prisma.OrderCreateNestedManyWithoutPickupLocationInput
 }
 
 export type LocationUncheckedCreateWithoutInventoryLevelsInput = {
@@ -443,10 +562,12 @@ export type LocationUncheckedCreateWithoutInventoryLevelsInput = {
   code: string
   isDefault?: boolean
   addressJson?: string | null
+  allowsPickup?: boolean
   active?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   posSessions?: Prisma.PosSessionUncheckedCreateNestedManyWithoutLocationInput
+  pickupOrders?: Prisma.OrderUncheckedCreateNestedManyWithoutPickupLocationInput
 }
 
 export type LocationCreateOrConnectWithoutInventoryLevelsInput = {
@@ -471,10 +592,12 @@ export type LocationUpdateWithoutInventoryLevelsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   addressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  allowsPickup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   posSessions?: Prisma.PosSessionUpdateManyWithoutLocationNestedInput
+  pickupOrders?: Prisma.OrderUpdateManyWithoutPickupLocationNestedInput
 }
 
 export type LocationUncheckedUpdateWithoutInventoryLevelsInput = {
@@ -483,10 +606,12 @@ export type LocationUncheckedUpdateWithoutInventoryLevelsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   addressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  allowsPickup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   posSessions?: Prisma.PosSessionUncheckedUpdateManyWithoutLocationNestedInput
+  pickupOrders?: Prisma.OrderUncheckedUpdateManyWithoutPickupLocationNestedInput
 }
 
 export type LocationCreateWithoutPosSessionsInput = {
@@ -495,10 +620,12 @@ export type LocationCreateWithoutPosSessionsInput = {
   code: string
   isDefault?: boolean
   addressJson?: string | null
+  allowsPickup?: boolean
   active?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   inventoryLevels?: Prisma.InventoryLevelCreateNestedManyWithoutLocationInput
+  pickupOrders?: Prisma.OrderCreateNestedManyWithoutPickupLocationInput
 }
 
 export type LocationUncheckedCreateWithoutPosSessionsInput = {
@@ -507,10 +634,12 @@ export type LocationUncheckedCreateWithoutPosSessionsInput = {
   code: string
   isDefault?: boolean
   addressJson?: string | null
+  allowsPickup?: boolean
   active?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   inventoryLevels?: Prisma.InventoryLevelUncheckedCreateNestedManyWithoutLocationInput
+  pickupOrders?: Prisma.OrderUncheckedCreateNestedManyWithoutPickupLocationInput
 }
 
 export type LocationCreateOrConnectWithoutPosSessionsInput = {
@@ -535,10 +664,12 @@ export type LocationUpdateWithoutPosSessionsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   addressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  allowsPickup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inventoryLevels?: Prisma.InventoryLevelUpdateManyWithoutLocationNestedInput
+  pickupOrders?: Prisma.OrderUpdateManyWithoutPickupLocationNestedInput
 }
 
 export type LocationUncheckedUpdateWithoutPosSessionsInput = {
@@ -547,10 +678,12 @@ export type LocationUncheckedUpdateWithoutPosSessionsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   addressJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  allowsPickup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inventoryLevels?: Prisma.InventoryLevelUncheckedUpdateManyWithoutLocationNestedInput
+  pickupOrders?: Prisma.OrderUncheckedUpdateManyWithoutPickupLocationNestedInput
 }
 
 
@@ -561,11 +694,13 @@ export type LocationUncheckedUpdateWithoutPosSessionsInput = {
 export type LocationCountOutputType = {
   inventoryLevels: number
   posSessions: number
+  pickupOrders: number
 }
 
 export type LocationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inventoryLevels?: boolean | LocationCountOutputTypeCountInventoryLevelsArgs
   posSessions?: boolean | LocationCountOutputTypeCountPosSessionsArgs
+  pickupOrders?: boolean | LocationCountOutputTypeCountPickupOrdersArgs
 }
 
 /**
@@ -592,6 +727,13 @@ export type LocationCountOutputTypeCountPosSessionsArgs<ExtArgs extends runtime.
   where?: Prisma.PosSessionWhereInput
 }
 
+/**
+ * LocationCountOutputType without action
+ */
+export type LocationCountOutputTypeCountPickupOrdersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OrderWhereInput
+}
+
 
 export type LocationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -599,11 +741,13 @@ export type LocationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   code?: boolean
   isDefault?: boolean
   addressJson?: boolean
+  allowsPickup?: boolean
   active?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   inventoryLevels?: boolean | Prisma.Location$inventoryLevelsArgs<ExtArgs>
   posSessions?: boolean | Prisma.Location$posSessionsArgs<ExtArgs>
+  pickupOrders?: boolean | Prisma.Location$pickupOrdersArgs<ExtArgs>
   _count?: boolean | Prisma.LocationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["location"]>
 
@@ -613,6 +757,7 @@ export type LocationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   code?: boolean
   isDefault?: boolean
   addressJson?: boolean
+  allowsPickup?: boolean
   active?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -624,6 +769,7 @@ export type LocationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   code?: boolean
   isDefault?: boolean
   addressJson?: boolean
+  allowsPickup?: boolean
   active?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -635,15 +781,17 @@ export type LocationSelectScalar = {
   code?: boolean
   isDefault?: boolean
   addressJson?: boolean
+  allowsPickup?: boolean
   active?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type LocationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "code" | "isDefault" | "addressJson" | "active" | "createdAt" | "updatedAt", ExtArgs["result"]["location"]>
+export type LocationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "code" | "isDefault" | "addressJson" | "allowsPickup" | "active" | "createdAt" | "updatedAt", ExtArgs["result"]["location"]>
 export type LocationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   inventoryLevels?: boolean | Prisma.Location$inventoryLevelsArgs<ExtArgs>
   posSessions?: boolean | Prisma.Location$posSessionsArgs<ExtArgs>
+  pickupOrders?: boolean | Prisma.Location$pickupOrdersArgs<ExtArgs>
   _count?: boolean | Prisma.LocationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type LocationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -654,6 +802,7 @@ export type $LocationPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   objects: {
     inventoryLevels: Prisma.$InventoryLevelPayload<ExtArgs>[]
     posSessions: Prisma.$PosSessionPayload<ExtArgs>[]
+    pickupOrders: Prisma.$OrderPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -661,6 +810,7 @@ export type $LocationPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     code: string
     isDefault: boolean
     addressJson: string | null
+    allowsPickup: boolean
     active: boolean
     createdAt: Date
     updatedAt: Date
@@ -1060,6 +1210,7 @@ export interface Prisma__LocationClient<T, Null = never, ExtArgs extends runtime
   readonly [Symbol.toStringTag]: "PrismaPromise"
   inventoryLevels<T extends Prisma.Location$inventoryLevelsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Location$inventoryLevelsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventoryLevelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   posSessions<T extends Prisma.Location$posSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Location$posSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PosSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  pickupOrders<T extends Prisma.Location$pickupOrdersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Location$pickupOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1094,6 +1245,7 @@ export interface LocationFieldRefs {
   readonly code: Prisma.FieldRef<"Location", 'String'>
   readonly isDefault: Prisma.FieldRef<"Location", 'Boolean'>
   readonly addressJson: Prisma.FieldRef<"Location", 'String'>
+  readonly allowsPickup: Prisma.FieldRef<"Location", 'Boolean'>
   readonly active: Prisma.FieldRef<"Location", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Location", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Location", 'DateTime'>
@@ -1533,6 +1685,30 @@ export type Location$posSessionsArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.PosSessionScalarFieldEnum | Prisma.PosSessionScalarFieldEnum[]
+}
+
+/**
+ * Location.pickupOrders
+ */
+export type Location$pickupOrdersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Order
+   */
+  select?: Prisma.OrderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Order
+   */
+  omit?: Prisma.OrderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OrderInclude<ExtArgs> | null
+  where?: Prisma.OrderWhereInput
+  orderBy?: Prisma.OrderOrderByWithRelationInput | Prisma.OrderOrderByWithRelationInput[]
+  cursor?: Prisma.OrderWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OrderScalarFieldEnum | Prisma.OrderScalarFieldEnum[]
 }
 
 /**
