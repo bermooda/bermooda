@@ -77,14 +77,14 @@ Finish each review completely in the same PR — do not defer work.
 
 ## Routes (`app/routes/`)
 
-| Area            | Status | Notes |
-| --------------- | ------ | ----- |
-| `storefront/`   | ⬜     |       |
-| `admin/`        | ⬜     |       |
-| `api/v1/`       | ⬜     |       |
-| `api/admin/v1/` | ⬜     |       |
-| `webhooks/`     | ⬜     |       |
-| `auth/`         | ⬜     |       |
+| Area            | Status | Notes                                                                                                                                                                                      |
+| --------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `storefront/`   | ⬜     |                                                                                                                                                                                            |
+| `admin/`        | ⬜     |                                                                                                                                                                                            |
+| `api/v1/`       | ⬜     |                                                                                                                                                                                            |
+| `api/admin/v1/` | ⬜     |                                                                                                                                                                                            |
+| `webhooks/`     | ⬜     |                                                                                                                                                                                            |
+| `auth/`         | ✅     | Shared `createAuthRouteHandlers` in `#/libs/auth/shared.server`; admin/customer routes thinned; removed unused default auth exports; expanded tests; docs synced with rate-limit behavior. |
 
 ## UI
 

@@ -96,17 +96,28 @@ GET/POST  /admin/auth/*    app/routes/auth/admin.jsx     (adminAuth)
 GET/POST  /account/auth/*  app/routes/auth/customer.jsx  (customerAuth)
 ```
 
-Each file is a thin React Router route that proxies the request to the
-corresponding better-auth handler:
+Each file is a thin React Router route that rate-limits and proxies the request
+to the corresponding better-auth handler via `createAuthRouteHandlers` from
+`#/libs/auth/shared.server`:
 
 ```js
-export async function loader({ request }) {
-  return auth.handler(request);
+import { adminAuth } from '#/libs/auth/admin.server';
+import { createAuthRouteHandlers } from '#/libs/auth/shared.server';
+
+const { loader: authLoader, action: authAction } =
+  createAuthRouteHandlers(adminAuth);
+
+export async function loader(args) {
+  return authLoader(args);
 }
-export async function action({ request }) {
-  return auth.handler(request);
+
+export async function action(args) {
+  return authAction(args);
 }
 ```
+
+Both loader and action apply the `auth` rate-limit policy (20 requests/min per
+IP+path) before delegating to `auth.handler(request)`.
 
 ---
 

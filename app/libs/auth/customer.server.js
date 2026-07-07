@@ -163,5 +163,3 @@ export async function getCustomerSession(request) {
     return null;
   }
 }
-
-export default customerAuth;

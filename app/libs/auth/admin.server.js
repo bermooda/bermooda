@@ -147,5 +147,3 @@ export async function authenticate(request) {
     throw redirect('/admin/login', 302);
   }
 }
-
-export default adminAuth;
