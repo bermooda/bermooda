@@ -174,6 +174,10 @@ export default [
       route('collections/:id', 'routes/api/admin/v1/collections/$id.jsx'),
       route('channels', 'routes/api/admin/v1/channels.jsx'),
       route('channels/:id', 'routes/api/admin/v1/channels/$id.jsx'),
+      route('companies/:id', 'routes/api/admin/v1/companies/$id.jsx'),
+      route('companies', 'routes/api/admin/v1/companies.jsx'),
+      route('quotes/:id', 'routes/api/admin/v1/quotes/$id.jsx'),
+      route('quotes', 'routes/api/admin/v1/quotes.jsx'),
       route('api-keys', 'routes/api/admin/v1/api-keys.jsx'),
       route('api-keys/:id', 'routes/api/admin/v1/api-keys/$id.jsx'),
       route(
