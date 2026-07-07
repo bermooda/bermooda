@@ -2,12 +2,13 @@ import { redirect } from 'react-router';
 import { useLoaderData } from 'react-router';
 
 import { getCartTokenFromRequest } from '#/utils/cart-cookie.server';
-import logger from '#/utils/logger.server';
-import { getCustomerSession } from '#/libs/auth/customer.server';
 import {
-  normalizeAddressForSession,
-  parseAddressInput,
-} from '#/core/address-validation/index.server';
+  appendCheckoutSessionCookie,
+  getCheckoutSessionIdFromRequest,
+} from '#/utils/checkout-cookie.server';
+import { getCustomerSession } from '#/libs/auth/customer.server';
+import { handleError } from '#/libs/error.server';
+import { normalizeAddressForSession } from '#/core/address-validation/index.server';
 import { getCart } from '#/core/cart/index.server';
 import {
   buildComputeTotalsParams,
@@ -18,168 +19,17 @@ import {
   parseCheckoutSessionFields,
   updateCheckoutSession,
 } from '#/core/checkout/index.server';
+import {
+  buildCheckoutPayload,
+  buildSessionUpdateData,
+  loadCheckoutDisplayData,
+  persistCheckoutSessionForPlaceOrder,
+  resolveCheckoutPlaceOrderResult,
+} from '#/core/checkout/storefront.server';
 import { computeTotals } from '#/core/checkout/totals.server';
-import { getRequestCurrency } from '#/core/currency/index.server';
-import { getRequestLocale } from '#/core/i18n/index.server';
-import { getCustomerLoyaltySummary } from '#/core/loyalty/index.server';
-import { attachPaymentIntent, placeOrder } from '#/core/orders/index.server';
-import {
-  createPaymentIntent,
-  createPaymentSession,
-  getProvider as getPaymentProvider,
-  listProvidersWithDetails,
-} from '#/core/payments/index.server';
-import {
-  getAllQuotes,
-  resolveShippingOption,
-} from '#/core/shipping/index.server';
-import { getCustomerStoreCreditSummary } from '#/core/store-credit/index.server';
-import { getSlotBlocksMap } from '#/core/themes/index.server';
+import { getAllQuotes } from '#/core/shipping/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
-
-function getCheckoutSessionId(request) {
-  const cookie = request.headers.get('cookie') ?? '';
-  const match = cookie.match(/(?:^|;\s*)checkout_session=([^;]+)/);
-  return match ? decodeURIComponent(match[1].trim()) : null;
-}
-
-async function loadTenderBalances(customerId) {
-  if (!customerId) {
-    return { isLoggedIn: false };
-  }
-
-  const [storeCredit, loyalty] = await Promise.all([
-    getCustomerStoreCreditSummary(customerId),
-    getCustomerLoyaltySummary(customerId),
-  ]);
-
-  return {
-    isLoggedIn: true,
-    storeCreditBalanceCents: storeCredit.balance,
-    loyaltyBalance: loyalty.balance,
-    loyaltyEnabled: loyalty.enabled,
-    loyaltyValueCents: loyalty.valueCents,
-  };
-}
-
-function buildCheckoutPayload(rawData, { session, customerId }) {
-  const addr = parseAddressInput(rawData);
-
-  const useStoreCredit =
-    rawData.useStoreCredit === 'on' || rawData.useStoreCredit === 'true';
-  const useLoyalty =
-    rawData.useLoyalty === 'on' || rawData.useLoyalty === 'true';
-
-  return {
-    addr,
-    email: rawData.email?.toString().trim() || session?.email || null,
-    vatId: rawData.vatId?.toString().trim() || null,
-    taxExempt: rawData.taxExempt === 'on' || rawData.taxExempt === 'true',
-    couponCode: rawData.couponCode?.toString().trim().toUpperCase() || null,
-    shippingOptionId: rawData.shippingOptionId?.toString() || null,
-    paymentProvider: rawData.paymentProvider?.toString() || 'stripe',
-    giftCardCode: rawData.giftCardCode?.toString().trim().toUpperCase() || null,
-    useStoreCredit,
-    useLoyalty,
-    effectiveCustomerId: session?.customerId ?? customerId ?? undefined,
-  };
-}
-
-async function resolveTenderAmounts(payload) {
-  let storeCreditCents = 0;
-  let loyaltyPointsCents = 0;
-
-  if (payload.effectiveCustomerId && payload.useStoreCredit) {
-    const storeCredit = await getCustomerStoreCreditSummary(
-      payload.effectiveCustomerId
-    );
-    storeCreditCents = storeCredit.balance;
-  }
-
-  if (payload.effectiveCustomerId && payload.useLoyalty) {
-    const loyalty = await getCustomerLoyaltySummary(
-      payload.effectiveCustomerId
-    );
-    loyaltyPointsCents = loyalty.valueCents;
-  }
-
-  return { storeCreditCents, loyaltyPointsCents };
-}
-
-async function buildSessionUpdateData(payload, session) {
-  const { normalizedAddr, hasAddress } = await normalizeAddressForSession(
-    payload.addr
-  );
-
-  let shippingOptionJson = session?.shippingOptionJson ?? null;
-  if (payload.shippingOptionId && hasAddress) {
-    const cartForQuotes = session?.cart ?? null;
-    if (cartForQuotes) {
-      const { option } = await resolveShippingOption({
-        cart: cartForQuotes,
-        shippingAddress: normalizedAddr,
-        optionId: payload.shippingOptionId,
-      });
-      if (option) {
-        shippingOptionJson = JSON.stringify(option);
-      }
-    }
-  }
-
-  const { storeCreditCents, loyaltyPointsCents } =
-    await resolveTenderAmounts(payload);
-
-  return {
-    shippingAddressJson: hasAddress
-      ? JSON.stringify(normalizedAddr)
-      : undefined,
-    billingAddressJson: null,
-    email: payload.email,
-    vatId: payload.vatId,
-    taxExempt: payload.taxExempt,
-    couponCode: payload.couponCode,
-    shippingOptionJson: shippingOptionJson ?? undefined,
-    paymentProvider: payload.paymentProvider,
-    giftCardCode: payload.giftCardCode,
-    storeCreditCents,
-    loyaltyPointsCents,
-    normalizedAddr,
-    hasAddress,
-  };
-}
-
-async function loadCheckoutData(request, session, cart, customerId) {
-  const locale = await getRequestLocale(request);
-  const currency = await getRequestCurrency(request);
-  const { shippingAddress } = parseCheckoutSessionFields(session);
-  const checkoutCart = session?.cart ?? cart;
-  const effectiveCustomerId = session?.customerId ?? customerId ?? undefined;
-
-  const [shippingQuotes, paymentProviders, totals, tenderBalances, slotBlocks] =
-    await Promise.all([
-      shippingAddress
-        ? getAllQuotes({ cart: checkoutCart, shippingAddress })
-        : Promise.resolve([]),
-      Promise.resolve(listProvidersWithDetails()),
-      computeTotals(buildComputeTotalsParams(session, checkoutCart)),
-      loadTenderBalances(effectiveCustomerId),
-      getSlotBlocksMap(['checkout.afterPayment']),
-    ]);
-
-  return {
-    session: normaliseCheckoutSessionForDisplay(session),
-    cart,
-    shippingQuotes,
-    paymentProviders,
-    totals,
-    tenderBalances,
-    locale,
-    currency,
-    slotBlocks,
-    stripePublishableKey: process.env.STRIPE_PUBLIC_KEY ?? null,
-  };
-}
 
 export async function loader({ request }) {
   const themeId = await preloadStorefrontTheme();
@@ -192,7 +42,7 @@ export async function loader({ request }) {
   const cart = await getCart(cartToken);
   if (!cart || !cart.lines?.length) return redirect('/cart');
 
-  let sessionId = getCheckoutSessionId(request);
+  let sessionId = getCheckoutSessionIdFromRequest(request);
   let session = sessionId ? await getCheckoutSession(sessionId) : null;
 
   if (!session) {
@@ -206,13 +56,15 @@ export async function loader({ request }) {
     session = { ...session, customerId };
   }
 
-  const data = await loadCheckoutData(request, session, cart, customerId);
+  const data = await loadCheckoutDisplayData(
+    request,
+    session,
+    cart,
+    customerId
+  );
 
   const headers = new Headers();
-  headers.set(
-    'Set-Cookie',
-    `checkout_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax`
-  );
+  appendCheckoutSessionCookie(headers, sessionId);
 
   return Response.json({ themeId, ...data }, { headers });
 }
@@ -220,7 +72,7 @@ export async function loader({ request }) {
 export async function action({ request }) {
   const themeId = await preloadStorefrontTheme();
   const formData = await request.formData();
-  const sessionId = getCheckoutSessionId(request);
+  const sessionId = getCheckoutSessionIdFromRequest(request);
   const intent = formData.get('intent')?.toString() ?? 'place-order';
   const rawData = Object.fromEntries(formData);
 
@@ -261,7 +113,6 @@ export async function action({ request }) {
     }
   }
 
-  // ── Place order ───────────────────────────────────────────────────────────
   if (!payload.shippingOptionId) {
     return { error: 'Please select a shipping method.' };
   }
@@ -286,105 +137,40 @@ export async function action({ request }) {
     if (err.message === 'Please check your shipping address.') {
       return { error: err.message };
     }
-    logger.error({ err }, 'Failed to prepare checkout session');
-    return { error: 'Unable to load shipping options. Please try again.' };
+    return handleError(err, {
+      source: 'storefront.checkout',
+      userMessage: 'Unable to load shipping options. Please try again.',
+    });
   }
 
   try {
-    await updateCheckoutSession(
-      sessionId,
-      {
-        shippingAddressJson: updateData.shippingAddressJson,
-        billingAddressJson: updateData.billingAddressJson,
-        email: updateData.email,
-        vatId: updateData.vatId,
-        taxExempt: updateData.taxExempt,
-        couponCode: updateData.couponCode,
-        shippingOptionJson: updateData.shippingOptionJson,
-        paymentProvider: updateData.paymentProvider,
-        giftCardCode: updateData.giftCardCode,
-        storeCreditCents: updateData.storeCreditCents,
-        loyaltyPointsCents: updateData.loyaltyPointsCents,
-      },
-      { requireComplete: true }
-    );
+    await persistCheckoutSessionForPlaceOrder(sessionId, updateData);
   } catch (err) {
     return { error: err.message };
   }
 
-  const refreshedSession = await getCheckoutSession(sessionId);
-  const cartSnapshot = refreshedSession?.cart ?? session.cart;
-
-  let order;
   try {
-    order = await placeOrder(sessionId, {
-      paymentProvider:
-        refreshedSession?.paymentProvider ?? payload.paymentProvider,
-    });
-  } catch (err) {
-    logger.error({ err }, 'placeOrder failed');
-    return { themeId, error: err.message };
-  }
-
-  const origin = new URL(request.url).origin;
-  const providerId = order.paymentProvider ?? 'stripe';
-
-  if (providerId === 'manual') {
-    return redirect(`${origin}/thank-you/${order.orderNumber}`);
-  }
-
-  if (order.totalCents <= 0) {
-    return redirect(`${origin}/thank-you/${order.orderNumber}`);
-  }
-
-  if (providerId === 'stripe_element') {
-    try {
-      const intent = await createPaymentIntent(providerId, {
-        amountCents: order.totalCents,
-        currency: order.currency,
-        orderId: order.id,
-      });
-
-      await attachPaymentIntent(order.id, intent.paymentIntentId);
-
-      return {
-        themeId,
-        paymentElement: {
-          clientSecret: intent.clientSecret,
-          orderNumber: order.orderNumber,
-          publishableKey: process.env.STRIPE_PUBLIC_KEY ?? null,
-        },
-      };
-    } catch (err) {
-      logger.error({ err, orderId: order.id }, 'PaymentIntent creation failed');
-      return {
-        error:
-          'Payment setup failed. Your order was placed — please contact support.',
-      };
-    }
-  }
-
-  try {
-    const paymentSession = await createPaymentSession(providerId, {
-      cart: cartSnapshot,
-      orderId: order.id,
-      amountCents: order.totalCents,
-      currency: order.currency,
-      successUrl: `${origin}/thank-you/${order.orderNumber}`,
-      cancelUrl: `${origin}/checkout`,
+    const result = await resolveCheckoutPlaceOrderResult({
+      sessionId,
+      session,
+      payload,
+      request,
     });
 
-    const provider = getPaymentProvider(providerId);
-    if (provider.requiresRedirect === false || paymentSession.manual) {
-      return redirect(`${origin}/thank-you/${order.orderNumber}`);
+    if (result.type === 'redirect') {
+      return redirect(result.url);
     }
 
-    return redirect(paymentSession.url);
-  } catch (err) {
-    logger.error({ err, orderId: order.id }, 'Payment session creation failed');
     return {
-      error: 'Payment session creation failed. Please contact support.',
+      themeId,
+      paymentElement: result.paymentElement,
     };
+  } catch (err) {
+    return handleError(err, {
+      source: 'storefront.checkout.placeOrder',
+      userMessage:
+        'Payment setup failed. Your order may have been placed — please contact support.',
+    });
   }
 }
 

@@ -15,6 +15,7 @@ vi.mock('#/libs/prisma.server', () => ({
     order: {
       create: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       update: vi.fn(),
     },
@@ -112,6 +113,7 @@ import {
 import {
   placeOrder,
   getOrder,
+  getOrderByOrderNumber,
   listOrders,
   updateOrderStatus,
   syncOrderFulfillmentStatus,
@@ -479,6 +481,25 @@ describe('listOrders', () => {
         take: 10,
       })
     );
+  });
+});
+
+describe('getOrderByOrderNumber', () => {
+  it('loads order with lines by public order number', async () => {
+    prisma.order.findFirst.mockResolvedValue({ id: 'ord_1', lines: [] });
+
+    const order = await getOrderByOrderNumber('ORD-123');
+
+    expect(prisma.order.findFirst).toHaveBeenCalledWith({
+      where: { orderNumber: 'ORD-123' },
+      include: { lines: true },
+    });
+    expect(order.id).toBe('ord_1');
+  });
+
+  it('returns null for blank order number', async () => {
+    expect(await getOrderByOrderNumber('')).toBeNull();
+    expect(prisma.order.findFirst).not.toHaveBeenCalled();
   });
 });
 

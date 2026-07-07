@@ -1,29 +1,21 @@
 import { useLoaderData } from 'react-router';
 
-import { getRequestCurrency } from '#/core/currency/index.server';
-import { getRequestLocale } from '#/core/i18n/index.server';
-import { listOrders } from '#/core/orders/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { clearCheckoutSessionCookie } from '#/utils/checkout-cookie.server';
+import { loadStorefrontPageContext } from '#/libs/api/storefront.server';
+import { getOrderByOrderNumber } from '#/core/orders/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request, params }) {
-  const themeId = await preloadStorefrontTheme();
-  const locale = await getRequestLocale(request);
-  const currency = await getRequestCurrency(request);
-  const { orderNumber } = params;
-
-  const { orders } = await listOrders({ orderNumber, limit: 1 });
-  const order = orders[0] ?? null;
+  const { themeId, locale, currency } =
+    await loadStorefrontPageContext(request);
+  const order = await getOrderByOrderNumber(params.orderNumber);
 
   if (!order) {
     throw new Response('Order not found', { status: 404 });
   }
 
   const headers = new Headers();
-  headers.set(
-    'Set-Cookie',
-    'checkout_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0'
-  );
+  clearCheckoutSessionCookie(headers);
 
   return Response.json({ order, locale, currency, themeId }, { headers });
 }

@@ -1,11 +1,12 @@
 import { redirect } from 'react-router';
 
+import { parseReturnTo } from '#/libs/api/storefront.server';
 import { getAvailableLocales, setLocaleCookie } from '#/core/i18n/index.server';
 
 export async function action({ request }) {
   const formData = await request.formData();
   const locale = formData.get('locale')?.toString();
-  const returnTo = formData.get('returnTo')?.toString() ?? '/';
+  const returnTo = parseReturnTo(formData);
   const enabledLocales = await getAvailableLocales();
 
   if (!locale || !enabledLocales.includes(locale)) {

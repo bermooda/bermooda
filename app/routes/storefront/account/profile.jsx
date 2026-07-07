@@ -1,6 +1,7 @@
 import { useLoaderData, useRouteLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
+import { handleError } from '#/libs/error.server';
 import { updateCustomer } from '#/core/customers/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
@@ -23,11 +24,18 @@ export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get('intent');
 
-  if (intent === 'updateName') {
-    const name = formData.get('name');
-    if (name) {
-      await updateCustomer(customer.id, { name });
+  try {
+    if (intent === 'updateName') {
+      const name = formData.get('name');
+      if (name) {
+        await updateCustomer(customer.id, { name });
+      }
     }
+  } catch (err) {
+    return handleError(err, {
+      source: 'storefront.account.profile',
+      userMessage: 'Could not update profile.',
+    });
   }
 
   return { success: true };

@@ -33,7 +33,8 @@ export default function AccountOrderDetailRoute() {
   const data = useLoaderData();
   const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
   const AccountOrderDetailPage = getStorefrontComponent(
-    'AccountOrderDetailPage'
+    'AccountOrderDetailPage',
+    layoutData?.themeId ?? data.themeId
   );
   if (!AccountOrderDetailPage) {
     throw new Error('AccountOrderDetailPage theme component not found');
