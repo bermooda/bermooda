@@ -24,6 +24,8 @@ import {
   updateDiscount,
   deleteDiscount,
   listDiscounts,
+  parseDiscountFormData,
+  toggleDiscountActive,
 } from '#/core/discounts/index.server';
 
 // ---------------------------------------------------------------------------
@@ -268,5 +270,74 @@ describe('listDiscounts', () => {
     expect(prisma.discount.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ skip: 10, take: 5 })
     );
+  });
+
+  it('supports custom orderBy', async () => {
+    prisma.discount.findMany.mockResolvedValue([]);
+    prisma.discount.count.mockResolvedValue(0);
+
+    await listDiscounts({ orderBy: { createdAt: 'desc' } });
+
+    expect(prisma.discount.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { createdAt: 'desc' } })
+    );
+  });
+});
+
+describe('parseDiscountFormData', () => {
+  it('normalizes percent discount fields', () => {
+    const formData = new FormData();
+    formData.set('code', ' save10 ');
+    formData.set('type', 'percent');
+    formData.set('value', '15');
+
+    expect(parseDiscountFormData(formData, { active: true })).toEqual({
+      data: {
+        code: 'SAVE10',
+        type: 'percent',
+        value: 15,
+        minSubtotalCents: null,
+        maxUsesCount: null,
+        currency: null,
+        expiresAt: null,
+        active: true,
+      },
+    });
+  });
+
+  it('requires currency for fixed discounts', () => {
+    const formData = new FormData();
+    formData.set('code', 'FIXED5');
+    formData.set('type', 'fixed');
+    formData.set('value', '500');
+
+    expect(parseDiscountFormData(formData)).toEqual({
+      error: 'Currency is required for fixed discounts.',
+    });
+  });
+});
+
+describe('toggleDiscountActive', () => {
+  it('flips the active flag', async () => {
+    prisma.discount.findFirst.mockResolvedValue(null);
+    prisma.discount.findUnique.mockResolvedValue({ id: 'd1', active: true });
+    prisma.discount.update.mockResolvedValue({ id: 'd1', active: false });
+
+    const result = await toggleDiscountActive('d1');
+
+    expect(result).toEqual({ id: 'd1', active: false });
+    expect(prisma.discount.update).toHaveBeenCalledWith({
+      where: { id: 'd1' },
+      data: { active: false },
+    });
+  });
+
+  it('throws when discount is missing', async () => {
+    prisma.discount.findFirst.mockResolvedValue(null);
+    prisma.discount.findUnique.mockResolvedValue(null);
+
+    await expect(toggleDiscountActive('missing')).rejects.toMatchObject({
+      code: 'DISCOUNT_NOT_FOUND',
+    });
   });
 });

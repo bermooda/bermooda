@@ -8,7 +8,11 @@ import {
   useNavigation,
 } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
+import { handleAdminActionError } from '#/libs/api/admin-ui.server';
+import {
+  createDiscount,
+  parseDiscountFormData,
+} from '#/core/discounts/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -21,46 +25,22 @@ import { ButtonSubmit } from '#/components/ui/button';
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const code = formData.get('code')?.toString().trim().toUpperCase() ?? '';
-  const type = formData.get('type')?.toString() ?? '';
-  const value = parseInt(formData.get('value') ?? '0', 10);
-  const minSubtotalCents = formData.get('minSubtotalCents')?.toString().trim()
-    ? parseInt(formData.get('minSubtotalCents'), 10)
-    : null;
-  const maxUsesCount = formData.get('maxUsesCount')?.toString().trim()
-    ? parseInt(formData.get('maxUsesCount'), 10)
-    : null;
-  const currency = formData.get('currency')?.toString().trim() || null;
-  const expiresAtRaw = formData.get('expiresAt')?.toString().trim();
-  const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null;
-
-  if (!code) return { error: 'Code is required.' };
-  if (!type) return { error: 'Type is required.' };
-  if (!value || value <= 0) {
-    return { error: 'Value must be greater than 0.' };
-  }
-  if (type === 'fixed' && !currency) {
-    return { error: 'Currency is required for fixed discounts.' };
+  const parsed = parseDiscountFormData(formData, { active: true });
+  if (parsed.error) {
+    return { error: parsed.error };
   }
 
   try {
-    await prisma.discount.create({
-      data: {
-        code,
-        type,
-        value,
-        minSubtotalCents,
-        maxUsesCount,
-        currency: type === 'fixed' ? currency : null,
-        expiresAt,
-        active: true,
-      },
-    });
+    await createDiscount(parsed.data);
   } catch (err) {
-    if (err?.code === 'P2002') {
-      return { error: 'A discount with that code already exists.' };
-    }
-    throw err;
+    return handleAdminActionError(err, {
+      source: 'admin.discounts.new',
+      shape: 'error',
+      knownCodes: {
+        P2002: { error: 'A discount with that code already exists.' },
+      },
+      userMessage: 'Could not create discount.',
+    });
   }
 
   return redirect('/admin/discounts');

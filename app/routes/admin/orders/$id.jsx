@@ -9,6 +9,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { handleAdminActionError } from '#/libs/api/admin-ui.server';
 import prisma from '#/libs/prisma.server';
 import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import Badge from '#/components/admin/badge';
@@ -206,7 +207,11 @@ export async function action({ request, params }) {
       });
       return { ok: true, intent };
     } catch (err) {
-      return { ok: false, error: err.message };
+      return handleAdminActionError(err, {
+        source: 'admin.orders.add-shipment',
+        intent,
+        userMessage: 'Could not add shipment.',
+      });
     }
   }
 
@@ -217,7 +222,11 @@ export async function action({ request, params }) {
       await ordersCore.markDelivered(shipmentId);
       return { ok: true, intent };
     } catch (err) {
-      return { ok: false, error: err.message };
+      return handleAdminActionError(err, {
+        source: 'admin.orders.mark-delivered',
+        intent,
+        userMessage: 'Could not mark shipment delivered.',
+      });
     }
   }
 
@@ -229,7 +238,11 @@ export async function action({ request, params }) {
       await ordersCore.createRefund(id, { amountCents, reason });
       return { ok: true, intent };
     } catch (err) {
-      return { ok: false, error: err.message };
+      return handleAdminActionError(err, {
+        source: 'admin.orders.add-refund',
+        intent,
+        userMessage: 'Could not create refund.',
+      });
     }
   }
 
@@ -240,7 +253,11 @@ export async function action({ request, params }) {
       await returnsCore.approveReturn(returnId, { resolution });
       return { ok: true, intent };
     } catch (err) {
-      return { ok: false, error: err.message };
+      return handleAdminActionError(err, {
+        source: 'admin.orders.approve-return',
+        intent,
+        userMessage: 'Could not approve return.',
+      });
     }
   }
 
@@ -250,7 +267,11 @@ export async function action({ request, params }) {
       await returnsCore.receiveReturn(returnId);
       return { ok: true, intent };
     } catch (err) {
-      return { ok: false, error: err.message };
+      return handleAdminActionError(err, {
+        source: 'admin.orders.receive-return',
+        intent,
+        userMessage: 'Could not receive return.',
+      });
     }
   }
 
@@ -261,7 +282,11 @@ export async function action({ request, params }) {
       await returnsCore.completeReturn(returnId, { resolution });
       return { ok: true, intent };
     } catch (err) {
-      return { ok: false, error: err.message };
+      return handleAdminActionError(err, {
+        source: 'admin.orders.complete-return',
+        intent,
+        userMessage: 'Could not complete return.',
+      });
     }
   }
 
@@ -271,7 +296,11 @@ export async function action({ request, params }) {
       await returnsCore.cancelReturn(returnId);
       return { ok: true, intent };
     } catch (err) {
-      return { ok: false, error: err.message };
+      return handleAdminActionError(err, {
+        source: 'admin.orders.cancel-return',
+        intent,
+        userMessage: 'Could not cancel return.',
+      });
     }
   }
 
