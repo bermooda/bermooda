@@ -137,7 +137,11 @@ export const ModelName = {
   SubscriptionPlan: 'SubscriptionPlan',
   Subscription: 'Subscription',
   PosSession: 'PosSession',
-  PosOrder: 'PosOrder'
+  PosOrder: 'PosOrder',
+  Company: 'Company',
+  CompanyMember: 'CompanyMember',
+  Quote: 'Quote',
+  QuoteLine: 'QuoteLine'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -513,7 +517,8 @@ export const OrderScalarFieldEnum = {
   taxExempt: 'taxExempt',
   notes: 'notes',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  pickupLocationId: 'pickupLocationId'
 } as const
 
 export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof OrderScalarFieldEnum]
@@ -929,6 +934,7 @@ export const LocationScalarFieldEnum = {
   code: 'code',
   isDefault: 'isDefault',
   addressJson: 'addressJson',
+  allowsPickup: 'allowsPickup',
   active: 'active',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1356,6 +1362,62 @@ export const PosOrderScalarFieldEnum = {
 } as const
 
 export type PosOrderScalarFieldEnum = (typeof PosOrderScalarFieldEnum)[keyof typeof PosOrderScalarFieldEnum]
+
+
+export const CompanyScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  taxId: 'taxId',
+  netTermsDays: 'netTermsDays',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CompanyScalarFieldEnum = (typeof CompanyScalarFieldEnum)[keyof typeof CompanyScalarFieldEnum]
+
+
+export const CompanyMemberScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  customerId: 'customerId',
+  role: 'role',
+  createdAt: 'createdAt'
+} as const
+
+export type CompanyMemberScalarFieldEnum = (typeof CompanyMemberScalarFieldEnum)[keyof typeof CompanyMemberScalarFieldEnum]
+
+
+export const QuoteScalarFieldEnum = {
+  id: 'id',
+  quoteNumber: 'quoteNumber',
+  companyId: 'companyId',
+  customerId: 'customerId',
+  status: 'status',
+  currency: 'currency',
+  subtotalCents: 'subtotalCents',
+  totalCents: 'totalCents',
+  expiresAt: 'expiresAt',
+  notes: 'notes',
+  orderId: 'orderId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type QuoteScalarFieldEnum = (typeof QuoteScalarFieldEnum)[keyof typeof QuoteScalarFieldEnum]
+
+
+export const QuoteLineScalarFieldEnum = {
+  id: 'id',
+  quoteId: 'quoteId',
+  variantId: 'variantId',
+  quantity: 'quantity',
+  priceCents: 'priceCents',
+  titleSnapshot: 'titleSnapshot',
+  createdAt: 'createdAt'
+} as const
+
+export type QuoteLineScalarFieldEnum = (typeof QuoteLineScalarFieldEnum)[keyof typeof QuoteLineScalarFieldEnum]
 
 
 export const SortOrder = {
