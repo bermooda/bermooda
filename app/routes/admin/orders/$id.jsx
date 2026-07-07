@@ -612,6 +612,7 @@ export default function AdminOrderRoute() {
                   <Th>Carrier</Th>
                   <Th>Tracking</Th>
                   <Th>Shipped At</Th>
+                  <Th>Documents</Th>
                 </tr>
               </thead>
               <tbody className="divide-border divide-y">
@@ -643,6 +644,14 @@ export default function AdminOrderRoute() {
                             year: 'numeric',
                           })
                         : '—'}
+                    </Td>
+                    <Td>
+                      <a
+                        href={`/admin/shipments/${s.id}/documents`}
+                        className="text-accent text-xs font-medium hover:underline"
+                      >
+                        Packing slip
+                      </a>
                     </Td>
                   </tr>
                 ))}

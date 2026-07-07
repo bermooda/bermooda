@@ -294,6 +294,10 @@ export default [
       route('orders/:id', 'routes/admin/orders/$id.jsx'),
       route('returns', 'routes/admin/returns/index.jsx'),
       route('orders/:id/documents', 'routes/admin/orders/$id/documents.jsx'),
+      route(
+        'shipments/:id/documents',
+        'routes/admin/shipments/$id/documents.jsx'
+      ),
       // Customers (P5-6)
       route('customers', 'routes/admin/customers/index.jsx'),
       route('customers/new', 'routes/admin/customers/new.jsx'),
