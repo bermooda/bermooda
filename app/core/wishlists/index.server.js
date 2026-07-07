@@ -1,8 +1,12 @@
 // app/core/wishlists/index.server.js
 // Customer wishlists.
 
-import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
+import { containsFilter } from '#/libs/prisma/filters.server';
+import {
+  parseListPagination,
+  readQueryParam,
+} from '#/libs/prisma/pagination.server';
 import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import { getCustomer } from '#/core/customers/index.server';
 
@@ -35,29 +39,6 @@ const WISHLIST_ITEM_LIST_INCLUDE = {
 // Input parsing
 // ---------------------------------------------------------------------------
 
-function parseListPagination(source, defaults) {
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
-  const limit = Math.min(
-    Math.max(
-      1,
-      parseInt(get('limit') ?? String(defaults.limit), 10) || defaults.limit
-    ),
-    defaults.max
-  );
-
-  return { page, limit };
-}
-
 /**
  * Parse wishlist list query params.
  *
@@ -69,19 +50,9 @@ export function parseWishlistListParams(source = {}) {
     max: MAX_WISHLIST_LIST_RESULTS,
   });
 
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const customerId = get('customerId')?.trim();
-  const variantId = get('variantId')?.trim();
-  const q = get('q')?.trim();
+  const customerId = readQueryParam(source, 'customerId')?.trim();
+  const variantId = readQueryParam(source, 'variantId')?.trim();
+  const q = readQueryParam(source, 'q')?.trim();
 
   if (!customerId) {
     throw Object.assign(new Error('customerId is required.'), {
@@ -109,19 +80,9 @@ export function parseWishlistAdminListParams(source = {}) {
     max: MAX_WISHLIST_LIST_RESULTS,
   });
 
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const customerId = get('customerId')?.trim();
-  const variantId = get('variantId')?.trim();
-  const q = get('q')?.trim();
+  const customerId = readQueryParam(source, 'customerId')?.trim();
+  const variantId = readQueryParam(source, 'variantId')?.trim();
+  const q = readQueryParam(source, 'q')?.trim();
 
   return {
     page,

@@ -3,6 +3,10 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import {
+  parseListPagination,
+  readQueryParam,
+} from '#/libs/prisma/pagination.server';
 import { listRecentVariantsForInventory } from '#/core/inventory/index.server';
 
 export const SUBSCRIPTION_INTERVALS = ['day', 'week', 'month', 'year'];
@@ -62,29 +66,6 @@ const SUBSCRIPTION_DETAIL_INCLUDE = {
 // Input parsing
 // ---------------------------------------------------------------------------
 
-function parseListPagination(source, defaults) {
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
-  const limit = Math.min(
-    Math.max(
-      1,
-      parseInt(get('limit') ?? String(defaults.limit), 10) || defaults.limit
-    ),
-    defaults.max
-  );
-
-  return { page, limit };
-}
-
 /**
  * Parse subscription plan list query params.
  *
@@ -96,17 +77,7 @@ export function parsePlanListParams(source = {}) {
     max: MAX_PLAN_LIST_RESULTS,
   });
 
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const activeOnlyRaw = get('activeOnly');
+  const activeOnlyRaw = readQueryParam(source, 'activeOnly');
   const activeOnly =
     activeOnlyRaw === undefined
       ? undefined
@@ -249,19 +220,9 @@ export function parseSubscriptionListParams(source = {}) {
     max: MAX_SUBSCRIPTION_LIST_RESULTS,
   });
 
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const customerId = get('customerId')?.trim();
-  const planId = get('planId')?.trim();
-  const status = get('status')?.trim();
+  const customerId = readQueryParam(source, 'customerId')?.trim();
+  const planId = readQueryParam(source, 'planId')?.trim();
+  const status = readQueryParam(source, 'status')?.trim();
 
   if (status && !SUBSCRIPTION_STATUS_SET.has(status)) {
     throw Object.assign(new Error('Invalid subscription status filter.'), {

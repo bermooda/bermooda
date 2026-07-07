@@ -3,7 +3,6 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { createContext, redirect } from 'react-router';
 
 import config from '#/config';
-import { getBetterAuthProvider } from '#/utils/database.server';
 import logger from '#/utils/logger.server';
 import {
   buildAuthAdvancedConfig,
@@ -17,6 +16,7 @@ import {
   pickAuthUserContextFields,
 } from '#/libs/auth/shared.server';
 import prisma from '#/libs/prisma.server';
+import { getBetterAuthProvider } from '#/libs/prisma/provider.server';
 import { enforceRateLimit } from '#/libs/rate-limit.server';
 import { emit } from '#/core/events/index.server';
 import { queuePasswordResetEmail } from '#/emails/job.server';

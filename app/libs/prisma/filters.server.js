@@ -1,7 +1,7 @@
-// app/utils/prisma-filters.server.js
+// app/libs/prisma/filters.server.js
 // Cross-database Prisma filter helpers (SQLite vs Postgres case sensitivity).
 
-import { isPostgres } from '#/utils/database.server';
+import { isPostgres } from '#/libs/prisma/provider.server';
 
 /**
  * Build a case-insensitive `contains` filter when supported.

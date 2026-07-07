@@ -3,12 +3,11 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import { buildPrismaPagination } from '#/libs/prisma/pagination.server';
 import { emit } from '#/core/events/index.server';
 import { hasMarketingConsent } from '#/core/gdpr/index.server';
 import { sendCampaignEmail } from '#/emails/index.server';
 import { queueAbandonedCart } from '#/emails/job.server';
-
-const MAX_LIST_RESULTS = 100;
 
 const SEGMENT_LIST_INCLUDE = {
   _count: { select: { campaigns: true } },
@@ -308,16 +307,23 @@ function notFound(entity) {
  * @param {{ page?: number, limit?: number }} [opts]
  */
 export async function listSegments({ page = 1, limit = 50 } = {}) {
-  const safePage = Math.max(1, page);
-  const safeLimit = Math.min(Math.max(1, limit), MAX_LIST_RESULTS);
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page,
+    limit,
+    defaultLimit: 50,
+  });
 
   const [segments, total] = await Promise.all([
     prisma.marketingSegment.findMany({
       orderBy: { name: 'asc' },
       include: SEGMENT_LIST_INCLUDE,
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.marketingSegment.count(),
   ]);
@@ -453,16 +459,23 @@ export async function resolveSegmentCustomers(segmentId) {
  * @param {{ page?: number, limit?: number }} [opts]
  */
 export async function listCampaigns({ page = 1, limit = 50 } = {}) {
-  const safePage = Math.max(1, page);
-  const safeLimit = Math.min(Math.max(1, limit), MAX_LIST_RESULTS);
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page,
+    limit,
+    defaultLimit: 50,
+  });
 
   const [campaigns, total] = await Promise.all([
     prisma.marketingCampaign.findMany({
       orderBy: { createdAt: 'desc' },
       include: CAMPAIGN_LIST_INCLUDE,
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.marketingCampaign.count(),
   ]);
@@ -609,15 +622,22 @@ export async function listAbandonedCartSequences({
   page = 1,
   limit = 50,
 } = {}) {
-  const safePage = Math.max(1, page);
-  const safeLimit = Math.min(Math.max(1, limit), MAX_LIST_RESULTS);
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page,
+    limit,
+    defaultLimit: 50,
+  });
 
   const [sequences, total] = await Promise.all([
     prisma.abandonedCartSequence.findMany({
       orderBy: { stepNumber: 'asc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.abandonedCartSequence.count(),
   ]);

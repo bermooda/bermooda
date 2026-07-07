@@ -3,6 +3,10 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import {
+  parseListPagination,
+  readQueryParam,
+} from '#/libs/prisma/pagination.server';
 import { listLocations } from '#/core/inventory/index.server';
 
 export const POS_SESSION_STATUSES = ['open', 'closed'];
@@ -40,29 +44,6 @@ const SESSION_DETAIL_INCLUDE = {
 // Input parsing
 // ---------------------------------------------------------------------------
 
-function parseListPagination(source, defaults) {
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
-  const limit = Math.min(
-    Math.max(
-      1,
-      parseInt(get('limit') ?? String(defaults.limit), 10) || defaults.limit
-    ),
-    defaults.max
-  );
-
-  return { page, limit };
-}
-
 /**
  * Parse POS session list query params.
  *
@@ -74,19 +55,9 @@ export function parseSessionListParams(source = {}) {
     max: MAX_SESSION_LIST_RESULTS,
   });
 
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const staffId = get('staffId')?.trim();
-  const locationId = get('locationId')?.trim();
-  const status = get('status')?.trim();
+  const staffId = readQueryParam(source, 'staffId')?.trim();
+  const locationId = readQueryParam(source, 'locationId')?.trim();
+  const status = readQueryParam(source, 'status')?.trim();
 
   if (status && !POS_SESSION_STATUS_SET.has(status)) {
     throw Object.assign(new Error('Invalid POS session status filter.'), {

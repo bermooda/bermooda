@@ -3,8 +3,8 @@
 // Auth is handled by better-auth (app/libs/auth/customer.server.js).
 // This service is data-only — no auth imports.
 
-import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
+import { containsFilter } from '#/libs/prisma/filters.server';
 
 // ---------------------------------------------------------------------------
 // Constants

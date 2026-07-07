@@ -25,8 +25,8 @@
 //   }
 
 import logger from '#/utils/logger.server';
-import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
+import { containsFilter } from '#/libs/prisma/filters.server';
 import { localizeEntity } from '#/core/catalog/locale.server';
 import {
   applyChannelPricesToProducts,

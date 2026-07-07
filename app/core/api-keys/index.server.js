@@ -6,6 +6,7 @@ import { createHash, randomBytes } from 'crypto';
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import { parseListPagination } from '#/libs/prisma/pagination.server';
 import { API_KEY_SCOPES } from '#/core/api-keys/scopes';
 
 export { API_KEY_SCOPES } from '#/core/api-keys/scopes';
@@ -35,29 +36,6 @@ function hashKey(rawKey) {
  */
 function generateRawKey() {
   return KEY_PREFIX + randomBytes(32).toString('hex');
-}
-
-function parseListPagination(source, defaults) {
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
-  const limit = Math.min(
-    Math.max(
-      1,
-      parseInt(get('limit') ?? String(defaults.limit), 10) || defaults.limit
-    ),
-    defaults.max
-  );
-
-  return { page, limit };
 }
 
 function normalizeScopes(scopes) {

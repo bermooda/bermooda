@@ -28,8 +28,8 @@ vi.mock('#/core/catalog/translations.server', () => ({
   loadProductTitleMap: vi.fn(),
 }));
 
-import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
+import { containsFilter } from '#/libs/prisma/filters.server';
 import {
   buildSubscriptionWhere,
   deleteBackInStockSubscription,
