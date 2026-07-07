@@ -129,6 +129,10 @@ export default [
       route('returns', 'routes/api/admin/v1/returns.jsx'),
       route('reviews/:id', 'routes/api/admin/v1/reviews/$id.jsx'),
       route('reviews', 'routes/api/admin/v1/reviews.jsx'),
+      route('pages/:id', 'routes/api/admin/v1/pages/$id.jsx'),
+      route('pages', 'routes/api/admin/v1/pages.jsx'),
+      route('menus/:handle', 'routes/api/admin/v1/menus/$handle.jsx'),
+      route('menus', 'routes/api/admin/v1/menus.jsx'),
       route('customers', 'routes/api/admin/v1/customers.jsx'),
       route('customers/:id', 'routes/api/admin/v1/customers/$id.jsx'),
       route(

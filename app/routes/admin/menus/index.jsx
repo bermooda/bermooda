@@ -2,10 +2,9 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { Form, useActionData, useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import {
-  getMenuForAdmin,
-  listMenus,
+  loadMenuEditorData,
+  parseMenuFormInput,
   upsertMenu,
 } from '#/core/content/index.server';
 import Card from '#/components/admin/card';
@@ -16,102 +15,22 @@ import PageHeader from '#/components/admin/page-header';
 import { SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
-const MENU_HANDLES = ['main', 'footer', 'sub-header'];
-
 export async function loader({ request }) {
   const url = new URL(request.url);
   const handle = url.searchParams.get('handle') || 'main';
-
-  const [menus, menu, pages, categories] = await Promise.all([
-    listMenus(),
-    getMenuForAdmin(handle),
-    prisma.page.findMany({
-      where: { status: 'published' },
-      orderBy: { position: 'asc' },
-    }),
-    prisma.category.findMany({ orderBy: { position: 'asc' } }),
-  ]);
-
-  const pageIds = pages.map((p) => p.id);
-  const catIds = categories.map((c) => c.id);
-
-  const [pageTitles, catTitles] = await Promise.all([
-    pageIds.length
-      ? prisma.translation.findMany({
-          where: {
-            entityType: 'page',
-            entityId: { in: pageIds },
-            locale: 'en',
-            field: 'title',
-          },
-        })
-      : [],
-    catIds.length
-      ? prisma.translation.findMany({
-          where: {
-            entityType: 'category',
-            entityId: { in: catIds },
-            locale: 'en',
-            field: 'title',
-          },
-        })
-      : [],
-  ]);
-
-  return {
-    handle,
-    menus,
-    menu,
-    pages: pages.map((p) => ({
-      id: p.id,
-      title:
-        pageTitles.find((t) => t.entityId === p.id)?.value ?? p.id.slice(0, 8),
-    })),
-    categories: categories.map((c) => ({
-      id: c.id,
-      title:
-        catTitles.find((t) => t.entityId === c.id)?.value ?? c.id.slice(0, 8),
-    })),
-  };
+  return loadMenuEditorData(handle);
 }
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const handle = formData.get('handle')?.toString() ?? 'main';
-  const title = formData.get('title')?.toString() ?? handle;
-  const itemCount = parseInt(formData.get('itemCount')?.toString() ?? '0', 10);
-
-  const items = [];
-  for (let i = 0; i < itemCount; i++) {
-    const label = formData.get(`items[${i}][label]`)?.toString() ?? '';
-    const url = formData.get(`items[${i}][url]`)?.toString().trim() || null;
-    const pageId = formData.get(`items[${i}][pageId]`)?.toString() || null;
-    const categoryId =
-      formData.get(`items[${i}][categoryId]`)?.toString() || null;
-    const position = parseInt(
-      formData.get(`items[${i}][position]`)?.toString() ?? String(i),
-      10
-    );
-    const openInNew = formData.get(`items[${i}][openInNew]`) === 'on';
-
-    if (!label && !pageId && !categoryId && !url) continue;
-
-    items.push({
-      label,
-      url: pageId || categoryId ? null : url,
-      pageId,
-      categoryId,
-      position,
-      openInNew,
-    });
-  }
-
+  const { handle, title, items } = parseMenuFormInput(formData);
   await upsertMenu(handle, { title, items });
   return { ok: true, handle };
 }
 
 export default function AdminMenusRoute() {
-  const { handle, menus, menu, pages, categories } = useLoaderData();
+  const { handle, menus, menu, menuHandles, pages, categories } =
+    useLoaderData();
   const actionData = useActionData();
   const [items, setItems] = useState(menu?.items ?? []);
 
@@ -148,7 +67,7 @@ export default function AdminMenusRoute() {
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
-        {MENU_HANDLES.map((h) => (
+        {menuHandles.map((h) => (
           <a
             key={h}
             href={`?handle=${h}`}

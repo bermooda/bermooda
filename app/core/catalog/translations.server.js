@@ -80,3 +80,27 @@ export async function loadCategoryTitleMap(categoryIds, locale = 'en') {
 
   return new Map(rows.map((row) => [row.entityId, row.value]));
 }
+
+/**
+ * Batch-load page title translations for admin lists and menus.
+ *
+ * @param {string[]} pageIds
+ * @param {string} [locale='en']
+ * @returns {Promise<Map<string, string>>}
+ */
+export async function loadPageTitleMap(pageIds, locale = 'en') {
+  const uniqueIds = [...new Set(pageIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return new Map();
+
+  const rows = await prisma.translation.findMany({
+    where: {
+      entityType: 'page',
+      entityId: { in: uniqueIds },
+      locale,
+      field: 'title',
+    },
+    select: { entityId: true, value: true },
+  });
+
+  return new Map(rows.map((row) => [row.entityId, row.value]));
+}
