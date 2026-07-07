@@ -1,7 +1,7 @@
 import { Telegraf } from 'telegraf';
 
 import logger from '#/utils/logger.server';
-import { SEVERITY } from '#/libs/alerting-types.server';
+import { normalizeErrorAlert } from '#/libs/alerting/shared.server';
 
 /**
  * @typedef {Object} TelegramConfig
@@ -14,16 +14,6 @@ import { SEVERITY } from '#/libs/alerting-types.server';
  */
 
 /**
- * @typedef {Object} ErrorMessage
- * @property {string} message - The error message
- * @property {string} [stack] - The error stack trace
- * @property {string} [timestamp] - ISO timestamp of the error
- * @property {string} [source] - Source of the error (e.g., API endpoint, function name)
- * @property {string} [severity] - Error severity level (low, medium, high, critical)
- * @property {Object} [metadata] - Additional metadata about the error
- */
-
-/**
  * @typedef {Object} NotificationOptions
  * @property {boolean} [silent=false] - Send notification silently
  * @property {boolean} [disableWebPagePreview=true] - Disable web page preview
@@ -33,8 +23,6 @@ import { SEVERITY } from '#/libs/alerting-types.server';
  * @property {string} [headline] - The headline of the message
  * @property {Object} [metadata] - Additional metadata to include in the message
  */
-
-export { SEVERITY };
 
 /**
  * Telegram Notifier Service
@@ -88,7 +76,7 @@ class TelegramNotifier {
 
   /**
    * Send an error message to Telegram
-   * @param {ErrorMessage|string|Error} errorData - Error data to send
+   * @param {import('#/libs/alerting-types.server').ErrorAlert|string|Error} errorData - Error data to send
    * @param {NotificationOptions} [options={}] - Notification options
    * @returns {Promise<boolean>} - Returns true if message was sent successfully
    */
@@ -189,7 +177,7 @@ class TelegramNotifier {
 
   /**
    * Format error message for Telegram
-   * @param {ErrorMessage|string|Error} errorData - Error data
+   * @param {import('#/libs/alerting-types.server').ErrorAlert|string|Error} errorData - Error data
    * @param {NotificationOptions} options - Notification options
    * @returns {string} - Formatted message
    * @private
@@ -202,29 +190,7 @@ class TelegramNotifier {
     const opts = { ...defaultOptions, ...options };
 
     let message = '';
-    let errorObj = {};
-
-    // Handle different error data types
-    if (typeof errorData === 'string') {
-      errorObj = {
-        message: errorData,
-        timestamp: new Date().toISOString(),
-        severity: SEVERITY.MEDIUM,
-      };
-    } else if (errorData instanceof Error) {
-      errorObj = {
-        message: errorData.message,
-        stack: errorData.stack,
-        timestamp: new Date().toISOString(),
-        severity: SEVERITY.HIGH,
-      };
-    } else if (typeof errorData === 'object') {
-      errorObj = {
-        timestamp: new Date().toISOString(),
-        severity: SEVERITY.MEDIUM,
-        ...errorData,
-      };
-    }
+    const errorObj = normalizeErrorAlert(errorData);
 
     // Build message
     const severityEmoji = this._getSeverityEmoji(errorObj.severity);
@@ -458,56 +424,6 @@ export function createTelegramNotifier() {
   });
 
   return defaultNotifier;
-}
-
-/**
- * Quick function to send error notifications using environment variables
- * @param {ErrorMessage|string|Error} errorData - Error data
- * @param {NotificationOptions} [options] - Options
- * @returns {Promise<boolean>} - Success status
- */
-export async function sendTelegramError(errorData, options = {}) {
-  if (process.env.NODE_ENV === 'development') {
-    return true;
-  }
-
-  try {
-    const notifier = createTelegramNotifier();
-
-    if (!notifier) {
-      return false;
-    }
-
-    return await notifier.sendError(errorData, options);
-  } catch (error) {
-    logger.error(error, 'Failed to send error notification');
-    return false;
-  }
-}
-
-/**
- * Quick function to send general notifications using environment variables
- * @param {string} message - Message to send
- * @param {NotificationOptions} [options] - Options (can include metadata property)
- * @returns {Promise<boolean>} - Success status
- */
-export async function sendTelegramMessage(message, options = {}) {
-  if (process.env.NODE_ENV === 'development') {
-    return true;
-  }
-
-  try {
-    const notifier = createTelegramNotifier();
-
-    if (!notifier) {
-      return false;
-    }
-
-    return await notifier.sendNotification(message, options);
-  } catch (error) {
-    logger.error(error, 'Failed to send notification');
-    return false;
-  }
 }
 
 export { TelegramNotifier };

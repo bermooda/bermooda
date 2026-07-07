@@ -19,7 +19,7 @@ Relevant modules: [app/libs/alerting.server.js](mdc:app/libs/alerting.server.js)
 | General notifications | `sendAlertMessage` from `#/libs/alerting.server` | Same provider as errors |
 | Custom provider | `registerProvider` from `#/libs/alerting.server` | Register at startup (e.g. bootstrap) |
 
-Do **not** call `sendTelegramError` or `sendTelegramMessage` in new code — those are legacy Telegram-specific helpers. Use the alerting handlers above.
+Do **not** call `sendTelegramError` or `sendTelegramMessage` in new code — those legacy helpers were removed. Use the alerting handlers above.
 
 ## Configuration
 

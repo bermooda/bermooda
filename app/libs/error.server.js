@@ -2,11 +2,12 @@ import { data } from 'react-router';
 
 import logger from '#/utils/logger.server';
 import { sendErrorAlert, SEVERITY } from '#/libs/alerting.server';
+import { buildHandleErrorAlert } from '#/libs/alerting/shared.server';
 
 /**
  * Handle error
  *
- * @param {Error} error - The error to handle
+ * @param {Error|unknown} error - The error to handle
  * @param {Object} [options] - Options
  * @param {string} [options.message] - The error message
  * @param {string} [options.source] - The source of the error
@@ -19,20 +20,24 @@ export const handleError = (
   error,
   { message, source, severity, metadata, userMessage, status } = {}
 ) => {
-  // Log for debugging
-  logger.error(error, message);
+  const resolvedMessage =
+    message ||
+    (error instanceof Error ? error.message : undefined) ||
+    'Something went wrong';
 
-  // Send error alert in production via configured provider
-  sendErrorAlert({
-    severity: severity || SEVERITY.HIGH,
-    stack: error.stack,
-    message,
-    source,
-    metadata,
-  });
+  logger.error(error, resolvedMessage);
+
+  sendErrorAlert(
+    buildHandleErrorAlert(error, {
+      message: resolvedMessage,
+      source,
+      severity,
+      metadata,
+    })
+  );
 
   return data(
-    { error: userMessage || message, success: false },
+    { error: userMessage || resolvedMessage, success: false },
     {
       status: status || 400,
     }
