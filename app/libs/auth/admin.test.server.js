@@ -6,10 +6,22 @@ import {
   adminAuthHandlerMiddleware,
 } from '#/libs/auth/admin.server';
 import { adminAuthTestState, catchThrown } from '#/libs/auth/test-setup.server';
+import { enforceRateLimit } from '#/libs/rate-limit.server';
 
 describe('adminAuthMiddleware', () => {
   beforeEach(() => {
     adminAuthTestState.sessionImpl.mockReset();
+    vi.mocked(enforceRateLimit).mockReset();
+  });
+
+  it('applies the auth rate limit before checking the session', async () => {
+    adminAuthTestState.sessionImpl.mockResolvedValue(null);
+    const request = new Request('http://localhost:3000/admin/products');
+    const context = { set: vi.fn() };
+
+    await catchThrown(() => adminAuthMiddleware({ request, context }));
+
+    expect(enforceRateLimit).toHaveBeenCalledWith(request, 'auth');
   });
 
   it('throws a 302 redirect to /admin/login when getSession returns null', async () => {

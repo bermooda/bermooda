@@ -12,11 +12,23 @@ import {
   catchThrown,
   customerAuthTestState,
 } from '#/libs/auth/test-setup.server';
+import { enforceRateLimit } from '#/libs/rate-limit.server';
 import { emit } from '#/core/events/index.server';
 
 describe('customerAuthMiddleware', () => {
   beforeEach(() => {
     customerAuthTestState.sessionImpl.mockReset();
+    vi.mocked(enforceRateLimit).mockReset();
+  });
+
+  it('applies the auth rate limit before checking the session', async () => {
+    customerAuthTestState.sessionImpl.mockResolvedValue(null);
+    const request = new Request('http://localhost:3000/account/orders');
+    const context = { set: vi.fn() };
+
+    await catchThrown(() => customerAuthMiddleware({ request, context }));
+
+    expect(enforceRateLimit).toHaveBeenCalledWith(request, 'auth');
   });
 
   it('throws a 302 redirect to /account/login when getSession returns null', async () => {

@@ -122,16 +122,14 @@ pattern in the nearest sibling route.
 
 ### Middleware (optional)
 
-Compose `rateLimitMiddleware('auth')` with the auth middleware for protected
-routes:
-
-- **Admin routes** — `adminAuthMiddleware` from `admin.server.js`. On success
-  it sets `adminAuthContext` so child routes can read the current admin user
-  via `context.get(adminAuthContext)`.
+- **Admin routes** — `adminAuthMiddleware` from `admin.server.js`. Applies the
+  `auth` rate limit, then verifies the session. On success it sets
+  `adminAuthContext` so child routes can read the current admin user via
+  `context.get(adminAuthContext)`.
 
 - **Customer routes** — `customerAuthMiddleware` from `customer.server.js`.
-  On success it sets `customerAuthContext`. Unauthenticated requests redirect
-  to `/account/login`.
+  Applies the `auth` rate limit, then verifies the session. On success it sets
+  `customerAuthContext`. Unauthenticated requests redirect to `/account/login`.
 
 ### Loader-based (current default in layouts)
 

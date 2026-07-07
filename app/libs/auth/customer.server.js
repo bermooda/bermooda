@@ -17,6 +17,7 @@ import {
 } from '#/libs/auth/shared.server';
 import prisma from '#/libs/prisma.server';
 import { getBetterAuthProvider } from '#/libs/prisma/provider.server';
+import { enforceRateLimit } from '#/libs/rate-limit.server';
 import { emit } from '#/core/events/index.server';
 import { queuePasswordResetEmail } from '#/emails/job.server';
 
@@ -139,6 +140,7 @@ export const customerAuthContext = createContext();
  * @param {import('react-router').RouterContextProvider} context.context - The context set
  */
 export async function customerAuthMiddleware({ request, context }) {
+  enforceRateLimit(request, 'auth');
   const session = await getCustomerSession(request);
 
   if (!session?.user) {
