@@ -3,7 +3,6 @@
 // DELETE /api/admin/v1/webhook-subscriptions/:id — delete subscription
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   getSubscription,
   deleteSubscription,
@@ -12,8 +11,6 @@ import {
 } from '#/core/webhooks/index.server';
 
 export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   try {
     const [subscription, deliveries] = await Promise.all([
       getSubscription(params.id),
@@ -32,8 +29,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method === 'DELETE') {
     try {
       await deleteSubscription(params.id);

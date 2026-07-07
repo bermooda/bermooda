@@ -2,7 +2,6 @@
 // POST /api/admin/v1/collections — create collection
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   createCollection,
   getCollection,
@@ -10,8 +9,6 @@ import {
 } from '#/core/collections/index.server';
 
 export async function loader({ request }) {
-  await requireApiKey(request, ['admin']);
-
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get('page') ?? '1', 10);
   const limit = Math.min(
@@ -34,8 +31,6 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

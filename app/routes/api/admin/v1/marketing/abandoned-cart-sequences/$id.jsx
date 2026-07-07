@@ -2,15 +2,12 @@
 // PATCH /api/admin/v1/marketing/abandoned-cart-sequences/:id — update sequence step
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   getAbandonedCartSequence,
   updateAbandonedCartSequence,
 } from '#/core/marketing/index.server';
 
 export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   try {
     const sequence = await getAbandonedCartSequence(params.id);
     return Response.json({ sequence });
@@ -26,8 +23,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

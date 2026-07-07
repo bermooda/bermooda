@@ -2,7 +2,6 @@
 // PATCH /api/admin/v1/quotes/:id — update quote status
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   acceptQuote,
   getQuote,
@@ -28,8 +27,6 @@ function quoteErrorResponse(err) {
 }
 
 export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   try {
     const quote = await getQuote(params.id);
     return Response.json({ quote });
@@ -39,8 +36,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

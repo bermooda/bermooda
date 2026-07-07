@@ -1,7 +1,6 @@
 // GET /api/admin/v1/customers/:id/store-credit — balance + ledger
 // POST /api/admin/v1/customers/:id/store-credit — issue store credit
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import { getCustomer } from '#/core/customers/index.server';
 import {
   getCustomerStoreCreditSummary,
@@ -21,8 +20,6 @@ async function loadCustomerOr404(customerId) {
 }
 
 export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   const result = await loadCustomerOr404(params.id);
   if (result.error) return result.error;
 
@@ -42,8 +39,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

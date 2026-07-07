@@ -2,7 +2,6 @@
 // PATCH /api/admin/v1/subscriptions/:id — cancel subscription
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   cancelSubscription,
   getSubscription,
@@ -19,8 +18,6 @@ function subscriptionErrorResponse(err) {
 }
 
 export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   try {
     const subscription = await getSubscription(params.id);
     return Response.json({ subscription });
@@ -30,8 +27,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

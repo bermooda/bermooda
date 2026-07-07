@@ -1,12 +1,9 @@
 // POST /api/admin/v1/orders/:id/refunds — create a refund
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import { createRefund } from '#/core/orders/index.server';
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

@@ -1,22 +1,41 @@
 // app/libs/auth/api.server.js
 // API key authentication for REST API route handlers.
-// Usage: const apiKey = await requireApiKey(request, ['admin']);
+
+import { createContext } from 'react-router';
 
 import { enforceRateLimit } from '#/libs/rate-limit.server';
 import { validateApiKey } from '#/core/api-keys/index.server';
 
 /**
+ * Context object for admin API key middleware.
+ *
+ * @type {import('react-router').RouterContext<object>}
+ */
+export const adminApiKeyContext = createContext();
+
+/**
+ * Middleware to validate an admin-scoped API key for /api/admin/v1/* routes.
+ *
+ * On success, sets `adminApiKeyContext` so child routes can read the key via
+ * `context.get(adminApiKeyContext)`.
+ *
+ * @param {object} context
+ * @param {Request} context.request
+ * @param {import('react-router').RouterContextProvider} context.context
+ */
+export async function adminApiKeyMiddleware({ request, context }) {
+  const apiKey = await requireApiKey(request, ['admin']);
+  context.set(adminApiKeyContext, apiKey);
+}
+
+/**
  * Extract and validate an API key from the Authorization header.
  *
  * Returns the API key record (without the raw key or hash) on success.
- * Throws a JSON Response on failure so route handlers can propagate it with:
+ * Throws a JSON Response on failure.
  *
- *   export async function loader({ request }) {
- *     const apiKey = await requireApiKey(request, ['admin']);
- *     ...
- *   }
- *
- * Rate limiting is enforced by the parent API layout loaders.
+ * Prefer `adminApiKeyMiddleware` on /api/admin/v1/* routes. Use this directly
+ * when middleware is not available.
  *
  * @param {Request} request
  * @param {string[]} [requiredScopes] - all listed scopes must be present

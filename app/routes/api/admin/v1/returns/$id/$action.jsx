@@ -4,7 +4,6 @@
 // POST /api/admin/v1/returns/:id/cancel
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   approveReturn,
   cancelReturn,
@@ -33,8 +32,6 @@ function returnErrorResponse(err) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

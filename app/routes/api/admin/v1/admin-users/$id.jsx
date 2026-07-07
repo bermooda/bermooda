@@ -2,12 +2,9 @@
 // PATCH /api/admin/v1/admin-users/:id — update admin/staff role
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import { getAdminUser, updateAdminUserRole } from '#/core/rbac/index.server';
 
 export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   const user = await getAdminUser(params.id);
   if (!user) {
     return Response.json({ error: 'Admin user not found' }, { status: 404 });
@@ -17,8 +14,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

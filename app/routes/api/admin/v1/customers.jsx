@@ -1,12 +1,9 @@
 // GET /api/admin/v1/customers — list customers
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import { listCustomers } from '#/core/customers/index.server';
 
 export async function loader({ request }) {
-  await requireApiKey(request, ['admin']);
-
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get('page') ?? '1', 10);
   const limit = Math.min(

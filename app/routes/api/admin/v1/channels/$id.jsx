@@ -2,7 +2,6 @@
 // PATCH /api/admin/v1/channels/:id — update sales channel
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   getChannel,
   serializeChannel,
@@ -12,8 +11,6 @@ import {
 } from '#/core/channels/index.server';
 
 export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   try {
     const channel = await getChannel(params.id);
     return Response.json({ channel: serializeChannel(channel) });
@@ -29,8 +26,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

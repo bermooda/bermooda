@@ -1,7 +1,6 @@
 // GET /api/admin/v1/reviews — list reviews
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   listReviews,
   parseReviewListParams,
@@ -9,8 +8,6 @@ import {
 } from '#/core/reviews/index.server';
 
 export async function loader({ request }) {
-  await requireApiKey(request, ['admin']);
-
   const url = new URL(request.url);
 
   try {

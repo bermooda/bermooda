@@ -1,4 +1,3 @@
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   getLoyaltyConfig,
   parseLoyaltySettingsInput,
@@ -6,15 +5,11 @@ import {
 } from '#/core/loyalty/index.server';
 
 export async function loader({ request }) {
-  await requireApiKey(request, ['admin']);
-
   const config = await getLoyaltyConfig();
   return Response.json({ config });
 }
 
 export async function action({ request }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

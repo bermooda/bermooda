@@ -2,7 +2,6 @@
 // POST /api/admin/v1/channels — create sales channel
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   createChannel,
   getChannel,
@@ -12,8 +11,6 @@ import {
 } from '#/core/channels/index.server';
 
 export async function loader({ request }) {
-  await requireApiKey(request, ['admin']);
-
   const url = new URL(request.url);
   const params = parseChannelListParams(url.searchParams);
   const { channels, total, page, limit } = await listChannels(params);
@@ -27,8 +24,6 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

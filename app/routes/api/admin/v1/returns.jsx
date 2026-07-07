@@ -1,7 +1,6 @@
 // GET /api/admin/v1/returns — list returns
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   listReturns,
   parseReturnListParams,
@@ -10,8 +9,6 @@ import {
 } from '#/core/returns/index.server';
 
 export async function loader({ request }) {
-  await requireApiKey(request, ['admin']);
-
   const url = new URL(request.url);
 
   try {

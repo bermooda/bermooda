@@ -1,13 +1,10 @@
 // POST /api/admin/v1/orders/:id/shipments — create a shipment
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import { isHookAbort } from '#/core/events/index.server';
 import { addShipment } from '#/core/orders/index.server';
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

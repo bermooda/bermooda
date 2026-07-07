@@ -2,7 +2,6 @@
 // POST /api/admin/v1/subscriptions — create customer subscription
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   createSubscription,
   listSubscriptions,
@@ -32,8 +31,6 @@ function subscriptionErrorResponse(err) {
 }
 
 export async function loader({ request }) {
-  await requireApiKey(request, ['admin']);
-
   const url = new URL(request.url);
 
   try {
@@ -49,8 +46,6 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

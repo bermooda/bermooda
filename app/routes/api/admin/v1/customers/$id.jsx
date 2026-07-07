@@ -2,12 +2,9 @@
 // PATCH /api/admin/v1/customers/:id — update customer
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import { getCustomer, updateCustomer } from '#/core/customers/index.server';
 
 export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   const customer = await getCustomer(params.id);
   if (!customer) {
     return Response.json({ error: 'Customer not found' }, { status: 404 });
@@ -17,8 +14,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

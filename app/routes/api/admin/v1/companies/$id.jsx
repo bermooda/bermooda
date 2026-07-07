@@ -2,7 +2,6 @@
 // POST /api/admin/v1/companies/:id — add company member
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   addCompanyMember,
   getCompany,
@@ -32,8 +31,6 @@ function companyErrorResponse(err) {
 }
 
 export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   try {
     const company = await getCompany(params.id);
     return Response.json({ company });
@@ -43,8 +40,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

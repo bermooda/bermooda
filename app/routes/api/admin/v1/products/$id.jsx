@@ -3,7 +3,6 @@
 // DELETE /api/admin/v1/products/:id — delete product
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   getProduct,
   updateProduct,
@@ -11,8 +10,6 @@ import {
 } from '#/core/catalog/index.server';
 
 export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   const url = new URL(request.url);
   const locale = url.searchParams.get('locale') ?? 'en';
   const currency = url.searchParams.get('currency') ?? 'USD';
@@ -29,8 +26,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method === 'PATCH') {
     let body;
     try {

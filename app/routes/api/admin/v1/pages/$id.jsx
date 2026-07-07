@@ -3,7 +3,6 @@
 // DELETE /api/admin/v1/pages/:id — delete page
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   deletePage,
   loadPageEditorData,
@@ -32,8 +31,6 @@ function pageErrorResponse(err) {
 }
 
 export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   try {
     const data = await loadPageEditorData(params.id);
     return Response.json({ page: data.page });
@@ -43,8 +40,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method === 'DELETE') {
     try {
       await deletePage(params.id);
