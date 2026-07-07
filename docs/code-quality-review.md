@@ -83,7 +83,7 @@ Finish each review completely in the same PR — do not defer work.
 | `admin/`        | ⬜     |                                                                                                                                                                                                                                                        |
 | `api/v1/`       | ✅     | Shared `#/libs/api/public.server` helpers; `rateLimitMiddleware('api-public')` on layout; cart/checkout/catalog/reviews/address routes use core helpers; removed direct Prisma cart access; deduped address validate routes; added route + core tests. |
 | `api/admin/v1/` | ⬜     |                                                                                                                                                                                                                                                        |
-| `webhooks/`     | ⬜     |                                                                                                                                                                                                                                                        |
+| `webhooks/`     | ✅     | Shared `#/core/payments/inbound.server` + `#/libs/api/webhooks.server` helpers; route uses `rateLimitMiddleware('webhooks')` and `requireMethod`; removed direct Prisma/payments access from route; expanded core + route tests.                       |
 | `auth/`         | ✅     | Auth routes use `rateLimitMiddleware('auth')` plus handler middleware; guard middleware keeps inline auth rate limits; removed unused default auth exports; expanded tests; docs synced.                                                               |
 
 ## UI
