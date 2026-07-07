@@ -3,7 +3,11 @@ import { useState } from 'react';
 import { Form, Link, useActionData, useNavigation } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
-import { createApiKey } from '#/core/api-keys/index.server';
+import {
+  createApiKey,
+  parseCreateApiKeyFormData,
+} from '#/core/api-keys/index.server';
+import { API_KEY_SCOPES } from '#/core/api-keys/scopes';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -15,7 +19,6 @@ import { ButtonSubmit } from '#/components/ui/button';
 
 const CHECKBOX_CLASS =
   'border-border text-accent focus:ring-accent bg-surface h-4 w-4 rounded';
-const AVAILABLE_SCOPES = ['admin', 'storefront'];
 
 function CopyButton({ value }) {
   const [copied, setCopied] = useState(false);
@@ -45,14 +48,10 @@ function CopyButton({ value }) {
 export async function action({ request }) {
   await authenticate(request);
   const formData = await request.formData();
-  const label = formData.get('label')?.toString().trim() ?? '';
-  const scopesRaw = formData.getAll('scopes').map(String);
-  const scopes = scopesRaw.length > 0 ? scopesRaw : ['admin'];
-
-  if (!label) return { error: 'Label is required.' };
 
   try {
-    const { key, record } = await createApiKey({ label, scopes });
+    const input = parseCreateApiKeyFormData(formData);
+    const { key, record } = await createApiKey(input);
     return { ok: true, key, record };
   } catch (err) {
     return { error: err.message };
@@ -110,7 +109,7 @@ export default function AdminNewApiKeyRoute() {
             </Field>
             <Field label="Scopes">
               <div className="flex gap-4">
-                {AVAILABLE_SCOPES.map((scope) => (
+                {API_KEY_SCOPES.map((scope) => (
                   <label
                     key={scope}
                     className="text-text flex items-center gap-1.5 text-sm"
