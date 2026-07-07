@@ -9,6 +9,7 @@ import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import {
   addToWishlist,
   listWishlistItems,
+  mapWishlistActionError,
   parseWishlistFromForm,
   removeFromWishlist,
 } from '#/core/wishlists/index.server';
@@ -54,13 +55,7 @@ export async function action({ request }) {
     await removeFromWishlist(customer.id, variantId);
     return { ok: true };
   } catch (err) {
-    if (err.code === 'VARIANT_ID_REQUIRED') {
-      return { ok: false, error: 'Missing variant.' };
-    }
-    if (err.code === 'INVALID_WISHLIST_ACTION') {
-      return { ok: false, error: 'Unknown action.' };
-    }
-    return { ok: false, error: err.message ?? 'Could not update wishlist.' };
+    return mapWishlistActionError(err, { style: 'account' });
   }
 }
 

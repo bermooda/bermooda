@@ -1,6 +1,7 @@
 import { useLoaderData, useRouteLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
+import { handleError } from '#/libs/error.server';
 import { parseAddressInput } from '#/core/address-validation/index.server';
 import {
   listAddresses,
@@ -38,14 +39,21 @@ export async function action({ request }) {
 
   const data = parseAddressInput(formData);
 
-  if (intent === 'add') {
-    await addAddress(customer.id, data);
-  } else if (intent === 'edit' && addressId) {
-    await updateAddress(addressId, customer.id, data);
-  } else if (intent === 'delete' && addressId) {
-    await deleteAddress(addressId, customer.id);
-  } else if (intent === 'setDefault' && addressId) {
-    await setDefaultAddress(addressId, customer.id);
+  try {
+    if (intent === 'add') {
+      await addAddress(customer.id, data);
+    } else if (intent === 'edit' && addressId) {
+      await updateAddress(addressId, customer.id, data);
+    } else if (intent === 'delete' && addressId) {
+      await deleteAddress(addressId, customer.id);
+    } else if (intent === 'setDefault' && addressId) {
+      await setDefaultAddress(addressId, customer.id);
+    }
+  } catch (err) {
+    return handleError(err, {
+      source: 'storefront.account.addresses',
+      userMessage: 'Could not update address.',
+    });
   }
 
   return null;

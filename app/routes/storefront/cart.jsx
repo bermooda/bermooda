@@ -5,7 +5,9 @@ import {
   appendCartTokenCookie,
   getCartTokenFromRequest,
 } from '#/utils/cart-cookie.server';
+import { loadStorefrontPageContext } from '#/libs/api/storefront.server';
 import { getCustomerSession } from '#/libs/auth/customer.server';
+import { handleError } from '#/libs/error.server';
 import {
   addLine,
   createCart,
@@ -13,16 +15,12 @@ import {
   removeLine,
   updateQuantity,
 } from '#/core/cart/index.server';
-import { getRequestCurrency } from '#/core/currency/index.server';
-import { getRequestLocale } from '#/core/i18n/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
-  const themeId = await preloadStorefrontTheme();
-  const locale = await getRequestLocale(request);
-  const currency = await getRequestCurrency(request);
+  const { themeId, locale, currency } =
+    await loadStorefrontPageContext(request);
   const token = getCartTokenFromRequest(request);
   const cart = token ? await getCart(token) : null;
   const slotBlocks = await getSlotBlocksMap(['cart.summary']);
@@ -39,8 +37,7 @@ export async function loader({ request }) {
 export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get('intent');
-  const locale = await getRequestLocale(request);
-  const currency = await getRequestCurrency(request);
+  const { locale, currency } = await loadStorefrontPageContext(request);
   const session = await getCustomerSession(request);
   const customerId = session?.user?.id ?? undefined;
 
@@ -75,12 +72,10 @@ export async function action({ request }) {
       if (err.message === 'PRICE_NOT_FOUND') {
         return { error: 'Price not available in this currency' };
       }
-      throw err;
-    }
-
-    const redirectTo = formData.get('redirectTo');
-    if (redirectTo === 'cart') {
-      return redirect('/cart', { headers });
+      return handleError(err, {
+        source: 'storefront.cart.add',
+        userMessage: 'Could not add item to cart.',
+      });
     }
 
     return redirect('/cart', { headers });
@@ -90,15 +85,22 @@ export async function action({ request }) {
     return { error: 'No cart' };
   }
 
-  if (intent === 'remove') {
-    const lineId = formData.get('lineId');
-    await removeLine(cart.id, lineId);
-  } else if (intent === 'update') {
-    const lineId = formData.get('lineId');
-    const quantity = Number(formData.get('quantity'));
-    await updateQuantity(cart.id, lineId, quantity);
-  } else if (intent === 'checkout') {
-    return redirect('/checkout');
+  try {
+    if (intent === 'remove') {
+      const lineId = formData.get('lineId');
+      await removeLine(cart.id, lineId);
+    } else if (intent === 'update') {
+      const lineId = formData.get('lineId');
+      const quantity = Number(formData.get('quantity'));
+      await updateQuantity(cart.id, lineId, quantity);
+    } else if (intent === 'checkout') {
+      return redirect('/checkout');
+    }
+  } catch (err) {
+    return handleError(err, {
+      source: 'storefront.cart',
+      userMessage: 'Could not update cart.',
+    });
   }
 
   return null;

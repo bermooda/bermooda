@@ -3,6 +3,8 @@
 import { Form, redirect, useActionData, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
+import { buildLoginRedirectUrl } from '#/libs/auth/shared.server';
+import { handleError } from '#/libs/error.server';
 import { getOrder } from '#/core/customers/index.server';
 import {
   parseReturnLinesFromForm,
@@ -13,7 +15,7 @@ export async function loader({ request, params }) {
   const session = await getCustomerSession(request);
   const customer = session?.user ?? null;
   if (!customer) {
-    throw redirect('/account/login');
+    throw redirect(buildLoginRedirectUrl('/account/login', request), 302);
   }
 
   const order = await getOrder(params.id, customer.id);
@@ -40,7 +42,7 @@ export async function action({ request, params }) {
   const session = await getCustomerSession(request);
   const customer = session?.user ?? null;
   if (!customer) {
-    throw redirect('/account/login');
+    throw redirect(buildLoginRedirectUrl('/account/login', request), 302);
   }
 
   const formData = await request.formData();
@@ -55,7 +57,13 @@ export async function action({ request, params }) {
     });
     return redirect(`/account/orders/${params.id}?return=${returnRecord.id}`);
   } catch (err) {
-    return { error: err.message };
+    if (err.code && err.message) {
+      return { error: err.message };
+    }
+    return handleError(err, {
+      source: 'storefront.account.return',
+      userMessage: 'Could not submit return request.',
+    });
   }
 }
 

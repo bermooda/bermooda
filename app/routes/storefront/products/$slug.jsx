@@ -25,6 +25,7 @@ import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import {
   addToWishlist,
   getWishlistedVariantIds,
+  mapWishlistActionError,
   parseWishlistFromForm,
   removeFromWishlist,
 } from '#/core/wishlists/index.server';
@@ -165,13 +166,7 @@ export async function action({ request, params }) {
       await removeFromWishlist(session.user.id, variantId);
       return { wishlistOk: true, wishlistAdded: false, variantId };
     } catch (err) {
-      if (err.code === 'VARIANT_ID_REQUIRED') {
-        return { wishlistError: 'Select a variant first.' };
-      }
-      if (err.code === 'NOT_FOUND') {
-        return { wishlistError: 'Variant not found.' };
-      }
-      return { wishlistError: 'Could not update wishlist. Try again.' };
+      return mapWishlistActionError(err);
     }
   }
 

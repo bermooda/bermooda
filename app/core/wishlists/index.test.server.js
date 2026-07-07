@@ -40,6 +40,7 @@ import {
   getWishlistedVariantIds,
   listWishlistItems,
   listWishlistItemsAdmin,
+  mapWishlistActionError,
   parseDeleteWishlistItemFromForm,
   parseWishlistAdminListParams,
   parseWishlistFromForm,
@@ -175,6 +176,29 @@ describe('parseWishlistMutationFromJson', () => {
       variantId: 'v1',
       intent: 'remove',
     });
+  });
+});
+
+describe('mapWishlistActionError', () => {
+  it('maps product-page wishlist errors', () => {
+    expect(
+      mapWishlistActionError(
+        Object.assign(new Error('variant required'), {
+          code: 'VARIANT_ID_REQUIRED',
+        })
+      )
+    ).toEqual({ wishlistError: 'Select a variant first.' });
+  });
+
+  it('maps account wishlist errors', () => {
+    expect(
+      mapWishlistActionError(
+        Object.assign(new Error('unknown'), {
+          code: 'INVALID_WISHLIST_ACTION',
+        }),
+        { style: 'account' }
+      )
+    ).toEqual({ ok: false, error: 'Unknown action.' });
   });
 });
 
