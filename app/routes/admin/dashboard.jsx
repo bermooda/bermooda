@@ -1,3 +1,4 @@
+// app/routes/admin/dashboard.jsx
 import {
   ArchiveBoxXMarkIcon,
   BanknotesIcon,
@@ -6,8 +7,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
+import { loadAdminDashboardData } from '#/core/reporting/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
@@ -36,72 +37,13 @@ export function meta() {
  * is already authenticated.
  */
 export async function loader() {
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-
-  const [
-    totalOrders,
-    revenueAgg,
-    abandonedCheckouts,
-    lowStockCount,
-    recentOrders,
-    slotBlocks,
-  ] = await Promise.all([
-    // Total orders count
-    prisma.order.count(),
-
-    // Sum of all order totals
-    prisma.order.aggregate({
-      _sum: { totalCents: true },
-    }),
-
-    // Abandoned checkouts: older than 1 hour and step != 'complete'
-    prisma.checkoutSession.count({
-      where: {
-        step: { not: 'complete' },
-        createdAt: { lt: oneHourAgo },
-      },
-    }),
-
-    // Low-stock variants: inventoryTracked=true and inventoryCount < 5
-    prisma.productVariant.count({
-      where: {
-        inventoryTracked: true,
-        inventoryCount: { lt: 5 },
-      },
-    }),
-
-    // Last 10 orders
-    prisma.order.findMany({
-      take: 10,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        orderNumber: true,
-        email: true,
-        status: true,
-        totalCents: true,
-        currency: true,
-        createdAt: true,
-        customer: {
-          select: { email: true },
-        },
-      },
-    }),
-
+  const [dashboard, slotBlocks] = await Promise.all([
+    loadAdminDashboardData(),
     getAdminSlotBlocksMap(['dashboard.widgets']),
   ]);
 
-  const totalRevenueCents = revenueAgg._sum.totalCents ?? 0;
-
   return {
-    totalOrders,
-    totalRevenueCents,
-    abandonedCheckouts,
-    lowStockCount,
-    recentOrders: recentOrders.map((o) => ({
-      ...o,
-      createdAt: o.createdAt.toISOString(),
-    })),
+    ...dashboard,
     slotBlocks,
   };
 }

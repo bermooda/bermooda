@@ -11,7 +11,7 @@ import {
 } from 'react-router';
 
 import { parseAdminSearchParams } from '#/libs/api/admin-ui.server';
-import prisma from '#/libs/prisma.server';
+import { loadProductsAdminIndexData } from '#/core/catalog/admin.server';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
@@ -33,117 +33,7 @@ export async function loader({ request }) {
     limit: PAGE_SIZE,
   });
 
-  // For slug search, look up product IDs that match
-  let productIds = null;
-  if (q) {
-    const slugRows = await prisma.slug.findMany({
-      where: {
-        entityType: 'product',
-        slug: { contains: q },
-      },
-      select: { entityId: true },
-    });
-    productIds = slugRows.map((r) => r.entityId);
-  }
-
-  const whereClause = productIds !== null ? { id: { in: productIds } } : {};
-
-  const [total, publishedCount, draftCount, products] = await Promise.all([
-    prisma.product.count({ where: whereClause }),
-    prisma.product.count({
-      where: { ...whereClause, publishedAt: { not: null } },
-    }),
-    prisma.product.count({
-      where: { ...whereClause, publishedAt: null },
-    }),
-    prisma.product.findMany({
-      where: whereClause,
-      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      include: {
-        variants: { select: { id: true } },
-        categories: {
-          include: {
-            category: true,
-          },
-        },
-      },
-    }),
-  ]);
-
-  // Fetch translations for category names
-  const categoryIds = [
-    ...new Set(products.flatMap((p) => p.categories.map((c) => c.categoryId))),
-  ];
-
-  const categoryTranslations =
-    categoryIds.length > 0
-      ? await prisma.translation.findMany({
-          where: {
-            entityType: 'category',
-            entityId: { in: categoryIds },
-            locale: 'en',
-            field: 'title',
-          },
-        })
-      : [];
-
-  const catTitleMap = Object.fromEntries(
-    categoryTranslations.map((t) => [t.entityId, t.value])
-  );
-
-  // Fetch slugs and titles for display
-  const productIdList = products.map((p) => p.id);
-  const [slugs, titles] = await Promise.all([
-    productIdList.length > 0
-      ? prisma.slug.findMany({
-          where: {
-            entityType: 'product',
-            entityId: { in: productIdList },
-            locale: 'en',
-          },
-        })
-      : [],
-    productIdList.length > 0
-      ? prisma.translation.findMany({
-          where: {
-            entityType: 'product',
-            entityId: { in: productIdList },
-            locale: 'en',
-            field: 'title',
-          },
-        })
-      : [],
-  ]);
-  const slugMap = Object.fromEntries(slugs.map((s) => [s.entityId, s.slug]));
-  const titleMap = Object.fromEntries(titles.map((t) => [t.entityId, t.value]));
-
-  const rows = products.map((p) => ({
-    id: p.id,
-    idPrefix: p.id.slice(0, 8),
-    slug: slugMap[p.id] ?? null,
-    title: titleMap[p.id] ?? null,
-    published: p.publishedAt !== null,
-    publishedAt: p.publishedAt?.toISOString() ?? null,
-    variantCount: p.variants.length,
-    categories: p.categories.map((c) => ({
-      id: c.categoryId,
-      title: catTitleMap[c.categoryId] ?? c.categoryId.slice(0, 6),
-    })),
-    createdAt: p.createdAt.toISOString(),
-  }));
-
-  return {
-    rows,
-    total,
-    publishedCount,
-    draftCount,
-    page,
-    pageSize: PAGE_SIZE,
-    totalPages: Math.ceil(total / PAGE_SIZE),
-    q,
-  };
+  return loadProductsAdminIndexData({ page, limit: PAGE_SIZE, q });
 }
 
 // ---------------------------------------------------------------------------

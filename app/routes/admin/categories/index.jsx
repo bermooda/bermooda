@@ -20,8 +20,13 @@ import {
   useNavigation,
 } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
-import { get } from '#/core/settings/index.server';
+import { handleAdminActionError } from '#/libs/api/admin-ui.server';
+import {
+  deleteCategoryRecursive,
+  loadCategoryAdminTreeData,
+  reorderCategory,
+  saveCategoryAdminForm,
+} from '#/core/catalog/admin.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
@@ -36,70 +41,7 @@ import Button, { ButtonSubmit } from '#/components/ui/button';
 // ---------------------------------------------------------------------------
 
 export async function loader() {
-  const [categories, localesRaw] = await Promise.all([
-    prisma.category.findMany({
-      orderBy: { position: 'asc' },
-    }),
-    get('locales'),
-  ]);
-
-  const locales = Array.isArray(localesRaw) ? localesRaw : ['en'];
-
-  // Ensure 'en' is always in the list
-  if (!locales.includes('en')) locales.unshift('en');
-
-  const catIds = categories.map((c) => c.id);
-
-  const [translations, slugRows] =
-    catIds.length > 0
-      ? await Promise.all([
-          prisma.translation.findMany({
-            where: { entityType: 'category', entityId: { in: catIds } },
-          }),
-          prisma.slug.findMany({
-            where: { entityType: 'category', entityId: { in: catIds } },
-          }),
-        ])
-      : [[], []];
-
-  // Build maps
-  const translationMap = {}; // entityId -> locale -> field -> value
-  for (const t of translations) {
-    if (!translationMap[t.entityId]) translationMap[t.entityId] = {};
-    if (!translationMap[t.entityId][t.locale])
-      translationMap[t.entityId][t.locale] = {};
-    translationMap[t.entityId][t.locale][t.field] = t.value;
-  }
-
-  const slugMap = {}; // entityId -> locale -> slug
-  for (const s of slugRows) {
-    if (!slugMap[s.entityId]) slugMap[s.entityId] = {};
-    slugMap[s.entityId][s.locale] = s.slug;
-  }
-
-  // Build flat tree: roots then their children recursively, each with a depth
-  function buildTree(cats, parentId = null, depth = 0) {
-    return cats
-      .filter((c) => c.parentId === parentId)
-      .sort((a, b) => a.position - b.position)
-      .flatMap((c) => [
-        {
-          id: c.id,
-          parentId: c.parentId ?? null,
-          position: c.position,
-          depth,
-          enTitle: translationMap[c.id]?.en?.title ?? '',
-          childCount: cats.filter((ch) => ch.parentId === c.id).length,
-          translations: translationMap[c.id] ?? {},
-          slugs: slugMap[c.id] ?? {},
-        },
-        ...buildTree(cats, c.id, depth + 1),
-      ]);
-  }
-
-  const tree = buildTree(categories, null);
-
-  return { tree, locales };
+  return loadCategoryAdminTreeData();
 }
 
 // ---------------------------------------------------------------------------
@@ -115,65 +57,16 @@ export async function action({ request }) {
     const id = formData.get('id')?.toString();
     if (!id) return { ok: false, error: 'Missing id.' };
 
-    const locales = formData.getAll('locales[]');
-
-    for (const locale of locales) {
-      const title = formData.get(`title[${locale}]`)?.toString() ?? '';
-      const slugValue = formData.get(`slug[${locale}]`)?.toString().trim();
-      const metaTitle = formData.get(`metaTitle[${locale}]`)?.toString() ?? '';
-      const metaDescription =
-        formData.get(`metaDescription[${locale}]`)?.toString() ?? '';
-
-      for (const [field, value] of [
-        ['title', title],
-        ['metaTitle', metaTitle],
-        ['metaDescription', metaDescription],
-      ]) {
-        await prisma.translation.upsert({
-          where: {
-            entityType_entityId_locale_field: {
-              entityType: 'category',
-              entityId: id,
-              locale,
-              field,
-            },
-          },
-          update: { value },
-          create: {
-            entityType: 'category',
-            entityId: id,
-            locale,
-            field,
-            value,
-          },
-        });
-      }
-
-      if (slugValue) {
-        try {
-          await prisma.slug.upsert({
-            where: {
-              entityType_entityId_locale: {
-                entityType: 'category',
-                entityId: id,
-                locale,
-              },
-            },
-            update: { slug: slugValue },
-            create: {
-              entityType: 'category',
-              entityId: id,
-              locale,
-              slug: slugValue,
-            },
-          });
-        } catch {
-          // Slug collision — skip
-        }
-      }
+    try {
+      await saveCategoryAdminForm(id, formData);
+      return { ok: true, intent: 'save' };
+    } catch (err) {
+      return handleAdminActionError(err, {
+        source: 'admin.categories.save',
+        intent: 'save',
+        userMessage: 'Could not save category.',
+      });
     }
-
-    return { ok: true, intent: 'save' };
   }
 
   // ── Delete ─────────────────────────────────────────────────────────────────
@@ -181,64 +74,36 @@ export async function action({ request }) {
     const id = formData.get('id')?.toString();
     if (!id) return { ok: false, error: 'Missing id.' };
 
-    // Cascade: delete children first (recursively), then translations/slugs,
-    // then the category itself. Prisma onDelete: Restrict by default on self-
-    // relations, so we do it manually.
-    async function deleteRecursive(catId) {
-      const children = await prisma.category.findMany({
-        where: { parentId: catId },
+    try {
+      await deleteCategoryRecursive(id);
+      return { ok: true, intent: 'delete' };
+    } catch (err) {
+      return handleAdminActionError(err, {
+        source: 'admin.categories.delete',
+        intent: 'delete',
+        userMessage: 'Could not delete category.',
       });
-      for (const child of children) {
-        await deleteRecursive(child.id);
-      }
-      await prisma.translation.deleteMany({
-        where: { entityType: 'category', entityId: catId },
-      });
-      await prisma.slug.deleteMany({
-        where: { entityType: 'category', entityId: catId },
-      });
-      await prisma.category.delete({ where: { id: catId } });
     }
-
-    await deleteRecursive(id);
-    return { ok: true, intent: 'delete' };
   }
 
-  // ── Reorder up ────────────────────────────────────────────────────────────
+  // ── Reorder up/down ───────────────────────────────────────────────────────
   if (intent === 'reorder-up' || intent === 'reorder-down') {
     const id = formData.get('id')?.toString();
     if (!id) return { ok: false, error: 'Missing id.' };
 
-    const current = await prisma.category.findUnique({ where: { id } });
-    if (!current) return { ok: false, error: 'Not found.' };
-
-    const siblings = await prisma.category.findMany({
-      where: { parentId: current.parentId ?? null },
-      orderBy: { position: 'asc' },
-    });
-
-    const idx = siblings.findIndex((s) => s.id === id);
-    const swapIdx = intent === 'reorder-up' ? idx - 1 : idx + 1;
-
-    if (swapIdx < 0 || swapIdx >= siblings.length) {
-      return { ok: true, intent }; // already at boundary
+    try {
+      await reorderCategory(id, intent);
+      return { ok: true, intent };
+    } catch (err) {
+      return handleAdminActionError(err, {
+        source: 'admin.categories.reorder',
+        intent,
+        knownCodes: {
+          NOT_FOUND: { ok: false, error: 'Not found.' },
+        },
+        userMessage: 'Could not reorder category.',
+      });
     }
-
-    const sibling = siblings[swapIdx];
-
-    // Swap positions
-    await prisma.$transaction([
-      prisma.category.update({
-        where: { id: current.id },
-        data: { position: sibling.position },
-      }),
-      prisma.category.update({
-        where: { id: sibling.id },
-        data: { position: current.position },
-      }),
-    ]);
-
-    return { ok: true, intent };
   }
 
   return { ok: false, error: 'Unknown intent.' };
