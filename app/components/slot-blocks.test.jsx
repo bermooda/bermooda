@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import SlotBlocks from '#/components/admin/slot-blocks';
+import SlotBlocks from '#/components/slot-blocks';
 
 describe('SlotBlocks', () => {
   it('forwards slot props to each plugin block', () => {
@@ -24,5 +24,10 @@ describe('SlotBlocks', () => {
     );
 
     expect(screen.getByText('Tracked orders: 42')).toBeInTheDocument();
+  });
+
+  it('returns null when no blocks are provided', () => {
+    const { container } = render(<SlotBlocks blocks={[]} />);
+    expect(container).toBeEmptyDOMElement();
   });
 });

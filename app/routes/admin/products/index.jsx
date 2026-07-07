@@ -2,25 +2,21 @@
 // Products admin list — paginated table with search, status, variant count,
 // category badges and a "New Product" button.
 
+import { CubeIcon, PlusIcon } from '@heroicons/react/24/outline';
 import {
-  CubeIcon,
-  MagnifyingGlassIcon,
-  PlusIcon,
-} from '@heroicons/react/24/outline';
-import {
-  Form,
   Link,
   useLoaderData,
   useNavigate,
   useSearchParams,
 } from 'react-router';
 
+import { parseAdminSearchParams } from '#/libs/api/admin-ui.server';
 import prisma from '#/libs/prisma.server';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
-import { controlClasses } from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
+import SearchField from '#/components/admin/search-field';
 import Stat from '#/components/admin/stat';
 import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
@@ -33,8 +29,9 @@ const PAGE_SIZE = 20;
 
 export async function loader({ request }) {
   const url = new URL(request.url);
-  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10));
-  const q = url.searchParams.get('q')?.trim() ?? '';
+  const { page, q } = parseAdminSearchParams(url.searchParams, {
+    limit: PAGE_SIZE,
+  });
 
   // For slug search, look up product IDs that match
   let productIds = null;
@@ -215,18 +212,11 @@ export default function AdminProductsRoute() {
 
       <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
         <Toolbar>
-          <Form method="get" className="w-full sm:max-w-sm">
-            <div className="relative">
-              <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <input
-                type="search"
-                name="q"
-                defaultValue={q}
-                placeholder="Search by slug…"
-                className={`${controlClasses} pl-9`}
-              />
-            </div>
-          </Form>
+          <SearchField
+            defaultValue={q}
+            placeholder="Search by slug…"
+            formClassName="w-full sm:max-w-sm"
+          />
           <ToolbarGroup>
             <span className="text-text-muted text-sm">
               {total} result{total !== 1 ? 's' : ''}

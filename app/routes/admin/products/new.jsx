@@ -8,12 +8,11 @@ import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import {
   createBlankProduct,
   loadAdminProductEditorContext,
+  NEW_VARIANT_ID,
   persistAdminProduct,
   validatePrimarySlug,
 } from '#/core/catalog/admin-product-form.server';
-import ProductEditor, {
-  NEW_VARIANT_ID,
-} from '#/components/admin/product-editor';
+import ProductEditor from '#/components/admin/product-editor';
 
 // ---------------------------------------------------------------------------
 // Loader

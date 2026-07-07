@@ -33,8 +33,8 @@ import Card, { CardHeader } from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
-import SlotBlocks from '#/components/admin/slot-blocks';
 import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
+import SlotBlocks from '#/components/slot-blocks';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 

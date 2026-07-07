@@ -1,11 +1,6 @@
-import {
-  DocumentTextIcon,
-  MagnifyingGlassIcon,
-  PlusIcon,
-} from '@heroicons/react/24/outline';
+import { DocumentTextIcon, PlusIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import {
-  Form,
   Link,
   useLoaderData,
   useNavigate,
@@ -15,9 +10,9 @@ import {
 import { listPagesAdmin } from '#/core/content/index.server';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
-import { controlClasses } from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
+import SearchField from '#/components/admin/search-field';
 import Stat from '#/components/admin/stat';
 import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
@@ -93,18 +88,12 @@ export default function AdminPagesIndexRoute() {
 
       <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
         <Toolbar>
-          <Form method="get" className="w-full sm:max-w-sm">
-            <div className="relative">
-              <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <input
-                type="search"
-                name="q"
-                defaultValue={q}
-                placeholder="Search by slug…"
-                className={`${controlClasses} pl-9`}
-              />
-            </div>
-          </Form>
+          <SearchField
+            defaultValue={q}
+            placeholder="Search by slug…"
+            formClassName="w-full sm:max-w-sm"
+            hiddenFields={status !== 'all' ? { status } : {}}
+          />
           <ToolbarGroup>
             <div className="flex flex-wrap gap-1.5">
               {['all', 'draft', 'published'].map((s) => (

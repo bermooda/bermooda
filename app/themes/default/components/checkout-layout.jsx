@@ -10,7 +10,7 @@ import {
 
 import { useT } from '#/core/i18n/index';
 import { cartLineTotal, formatPrice, summarizeCartLines } from '#/core/index';
-import SlotBlocks from '#/components/storefront/slot-blocks';
+import SlotBlocks from '#/components/slot-blocks';
 
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
