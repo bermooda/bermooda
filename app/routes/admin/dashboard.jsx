@@ -12,8 +12,8 @@ import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
-import SlotBlocks from '#/components/admin/slot-blocks';
 import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import SlotBlocks from '#/components/slot-blocks';
 
 // ---------------------------------------------------------------------------
 // Meta

@@ -9,23 +9,12 @@ import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import Textarea from '#/components/admin/form/textarea';
+import LocaleTabs from '#/components/admin/locale-tabs';
 import PageHeader from '#/components/admin/page-header';
-import Tabs from '#/components/admin/tabs';
+import SeoFields from '#/components/admin/seo-fields';
+import SlugField from '#/components/admin/slug-field';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
-
-function LocaleTabs({ locales, activeLocale, onSelect }) {
-  const activeIndex = Math.max(0, locales.indexOf(activeLocale));
-
-  return (
-    <Tabs
-      tabs={locales.map((locale) => locale.toUpperCase())}
-      active={activeIndex}
-      onChange={(index) => onSelect(locales[index])}
-      variant="pills"
-    />
-  );
-}
 
 export default function PageEditor({
   mode = 'edit',
@@ -118,21 +107,7 @@ export default function PageEditor({
               <Field label="Title" htmlFor="page-title">
                 <Input id="page-title" name="title" type="text" required />
               </Field>
-              <Field label="URL slug" htmlFor="page-slug">
-                <div className="relative">
-                  <span className="text-text-muted pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm">
-                    /
-                  </span>
-                  <Input
-                    id="page-slug"
-                    name="slug"
-                    type="text"
-                    required
-                    pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-                    className="pl-7"
-                  />
-                </div>
-              </Field>
+              <SlugField id="page-slug" name="slug" label="URL slug" required />
             </div>
           ) : (
             <>
@@ -150,24 +125,12 @@ export default function PageEditor({
                     defaultValue={t.title ?? ''}
                   />
                 </Field>
-                <Field
+                <SlugField
+                  id={`slug-${activeLocale}`}
+                  name="slug"
                   label={`URL slug (${activeLocale})`}
-                  htmlFor={`slug-${activeLocale}`}
-                >
-                  <div className="relative">
-                    <span className="text-text-muted pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm">
-                      /
-                    </span>
-                    <Input
-                      id={`slug-${activeLocale}`}
-                      name="slug"
-                      type="text"
-                      defaultValue={slugMap[activeLocale] ?? ''}
-                      pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-                      className="pl-7"
-                    />
-                  </div>
-                </Field>
+                  defaultValue={slugMap[activeLocale] ?? ''}
+                />
                 <Field label="Body" htmlFor={`body-${activeLocale}`}>
                   <Textarea
                     id={`body-${activeLocale}`}
@@ -176,35 +139,16 @@ export default function PageEditor({
                     defaultValue={t.body ?? ''}
                   />
                 </Field>
-                <div className="bg-surface-2/70 border-border rounded-lg border p-4">
-                  <p className="text-text-muted mb-4 text-xs font-semibold tracking-wide uppercase">
-                    SEO
-                  </p>
-                  <div className="space-y-4">
-                    <Field
-                      label="Meta title"
-                      htmlFor={`meta-title-${activeLocale}`}
-                    >
-                      <Input
-                        id={`meta-title-${activeLocale}`}
-                        name="metaTitle"
-                        type="text"
-                        defaultValue={t.metaTitle ?? ''}
-                      />
-                    </Field>
-                    <Field
-                      label="Meta description"
-                      htmlFor={`meta-desc-${activeLocale}`}
-                    >
-                      <Textarea
-                        id={`meta-desc-${activeLocale}`}
-                        name="metaDescription"
-                        rows={2}
-                        defaultValue={t.metaDescription ?? ''}
-                      />
-                    </Field>
-                  </div>
-                </div>
+                <SeoFields
+                  titleFieldName="metaTitle"
+                  descriptionFieldName="metaDescription"
+                  titleId={`meta-title-${activeLocale}`}
+                  descriptionId={`meta-desc-${activeLocale}`}
+                  titleLabel="Meta title"
+                  descriptionLabel="Meta description"
+                  defaultTitle={t.metaTitle ?? ''}
+                  defaultDescription={t.metaDescription ?? ''}
+                />
               </div>
             </>
           )}

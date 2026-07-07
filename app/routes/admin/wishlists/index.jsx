@@ -1,7 +1,6 @@
 // app/routes/admin/wishlists/index.jsx
 // Wishlist items admin UI.
 
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
 import {
@@ -10,9 +9,9 @@ import {
   parseDeleteWishlistItemFromForm,
 } from '#/core/wishlists/index.server';
 import EmptyState from '#/components/admin/empty-state';
-import { controlClasses } from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
+import SearchField from '#/components/admin/search-field';
 import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
 
@@ -70,16 +69,11 @@ export default function AdminWishlistsRoute() {
 
       <Toolbar className="mb-4">
         <ToolbarGroup>
-          <Form method="get" className="relative">
-            <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <input
-              type="search"
-              name="q"
-              defaultValue={q}
-              placeholder="Search by email or SKU…"
-              className={`${controlClasses} w-72 pl-9`}
-            />
-          </Form>
+          <SearchField
+            defaultValue={q}
+            placeholder="Search by email or SKU…"
+            className="w-72"
+          />
         </ToolbarGroup>
       </Toolbar>
 

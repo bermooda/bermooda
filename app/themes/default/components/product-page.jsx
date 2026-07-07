@@ -7,7 +7,7 @@ import { Link, Form, useFetcher } from 'react-router';
 import { useT } from '#/core/i18n/index';
 import { formatPrice } from '#/core/index';
 import { resolveCatalogMediaUrl } from '#/core/storage/media';
-import SlotBlocks from '#/components/storefront/slot-blocks';
+import SlotBlocks from '#/components/slot-blocks';
 
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,

@@ -88,8 +88,8 @@ Finish each review completely in the same PR — do not defer work.
 
 ## UI
 
-| Area                  | Status | Notes |
-| --------------------- | ------ | ----- |
-| `app/components/`     | ⬜     |       |
-| `app/themes/default/` | ⬜     |       |
-| `app/plugins/`        | ⬜     |       |
+| Area                  | Status | Notes                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/components/`     | ✅     | Shared `SlotBlocks`, `LocaleTabs`, `SlugField`, `SeoFields`, `SearchField`; deduped page/product editors; media upload errors surfaced; `NEW_VARIANT_ID` moved to `#/core/catalog/admin-product-form.server`; removed dead landing/auth/support/theme-toggle/accordion/section-header/CardSection and duplicate slot-blocks copies; wired admin list search routes; expanded tests. |
+| `app/themes/default/` | ⬜     |                                                                                                                                                                                                                                                                                                                                                                                     |
+| `app/plugins/`        | ⬜     |                                                                                                                                                                                                                                                                                                                                                                                     |
