@@ -6,9 +6,19 @@ import { createHash, randomBytes } from 'crypto';
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import { API_KEY_SCOPES } from '#/core/api-keys/scopes';
+
+export { API_KEY_SCOPES } from '#/core/api-keys/scopes';
+
+export const DEFAULT_API_KEY_LIST_LIMIT = 20;
+export const MAX_API_KEY_LIST_RESULTS = 100;
 
 const KEY_PREFIX = 'berm_';
-const MAX_LIST_RESULTS = 100;
+const API_KEY_SCOPE_SET = new Set(API_KEY_SCOPES);
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
 
 /**
  * Hash a raw API key using SHA-256.
@@ -27,12 +37,68 @@ function generateRawKey() {
   return KEY_PREFIX + randomBytes(32).toString('hex');
 }
 
+function parseListPagination(source, defaults) {
+  const get = (key) => {
+    if (source instanceof URLSearchParams) {
+      const value = source.get(key);
+      return value === null || value === '' ? undefined : value;
+    }
+    const value = source[key];
+    if (value === null || value === undefined || value === '') return undefined;
+    return value.toString();
+  };
+
+  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
+  const limit = Math.min(
+    Math.max(
+      1,
+      parseInt(get('limit') ?? String(defaults.limit), 10) || defaults.limit
+    ),
+    defaults.max
+  );
+
+  return { page, limit };
+}
+
+function normalizeScopes(scopes) {
+  const normalized = [
+    ...new Set(scopes.map((scope) => scope.toString().trim())),
+  ];
+  if (normalized.length === 0) {
+    throw Object.assign(new Error('At least one scope is required'), {
+      code: 'SCOPES_REQUIRED',
+    });
+  }
+
+  const invalid = normalized.filter((scope) => !API_KEY_SCOPE_SET.has(scope));
+  if (invalid.length > 0) {
+    throw Object.assign(new Error(`Invalid scope: ${invalid.join(', ')}`), {
+      code: 'SCOPES_INVALID',
+    });
+  }
+
+  return normalized;
+}
+
+function parseExpiresAt(value) {
+  if (value === null || value === undefined || value === '') return null;
+
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw Object.assign(new Error('Invalid expiresAt value'), {
+      code: 'EXPIRES_AT_INVALID',
+    });
+  }
+
+  return parsed;
+}
+
 /**
  * Serialize an ApiKey record: drop keyHash, parse scopes, ISO-format dates.
  * @param {object} record
  * @returns {object}
  */
-function serializeApiKey({ keyHash: _kh, scopes, ...rest }) {
+export function serializeApiKey({ keyHash: _kh, scopes, ...rest }) {
   return {
     ...rest,
     scopes: JSON.parse(scopes),
@@ -41,6 +107,85 @@ function serializeApiKey({ keyHash: _kh, scopes, ...rest }) {
     lastUsedAt: rest.lastUsedAt?.toISOString?.() ?? rest.lastUsedAt,
     expiresAt: rest.expiresAt?.toISOString?.() ?? rest.expiresAt,
   };
+}
+
+function notFoundError(id) {
+  return Object.assign(new Error('API key not found'), {
+    code: 'NOT_FOUND',
+    status: 404,
+    id,
+  });
+}
+
+async function requireApiKeyRecord(id) {
+  const record = await prisma.apiKey.findUnique({ where: { id } });
+  if (!record) {
+    throw notFoundError(id);
+  }
+  return record;
+}
+
+// ---------------------------------------------------------------------------
+// Input parsing
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse API key list query params.
+ *
+ * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ */
+export function parseApiKeyListParams(source = {}) {
+  const { page, limit } = parseListPagination(source, {
+    limit: DEFAULT_API_KEY_LIST_LIMIT,
+    max: MAX_API_KEY_LIST_RESULTS,
+  });
+
+  return { page, limit };
+}
+
+/**
+ * Parse admin/API create payload into normalized API key fields.
+ *
+ * @param {object} input
+ * @returns {{ label: string, scopes: string[], expiresAt: Date|null }}
+ */
+export function parseCreateApiKeyInput(input = {}) {
+  const label = input.label?.toString().trim() ?? '';
+  if (!label) {
+    throw Object.assign(new Error('Label is required'), {
+      code: 'LABEL_REQUIRED',
+    });
+  }
+
+  const rawScopes = Array.isArray(input.scopes)
+    ? input.scopes
+    : input.scopes
+      ? [input.scopes]
+      : ['admin'];
+
+  const scopes = normalizeScopes(rawScopes);
+  const expiresAt = parseExpiresAt(input.expiresAt);
+
+  return { label, scopes, expiresAt };
+}
+
+/**
+ * Parse admin create-key form data.
+ *
+ * @param {FormData} formData
+ * @returns {{ label: string, scopes: string[], expiresAt: Date|null }}
+ */
+export function parseCreateApiKeyFormData(formData) {
+  const label = formData.get('label')?.toString().trim() ?? '';
+  const scopesRaw = formData.getAll('scopes').map(String);
+  const scopes = scopesRaw.length > 0 ? scopesRaw : ['admin'];
+  const expiresAtRaw = formData.get('expiresAt')?.toString().trim();
+
+  return parseCreateApiKeyInput({
+    label,
+    scopes,
+    ...(expiresAtRaw ? { expiresAt: expiresAtRaw } : {}),
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -54,34 +199,22 @@ function serializeApiKey({ keyHash: _kh, scopes, ...rest }) {
  * @param {{ label: string, scopes?: string[], expiresAt?: Date }} params
  * @returns {Promise<{ key: string, record: object }>}
  */
-export async function createApiKey({ label, scopes = ['admin'], expiresAt }) {
-  if (!label?.trim()) {
-    throw Object.assign(new Error('Label is required'), {
-      code: 'LABEL_REQUIRED',
-    });
-  }
-  if (!Array.isArray(scopes) || scopes.length === 0) {
-    throw Object.assign(new Error('At least one scope is required'), {
-      code: 'SCOPES_REQUIRED',
-    });
-  }
+export async function createApiKey(params) {
+  const { label, scopes, expiresAt } = parseCreateApiKeyInput(params);
 
   const rawKey = generateRawKey();
   const keyHash = hashKey(rawKey);
 
   const record = await prisma.apiKey.create({
     data: {
-      label: label.trim(),
+      label,
       keyHash,
       scopes: JSON.stringify(scopes),
-      expiresAt: expiresAt ?? null,
+      expiresAt,
     },
   });
 
-  logger.info(
-    { id: record.id, label: record.label, scopes },
-    'API key created'
-  );
+  logger.info({ id: record.id, label, scopes }, 'API key created');
   return { key: rawKey, record: serializeApiKey(record) };
 }
 
@@ -141,15 +274,30 @@ export async function validateApiKey(rawKey, requiredScopes = []) {
 }
 
 /**
- * List all API keys (keyHash excluded).
- * @returns {Promise<object[]>}
+ * List API keys with pagination (keyHash excluded).
+ *
+ * @param {{ page?: number, limit?: number }} [params]
+ * @returns {Promise<{ apiKeys: object[], total: number, page: number, limit: number }>}
  */
-export async function listApiKeys() {
-  const records = await prisma.apiKey.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: MAX_LIST_RESULTS,
-  });
-  return records.map(serializeApiKey);
+export async function listApiKeys(params = {}) {
+  const { page, limit } = parseApiKeyListParams(params);
+  const skip = (page - 1) * limit;
+
+  const [records, total] = await Promise.all([
+    prisma.apiKey.findMany({
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.apiKey.count(),
+  ]);
+
+  return {
+    apiKeys: records.map(serializeApiKey),
+    total,
+    page,
+    limit,
+  };
 }
 
 /**
@@ -158,21 +306,18 @@ export async function listApiKeys() {
  * @returns {Promise<object>}
  */
 export async function getApiKey(id) {
-  const record = await prisma.apiKey.findUnique({ where: { id } });
-  if (!record) {
-    throw Object.assign(new Error('API key not found'), {
-      code: 'KEY_NOT_FOUND',
-      status: 404,
-    });
-  }
+  const record = await requireApiKeyRecord(id);
   return serializeApiKey(record);
 }
 
 /**
  * Revoke (permanently delete) an API key by id.
  * @param {string} id
+ * @returns {Promise<{ revoked: true }>}
  */
 export async function revokeApiKey(id) {
+  await requireApiKeyRecord(id);
   await prisma.apiKey.delete({ where: { id } });
   logger.info({ id }, 'API key revoked');
+  return { revoked: true };
 }
