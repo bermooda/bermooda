@@ -17,6 +17,7 @@ import {
   isProductPublishedOnChannel,
 } from '#/core/channels/index.server';
 import { emit } from '#/core/events/index.server';
+import { deleteMedia, uploadAndCreateMedia } from '#/core/storage/index.server';
 
 export { getTranslations, setTranslation };
 
@@ -435,10 +436,28 @@ export async function attachMedia(productId, mediaId, position = 0) {
   return result;
 }
 
+export async function uploadProductMedia(productId, file) {
+  const media = await uploadAndCreateMedia(file);
+
+  const lastMedia = await prisma.productMedia.findFirst({
+    where: { productId },
+    orderBy: { position: 'desc' },
+  });
+
+  await attachMedia(productId, media.id, (lastMedia?.position ?? -1) + 1);
+  return media;
+}
+
 export async function detachMedia(productId, mediaId) {
   await prisma.productMedia.delete({
     where: { productId_mediaId: { productId, mediaId } },
   });
+
+  const remaining = await prisma.productMedia.count({ where: { mediaId } });
+  if (remaining === 0) {
+    await deleteMedia(mediaId);
+  }
+
   invalidateCatalogCache();
 }
 

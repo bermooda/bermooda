@@ -12,12 +12,12 @@ const ACCESS_KEY = process.env.STORAGE_ACCESS_KEY;
 const SECRET_KEY = process.env.STORAGE_SECRET_KEY;
 const PUBLIC_URL = process.env.STORAGE_PUBLIC_URL;
 
-function isConfigured() {
+export function isStorageConfigured() {
   return Boolean(ENDPOINT && BUCKET && ACCESS_KEY && SECRET_KEY);
 }
 
 export async function putObject(key, body, contentType, options = {}) {
-  if (!isConfigured()) {
+  if (!isStorageConfigured()) {
     throw new Error(
       'Storage is not configured. Set STORAGE_* environment variables.'
     );
@@ -50,7 +50,7 @@ export function getObjectUrl(key) {
 }
 
 export async function deleteObject(key) {
-  if (!isConfigured()) {
+  if (!isStorageConfigured()) {
     throw new Error(
       'Storage is not configured. Set STORAGE_* environment variables.'
     );

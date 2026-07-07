@@ -75,13 +75,33 @@ deleteObject(key); // → Promise<void>
 ### High-level API (`index.server.js`)
 
 ```js
-uploadMedia(file); // → Promise<{ url, storageKey, mimeType, width, height }>
+parseUploadFileInput(file); // validate FormData file
+uploadMedia(file); // → Promise<{ url, storageKey, mimeType, width, height, variantsJson }>
+uploadAndCreateMedia(file); // upload + persist Media row
+createMediaRecord(uploadResult); // persist upload metadata
+getMedia(mediaId); // load Media row (404 when missing)
+deleteMedia(mediaId); // delete storage objects + Media row
+deleteStoredObjects(media); // delete primary + variant objects
+loadStorageStatus(); // → { configured: boolean }
+isStorageConfigured(); // boolean env check
 ```
 
-`uploadMedia` accepts a Web API `File` object (as received from a browser form upload via Remix's `request.formData()`):
+`uploadMedia` accepts a Web API `File` object (as received from a browser form upload):
 
 - Generates a storage key following the `media/{timestamp}-{random}.{ext}` convention
 - Calls `putObject` internally
-- Returns `{ url: string, storageKey: string, mimeType: string, width: null, height: null }`
+- Generates responsive WebP variants at 640px and 1280px widths for optimizable images (via `sharp`)
+- Returns `{ url, storageKey, mimeType, width, height, variantsJson }`
 
-Note: image dimensions (`width`, `height`) are always `null` — dimension detection requires `sharp` or `probe-image-size`, neither of which is currently installed. The fields are included in the return shape so callers can store them in the `Media` table without schema changes once detection is added.
+### Client-safe helpers (`media.js`)
+
+```js
+parseMediaVariants(variantsJson);
+resolveMediaUrl(media, targetWidth);
+resolveCatalogMediaUrl(entity, targetWidth);
+pickMediaRecord(entry);
+serializeMediaRecord(media);
+collectStorageKeys(media);
+```
+
+Storefront themes and SEO helpers use `resolveCatalogMediaUrl` to serve responsive variant URLs when available.

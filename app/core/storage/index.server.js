@@ -7,14 +7,31 @@
 import sharp from 'sharp';
 
 import logger from '#/utils/logger.server';
+import prisma from '#/libs/prisma.server';
 import * as client from '#/core/storage/client.server';
+import {
+  collectStorageKeys,
+  RESPONSIVE_WIDTHS,
+  serializeMediaRecord,
+} from '#/core/storage/media';
+
+export {
+  collectStorageKeys,
+  DEFAULT_MEDIA_WIDTH,
+  parseMediaVariants,
+  pickMediaRecord,
+  resolveCatalogMediaUrl,
+  resolveMediaUrl,
+  RESPONSIVE_WIDTHS,
+  serializeMediaRecord,
+} from '#/core/storage/media';
 
 export const putObject = client.putObject;
 export const getObjectUrl = client.getObjectUrl;
 export const deleteObject = client.deleteObject;
+export const isStorageConfigured = client.isStorageConfigured;
 
 const IMAGE_MIME_PREFIX = 'image/';
-const RESPONSIVE_WIDTHS = [640, 1280];
 
 // ---------------------------------------------------------------------------
 // Private helpers
@@ -84,6 +101,24 @@ async function generateResponsiveVariants(buffer, baseKey) {
 }
 
 // ---------------------------------------------------------------------------
+// Input parsing
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate a browser upload from FormData.
+ *
+ * @param {FormDataEntryValue|null} file
+ */
+export function parseUploadFileInput(file) {
+  if (!file || typeof file === 'string') {
+    throw Object.assign(new Error('No file provided.'), {
+      code: 'FILE_REQUIRED',
+    });
+  }
+  return file;
+}
+
+// ---------------------------------------------------------------------------
 // uploadMedia
 // ---------------------------------------------------------------------------
 
@@ -94,24 +129,25 @@ async function generateResponsiveVariants(buffer, baseKey) {
  * @returns {Promise<{ url: string, storageKey: string, mimeType: string, width: number|null, height: number|null, variantsJson: string|null }>}
  */
 export async function uploadMedia(file) {
-  const ext = getExtension(file.name ?? '', file.type);
+  const validFile = parseUploadFileInput(file);
+  const ext = getExtension(validFile.name ?? '', validFile.type);
   const storageKey = `media/${Date.now()}-${randomSuffix()}.${ext}`;
 
   logger.info(
-    { storageKey, mimeType: file.type },
+    { storageKey, mimeType: validFile.type },
     'uploadMedia: uploading file'
   );
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const url = await client.putObject(storageKey, buffer, file.type, {
-    cacheControl: cacheControlForMime(file.type),
+  const buffer = Buffer.from(await validFile.arrayBuffer());
+  const url = await client.putObject(storageKey, buffer, validFile.type, {
+    cacheControl: cacheControlForMime(validFile.type),
   });
 
   let width = null;
   let height = null;
   let variantsJson = null;
 
-  if (isOptimizableImage(file.type)) {
+  if (isOptimizableImage(validFile.type)) {
     try {
       const result = await generateResponsiveVariants(buffer, storageKey);
       width = result.width;
@@ -130,41 +166,99 @@ export async function uploadMedia(file) {
   return {
     url,
     storageKey,
-    mimeType: file.type,
+    mimeType: validFile.type,
     width,
     height,
     variantsJson,
   };
 }
 
+// ---------------------------------------------------------------------------
+// Media records
+// ---------------------------------------------------------------------------
+
 /**
- * Parse stored responsive variant metadata.
+ * Delete all storage objects referenced by a media record.
  *
- * @param {string|null|undefined} variantsJson
+ * @param {{ storageKey?: string|null, variantsJson?: string|null }} media
  */
-export function parseMediaVariants(variantsJson) {
-  if (!variantsJson) return {};
-  try {
-    return JSON.parse(variantsJson);
-  } catch {
-    return {};
-  }
+export async function deleteStoredObjects(media) {
+  if (!isStorageConfigured()) return;
+
+  const keys = collectStorageKeys(media);
+  await Promise.all(
+    keys.map((key) =>
+      deleteObject(key).catch((err) => {
+        logger.warn(
+          { err, key },
+          'deleteStoredObjects: failed to delete object'
+        );
+      })
+    )
+  );
 }
 
 /**
- * Pick the best variant URL for a target width.
+ * Persist an upload result as a Media row.
  *
- * @param {{ url: string, variantsJson?: string|null }} media
- * @param {number} targetWidth
+ * @param {Awaited<ReturnType<typeof uploadMedia>>} uploadResult
  */
-export function resolveMediaUrl(media, targetWidth = 640) {
-  const variants = parseMediaVariants(media.variantsJson);
-  const widths = Object.keys(variants)
-    .map(Number)
-    .sort((a, b) => a - b);
-  const match = widths.find((width) => width >= targetWidth) ?? widths.at(-1);
-  if (match && variants[String(match)]?.url) {
-    return variants[String(match)].url;
+export async function createMediaRecord(uploadResult) {
+  const media = await prisma.media.create({
+    data: {
+      storageKey: uploadResult.storageKey,
+      url: uploadResult.url,
+      mimeType: uploadResult.mimeType,
+      width: uploadResult.width,
+      height: uploadResult.height,
+      variantsJson: uploadResult.variantsJson,
+    },
+  });
+
+  return serializeMediaRecord(media);
+}
+
+/**
+ * Upload a file and persist the resulting Media row.
+ *
+ * @param {FormDataEntryValue|null} file
+ */
+export async function uploadAndCreateMedia(file) {
+  const uploadResult = await uploadMedia(file);
+  return createMediaRecord(uploadResult);
+}
+
+/**
+ * Load a Media record by id.
+ *
+ * @param {string} mediaId
+ */
+export async function getMedia(mediaId) {
+  const media = await prisma.media.findUnique({ where: { id: mediaId } });
+  if (!media) {
+    throw Object.assign(new Error('Media not found.'), { code: 'NOT_FOUND' });
   }
-  return media.url;
+  return serializeMediaRecord(media);
+}
+
+/**
+ * Delete a Media row and its storage objects.
+ *
+ * @param {string} mediaId
+ */
+export async function deleteMedia(mediaId) {
+  const media = await prisma.media.findUnique({ where: { id: mediaId } });
+  if (!media) {
+    throw Object.assign(new Error('Media not found.'), { code: 'NOT_FOUND' });
+  }
+
+  await deleteStoredObjects(media);
+  await prisma.media.delete({ where: { id: mediaId } });
+}
+
+/**
+ * Return whether storage credentials are configured.
+ */
+export function loadStorageStatus() {
+  return { configured: isStorageConfigured() };
 }

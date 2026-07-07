@@ -43,7 +43,7 @@ import {
   saveTaxSettings,
   set,
 } from '#/core/settings/index.server';
-import { uploadMedia } from '#/core/storage/index.server';
+import { parseUploadFileInput, uploadMedia } from '#/core/storage/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import { controlClasses } from '#/components/admin/form/input';
@@ -143,14 +143,14 @@ export async function action({ request }) {
   }
 
   if (intent === 'upload-seo-image') {
-    const file = formData.get('file');
-    if (!file || typeof file === 'string') {
-      return { ok: false, error: 'No file provided.', intent };
+    try {
+      const file = parseUploadFileInput(formData.get('file'));
+      const { url } = await uploadMedia(file);
+      await set('seo.ogImageUrl', url);
+      return { ok: true, intent, ogImageUrl: url };
+    } catch (err) {
+      return { ok: false, error: err.message, intent };
     }
-
-    const { url } = await uploadMedia(file);
-    await set('seo.ogImageUrl', url);
-    return { ok: true, intent, ogImageUrl: url };
   }
 
   if (intent === 'remove-seo-image') {
