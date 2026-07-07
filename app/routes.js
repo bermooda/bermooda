@@ -172,6 +172,8 @@ export default [
       route('discounts/:id', 'routes/api/admin/v1/discounts/$id.jsx'),
       route('collections', 'routes/api/admin/v1/collections.jsx'),
       route('collections/:id', 'routes/api/admin/v1/collections/$id.jsx'),
+      route('channels', 'routes/api/admin/v1/channels.jsx'),
+      route('channels/:id', 'routes/api/admin/v1/channels/$id.jsx'),
       route('api-keys', 'routes/api/admin/v1/api-keys.jsx'),
       route('api-keys/:id', 'routes/api/admin/v1/api-keys/$id.jsx'),
       route(

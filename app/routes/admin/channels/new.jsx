@@ -6,7 +6,10 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { createChannel } from '#/core/channels/index.server';
+import {
+  createChannel,
+  parseCreateChannelInput,
+} from '#/core/channels/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -18,18 +21,20 @@ import { ButtonSubmit } from '#/components/ui/button';
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const name = formData.get('name')?.toString().trim();
-  const handle = formData.get('handle')?.toString().trim().toLowerCase();
-  const domain = formData.get('domain')?.toString().trim() || null;
-  const currency = formData.get('currency')?.toString().trim() || 'USD';
-  const locale = formData.get('locale')?.toString().trim() || 'en';
 
-  if (!name || !handle) {
-    return { error: 'Name and handle are required.' };
+  try {
+    const input = await parseCreateChannelInput({
+      name: formData.get('name')?.toString(),
+      handle: formData.get('handle')?.toString(),
+      domain: formData.get('domain')?.toString(),
+      currency: formData.get('currency')?.toString(),
+      locale: formData.get('locale')?.toString(),
+    });
+    await createChannel(input);
+    return redirect('/admin/channels');
+  } catch (err) {
+    return { error: err.message };
   }
-
-  await createChannel({ name, handle, domain, currency, locale });
-  return redirect('/admin/channels');
 }
 
 export default function AdminNewChannelRoute() {
