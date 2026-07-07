@@ -1,12 +1,9 @@
 // GET /api/admin/v1/shipments/:id/documents/packing-slip — download packing slip PDF
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import { generatePackingSlipPdf } from '#/core/documents/index.server';
 
-export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader({ params }) {
   try {
     const pdf = await generatePackingSlipPdf(params.id);
     return new Response(pdf, {

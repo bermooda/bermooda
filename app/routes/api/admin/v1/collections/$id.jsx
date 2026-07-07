@@ -3,16 +3,13 @@
 // DELETE /api/admin/v1/collections/:id — delete collection
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   deleteCollection,
   getCollection,
   updateCollection,
 } from '#/core/collections/index.server';
 
-export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader({ params }) {
   const collection = await getCollection(params.id);
   if (!collection) {
     return Response.json({ error: 'Collection not found' }, { status: 404 });
@@ -22,8 +19,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method === 'PATCH') {
     let body = {};
     try {

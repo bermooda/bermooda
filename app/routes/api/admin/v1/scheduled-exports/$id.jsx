@@ -2,15 +2,12 @@
 // DELETE /api/admin/v1/scheduled-exports/:id — delete scheduled export
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   deleteScheduledExport,
   getScheduledExport,
 } from '#/core/exports/index.server';
 
-export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader({ params }) {
   try {
     const scheduledExport = await getScheduledExport(params.id);
     return Response.json({ scheduledExport });
@@ -26,8 +23,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'DELETE') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

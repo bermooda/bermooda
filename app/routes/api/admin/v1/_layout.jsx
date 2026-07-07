@@ -1,13 +1,14 @@
-// Parent layout for /api/admin/v1/* — enforces admin API rate limits.
+// Parent layout for /api/admin/v1/* — enforces admin API rate limits and API key auth.
 
 import { Outlet } from 'react-router';
 
-import { enforceRateLimit } from '#/libs/rate-limit.server';
+import { adminApiKeyMiddleware } from '#/libs/auth/api.server';
+import { rateLimitMiddleware } from '#/libs/rate-limit.server';
 
-export async function loader({ request }) {
-  enforceRateLimit(request, 'api-admin');
-  return null;
-}
+export const middleware = [
+  rateLimitMiddleware('api-admin'),
+  adminApiKeyMiddleware,
+];
 
 export default function AdminApiV1LayoutRoute() {
   return <Outlet />;

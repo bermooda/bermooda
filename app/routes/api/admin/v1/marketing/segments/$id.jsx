@@ -3,16 +3,13 @@
 // DELETE /api/admin/v1/marketing/segments/:id — delete segment
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   deleteSegment,
   getSegment,
   updateSegment,
 } from '#/core/marketing/index.server';
 
-export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader({ params }) {
   try {
     const segment = await getSegment(params.id);
     return Response.json({ segment });
@@ -25,8 +22,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method === 'DELETE') {
     try {
       await deleteSegment(params.id);

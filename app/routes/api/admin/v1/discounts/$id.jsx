@@ -3,16 +3,13 @@
 // DELETE /api/admin/v1/discounts/:id — delete discount
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   getDiscount,
   updateDiscount,
   deleteDiscount,
 } from '#/core/discounts/index.server';
 
-export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader({ params }) {
   try {
     const discount = await getDiscount(params.id);
     return Response.json({ discount });
@@ -22,8 +19,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method === 'PATCH') {
     let body;
     try {

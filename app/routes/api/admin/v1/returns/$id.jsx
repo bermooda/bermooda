@@ -1,7 +1,6 @@
 // GET /api/admin/v1/returns/:id — get a single return
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import { getReturn } from '#/core/returns/index.server';
 
 function returnErrorResponse(err) {
@@ -14,9 +13,7 @@ function returnErrorResponse(err) {
   return Response.json({ error: err.message, code: err.code }, { status: 422 });
 }
 
-export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader({ params }) {
   try {
     const returnRecord = await getReturn(params.id);
     return Response.json({ return: returnRecord });
