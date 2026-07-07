@@ -15,6 +15,9 @@ vi.mock('#/libs/prisma.server', () => ({
     checkoutSession: {
       count: vi.fn(),
     },
+    productVariant: {
+      count: vi.fn(),
+    },
     orderLine: {
       findMany: vi.fn(),
     },
@@ -33,6 +36,7 @@ import {
   getSalesByProduct,
   getSalesByCategory,
   getDashboardReport,
+  loadAdminDashboardData,
 } from '#/core/reporting/index.server';
 
 describe('reporting', () => {
@@ -262,6 +266,41 @@ describe('reporting', () => {
       salesOverTime: [],
       salesByProduct: [],
       salesByCategory: [],
+    });
+  });
+
+  it('loadAdminDashboardData returns KPI payload', async () => {
+    prisma.order.count.mockResolvedValue(12);
+    prisma.order.aggregate.mockResolvedValue({ _sum: { totalCents: 45000 } });
+    prisma.checkoutSession.count.mockResolvedValue(3);
+    prisma.productVariant.count.mockResolvedValue(2);
+    prisma.order.findMany.mockResolvedValue([
+      {
+        id: 'ord_1',
+        orderNumber: 1001,
+        email: 'buyer@example.com',
+        status: 'paid',
+        totalCents: 2500,
+        currency: 'USD',
+        createdAt: new Date('2026-01-15T12:00:00.000Z'),
+        customer: { email: 'buyer@example.com' },
+      },
+    ]);
+
+    const data = await loadAdminDashboardData();
+
+    expect(data).toEqual({
+      totalOrders: 12,
+      totalRevenueCents: 45000,
+      abandonedCheckouts: 3,
+      lowStockCount: 2,
+      recentOrders: [
+        expect.objectContaining({
+          id: 'ord_1',
+          orderNumber: 1001,
+          createdAt: '2026-01-15T12:00:00.000Z',
+        }),
+      ],
     });
   });
 });

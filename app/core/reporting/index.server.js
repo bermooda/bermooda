@@ -331,6 +331,65 @@ export async function getSalesByCategory(params = {}) {
 }
 
 /**
+ * Load KPI data and recent orders for the admin home dashboard.
+ */
+export async function loadAdminDashboardData() {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  const [
+    totalOrders,
+    revenueAgg,
+    abandonedCheckouts,
+    lowStockCount,
+    recentOrders,
+  ] = await Promise.all([
+    prisma.order.count(),
+    prisma.order.aggregate({
+      _sum: { totalCents: true },
+    }),
+    prisma.checkoutSession.count({
+      where: {
+        step: { not: 'complete' },
+        createdAt: { lt: oneHourAgo },
+      },
+    }),
+    prisma.productVariant.count({
+      where: {
+        inventoryTracked: true,
+        inventoryCount: { lt: 5 },
+      },
+    }),
+    prisma.order.findMany({
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        orderNumber: true,
+        email: true,
+        status: true,
+        totalCents: true,
+        currency: true,
+        createdAt: true,
+        customer: {
+          select: { email: true },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    totalOrders,
+    totalRevenueCents: revenueAgg._sum.totalCents ?? 0,
+    abandonedCheckouts,
+    lowStockCount,
+    recentOrders: recentOrders.map((order) => ({
+      ...order,
+      createdAt: order.createdAt.toISOString(),
+    })),
+  };
+}
+
+/**
  * Full dashboard report payload.
  *
  * @param {{ startDate?: string, endDate?: string, limit?: number, locale?: string }} params
