@@ -24,7 +24,7 @@ vi.mock('#/libs/alerting/telegram.server', () => ({
 import {
   __resetAlertingRegistry,
   getActiveProvider,
-  listProviders,
+  listProvidersWithDetails,
   registerProvider,
   sendAlertMessage,
   sendErrorAlert,
@@ -43,7 +43,9 @@ describe('alerting.server', () => {
   it('registers the telegram provider by default', () => {
     getActiveProvider();
 
-    expect(listProviders()).toEqual(['telegram']);
+    expect(listProvidersWithDetails()).toEqual([
+      { id: 'telegram', name: 'Telegram' },
+    ]);
   });
 
   it('sends alerts through the configured provider', async () => {

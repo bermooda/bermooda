@@ -1,5 +1,6 @@
 import logger from '#/utils/logger.server';
 import { SEVERITY } from '#/libs/alerting-types.server';
+import { isAlertsEnabled } from '#/libs/alerting/shared.server';
 import { createTelegramAlertProvider } from '#/libs/alerting/telegram.server';
 
 /** @type {Map<string, import('#/libs/alerting-types.server').AlertProvider>} */
@@ -51,12 +52,15 @@ export function getProvider(id) {
 }
 
 /**
- * List all registered alert provider ids.
+ * List registered alert providers for admin or diagnostics.
  *
- * @returns {string[]}
+ * @returns {Array<{ id: string, name: string }>}
  */
-export function listProviders() {
-  return Array.from(_registry.keys());
+export function listProvidersWithDetails() {
+  return Array.from(_registry.values()).map((provider) => ({
+    id: provider.id,
+    name: provider.name || provider.id,
+  }));
 }
 
 /**
@@ -79,12 +83,8 @@ export function getActiveProvider() {
  * @returns {Promise<boolean>}
  */
 export async function sendErrorAlert(errorData, options = {}) {
-  if (process.env.NODE_ENV === 'development') {
-    return true;
-  }
-
-  if (process.env.ERROR_ALERTS_ENABLED === 'false') {
-    return false;
+  if (!isAlertsEnabled()) {
+    return process.env.NODE_ENV === 'development';
   }
 
   try {
@@ -104,12 +104,8 @@ export async function sendErrorAlert(errorData, options = {}) {
  * @returns {Promise<boolean>}
  */
 export async function sendAlertMessage(message, options = {}) {
-  if (process.env.NODE_ENV === 'development') {
-    return true;
-  }
-
-  if (process.env.ERROR_ALERTS_ENABLED === 'false') {
-    return false;
+  if (!isAlertsEnabled()) {
+    return process.env.NODE_ENV === 'development';
   }
 
   try {
@@ -128,9 +124,6 @@ export async function sendAlertMessage(message, options = {}) {
     return false;
   }
 }
-
-/** @deprecated Prefer sendAlertMessage */
-export const sendTelegramMessage = sendAlertMessage;
 
 function ensureBuiltinProviders() {
   if (_builtinsRegistered) {
