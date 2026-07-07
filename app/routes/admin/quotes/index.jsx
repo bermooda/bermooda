@@ -4,11 +4,10 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import {
   createQuote,
-  listCompanies,
-  listQuotes,
+  loadQuoteAdminIndexData,
+  parseCreateQuoteForm,
   sendQuote,
 } from '#/core/b2b/index.server';
 import Card from '#/components/admin/card';
@@ -18,73 +17,30 @@ import PageHeader from '#/components/admin/page-header';
 import Button from '#/components/ui/button';
 
 export async function loader() {
-  const [quotes, companies, variants] = await Promise.all([
-    listQuotes(),
-    listCompanies(),
-    prisma.productVariant.findMany({
-      take: 30,
-      orderBy: { updatedAt: 'desc' },
-      include: { product: true, prices: true },
-    }),
-  ]);
-
-  return { quotes, companies, variants };
+  return loadQuoteAdminIndexData();
 }
 
 export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get('intent');
 
-  if (intent === 'create-quote') {
-    const companyId = formData.get('companyId')?.toString();
-    const variantId = formData.get('variantId')?.toString();
-    const quantity = parseInt(formData.get('quantity')?.toString() ?? '1', 10);
-    const priceCents = parseInt(
-      formData.get('priceCents')?.toString() ?? '0',
-      10
-    );
-    const currency = formData.get('currency')?.toString() ?? 'USD';
-
-    if (!companyId || !variantId) {
-      return { ok: false, error: 'Company and variant are required.' };
+  try {
+    if (intent === 'create-quote') {
+      await createQuote(parseCreateQuoteForm(formData));
+      return { ok: true };
     }
 
-    const variant = await prisma.productVariant.findUnique({
-      where: { id: variantId },
-      include: { product: true },
-    });
+    if (intent === 'send-quote') {
+      const quoteId = formData.get('quoteId')?.toString();
+      if (!quoteId) return { ok: false, error: 'Quote required.' };
+      await sendQuote(quoteId);
+      return { ok: true };
+    }
 
-    await createQuote({
-      companyId,
-      currency,
-      lines: [
-        {
-          variantId,
-          quantity: Number.isNaN(quantity) ? 1 : quantity,
-          priceCents: Number.isNaN(priceCents) ? 0 : priceCents,
-          titleSnapshot: variant?.product?.title ?? variant?.sku ?? null,
-        },
-      ],
-    });
-
-    return { ok: true };
+    return { ok: false, error: 'Unknown action.' };
+  } catch (err) {
+    return { ok: false, error: err.message ?? 'Could not save quote.' };
   }
-
-  if (intent === 'send-quote') {
-    const quoteId = formData.get('quoteId')?.toString();
-    if (!quoteId) return { ok: false, error: 'Quote required.' };
-    await sendQuote(quoteId);
-    return { ok: true };
-  }
-
-  return { ok: false, error: 'Unknown action.' };
-}
-
-function formatMoney(cents, currency) {
-  return new Intl.NumberFormat('en', {
-    style: 'currency',
-    currency,
-  }).format(cents / 100);
 }
 
 export default function AdminQuotesRoute() {
@@ -183,8 +139,8 @@ export default function AdminQuotesRoute() {
                         {quote.quoteNumber}
                       </p>
                       <p className="text-text-muted text-xs">
-                        {quote.company.name} · {quote._count.lines} line(s) ·{' '}
-                        {formatMoney(quote.totalCents, quote.currency)}
+                        {quote.company?.name} · {quote.lineCount ?? 0} line(s) ·{' '}
+                        {quote.formattedTotal}
                       </p>
                     </div>
                     <span className="text-text-muted text-xs uppercase">
