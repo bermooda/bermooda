@@ -10,7 +10,7 @@ import { Link } from 'react-router';
 
 import { formatPrice } from '#/core/index';
 import { resolveCatalogMediaUrl } from '#/core/storage/media';
-import SlotBlocks from '#/components/storefront/slot-blocks';
+import SlotBlocks from '#/components/slot-blocks';
 
 import StorefrontShell, {
   STOREFRONT_CREAM as CREAM,

@@ -26,23 +26,6 @@ export default function Card({ children, className = '', padded = true }) {
 }
 
 /**
- * CardSection
- * A divided section inside a Card, separated by a hairline top border.
- *
- * @param {Object} props
- * @param {React.ReactNode} props.children
- * @param {string} [props.className] Extra classes
- * @returns {React.ReactElement}
- */
-export function CardSection({ children, className = '' }) {
-  return (
-    <div className={clsx('border-border border-t p-4 sm:p-6', className)}>
-      {children}
-    </div>
-  );
-}
-
-/**
  * CardHeader
  * Optional top block inside a Card with title, description, and actions.
  *

@@ -13,7 +13,7 @@ Keep component rules short and practical. Favor existing patterns in nearby file
 - Reusable primitives in `app/components/ui/`.
 - Admin back-office UI in `app/components/admin/`.
 - Shared auth chrome in `app/components/auth/`.
-- Marketing/landing pages in `app/components/landing/`.
+- Shared cross-surface components in `app/components/` (e.g. `slot-blocks.jsx`).
 - **Storefront page UI** in `app/themes/<name>/components/` (not `app/components/`).
 - Keep route-level data loading/mutations in routes and `app/core`, not in shared UI primitives.
 

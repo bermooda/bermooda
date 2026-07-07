@@ -1,5 +1,5 @@
 /**
- * Renders plugin blocks for a named storefront slot.
+ * Renders plugin blocks for a named slot.
  * Slot blocks are loaded server-side and passed via loader data.
  */
 export default function SlotBlocks({ blocks = [], slotProps = {} }) {

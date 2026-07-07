@@ -758,7 +758,7 @@ export const pluginManifest = definePlugin({
 });
 ```
 
-Admin route loaders resolve blocks server-side with `getAdminSlotBlocksMap()` from `app/core/admin/slots.server.js` and pass them to the shared `SlotBlocks` component in `app/components/admin/slot-blocks.jsx`.
+Admin route loaders resolve blocks server-side with `getAdminSlotBlocksMap()` from `app/core/admin/slots.server.js` and pass them to the shared `SlotBlocks` component in `app/components/slot-blocks.jsx`.
 
 ### Slot props
 

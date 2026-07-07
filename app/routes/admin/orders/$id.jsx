@@ -17,8 +17,8 @@ import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
 import { controlClasses } from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
-import SlotBlocks from '#/components/admin/slot-blocks';
 import { Td, Th } from '#/components/admin/table';
+import SlotBlocks from '#/components/slot-blocks';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 

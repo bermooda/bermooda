@@ -6,6 +6,9 @@ import { publishProduct, unpublishProduct } from '#/core/catalog/index.server';
 import { setDefaultLocationQuantity } from '#/core/inventory/locations.server';
 import { get } from '#/core/settings/index.server';
 
+/** Placeholder variant id used in the create-product form before persistence. */
+export const NEW_VARIANT_ID = 'new-variant-0';
+
 /**
  * Load shared editor context (locales, currencies, category list).
  */

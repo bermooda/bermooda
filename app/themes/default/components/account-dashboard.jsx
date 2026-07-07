@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
 import { formatPrice } from '#/core/index';
-import SlotBlocks from '#/components/storefront/slot-blocks';
+import SlotBlocks from '#/components/slot-blocks';
 
 function StatusBadge({ status }) {
   const colours = {

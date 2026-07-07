@@ -16,28 +16,14 @@ import Card, { CardHeader } from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Textarea from '#/components/admin/form/textarea';
+import LocaleTabs from '#/components/admin/locale-tabs';
 import PageHeader from '#/components/admin/page-header';
-import SlotBlocks from '#/components/admin/slot-blocks';
+import SeoFields from '#/components/admin/seo-fields';
+import SlugField from '#/components/admin/slug-field';
 import { Th } from '#/components/admin/table';
-import Tabs from '#/components/admin/tabs';
+import SlotBlocks from '#/components/slot-blocks';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
-
-const NEW_VARIANT_ID = 'new-variant-0';
-
-/** Tab bar for switching locales */
-function LocaleTabs({ locales, activeLocale, onSelect }) {
-  const activeIndex = Math.max(0, locales.indexOf(activeLocale));
-
-  return (
-    <Tabs
-      tabs={locales.map((locale) => locale.toUpperCase())}
-      active={activeIndex}
-      onChange={(index) => onSelect(locales[index])}
-      variant="pills"
-    />
-  );
-}
 
 /**
  * Per-locale translation fields. Auto-generates slug from title on the primary
@@ -92,30 +78,19 @@ function LocaleEditor({
         />
       </Field>
 
-      <Field
+      <SlugField
+        id={`slug-${locale}`}
+        name={`slug[${locale}]`}
         label={`URL slug (${locale})`}
-        htmlFor={`slug-${locale}`}
         hint={
           locale === primaryLocale
             ? 'Generated from the title as you type. You can edit it anytime.'
             : undefined
         }
-      >
-        <div className="relative">
-          <span className="text-text-muted pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm">
-            /
-          </span>
-          <Input
-            id={`slug-${locale}`}
-            name={`slug[${locale}]`}
-            value={slug}
-            onChange={handleSlugChange}
-            placeholder="url-slug"
-            className="pl-7"
-            pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-          />
-        </div>
-      </Field>
+        value={slug}
+        onChange={handleSlugChange}
+        placeholder="url-slug"
+      />
 
       <Field label="Description" htmlFor={`description-${locale}`}>
         <Textarea
@@ -126,28 +101,14 @@ function LocaleEditor({
         />
       </Field>
 
-      <div className="bg-surface-2/70 border-border rounded-lg border p-4">
-        <p className="text-text-muted mb-4 text-xs font-semibold tracking-wide uppercase">
-          SEO
-        </p>
-        <div className="space-y-4">
-          <Field label="SEO title" htmlFor={`seo-title-${locale}`}>
-            <Input
-              id={`seo-title-${locale}`}
-              name={`translation[${locale}][seoTitle]`}
-              defaultValue={t.seoTitle ?? ''}
-            />
-          </Field>
-          <Field label="SEO description" htmlFor={`seo-desc-${locale}`}>
-            <Textarea
-              id={`seo-desc-${locale}`}
-              name={`translation[${locale}][seoDescription]`}
-              defaultValue={t.seoDescription ?? ''}
-              rows={2}
-            />
-          </Field>
-        </div>
-      </div>
+      <SeoFields
+        titleFieldName={`translation[${locale}][seoTitle]`}
+        descriptionFieldName={`translation[${locale}][seoDescription]`}
+        titleId={`seo-title-${locale}`}
+        descriptionId={`seo-desc-${locale}`}
+        defaultTitle={t.seoTitle ?? ''}
+        defaultDescription={t.seoDescription ?? ''}
+      />
     </div>
   );
 }
@@ -419,6 +380,13 @@ function MediaUploader({ initialMedia, disabled = false, disabledMessage }) {
     fetcher.state !== 'idle' &&
     fetcher.formData?.get('intent') === 'upload-media';
 
+  const mediaError =
+    fetcher.state === 'idle' &&
+    fetcher.data?.ok === false &&
+    fetcher.data?.intent === 'upload-media'
+      ? fetcher.data.error
+      : null;
+
   if (disabled) {
     return (
       <div className="border-border text-text-muted rounded-lg border border-dashed px-4 py-8 text-center text-sm">
@@ -429,6 +397,7 @@ function MediaUploader({ initialMedia, disabled = false, disabledMessage }) {
 
   return (
     <div>
+      {mediaError && <ErrorAlert message={mediaError} />}
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-3">
         {media.map((item) => (
           <div
@@ -757,5 +726,3 @@ export default function ProductEditor({
     </div>
   );
 }
-
-export { NEW_VARIANT_ID };
