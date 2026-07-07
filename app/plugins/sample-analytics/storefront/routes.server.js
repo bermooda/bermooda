@@ -1,18 +1,11 @@
-import prisma from '#/libs/prisma.server';
-
+import { loadRecentEvents } from '#/plugins/sample-analytics/data.server';
 import { AnalyticsPage } from '#/plugins/sample-analytics/storefront/analytics-page';
-
-const PLUGIN_ID = 'sample-analytics';
-const EVENTS_KEY = 'recentEvents';
 
 export const routes = [
   {
     path: '',
     async loader() {
-      const row = await prisma.pluginData.findUnique({
-        where: { pluginId_key: { pluginId: PLUGIN_ID, key: EVENTS_KEY } },
-      });
-      const events = row ? JSON.parse(row.value) : [];
+      const events = await loadRecentEvents();
 
       return {
         eventCount: events.length,
