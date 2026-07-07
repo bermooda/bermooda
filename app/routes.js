@@ -165,9 +165,15 @@ export default [
       route('wishlists', 'routes/api/admin/v1/wishlists.jsx'),
       route('pos', 'routes/api/admin/v1/pos.jsx'),
       route(
+        'subscriptions/plans/:id',
+        'routes/api/admin/v1/subscriptions/plans/$id.jsx'
+      ),
+      route(
         'subscriptions/plans',
         'routes/api/admin/v1/subscriptions/plans.jsx'
       ),
+      route('subscriptions/:id', 'routes/api/admin/v1/subscriptions/$id.jsx'),
+      route('subscriptions', 'routes/api/admin/v1/subscriptions.jsx'),
       route('discounts', 'routes/api/admin/v1/discounts.jsx'),
       route('discounts/:id', 'routes/api/admin/v1/discounts/$id.jsx'),
       route('collections', 'routes/api/admin/v1/collections.jsx'),

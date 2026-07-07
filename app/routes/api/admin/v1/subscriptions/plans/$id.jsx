@@ -1,18 +1,16 @@
-// GET /api/admin/v1/subscriptions/plans — list subscription plans
-// POST /api/admin/v1/subscriptions/plans — create subscription plan
+// GET /api/admin/v1/subscriptions/plans/:id — get subscription plan
+// PATCH /api/admin/v1/subscriptions/plans/:id — update subscription plan
 // Requires admin-scoped API key.
 
 import { requireApiKey } from '#/libs/auth/api.server';
 import {
-  createSubscriptionPlan,
-  listSubscriptionPlans,
-  parseCreatePlanInput,
-  parsePlanListParams,
-  SUBSCRIPTION_INTERVALS,
+  getSubscriptionPlan,
+  parseUpdatePlanInput,
+  updateSubscriptionPlan,
 } from '#/core/subscriptions/index.server';
 
 function planErrorResponse(err) {
-  if (err.code === 'NOT_FOUND' || err.code === 'VARIANT_NOT_FOUND') {
+  if (err.code === 'NOT_FOUND') {
     return Response.json(
       { error: err.message, code: err.code },
       { status: 404 }
@@ -21,7 +19,8 @@ function planErrorResponse(err) {
   if (
     err.code === 'PLAN_NAME_REQUIRED' ||
     err.code === 'INVALID_SUBSCRIPTION_INTERVAL' ||
-    err.code === 'INVALID_INTERVAL_COUNT'
+    err.code === 'INVALID_INTERVAL_COUNT' ||
+    err.code === 'PLAN_UPDATE_EMPTY'
   ) {
     return Response.json(
       { error: err.message, code: err.code },
@@ -31,30 +30,21 @@ function planErrorResponse(err) {
   return Response.json({ error: err.message, code: err.code }, { status: 422 });
 }
 
-export async function loader({ request }) {
+export async function loader({ request, params }) {
   await requireApiKey(request, ['admin']);
 
-  const url = new URL(request.url);
-
   try {
-    const params = parsePlanListParams(url.searchParams);
-    const result = await listSubscriptionPlans({
-      ...params,
-      activeOnly: params.activeOnly ?? false,
-    });
-    return Response.json({
-      ...result,
-      subscriptionIntervals: SUBSCRIPTION_INTERVALS,
-    });
+    const plan = await getSubscriptionPlan(params.id);
+    return Response.json({ plan });
   } catch (err) {
     return planErrorResponse(err);
   }
 }
 
-export async function action({ request }) {
+export async function action({ request, params }) {
   await requireApiKey(request, ['admin']);
 
-  if (request.method !== 'POST') {
+  if (request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
@@ -66,9 +56,9 @@ export async function action({ request }) {
   }
 
   try {
-    parseCreatePlanInput(body);
-    const plan = await createSubscriptionPlan(body);
-    return Response.json({ plan }, { status: 201 });
+    parseUpdatePlanInput(body);
+    const plan = await updateSubscriptionPlan(params.id, body);
+    return Response.json({ plan });
   } catch (err) {
     return planErrorResponse(err);
   }
