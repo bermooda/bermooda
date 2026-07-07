@@ -26,8 +26,8 @@ import Tabs from '#/components/admin/tabs';
 
 export async function loader({ request }) {
   await authenticate(request);
-  const [apiKeys, { subscriptions }] = await Promise.all([
-    listApiKeys(),
+  const [{ apiKeys }, { subscriptions }] = await Promise.all([
+    listApiKeys({ page: 1, limit: 100 }),
     listSubscriptions(),
   ]);
   return { apiKeys, subscriptions, supportedEvents: DOMAIN_EVENTS };
