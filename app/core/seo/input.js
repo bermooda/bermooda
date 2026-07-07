@@ -38,14 +38,17 @@ export function truncateMetaDescription(text, maxLength = 160) {
   return trimmed.slice(0, maxLength);
 }
 
+import { resolveCatalogMediaUrl } from '#/core/storage/media';
+
 /**
  * Resolve the first media URL from catalog entities.
  *
  * @param {{ media?: Array<{ media?: { url?: string }, url?: string }> }|null|undefined} entity
+ * @param {number} [targetWidth]
  * @returns {string|null}
  */
-export function resolveEntityMediaUrl(entity) {
-  return entity?.media?.[0]?.media?.url ?? entity?.media?.[0]?.url ?? null;
+export function resolveEntityMediaUrl(entity, targetWidth = 1280) {
+  return resolveCatalogMediaUrl(entity, targetWidth);
 }
 
 /**

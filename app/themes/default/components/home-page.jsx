@@ -9,6 +9,7 @@ import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { Link } from 'react-router';
 
 import { formatPrice } from '#/core/index';
+import { resolveCatalogMediaUrl } from '#/core/storage/media';
 import SlotBlocks from '#/components/storefront/slot-blocks';
 
 import StorefrontShell, {
@@ -82,8 +83,8 @@ export default function HomePage({
           ? `/categories/${entry.slug}`
           : `/products/${resolveSlug(entry)}`,
         img:
-          product?.media?.[0]?.media?.url ??
-          entry.media?.[0]?.media?.url ??
+          resolveCatalogMediaUrl(product, 640) ??
+          resolveCatalogMediaUrl(entry, 640) ??
           null,
       };
     });
@@ -164,28 +165,28 @@ export default function HomePage({
 
           {/* Hero collage */}
           <div className="relative h-[480px] w-full">
-            {products[0]?.media?.[0]?.media?.url && (
+            {resolveCatalogMediaUrl(products[0], 1280) && (
               <div
                 className="absolute top-0 right-0 w-[68%] overflow-hidden rounded-3xl bg-white"
                 style={{ boxShadow: '0 24px 48px -16px rgba(47,74,58,.25)' }}
               >
                 <div className="aspect-4/5">
                   <img
-                    src={products[0].media[0].media.url}
+                    src={resolveCatalogMediaUrl(products[0], 1280)}
                     alt={products[0].title}
                     className="h-full w-full object-cover"
                   />
                 </div>
               </div>
             )}
-            {products[1]?.media?.[0]?.media?.url && (
+            {resolveCatalogMediaUrl(products[1], 640) && (
               <div
                 className="absolute bottom-4 left-0 w-[55%] overflow-hidden rounded-3xl bg-white"
                 style={{ boxShadow: '0 20px 40px -14px rgba(47,74,58,.25)' }}
               >
                 <div className="aspect-square">
                   <img
-                    src={products[1].media[0].media.url}
+                    src={resolveCatalogMediaUrl(products[1], 640)}
                     alt={products[1].title}
                     className="h-full w-full object-cover"
                   />
@@ -336,7 +337,7 @@ export default function HomePage({
 
           <div className="grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-4">
             {newArrivals.map((p, i) => {
-              const img = p.media?.[0]?.media?.url ?? null;
+              const img = resolveCatalogMediaUrl(p, 640);
               const slug = resolveSlug(p);
               const price = resolvePrice(p);
               const isNew = i < 4;
@@ -420,7 +421,7 @@ export default function HomePage({
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {favorites.map((p) => {
-              const img = p.media?.[0]?.media?.url ?? null;
+              const img = resolveCatalogMediaUrl(p, 640);
               const slug = resolveSlug(p);
               const price = resolvePrice(p);
               return (

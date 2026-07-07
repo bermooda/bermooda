@@ -158,6 +158,8 @@ export default [
       route('gift-cards', 'routes/api/admin/v1/gift-cards.jsx'),
       route('loyalty', 'routes/api/admin/v1/loyalty.jsx'),
       route('settings', 'routes/api/admin/v1/settings.jsx'),
+      route('storage', 'routes/api/admin/v1/storage.jsx'),
+      route('media/:id', 'routes/api/admin/v1/media/$id.jsx'),
       route('admin-users', 'routes/api/admin/v1/admin-users.jsx'),
       route('admin-users/:id', 'routes/api/admin/v1/admin-users/$id.jsx'),
       route('audit-logs', 'routes/api/admin/v1/audit-logs.jsx'),
