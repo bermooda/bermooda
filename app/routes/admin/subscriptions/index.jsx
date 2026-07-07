@@ -4,10 +4,10 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import {
   createSubscriptionPlan,
-  listSubscriptionPlans,
+  loadSubscriptionPlanAdminData,
+  parseCreatePlanFromForm,
 } from '#/core/subscriptions/index.server';
 import Card from '#/components/admin/card';
 import Input from '#/components/admin/form/input';
@@ -16,16 +16,7 @@ import PageHeader from '#/components/admin/page-header';
 import Button from '#/components/ui/button';
 
 export async function loader() {
-  const [plans, variants] = await Promise.all([
-    listSubscriptionPlans({ activeOnly: false }),
-    prisma.productVariant.findMany({
-      take: 50,
-      orderBy: { updatedAt: 'desc' },
-      include: { product: true, prices: true },
-    }),
-  ]);
-
-  return { plans, variants };
+  return loadSubscriptionPlanAdminData();
 }
 
 export async function action({ request }) {
@@ -33,26 +24,13 @@ export async function action({ request }) {
   const intent = formData.get('intent');
 
   if (intent === 'create-plan') {
-    const name = formData.get('name')?.toString().trim();
-    const variantId = formData.get('variantId')?.toString() || null;
-    const interval = formData.get('interval')?.toString() ?? 'month';
-    const intervalCount = parseInt(
-      formData.get('intervalCount')?.toString() ?? '1',
-      10
-    );
-
-    if (!name) {
-      return { ok: false, error: 'Plan name is required.' };
+    try {
+      const input = parseCreatePlanFromForm(formData);
+      await createSubscriptionPlan(input);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err.message };
     }
-
-    await createSubscriptionPlan({
-      name,
-      variantId,
-      interval,
-      intervalCount: Number.isNaN(intervalCount) ? 1 : intervalCount,
-    });
-
-    return { ok: true };
   }
 
   return { ok: false, error: 'Unknown action.' };
