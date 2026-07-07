@@ -4,7 +4,7 @@
 
 import { getAdminUser, updateAdminUserRole } from '#/core/rbac/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   const user = await getAdminUser(params.id);
   if (!user) {
     return Response.json({ error: 'Admin user not found' }, { status: 404 });

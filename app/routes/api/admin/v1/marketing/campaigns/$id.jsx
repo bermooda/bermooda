@@ -3,7 +3,7 @@
 
 import { getCampaign } from '#/core/marketing/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const campaign = await getCampaign(params.id);
     return Response.json({ campaign });

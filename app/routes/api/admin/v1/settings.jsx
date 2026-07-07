@@ -4,7 +4,7 @@ import {
   parseAdminSettingsPatch,
 } from '#/core/settings/index.server';
 
-export async function loader({ request }) {
+export async function loader() {
   const settings = await getAdminSettingsSnapshot();
   return Response.json({ settings });
 }

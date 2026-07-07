@@ -26,7 +26,7 @@ function quoteErrorResponse(err) {
   return Response.json({ error: err.message, code: err.code }, { status: 422 });
 }
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const quote = await getQuote(params.id);
     return Response.json({ quote });

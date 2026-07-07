@@ -3,7 +3,7 @@
 
 import { listApiKeys } from '#/core/api-keys/index.server';
 
-export async function loader({ request }) {
+export async function loader() {
   const keys = await listApiKeys();
   return Response.json({ apiKeys: keys });
 }

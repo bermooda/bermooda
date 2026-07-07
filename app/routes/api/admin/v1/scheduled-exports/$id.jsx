@@ -7,7 +7,7 @@ import {
   getScheduledExport,
 } from '#/core/exports/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const scheduledExport = await getScheduledExport(params.id);
     return Response.json({ scheduledExport });

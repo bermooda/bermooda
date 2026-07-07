@@ -4,7 +4,7 @@ import {
   updateLoyaltySettings,
 } from '#/core/loyalty/index.server';
 
-export async function loader({ request }) {
+export async function loader() {
   const config = await getLoyaltyConfig();
   return Response.json({ config });
 }

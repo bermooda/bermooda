@@ -3,7 +3,7 @@
 
 import { generatePackingSlipPdf } from '#/core/documents/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const pdf = await generatePackingSlipPdf(params.id);
     return new Response(pdf, {

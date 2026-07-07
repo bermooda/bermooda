@@ -10,7 +10,7 @@ import {
   updateChannel,
 } from '#/core/channels/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const channel = await getChannel(params.id);
     return Response.json({ channel: serializeChannel(channel) });

@@ -7,12 +7,11 @@ vi.mock('#/core/api-keys/index.server', () => ({
   validateApiKey: vi.fn(),
 }));
 
-import { validateApiKey } from '#/core/api-keys/index.server';
-
 import {
   adminApiKeyContext,
   adminApiKeyMiddleware,
 } from '#/libs/auth/api.server';
+import { validateApiKey } from '#/core/api-keys/index.server';
 
 /** Run middleware and return the thrown value (or null if it resolves). */
 async function catchThrown(fn) {

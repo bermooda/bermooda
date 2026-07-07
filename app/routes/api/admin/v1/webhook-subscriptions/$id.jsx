@@ -10,7 +10,7 @@ import {
   updateSubscription,
 } from '#/core/webhooks/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const [subscription, deliveries] = await Promise.all([
       getSubscription(params.id),

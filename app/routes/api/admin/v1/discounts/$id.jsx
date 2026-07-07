@@ -9,7 +9,7 @@ import {
   deleteDiscount,
 } from '#/core/discounts/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const discount = await getDiscount(params.id);
     return Response.json({ discount });

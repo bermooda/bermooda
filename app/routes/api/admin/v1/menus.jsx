@@ -3,7 +3,7 @@
 
 import { DEFAULT_MENU_HANDLES, listMenus } from '#/core/content/index.server';
 
-export async function loader({ request }) {
+export async function loader() {
   const menus = await listMenus();
   return Response.json({ menus, menuHandles: DEFAULT_MENU_HANDLES });
 }

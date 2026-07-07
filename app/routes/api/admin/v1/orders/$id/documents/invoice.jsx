@@ -3,7 +3,7 @@
 
 import { generateInvoicePdf } from '#/core/documents/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const pdf = await generateInvoicePdf(params.id);
     return new Response(pdf, {

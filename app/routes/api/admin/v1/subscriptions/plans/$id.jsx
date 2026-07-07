@@ -29,7 +29,7 @@ function planErrorResponse(err) {
   return Response.json({ error: err.message, code: err.code }, { status: 422 });
 }
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const plan = await getSubscriptionPlan(params.id);
     return Response.json({ plan });

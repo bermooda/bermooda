@@ -7,7 +7,7 @@ import {
   updateAbandonedCartSequence,
 } from '#/core/marketing/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const sequence = await getAbandonedCartSequence(params.id);
     return Response.json({ sequence });

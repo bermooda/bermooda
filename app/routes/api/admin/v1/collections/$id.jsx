@@ -9,7 +9,7 @@ import {
   updateCollection,
 } from '#/core/collections/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   const collection = await getCollection(params.id);
   if (!collection) {
     return Response.json({ error: 'Collection not found' }, { status: 404 });

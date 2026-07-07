@@ -4,7 +4,7 @@
 
 import { getOrder, updateOrderStatus } from '#/core/orders/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const order = await getOrder(params.id);
     return Response.json({ order });

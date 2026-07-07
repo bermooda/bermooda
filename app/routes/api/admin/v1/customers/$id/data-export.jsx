@@ -3,7 +3,7 @@
 
 import { exportCustomerData } from '#/core/gdpr/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const data = await exportCustomerData(params.id);
     return Response.json(data);

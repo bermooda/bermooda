@@ -4,7 +4,7 @@
 
 import { getCustomer, updateCustomer } from '#/core/customers/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   const customer = await getCustomer(params.id);
   if (!customer) {
     return Response.json({ error: 'Customer not found' }, { status: 404 });

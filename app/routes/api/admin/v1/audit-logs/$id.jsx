@@ -3,7 +3,7 @@
 
 import { getAuditLog } from '#/core/audit/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const auditLog = await getAuditLog(params.id);
     return Response.json({ auditLog });

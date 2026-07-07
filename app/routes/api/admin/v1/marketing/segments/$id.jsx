@@ -9,7 +9,7 @@ import {
   updateSegment,
 } from '#/core/marketing/index.server';
 
-export async function loader({ request, params }) {
+export async function loader({ params }) {
   try {
     const segment = await getSegment(params.id);
     return Response.json({ segment });
