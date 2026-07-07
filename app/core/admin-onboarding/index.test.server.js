@@ -37,7 +37,12 @@ import {
   isOnboardingAvailable,
   validateOnboardingInput,
   createFirstAdmin,
+  resolveAdminEntryMode,
+  parseOnboardingFormData,
+  onboardingFormFieldsForReplay,
+  mapOnboardingActionError,
 } from '#/core/admin-onboarding/index.server';
+import { SETTING_KEYS } from '#/core/settings/keys';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -84,7 +89,7 @@ describe('isOnboardingAvailable', () => {
 
   it('returns false when the setup-complete flag is set', async () => {
     prisma.setting.findUnique.mockResolvedValue({
-      key: 'adminSetupComplete',
+      key: SETTING_KEYS.ADMIN_SETUP_COMPLETE,
       value: 'true',
     });
 
@@ -242,7 +247,9 @@ describe('createFirstAdmin', () => {
     });
 
     expect(prisma._tx.setting.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ key: 'adminSetupComplete' }),
+      data: expect.objectContaining({
+        key: SETTING_KEYS.ADMIN_SETUP_COMPLETE,
+      }),
     });
   });
 
@@ -265,7 +272,10 @@ describe('createFirstAdmin', () => {
   });
 
   it('throws ONBOARDING_UNAVAILABLE when setup flag is already set', async () => {
-    setAvailable({ key: 'adminSetupComplete', value: 'true' });
+    setAvailable({
+      key: SETTING_KEYS.ADMIN_SETUP_COMPLETE,
+      value: 'true',
+    });
 
     await expect(createFirstAdmin(VALID_INPUT)).rejects.toMatchObject({
       code: 'ONBOARDING_UNAVAILABLE',
@@ -313,10 +323,121 @@ describe('createFirstAdmin', () => {
     prisma._tx.setting.create.mockResolvedValue({});
 
     // Second call: now unavailable → throws
-    setAvailable({ key: 'adminSetupComplete', value: 'true' });
+    setAvailable({
+      key: SETTING_KEYS.ADMIN_SETUP_COMPLETE,
+      value: 'true',
+    });
     await expect(createFirstAdmin(VALID_INPUT)).rejects.toMatchObject({
       code: 'ONBOARDING_UNAVAILABLE',
     });
     expect(prisma.setting.findUnique).toHaveBeenCalledOnce();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveAdminEntryMode
+// ---------------------------------------------------------------------------
+
+describe('resolveAdminEntryMode', () => {
+  it('returns onboarding when setup is available', async () => {
+    prisma.setting.findUnique.mockResolvedValue(null);
+    prisma.user.count.mockResolvedValue(0);
+
+    expect(await resolveAdminEntryMode()).toBe('onboarding');
+  });
+
+  it('returns login when setup is complete', async () => {
+    prisma.setting.findUnique.mockResolvedValue({
+      key: SETTING_KEYS.ADMIN_SETUP_COMPLETE,
+      value: 'true',
+    });
+
+    expect(await resolveAdminEntryMode()).toBe('login');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseOnboardingFormData
+// ---------------------------------------------------------------------------
+
+describe('parseOnboardingFormData', () => {
+  it('reads onboarding fields from FormData', () => {
+    const formData = new FormData();
+    formData.set('_intent', 'onboard');
+    formData.set('name', 'Alice');
+    formData.set('email', 'alice@example.com');
+    formData.set('password', 'secret');
+    formData.set('confirmPassword', 'secret');
+
+    expect(parseOnboardingFormData(formData)).toEqual({
+      intent: 'onboard',
+      name: 'Alice',
+      email: 'alice@example.com',
+      password: 'secret',
+      confirmPassword: 'secret',
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// onboardingFormFieldsForReplay
+// ---------------------------------------------------------------------------
+
+describe('onboardingFormFieldsForReplay', () => {
+  it('returns only non-sensitive fields', () => {
+    expect(
+      onboardingFormFieldsForReplay({
+        name: 'Alice',
+        email: 'alice@example.com',
+      })
+    ).toEqual({
+      name: 'Alice',
+      email: 'alice@example.com',
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// mapOnboardingActionError
+// ---------------------------------------------------------------------------
+
+describe('mapOnboardingActionError', () => {
+  it('maps ONBOARDING_UNAVAILABLE to 409', () => {
+    const error = Object.assign(new Error('unavailable'), {
+      code: 'ONBOARDING_UNAVAILABLE',
+    });
+
+    expect(
+      mapOnboardingActionError(error, { name: 'Alice', email: 'a@b.com' })
+    ).toEqual({
+      status: 409,
+      body: { error: 'Setup is already complete. Please sign in.' },
+    });
+  });
+
+  it('maps VALIDATION_ERROR to 422 with replay fields', () => {
+    const error = Object.assign(new Error('invalid'), {
+      code: 'VALIDATION_ERROR',
+      errors: { name: 'Name is required.' },
+    });
+
+    expect(
+      mapOnboardingActionError(error, { name: '', email: 'a@b.com' })
+    ).toEqual({
+      status: 422,
+      body: {
+        fieldErrors: { name: 'Name is required.' },
+        fields: { name: '', email: 'a@b.com' },
+      },
+    });
+  });
+
+  it('returns null for unexpected errors', () => {
+    expect(
+      mapOnboardingActionError(new Error('boom'), {
+        name: 'Alice',
+        email: 'a@b.com',
+      })
+    ).toBeNull();
   });
 });
