@@ -4,6 +4,7 @@ import AccountLayout from '#/themes/default/components/account-layout';
 import AccountOrderDetailPage from '#/themes/default/components/account-order-detail-page';
 import AccountOrdersPage from '#/themes/default/components/account-orders-page';
 import AccountProfilePage from '#/themes/default/components/account-profile-page';
+import AccountWishlistPage from '#/themes/default/components/account-wishlist-page';
 import CartPage from '#/themes/default/components/cart-page';
 import CategoryPage from '#/themes/default/components/category-page';
 import CheckoutLayout from '#/themes/default/components/checkout-layout';
@@ -48,6 +49,7 @@ export default {
     AccountOrderDetailPage,
     AccountAddressesPage,
     AccountProfilePage,
+    AccountWishlistPage,
     LoginPage,
     RegisterPage,
     ForgotPasswordPage,
