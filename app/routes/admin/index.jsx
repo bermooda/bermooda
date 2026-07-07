@@ -15,7 +15,9 @@ import { adminAuthClient } from '#/libs/auth/admin-client';
 import { adminAuth } from '#/libs/auth/admin.server';
 import {
   createFirstAdmin,
-  isOnboardingAvailable,
+  mapOnboardingActionError,
+  parseOnboardingFormData,
+  resolveAdminEntryMode,
 } from '#/core/admin-onboarding/index.server';
 import AuthLayout from '#/components/auth/auth-layout';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
@@ -44,8 +46,8 @@ export async function loader({ request }) {
     return redirect('/admin/dashboard', 302);
   }
 
-  const onboardingAvailable = await isOnboardingAvailable();
-  return { mode: onboardingAvailable ? 'onboarding' : 'login' };
+  const onboardingAvailable = await resolveAdminEntryMode();
+  return { mode: onboardingAvailable };
 }
 
 // ---------------------------------------------------------------------------
@@ -54,16 +56,12 @@ export async function loader({ request }) {
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const intent = formData.get('_intent');
+  const { intent, name, email, password, confirmPassword } =
+    parseOnboardingFormData(formData);
 
   if (intent !== 'onboard') {
     return data({ error: 'Invalid request.' }, { status: 400 });
   }
-
-  const name = String(formData.get('name') ?? '');
-  const email = String(formData.get('email') ?? '');
-  const password = String(formData.get('password') ?? '');
-  const confirmPassword = String(formData.get('confirmPassword') ?? '');
 
   try {
     await createFirstAdmin({ name, email, password, confirmPassword });
@@ -71,18 +69,9 @@ export async function action({ request }) {
   } catch (error) {
     if (error instanceof Response) throw error;
 
-    if (error.code === 'ONBOARDING_UNAVAILABLE') {
-      return data(
-        { error: 'Setup is already complete. Please sign in.' },
-        { status: 409 }
-      );
-    }
-
-    if (error.code === 'VALIDATION_ERROR') {
-      return data(
-        { fieldErrors: error.errors, fields: { name, email } },
-        { status: 422 }
-      );
+    const mapped = mapOnboardingActionError(error, { name, email });
+    if (mapped) {
+      return data(mapped.body, { status: mapped.status });
     }
 
     logger.error({ err: error }, 'Admin onboarding action error');

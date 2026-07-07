@@ -3,6 +3,7 @@
 
 import bcrypt from 'bcryptjs';
 
+import { isValidEmail, normalizeEmail } from '#/utils/email';
 import prisma from '#/libs/prisma.server';
 import {
   ADMIN_ROLES,
@@ -22,7 +23,6 @@ export {
 const CACHE_TTL_MS = 60_000;
 const MAX_LIST_RESULTS = 100;
 const STAFF_TEMP_PASSWORD = 'ChangeMe123!';
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 let _permissionCache = null;
 let _cacheLoadedAt = 0;
@@ -205,7 +205,7 @@ export async function getAdminUser(id) {
  * @returns {{ email: string, name: string|null }}
  */
 export function parseCreateAdminUserInput(input = {}) {
-  const email = input.email?.toString().trim() ?? '';
+  const email = normalizeEmail(input.email);
   const name = input.name?.toString().trim() || null;
 
   if (!email) {
@@ -214,7 +214,7 @@ export function parseCreateAdminUserInput(input = {}) {
     });
   }
 
-  if (!EMAIL_RE.test(email)) {
+  if (!isValidEmail(email)) {
     throw Object.assign(new Error('Enter a valid email address'), {
       code: 'EMAIL_INVALID',
     });
