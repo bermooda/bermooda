@@ -30,6 +30,7 @@ import {
   DeviceTabletIcon,
   ArrowPathIcon,
   ArrowUturnLeftIcon,
+  BellAlertIcon,
 } from '@heroicons/react/24/outline';
 
 /**
@@ -71,6 +72,11 @@ export const NAV_GROUPS = [
         name: 'Inventory',
         href: '/admin/inventory',
         Icon: BuildingStorefrontIcon,
+      },
+      {
+        name: 'Back in stock',
+        href: '/admin/back-in-stock',
+        Icon: BellAlertIcon,
       },
       { name: 'Import', href: '/admin/import', Icon: ArrowDownOnSquareIcon },
     ],
