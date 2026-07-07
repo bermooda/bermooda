@@ -149,6 +149,7 @@ describe('getAdminSettingsSnapshot', () => {
     expect(snapshot.currencies).toEqual(['USD', 'EUR', 'AUD']);
     expect(snapshot.locales).toEqual(['en']);
     expect(snapshot.taxMode).toBe('exclusive');
+    expect(snapshot.addressValidationProvider).toBe('noop');
     expect(snapshot.seoAllowIndexing).toBe(true);
   });
 });
@@ -209,6 +210,15 @@ describe('parseAdminSettingsPatch', () => {
     ).toMatchObject({
       section: 'tax',
       values: { mode: 'inclusive' },
+    });
+
+    expect(
+      parseAdminSettingsPatch({
+        addressValidation: { provider: 'noop' },
+      })
+    ).toEqual({
+      section: 'addressValidation',
+      values: { provider: 'noop' },
     });
   });
 

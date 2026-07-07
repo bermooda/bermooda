@@ -1,6 +1,7 @@
 import { useLoaderData, useRouteLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
+import { parseAddressInput } from '#/core/address-validation/index.server';
 import {
   listAddresses,
   addAddress,
@@ -35,17 +36,7 @@ export async function action({ request }) {
   const intent = formData.get('intent');
   const addressId = formData.get('addressId');
 
-  const data = {
-    firstName: formData.get('firstName'),
-    lastName: formData.get('lastName'),
-    line1: formData.get('line1'),
-    line2: formData.get('line2') || null,
-    city: formData.get('city'),
-    state: formData.get('state') || null,
-    postalCode: formData.get('postalCode'),
-    country: formData.get('country'),
-    phone: formData.get('phone') || null,
-  };
+  const data = parseAddressInput(formData);
 
   if (intent === 'add') {
     await addAddress(customer.id, data);

@@ -85,6 +85,7 @@ describe('bootstrap.server', () => {
   let registerShipping;
   let registerTax;
   let registerSearch;
+  let registerAddressValidation;
   let registerTheme;
   let registerPaymentEventHandlers;
   let registerAuditSubscribers;
@@ -126,6 +127,10 @@ describe('bootstrap.server', () => {
     registerAuditSubscribers = audit.registerAuditSubscribers;
     registerBackInStockSubscribers = backInStock.registerBackInStockSubscribers;
     registerLoyaltySubscribers = loyalty.registerLoyaltySubscribers;
+
+    const addressValidation =
+      await import('#/core/address-validation/index.server');
+    registerAddressValidation = addressValidation.registerProvider;
   });
 
   afterEach(() => {
@@ -168,6 +173,10 @@ describe('bootstrap.server', () => {
     expect(registerTax).toHaveBeenCalledWith('automatic', expect.any(Object));
     expect(registerTax).not.toHaveBeenCalledWith('taxjar', expect.any(Object));
     expect(registerSearch).toHaveBeenCalledWith('db', expect.any(Object));
+    expect(registerAddressValidation).toHaveBeenCalledWith(
+      'noop',
+      expect.any(Object)
+    );
     expect(registerTheme).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'default' })
     );
