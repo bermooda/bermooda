@@ -1,11 +1,11 @@
 // GET /api/v1/catalog/:id — single product by id (public)
 
 import { getProduct } from '#/core/catalog/index.server';
+import { parsePublicCatalogDetailParams } from '#/core/catalog/params';
 
 export async function loader({ request, params }) {
   const url = new URL(request.url);
-  const locale = url.searchParams.get('locale') ?? 'en';
-  const currency = url.searchParams.get('currency') ?? 'USD';
+  const { locale, currency } = parsePublicCatalogDetailParams(url);
 
   try {
     const product = await getProduct(params.id, { locale, currency });

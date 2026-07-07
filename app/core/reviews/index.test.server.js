@@ -38,6 +38,7 @@ import {
   parseModerateReviewInput,
   parseReviewListParams,
   parseReviewModerationFromForm,
+  resolveReviewErrorStatus,
   REVIEW_STATUSES,
   serializeReview,
 } from '#/core/reviews/index.server';
@@ -93,6 +94,33 @@ describe('parseCreateReviewInput', () => {
         body: 'Nice',
       })
     ).toThrow('Rating must be between 1 and 5');
+  });
+});
+
+describe('resolveReviewErrorStatus', () => {
+  it('maps customer and list validation errors to 400', () => {
+    expect(
+      resolveReviewErrorStatus(
+        Object.assign(new Error('missing customer'), {
+          code: 'CUSTOMER_ID_REQUIRED',
+        })
+      )
+    ).toBe(400);
+    expect(
+      resolveReviewErrorStatus(
+        Object.assign(new Error('bad status'), {
+          code: 'INVALID_REVIEW_STATUS',
+        })
+      )
+    ).toBe(400);
+  });
+
+  it('defaults other review errors to 422', () => {
+    expect(
+      resolveReviewErrorStatus(
+        Object.assign(new Error('duplicate'), { code: 'DUPLICATE_REVIEW' })
+      )
+    ).toBe(422);
   });
 });
 

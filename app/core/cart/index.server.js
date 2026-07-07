@@ -100,6 +100,24 @@ export async function getCart(token) {
 }
 
 // ---------------------------------------------------------------------------
+// deleteCart
+// ---------------------------------------------------------------------------
+
+/**
+ * Delete a cart by token.
+ *
+ * @param {string} token
+ * @returns {Promise<boolean>} true when deleted, false when not found
+ */
+export async function deleteCart(token) {
+  const cart = await prisma.cart.findUnique({ where: { token } });
+  if (!cart) return false;
+
+  await prisma.cart.delete({ where: { id: cart.id } });
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // addLine
 // ---------------------------------------------------------------------------
 
