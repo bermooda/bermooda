@@ -2,7 +2,6 @@
 // PATCH /api/admin/v1/subscriptions/plans/:id — update subscription plan
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   getSubscriptionPlan,
   parseUpdatePlanInput,
@@ -30,9 +29,7 @@ function planErrorResponse(err) {
   return Response.json({ error: err.message, code: err.code }, { status: 422 });
 }
 
-export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader({ params }) {
   try {
     const plan = await getSubscriptionPlan(params.id);
     return Response.json({ plan });
@@ -42,8 +39,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

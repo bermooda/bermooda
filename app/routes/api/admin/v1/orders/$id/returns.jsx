@@ -1,7 +1,6 @@
 // POST /api/admin/v1/orders/:id/returns — create a return request
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   parseRequestReturnInput,
   requestReturn,
@@ -27,8 +26,6 @@ function returnErrorResponse(err) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

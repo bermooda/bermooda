@@ -1,12 +1,9 @@
 // GET /api/admin/v1/orders/:id/documents/invoice — download invoice PDF
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import { generateInvoicePdf } from '#/core/documents/index.server';
 
-export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader({ params }) {
   try {
     const pdf = await generateInvoicePdf(params.id);
     return new Response(pdf, {

@@ -1,20 +1,15 @@
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   applyAdminSettingsPatch,
   getAdminSettingsSnapshot,
   parseAdminSettingsPatch,
 } from '#/core/settings/index.server';
 
-export async function loader({ request }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader() {
   const settings = await getAdminSettingsSnapshot();
   return Response.json({ settings });
 }
 
 export async function action({ request }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

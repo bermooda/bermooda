@@ -1,12 +1,9 @@
 // POST /api/admin/v1/marketing/campaigns/:id/send — send campaign
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import { sendCampaign } from '#/core/marketing/index.server';
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

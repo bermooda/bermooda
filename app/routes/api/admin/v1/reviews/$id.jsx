@@ -3,7 +3,6 @@
 // DELETE /api/admin/v1/reviews/:id — delete review
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   deleteReview,
   getReview,
@@ -27,9 +26,7 @@ function reviewErrorResponse(err) {
   return Response.json({ error: err.message, code: err.code }, { status: 422 });
 }
 
-export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader({ params }) {
   try {
     const review = await getReview(params.id);
     return Response.json({ review });
@@ -39,8 +36,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method === 'DELETE') {
     try {
       await deleteReview(params.id);

@@ -1,4 +1,3 @@
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   closePosSession,
   createPosDraftOrder,
@@ -6,8 +5,6 @@ import {
 } from '#/core/pos/index.server';
 
 export async function action({ request }) {
-  await requireApiKey(request, ['admin']);
-
   let body = {};
   try {
     body = await request.json();

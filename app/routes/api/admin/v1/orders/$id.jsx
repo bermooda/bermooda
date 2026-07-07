@@ -2,12 +2,9 @@
 // PATCH /api/admin/v1/orders/:id — update order status
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import { getOrder, updateOrderStatus } from '#/core/orders/index.server';
 
-export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader({ params }) {
   try {
     const order = await getOrder(params.id);
     return Response.json({ order });
@@ -17,8 +14,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

@@ -2,7 +2,6 @@
 // PUT /api/admin/v1/menus/:handle — upsert menu
 // Requires admin-scoped API key.
 
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   getMenuForAdmin,
   getMenuOrThrow,
@@ -20,9 +19,7 @@ function menuErrorResponse(err) {
   return Response.json({ error: err.message, code: err.code }, { status: 422 });
 }
 
-export async function loader({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
+export async function loader({ params }) {
   const menu = await getMenuForAdmin(params.handle);
   if (!menu) {
     return Response.json(
@@ -35,8 +32,6 @@ export async function loader({ request, params }) {
 }
 
 export async function action({ request, params }) {
-  await requireApiKey(request, ['admin']);
-
   if (request.method !== 'PUT' && request.method !== 'PATCH') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }

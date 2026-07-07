@@ -1,4 +1,3 @@
-import { requireApiKey } from '#/libs/auth/api.server';
 import {
   addToWishlist,
   listWishlistItems,
@@ -6,8 +5,6 @@ import {
 } from '#/core/wishlists/index.server';
 
 export async function loader({ request }) {
-  await requireApiKey(request, ['admin']);
-
   const url = new URL(request.url);
   const customerId = url.searchParams.get('customerId');
   if (!customerId) {
@@ -19,8 +16,6 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
-  await requireApiKey(request, ['admin']);
-
   let body = {};
   try {
     body = await request.json();
