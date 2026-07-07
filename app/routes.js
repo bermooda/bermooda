@@ -95,6 +95,7 @@ export default [
       route('checkout', 'routes/api/v1/checkout.jsx'),
       route('checkout/:id', 'routes/api/v1/checkout/$id.jsx'),
       route('checkout/:id/update', 'routes/api/v1/checkout/$id/update.jsx'),
+      route('addresses/validate', 'routes/api/v1/addresses/validate.jsx'),
     ]),
   ]),
 
@@ -159,6 +160,14 @@ export default [
       route('loyalty', 'routes/api/admin/v1/loyalty.jsx'),
       route('settings', 'routes/api/admin/v1/settings.jsx'),
       route('storage', 'routes/api/admin/v1/storage.jsx'),
+      route(
+        'address-validation/providers',
+        'routes/api/admin/v1/address-validation/providers.jsx'
+      ),
+      route(
+        'address-validation/validate',
+        'routes/api/admin/v1/address-validation/validate.jsx'
+      ),
       route('media/:id', 'routes/api/admin/v1/media/$id.jsx'),
       route('admin-users', 'routes/api/admin/v1/admin-users.jsx'),
       route('admin-users/:id', 'routes/api/admin/v1/admin-users/$id.jsx'),

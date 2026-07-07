@@ -1,5 +1,9 @@
 // POST /api/v1/checkout/:id/update — persist checkout session fields
 
+import {
+  normalizeAddressForSession,
+  parseAddressJson,
+} from '#/core/address-validation/index.server';
 import { updateCheckoutSession } from '#/core/checkout/index.server';
 
 export async function action({ request, params }) {
@@ -15,6 +19,14 @@ export async function action({ request, params }) {
   }
 
   try {
+    if (body.shippingAddressJson) {
+      const addr = parseAddressJson(body.shippingAddressJson);
+      if (addr) {
+        const { normalizedAddr } = await normalizeAddressForSession(addr);
+        body = { ...body, shippingAddressJson: JSON.stringify(normalizedAddr) };
+      }
+    }
+
     const session = await updateCheckoutSession(params.id, body, {
       requireComplete: Boolean(
         body.shippingAddressJson &&

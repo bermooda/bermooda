@@ -14,6 +14,7 @@ export const SETTING_KEYS = {
   TAX_MODE: 'tax.mode',
   TAX_REGIONS: 'tax.regions',
   TAX_PROVIDER: 'tax.provider',
+  ADDRESS_VALIDATION_PROVIDER: 'addressValidation.provider',
   SHIPPING_ZONES: 'shipping.zones',
   SEO_META_TITLE: 'seo.metaTitle',
   SEO_META_DESCRIPTION: 'seo.metaDescription',

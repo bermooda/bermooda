@@ -4,7 +4,10 @@ import { useLoaderData } from 'react-router';
 import { getCartTokenFromRequest } from '#/utils/cart-cookie.server';
 import logger from '#/utils/logger.server';
 import { getCustomerSession } from '#/libs/auth/customer.server';
-import { validateAddress } from '#/core/address-validation/index.server';
+import {
+  normalizeAddressForSession,
+  parseAddressInput,
+} from '#/core/address-validation/index.server';
 import { getCart } from '#/core/cart/index.server';
 import {
   buildComputeTotalsParams,
@@ -61,17 +64,7 @@ async function loadTenderBalances(customerId) {
 }
 
 function buildCheckoutPayload(rawData, { session, customerId }) {
-  const addr = {
-    firstName: rawData.firstName ?? '',
-    lastName: rawData.lastName ?? '',
-    line1: rawData.line1 ?? '',
-    line2: rawData.line2 || null,
-    city: rawData.city ?? '',
-    state: rawData.state || null,
-    postalCode: rawData.postalCode || null,
-    country: rawData.country ?? '',
-    phone: rawData.phone || null,
-  };
+  const addr = parseAddressInput(rawData);
 
   const useStoreCredit =
     rawData.useStoreCredit === 'on' || rawData.useStoreCredit === 'true';
@@ -115,23 +108,9 @@ async function resolveTenderAmounts(payload) {
 }
 
 async function buildSessionUpdateData(payload, session) {
-  const hasAddress =
-    payload.addr.line1 && payload.addr.city && payload.addr.country;
-
-  let normalizedAddr = payload.addr;
-  if (hasAddress) {
-    try {
-      const validation = await validateAddress(payload.addr);
-      if (validation.valid) {
-        normalizedAddr = validation.normalized ?? payload.addr;
-      }
-    } catch (err) {
-      logger.warn(
-        { err },
-        'Address validation failed — continuing with raw address'
-      );
-    }
-  }
+  const { normalizedAddr, hasAddress } = await normalizeAddressForSession(
+    payload.addr
+  );
 
   let shippingOptionJson = session?.shippingOptionJson ?? null;
   if (payload.shippingOptionId && hasAddress) {
@@ -298,16 +277,17 @@ export async function action({ request }) {
         error: 'The selected shipping method is no longer available.',
       };
     }
+
+    await normalizeAddressForSession(
+      JSON.parse(updateData.shippingAddressJson),
+      { strict: true }
+    );
   } catch (err) {
+    if (err.message === 'Please check your shipping address.') {
+      return { error: err.message };
+    }
     logger.error({ err }, 'Failed to prepare checkout session');
     return { error: 'Unable to load shipping options. Please try again.' };
-  }
-
-  const validation = await validateAddress(
-    JSON.parse(updateData.shippingAddressJson)
-  );
-  if (!validation.valid) {
-    return { error: 'Please check your shipping address.' };
   }
 
   try {

@@ -3,6 +3,10 @@
 
 import cache, { getCachedResult } from '#/utils/cache.server';
 import prisma from '#/libs/prisma.server';
+import {
+  parseAddressValidationSettingsInput,
+  resolveAddressValidationProvider,
+} from '#/core/address-validation/index.server';
 import { normalizeLocaleList } from '#/core/i18n/locales';
 import {
   parseSeoSettingsInput,
@@ -169,6 +173,7 @@ export async function getAdminSettingsSnapshot() {
     SETTING_KEYS.SEO_GOOGLE_SITE_VERIFICATION,
     SETTING_KEYS.SEO_BING_SITE_VERIFICATION,
     SETTING_KEYS.SEO_TWITTER_HANDLE,
+    SETTING_KEYS.ADDRESS_VALIDATION_PROVIDER,
   ]);
 
   return {
@@ -188,6 +193,8 @@ export async function getAdminSettingsSnapshot() {
     shippingZones: Array.isArray(values[SETTING_KEYS.SHIPPING_ZONES])
       ? values[SETTING_KEYS.SHIPPING_ZONES]
       : [],
+    addressValidationProvider:
+      values[SETTING_KEYS.ADDRESS_VALIDATION_PROVIDER] ?? 'noop',
     ...serializeSeoSettings(values),
   };
 }
@@ -300,6 +307,13 @@ export function parseAdminSettingsPatch(body = {}) {
     return { section: 'shipping', values: { zones } };
   }
 
+  if (body.addressValidation) {
+    return {
+      section: 'addressValidation',
+      values: parseAddressValidationSettingsInput(body.addressValidation),
+    };
+  }
+
   return null;
 }
 
@@ -353,6 +367,12 @@ export async function saveShippingSettings(values) {
   await set(SETTING_KEYS.SHIPPING_ZONES, zones);
 }
 
+export async function saveAddressValidationSettings(values) {
+  const parsed = parseAddressValidationSettingsInput(values);
+  const provider = resolveAddressValidationProvider(parsed.provider);
+  await set(SETTING_KEYS.ADDRESS_VALIDATION_PROVIDER, provider);
+}
+
 /**
  * Apply a parsed admin/API settings patch.
  *
@@ -377,6 +397,9 @@ export async function applyAdminSettingsPatch({ section, values }) {
       return;
     case 'shipping':
       await saveShippingSettings(values);
+      return;
+    case 'addressValidation':
+      await saveAddressValidationSettings(values);
       return;
     default:
       throw new Error(`Unknown settings section: ${section}`);

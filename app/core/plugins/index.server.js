@@ -4,6 +4,10 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import queue from '#/libs/queue.server';
+import {
+  registerProvider as registerAddressValidationProvider,
+  unregisterProvider as unregisterAddressValidationProvider,
+} from '#/core/address-validation/index.server';
 import { emit, isHookAbort, off, on } from '#/core/events/index.server';
 import { isBeforeHookEvent } from '#/core/events/names';
 import { translate } from '#/core/i18n/index';
@@ -123,14 +127,18 @@ export function defineHooks(hookMap) {
 /**
  * Returns a typed provider spec object.
  *
- * @param {'payment' | 'shipping' | 'tax' | 'search'} type
+ * @param {'payment' | 'shipping' | 'tax' | 'search' | 'address_validation'} type
  * @param {Object} spec
  * @returns {{ type: string } & Object}
  */
 export function defineProvider(type, spec) {
-  if (!['payment', 'shipping', 'tax', 'search'].includes(type)) {
+  if (
+    !['payment', 'shipping', 'tax', 'search', 'address_validation'].includes(
+      type
+    )
+  ) {
     throw new Error(
-      `Invalid provider type "${type}". Must be one of: payment, shipping, tax, search`
+      `Invalid provider type "${type}". Must be one of: payment, shipping, tax, search, address_validation`
     );
   }
 
@@ -161,9 +169,13 @@ export function defineProviders(providerMap) {
     if (!spec || typeof spec !== 'object') {
       throw new Error(`Provider "${providerId}" must be an object`);
     }
-    if (!['payment', 'shipping', 'tax', 'search'].includes(spec.type)) {
+    if (
+      !['payment', 'shipping', 'tax', 'search', 'address_validation'].includes(
+        spec.type
+      )
+    ) {
       throw new Error(
-        `Provider "${providerId}" has invalid type "${spec.type}". Must be one of: payment, shipping, tax, search`
+        `Provider "${providerId}" has invalid type "${spec.type}". Must be one of: payment, shipping, tax, search, address_validation`
       );
     }
   }
@@ -501,6 +513,10 @@ function registerProvidersForPlugin(entry) {
         });
         break;
       }
+      case 'address_validation':
+        registerAddressValidationProvider(providerId, providerSpec);
+        entry.providers.push({ type, id: providerId });
+        break;
       default:
         throw new Error(`Unsupported provider type "${type}"`);
     }
@@ -527,6 +543,9 @@ function unregisterProvidersForPlugin(entry) {
         ) {
           setDefaultSearchProvider(provider.previousDefaultId);
         }
+        break;
+      case 'address_validation':
+        unregisterAddressValidationProvider(provider.id);
         break;
       default:
         break;
