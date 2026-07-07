@@ -315,6 +315,22 @@ export async function getOrder(id) {
   });
 }
 
+/**
+ * Fetch an order by public order number for storefront thank-you pages.
+ *
+ * @param {string} orderNumber
+ * @returns {Promise<object|null>}
+ */
+export async function getOrderByOrderNumber(orderNumber) {
+  const normalized = orderNumber?.toString().trim();
+  if (!normalized) return null;
+
+  return prisma.order.findFirst({
+    where: { orderNumber: normalized },
+    include: { lines: true },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // listOrders
 // ---------------------------------------------------------------------------

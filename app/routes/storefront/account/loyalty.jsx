@@ -3,6 +3,7 @@
 import { redirect, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
+import { buildLoginRedirectUrl } from '#/libs/auth/shared.server';
 import {
   getCustomerLoyaltySummary,
   getOrCreateReferralCode,
@@ -11,7 +12,9 @@ import {
 
 export async function loader({ request }) {
   const session = await getCustomerSession(request);
-  if (!session?.user) return redirect('/account/login');
+  if (!session?.user) {
+    throw redirect(buildLoginRedirectUrl('/account/login', request), 302);
+  }
 
   const customerId = session.user.id;
   const [loyalty, { transactions }, referralCode] = await Promise.all([

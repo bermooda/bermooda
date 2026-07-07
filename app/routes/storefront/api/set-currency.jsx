@@ -1,5 +1,6 @@
 import { redirect } from 'react-router';
 
+import { parseReturnTo } from '#/libs/api/storefront.server';
 import { setCurrencyCookie } from '#/core/currency/index.server';
 import {
   getEnabledCurrencies,
@@ -9,7 +10,7 @@ import {
 export async function action({ request }) {
   const formData = await request.formData();
   const currency = formData.get('currency')?.toString().trim().toUpperCase();
-  const returnTo = formData.get('returnTo') ?? '/';
+  const returnTo = parseReturnTo(formData);
 
   const enabled = await getEnabledCurrencies();
   if (

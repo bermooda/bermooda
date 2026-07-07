@@ -176,6 +176,37 @@ export function parseWishlistMutationFromJson(body = {}) {
 }
 
 /**
+ * Map wishlist mutation errors to storefront action payloads.
+ *
+ * @param {Error & { code?: string }} err
+ * @param {{ style?: 'product'|'account' }} [opts]
+ */
+export function mapWishlistActionError(err, { style = 'product' } = {}) {
+  const messageByCode = {
+    VARIANT_ID_REQUIRED:
+      style === 'account' ? 'Missing variant.' : 'Select a variant first.',
+    NOT_FOUND:
+      style === 'account' ? 'Variant not found.' : 'Variant not found.',
+    INVALID_WISHLIST_ACTION:
+      style === 'account'
+        ? 'Unknown action.'
+        : 'Could not update wishlist. Try again.',
+  };
+
+  const message =
+    messageByCode[err.code] ??
+    (style === 'account'
+      ? (err.message ?? 'Could not update wishlist.')
+      : 'Could not update wishlist. Try again.');
+
+  if (style === 'account') {
+    return { ok: false, error: message };
+  }
+
+  return { wishlistError: message };
+}
+
+/**
  * Parse admin delete-wishlist-item form intent.
  *
  * @param {FormData} formData
