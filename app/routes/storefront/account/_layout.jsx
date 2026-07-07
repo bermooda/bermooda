@@ -2,6 +2,7 @@ import { redirect } from 'react-router';
 import { Outlet, useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
+import { buildLoginRedirectUrl } from '#/libs/auth/shared.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
@@ -10,9 +11,7 @@ export async function loader({ request }) {
   const session = await getCustomerSession(request);
 
   if (!session?.user) {
-    const url = new URL(request.url);
-    const returnTo = url.pathname + url.search;
-    throw redirect(`/account/login?returnTo=${encodeURIComponent(returnTo)}`);
+    throw redirect(buildLoginRedirectUrl('/account/login', request), 302);
   }
 
   return { themeId, customer: session.user };

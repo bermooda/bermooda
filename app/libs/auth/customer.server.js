@@ -1,54 +1,27 @@
-import { networkInterfaces } from 'os';
-
-import bcrypt from 'bcryptjs';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { createAuthMiddleware } from 'better-auth/api';
 import { createContext, redirect } from 'react-router';
 
 import config from '#/config';
 import { getBetterAuthProvider } from '#/utils/database.server';
 import logger from '#/utils/logger.server';
+import {
+  buildAuthAdvancedConfig,
+  buildAuthLoggerConfig,
+  buildLoginRedirectUrl,
+  buildSocialProvidersConfig,
+  createEmailPasswordConfig,
+  createEmailVerificationConfig,
+  createSocialCallbackRedirectHook,
+  getTrustedOrigins,
+  pickAuthUserContextFields,
+} from '#/libs/auth/shared.server';
 import prisma from '#/libs/prisma.server';
+import { enforceRateLimit } from '#/libs/rate-limit.server';
 import { emit } from '#/core/events/index.server';
-import { queuePasswordResetEmail, queueVerifyEmail } from '#/emails/job.server';
+import { queuePasswordResetEmail } from '#/emails/job.server';
 
-const IS_DEV = process.env.NODE_ENV === 'development';
 const CUSTOMER_AUTH_BASE_URL = config.baseUrl + config.auth.customerBasePath;
-
-/**
- * Get local network address for dev mode with --host flag
- * @returns {string|null} The local network URL or null if not found
- */
-function getLocalNetworkUrl() {
-  const nets = networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    for (const net of nets[name]) {
-      // Skip internal and non-IPv4 addresses
-      if (net.family === 'IPv4' && !net.internal) {
-        return `http://${net.address}:3000`;
-      }
-    }
-  }
-  return null;
-}
-
-/**
- * Build trusted origins array, including network address in development
- * @returns {string[]} Array of trusted origin URLs
- */
-function getTrustedOrigins() {
-  const origins = [config.baseUrl];
-
-  if (IS_DEV) {
-    const networkUrl = getLocalNetworkUrl();
-    if (networkUrl) {
-      origins.push(networkUrl);
-    }
-  }
-
-  return origins;
-}
 
 /**
  * Customer Better Auth instance
@@ -61,10 +34,6 @@ function getTrustedOrigins() {
  *   session      -> CustomerSession
  *   account      -> CustomerAccount
  *   verification -> CustomerVerification
- *
- * NOTE: The Customer* Prisma tables do not exist yet — they will be added in
- * Phase 2. This configuration compiles and the handler mounts correctly; runtime
- * DB operations against Customer* tables require the Phase 2 schema migration.
  */
 export const customerAuth = betterAuth({
   appName: config.appName,
@@ -79,8 +48,6 @@ export const customerAuth = betterAuth({
   basePath: config.auth.customerBasePath,
   trustedOrigins: getTrustedOrigins(),
 
-  // Map better-auth's internal model names to the Customer* Prisma models.
-  // better-auth uses BetterAuthDBOptions.modelName for each table.
   user: {
     modelName: 'Customer',
     changeEmail: {
@@ -114,69 +81,31 @@ export const customerAuth = betterAuth({
     },
   },
 
-  // Override password hashing and verification to increase login performance
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: true,
-    password: {
-      hash: async (password) => {
-        return await bcrypt.hash(password, 10);
-      },
-      verify: async (data) => {
-        return await bcrypt.compare(data.password, data.hash);
-      },
-    },
-    async sendResetPassword({ user, url }) {
+  emailAndPassword: createEmailPasswordConfig({
+    sendResetPassword({ user, url }) {
       queuePasswordResetEmail(user.email, user.name, url);
     },
-  },
+  }),
 
-  emailVerification: {
-    enabled: true,
-    sendOnSignUp: true,
-    autoSignInAfterVerification: true,
-    async sendVerificationEmail({ user, url }) {
-      const verificationUrl = `${url}account?welcome-message=true`;
-      queueVerifyEmail(user.email, user.name, verificationUrl);
+  emailVerification: createEmailVerificationConfig({
+    buildVerificationUrl({ url }) {
+      return `${url}account?welcome-message=true`;
     },
-  },
+  }),
 
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    },
-  },
+  socialProviders: buildSocialProvidersConfig(),
 
-  // No twoFactor plugin for customers (deferred to a future phase)
-
-  // Redirect all social logins to customer callback URL
   hooks: {
-    after: createAuthMiddleware(async (ctx) => {
-      if (ctx?.path?.startsWith('/callback') && ctx?.context?.newSession) {
-        throw ctx.redirect(config.auth.customerCallbackUrl);
-      }
-    }),
+    after: createSocialCallbackRedirectHook(config.auth.customerCallbackUrl),
   },
 
-  logger: {
-    level: IS_DEV ? 'debug' : 'warn',
-    log(level, message) {
-      logger[level](message);
-    },
-  },
+  logger: buildAuthLoggerConfig(),
 
   telemetry: {
     enabled: false,
   },
 
-  advanced: {
-    defaultCookieAttributes: {
-      httpOnly: true,
-      secure: !IS_DEV,
-    },
-    cookiePrefix: config.auth.customerCookiePrefix,
-  },
+  advanced: buildAuthAdvancedConfig(config.auth.customerCookiePrefix),
 });
 
 /**
@@ -201,26 +130,14 @@ export const customerAuthContext = createContext();
  * @param {import('react-router').RouterContextProvider} context.context - The context set
  */
 export async function customerAuthMiddleware({ request, context }) {
+  enforceRateLimit(request, 'auth');
   const session = await getCustomerSession(request);
 
   if (!session?.user) {
-    const url = new URL(request.url);
-    const redirectTo = url.pathname + url.search;
-    throw redirect(
-      `/account/login?returnTo=${encodeURIComponent(redirectTo)}`,
-      302
-    );
+    throw redirect(buildLoginRedirectUrl('/account/login', request), 302);
   }
 
-  // Set customer context for use in routes
-  context.set(customerAuthContext, {
-    id: session.user.id,
-    email: session.user.email,
-    name: session.user.name,
-    emailVerified: session.user.emailVerified,
-    createdAt: session.user.createdAt,
-    updatedAt: session.user.updatedAt,
-  });
+  context.set(customerAuthContext, pickAuthUserContextFields(session.user));
 }
 
 /**
