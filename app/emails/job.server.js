@@ -1,8 +1,7 @@
 import config from '#/config';
 import logger from '#/utils/logger.server';
-import { handleError } from '#/libs/error.server';
 import prisma from '#/libs/prisma.server';
-import queue, { createThrottledJob } from '#/libs/queue.server';
+import queue, { createThrottledJob, defineQueueJob } from '#/libs/queue.server';
 import { on } from '#/core/events/index.server';
 import {
   sendPasswordResetEmail,
@@ -17,57 +16,46 @@ import {
   sendAbandonedCartEmail,
 } from '#/emails/index.server';
 
-const verifyEmailJob = queue.createJob('verify_email');
-const passwordResetEmailJob = queue.createJob('password_reset_email');
-const twoFactorOtpJob = queue.createJob('two_factor_otp');
-
-verifyEmailJob.process(async (taskData) => {
-  await sendVerificationEmail({
-    email: taskData.email,
-    name: taskData.name,
-    verificationUrl: taskData.url,
-  });
-});
-
-passwordResetEmailJob.process(async (taskData) => {
-  await sendPasswordResetEmail({
-    email: taskData.email,
-    name: taskData.name,
-    resetUrl: taskData.url,
-  });
-});
-
-twoFactorOtpJob.process(async (taskData) => {
-  await sendTwoFactorOtpEmail({
-    email: taskData.email,
-    name: taskData.name,
-    otp: taskData.otp,
-  });
-});
-
-/**
- * Event Handlers
- */
-
-verifyEmailJob.on('failed', async (event) => {
-  handleError(event.error, {
+const verifyEmailJob = defineQueueJob(queue, 'verify_email', {
+  process: async (taskData) => {
+    await sendVerificationEmail({
+      email: taskData.email,
+      name: taskData.name,
+      verificationUrl: taskData.url,
+    });
+  },
+  onFailed: {
     message: 'Verify email job failed',
-    source: 'queue.server verifyEmailJob',
-  });
+    source: 'emails/job.server verifyEmailJob',
+  },
 });
 
-passwordResetEmailJob.on('failed', async (event) => {
-  handleError(event.error, {
+const passwordResetEmailJob = defineQueueJob(queue, 'password_reset_email', {
+  process: async (taskData) => {
+    await sendPasswordResetEmail({
+      email: taskData.email,
+      name: taskData.name,
+      resetUrl: taskData.url,
+    });
+  },
+  onFailed: {
     message: 'Password reset email job failed',
-    source: 'queue.server passwordResetEmailJob',
-  });
+    source: 'emails/job.server passwordResetEmailJob',
+  },
 });
 
-twoFactorOtpJob.on('failed', async (event) => {
-  handleError(event.error, {
+const twoFactorOtpJob = defineQueueJob(queue, 'two_factor_otp', {
+  process: async (taskData) => {
+    await sendTwoFactorOtpEmail({
+      email: taskData.email,
+      name: taskData.name,
+      otp: taskData.otp,
+    });
+  },
+  onFailed: {
     message: 'Two-factor OTP email job failed',
-    source: 'queue.server twoFactorOtpJob',
-  });
+    source: 'emails/job.server twoFactorOtpJob',
+  },
 });
 
 /**
@@ -120,89 +108,74 @@ export const queueTwoFactorOtp = createThrottledJob(
 
 // ─── Shop email jobs ──────────────────────────────────────────────────────────
 
-const orderConfirmationJob = queue.createJob('order_confirmation_email');
-const orderShippedJob = queue.createJob('order_shipped_email');
-const orderDeliveredJob = queue.createJob('order_delivered_email');
-const orderRefundedJob = queue.createJob('order_refunded_email');
-const returnReceivedJob = queue.createJob('return_received_email');
-const customerWelcomeJob = queue.createJob('customer_welcome_email');
-const abandonedCartJob = queue.createJob('abandoned_cart_email');
-
-orderConfirmationJob.process(async (taskData) => {
-  await sendOrderConfirmationEmail(taskData);
-});
-
-orderShippedJob.process(async (taskData) => {
-  await sendOrderShippedEmail(taskData);
-});
-
-orderDeliveredJob.process(async (taskData) => {
-  await sendOrderDeliveredEmail(taskData);
-});
-
-orderRefundedJob.process(async (taskData) => {
-  await sendOrderRefundedEmail(taskData);
-});
-
-returnReceivedJob.process(async (taskData) => {
-  await sendReturnReceivedEmail(taskData);
-});
-
-customerWelcomeJob.process(async (taskData) => {
-  await sendCustomerWelcomeEmail(taskData);
-});
-
-abandonedCartJob.process(async (taskData) => {
-  await sendAbandonedCartEmail(taskData);
-});
-
-orderConfirmationJob.on('failed', async (event) => {
-  handleError(event.error, {
+const orderConfirmationJob = defineQueueJob(queue, 'order_confirmation_email', {
+  process: async (taskData) => {
+    await sendOrderConfirmationEmail(taskData);
+  },
+  onFailed: {
     message: 'Order confirmation email job failed',
-    source: 'queue.server orderConfirmationJob',
-  });
+    source: 'emails/job.server orderConfirmationJob',
+  },
 });
 
-orderShippedJob.on('failed', async (event) => {
-  handleError(event.error, {
+const orderShippedJob = defineQueueJob(queue, 'order_shipped_email', {
+  process: async (taskData) => {
+    await sendOrderShippedEmail(taskData);
+  },
+  onFailed: {
     message: 'Order shipped email job failed',
-    source: 'queue.server orderShippedJob',
-  });
+    source: 'emails/job.server orderShippedJob',
+  },
 });
 
-orderDeliveredJob.on('failed', async (event) => {
-  handleError(event.error, {
+const orderDeliveredJob = defineQueueJob(queue, 'order_delivered_email', {
+  process: async (taskData) => {
+    await sendOrderDeliveredEmail(taskData);
+  },
+  onFailed: {
     message: 'Order delivered email job failed',
-    source: 'queue.server orderDeliveredJob',
-  });
+    source: 'emails/job.server orderDeliveredJob',
+  },
 });
 
-orderRefundedJob.on('failed', async (event) => {
-  handleError(event.error, {
+const orderRefundedJob = defineQueueJob(queue, 'order_refunded_email', {
+  process: async (taskData) => {
+    await sendOrderRefundedEmail(taskData);
+  },
+  onFailed: {
     message: 'Order refunded email job failed',
-    source: 'queue.server orderRefundedJob',
-  });
+    source: 'emails/job.server orderRefundedJob',
+  },
 });
 
-returnReceivedJob.on('failed', async (event) => {
-  handleError(event.error, {
+const returnReceivedJob = defineQueueJob(queue, 'return_received_email', {
+  process: async (taskData) => {
+    await sendReturnReceivedEmail(taskData);
+  },
+  onFailed: {
     message: 'Return received email job failed',
-    source: 'queue.server returnReceivedJob',
-  });
+    source: 'emails/job.server returnReceivedJob',
+  },
 });
 
-customerWelcomeJob.on('failed', async (event) => {
-  handleError(event.error, {
+const customerWelcomeJob = defineQueueJob(queue, 'customer_welcome_email', {
+  process: async (taskData) => {
+    await sendCustomerWelcomeEmail(taskData);
+  },
+  onFailed: {
     message: 'Customer welcome email job failed',
-    source: 'queue.server customerWelcomeJob',
-  });
+    source: 'emails/job.server customerWelcomeJob',
+  },
 });
 
-abandonedCartJob.on('failed', async (event) => {
-  handleError(event.error, {
+const abandonedCartJob = defineQueueJob(queue, 'abandoned_cart_email', {
+  process: async (taskData) => {
+    await sendAbandonedCartEmail(taskData);
+  },
+  onFailed: {
     message: 'Abandoned cart email job failed',
-    source: 'queue.server abandonedCartJob',
-  });
+    source: 'emails/job.server abandonedCartJob',
+  },
 });
 
 /**
