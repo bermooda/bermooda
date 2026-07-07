@@ -1,26 +1,25 @@
 // POST /api/admin/v1/customers/:id/erase — anonymize customer PII
 // Requires admin-scoped API key.
 
+import {
+  createDomainErrorMapper,
+  requireMethod,
+} from '#/libs/api/admin.server';
 import { eraseCustomer } from '#/core/gdpr/index.server';
 
+const mapEraseError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+  conflict: ['ALREADY_ERASED'],
+});
+
 export async function action({ request, params }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
   try {
     const result = await eraseCustomer(params.id);
     return Response.json(result);
   } catch (err) {
-    if (err.code === 'NOT_FOUND') {
-      return Response.json({ error: err.message }, { status: 404 });
-    }
-    if (err.code === 'ALREADY_ERASED') {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 409 }
-      );
-    }
-    throw err;
+    return mapEraseError(err);
   }
 }

@@ -3,6 +3,13 @@
 // Requires admin-scoped API key.
 
 import {
+  jsonDomainError,
+  jsonListResponse,
+  parseAdminListPagination,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   EXPORT_SCHEDULES,
   EXPORT_TYPES,
   createScheduledExport,
@@ -11,42 +18,37 @@ import {
 
 export async function loader({ request }) {
   const url = new URL(request.url);
-  const page = parseInt(url.searchParams.get('page') ?? '1', 10);
-  const limit = Math.min(
-    parseInt(url.searchParams.get('limit') ?? '50', 10),
-    100
-  );
+  const { page, limit } = parseAdminListPagination(url.searchParams, {
+    limit: 50,
+  });
 
-  const result = await listScheduledExports({ page, limit });
-  return Response.json({
-    ...result,
-    exportTypes: EXPORT_TYPES,
-    exportSchedules: EXPORT_SCHEDULES,
+  const { scheduledExports, total } = await listScheduledExports({
+    page,
+    limit,
+  });
+  return jsonListResponse('scheduledExports', {
+    items: scheduledExports,
+    total,
+    page,
+    limit,
+    extra: {
+      exportTypes: EXPORT_TYPES,
+      exportSchedules: EXPORT_SCHEDULES,
+    },
   });
 }
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request);
+  if (parsed.error) return parsed.error;
 
   try {
-    const scheduledExport = await createScheduledExport(body);
+    const scheduledExport = await createScheduledExport(parsed.body);
     return Response.json({ scheduledExport }, { status: 201 });
   } catch (err) {
-    const status =
-      err.code === 'FIELDS_REQUIRED' ||
-      err.code === 'INVALID_EXPORT_TYPE' ||
-      err.code === 'INVALID_SCHEDULE'
-        ? 422
-        : 422;
-    return Response.json({ error: err.message, code: err.code }, { status });
+    return jsonDomainError(err);
   }
 }

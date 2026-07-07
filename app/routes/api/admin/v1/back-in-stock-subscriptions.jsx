@@ -1,21 +1,16 @@
 // GET /api/admin/v1/back-in-stock-subscriptions — list subscriptions
 // Requires admin-scoped API key.
 
+import { createDomainErrorMapper } from '#/libs/api/admin.server';
 import {
   listBackInStockSubscriptions,
   parseSubscriptionListParams,
   SUBSCRIPTION_STATUSES,
 } from '#/core/back-in-stock/index.server';
 
-function subscriptionErrorResponse(err) {
-  if (err.code === 'INVALID_SUBSCRIPTION_STATUS') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 400 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapSubscriptionError = createDomainErrorMapper({
+  badRequest: ['INVALID_SUBSCRIPTION_STATUS'],
+});
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -28,6 +23,6 @@ export async function loader({ request }) {
       subscriptionStatuses: SUBSCRIPTION_STATUSES,
     });
   } catch (err) {
-    return subscriptionErrorResponse(err);
+    return mapSubscriptionError(err);
   }
 }

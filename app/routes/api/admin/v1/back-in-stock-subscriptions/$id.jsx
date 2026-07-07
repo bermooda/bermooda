@@ -3,38 +3,35 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  requireOneOfMethods,
+} from '#/libs/api/admin.server';
+import {
   deleteBackInStockSubscription,
   getBackInStockSubscription,
 } from '#/core/back-in-stock/index.server';
 
-function subscriptionErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapSubscriptionError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+});
 
 export async function loader({ params }) {
   try {
     const subscription = await getBackInStockSubscription(params.id);
     return Response.json({ subscription });
   } catch (err) {
-    return subscriptionErrorResponse(err);
+    return mapSubscriptionError(err);
   }
 }
 
 export async function action({ request, params }) {
-  if (request.method === 'DELETE') {
-    try {
-      await deleteBackInStockSubscription(params.id);
-      return Response.json({ deleted: true });
-    } catch (err) {
-      return subscriptionErrorResponse(err);
-    }
-  }
+  const methodError = requireOneOfMethods(request, ['DELETE']);
+  if (methodError) return methodError;
 
-  return Response.json({ error: 'Method not allowed' }, { status: 405 });
+  try {
+    await deleteBackInStockSubscription(params.id);
+    return Response.json({ deleted: true });
+  } catch (err) {
+    return mapSubscriptionError(err);
+  }
 }

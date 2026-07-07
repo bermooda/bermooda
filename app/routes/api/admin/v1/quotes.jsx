@@ -3,36 +3,30 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   createQuote,
   listQuotes,
   parseQuoteListParams,
   QUOTE_STATUSES,
 } from '#/core/b2b/index.server';
 
-function quoteErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  if (
-    err.code === 'INVALID_QUOTE_STATUS' ||
-    err.code === 'COMPANY_ID_REQUIRED' ||
-    err.code === 'QUOTE_LINES_REQUIRED' ||
-    err.code === 'INVALID_QUOTE_LINE' ||
-    err.code === 'INVALID_QUOTE_LINE_PRICE' ||
-    err.code === 'EXPIRES_AT_INVALID' ||
-    err.code === 'CUSTOMER_NOT_FOUND' ||
-    err.code === 'VARIANT_NOT_FOUND'
-  ) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 400 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapQuoteError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+  badRequest: [
+    'INVALID_QUOTE_STATUS',
+    'COMPANY_ID_REQUIRED',
+    'QUOTE_LINES_REQUIRED',
+    'INVALID_QUOTE_LINE',
+    'INVALID_QUOTE_LINE_PRICE',
+    'EXPIRES_AT_INVALID',
+    'CUSTOMER_NOT_FOUND',
+    'VARIANT_NOT_FOUND',
+  ],
+});
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -45,26 +39,24 @@ export async function loader({ request }) {
       quoteStatuses: QUOTE_STATUSES,
     });
   } catch (err) {
-    return quoteErrorResponse(err);
+    return mapQuoteError(err);
   }
 }
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     const quote = await createQuote(body);
     return Response.json({ quote }, { status: 201 });
   } catch (err) {
-    return quoteErrorResponse(err);
+    return mapQuoteError(err);
   }
 }

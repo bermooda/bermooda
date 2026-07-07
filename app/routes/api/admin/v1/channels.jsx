@@ -3,12 +3,28 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   createChannel,
   getChannel,
   listChannels,
   parseChannelListParams,
   serializeChannel,
 } from '#/core/channels/index.server';
+
+const mapChannelError = createDomainErrorMapper({
+  badRequest: [
+    'NAME_REQUIRED',
+    'HANDLE_REQUIRED',
+    'HANDLE_INVALID',
+    'CURRENCY_INVALID',
+    'LOCALE_INVALID',
+  ],
+  conflict: ['CHANNEL_CONFLICT'],
+});
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -24,16 +40,14 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     const channel = await createChannel(body);
@@ -43,24 +57,6 @@ export async function action({ request }) {
       { status: 201 }
     );
   } catch (err) {
-    if (
-      err.code === 'NAME_REQUIRED' ||
-      err.code === 'HANDLE_REQUIRED' ||
-      err.code === 'HANDLE_INVALID' ||
-      err.code === 'CURRENCY_INVALID' ||
-      err.code === 'LOCALE_INVALID'
-    ) {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 400 }
-      );
-    }
-    if (err.code === 'CHANNEL_CONFLICT') {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 409 }
-      );
-    }
-    throw err;
+    return mapChannelError(err);
   }
 }

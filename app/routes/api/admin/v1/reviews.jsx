@@ -1,11 +1,16 @@
 // GET /api/admin/v1/reviews — list reviews
 // Requires admin-scoped API key.
 
+import { createDomainErrorMapper } from '#/libs/api/admin.server';
 import {
   listReviews,
   parseReviewListParams,
   REVIEW_STATUSES,
 } from '#/core/reviews/index.server';
+
+const mapReviewListError = createDomainErrorMapper({
+  badRequest: ['INVALID_REVIEW_STATUS'],
+});
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -18,12 +23,6 @@ export async function loader({ request }) {
       reviewStatuses: REVIEW_STATUSES,
     });
   } catch (err) {
-    if (err.code === 'INVALID_REVIEW_STATUS') {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 400 }
-      );
-    }
-    throw err;
+    return mapReviewListError(err);
   }
 }

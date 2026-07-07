@@ -4,51 +4,44 @@
 // Requires admin-scoped API key.
 
 import {
+  jsonDomainError,
+  jsonResourceOr404,
+  parseJsonBody,
+  requireOneOfMethods,
+} from '#/libs/api/admin.server';
+import {
   getDiscount,
   updateDiscount,
   deleteDiscount,
 } from '#/core/discounts/index.server';
 
 export async function loader({ params }) {
-  try {
-    const discount = await getDiscount(params.id);
-    return Response.json({ discount });
-  } catch {
-    return Response.json({ error: 'Discount not found' }, { status: 404 });
-  }
+  const discount = await getDiscount(params.id);
+  return jsonResourceOr404('discount', discount, {
+    message: 'Discount not found',
+  });
 }
 
 export async function action({ request, params }) {
+  const methodError = requireOneOfMethods(request, ['PATCH', 'DELETE']);
+  if (methodError) return methodError;
+
   if (request.method === 'PATCH') {
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-    }
+    const parsed = await parseJsonBody(request);
+    if (parsed.error) return parsed.error;
 
     try {
-      const discount = await updateDiscount(params.id, body);
+      const discount = await updateDiscount(params.id, parsed.body);
       return Response.json({ discount });
     } catch (err) {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 422 }
-      );
+      return jsonDomainError(err);
     }
   }
 
-  if (request.method === 'DELETE') {
-    try {
-      await deleteDiscount(params.id);
-      return Response.json({ deleted: true });
-    } catch (err) {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 422 }
-      );
-    }
+  try {
+    await deleteDiscount(params.id);
+    return Response.json({ deleted: true });
+  } catch (err) {
+    return jsonDomainError(err);
   }
-
-  return Response.json({ error: 'Method not allowed' }, { status: 405 });
 }

@@ -3,53 +3,45 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   addCompanyMember,
   getCompany,
   parseAddCompanyMemberInput,
 } from '#/core/b2b/index.server';
 
-function companyErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  if (
-    err.code === 'COMPANY_ID_REQUIRED' ||
-    err.code === 'CUSTOMER_ID_REQUIRED' ||
-    err.code === 'ROLE_INVALID' ||
-    err.code === 'CUSTOMER_NOT_FOUND' ||
-    err.code === 'MEMBER_EXISTS'
-  ) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 400 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapCompanyError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+  badRequest: [
+    'COMPANY_ID_REQUIRED',
+    'CUSTOMER_ID_REQUIRED',
+    'ROLE_INVALID',
+    'CUSTOMER_NOT_FOUND',
+    'MEMBER_EXISTS',
+  ],
+});
 
 export async function loader({ params }) {
   try {
     const company = await getCompany(params.id);
     return Response.json({ company });
   } catch (err) {
-    return companyErrorResponse(err);
+    return mapCompanyError(err);
   }
 }
 
 export async function action({ request, params }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     const member = await addCompanyMember(
@@ -57,6 +49,6 @@ export async function action({ request, params }) {
     );
     return Response.json({ member }, { status: 201 });
   } catch (err) {
-    return companyErrorResponse(err);
+    return mapCompanyError(err);
   }
 }

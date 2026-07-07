@@ -4,11 +4,25 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  jsonDomainError,
+  parseJsonBody,
+  requireOneOfMethods,
+} from '#/libs/api/admin.server';
+import {
   getSubscription,
   deleteSubscription,
   listDeliveries,
   updateSubscription,
 } from '#/core/webhooks/index.server';
+
+const mapWebhookSubscriptionError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+});
+
+function subscriptionNotFoundResponse() {
+  return Response.json({ error: 'Subscription not found' }, { status: 404 });
+}
 
 export async function loader({ params }) {
   try {
@@ -19,62 +33,38 @@ export async function loader({ params }) {
     return Response.json({ subscription, deliveries });
   } catch (err) {
     if (err.code === 'NOT_FOUND') {
-      return Response.json(
-        { error: 'Subscription not found' },
-        { status: 404 }
-      );
+      return subscriptionNotFoundResponse();
     }
     throw err;
   }
 }
 
 export async function action({ request, params }) {
+  const methodError = requireOneOfMethods(request, ['PATCH', 'DELETE']);
+  if (methodError) return methodError;
+
   if (request.method === 'DELETE') {
     try {
       await deleteSubscription(params.id);
       return Response.json({ deleted: true });
     } catch (err) {
       if (err.code === 'NOT_FOUND') {
-        return Response.json(
-          { error: 'Subscription not found' },
-          { status: 404 }
-        );
+        return subscriptionNotFoundResponse();
       }
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 422 }
-      );
+      return jsonDomainError(err);
     }
   }
 
-  if (request.method === 'PATCH') {
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-    }
+  const parsed = await parseJsonBody(request);
+  if (parsed.error) return parsed.error;
 
-    try {
-      const subscription = await updateSubscription(params.id, body);
-      return Response.json({ subscription });
-    } catch (err) {
-      if (err.code === 'NOT_FOUND') {
-        return Response.json(
-          { error: 'Subscription not found' },
-          { status: 404 }
-        );
-      }
-      const status =
-        err.code === 'NO_CHANGES' ||
-        err.code === 'URL_REQUIRED' ||
-        err.code === 'SECRET_REQUIRED' ||
-        err.code === 'EVENTS_INVALID'
-          ? 422
-          : 422;
-      return Response.json({ error: err.message, code: err.code }, { status });
+  try {
+    const subscription = await updateSubscription(params.id, parsed.body);
+    return Response.json({ subscription });
+  } catch (err) {
+    if (err.code === 'NOT_FOUND') {
+      return subscriptionNotFoundResponse();
     }
+    return mapWebhookSubscriptionError(err);
   }
-
-  return Response.json({ error: 'Method not allowed' }, { status: 405 });
 }

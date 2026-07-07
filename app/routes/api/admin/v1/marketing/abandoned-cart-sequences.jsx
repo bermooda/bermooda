@@ -3,43 +3,48 @@
 // Requires admin-scoped API key.
 
 import {
+  jsonDomainError,
+  jsonListResponse,
+  parseAdminListPagination,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   createAbandonedCartSequence,
   listAbandonedCartSequences,
 } from '#/core/marketing/index.server';
 
 export async function loader({ request }) {
   const url = new URL(request.url);
-  const page = parseInt(url.searchParams.get('page') ?? '1', 10);
-  const limit = Math.min(
-    parseInt(url.searchParams.get('limit') ?? '50', 10),
-    100
-  );
+  const { page, limit } = parseAdminListPagination(url.searchParams, {
+    limit: 50,
+  });
 
-  const result = await listAbandonedCartSequences({ page, limit });
-  return Response.json(result);
+  const { sequences, total } = await listAbandonedCartSequences({
+    page,
+    limit,
+  });
+  return jsonListResponse('sequences', {
+    items: sequences,
+    total,
+    page,
+    limit,
+  });
 }
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request);
+  if (parsed.error) return parsed.error;
 
   try {
-    const sequence = await createAbandonedCartSequence(body);
+    const sequence = await createAbandonedCartSequence(parsed.body);
     return Response.json({ sequence }, { status: 201 });
   } catch (err) {
     if (err.code === 'SEQUENCE_INVALID') {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 422 }
-      );
+      return jsonDomainError(err);
     }
     throw err;
   }

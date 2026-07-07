@@ -3,9 +3,24 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   deleteScheduledExport,
   getScheduledExport,
 } from '#/core/exports/index.server';
+
+const mapScheduledExportError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+});
+
+function scheduledExportNotFoundResponse() {
+  return Response.json(
+    { error: 'Scheduled export not found' },
+    { status: 404 }
+  );
+}
 
 export async function loader({ params }) {
   try {
@@ -13,30 +28,23 @@ export async function loader({ params }) {
     return Response.json({ scheduledExport });
   } catch (err) {
     if (err.code === 'NOT_FOUND') {
-      return Response.json(
-        { error: 'Scheduled export not found' },
-        { status: 404 }
-      );
+      return scheduledExportNotFoundResponse();
     }
-    throw err;
+    return mapScheduledExportError(err);
   }
 }
 
 export async function action({ request, params }) {
-  if (request.method !== 'DELETE') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'DELETE');
+  if (methodError) return methodError;
 
   try {
     await deleteScheduledExport(params.id);
     return Response.json({ deleted: true });
   } catch (err) {
     if (err.code === 'NOT_FOUND') {
-      return Response.json(
-        { error: 'Scheduled export not found' },
-        { status: 404 }
-      );
+      return scheduledExportNotFoundResponse();
     }
-    throw err;
+    return mapScheduledExportError(err);
   }
 }

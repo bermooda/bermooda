@@ -3,38 +3,38 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   getCustomerConsentSummary,
   parseUpdateConsentInput,
   updateCustomerConsent,
 } from '#/core/gdpr/index.server';
 
-function gdprErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json({ error: err.message }, { status: 404 });
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapGdprError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+});
 
 export async function loader({ params }) {
   try {
     const summary = await getCustomerConsentSummary(params.id);
     return Response.json(summary);
   } catch (err) {
-    return gdprErrorResponse(err);
+    return mapGdprError(err);
   }
 }
 
 export async function action({ request, params }) {
-  if (request.method !== 'PATCH') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'PATCH');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   const input = parseUpdateConsentInput(body);
   if (input.analytics === undefined && input.marketing === undefined) {
@@ -48,6 +48,6 @@ export async function action({ request, params }) {
     const consent = await updateCustomerConsent(params.id, input);
     return Response.json({ customerId: params.id, consent });
   } catch (err) {
-    return gdprErrorResponse(err);
+    return mapGdprError(err);
   }
 }

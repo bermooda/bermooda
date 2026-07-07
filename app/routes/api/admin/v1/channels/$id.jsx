@@ -3,6 +3,11 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   getChannel,
   serializeChannel,
   setChannelPriceOverride,
@@ -10,32 +15,39 @@ import {
   updateChannel,
 } from '#/core/channels/index.server';
 
+const mapChannelError = createDomainErrorMapper({
+  notFound: ['CHANNEL_NOT_FOUND'],
+  badRequest: [
+    'NAME_REQUIRED',
+    'HANDLE_REQUIRED',
+    'HANDLE_INVALID',
+    'CURRENCY_INVALID',
+    'LOCALE_INVALID',
+    'CHANNEL_REQUIRED',
+    'VARIANT_REQUIRED',
+    'PRICE_INVALID',
+  ],
+  conflict: ['CHANNEL_CONFLICT'],
+});
+
 export async function loader({ params }) {
   try {
     const channel = await getChannel(params.id);
     return Response.json({ channel: serializeChannel(channel) });
   } catch (err) {
-    if (err.code === 'CHANNEL_NOT_FOUND') {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 404 }
-      );
-    }
-    throw err;
+    return mapChannelError(err);
   }
 }
 
 export async function action({ request, params }) {
-  if (request.method !== 'PATCH') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'PATCH');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     if (body.priceOverride) {
@@ -70,33 +82,6 @@ export async function action({ request, params }) {
     const channel = await getChannel(params.id);
     return Response.json({ channel: serializeChannel(channel) });
   } catch (err) {
-    if (err.code === 'CHANNEL_NOT_FOUND') {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 404 }
-      );
-    }
-    if (
-      err.code === 'NAME_REQUIRED' ||
-      err.code === 'HANDLE_REQUIRED' ||
-      err.code === 'HANDLE_INVALID' ||
-      err.code === 'CURRENCY_INVALID' ||
-      err.code === 'LOCALE_INVALID' ||
-      err.code === 'CHANNEL_REQUIRED' ||
-      err.code === 'VARIANT_REQUIRED' ||
-      err.code === 'PRICE_INVALID'
-    ) {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 400 }
-      );
-    }
-    if (err.code === 'CHANNEL_CONFLICT') {
-      return Response.json(
-        { error: err.message, code: err.code },
-        { status: 409 }
-      );
-    }
-    throw err;
+    return mapChannelError(err);
   }
 }

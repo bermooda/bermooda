@@ -1,36 +1,45 @@
 import {
+  createDomainErrorMapper,
+  jsonListResponse,
+  parseAdminListPagination,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   issueGiftCard,
   listGiftCards,
   parseIssueGiftCardInput,
 } from '#/core/gift-cards/index.server';
 
+const mapGiftCardError = createDomainErrorMapper({
+  conflict: ['GIFT_CARD_CODE_EXISTS'],
+});
+
 export async function loader({ request }) {
   const url = new URL(request.url);
-  const page = parseInt(url.searchParams.get('page') ?? '1', 10);
-  const limit = Math.min(
-    parseInt(url.searchParams.get('limit') ?? '20', 10),
-    100
-  );
+  const { page, limit } = parseAdminListPagination(url.searchParams);
   const q = url.searchParams.get('q') ?? undefined;
 
   const { giftCards, total } = await listGiftCards({ page, limit, q });
 
-  return Response.json({ giftCards, total, page, limit });
+  return jsonListResponse('giftCards', {
+    items: giftCards,
+    total,
+    page,
+    limit,
+  });
 }
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
 
-  const input = parseIssueGiftCardInput(body);
+  const input = parseIssueGiftCardInput(parsed.body);
   if (!input.balanceCents || input.balanceCents <= 0) {
     return Response.json(
       { error: 'balanceCents must be greater than zero' },
@@ -42,15 +51,12 @@ export async function action({ request }) {
     const giftCard = await issueGiftCard(input);
     return Response.json({ giftCard }, { status: 201 });
   } catch (err) {
-    if (err.code === 'GIFT_CARD_CODE_EXISTS') {
-      return Response.json({ error: err.message }, { status: 409 });
-    }
     if (err.message === 'INVALID_GIFT_CARD_AMOUNT') {
       return Response.json(
         { error: 'balanceCents must be greater than zero' },
         { status: 400 }
       );
     }
-    throw err;
+    return mapGiftCardError(err);
   }
 }

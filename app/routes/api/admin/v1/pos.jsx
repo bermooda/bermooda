@@ -3,6 +3,11 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   closePosSession,
   createPosDraftOrder,
   listPosSessions,
@@ -15,33 +20,17 @@ import {
   POS_SESSION_STATUSES,
 } from '#/core/pos/index.server';
 
-function posErrorResponse(err) {
-  if (err.code === 'NOT_FOUND' || err.code === 'LOCATION_NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  if (
-    err.code === 'STAFF_ID_REQUIRED' ||
-    err.code === 'SESSION_ID_REQUIRED' ||
-    err.code === 'INVALID_TOTAL_CENTS' ||
-    err.code === 'CURRENCY_REQUIRED' ||
-    err.code === 'INVALID_POS_SESSION_STATUS'
-  ) {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 400 }
-    );
-  }
-  if (err.code === 'SESSION_NOT_OPEN' || err.code === 'SESSION_ALREADY_OPEN') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 409 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapPosError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND', 'LOCATION_NOT_FOUND'],
+  badRequest: [
+    'STAFF_ID_REQUIRED',
+    'SESSION_ID_REQUIRED',
+    'INVALID_TOTAL_CENTS',
+    'CURRENCY_REQUIRED',
+    'INVALID_POS_SESSION_STATUS',
+  ],
+  conflict: ['SESSION_NOT_OPEN', 'SESSION_ALREADY_OPEN'],
+});
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -55,21 +44,19 @@ export async function loader({ request }) {
       posOrderStatuses: POS_ORDER_STATUSES,
     });
   } catch (err) {
-    return posErrorResponse(err);
+    return mapPosError(err);
   }
 }
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, {
+    invalidMessage: 'Invalid JSON',
+  });
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
   try {
     if (body.intent === 'openSession') {
@@ -92,6 +79,6 @@ export async function action({ request }) {
 
     return Response.json({ error: 'Unknown intent' }, { status: 400 });
   } catch (err) {
-    return posErrorResponse(err);
+    return mapPosError(err);
   }
 }

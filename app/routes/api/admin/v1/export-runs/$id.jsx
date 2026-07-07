@@ -1,7 +1,12 @@
 // GET /api/admin/v1/export-runs/:id — get export run metadata or CSV content
 // Requires admin-scoped API key.
 
+import { createDomainErrorMapper } from '#/libs/api/admin.server';
 import { getExportRun } from '#/core/exports/index.server';
+
+const mapExportRunError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+});
 
 export async function loader({ request, params }) {
   const url = new URL(request.url);
@@ -18,6 +23,6 @@ export async function loader({ request, params }) {
     if (err.code === 'NOT_FOUND') {
       return Response.json({ error: 'Export run not found' }, { status: 404 });
     }
-    throw err;
+    return mapExportRunError(err);
   }
 }

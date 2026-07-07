@@ -3,38 +3,35 @@
 // Requires admin-scoped API key.
 
 import {
+  createDomainErrorMapper,
+  requireMethod,
+} from '#/libs/api/admin.server';
+import {
   cancelSubscription,
   getSubscription,
 } from '#/core/subscriptions/index.server';
 
-function subscriptionErrorResponse(err) {
-  if (err.code === 'NOT_FOUND') {
-    return Response.json(
-      { error: err.message, code: err.code },
-      { status: 404 }
-    );
-  }
-  return Response.json({ error: err.message, code: err.code }, { status: 422 });
-}
+const mapSubscriptionError = createDomainErrorMapper({
+  notFound: ['NOT_FOUND'],
+});
 
 export async function loader({ params }) {
   try {
     const subscription = await getSubscription(params.id);
     return Response.json({ subscription });
   } catch (err) {
-    return subscriptionErrorResponse(err);
+    return mapSubscriptionError(err);
   }
 }
 
 export async function action({ request, params }) {
-  if (request.method !== 'PATCH') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'PATCH');
+  if (methodError) return methodError;
 
   try {
     const subscription = await cancelSubscription(params.id);
     return Response.json({ subscription });
   } catch (err) {
-    return subscriptionErrorResponse(err);
+    return mapSubscriptionError(err);
   }
 }
