@@ -66,7 +66,7 @@ export async function action({ request }) {
     if (err.code === 'INVALID_IMPORT_TYPE') {
       return { error: err.message };
     }
-    return handleError(err, { context: 'admin.import' });
+    return handleError(err, { source: 'admin.import' });
   }
 }
 
