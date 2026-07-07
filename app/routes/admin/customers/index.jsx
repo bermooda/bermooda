@@ -11,8 +11,11 @@ import {
   useSearchParams,
 } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
-import { buildCustomerSearchWhere } from '#/core/customers/index.server';
+import { parseAdminUiPagination } from '#/libs/api/admin-ui.server';
+import {
+  countCustomersWithOrders,
+  listCustomers,
+} from '#/core/customers/index.server';
 import EmptyState from '#/components/admin/empty-state';
 import { controlClasses } from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
@@ -25,34 +28,14 @@ const PAGE_SIZE = 20;
 
 export async function loader({ request }) {
   const url = new URL(request.url);
-  const rawPage = parseInt(url.searchParams.get('page') ?? '1', 10);
-  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+  const { page, limit: pageSize } = parseAdminUiPagination(url.searchParams, {
+    limit: PAGE_SIZE,
+  });
   const q = url.searchParams.get('q')?.trim() ?? '';
 
-  const where = buildCustomerSearchWhere(q);
-
-  const [total, withOrdersCount, customers] = await Promise.all([
-    prisma.customer.count({ where }),
-    prisma.customer.count({
-      where: {
-        ...where,
-        orders: { some: {} },
-      },
-    }),
-    prisma.customer.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        createdAt: true,
-        _count: { select: { orders: true } },
-      },
-    }),
+  const [{ customers, total }, withOrdersCount] = await Promise.all([
+    listCustomers({ page, limit: pageSize, q, includeOrderCount: true }),
+    countCustomersWithOrders(q),
   ]);
 
   const rows = customers.map((c) => ({
@@ -69,8 +52,8 @@ export async function loader({ request }) {
     total,
     withOrdersCount,
     page,
-    pageSize: PAGE_SIZE,
-    totalPages: Math.ceil(total / PAGE_SIZE),
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
     q,
   };
 }

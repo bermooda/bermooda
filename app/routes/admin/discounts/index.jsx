@@ -12,7 +12,14 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { Link, useFetcher, useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
+import { handleAdminActionError } from '#/libs/api/admin-ui.server';
+import {
+  deleteDiscount,
+  listDiscounts,
+  parseDiscountFormData,
+  toggleDiscountActive,
+  updateDiscount,
+} from '#/core/discounts/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
@@ -27,7 +34,9 @@ import Button, { ButtonSubmit } from '#/components/ui/button';
 // ---------------------------------------------------------------------------
 
 export async function loader() {
-  const discounts = await prisma.discount.findMany({
+  const { discounts } = await listDiscounts({
+    page: 1,
+    limit: 500,
     orderBy: { createdAt: 'desc' },
   });
   return { discounts };
@@ -46,54 +55,26 @@ export async function action({ request }) {
     const id = formData.get('id')?.toString();
     if (!id) return { ok: false, error: 'Missing id.', intent };
 
-    const code = formData.get('code')?.toString().trim().toUpperCase() ?? '';
-    const type = formData.get('type')?.toString() ?? '';
-    const value = parseInt(formData.get('value') ?? '0', 10);
-    const minSubtotalCents = formData.get('minSubtotalCents')?.toString().trim()
-      ? parseInt(formData.get('minSubtotalCents'), 10)
-      : null;
-    const maxUsesCount = formData.get('maxUsesCount')?.toString().trim()
-      ? parseInt(formData.get('maxUsesCount'), 10)
-      : null;
-    const currency = formData.get('currency')?.toString().trim() || null;
-    const expiresAtRaw = formData.get('expiresAt')?.toString().trim();
-    const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null;
     const active = formData.get('active') === 'true';
-
-    if (!code) return { ok: false, error: 'Code is required.', intent };
-    if (!type) return { ok: false, error: 'Type is required.', intent };
-    if (!value || value <= 0)
-      return { ok: false, error: 'Value must be greater than 0.', intent };
-    if (type === 'fixed' && !currency)
-      return {
-        ok: false,
-        error: 'Currency is required for fixed discounts.',
-        intent,
-      };
+    const parsed = parseDiscountFormData(formData, { active });
+    if (parsed.error) {
+      return { ok: false, error: parsed.error, intent };
+    }
 
     try {
-      await prisma.discount.update({
-        where: { id },
-        data: {
-          code,
-          type,
-          value,
-          minSubtotalCents,
-          maxUsesCount,
-          currency: type === 'fixed' ? currency : null,
-          expiresAt,
-          active,
-        },
-      });
+      await updateDiscount(id, parsed.data);
     } catch (err) {
-      if (err?.code === 'P2002') {
-        return {
-          ok: false,
-          error: 'A discount with that code already exists.',
-          intent,
-        };
-      }
-      throw err;
+      return handleAdminActionError(err, {
+        source: 'admin.discounts.save',
+        intent,
+        knownCodes: {
+          P2002: {
+            ok: false,
+            error: 'A discount with that code already exists.',
+          },
+        },
+        userMessage: 'Could not save discount.',
+      });
     }
 
     return { ok: true, intent };
@@ -104,7 +85,16 @@ export async function action({ request }) {
     const id = formData.get('id')?.toString();
     if (!id) return { ok: false, error: 'Missing id.', intent };
 
-    await prisma.discount.delete({ where: { id } });
+    try {
+      await deleteDiscount(id);
+    } catch (err) {
+      return handleAdminActionError(err, {
+        source: 'admin.discounts.delete',
+        intent,
+        userMessage: 'Could not delete discount.',
+      });
+    }
+
     return { ok: true, intent };
   }
 
@@ -113,13 +103,18 @@ export async function action({ request }) {
     const id = formData.get('id')?.toString();
     if (!id) return { ok: false, error: 'Missing id.', intent };
 
-    const current = await prisma.discount.findUnique({ where: { id } });
-    if (!current) return { ok: false, error: 'Not found.', intent };
-
-    await prisma.discount.update({
-      where: { id },
-      data: { active: !current.active },
-    });
+    try {
+      await toggleDiscountActive(id);
+    } catch (err) {
+      return handleAdminActionError(err, {
+        source: 'admin.discounts.toggle-active',
+        intent,
+        knownCodes: {
+          DISCOUNT_NOT_FOUND: { ok: false, error: 'Not found.' },
+        },
+        userMessage: 'Could not update discount status.',
+      });
+    }
 
     return { ok: true, intent };
   }

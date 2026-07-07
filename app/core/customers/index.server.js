@@ -140,7 +140,12 @@ export async function createCustomer({
  * @param {{ page?: number, limit?: number, q?: string }} options
  * @returns {Promise<{ customers: object[], total: number }>}
  */
-export async function listCustomers({ page = 1, limit = 20, q } = {}) {
+export async function listCustomers({
+  page = 1,
+  limit = 20,
+  q,
+  includeOrderCount = false,
+} = {}) {
   const where = buildCustomerSearchWhere(q);
   const skip = (page - 1) * limit;
 
@@ -159,12 +164,29 @@ export async function listCustomers({ page = 1, limit = 20, q } = {}) {
         emailVerified: true,
         createdAt: true,
         updatedAt: true,
+        ...(includeOrderCount ? { _count: { select: { orders: true } } } : {}),
       },
     }),
     prisma.customer.count({ where }),
   ]);
 
   return { customers, total };
+}
+
+/**
+ * Count customers matching search that have at least one order.
+ *
+ * @param {string} [q]
+ * @returns {Promise<number>}
+ */
+export async function countCustomersWithOrders(q) {
+  const where = buildCustomerSearchWhere(q);
+  return prisma.customer.count({
+    where: {
+      ...where,
+      orders: { some: {} },
+    },
+  });
 }
 
 // ---------------------------------------------------------------------------
