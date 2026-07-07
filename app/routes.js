@@ -163,6 +163,7 @@ export default [
       route('audit-logs', 'routes/api/admin/v1/audit-logs.jsx'),
       route('audit-logs/:id', 'routes/api/admin/v1/audit-logs/$id.jsx'),
       route('wishlists', 'routes/api/admin/v1/wishlists.jsx'),
+      route('pos/sessions/:id', 'routes/api/admin/v1/pos/sessions/$id.jsx'),
       route('pos', 'routes/api/admin/v1/pos.jsx'),
       route(
         'subscriptions/plans/:id',
