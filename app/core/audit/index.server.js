@@ -3,9 +3,14 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import {
+  buildPaginationMeta,
+  buildPrismaPagination,
+  parseListPagination,
+  readQueryParam,
+} from '#/libs/prisma/pagination.server';
 import { DOMAIN_EVENTS } from '#/core/events/names';
 
-const MAX_LIST_RESULTS = 100;
 const DEFAULT_LIST_LIMIT = 50;
 
 const ENTITY_TYPE_BY_EVENT = {
@@ -44,29 +49,13 @@ const ENTITY_TYPE_BY_EVENT = {
  * @returns {{ page: number, limit: number, action?: string, entityType?: string, actorId?: string }}
  */
 export function parseAuditListParams(source = {}) {
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
+  const { page, limit } = parseListPagination(source, {
+    limit: DEFAULT_LIST_LIMIT,
+  });
 
-  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
-  const limit = Math.min(
-    Math.max(
-      1,
-      parseInt(get('limit') ?? String(DEFAULT_LIST_LIMIT), 10) ||
-        DEFAULT_LIST_LIMIT
-    ),
-    MAX_LIST_RESULTS
-  );
-
-  const action = get('action')?.trim();
-  const entityType = get('entityType')?.trim();
-  const actorId = get('actorId')?.trim();
+  const action = readQueryParam(source, 'action')?.trim();
+  const entityType = readQueryParam(source, 'entityType')?.trim();
+  const actorId = readQueryParam(source, 'actorId')?.trim();
 
   return {
     page,
@@ -250,9 +239,16 @@ export async function listAuditLogs({
   entityType,
   actorId,
 } = {}) {
-  const safePage = Math.max(1, page);
-  const safeLimit = Math.min(Math.max(1, limit), MAX_LIST_RESULTS);
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page,
+    limit,
+    defaultLimit: DEFAULT_LIST_LIMIT,
+  });
   const where = buildAuditLogWhere({ action, entityType, actorId });
 
   const [items, total] = await Promise.all([
@@ -260,17 +256,14 @@ export async function listAuditLogs({
       where,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.auditLog.count({ where }),
   ]);
 
   return {
     auditLogs: items.map(serializeAuditLog),
-    total,
-    page: safePage,
-    limit: safeLimit,
-    totalPages: Math.ceil(total / safeLimit) || 1,
+    ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
   };
 }
 

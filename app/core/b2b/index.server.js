@@ -1,8 +1,8 @@
 // app/core/b2b/index.server.js
 // B2B company accounts and quote workflow.
 
-import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
+import { containsFilter } from '#/libs/prisma/filters.server';
 
 export const QUOTE_STATUSES = [
   'draft',

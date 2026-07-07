@@ -1,4 +1,4 @@
-// app/utils/database.server.js
+// app/libs/prisma/provider.server.js
 // Detect the active database provider from environment configuration.
 
 /**

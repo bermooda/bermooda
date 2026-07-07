@@ -1,8 +1,8 @@
 // app/core/collections/index.server.js
 // Manual and smart product collections.
 
-import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
+import { containsFilter } from '#/libs/prisma/filters.server';
 import {
   getTranslations,
   setSlug,

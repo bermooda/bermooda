@@ -2,6 +2,7 @@
 // CSV data exports and scheduled export management.
 
 import prisma from '#/libs/prisma.server';
+import { buildPrismaPagination } from '#/libs/prisma/pagination.server';
 import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import {
@@ -12,7 +13,6 @@ import {
 export const EXPORT_TYPES = ['orders', 'products', 'customers', 'inventory'];
 export const EXPORT_SCHEDULES = ['daily', 'weekly', 'monthly'];
 
-const MAX_LIST_RESULTS = 100;
 const DEFAULT_LIST_LIMIT = 50;
 const RECENT_RUNS_LIMIT = 3;
 
@@ -537,15 +537,22 @@ export async function listScheduledExports({
   page = 1,
   limit = DEFAULT_LIST_LIMIT,
 } = {}) {
-  const safePage = Math.max(1, page);
-  const safeLimit = Math.min(Math.max(1, limit), MAX_LIST_RESULTS);
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page,
+    limit,
+    defaultLimit: DEFAULT_LIST_LIMIT,
+  });
 
   const [items, total] = await Promise.all([
     prisma.scheduledExport.findMany({
       orderBy: { createdAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
       include: {
         runs: {
           orderBy: { createdAt: 'desc' },

@@ -2,8 +2,14 @@
 // Back-in-stock subscriptions and notifications.
 
 import logger from '#/utils/logger.server';
-import { containsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
+import { containsFilter } from '#/libs/prisma/filters.server';
+import {
+  buildPaginationMeta,
+  buildPrismaPagination,
+  parseListPagination,
+  readQueryParam,
+} from '#/libs/prisma/pagination.server';
 import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import { sendBackInStockEmail } from '#/emails/index.server';
 
@@ -35,29 +41,6 @@ export function normalizeSubscriberEmail(email) {
   return email?.toString().trim().toLowerCase() ?? '';
 }
 
-function parseListPagination(source, defaults) {
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
-  const limit = Math.min(
-    Math.max(
-      1,
-      parseInt(get('limit') ?? String(defaults.limit), 10) || defaults.limit
-    ),
-    defaults.max
-  );
-
-  return { page, limit };
-}
-
 /**
  * Parse back-in-stock subscription list query params.
  *
@@ -69,20 +52,10 @@ export function parseSubscriptionListParams(source = {}) {
     max: MAX_SUBSCRIPTION_LIST_RESULTS,
   });
 
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const variantId = get('variantId')?.trim();
-  const customerId = get('customerId')?.trim();
-  const status = get('status')?.trim() || 'pending';
-  const q = get('q')?.trim();
+  const variantId = readQueryParam(source, 'variantId')?.trim();
+  const customerId = readQueryParam(source, 'customerId')?.trim();
+  const status = readQueryParam(source, 'status')?.trim() || 'pending';
+  const q = readQueryParam(source, 'q')?.trim();
 
   if (!SUBSCRIPTION_STATUS_SET.has(status)) {
     throw Object.assign(new Error('Invalid subscription status filter.'), {
@@ -339,12 +312,12 @@ export async function listBackInStockSubscriptions(options = {}) {
       ? options
       : parseSubscriptionListParams(options);
 
-  const safePage = Math.max(1, params.page ?? 1);
-  const safeLimit = Math.min(
-    Math.max(1, params.limit ?? DEFAULT_SUBSCRIPTION_LIST_LIMIT),
-    MAX_SUBSCRIPTION_LIST_RESULTS
-  );
-  const skip = (safePage - 1) * safeLimit;
+  const { page, limit, skip, take } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_SUBSCRIPTION_LIST_LIMIT,
+    maxLimit: MAX_SUBSCRIPTION_LIST_RESULTS,
+  });
   const where = buildSubscriptionWhere(params);
 
   const [items, total] = await Promise.all([
@@ -353,7 +326,7 @@ export async function listBackInStockSubscriptions(options = {}) {
       include: SUBSCRIPTION_LIST_INCLUDE,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.backInStockSubscription.count({ where }),
   ]);
@@ -365,10 +338,7 @@ export async function listBackInStockSubscriptions(options = {}) {
 
   return {
     subscriptions,
-    total,
-    page: safePage,
-    limit: safeLimit,
-    totalPages: Math.ceil(total / safeLimit) || 1,
+    ...buildPaginationMeta({ page, limit, total }),
   };
 }
 
