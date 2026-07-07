@@ -341,7 +341,12 @@ export async function deleteDiscount(id) {
   await prisma.discount.delete({ where: { id } });
 }
 
-export async function listDiscounts({ active, page = 1, limit = 20 } = {}) {
+export async function listDiscounts({
+  active,
+  page = 1,
+  limit = 20,
+  orderBy = { code: 'asc' },
+} = {}) {
   const where = {};
   if (active !== undefined) where.active = active;
 
@@ -352,12 +357,73 @@ export async function listDiscounts({ active, page = 1, limit = 20 } = {}) {
       where,
       skip,
       take: limit,
-      orderBy: { code: 'asc' },
+      orderBy,
     }),
     prisma.discount.count({ where }),
   ]);
 
   return { discounts, total };
+}
+
+/**
+ * Parse admin discount create/update form fields.
+ *
+ * @param {FormData} formData
+ * @param {{ active?: boolean }} [opts]
+ * @returns {{ data: object } | { error: string }}
+ */
+export function parseDiscountFormData(formData, { active } = {}) {
+  const code = formData.get('code')?.toString().trim().toUpperCase() ?? '';
+  const type = formData.get('type')?.toString() ?? '';
+  const value = parseInt(formData.get('value') ?? '0', 10);
+  const minSubtotalCents = formData.get('minSubtotalCents')?.toString().trim()
+    ? parseInt(formData.get('minSubtotalCents'), 10)
+    : null;
+  const maxUsesCount = formData.get('maxUsesCount')?.toString().trim()
+    ? parseInt(formData.get('maxUsesCount'), 10)
+    : null;
+  const currency = formData.get('currency')?.toString().trim() || null;
+  const expiresAtRaw = formData.get('expiresAt')?.toString().trim();
+  const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null;
+
+  if (!code) return { error: 'Code is required.' };
+  if (!type) return { error: 'Type is required.' };
+  if (!value || value <= 0) {
+    return { error: 'Value must be greater than 0.' };
+  }
+  if (type === 'fixed' && !currency) {
+    return { error: 'Currency is required for fixed discounts.' };
+  }
+
+  return {
+    data: {
+      code,
+      type,
+      value,
+      minSubtotalCents,
+      maxUsesCount,
+      currency: type === 'fixed' ? currency : null,
+      expiresAt,
+      ...(active !== undefined ? { active } : {}),
+    },
+  };
+}
+
+/**
+ * Toggle a discount's active flag.
+ *
+ * @param {string} id
+ * @returns {Promise<object>}
+ */
+export async function toggleDiscountActive(id) {
+  const current = await getDiscount(id);
+  if (!current) {
+    const err = new Error('Discount not found');
+    err.code = 'DISCOUNT_NOT_FOUND';
+    throw err;
+  }
+
+  return updateDiscount(id, { active: !current.active });
 }
 
 // Exported for testing
