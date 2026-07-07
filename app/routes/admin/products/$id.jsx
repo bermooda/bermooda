@@ -12,11 +12,10 @@ import {
   persistAdminProduct,
 } from '#/core/catalog/admin-product-form.server';
 import {
-  attachMedia,
   deleteProduct,
   detachMedia,
+  uploadProductMedia,
 } from '#/core/catalog/index.server';
-import { uploadMedia } from '#/core/storage/index.server';
 import ProductEditor from '#/components/admin/product-editor';
 
 // ---------------------------------------------------------------------------
@@ -121,26 +120,16 @@ export async function action({ request, params }) {
   const intent = formData.get('intent');
 
   if (intent === 'upload-media') {
-    const file = formData.get('file');
-    if (!file || typeof file === 'string') {
-      return { ok: false, error: 'No file provided.' };
+    try {
+      await uploadProductMedia(id, formData.get('file'));
+      return { ok: true, intent: 'upload-media' };
+    } catch (err) {
+      return {
+        ok: false,
+        error: err.message,
+        intent: 'upload-media',
+      };
     }
-
-    const { url, storageKey, mimeType, width, height } =
-      await uploadMedia(file);
-
-    const media = await prisma.media.create({
-      data: { storageKey, url, mimeType, width, height },
-    });
-
-    const lastMedia = await prisma.productMedia.findFirst({
-      where: { productId: id },
-      orderBy: { position: 'desc' },
-    });
-
-    await attachMedia(id, media.id, (lastMedia?.position ?? -1) + 1);
-
-    return { ok: true, intent: 'upload-media' };
   }
 
   if (intent === 'delete-media') {

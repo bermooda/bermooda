@@ -6,6 +6,7 @@ import { Link, Form, useFetcher } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
 import { formatPrice } from '#/core/index';
+import { resolveCatalogMediaUrl } from '#/core/storage/media';
 import SlotBlocks from '#/components/storefront/slot-blocks';
 
 import StorefrontShell, {
@@ -104,7 +105,7 @@ export default function ProductPage({
 
   const images = product.media ?? [];
   const activeImage = images[activeImageIndex];
-  const activeImageUrl = activeImage?.media?.url ?? activeImage?.url ?? null;
+  const activeImageUrl = resolveCatalogMediaUrl(activeImage, 1280);
 
   function handleOptionChange(optionName, value) {
     setSelectedOptions((prev) => ({ ...prev, [optionName]: value }));
@@ -165,7 +166,7 @@ export default function ProductPage({
             {images.length > 1 && (
               <div className="flex flex-wrap gap-2">
                 {images.map((img, i) => {
-                  const thumbUrl = img?.media?.url ?? img?.url ?? null;
+                  const thumbUrl = resolveCatalogMediaUrl(img, 160);
                   return (
                     <button
                       key={img.id}

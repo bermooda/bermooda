@@ -5,6 +5,7 @@ import { Link, Form, useNavigation } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
 import { cartLineTotal, formatPrice, summarizeCartLines } from '#/core/index';
+import { resolveCatalogMediaUrl } from '#/core/storage/media';
 import SlotBlocks from '#/components/storefront/slot-blocks';
 
 import StorefrontShell, {
@@ -100,10 +101,7 @@ export default function CartPage({ cart, locale, currency, slotBlocks = {} }) {
             <ul className="divide-y divide-stone-200">
               {lines.map((line) => {
                 const product = line.variant?.product;
-                const imageUrl =
-                  product?.media?.[0]?.media?.url ??
-                  product?.media?.[0]?.url ??
-                  null;
+                const imageUrl = resolveCatalogMediaUrl(product, 128);
                 const productSlug = product?.slug?.slug || product?.id;
                 const productHref = productSlug
                   ? `/products/${productSlug}`

@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 
 import { formatPrice } from '#/core/index';
+import { resolveCatalogMediaUrl } from '#/core/storage/media';
 
 import {
   STOREFRONT_CREAM as CREAM,
@@ -21,7 +22,7 @@ function resolveSlug(product) {
 }
 
 export default function ProductCard({ product, locale, currency }) {
-  const imageUrl = product.media?.[0]?.media?.url ?? null;
+  const imageUrl = resolveCatalogMediaUrl(product, 640);
   const priceCents = resolvePrice(product);
   const slug = resolveSlug(product);
 

@@ -47,6 +47,8 @@ vi.mock('#/libs/prisma.server', () => ({
       upsert: vi.fn(),
       delete: vi.fn(),
       update: vi.fn(),
+      findFirst: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
@@ -59,8 +61,14 @@ vi.mock('#/core/events/index.server', () => ({
   emit: vi.fn(),
 }));
 
+vi.mock('#/core/storage/index.server', () => ({
+  uploadAndCreateMedia: vi.fn(),
+  deleteMedia: vi.fn(),
+}));
+
 import prisma from '#/libs/prisma.server';
 import { emit } from '#/core/events/index.server';
+import { deleteMedia, uploadAndCreateMedia } from '#/core/storage/index.server';
 
 // Build a transaction mock that delegates to the same mock fns.
 const mockTx = {
@@ -86,6 +94,7 @@ import {
   attachMedia,
   reorderMedia,
   detachMedia,
+  uploadProductMedia,
   listCategories,
   getCategory,
   getCategoryBySlug,
@@ -393,12 +402,42 @@ describe('reorderMedia', () => {
 describe('detachMedia', () => {
   it('deletes productMedia by compound key', async () => {
     prisma.productMedia.delete.mockResolvedValue({});
+    prisma.productMedia.count.mockResolvedValue(1);
 
     await detachMedia('prod_1', 'media_1');
 
     expect(prisma.productMedia.delete).toHaveBeenCalledWith({
       where: { productId_mediaId: { productId: 'prod_1', mediaId: 'media_1' } },
     });
+    expect(deleteMedia).not.toHaveBeenCalled();
+  });
+
+  it('deletes orphaned media from storage when no references remain', async () => {
+    prisma.productMedia.delete.mockResolvedValue({});
+    prisma.productMedia.count.mockResolvedValue(0);
+
+    await detachMedia('prod_1', 'media_1');
+
+    expect(deleteMedia).toHaveBeenCalledWith('media_1');
+  });
+});
+
+describe('uploadProductMedia', () => {
+  it('uploads media, attaches it, and uses the next position', async () => {
+    uploadAndCreateMedia.mockResolvedValue({ id: 'media_1' });
+    prisma.productMedia.findFirst.mockResolvedValue({ position: 2 });
+    prisma.productMedia.upsert.mockResolvedValue({});
+
+    const file = { name: 'photo.jpg', type: 'image/jpeg' };
+    const result = await uploadProductMedia('prod_1', file);
+
+    expect(uploadAndCreateMedia).toHaveBeenCalledWith(file);
+    expect(prisma.productMedia.upsert).toHaveBeenCalledWith({
+      where: { productId_mediaId: { productId: 'prod_1', mediaId: 'media_1' } },
+      create: { productId: 'prod_1', mediaId: 'media_1', position: 3 },
+      update: { position: 3 },
+    });
+    expect(result).toEqual({ id: 'media_1' });
   });
 });
 
