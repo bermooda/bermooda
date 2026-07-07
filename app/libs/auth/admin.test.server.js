@@ -1,12 +1,27 @@
 import '#/libs/auth/test-setup.server';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { adminAuthMiddleware } from '#/libs/auth/admin.server';
+import {
+  adminAuthMiddleware,
+  adminAuthHandlerMiddleware,
+} from '#/libs/auth/admin.server';
 import { adminAuthTestState, catchThrown } from '#/libs/auth/test-setup.server';
+import { enforceRateLimit } from '#/libs/rate-limit.server';
 
 describe('adminAuthMiddleware', () => {
   beforeEach(() => {
     adminAuthTestState.sessionImpl.mockReset();
+    vi.mocked(enforceRateLimit).mockReset();
+  });
+
+  it('applies the auth rate limit before checking the session', async () => {
+    adminAuthTestState.sessionImpl.mockResolvedValue(null);
+    const request = new Request('http://localhost:3000/admin/products');
+    const context = { set: vi.fn() };
+
+    await catchThrown(() => adminAuthMiddleware({ request, context }));
+
+    expect(enforceRateLimit).toHaveBeenCalledWith(request, 'auth');
   });
 
   it('throws a 302 redirect to /admin/login when getSession returns null', async () => {
@@ -84,6 +99,22 @@ describe('adminAuthMiddleware', () => {
       name: 'Admin User',
       role: 'admin',
     });
+  });
+});
+
+describe('adminAuthHandlerMiddleware', () => {
+  it('throws the admin auth handler response', async () => {
+    const request = new Request('http://localhost:3000/admin/auth/get-session');
+    const response = Response.json({ session: null });
+    const { adminAuth } = await import('#/libs/auth/admin.server');
+    adminAuth.handler.mockResolvedValue(response);
+
+    const thrown = await catchThrown(() =>
+      adminAuthHandlerMiddleware({ request })
+    );
+
+    expect(thrown).toBe(response);
+    expect(adminAuth.handler).toHaveBeenCalledWith(request);
   });
 });
 

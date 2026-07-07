@@ -109,6 +109,16 @@ export const customerAuth = betterAuth({
 });
 
 /**
+ * React Router middleware that proxies requests to the customer Better Auth handler.
+ *
+ * @param {object} context
+ * @param {Request} context.request
+ */
+export async function customerAuthHandlerMiddleware({ request }) {
+  throw await customerAuth.handler(request);
+}
+
+/**
  * Context object for customer authentication middleware
  *
  * @type {import('react-router').RouterContext<{
@@ -163,5 +173,3 @@ export async function getCustomerSession(request) {
     return null;
   }
 }
-
-export default customerAuth;
