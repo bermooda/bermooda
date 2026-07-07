@@ -1,7 +1,10 @@
 import '#/libs/auth/test-setup.server';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { adminAuthMiddleware } from '#/libs/auth/admin.server';
+import {
+  adminAuthMiddleware,
+  adminAuthHandlerMiddleware,
+} from '#/libs/auth/admin.server';
 import { adminAuthTestState, catchThrown } from '#/libs/auth/test-setup.server';
 
 describe('adminAuthMiddleware', () => {
@@ -84,6 +87,22 @@ describe('adminAuthMiddleware', () => {
       name: 'Admin User',
       role: 'admin',
     });
+  });
+});
+
+describe('adminAuthHandlerMiddleware', () => {
+  it('throws the admin auth handler response', async () => {
+    const request = new Request('http://localhost:3000/admin/auth/get-session');
+    const response = Response.json({ session: null });
+    const { adminAuth } = await import('#/libs/auth/admin.server');
+    adminAuth.handler.mockResolvedValue(response);
+
+    const thrown = await catchThrown(() =>
+      adminAuthHandlerMiddleware({ request })
+    );
+
+    expect(thrown).toBe(response);
+    expect(adminAuth.handler).toHaveBeenCalledWith(request);
   });
 });
 

@@ -18,7 +18,6 @@ import {
 } from '#/libs/auth/shared.server';
 import prisma from '#/libs/prisma.server';
 import { getBetterAuthProvider } from '#/libs/prisma/provider.server';
-import { enforceRateLimit } from '#/libs/rate-limit.server';
 import {
   queuePasswordResetEmail,
   queueTwoFactorOtp,
@@ -89,6 +88,16 @@ export const adminAuth = betterAuth({
 });
 
 /**
+ * React Router middleware that proxies requests to the admin Better Auth handler.
+ *
+ * @param {object} context
+ * @param {Request} context.request
+ */
+export async function adminAuthHandlerMiddleware({ request }) {
+  throw await adminAuth.handler(request);
+}
+
+/**
  * Context object for admin authentication middleware
  *
  * @type {import('react-router').RouterContext<{
@@ -110,7 +119,6 @@ export const adminAuthContext = createContext();
  * @param {import('react-router').RouterContextProvider} context.context - The context Set
  */
 export async function adminAuthMiddleware({ request, context }) {
-  enforceRateLimit(request, 'auth');
   const { user } = await authenticate(request);
 
   context.set(adminAuthContext, {

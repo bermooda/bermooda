@@ -77,14 +77,14 @@ Finish each review completely in the same PR — do not defer work.
 
 ## Routes (`app/routes/`)
 
-| Area            | Status | Notes                                                                                                                                                                                      |
-| --------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `storefront/`   | ⬜     |                                                                                                                                                                                            |
-| `admin/`        | ⬜     |                                                                                                                                                                                            |
-| `api/v1/`       | ⬜     |                                                                                                                                                                                            |
-| `api/admin/v1/` | ⬜     |                                                                                                                                                                                            |
-| `webhooks/`     | ⬜     |                                                                                                                                                                                            |
-| `auth/`         | ✅     | Shared `createAuthRouteHandlers` in `#/libs/auth/shared.server`; admin/customer routes thinned; removed unused default auth exports; expanded tests; docs synced with rate-limit behavior. |
+| Area            | Status | Notes                                                                                                                                                                       |
+| --------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `storefront/`   | ⬜     |                                                                                                                                                                             |
+| `admin/`        | ⬜     |                                                                                                                                                                             |
+| `api/v1/`       | ⬜     |                                                                                                                                                                             |
+| `api/admin/v1/` | ⬜     |                                                                                                                                                                             |
+| `webhooks/`     | ⬜     |                                                                                                                                                                             |
+| `auth/`         | ✅     | Auth routes use `rateLimitMiddleware('auth')` plus handler middleware; removed `createAuthRouteHandlers`; removed unused default auth exports; expanded tests; docs synced. |
 
 ## UI
 

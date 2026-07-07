@@ -96,28 +96,22 @@ GET/POST  /admin/auth/*    app/routes/auth/admin.jsx     (adminAuth)
 GET/POST  /account/auth/*  app/routes/auth/customer.jsx  (customerAuth)
 ```
 
-Each file is a thin React Router route that rate-limits and proxies the request
-to the corresponding better-auth handler via `createAuthRouteHandlers` from
-`#/libs/auth/shared.server`:
+Each file is a thin React Router route that applies middleware before proxying
+to the corresponding better-auth handler:
 
 ```js
-import { adminAuth } from '#/libs/auth/admin.server';
-import { createAuthRouteHandlers } from '#/libs/auth/shared.server';
+import { adminAuthHandlerMiddleware } from '#/libs/auth/admin.server';
+import { rateLimitMiddleware } from '#/libs/rate-limit.server';
 
-const { loader: authLoader, action: authAction } =
-  createAuthRouteHandlers(adminAuth);
-
-export async function loader(args) {
-  return authLoader(args);
-}
-
-export async function action(args) {
-  return authAction(args);
-}
+export const middleware = [
+  rateLimitMiddleware('auth'),
+  adminAuthHandlerMiddleware,
+];
 ```
 
-Both loader and action apply the `auth` rate-limit policy (20 requests/min per
-IP+path) before delegating to `auth.handler(request)`.
+`rateLimitMiddleware('auth')` applies the auth policy (20 requests/min per
+IP+path). `adminAuthHandlerMiddleware` / `customerAuthHandlerMiddleware` throw
+the better-auth handler response without calling `next()`.
 
 ---
 
@@ -127,6 +121,9 @@ Use either React Router middleware or loader-based session checks — follow the
 pattern in the nearest sibling route.
 
 ### Middleware (optional)
+
+Compose `rateLimitMiddleware('auth')` with the auth middleware for protected
+routes:
 
 - **Admin routes** — `adminAuthMiddleware` from `admin.server.js`. On success
   it sets `adminAuthContext` so child routes can read the current admin user

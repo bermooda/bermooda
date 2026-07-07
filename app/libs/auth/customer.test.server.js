@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import logger from '#/utils/logger.server';
 import {
   customerAuth,
+  customerAuthHandlerMiddleware,
   customerAuthMiddleware,
   getCustomerSession,
 } from '#/libs/auth/customer.server';
@@ -95,6 +96,23 @@ describe('customerAuthMiddleware', () => {
       email: 'customer@example.com',
       name: 'Test Customer',
     });
+  });
+});
+
+describe('customerAuthHandlerMiddleware', () => {
+  it('throws the customer auth handler response', async () => {
+    const request = new Request(
+      'http://localhost:3000/account/auth/get-session'
+    );
+    const response = Response.json({ session: null });
+    customerAuth.handler.mockResolvedValue(response);
+
+    const thrown = await catchThrown(() =>
+      customerAuthHandlerMiddleware({ request })
+    );
+
+    expect(thrown).toBe(response);
+    expect(customerAuth.handler).toHaveBeenCalledWith(request);
   });
 });
 

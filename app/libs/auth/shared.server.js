@@ -5,7 +5,6 @@ import { createAuthMiddleware } from 'better-auth/api';
 
 import config from '#/config';
 import logger from '#/utils/logger.server';
-import { enforceRateLimit } from '#/libs/rate-limit.server';
 import { queueVerifyEmail } from '#/emails/job.server';
 
 export const IS_DEV = process.env.NODE_ENV === 'development';
@@ -173,19 +172,4 @@ export function buildLoginRedirectUrl(loginPath, requestOrUrl) {
       : new URL(requestOrUrl.url);
   const returnTo = url.pathname + url.search;
   return `${loginPath}?returnTo=${encodeURIComponent(returnTo)}`;
-}
-
-/**
- * Create loader/action handlers that rate-limit and proxy to a better-auth instance.
- *
- * @param {{ handler: (request: Request) => Promise<Response> | Response }} auth
- * @returns {{ loader: Function, action: Function }}
- */
-export function createAuthRouteHandlers(auth) {
-  async function handleAuthRequest({ request }) {
-    enforceRateLimit(request, 'auth');
-    return auth.handler(request);
-  }
-
-  return { loader: handleAuthRequest, action: handleAuthRequest };
 }
