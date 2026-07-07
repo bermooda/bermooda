@@ -68,12 +68,12 @@ Finish each review completely in the same PR — do not defer work.
 
 ## Infrastructure (`app/libs/`)
 
-| Area        | Status | Notes |
-| ----------- | ------ | ----- |
-| `auth/`     | ⬜     |       |
-| `alerting/` | ⬜     |       |
-| `prisma/`   | ⬜     |       |
-| `queue/`    | ⬜     |       |
+| Area        | Status | Notes                                                                                                                                                                                                                                                                                                            |
+| ----------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth/`     | ✅     | Shared helpers in `#/libs/auth/shared.server` and `#/libs/auth/client-base`; deduped admin/customer better-auth config; shared login redirect helper wired in middleware and account layout; customer auth handler rate-limited; removed dead `requireAdminPermission`; consolidated test mocks; expanded tests. |
+| `alerting/` | ⬜     |                                                                                                                                                                                                                                                                                                                  |
+| `prisma/`   | ⬜     |                                                                                                                                                                                                                                                                                                                  |
+| `queue/`    | ⬜     |                                                                                                                                                                                                                                                                                                                  |
 
 ## Routes (`app/routes/`)
 
