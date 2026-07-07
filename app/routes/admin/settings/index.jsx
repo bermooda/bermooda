@@ -19,6 +19,7 @@ import {
 } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
+import { listProvidersWithDetails as listAddressValidationProviders } from '#/core/address-validation/index.server';
 import {
   ADMIN_AVAILABLE_LOCALES,
   LOCALE_LABELS,
@@ -41,6 +42,7 @@ import {
   saveSeoSettings,
   saveShippingSettings,
   saveTaxSettings,
+  saveAddressValidationSettings,
   set,
 } from '#/core/settings/index.server';
 import { parseUploadFileInput, uploadMedia } from '#/core/storage/index.server';
@@ -67,6 +69,7 @@ const TABS = [
   'Locales',
   'Tax',
   'Shipping',
+  'Address Validation',
   'Admin Users',
   'Email Templates',
 ];
@@ -106,9 +109,10 @@ const EMAIL_TEMPLATES = [
 export async function loader({ request }) {
   const adminLocale = await getRequestLocale(request);
 
-  const [settings, users] = await Promise.all([
+  const [settings, users, addressValidationProviders] = await Promise.all([
     getAdminSettingsSnapshot(),
     listAdminUsers(),
+    Promise.resolve(listAddressValidationProviders()),
   ]);
 
   return {
@@ -116,6 +120,7 @@ export async function loader({ request }) {
     adminLocale,
     adminAvailableLocales: ADMIN_AVAILABLE_LOCALES,
     users,
+    addressValidationProviders,
   };
 }
 
@@ -189,6 +194,13 @@ export async function action({ request }) {
   if (intent === 'save-shipping') {
     await saveShippingSettings({
       shippingZones: formData.get('shippingZones'),
+    });
+    return { ok: true, intent };
+  }
+
+  if (intent === 'save-address-validation') {
+    await saveAddressValidationSettings({
+      provider: formData.get('provider'),
     });
     return { ok: true, intent };
   }
@@ -1121,6 +1133,46 @@ function ShippingTab({ data }) {
 }
 
 // ---------------------------------------------------------------------------
+// Tab: Address Validation
+// ---------------------------------------------------------------------------
+
+function AddressValidationTab({ data }) {
+  const fetcher = useFetcher();
+  const [provider, setProvider] = useState(data.addressValidationProvider);
+
+  return (
+    <SectionCard title="Address Validation">
+      <fetcher.Form method="post" className="space-y-6">
+        <input type="hidden" name="intent" value="save-address-validation" />
+        <input type="hidden" name="provider" value={provider} />
+
+        <p className="text-text-muted text-sm">
+          Choose the provider used to validate shipping addresses during
+          checkout. The built-in no-op provider accepts all addresses.
+        </p>
+
+        <div>
+          <FieldLabel>Provider</FieldLabel>
+          <select
+            value={provider}
+            onChange={(event) => setProvider(event.target.value)}
+            className={clsx(controlClasses, 'mt-1 max-w-md')}
+          >
+            {data.addressValidationProviders.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {entry.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <SaveButton fetcher={fetcher} intent="save-address-validation" />
+      </fetcher.Form>
+    </SectionCard>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Tab: Admin Users
 // ---------------------------------------------------------------------------
 
@@ -1279,8 +1331,9 @@ export default function AdminSettingsRoute() {
       {activeTab === 3 && <LocalesTab data={data} />}
       {activeTab === 4 && <TaxTab data={data} />}
       {activeTab === 5 && <ShippingTab data={data} />}
-      {activeTab === 6 && <AdminUsersTab data={data} />}
-      {activeTab === 7 && <EmailTemplatesTab />}
+      {activeTab === 6 && <AddressValidationTab data={data} />}
+      {activeTab === 7 && <AdminUsersTab data={data} />}
+      {activeTab === 8 && <EmailTemplatesTab />}
     </div>
   );
 }

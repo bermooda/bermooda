@@ -21,10 +21,11 @@ export const DEFAULT_ENABLED_PLUGINS = [];
 
 /** Values written by seedDefaults when a key is absent from the DB. */
 export const SETTING_DEFAULTS = {
-  defaultCurrency: DEFAULT_CURRENCY,
-  currencies: DEFAULT_CURRENCIES,
-  defaultLocale: DEFAULT_LOCALE,
-  locales: DEFAULT_LOCALES,
-  activeTheme: DEFAULT_ACTIVE_THEME,
-  pluginOrder: DEFAULT_PLUGIN_ORDER,
+  'defaultCurrency': DEFAULT_CURRENCY,
+  'currencies': DEFAULT_CURRENCIES,
+  'defaultLocale': DEFAULT_LOCALE,
+  'locales': DEFAULT_LOCALES,
+  'activeTheme': DEFAULT_ACTIVE_THEME,
+  'pluginOrder': DEFAULT_PLUGIN_ORDER,
+  'addressValidation.provider': 'noop',
 };
