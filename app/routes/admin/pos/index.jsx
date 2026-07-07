@@ -4,12 +4,14 @@
 import { Form, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
-import prisma from '#/libs/prisma.server';
-import { listLocations } from '#/core/inventory/index.server';
 import {
   closePosSession,
   createPosDraftOrder,
+  loadPosAdminIndexData,
   openPosSession,
+  parseCloseSessionFromForm,
+  parseCreateDraftOrderFromForm,
+  parseOpenSessionFromForm,
 } from '#/core/pos/index.server';
 import Card from '#/components/admin/card';
 import Select from '#/components/admin/form/select';
@@ -18,23 +20,7 @@ import Button from '#/components/ui/button';
 
 export async function loader({ request }) {
   const { user } = await authenticate(request);
-
-  const [locations, sessions] = await Promise.all([
-    listLocations(),
-    prisma.posSession.findMany({
-      orderBy: { openedAt: 'desc' },
-      take: 20,
-      include: {
-        location: true,
-        orders: true,
-        staff: { select: { id: true, name: true, email: true } },
-      },
-    }),
-  ]);
-
-  const openSession = sessions.find((s) => s.status === 'open') ?? null;
-
-  return { locations, sessions, openSession, staffId: user.id };
+  return loadPosAdminIndexData({ staffId: user.id });
 }
 
 export async function action({ request }) {
@@ -43,35 +29,33 @@ export async function action({ request }) {
   const intent = formData.get('intent');
 
   if (intent === 'open-session') {
-    const locationId = formData.get('locationId')?.toString() || null;
-    await openPosSession({ staffId: user.id, locationId });
-    return { ok: true };
+    try {
+      const input = parseOpenSessionFromForm(formData, { staffId: user.id });
+      await openPosSession(input);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
   }
 
   if (intent === 'close-session') {
-    const sessionId = formData.get('sessionId')?.toString();
-    if (!sessionId) return { ok: false, error: 'Session required.' };
-    await closePosSession(sessionId);
-    return { ok: true };
+    try {
+      const input = parseCloseSessionFromForm(formData);
+      await closePosSession(input);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
   }
 
   if (intent === 'create-draft') {
-    const sessionId = formData.get('sessionId')?.toString();
-    const totalCents = parseInt(
-      formData.get('totalCents')?.toString() ?? '0',
-      10
-    );
-    const currency = formData.get('currency')?.toString() ?? 'USD';
-
-    if (!sessionId) return { ok: false, error: 'Session required.' };
-
-    await createPosDraftOrder({
-      posSessionId: sessionId,
-      totalCents: Number.isNaN(totalCents) ? 0 : totalCents,
-      currency,
-    });
-
-    return { ok: true };
+    try {
+      const input = parseCreateDraftOrderFromForm(formData);
+      await createPosDraftOrder(input);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
   }
 
   return { ok: false, error: 'Unknown action.' };
@@ -160,7 +144,7 @@ export default function AdminPosRoute() {
                     </span>
                   </div>
                   <p className="text-text-muted text-xs">
-                    {session.orders.length} draft(s) ·{' '}
+                    {session.orderCount} draft(s) ·{' '}
                     {session.staff?.name ?? session.staff?.email}
                   </p>
                 </li>
