@@ -137,6 +137,15 @@ export async function getEnabledCurrencies() {
 }
 
 /**
+ * Enabled storefront locales from settings.
+ *
+ * @returns {Promise<string[]>}
+ */
+export async function getEnabledLocales() {
+  return normalizeLocaleList(await get(SETTING_KEYS.LOCALES));
+}
+
+/**
  * Load shop settings used by the admin settings page.
  *
  * @returns {Promise<object>}

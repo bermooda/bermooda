@@ -3,11 +3,10 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
 import {
-  listChannels,
+  loadChannelAdminIndexData,
+  parseChannelAdminAction,
   setChannelPriceOverride,
-  setChannelProductPublished,
   updateChannel,
 } from '#/core/channels/index.server';
 import Badge from '#/components/admin/badge';
@@ -19,50 +18,26 @@ import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 import Button from '#/components/ui/button';
 
 export async function loader() {
-  const { channels, total } = await listChannels({ limit: 100 });
-  const products = await prisma.product.findMany({
-    take: 50,
-    orderBy: { createdAt: 'desc' },
-    include: { variants: { include: { prices: true } } },
-  });
-  return { channels, total, products };
+  return loadChannelAdminIndexData({ limit: 100 });
 }
 
 export async function action({ request }) {
   const formData = await request.formData();
-  const intent = formData.get('intent');
 
-  if (intent === 'toggle-product') {
-    const channelId = formData.get('channelId')?.toString();
-    const productId = formData.get('productId')?.toString();
-    const published = formData.get('published') === 'true';
-    if (!channelId || !productId) {
-      return { ok: false, error: 'Channel and product required.' };
+  try {
+    const parsed = await parseChannelAdminAction(formData);
+
+    if (parsed.intent === 'set-default') {
+      await updateChannel(parsed.channelId, { isDefault: true });
+      return { ok: true };
     }
-    await setChannelProductPublished(channelId, productId, published);
-    return { ok: true };
-  }
 
-  if (intent === 'set-price') {
-    const channelId = formData.get('channelId')?.toString();
-    const variantId = formData.get('variantId')?.toString();
-    const currency = formData.get('currency')?.toString().trim() || 'USD';
-    const priceCents = parseInt(
-      formData.get('priceCents')?.toString() ?? '0',
-      10
-    );
-    if (!channelId || !variantId || !priceCents) {
-      return { ok: false, error: 'Channel, variant, and price required.' };
+    if (parsed.intent === 'set-price') {
+      await setChannelPriceOverride(parsed);
+      return { ok: true };
     }
-    await setChannelPriceOverride(channelId, variantId, currency, priceCents);
-    return { ok: true };
-  }
-
-  if (intent === 'set-default') {
-    const channelId = formData.get('channelId')?.toString();
-    if (!channelId) return { ok: false, error: 'Channel required.' };
-    await updateChannel(channelId, { isDefault: true });
-    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
   }
 
   return { ok: false, error: 'Unknown action.' };
