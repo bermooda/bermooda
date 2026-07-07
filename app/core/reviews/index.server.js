@@ -143,6 +143,18 @@ export function parseCreateReviewInput(input = {}) {
 }
 
 /**
+ * Resolve the HTTP status for a review domain error.
+ *
+ * @param {Error & { code?: string }} err
+ * @returns {number}
+ */
+export function resolveReviewErrorStatus(err) {
+  if (err.code === 'CUSTOMER_ID_REQUIRED') return 400;
+  if (err.code === 'INVALID_REVIEW_STATUS') return 400;
+  return 422;
+}
+
+/**
  * Parse moderate-review payload from admin/API input.
  *
  * @param {object} input

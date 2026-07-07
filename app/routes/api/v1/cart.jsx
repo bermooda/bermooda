@@ -1,22 +1,18 @@
 // POST /api/v1/cart — create a cart (public)
 
+import { parseJsonBody, requireMethod } from '#/libs/api/public.server';
 import { createCart } from '#/core/cart/index.server';
 
 export async function action({ request }) {
-  if (request.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 });
-  }
+  const methodError = requireMethod(request, 'POST');
+  if (methodError) return methodError;
 
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    // No body or non-JSON — use defaults
-  }
+  const parsed = await parseJsonBody(request, { defaultValue: {} });
+  if (parsed.error) return parsed.error;
 
   const cart = await createCart({
-    currency: body.currency ?? 'USD',
-    customerId: body.customerId ?? undefined,
+    currency: parsed.body.currency ?? 'USD',
+    customerId: parsed.body.customerId ?? undefined,
   });
 
   return Response.json({ cart }, { status: 201 });

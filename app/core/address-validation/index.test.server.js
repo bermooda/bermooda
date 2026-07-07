@@ -21,6 +21,7 @@ import {
   parseAddressInput,
   parseAddressJson,
   parseAddressValidationSettingsInput,
+  parseValidatedAddressInput,
   registerProvider,
   resolveAddressValidationProvider,
   unregisterProvider,
@@ -98,6 +99,19 @@ describe('hasMinimumAddressFields', () => {
       hasMinimumAddressFields({ line1: '1 Main', city: 'X', country: 'AU' })
     ).toBe(true);
     expect(hasMinimumAddressFields({ line1: '1 Main', city: 'X' })).toBe(false);
+  });
+});
+
+describe('parseValidatedAddressInput', () => {
+  it('returns the nested address payload when fields are present', () => {
+    const address = { line1: '1 Main', city: 'Sydney', country: 'AU' };
+    expect(parseValidatedAddressInput({ address })).toEqual(address);
+  });
+
+  it('throws when required fields are missing', () => {
+    expect(() => parseValidatedAddressInput({ line1: '1 Main' })).toThrow(
+      'Address must include line1, city, and country'
+    );
   });
 });
 

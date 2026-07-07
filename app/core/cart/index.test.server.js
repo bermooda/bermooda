@@ -50,6 +50,7 @@ import {
   expireCarts,
   lockCart,
   unlockCart,
+  deleteCart,
 } from '#/core/cart/index.server';
 import { emit } from '#/core/events/index.server';
 import { resolveVariantPrice } from '#/core/pricing/index.server';
@@ -129,6 +130,25 @@ describe('createCart', () => {
         expiresAt: expect.any(Date),
       })
     );
+  });
+});
+
+describe('deleteCart', () => {
+  it('returns false when the cart token is not found', async () => {
+    prisma.cart.findUnique.mockResolvedValue(null);
+
+    await expect(deleteCart('missing')).resolves.toBe(false);
+    expect(prisma.cart.delete).not.toHaveBeenCalled();
+  });
+
+  it('deletes the cart when the token exists', async () => {
+    prisma.cart.findUnique.mockResolvedValue({ id: 'cart_1', token: 'tok_1' });
+    prisma.cart.delete.mockResolvedValue({ id: 'cart_1' });
+
+    await expect(deleteCart('tok_1')).resolves.toBe(true);
+    expect(prisma.cart.delete).toHaveBeenCalledWith({
+      where: { id: 'cart_1' },
+    });
   });
 });
 
