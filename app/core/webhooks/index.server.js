@@ -5,12 +5,14 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import {
+  buildPrismaPagination,
+  normalizePagination,
+} from '#/libs/prisma/pagination.server';
+import {
   DOMAIN_EVENT_WILDCARD,
   DOMAIN_EVENTS,
   isDomainEventOrWildcard,
 } from '#/core/events/names';
-
-const MAX_LIST_RESULTS = 100;
 
 // Enqueuer set by job.server.js to avoid a circular import.
 let _enqueuer = null;
@@ -211,15 +213,22 @@ export async function createSubscription(params) {
  * @returns {Promise<{ subscriptions: object[], total: number, page: number, limit: number }>}
  */
 export async function listSubscriptions({ page = 1, limit = 50 } = {}) {
-  const safePage = Math.max(1, page);
-  const safeLimit = Math.min(Math.max(1, limit), MAX_LIST_RESULTS);
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page,
+    limit,
+    defaultLimit: 50,
+  });
 
   const [subs, total] = await Promise.all([
     prisma.webhookSubscription.findMany({
       orderBy: { createdAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.webhookSubscription.count(),
   ]);
@@ -301,11 +310,14 @@ export async function deleteSubscription(id) {
 export async function listDeliveries(subscriptionId, { limit = 50 } = {}) {
   await getSubscription(subscriptionId);
 
-  const safeLimit = Math.min(Math.max(1, limit), MAX_LIST_RESULTS);
+  const { take } = normalizePagination({
+    limit,
+    defaultLimit: 50,
+  });
   const deliveries = await prisma.webhookDelivery.findMany({
     where: { subscriptionId },
     orderBy: { createdAt: 'desc' },
-    take: safeLimit,
+    take,
   });
   return deliveries.map(serializeDelivery);
 }

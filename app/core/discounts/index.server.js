@@ -1,8 +1,8 @@
 // app/core/discounts/index.server.js
 // Promotions engine: validation, stacking, automatic discounts, CRUD.
 
-import { equalsFilter } from '#/utils/prisma-filters.server';
 import prisma from '#/libs/prisma.server';
+import { equalsFilter } from '#/libs/prisma/filters.server';
 import { summarizeCartLines } from '#/core/cart/lines';
 
 // ---------------------------------------------------------------------------

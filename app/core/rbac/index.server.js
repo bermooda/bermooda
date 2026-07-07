@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 
 import { isValidEmail, normalizeEmail } from '#/utils/email';
 import prisma from '#/libs/prisma.server';
+import { DEFAULT_MAX_LIST_RESULTS } from '#/libs/prisma/pagination.server';
 import {
   ADMIN_ROLES,
   ADMIN_WILDCARD,
@@ -21,7 +22,6 @@ export {
 /** @typedef {'read' | 'write' | 'delete' | 'manage'} PermissionAction */
 
 const CACHE_TTL_MS = 60_000;
-const MAX_LIST_RESULTS = 100;
 const STAFF_TEMP_PASSWORD = 'ChangeMe123!';
 
 let _permissionCache = null;
@@ -162,7 +162,7 @@ export async function requirePermission(user, permission) {
 export async function listAdminUsers() {
   const users = await prisma.user.findMany({
     orderBy: { createdAt: 'asc' },
-    take: MAX_LIST_RESULTS,
+    take: DEFAULT_MAX_LIST_RESULTS,
     select: {
       id: true,
       email: true,

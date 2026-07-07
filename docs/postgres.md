@@ -22,9 +22,9 @@ DATABASE_PROVIDER="postgresql"
 
 ## Application wiring
 
-- `app/libs/prisma.server.js` selects `@prisma/adapter-better-sqlite3` or `@prisma/adapter-pg` based on the provider.
-- Better Auth adapters use the matching provider via `getBetterAuthProvider()`.
-- Case-insensitive filters use `app/utils/prisma-filters.server.js` so queries work on both engines (`mode: 'insensitive'` is applied only on Postgres).
+- `app/libs/prisma/client.server.js` selects `@prisma/adapter-better-sqlite3` or `@prisma/adapter-pg` based on the provider.
+- Better Auth adapters use the matching provider via `getBetterAuthProvider()` from `#/libs/prisma/provider.server`.
+- Case-insensitive filters use `#/libs/prisma/filters.server` so queries work on both engines (`mode: 'insensitive'` is applied only on Postgres).
 
 ## CI / fresh Postgres database
 

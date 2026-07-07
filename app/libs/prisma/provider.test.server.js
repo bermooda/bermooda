@@ -1,14 +1,12 @@
-// app/utils/database.test.server.js
-
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   getBetterAuthProvider,
   getDatabaseProvider,
   isPostgres,
-} from '#/utils/database.server';
+} from '#/libs/prisma/provider.server';
 
-describe('database provider', () => {
+describe('prisma provider', () => {
   const originalUrl = process.env.DATABASE_URL;
   const originalProvider = process.env.DATABASE_PROVIDER;
 
@@ -31,5 +29,12 @@ describe('database provider', () => {
     expect(getDatabaseProvider()).toBe('postgresql');
     expect(isPostgres()).toBe(true);
     expect(getBetterAuthProvider()).toBe('postgresql');
+  });
+
+  it('respects explicit DATABASE_PROVIDER override', () => {
+    process.env.DATABASE_URL = 'file:./prisma/dev.db';
+    process.env.DATABASE_PROVIDER = 'postgresql';
+    expect(getDatabaseProvider()).toBe('postgresql');
+    expect(isPostgres()).toBe(true);
   });
 });
