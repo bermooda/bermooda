@@ -31,10 +31,8 @@ vi.mock('#/utils/logger.server', () => ({
 
 import prisma from '#/libs/prisma.server';
 
+import { EVENTS_KEY, PLUGIN_ID } from '#/plugins/sample-analytics/data.server';
 import { pluginManifest } from '#/plugins/sample-analytics/index.server';
-
-const PLUGIN_ID = 'sample-analytics';
-const EVENTS_KEY = 'recentEvents';
 
 beforeEach(() => {
   vi.clearAllMocks();

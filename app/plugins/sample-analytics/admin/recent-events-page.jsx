@@ -1,23 +1,28 @@
+import { useT } from '#/core/i18n/index';
+
 export function RecentEventsPage({ loaderData }) {
+  const t = useT();
   const { events } = loaderData ?? { events: [] };
 
   return (
     <div className="p-6">
       <h1 className="mb-4 text-xl font-semibold">
-        Sample Analytics — Recent Events
+        {t('sampleAnalytics.admin.pageTitle')}
       </h1>
       {events.length === 0 ? (
-        <p className="text-slate-500">
-          No events captured yet. Place an order to see data here.
-        </p>
+        <p className="text-slate-500">{t('sampleAnalytics.admin.noEvents')}</p>
       ) : (
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b text-left text-slate-600">
-              <th className="py-2 pr-4">Order #</th>
-              <th className="py-2 pr-4">Total</th>
-              <th className="py-2 pr-4">Currency</th>
-              <th className="py-2">Captured At</th>
+              <th className="py-2 pr-4">
+                {t('sampleAnalytics.admin.orderNumber')}
+              </th>
+              <th className="py-2 pr-4">{t('sampleAnalytics.admin.total')}</th>
+              <th className="py-2 pr-4">
+                {t('sampleAnalytics.admin.currency')}
+              </th>
+              <th className="py-2">{t('sampleAnalytics.admin.capturedAt')}</th>
             </tr>
           </thead>
           <tbody>

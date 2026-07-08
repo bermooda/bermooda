@@ -1,38 +1,15 @@
 import logger from '#/utils/logger.server';
-import prisma from '#/libs/prisma.server';
 import { defineHooks, definePlugin } from '#/core/plugins/index.server';
 
 import DashboardWidgetsBlock from '#/plugins/sample-analytics/blocks/dashboard/widgets.jsx';
 import ProductAfterDescriptionBlock from '#/plugins/sample-analytics/blocks/product/after-description.jsx';
+import { appendRecentEvent } from '#/plugins/sample-analytics/data.server';
 import manifest from '#/plugins/sample-analytics/manifest';
 
-const PLUGIN_ID = manifest.id;
-const EVENTS_KEY = 'recentEvents';
-const MAX_EVENTS = 100;
-
-// Hooks only receive the event payload — access Prisma directly.
+// Hooks only receive the event payload — access plugin data helpers directly.
 async function handleOrderCreated(payload) {
   try {
-    const row = await prisma.pluginData.findUnique({
-      where: { pluginId_key: { pluginId: PLUGIN_ID, key: EVENTS_KEY } },
-    });
-
-    const existing = row ? JSON.parse(row.value) : [];
-    const event = {
-      type: 'order.created',
-      orderId: payload.orderId,
-      orderNumber: payload.orderNumber,
-      totalCents: payload.totalCents,
-      currency: payload.currency,
-      capturedAt: new Date().toISOString(),
-    };
-    const updated = JSON.stringify([event, ...existing].slice(0, MAX_EVENTS));
-
-    await prisma.pluginData.upsert({
-      where: { pluginId_key: { pluginId: PLUGIN_ID, key: EVENTS_KEY } },
-      create: { pluginId: PLUGIN_ID, key: EVENTS_KEY, value: updated },
-      update: { value: updated },
-    });
+    await appendRecentEvent(payload);
   } catch (err) {
     logger.error({ err }, 'sample-analytics: failed to capture order.created');
   }
