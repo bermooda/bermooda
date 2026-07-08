@@ -1,9 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 
 /**
+ * @typedef {Object} CommandPaletteState
+ * @property {boolean} open
+ * @property {(open: boolean) => void} setOpen
+ * @property {() => void} openPalette
+ * @property {() => void} closePalette
+ */
+
+/**
  * Global command palette open state with Cmd/Ctrl+K toggle.
  *
- * @returns {{ open: boolean, setOpen: (open: boolean) => void, openPalette: () => void, closePalette: () => void }}
+ * @returns {CommandPaletteState}
  */
 export default function useCommandPalette() {
   const [open, setOpen] = useState(false);
@@ -12,6 +20,7 @@ export default function useCommandPalette() {
   const closePalette = useCallback(() => setOpen(false), []);
 
   useEffect(() => {
+    /** @param {KeyboardEvent} event */
     function onKeyDown(event) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();

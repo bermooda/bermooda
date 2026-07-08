@@ -14,8 +14,9 @@ const THEME_KEY = 'theme';
  * @property {boolean} isDark - Whether dark mode is currently active
  */
 
-/** @type {React.Context<ThemeContextValue | null>} */
-const ThemeContext = createContext(null);
+const ThemeContext = createContext(
+  /** @type {ThemeContextValue | null} */ (null)
+);
 
 /**
  * Get the resolved theme based on system preference
@@ -88,6 +89,7 @@ export function ThemeProvider({ children }) {
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
+    /** @param {MediaQueryListEvent} e */
     const handleChange = (e) => {
       const resolvedTheme = e.matches ? 'dark' : 'light';
       applyThemeClass(resolvedTheme);

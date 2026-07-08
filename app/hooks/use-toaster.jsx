@@ -3,14 +3,14 @@ import { toast } from 'sonner';
 
 /**
  * @typedef {Object} ActionResponse
- * @property {string} message
- * @property {string} error
+ * @property {string} [message]
+ * @property {string} [error]
  */
 
 /**
- * Display toast notifications when action response data changes
+ * Display toast notifications when action response data changes.
  *
- * @param {ActionResponse} response
+ * @param {ActionResponse | null | undefined} response
  */
 export default function useToaster(response) {
   useEffect(() => {

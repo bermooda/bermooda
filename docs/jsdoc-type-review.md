@@ -57,9 +57,9 @@ Skip `*.test.*` files in area checks unless you add `paths` for `#/*` (tests imp
 
 ## Hooks (`app/hooks/`)
 
-| Module       | Status | Notes |
-| ------------ | ------ | ----- |
-| `app/hooks/` | ⬜     |       |
+| Module       | Status | Notes                                                                                                                                                       |
+| ------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/hooks/` | ✅     | Added `@types/react`; fixed optional `ActionResponse`; typed keyboard/media-query handlers; fixed `createContext` null cast; `CommandPaletteState` typedef. |
 
 ---
 
