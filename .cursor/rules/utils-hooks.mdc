@@ -12,6 +12,7 @@ alwaysApply: false
 - Keep utilities small and mostly side-effect free.
 - Use `*.server.js` for server-only utilities.
 - Do not place business workflows here (use `app/core`).
+- Document every exported function with `@param` / `@returns` (see [jsdoc-types.mdc](mdc:.cursor/rules/jsdoc-types.mdc)).
 
 ## `app/hooks`
 
@@ -19,6 +20,7 @@ alwaysApply: false
 - Hook files should be named `use-*.jsx`.
 - Hook functions should start with `use`.
 - If logic does not need React, move it to `app/utils`.
+- Document hook params and return values with JSDoc; add `@typedef` for context/value shapes when reused.
 
 ## Shared boundaries
 

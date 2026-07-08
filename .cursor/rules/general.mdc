@@ -13,6 +13,7 @@ This ruleset intentionally keeps only non-obvious, repository-specific requireme
 - Make the smallest change that fully solves the task.
 - Prefer existing patterns in nearby files over introducing new abstractions.
 - In `app/`, write JavaScript/JSX (not TypeScript) unless explicitly requested.
+- Add and fix JSDoc types on every new or changed export in `app/` — see [jsdoc-types.mdc](mdc:.cursor/rules/jsdoc-types.mdc).
 
 ## Imports and logging
 

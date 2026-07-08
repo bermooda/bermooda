@@ -1,0 +1,87 @@
+---
+description: JSDoc typing conventions for checkJs in app JavaScript
+globs:
+alwaysApply: true
+---
+
+# JSDoc types (required when generating code)
+
+The project uses [jsconfig.json](mdc:jsconfig.json) with `allowJs` + `checkJs` for editor type checking. **Every change that adds or edits exported functions, hooks, or components in `app/` must include correct JSDoc** — not only the new code, but also fix typings on adjacent exports you touch.
+
+Tracker for area-by-area cleanup: [docs/jsdoc-type-review.md](mdc:docs/jsdoc-type-review.md).
+
+## When to add JSDoc
+
+- New or changed **exported** functions and methods
+- New or changed **React components** (props)
+- New or changed **custom hooks** (params + return type)
+- New **`@typedef`** shapes reused across a module
+- Generic helpers — use `@template`
+
+Do not leave new exports with implicit `any` parameters.
+
+## Patterns (match nearby files)
+
+**Utility / core / libs function**
+
+```js
+/**
+ * @param {Request} request
+ * @param {string} key
+ * @returns {string | null}
+ */
+export function getCookieValue(request, key) { /* ... */ }
+```
+
+**Generic helper**
+
+```js
+/**
+ * @template T
+ * @param {string} key
+ * @param {() => Promise<T>} refresh
+ * @returns {Promise<T>}
+ */
+export async function getCachedResult(key, refresh) { /* ... */ }
+```
+
+**Shared object shape**
+
+```js
+/** @typedef {{ limit: number, windowMs: number }} RateLimitConfig */
+```
+
+**React component props** (see `app/components/admin/`)
+
+```js
+/**
+ * @param {Object} props
+ * @param {string} props.title
+ * @param {(id: string) => void} props.onSelect
+ */
+export function MyComponent({ title, onSelect }) { /* ... */ }
+```
+
+**Prisma / external types**
+
+```js
+/** @typedef {import('#prisma/client').Order} Order */
+```
+
+## Typing hygiene
+
+- `@returns` must match actual return values (`null` vs `undefined` — normalize or document accurately).
+- Prefer concrete types over `any`; use `unknown` for unvalidated input, then narrow.
+- Use `Request`, `Headers`, `Response` for Web API parameters.
+- Do not add `// @ts-ignore` or `// @ts-expect-error` unless unavoidable — fix the types instead.
+- When editing a file, bring incomplete JSDoc on touched exports up to the same standard.
+
+## Validation
+
+When you add or change typed exports, run a quick check on touched files:
+
+```bash
+npx -p typescript tsc --noEmit --allowJs --checkJs --strict \
+  --module preserve --moduleResolution bundler --target es2020 --jsx react-jsx \
+  "path/to/changed-file.js"
+```

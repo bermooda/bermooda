@@ -29,3 +29,4 @@ Keep component rules short and practical. Favor existing patterns in nearby file
 - Component file names are lowercase and hyphenated.
 - Use PascalCase for component function names.
 - Use `#/*` imports inside `app/`, without file extensions.
+- Document component props with JSDoc (`@param {Object} props` + per-prop lines) — follow `app/components/admin/` patterns; see [jsdoc-types.mdc](mdc:.cursor/rules/jsdoc-types.mdc).
