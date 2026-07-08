@@ -27,14 +27,14 @@ Skip `*.test.*` files in area checks unless you add `paths` for `#/*` (tests imp
 
 ### Common fixes
 
-| Issue | Fix |
-| ----- | --- |
-| Implicit `any` on params | Add `@param {Type}` JSDoc |
+| Issue                                     | Fix                                            |
+| ----------------------------------------- | ---------------------------------------------- |
+| Implicit `any` on params                  | Add `@param {Type}` JSDoc                      |
 | `string \| undefined` vs `string \| null` | Normalize return (`?? null`) or fix `@returns` |
-| `cache.get()` returns `unknown` | Cast with `/** @type {T} */ (...)` or narrow |
-| `any` in generics | Use `@template T` and `Promise<T>` |
-| Missing exports on cookie/header helpers | Document `Request`, `Headers`, return types |
-| Stale file-extension comments | Update `.ts` references to `.js` |
+| `cache.get()` returns `unknown`           | Cast with `/** @type {T} */ (...)` or narrow   |
+| `any` in generics                         | Use `@template T` and `Promise<T>`             |
+| Missing exports on cookie/header helpers  | Document `Request`, `Headers`, return types    |
+| Stale file-extension comments             | Update `.ts` references to `.js`               |
 
 ## Agent rules
 
@@ -49,158 +49,158 @@ Skip `*.test.*` files in area checks unless you add `paths` for `#/*` (tests imp
 
 ## Shared utilities (`app/utils/`)
 
-| Module | Status | Notes |
-| ------ | ------ | ----- |
-| `app/utils/` (all) | ✅ | Added JSDoc on cart/checkout cookie helpers; fixed `getCookieValue` nullability; generic `getCachedResult<T>`; typed cache key iteration; fixed litefs comment. |
+| Module             | Status | Notes                                                                                                                                                           |
+| ------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/utils/` (all) | ✅     | Added JSDoc on cart/checkout cookie helpers; fixed `getCookieValue` nullability; generic `getCachedResult<T>`; typed cache key iteration; fixed litefs comment. |
 
 ---
 
 ## Hooks (`app/hooks/`)
 
-| Module | Status | Notes |
-| ------ | ------ | ----- |
-| `app/hooks/` | ⬜ | |
+| Module       | Status | Notes |
+| ------------ | ------ | ----- |
+| `app/hooks/` | ⬜     |       |
 
 ---
 
 ## UI components (`app/components/`)
 
-| Area | Status | Notes |
-| ---- | ------ | ----- |
-| `admin/` | ⬜ | |
-| `admin/form/` | ⬜ | |
-| `auth/` | ⬜ | |
-| `seo/` | ⬜ | |
-| `ui/` | ⬜ | |
-| Root components (`slot-blocks`, etc.) | ⬜ | |
+| Area                                  | Status | Notes |
+| ------------------------------------- | ------ | ----- |
+| `admin/`                              | ⬜     |       |
+| `admin/form/`                         | ⬜     |       |
+| `auth/`                               | ⬜     |       |
+| `seo/`                                | ⬜     |       |
+| `ui/`                                 | ⬜     |       |
+| Root components (`slot-blocks`, etc.) | ⬜     |       |
 
 ---
 
 ## Core domain (`app/core/`)
 
-| Area | Status | Notes |
-| ---- | ------ | ----- |
-| `address-validation/` | ⬜ | |
-| `admin/` | ⬜ | |
-| `admin-onboarding/` | ⬜ | |
-| `api-keys/` | ⬜ | |
-| `audit/` | ⬜ | |
-| `b2b/` | ⬜ | |
-| `back-in-stock/` | ⬜ | |
-| `cart/` | ⬜ | |
-| `catalog/` | ⬜ | |
-| `channels/` | ⬜ | |
-| `checkout/` | ⬜ | |
-| `collections/` | ⬜ | |
-| `content/` | ⬜ | |
-| `currency/` | ⬜ | |
-| `customers/` | ⬜ | |
-| `discounts/` | ⬜ | |
-| `documents/` | ⬜ | |
-| `events/` | ⬜ | |
-| `exports/` | ⬜ | |
-| `gdpr/` | ⬜ | |
-| `gift-cards/` | ⬜ | |
-| `i18n/` | ⬜ | |
-| `imports/` | ⬜ | |
-| `inventory/` | ⬜ | |
-| `loyalty/` | ⬜ | |
-| `marketing/` | ⬜ | |
-| `orders/` | ⬜ | |
-| `payments/` | ⬜ | |
-| `plugins/` | ⬜ | |
-| `pos/` | ⬜ | |
-| `pricing/` | ⬜ | |
-| `rbac/` | ⬜ | |
-| `reporting/` | ⬜ | |
-| `returns/` | ⬜ | |
-| `reviews/` | ⬜ | |
-| `search/` | ⬜ | |
-| `seo/` | ⬜ | |
-| `settings/` | ⬜ | |
-| `shipping/` | ⬜ | |
-| `storage/` | ⬜ | |
-| `store-credit/` | ⬜ | |
-| `subscriptions/` | ⬜ | |
-| `tax/` | ⬜ | |
-| `themes/` | ⬜ | |
-| `webhooks/` | ⬜ | |
-| `wishlists/` | ⬜ | |
-| Root (`bootstrap.server.js`, `index.test.jsx`, etc.) | ⬜ | |
+| Area                                                 | Status | Notes |
+| ---------------------------------------------------- | ------ | ----- |
+| `address-validation/`                                | ⬜     |       |
+| `admin/`                                             | ⬜     |       |
+| `admin-onboarding/`                                  | ⬜     |       |
+| `api-keys/`                                          | ⬜     |       |
+| `audit/`                                             | ⬜     |       |
+| `b2b/`                                               | ⬜     |       |
+| `back-in-stock/`                                     | ⬜     |       |
+| `cart/`                                              | ⬜     |       |
+| `catalog/`                                           | ⬜     |       |
+| `channels/`                                          | ⬜     |       |
+| `checkout/`                                          | ⬜     |       |
+| `collections/`                                       | ⬜     |       |
+| `content/`                                           | ⬜     |       |
+| `currency/`                                          | ⬜     |       |
+| `customers/`                                         | ⬜     |       |
+| `discounts/`                                         | ⬜     |       |
+| `documents/`                                         | ⬜     |       |
+| `events/`                                            | ⬜     |       |
+| `exports/`                                           | ⬜     |       |
+| `gdpr/`                                              | ⬜     |       |
+| `gift-cards/`                                        | ⬜     |       |
+| `i18n/`                                              | ⬜     |       |
+| `imports/`                                           | ⬜     |       |
+| `inventory/`                                         | ⬜     |       |
+| `loyalty/`                                           | ⬜     |       |
+| `marketing/`                                         | ⬜     |       |
+| `orders/`                                            | ⬜     |       |
+| `payments/`                                          | ⬜     |       |
+| `plugins/`                                           | ⬜     |       |
+| `pos/`                                               | ⬜     |       |
+| `pricing/`                                           | ⬜     |       |
+| `rbac/`                                              | ⬜     |       |
+| `reporting/`                                         | ⬜     |       |
+| `returns/`                                           | ⬜     |       |
+| `reviews/`                                           | ⬜     |       |
+| `search/`                                            | ⬜     |       |
+| `seo/`                                               | ⬜     |       |
+| `settings/`                                          | ⬜     |       |
+| `shipping/`                                          | ⬜     |       |
+| `storage/`                                           | ⬜     |       |
+| `store-credit/`                                      | ⬜     |       |
+| `subscriptions/`                                     | ⬜     |       |
+| `tax/`                                               | ⬜     |       |
+| `themes/`                                            | ⬜     |       |
+| `webhooks/`                                          | ⬜     |       |
+| `wishlists/`                                         | ⬜     |       |
+| Root (`bootstrap.server.js`, `index.test.jsx`, etc.) | ⬜     |       |
 
 ---
 
 ## Infrastructure (`app/libs/`)
 
-| Area | Status | Notes |
-| ---- | ------ | ----- |
-| `alerting/` | ⬜ | |
-| `api/` | ⬜ | |
-| `auth/` | ⬜ | |
-| `prisma/` | ⬜ | |
-| `queue/` | ⬜ | |
-| Root (`error.server.js`, `rate-limit.server.js`, etc.) | ⬜ | |
+| Area                                                   | Status | Notes |
+| ------------------------------------------------------ | ------ | ----- |
+| `alerting/`                                            | ⬜     |       |
+| `api/`                                                 | ⬜     |       |
+| `auth/`                                                | ⬜     |       |
+| `prisma/`                                              | ⬜     |       |
+| `queue/`                                               | ⬜     |       |
+| Root (`error.server.js`, `rate-limit.server.js`, etc.) | ⬜     |       |
 
 ---
 
 ## Routes (`app/routes/`)
 
-| Area | Status | Notes |
-| ---- | ------ | ----- |
-| `storefront/` | ⬜ | |
-| `admin/` | ⬜ | |
-| `api/v1/` | ⬜ | |
-| `api/admin/v1/` | ⬜ | |
-| `webhooks/` | ⬜ | |
-| `auth/` | ⬜ | |
-| Root (`404.jsx`, `health.jsx`, etc.) | ⬜ | |
+| Area                                 | Status | Notes |
+| ------------------------------------ | ------ | ----- |
+| `storefront/`                        | ⬜     |       |
+| `admin/`                             | ⬜     |       |
+| `api/v1/`                            | ⬜     |       |
+| `api/admin/v1/`                      | ⬜     |       |
+| `webhooks/`                          | ⬜     |       |
+| `auth/`                              | ⬜     |       |
+| Root (`404.jsx`, `health.jsx`, etc.) | ⬜     |       |
 
 ---
 
 ## Emails (`app/emails/`)
 
-| Area | Status | Notes |
-| ---- | ------ | ----- |
-| `components/` | ⬜ | |
-| `shop/` | ⬜ | |
-| `templates/` | ⬜ | |
-| Root (`index.server.jsx`, `job.server.js`) | ⬜ | |
+| Area                                       | Status | Notes |
+| ------------------------------------------ | ------ | ----- |
+| `components/`                              | ⬜     |       |
+| `shop/`                                    | ⬜     |       |
+| `templates/`                               | ⬜     |       |
+| Root (`index.server.jsx`, `job.server.js`) | ⬜     |       |
 
 ---
 
 ## Themes (`app/themes/`)
 
-| Area | Status | Notes |
-| ---- | ------ | ----- |
-| `default/components/` | ⬜ | |
-| `default/i18n/` | ⬜ | |
-| `default/` manifest & registry | ⬜ | |
+| Area                           | Status | Notes |
+| ------------------------------ | ------ | ----- |
+| `default/components/`          | ⬜     |       |
+| `default/i18n/`                | ⬜     |       |
+| `default/` manifest & registry | ⬜     |       |
 
 ---
 
 ## Plugins (`app/plugins/`)
 
-| Area | Status | Notes |
-| ---- | ------ | ----- |
-| `fraud-guard/` | ⬜ | |
-| `meilisearch/` | ⬜ | |
-| `sample-analytics/` | ⬜ | |
+| Area                | Status | Notes |
+| ------------------- | ------ | ----- |
+| `fraud-guard/`      | ⬜     |       |
+| `meilisearch/`      | ⬜     |       |
+| `sample-analytics/` | ⬜     |       |
 
 ---
 
 ## App shell & entry
 
-| Area | Status | Notes |
-| ---- | ------ | ----- |
-| `app/root.jsx` | ⬜ | Has `// @ts-ignore` on line 15 |
-| `app/routes.js` | ⬜ | |
-| `app/entry.client.jsx` / `entry.server.jsx` | ⬜ | |
+| Area                                        | Status | Notes                          |
+| ------------------------------------------- | ------ | ------------------------------ |
+| `app/root.jsx`                              | ⬜     | Has `// @ts-ignore` on line 15 |
+| `app/routes.js`                             | ⬜     |                                |
+| `app/entry.client.jsx` / `entry.server.jsx` | ⬜     |                                |
 
 ---
 
 ## Test support (`app/test/`)
 
-| Area | Status | Notes |
-| ---- | ------ | ----- |
-| `factories/` | ⬜ | Lower priority — not in storefront/admin runtime |
-| `helpers/` | ⬜ | |
+| Area         | Status | Notes                                            |
+| ------------ | ------ | ------------------------------------------------ |
+| `factories/` | ⬜     | Lower priority — not in storefront/admin runtime |
+| `helpers/`   | ⬜     |                                                  |
