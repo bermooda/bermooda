@@ -2,7 +2,7 @@
 // Admin Plugins page — list registered plugins, enable/disable, reorder, settings.
 
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import {
   Form,
   useActionData,
@@ -27,8 +27,11 @@ import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
+import Tabs from '#/components/admin/tabs';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
+
+const TABS = ['Plugins', 'Block order'];
 
 // ---------------------------------------------------------------------------
 // Meta
@@ -57,11 +60,13 @@ export async function loader() {
   ]);
   const enabledPluginIds = Array.isArray(enabledPlugins) ? enabledPlugins : [];
   const pluginOrder = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
-  const plugins = sortPluginsByOrder(allPlugins, pluginOrder);
+  const plugins = [...allPlugins].sort((a, b) => a.name.localeCompare(b.name));
+  const orderedPlugins = sortPluginsByOrder(allPlugins, pluginOrder);
   const pluginSettings = await loadAllPluginSettings(allPlugins);
 
   return {
     plugins,
+    orderedPlugins,
     enabledPlugins: enabledPluginIds,
     pluginOrder,
     pluginSettings,
@@ -248,9 +253,9 @@ function PluginSettingsForm({ manifest, values }) {
 /**
  * A single plugin card.
  *
- * @param {{ manifest: object, isEnabled: boolean, isFirst: boolean, isLast: boolean, pluginSettings: object }} props
+ * @param {{ manifest: object, isEnabled: boolean, pluginSettings: object }} props
  */
-function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
+function PluginCard({ manifest, isEnabled, pluginSettings }) {
   const navigation = useNavigation();
 
   const isToggling =
@@ -259,83 +264,42 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
       navigation.formData?.get('intent') === 'disable') &&
     navigation.formData?.get('pluginId') === manifest.id;
 
-  const isReordering =
-    navigation.state === 'submitting' &&
-    (navigation.formData?.get('intent') === 'reorder-up' ||
-      navigation.formData?.get('intent') === 'reorder-down') &&
-    navigation.formData?.get('pluginId') === manifest.id;
-
   const toggleIntent = isEnabled ? 'disable' : 'enable';
   const values = pluginSettings[manifest.id] ?? {};
 
   return (
     <Card
       padded={false}
-      className={isEnabled ? 'border-accent bg-accent/5 p-5' : 'p-5'}
+      className={`flex h-full flex-col p-5${isEnabled ? ' border-accent bg-accent/5' : ''}`}
     >
       {/* Header row */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="text-text truncate text-sm font-semibold">
-              {manifest.name}
-            </h3>
-            {isEnabled && <Badge tone="success">Enabled</Badge>}
-          </div>
-          <p className="text-text-muted mt-0.5 text-xs">
-            v{manifest.version} &middot;{' '}
-            <span className="font-mono">{manifest.id}</span>
-          </p>
-          {manifest.description && (
-            <p className="text-text-muted mt-1.5 text-sm">
-              {manifest.description}
-            </p>
-          )}
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <h3 className="text-text truncate text-sm font-semibold">
+            {manifest.name}
+          </h3>
+          {isEnabled && <Badge tone="success">Enabled</Badge>}
         </div>
-
-        {/* Enable / Disable — mirrors theme Activate button placement */}
-        {!isEnabled && (
-          <Form method="post" className="flex-shrink-0">
-            <input type="hidden" name="intent" value={toggleIntent} />
-            <input type="hidden" name="pluginId" value={manifest.id} />
-            <Button type="submit" variant="secondary" disabled={isToggling}>
-              Enable
-            </Button>
-          </Form>
+        <p className="text-text-muted mt-0.5 text-xs">
+          v{manifest.version} &middot;{' '}
+          <span className="font-mono">{manifest.id}</span>
+        </p>
+        {manifest.description && (
+          <p className="text-text-muted mt-1.5 text-sm">
+            {manifest.description}
+          </p>
         )}
       </div>
 
-      {/* Reorder, admin link, and disable — secondary actions below header */}
-      {(isEnabled || manifest.adminPath || !isFirst || !isLast) && (
-        <div className="border-border mt-4 flex items-center justify-between gap-2 border-t pt-3">
-          <div className="flex items-center gap-0.5">
-            <Form method="post">
-              <input type="hidden" name="intent" value="reorder-up" />
-              <input type="hidden" name="pluginId" value={manifest.id} />
-              <button
-                type="submit"
-                disabled={isFirst || isReordering}
-                title="Move up"
-                className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
-              >
-                <ChevronUpIcon className="h-4 w-4" />
-              </button>
-            </Form>
-            <Form method="post">
-              <input type="hidden" name="intent" value="reorder-down" />
-              <input type="hidden" name="pluginId" value={manifest.id} />
-              <button
-                type="submit"
-                disabled={isLast || isReordering}
-                title="Move down"
-                className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
-              >
-                <ChevronDownIcon className="h-4 w-4" />
-              </button>
-            </Form>
-          </div>
+      {/* Manifest-driven settings form */}
+      {manifest.settings?.length > 0 && (
+        <PluginSettingsForm manifest={manifest} values={values} />
+      )}
 
-          <div className="flex flex-shrink-0 items-center gap-2">
+      {/* Actions — pinned to card bottom for aligned grid rows */}
+      <div className="mt-auto pt-4">
+        <div className="border-border flex items-center justify-between gap-2 border-t pt-3">
+          <div>
             {manifest.adminPath && (
               <a
                 href={manifest.adminPath}
@@ -344,24 +308,150 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
                 Plugin Admin &rarr;
               </a>
             )}
-            {isEnabled && (
-              <Form method="post">
-                <input type="hidden" name="intent" value={toggleIntent} />
-                <input type="hidden" name="pluginId" value={manifest.id} />
-                <Button type="submit" variant="danger" disabled={isToggling}>
-                  Disable
-                </Button>
-              </Form>
-            )}
           </div>
+          <Form method="post">
+            <input type="hidden" name="intent" value={toggleIntent} />
+            <input type="hidden" name="pluginId" value={manifest.id} />
+            <Button
+              type="submit"
+              variant={isEnabled ? 'danger' : 'secondary'}
+              disabled={isToggling}
+              className="h-9 min-w-[5.25rem] justify-center"
+            >
+              {isEnabled ? 'Disable' : 'Enable'}
+            </Button>
+          </Form>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * A single row in the block-order list.
+ *
+ * @param {{ manifest: object, isEnabled: boolean, isFirst: boolean, isLast: boolean }} props
+ */
+function PluginOrderItem({ manifest, isEnabled, isFirst, isLast }) {
+  const navigation = useNavigation();
+
+  const isReordering =
+    navigation.state === 'submitting' &&
+    (navigation.formData?.get('intent') === 'reorder-up' ||
+      navigation.formData?.get('intent') === 'reorder-down') &&
+    navigation.formData?.get('pluginId') === manifest.id;
+
+  return (
+    <li className="border-border bg-surface flex items-center gap-3 rounded-lg border px-4 py-3">
+      <div className="flex items-center gap-0.5">
+        <Form method="post">
+          <input type="hidden" name="intent" value="reorder-up" />
+          <input type="hidden" name="pluginId" value={manifest.id} />
+          <button
+            type="submit"
+            disabled={isFirst || isReordering}
+            title="Move up"
+            className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
+          >
+            <ChevronUpIcon className="h-4 w-4" />
+          </button>
+        </Form>
+        <Form method="post">
+          <input type="hidden" name="intent" value="reorder-down" />
+          <input type="hidden" name="pluginId" value={manifest.id} />
+          <button
+            type="submit"
+            disabled={isLast || isReordering}
+            title="Move down"
+            className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
+          >
+            <ChevronDownIcon className="h-4 w-4" />
+          </button>
+        </Form>
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-text truncate text-sm font-medium">
+            {manifest.name}
+          </span>
+          {isEnabled && <Badge tone="success">Enabled</Badge>}
+        </div>
+        <p className="text-text-muted truncate text-xs font-mono">
+          {manifest.id}
+        </p>
+      </div>
+    </li>
+  );
+}
+
+/**
+ * Block order tab — reorder plugins for storefront slot rendering.
+ *
+ * @param {{ orderedPlugins: object[], enabledPlugins: string[] }} props
+ */
+function BlockOrderTab({ orderedPlugins, enabledPlugins }) {
+  return (
+    <div className="space-y-4">
+      <p className="text-text-muted text-sm">
+        This order controls how plugin blocks are rendered in storefront slots
+        (for example on product pages, cart, and checkout). Plugins higher in
+        the list appear first when multiple plugins contribute to the same slot.
+        It does not change how plugins are listed on the Plugins tab.
+      </p>
+
+      {orderedPlugins.length === 0 ? (
+        <EmptyState
+          title="No plugins registered"
+          description="Plugins are loaded from app/plugins/ at startup."
+        />
+      ) : (
+        <ol className="space-y-2">
+          {orderedPlugins.map((manifest, idx) => (
+            <PluginOrderItem
+              key={manifest.id}
+              manifest={manifest}
+              isEnabled={enabledPlugins.includes(manifest.id)}
+              isFirst={idx === 0}
+              isLast={idx === orderedPlugins.length - 1}
+            />
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Main plugins tab — enable/disable and configure plugins.
+ *
+ * @param {{ plugins: object[], enabledPlugins: string[], pluginSettings: object }} props
+ */
+function PluginsTab({ plugins, enabledPlugins, pluginSettings }) {
+  return (
+    <div>
+      <h2 className="text-text mb-3 text-lg font-semibold">
+        Registered Plugins
+      </h2>
+
+      {plugins.length === 0 ? (
+        <EmptyState
+          title="No plugins registered"
+          description="Plugins are loaded from app/plugins/ at startup."
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {plugins.map((manifest) => (
+            <PluginCard
+              key={manifest.id}
+              manifest={manifest}
+              isEnabled={enabledPlugins.includes(manifest.id)}
+              pluginSettings={pluginSettings}
+            />
+          ))}
         </div>
       )}
-
-      {/* Manifest-driven settings form */}
-      {manifest.settings?.length > 0 && (
-        <PluginSettingsForm manifest={manifest} values={values} />
-      )}
-    </Card>
+    </div>
   );
 }
 
@@ -375,41 +465,37 @@ function PluginCard({ manifest, isEnabled, isFirst, isLast, pluginSettings }) {
  * @returns {React.ReactElement}
  */
 export default function AdminPluginsRoute() {
-  const { plugins, enabledPlugins, pluginSettings } = useLoaderData();
+  const { plugins, orderedPlugins, enabledPlugins, pluginSettings } =
+    useLoaderData();
+  const [activeTab, setActiveTab] = useState(0);
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Plugins"
-        subtitle="Manage installed plugins. Display order and enabled state are persisted to settings."
+        subtitle="Manage installed plugins. Enable or disable plugins and configure their settings."
       />
 
-      {/* Plugin list */}
-      <div>
-        <h2 className="text-text mb-3 text-lg font-semibold">
-          Registered Plugins
-        </h2>
+      <Tabs
+        tabs={TABS}
+        active={activeTab}
+        onChange={setActiveTab}
+        className="mb-6"
+      />
 
-        {plugins.length === 0 ? (
-          <EmptyState
-            title="No plugins registered"
-            description="Plugins are loaded from app/plugins/ at startup."
-          />
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {plugins.map((manifest, idx) => (
-              <PluginCard
-                key={manifest.id}
-                manifest={manifest}
-                isEnabled={enabledPlugins.includes(manifest.id)}
-                isFirst={idx === 0}
-                isLast={idx === plugins.length - 1}
-                pluginSettings={pluginSettings}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {activeTab === 0 && (
+        <PluginsTab
+          plugins={plugins}
+          enabledPlugins={enabledPlugins}
+          pluginSettings={pluginSettings}
+        />
+      )}
+      {activeTab === 1 && (
+        <BlockOrderTab
+          orderedPlugins={orderedPlugins}
+          enabledPlugins={enabledPlugins}
+        />
+      )}
     </div>
   );
 }

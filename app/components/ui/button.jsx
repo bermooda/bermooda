@@ -17,7 +17,8 @@ const VARIANTS = {
     'bg-surface text-text border border-border hover:bg-surface-2 focus-visible:outline-accent',
   ghost:
     'bg-transparent text-text hover:bg-surface-2 focus-visible:outline-accent',
-  danger: 'bg-danger text-white hover:opacity-90 focus-visible:outline-danger',
+  danger:
+    'border border-transparent bg-danger text-white hover:opacity-90 focus-visible:outline-danger',
 };
 
 /**
