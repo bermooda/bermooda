@@ -13,19 +13,19 @@ vi.mock('#/libs/prisma.server', () => ({
   },
 }));
 
-import { readPluginJson, writePluginJson } from '#/core/plugins/data.server';
+import { readPluginData, writePluginData } from '#/core/plugins/data.server';
 
 describe('plugin data helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('readPluginJson', () => {
+  describe('readPluginData', () => {
     it('returns the fallback when no row exists', async () => {
       mockPluginData.findUnique.mockResolvedValue(null);
 
       await expect(
-        readPluginJson('sample-analytics', 'recentEvents', [])
+        readPluginData('sample-analytics', 'recentEvents', [])
       ).resolves.toEqual([]);
     });
 
@@ -37,7 +37,7 @@ describe('plugin data helpers', () => {
       });
 
       await expect(
-        readPluginJson('sample-analytics', 'recentEvents', [])
+        readPluginData('sample-analytics', 'recentEvents', [])
       ).resolves.toEqual([{ orderId: 'order_1' }]);
     });
 
@@ -48,17 +48,17 @@ describe('plugin data helpers', () => {
         value: 'not-json',
       });
 
-      await expect(readPluginJson('fraud-guard', 'holds', [])).resolves.toEqual(
+      await expect(readPluginData('fraud-guard', 'holds', [])).resolves.toEqual(
         []
       );
     });
   });
 
-  describe('writePluginJson', () => {
+  describe('writePluginData', () => {
     it('upserts serialized JSON values', async () => {
       mockPluginData.upsert.mockResolvedValue({});
 
-      await writePluginJson('sample-analytics', 'recentEvents', [
+      await writePluginData('sample-analytics', 'recentEvents', [
         { orderId: 'order_1' },
       ]);
 

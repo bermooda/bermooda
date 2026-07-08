@@ -1,4 +1,4 @@
-import { readPluginJson, writePluginJson } from '#/core/plugins/data.server';
+import { readPluginData, writePluginData } from '#/core/plugins/data.server';
 
 import manifest from '#/plugins/sample-analytics/manifest';
 
@@ -7,7 +7,7 @@ export const EVENTS_KEY = 'recentEvents';
 const MAX_EVENTS = 100;
 
 export async function loadRecentEvents() {
-  const events = await readPluginJson(PLUGIN_ID, EVENTS_KEY, []);
+  const events = await readPluginData(PLUGIN_ID, EVENTS_KEY, []);
   return Array.isArray(events) ? events : [];
 }
 
@@ -21,7 +21,7 @@ export async function appendRecentEvent(payload) {
     currency: payload.currency,
     capturedAt: new Date().toISOString(),
   };
-  await writePluginJson(
+  await writePluginData(
     PLUGIN_ID,
     EVENTS_KEY,
     [event, ...existing].slice(0, MAX_EVENTS)

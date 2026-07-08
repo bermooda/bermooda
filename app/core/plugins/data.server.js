@@ -8,7 +8,7 @@ import prisma from '#/libs/prisma.server';
  * @param {*} [fallback=null]
  * @returns {Promise<*>}
  */
-export async function readPluginJson(pluginId, key, fallback = null) {
+export async function readPluginData(pluginId, key, fallback = null) {
   const row = await prisma.pluginData.findUnique({
     where: { pluginId_key: { pluginId, key } },
   });
@@ -29,7 +29,7 @@ export async function readPluginJson(pluginId, key, fallback = null) {
  * @param {*} value
  * @returns {Promise<void>}
  */
-export async function writePluginJson(pluginId, key, value) {
+export async function writePluginData(pluginId, key, value) {
   const serialized = JSON.stringify(value);
   await prisma.pluginData.upsert({
     where: { pluginId_key: { pluginId, key } },
