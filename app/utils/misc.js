@@ -24,5 +24,5 @@ export function getDomainUrl(request) {
 export function getCookieValue(request, key) {
   const cookieHeader = request.headers.get('Cookie');
   const cookieMatch = cookieHeader?.match(`${key}=([^;]+)`)?.[1];
-  return cookieMatch;
+  return cookieMatch ?? null;
 }
