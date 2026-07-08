@@ -129,18 +129,3 @@ export const meilisearchProvider = {
     }
   },
 };
-
-/**
- * Index a product document in Meilisearch (call from sync jobs or hooks).
- *
- * @param {object} document
- */
-export async function indexProduct(document) {
-  const config = getConfig();
-  if (!config) return;
-
-  await meiliFetch(`/indexes/${INDEX_NAME}/documents`, {
-    method: 'POST',
-    body: [document],
-  });
-}
