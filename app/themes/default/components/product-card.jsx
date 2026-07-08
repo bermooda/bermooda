@@ -1,6 +1,11 @@
 import { Link } from 'react-router';
 
-import { formatPrice } from '#/core/index';
+import {
+  formatPrice,
+  resolveProductDisplayPrice,
+  resolveProductHref,
+  resolveProductSlug,
+} from '#/core/index';
 import { resolveCatalogMediaUrl } from '#/core/storage/media';
 
 import {
@@ -8,27 +13,15 @@ import {
   STOREFRONT_SAND as SAND,
 } from '#/themes/default/components/storefront-chrome';
 
-function resolvePrice(product) {
-  if (product.displayPrice != null) return product.displayPrice;
-  if (product.variantPrices?.[0]?.priceCents != null)
-    return product.variantPrices[0].priceCents;
-  if (product.variants?.[0]?.prices?.[0]?.priceCents != null)
-    return product.variants[0].prices[0].priceCents;
-  return null;
-}
-
-function resolveSlug(product) {
-  return product.slug?.slug ?? product.slug ?? product.id;
-}
-
 export default function ProductCard({ product, locale, currency }) {
   const imageUrl = resolveCatalogMediaUrl(product, 640);
-  const priceCents = resolvePrice(product);
-  const slug = resolveSlug(product);
+  const priceCents = resolveProductDisplayPrice(product);
+  const href = resolveProductHref(product);
+  const slug = resolveProductSlug(product);
 
   return (
     <Link
-      to={`/products/${slug}`}
+      to={href ?? `/products/${slug}`}
       className="group flex flex-col overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-stone-200/80 transition-shadow hover:shadow-lg"
     >
       {/* Image */}

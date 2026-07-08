@@ -40,6 +40,29 @@ export async function getTranslations(entityType, entityId, locale) {
  * @param {string} [locale='en']
  * @returns {Promise<Map<string, string>>}
  */
+/**
+ * Batch-load product slug values for storefront links and serializers.
+ *
+ * @param {string[]} productIds
+ * @param {string} [locale='en']
+ * @returns {Promise<Map<string, string>>}
+ */
+export async function loadProductSlugMap(productIds, locale = 'en') {
+  const uniqueIds = [...new Set(productIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return new Map();
+
+  const rows = await prisma.slug.findMany({
+    where: {
+      entityType: 'product',
+      entityId: { in: uniqueIds },
+      locale,
+    },
+    select: { entityId: true, slug: true },
+  });
+
+  return new Map(rows.map((row) => [row.entityId, row.slug]));
+}
+
 export async function loadProductTitleMap(productIds, locale = 'en') {
   const uniqueIds = [...new Set(productIds.filter(Boolean))];
   if (uniqueIds.length === 0) return new Map();

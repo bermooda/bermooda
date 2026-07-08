@@ -16,6 +16,8 @@ export const routeComponents = {
   '/account/orders/:id': 'AccountOrderDetailPage',
   '/account/addresses': 'AccountAddressesPage',
   '/account/profile': 'AccountProfilePage',
+  '/account/wishlist': 'AccountWishlistPage',
+  '/account/loyalty': 'AccountLoyaltyPage',
   '/account/login': 'LoginPage',
   '/account/register': 'RegisterPage',
   '/account/forgot-password': 'ForgotPasswordPage',

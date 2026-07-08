@@ -1,4 +1,3 @@
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigation } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
@@ -11,12 +10,11 @@ import {
   CatalogSortSelect,
   catalogHasFacets,
 } from '#/themes/default/components/catalog-filters';
+import CatalogPagination from '#/themes/default/components/catalog-pagination';
 import ProductGrid from '#/themes/default/components/product-grid';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';
-
-const PAGE_SIZE = 24;
 
 export default function CategoryPage({
   category,
@@ -36,9 +34,6 @@ export default function CategoryPage({
   const pathname = location.pathname;
   const isLoading = navigation.state === 'loading';
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-  const hasPrev = page > 1;
-  const hasNext = page < totalPages;
   const hasFacets = catalogHasFacets(facets, { hideCategoryFacet: true });
   const topSlotBlocks = slotBlocks['category.top'] ?? [];
   const slotProps = {
@@ -52,12 +47,6 @@ export default function CategoryPage({
     locale,
     currency,
   };
-
-  function pageHref(p) {
-    const params = new URLSearchParams(location.search);
-    params.set('page', String(p));
-    return `${pathname}?${params}`;
-  }
 
   return (
     <StorefrontShell>
@@ -149,43 +138,12 @@ export default function CategoryPage({
               />
             </div>
 
-            {totalPages > 1 && (
-              <nav className="mt-14 flex flex-wrap items-center justify-center gap-4">
-                {hasPrev ? (
-                  <Link
-                    to={pageHref(page - 1)}
-                    className="flex items-center gap-1.5 rounded-full border border-stone-400 px-5 py-2.5 text-sm font-semibold text-stone-800 transition-colors hover:border-stone-800 hover:bg-white"
-                  >
-                    <ChevronLeftIcon className="h-4 w-4" />
-                    Previous
-                  </Link>
-                ) : (
-                  <span className="flex items-center gap-1.5 rounded-full border border-stone-200 px-5 py-2.5 text-sm text-stone-400">
-                    <ChevronLeftIcon className="h-4 w-4" />
-                    Previous
-                  </span>
-                )}
-
-                <span className="text-sm font-medium text-stone-600">
-                  Page {page} of {totalPages}
-                </span>
-
-                {hasNext ? (
-                  <Link
-                    to={pageHref(page + 1)}
-                    className="flex items-center gap-1.5 rounded-full border border-stone-400 px-5 py-2.5 text-sm font-semibold text-stone-800 transition-colors hover:border-stone-800 hover:bg-white"
-                  >
-                    Next
-                    <ChevronRightIcon className="h-4 w-4" />
-                  </Link>
-                ) : (
-                  <span className="flex items-center gap-1.5 rounded-full border border-stone-200 px-5 py-2.5 text-sm text-stone-400">
-                    Next
-                    <ChevronRightIcon className="h-4 w-4" />
-                  </span>
-                )}
-              </nav>
-            )}
+            <CatalogPagination
+              page={page}
+              total={total}
+              pathname={pathname}
+              search={location.search}
+            />
           </div>
         </div>
       </div>

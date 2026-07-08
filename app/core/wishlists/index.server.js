@@ -7,8 +7,12 @@ import {
   parseListPagination,
   readQueryParam,
 } from '#/libs/prisma/pagination.server';
-import { loadProductTitleMap } from '#/core/catalog/translations.server';
+import {
+  loadProductSlugMap,
+  loadProductTitleMap,
+} from '#/core/catalog/translations.server';
 import { getCustomer } from '#/core/customers/index.server';
+import { resolveCatalogMediaUrl } from '#/core/storage/media';
 
 export const DEFAULT_WISHLIST_LIST_LIMIT = 20;
 export const MAX_WISHLIST_LIST_RESULTS = 100;
@@ -24,7 +28,21 @@ const WISHLIST_FORM_INTENT_MAP = {
 
 const WISHLIST_ITEM_LIST_INCLUDE = {
   variant: {
-    select: { id: true, sku: true, productId: true },
+    select: {
+      id: true,
+      sku: true,
+      productId: true,
+      product: {
+        select: {
+          id: true,
+          media: {
+            orderBy: { position: 'asc' },
+            take: 1,
+            include: { media: true },
+          },
+        },
+      },
+    },
   },
   wishlist: {
     select: {
@@ -238,9 +256,14 @@ export function parseDeleteWishlistItemFromForm(formData) {
  * Serialize a wishlist item for admin/API responses.
  *
  * @param {object} record
- * @param {{ productTitle?: string|null }} [options]
+ * @param {{ productTitle?: string|null, productSlug?: string|null, imageUrl?: string|null }} [options]
  */
-export function serializeWishlistItem(record, { productTitle } = {}) {
+export function serializeWishlistItem(
+  record,
+  { productTitle, productSlug, imageUrl } = {}
+) {
+  const mediaEntry = record.variant?.product?.media?.[0];
+
   return {
     id: record.id,
     wishlistId: record.wishlistId,
@@ -253,6 +276,11 @@ export function serializeWishlistItem(record, { productTitle } = {}) {
       record.productTitle ??
       record.variant?.productId?.slice?.(0, 8) ??
       null,
+    productSlug: productSlug ?? record.productSlug ?? null,
+    imageUrl:
+      imageUrl ??
+      record.imageUrl ??
+      (mediaEntry ? resolveCatalogMediaUrl(mediaEntry, 640) : null),
     customerId: record.wishlist?.customerId ?? null,
     customer: record.wishlist?.customer
       ? {
@@ -288,7 +316,10 @@ async function serializeWishlistItemsWithProductTitles(items, locale = 'en') {
   const productIds = [
     ...new Set(items.map((item) => item.variant?.productId).filter(Boolean)),
   ];
-  const titleMap = await loadProductTitleMap(productIds, locale);
+  const [titleMap, slugMap] = await Promise.all([
+    loadProductTitleMap(productIds, locale),
+    loadProductSlugMap(productIds, locale),
+  ]);
 
   return items.map((item) =>
     serializeWishlistItem(item, {
@@ -296,6 +327,7 @@ async function serializeWishlistItemsWithProductTitles(items, locale = 'en') {
         titleMap.get(item.variant?.productId) ??
         item.variant?.productId?.slice(0, 8) ??
         null,
+      productSlug: slugMap.get(item.variant?.productId) ?? null,
     })
   );
 }

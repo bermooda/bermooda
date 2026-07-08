@@ -1,6 +1,12 @@
 import { useFetcher, useLocation } from 'react-router';
 
-const LOCALE_NAMES = { en: 'EN', de: 'DE', fr: 'FR' };
+import { LOCALE_LABELS } from '#/core/i18n/locales';
+
+function localeAbbreviation(locale) {
+  return (
+    LOCALE_LABELS[locale]?.slice(0, 2).toUpperCase() ?? locale.toUpperCase()
+  );
+}
 
 export default function LocaleSwitcher({
   currentLocale = 'en',
@@ -27,7 +33,7 @@ export default function LocaleSwitcher({
       >
         {availableLocales.map((l) => (
           <option key={l} value={l}>
-            {LOCALE_NAMES[l] ?? l.toUpperCase()}
+            {localeAbbreviation(l)}
           </option>
         ))}
       </select>

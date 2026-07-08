@@ -54,7 +54,7 @@ export function buildAttributeHref(pathname, search, attrName, attrValue) {
   return query ? `${pathname}?${query}` : pathname;
 }
 
-function ActiveFilters({
+export function CatalogActiveFilters({
   filters,
   facets,
   locale,
@@ -408,26 +408,6 @@ export function CatalogFilterSidebar({
   );
 }
 
-export function CatalogActiveFilters({
-  filters,
-  facets,
-  locale,
-  currency,
-  pathname,
-  clearHref,
-}) {
-  return (
-    <ActiveFilters
-      filters={filters}
-      facets={facets}
-      locale={locale}
-      currency={currency}
-      pathname={pathname}
-      clearHref={clearHref}
-    />
-  );
-}
-
 export function CatalogSortSelect({ sort, pathname }) {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -526,5 +506,3 @@ export function catalogHasFacets(facets, { hideCategoryFacet = false } = {}) {
       facets?.availability?.inStock < facets?.availability?.total)
   );
 }
-
-export { SORT_OPTIONS };
