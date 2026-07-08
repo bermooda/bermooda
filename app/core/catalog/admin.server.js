@@ -439,6 +439,42 @@ export async function deleteCategoryRecursive(id) {
 }
 
 /**
+ * Persist sibling order for categories that share the same parent.
+ *
+ * @param {string | null} parentId
+ * @param {string[]} orderedIds
+ */
+export async function setCategorySiblingOrder(parentId, orderedIds) {
+  if (!orderedIds.length) return;
+
+  const siblings = await prisma.category.findMany({
+    where: { parentId: parentId ?? null },
+    orderBy: { position: 'asc' },
+  });
+
+  const siblingIds = new Set(siblings.map((sibling) => sibling.id));
+  const incomingIds = new Set(orderedIds);
+
+  if (
+    siblingIds.size !== incomingIds.size ||
+    orderedIds.some((id) => !siblingIds.has(id))
+  ) {
+    throw Object.assign(new Error('Invalid category order.'), {
+      code: 'INVALID_ORDER',
+    });
+  }
+
+  await prisma.$transaction(
+    orderedIds.map((id, position) =>
+      prisma.category.update({
+        where: { id },
+        data: { position },
+      })
+    )
+  );
+}
+
+/**
  * Move a category up or down among its siblings.
  *
  * @param {string} id
