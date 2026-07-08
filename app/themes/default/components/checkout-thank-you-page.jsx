@@ -2,7 +2,11 @@ import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
-import { cartLineTotal, formatPrice } from '#/core/index';
+import {
+  cartLineTotal,
+  formatPrice,
+  parseShippingAddressSnapshot,
+} from '#/core/index';
 
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
@@ -21,10 +25,7 @@ export default function CheckoutThankYouPage({ order, locale, currency }) {
     );
   }
 
-  const addr =
-    typeof order.shippingAddressSnapshot === 'string'
-      ? JSON.parse(order.shippingAddressSnapshot)
-      : (order.shippingAddressSnapshot ?? {});
+  const addr = parseShippingAddressSnapshot(order);
 
   const displayCurrency = order.currency ?? currency;
 

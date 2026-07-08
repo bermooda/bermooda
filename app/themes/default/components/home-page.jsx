@@ -8,7 +8,11 @@ import {
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { Link } from 'react-router';
 
-import { formatPrice } from '#/core/index';
+import {
+  formatPrice,
+  resolveProductDisplayPrice,
+  resolveProductSlug,
+} from '#/core/index';
 import { resolveCatalogMediaUrl } from '#/core/storage/media';
 import SlotBlocks from '#/components/slot-blocks';
 
@@ -17,19 +21,6 @@ import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
   STOREFRONT_SAND as SAND,
 } from '#/themes/default/components/storefront-chrome';
-
-function resolvePrice(product) {
-  if (product.displayPrice != null) return product.displayPrice;
-  if (product.variantPrices?.[0]?.priceCents != null)
-    return product.variantPrices[0].priceCents;
-  if (product.variants?.[0]?.prices?.[0]?.priceCents != null)
-    return product.variants[0].prices[0].priceCents;
-  return null;
-}
-
-function resolveSlug(product) {
-  return product.slug?.slug ?? product.slug ?? product.id;
-}
 
 function fmt(price, currency, locale) {
   return price != null
@@ -312,34 +303,13 @@ export default function HomePage({
                 gone, they're gone.
               </p>
             </div>
-            <div className="flex gap-2 text-[11px] font-semibold tracking-[0.18em] uppercase">
-              <button
-                type="button"
-                className="rounded-full px-4 py-2 text-white"
-                style={{ background: GREEN }}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                className="rounded-full border border-stone-400 px-4 py-2 text-stone-700 hover:border-stone-700"
-              >
-                Under {fmt(5000, currency, locale)}
-              </button>
-              <button
-                type="button"
-                className="rounded-full border border-stone-400 px-4 py-2 text-stone-700 hover:border-stone-700"
-              >
-                Best sellers
-              </button>
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-4">
             {newArrivals.map((p, i) => {
               const img = resolveCatalogMediaUrl(p, 640);
-              const slug = resolveSlug(p);
-              const price = resolvePrice(p);
+              const slug = resolveProductSlug(p);
+              const price = resolveProductDisplayPrice(p);
               const isNew = i < 4;
               return (
                 <Link
@@ -372,13 +342,6 @@ export default function HomePage({
                         New
                       </span>
                     )}
-                    <button
-                      type="button"
-                      aria-label="Add to favorites"
-                      className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-stone-700 opacity-0 transition-opacity group-hover:opacity-100 hover:text-rose-600"
-                    >
-                      <HeartIcon className="h-4 w-4" />
-                    </button>
                   </div>
                   <div className="mt-4 px-1">
                     <div className="text-[11px] tracking-[0.18em] text-stone-500 uppercase">
@@ -422,8 +385,8 @@ export default function HomePage({
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {favorites.map((p) => {
               const img = resolveCatalogMediaUrl(p, 640);
-              const slug = resolveSlug(p);
-              const price = resolvePrice(p);
+              const slug = resolveProductSlug(p);
+              const price = resolveProductDisplayPrice(p);
               return (
                 <Link
                   key={p.id}
@@ -519,20 +482,12 @@ export default function HomePage({
             Plus early access to new arrivals, members-only sales, and the
             occasional thoughtful note.
           </p>
-          <form className="mx-auto mt-8 flex max-w-md flex-col gap-2 sm:flex-row">
-            <input
-              type="email"
-              required
-              placeholder="your@email.com"
-              className="flex-1 rounded-full bg-white/10 px-5 py-3 text-sm text-white ring-1 ring-white/30 outline-none placeholder:text-white/60 focus:ring-2 focus:ring-white"
-            />
-            <button
-              type="submit"
-              className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100"
-            >
-              Sign me up
-            </button>
-          </form>
+          <Link
+            to="/account/register"
+            className="mt-8 inline-block rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-900 hover:bg-stone-100"
+          >
+            Create an account
+          </Link>
           <p className="mt-3 text-xs text-white/60">
             No spam, ever. Unsubscribe anytime.
           </p>

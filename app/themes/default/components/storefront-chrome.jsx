@@ -16,7 +16,7 @@ export const STOREFRONT_CREAM = '#f7f1e6';
 export const STOREFRONT_SAND = '#e8dcc4';
 export const STOREFRONT_PAGE_BG = '#fbf7ef';
 
-export function StorefrontPromoBar() {
+function StorefrontPromoBar() {
   return (
     <div
       className="border-b border-stone-200"
@@ -72,9 +72,12 @@ function MenuLinks({ items, className }) {
   );
 }
 
-export function StorefrontSubHeader({ items = [] }) {
+function StorefrontSubHeader({ items = [] }) {
   return (
-    <div className="border-b border-stone-200 bg-[#fbf7ef]">
+    <div
+      className="border-b border-stone-200"
+      style={{ background: STOREFRONT_PAGE_BG }}
+    >
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
         <Form
           method="get"
@@ -110,7 +113,10 @@ function StorefrontMainNav({
   const t = useT();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-stone-200 bg-[#fbf7ef]/95 backdrop-blur-sm">
+    <header
+      className="sticky top-0 z-50 border-b border-stone-200 backdrop-blur-sm"
+      style={{ background: `${STOREFRONT_PAGE_BG}f2` }}
+    >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <Link
           to="/"
@@ -178,7 +184,7 @@ function StorefrontMainNav({
   );
 }
 
-export function StorefrontFooter({ items = [], slotBlocks = [], slotProps }) {
+function StorefrontFooter({ items = [], slotBlocks = [], slotProps }) {
   const year = new Date().getFullYear();
 
   return (
@@ -233,7 +239,10 @@ export default function StorefrontShell({ children }) {
   const footerSlotBlocks = slotBlocks['layout.footer'] ?? [];
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#fbf7ef] font-sans text-stone-800 antialiased">
+    <div
+      className="flex min-h-screen flex-col font-sans text-stone-800 antialiased"
+      style={{ background: STOREFRONT_PAGE_BG }}
+    >
       <StorefrontPromoBar />
       <StorefrontSubHeader items={menus.subHeader} />
       <StorefrontMainNav

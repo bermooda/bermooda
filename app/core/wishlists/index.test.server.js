@@ -22,6 +22,7 @@ vi.mock('#/libs/prisma.server', () => ({
 
 vi.mock('#/core/catalog/translations.server', () => ({
   loadProductTitleMap: vi.fn(),
+  loadProductSlugMap: vi.fn(),
 }));
 
 vi.mock('#/core/customers/index.server', () => ({
@@ -30,7 +31,10 @@ vi.mock('#/core/customers/index.server', () => ({
 
 import prisma from '#/libs/prisma.server';
 import { containsFilter } from '#/libs/prisma/filters.server';
-import { loadProductTitleMap } from '#/core/catalog/translations.server';
+import {
+  loadProductSlugMap,
+  loadProductTitleMap,
+} from '#/core/catalog/translations.server';
 import { getCustomer } from '#/core/customers/index.server';
 import {
   addToWishlist,
@@ -54,6 +58,7 @@ import {
 beforeEach(() => {
   vi.clearAllMocks();
   loadProductTitleMap.mockResolvedValue(new Map());
+  loadProductSlugMap.mockResolvedValue(new Map());
 });
 
 describe('parseWishlistListParams', () => {
@@ -228,7 +233,11 @@ describe('serializeWishlistItem', () => {
             customer: { id: 'c1', name: 'Buyer', email: 'buyer@example.com' },
           },
         },
-        { productTitle: 'Tee' }
+        {
+          productTitle: 'Tee',
+          productSlug: 'tee-shirt',
+          imageUrl: 'https://cdn.example/tee.jpg',
+        }
       )
     ).toEqual({
       id: 'wi-1',
@@ -238,6 +247,8 @@ describe('serializeWishlistItem', () => {
       variantSku: 'SKU-1',
       productId: 'p1',
       productTitle: 'Tee',
+      productSlug: 'tee-shirt',
+      imageUrl: 'https://cdn.example/tee.jpg',
       customerId: 'c1',
       customer: { id: 'c1', name: 'Buyer', email: 'buyer@example.com' },
     });

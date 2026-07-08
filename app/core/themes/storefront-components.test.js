@@ -14,4 +14,20 @@ describe('default theme storefront components', () => {
     expect(routeComponents['/collections/:handle']).toBe('CollectionPage');
     expect(getStorefrontComponent('CollectionPage')).toBeTypeOf('function');
   });
+
+  it('registers account wishlist and loyalty pages', () => {
+    expect(routeComponents['/account/wishlist']).toBe('AccountWishlistPage');
+    expect(routeComponents['/account/loyalty']).toBe('AccountLoyaltyPage');
+    expect(getStorefrontComponent('AccountWishlistPage')).toBeTypeOf(
+      'function'
+    );
+    expect(getStorefrontComponent('AccountLoyaltyPage')).toBeTypeOf('function');
+  });
+
+  it('aliases required Layout to StorefrontShell', () => {
+    const Layout = getStorefrontComponent('Layout');
+    const NotFoundPage = getStorefrontComponent('NotFoundPage');
+    expect(Layout).toBeTypeOf('function');
+    expect(NotFoundPage).toBeTypeOf('function');
+  });
 });
