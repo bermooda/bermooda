@@ -23,6 +23,17 @@ export { formatPrice } from '#/core/currency/format';
 
 export { cartLineTotal, summarizeCartLines } from '#/core/cart/lines';
 
+export {
+  findVariantBySelectedOptions,
+  isVariantInStock,
+  pickVariantPriceForCurrency,
+  resolveProductDisplayPrice,
+  resolveProductHref,
+  resolveProductSlug,
+} from '#/core/catalog/display';
+
+export { parseShippingAddressSnapshot } from '#/core/orders/address-snapshot';
+
 // -- Components -------------------------------------------------------------
 
 // Slot intentionally returns children as-is (no JSX) so this file stays .js.

@@ -1,6 +1,6 @@
 // app/routes/storefront/account/wishlist.jsx
 
-import { useLoaderData, useRouteLoaderData } from 'react-router';
+import { useLoaderData, useActionData, useRouteLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
@@ -65,6 +65,7 @@ export function meta() {
 
 export default function AccountWishlistRoute() {
   const data = useLoaderData();
+  const actionData = useActionData();
   const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
   const themeId = layoutData?.themeId ?? 'default';
   const AccountWishlistPage = getStorefrontComponent(
@@ -74,5 +75,11 @@ export default function AccountWishlistRoute() {
   if (!AccountWishlistPage) {
     throw new Error('AccountWishlistPage theme component not found');
   }
-  return <AccountWishlistPage {...data} customer={layoutData?.customer} />;
+  return (
+    <AccountWishlistPage
+      {...data}
+      actionData={actionData}
+      customer={layoutData?.customer}
+    />
+  );
 }

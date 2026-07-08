@@ -1,3 +1,6 @@
+/** Default page size for storefront catalog listings (search, category, collection). */
+export const STOREFRONT_CATALOG_PAGE_SIZE = 24;
+
 /**
  * Parse catalog filter/sort/pagination params from a request URL.
  * Shared by search, category, and collection storefront routes.

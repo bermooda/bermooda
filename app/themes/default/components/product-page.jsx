@@ -5,33 +5,19 @@ import { useState } from 'react';
 import { Link, Form, useFetcher } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
-import { formatPrice } from '#/core/index';
+import {
+  findVariantBySelectedOptions,
+  formatPrice,
+  isVariantInStock,
+  pickVariantPriceForCurrency,
+  resolveProductHref,
+} from '#/core/index';
 import { resolveCatalogMediaUrl } from '#/core/storage/media';
 import SlotBlocks from '#/components/slot-blocks';
 
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';
-
-function getVariantPrice(variant, currency) {
-  if (!variant?.prices?.length) return null;
-  const match = variant.prices.find((p) => p.currency === currency);
-  return match ?? variant.prices[0];
-}
-
-function isInStock(variant) {
-  if (!variant) return false;
-  if (!variant.inventoryTracked) return true;
-  return variant.inventoryQuantity > 0;
-}
-
-function findVariantByOptions(variants, selectedOptions) {
-  return (
-    variants.find((variant) =>
-      variant.options.every((opt) => selectedOptions[opt.name] === opt.value)
-    ) ?? null
-  );
-}
 
 function categoryHref(entry) {
   const slug =
@@ -55,6 +41,7 @@ export default function ProductPage({
   wishlistedVariantIds = [],
   actionData,
   slotBlocks = {},
+  path,
 }) {
   const t = useT();
   const fetcher = useFetcher();
@@ -75,11 +62,11 @@ export default function ProductPage({
 
   const hasOptions = product.options?.length > 0;
   const selectedVariant = hasOptions
-    ? findVariantByOptions(product.variants ?? [], selectedOptions)
+    ? findVariantBySelectedOptions(product.variants ?? [], selectedOptions)
     : (product.variants?.[0] ?? null);
 
-  const priceEntry = getVariantPrice(selectedVariant, currency);
-  const inStock = isInStock(selectedVariant);
+  const priceEntry = pickVariantPriceForCurrency(selectedVariant, currency);
+  const inStock = isVariantInStock(selectedVariant);
   const isSubmitting = fetcher.state !== 'idle';
   const isWishlistBusy = wishlistFetcher.state !== 'idle';
 
@@ -112,7 +99,7 @@ export default function ProductPage({
   }
 
   const maxQty = selectedVariant?.inventoryTracked
-    ? selectedVariant.inventoryQuantity
+    ? selectedVariant.inventoryCount
     : 99;
 
   return (
@@ -364,7 +351,7 @@ export default function ProductPage({
                   </wishlistFetcher.Form>
                 ) : (
                   <Link
-                    to={`/account/login?returnTo=${encodeURIComponent(`/products/${product.slug}`)}`}
+                    to={`/account/login?returnTo=${encodeURIComponent(path ?? resolveProductHref(product) ?? '/')}`}
                     className="flex w-full items-center justify-center gap-2 rounded-full border border-stone-300 px-6 py-3 text-sm font-semibold text-stone-700 hover:border-stone-500 hover:bg-stone-50"
                   >
                     <HeartOutlineIcon className="h-4 w-4" />
@@ -454,7 +441,6 @@ export default function ProductPage({
                 reviewTotal={reviewTotal}
                 reviewPage={reviewPage}
                 customer={customer}
-                productSlug={product.slug}
                 actionData={actionData}
               />
             </div>
@@ -489,7 +475,6 @@ function ProductReviewsSection({
   reviewTotal = 0,
   reviewPage = 1,
   customer,
-  productSlug: _productSlug,
   actionData,
 }) {
   return (

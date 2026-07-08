@@ -1,25 +1,13 @@
 import { ChevronLeftIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router';
 
-import { cartLineTotal, formatPrice } from '#/core/index';
+import {
+  cartLineTotal,
+  formatPrice,
+  parseShippingAddressSnapshot,
+} from '#/core/index';
 
-function StatusBadge({ status }) {
-  const colours = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    confirmed: 'bg-blue-100 text-blue-800',
-    shipped: 'bg-purple-100 text-purple-800',
-    delivered: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
-    refunded: 'bg-zinc-100 text-zinc-800',
-  };
-  return (
-    <span
-      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${colours[status] ?? 'bg-zinc-100 text-zinc-800'}`}
-    >
-      {status}
-    </span>
-  );
-}
+import AccountStatusBadge from '#/themes/default/components/account-status-badge';
 
 export default function AccountOrderDetailPage({ order, locale, currency }) {
   if (!order) {
@@ -37,10 +25,7 @@ export default function AccountOrderDetailPage({ order, locale, currency }) {
     );
   }
 
-  const addr =
-    typeof order.shippingAddressSnapshot === 'string'
-      ? JSON.parse(order.shippingAddressSnapshot)
-      : (order.shippingAddressSnapshot ?? {});
+  const addr = parseShippingAddressSnapshot(order);
 
   const displayCurrency = order.currency ?? currency ?? 'USD';
 
@@ -58,7 +43,7 @@ export default function AccountOrderDetailPage({ order, locale, currency }) {
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
           Order #{order.orderNumber}
         </h1>
-        <StatusBadge status={order.status} />
+        <AccountStatusBadge status={order.status} />
       </div>
 
       <p className="text-sm text-zinc-500">

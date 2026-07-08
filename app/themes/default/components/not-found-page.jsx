@@ -1,6 +1,9 @@
 import { Link } from 'react-router';
 
+import config from '#/config';
 import { useT } from '#/core/i18n/index';
+
+const accountHome = config.auth.customerCallbackUrl;
 
 export default function NotFoundPage() {
   const t = useT();
@@ -8,21 +11,29 @@ export default function NotFoundPage() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="text-center">
-        <p className="mb-4 text-sm font-medium tracking-widest text-gray-400 uppercase dark:text-gray-500">
+        <p className="mb-4 text-sm font-medium tracking-widest text-stone-400 uppercase">
           404
         </p>
-        <h1 className="mb-3 text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="mb-3 font-serif text-3xl text-stone-900 md:text-4xl">
           {t('common.notFound')}
         </h1>
-        <p className="mb-8 text-gray-500 dark:text-gray-400">
+        <p className="mb-8 text-stone-500">
           The page you&apos;re looking for doesn&apos;t exist.
         </p>
-        <Link
-          to="/"
-          className="inline-block rounded-md bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
-        >
-          {t('common.backToHome')}
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <Link
+            to="/"
+            className="inline-block rounded-full bg-stone-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-stone-700"
+          >
+            {t('common.backToHome')}
+          </Link>
+          <Link
+            to={accountHome}
+            className="text-sm font-medium text-stone-700 hover:text-stone-900"
+          >
+            {t('nav.account')} →
+          </Link>
+        </div>
       </div>
     </div>
   );

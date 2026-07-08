@@ -4,7 +4,12 @@ import { useState } from 'react';
 import { Link, Form, useNavigation } from 'react-router';
 
 import { useT } from '#/core/i18n/index';
-import { cartLineTotal, formatPrice, summarizeCartLines } from '#/core/index';
+import {
+  cartLineTotal,
+  formatPrice,
+  resolveProductHref,
+  summarizeCartLines,
+} from '#/core/index';
 import { resolveCatalogMediaUrl } from '#/core/storage/media';
 import SlotBlocks from '#/components/slot-blocks';
 
@@ -102,10 +107,7 @@ export default function CartPage({ cart, locale, currency, slotBlocks = {} }) {
               {lines.map((line) => {
                 const product = line.variant?.product;
                 const imageUrl = resolveCatalogMediaUrl(product, 128);
-                const productSlug = product?.slug?.slug || product?.id;
-                const productHref = productSlug
-                  ? `/products/${productSlug}`
-                  : '#';
+                const productHref = resolveProductHref(product) ?? '#';
 
                 return (
                   <li key={line.id} className="flex gap-5 py-8">

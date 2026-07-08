@@ -1,8 +1,7 @@
-import { Link } from 'react-router';
+import { useLoaderData } from 'react-router';
 
-import config from '#/config';
-
-const accountHome = config.auth.customerCallbackUrl;
+import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export function meta() {
   return [
@@ -14,39 +13,23 @@ export function meta() {
   ];
 }
 
-/**
- * 404 Not Found Route component
- * This component displays a user-friendly 404 error page
- * when users navigate to non-existent routes
- */
+export async function loader() {
+  const themeId = await preloadStorefrontTheme();
+  return { themeId };
+}
+
 export default function NotFoundRoute() {
+  const { themeId } = useLoaderData();
+  const Layout = getStorefrontComponent('Layout', themeId);
+  const NotFoundPage = getStorefrontComponent('NotFoundPage', themeId);
+
+  if (!Layout || !NotFoundPage) {
+    throw new Error('404 theme components not found');
+  }
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-white px-6 py-24 sm:py-32 lg:px-8">
-      <div className="text-center">
-        <p className="text-base font-semibold text-indigo-600">404</p>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-          Page not found
-        </h1>
-        <p className="mt-6 text-base leading-7 text-gray-600">
-          Sorry, we couldn&apos;t find the page you&apos;re looking for.
-        </p>
-        <div className="mt-10 flex items-center justify-center gap-x-6">
-          <Link
-            to="/"
-            prefetch="intent"
-            className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Go back home
-          </Link>
-          <Link
-            to={accountHome}
-            prefetch="intent"
-            className="text-sm font-semibold text-gray-900"
-          >
-            My account <span aria-hidden="true">&rarr;</span>
-          </Link>
-        </div>
-      </div>
-    </div>
+    <Layout>
+      <NotFoundPage />
+    </Layout>
   );
 }
