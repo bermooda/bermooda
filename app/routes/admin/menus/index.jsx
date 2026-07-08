@@ -12,6 +12,7 @@ import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
+import SortableList, { SortableGrip } from '#/components/admin/sortable-list';
 import { SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
@@ -32,12 +33,18 @@ export default function AdminMenusRoute() {
   const { handle, menus, menu, menuHandles, pages, categories } =
     useLoaderData();
   const actionData = useActionData();
-  const [items, setItems] = useState(menu?.items ?? []);
+  const [items, setItems] = useState(
+    (menu?.items ?? []).map((item, index) => ({
+      ...item,
+      clientId: item.clientId ?? `item-${index}`,
+    }))
+  );
 
   function addItem() {
     setItems((prev) => [
       ...prev,
       {
+        clientId: `item-${Date.now()}`,
         label: '',
         url: '',
         pageId: '',
@@ -49,7 +56,15 @@ export default function AdminMenusRoute() {
   }
 
   function removeItem(index) {
-    setItems((prev) => prev.filter((_, i) => i !== index));
+    setItems((prev) =>
+      prev
+        .filter((_, i) => i !== index)
+        .map((item, position) => ({ ...item, position }))
+    );
+  }
+
+  function reorderItems(nextItems) {
+    setItems(nextItems.map((item, position) => ({ ...item, position })));
   }
 
   function updateItem(index, field, value) {
@@ -96,12 +111,23 @@ export default function AdminMenusRoute() {
             />
           </Field>
 
-          <div className="space-y-3">
-            {items.map((item, index) => (
-              <div
-                key={index}
-                className="border-border grid gap-3 rounded-md border p-4 md:grid-cols-2"
-              >
+          <SortableList
+            items={items}
+            getId={(item) => item.clientId}
+            className="space-y-3"
+            itemClassName="list-none"
+            onReorder={reorderItems}
+            renderItem={(item, index, { handleRef }) => (
+              <div className="border-border grid gap-3 rounded-md border p-4 md:grid-cols-2">
+                <div className="flex items-start md:col-span-2">
+                  <SortableGrip
+                    handleRef={handleRef}
+                    className="mr-2 shrink-0"
+                  />
+                  <span className="text-text-muted text-xs font-medium">
+                    Item {index + 1}
+                  </span>
+                </div>
                 <input
                   type="hidden"
                   name={`items[${index}][position]`}
@@ -172,8 +198,8 @@ export default function AdminMenusRoute() {
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
+            )}
+          />
 
           <button
             type="button"

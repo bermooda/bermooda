@@ -370,6 +370,28 @@ export async function setPluginEnabledState(pluginId, enabled) {
 }
 
 /**
+ * Persist the full plugin display order.
+ *
+ * @param {string[]} orderedIds
+ * @returns {Promise<string[]>}
+ */
+export async function setPluginOrder(orderedIds) {
+  const pluginIds = listRegisteredPlugins().map((manifest) => manifest.id);
+  const pluginIdSet = new Set(pluginIds);
+
+  if (
+    orderedIds.length !== pluginIds.length ||
+    orderedIds.some((id) => !pluginIdSet.has(id))
+  ) {
+    throw new Error('Invalid plugin order');
+  }
+
+  const fullOrder = buildFullPluginOrder(orderedIds, pluginIds);
+  await settingsSet('pluginOrder', fullOrder);
+  return fullOrder;
+}
+
+/**
  * Moves a plugin one position earlier or later in pluginOrder.
  *
  * @param {string} pluginId

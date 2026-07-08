@@ -24,6 +24,8 @@
     "seed": "node --experimental-strip-types prisma/seed.js"
   },
   "dependencies": {
+    "@dnd-kit/helpers": "^0.5.0",
+    "@dnd-kit/react": "^0.5.0",
     "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.2.0",
     "@isaacs/ttlcache": "^2.1.5",

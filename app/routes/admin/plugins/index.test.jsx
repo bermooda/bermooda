@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockReorderPlugin, mockSetPluginEnabledState } = vi.hoisted(() => ({
-  mockReorderPlugin: vi.fn(),
+const { mockSetPluginOrder, mockSetPluginEnabledState } = vi.hoisted(() => ({
+  mockSetPluginOrder: vi.fn(),
   mockSetPluginEnabledState: vi.fn(),
 }));
 
@@ -9,7 +9,7 @@ vi.mock('#/core/plugins/index.server', () => ({
   getRegisteredPlugin: vi.fn(),
   listRegisteredPlugins: vi.fn(() => []),
   loadAllPluginSettings: vi.fn(async () => ({})),
-  reorderPlugin: mockReorderPlugin,
+  setPluginOrder: mockSetPluginOrder,
   savePluginSettings: vi.fn(),
   setPluginEnabledState: mockSetPluginEnabledState,
   sortPluginsByOrder: vi.fn((plugins) => plugins),
@@ -21,10 +21,13 @@ vi.mock('#/core/settings/index.server', () => ({
 
 import { action } from '#/routes/admin/plugins/index';
 
-function buildRequest(intent, pluginId) {
+function buildRequest(intent, pluginId, extra = {}) {
   const formData = new FormData();
   formData.set('intent', intent);
   if (pluginId) formData.set('pluginId', pluginId);
+  for (const [key, value] of Object.entries(extra)) {
+    formData.set(key, value);
+  }
 
   return new Request('http://localhost/admin/plugins', {
     method: 'POST',
@@ -78,13 +81,15 @@ describe('admin plugins action', () => {
   });
 
   it('reorders plugins through the core helper', async () => {
-    mockReorderPlugin.mockResolvedValue(['sample-analytics']);
+    mockSetPluginOrder.mockResolvedValue(['sample-analytics']);
 
     const result = await action({
-      request: buildRequest('reorder-up', 'sample-analytics'),
+      request: buildRequest('reorder', null, {
+        order: JSON.stringify(['sample-analytics']),
+      }),
     });
 
-    expect(result).toEqual({ success: true, intent: 'reorder-up' });
-    expect(mockReorderPlugin).toHaveBeenCalledWith('sample-analytics', 'up');
+    expect(result).toEqual({ success: true, intent: 'reorder' });
+    expect(mockSetPluginOrder).toHaveBeenCalledWith(['sample-analytics']);
   });
 });

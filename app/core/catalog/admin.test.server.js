@@ -48,6 +48,7 @@ import {
   loadProductsAdminIndexData,
   parseCategoryCreateInput,
   reorderCategory,
+  setCategorySiblingOrder,
 } from '#/core/catalog/admin.server';
 import { setSlug } from '#/core/catalog/index.server';
 import {
@@ -188,6 +189,17 @@ describe('catalog admin helpers', () => {
     const result = await reorderCategory('cat_b', 'reorder-up');
 
     expect(result).toEqual({ moved: true });
+    expect(prisma.$transaction).toHaveBeenCalled();
+  });
+
+  it('setCategorySiblingOrder persists sibling positions', async () => {
+    prisma.category.findMany.mockResolvedValue([
+      { id: 'cat_b', position: 1 },
+      { id: 'cat_a', position: 0 },
+    ]);
+
+    await setCategorySiblingOrder(null, ['cat_b', 'cat_a']);
+
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 });

@@ -1,11 +1,11 @@
 // app/routes/admin/plugins/index.jsx
 // Admin Plugins page — list registered plugins, enable/disable, reorder, settings.
 
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Form,
   useActionData,
+  useFetcher,
   useLoaderData,
   useNavigation,
 } from 'react-router';
@@ -14,9 +14,9 @@ import {
   getRegisteredPlugin,
   listRegisteredPlugins,
   loadAllPluginSettings,
-  reorderPlugin,
   savePluginSettings,
   setPluginEnabledState,
+  setPluginOrder,
   sortPluginsByOrder,
 } from '#/core/plugins/index.server';
 import { get } from '#/core/settings/index.server';
@@ -27,6 +27,7 @@ import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
+import SortableList, { SortableGrip } from '#/components/admin/sortable-list';
 import Tabs from '#/components/admin/tabs';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
@@ -81,8 +82,7 @@ export async function loader() {
  * Handles:
  *  - intent=enable        → add pluginId to enabledPlugins
  *  - intent=disable       → remove pluginId from enabledPlugins
- *  - intent=reorder-up    → move plugin one position earlier in pluginOrder
- *  - intent=reorder-down  → move plugin one position later in pluginOrder
+ *  - intent=reorder       → persist plugin block order from drag and drop
  *  - intent=save-settings → persist per-plugin setting values
  */
 export async function action({ request }) {
@@ -105,12 +105,23 @@ export async function action({ request }) {
     return { success: true, intent };
   }
 
-  if (intent === 'reorder-up' || intent === 'reorder-down') {
-    const pluginId = formData.get('pluginId');
-    if (!pluginId) return { error: 'Missing pluginId' };
+  if (intent === 'reorder') {
+    const orderRaw = formData.get('order')?.toString();
+    if (!orderRaw) return { error: 'Missing order' };
+
+    let orderedIds;
+    try {
+      orderedIds = JSON.parse(orderRaw);
+    } catch {
+      return { error: 'Invalid order' };
+    }
+
+    if (!Array.isArray(orderedIds)) {
+      return { error: 'Invalid order' };
+    }
 
     try {
-      await reorderPlugin(pluginId, intent === 'reorder-up' ? 'up' : 'down');
+      await setPluginOrder(orderedIds);
     } catch (err) {
       return {
         error: err instanceof Error ? err.message : 'Failed to reorder plugin',
@@ -328,69 +339,30 @@ function PluginCard({ manifest, isEnabled, pluginSettings }) {
 }
 
 /**
- * A single row in the block-order list.
- *
- * @param {{ manifest: object, isEnabled: boolean, isFirst: boolean, isLast: boolean }} props
- */
-function PluginOrderItem({ manifest, isEnabled, isFirst, isLast }) {
-  const navigation = useNavigation();
-
-  const isReordering =
-    navigation.state === 'submitting' &&
-    (navigation.formData?.get('intent') === 'reorder-up' ||
-      navigation.formData?.get('intent') === 'reorder-down') &&
-    navigation.formData?.get('pluginId') === manifest.id;
-
-  return (
-    <li className="border-border bg-surface flex items-center gap-3 rounded-lg border px-4 py-3">
-      <div className="flex items-center gap-0.5">
-        <Form method="post">
-          <input type="hidden" name="intent" value="reorder-up" />
-          <input type="hidden" name="pluginId" value={manifest.id} />
-          <button
-            type="submit"
-            disabled={isFirst || isReordering}
-            title="Move up"
-            className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
-          >
-            <ChevronUpIcon className="h-4 w-4" />
-          </button>
-        </Form>
-        <Form method="post">
-          <input type="hidden" name="intent" value="reorder-down" />
-          <input type="hidden" name="pluginId" value={manifest.id} />
-          <button
-            type="submit"
-            disabled={isLast || isReordering}
-            title="Move down"
-            className="text-text-muted hover:text-text rounded p-0.5 disabled:opacity-30"
-          >
-            <ChevronDownIcon className="h-4 w-4" />
-          </button>
-        </Form>
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-text truncate text-sm font-medium">
-            {manifest.name}
-          </span>
-          {isEnabled && <Badge tone="success">Enabled</Badge>}
-        </div>
-        <p className="text-text-muted truncate text-xs font-mono">
-          {manifest.id}
-        </p>
-      </div>
-    </li>
-  );
-}
-
-/**
  * Block order tab — reorder plugins for storefront slot rendering.
  *
  * @param {{ orderedPlugins: object[], enabledPlugins: string[] }} props
  */
 function BlockOrderTab({ orderedPlugins, enabledPlugins }) {
+  const reorderFetcher = useFetcher();
+  const [plugins, setPlugins] = useState(orderedPlugins);
+
+  useEffect(() => {
+    setPlugins(orderedPlugins);
+  }, [orderedPlugins]);
+
+  const isReordering = reorderFetcher.state !== 'idle';
+
+  function persistOrder(nextPlugins) {
+    const formData = new FormData();
+    formData.set('intent', 'reorder');
+    formData.set(
+      'order',
+      JSON.stringify(nextPlugins.map((plugin) => plugin.id))
+    );
+    reorderFetcher.submit(formData, { method: 'post' });
+  }
+
   return (
     <div className="space-y-4">
       <p className="text-text-muted text-sm">
@@ -400,23 +372,48 @@ function BlockOrderTab({ orderedPlugins, enabledPlugins }) {
         It does not change how plugins are listed on the Plugins tab.
       </p>
 
-      {orderedPlugins.length === 0 ? (
+      {plugins.length === 0 ? (
         <EmptyState
           title="No plugins registered"
           description="Plugins are loaded from app/plugins/ at startup."
         />
       ) : (
-        <ol className="space-y-2">
-          {orderedPlugins.map((manifest, idx) => (
-            <PluginOrderItem
-              key={manifest.id}
-              manifest={manifest}
-              isEnabled={enabledPlugins.includes(manifest.id)}
-              isFirst={idx === 0}
-              isLast={idx === orderedPlugins.length - 1}
-            />
-          ))}
-        </ol>
+        <SortableList
+          items={plugins}
+          getId={(manifest) => manifest.id}
+          disabled={isReordering}
+          className="space-y-2"
+          itemClassName="list-none"
+          onReorder={(nextPlugins) => {
+            setPlugins(nextPlugins);
+            persistOrder(nextPlugins);
+          }}
+          renderItem={(manifest, _index, { handleRef, isDragging }) => (
+            <div
+              className={`border-border bg-surface flex items-center gap-3 rounded-lg border px-4 py-3${isDragging || isReordering ? ' opacity-60' : ''}`}
+            >
+              <SortableGrip
+                handleRef={handleRef}
+                disabled={isReordering}
+                className="shrink-0"
+              />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-text truncate text-sm font-medium">
+                    {manifest.name}
+                  </span>
+                  {enabledPlugins.includes(manifest.id) && (
+                    <Badge tone="success">Enabled</Badge>
+                  )}
+                </div>
+                <p className="text-text-muted truncate font-mono text-xs">
+                  {manifest.id}
+                </p>
+              </div>
+            </div>
+          )}
+        />
       )}
     </div>
   );
