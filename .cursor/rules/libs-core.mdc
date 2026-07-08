@@ -28,3 +28,4 @@ alwaysApply: false
 
 - Prefer `*.server.js` for server-only modules in both directories.
 - Use `#/*` imports and omit extensions.
+- Document exported functions with JSDoc; use `@typedef` and Prisma `import()` types for domain shapes (see [jsdoc-types.mdc](mdc:.cursor/rules/jsdoc-types.mdc)).

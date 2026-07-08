@@ -43,6 +43,7 @@ Skip `*.test.*` files in area checks unless you add `paths` for `#/*` (tests imp
 3. Run targeted tests when the area has `*.test.*` siblings.
 4. Update this doc: mark the area ✅ with a short notes column entry.
 5. Do not enable `strict: true` in `jsconfig.json` globally until most areas are done.
+6. Follow [.cursor/rules/jsdoc-types.mdc](../.cursor/rules/jsdoc-types.mdc) when generating or editing code — JSDoc is required on new/changed exports, not only during dedicated type-review passes.
 
 ---
 
