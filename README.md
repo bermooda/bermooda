@@ -1,6 +1,6 @@
 # bermooda
 
-**Own your commerce stack.** bermooda is an open-source ecommerce platform that runs as a single deployable app: themed storefront, merchant admin, and REST API—together.
+**Own your ecommerce stack.** bermooda is an open-source ecommerce platform that runs as a single deployable app: themed storefront, merchant admin, and REST API—together.
 
 Clone it, scaffold a shop in minutes, and ship real catalog, cart, checkout, orders, and staff tools without bolting together a half-dozen SaaS products. Domain logic lives in one place (`app/core/*`), so you can read, change, and extend the engine like any other Node app.
 
