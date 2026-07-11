@@ -1,245 +1,217 @@
 # bermooda
 
-**bermooda** is an open-source ecommerce platform built as a single deployable service. One React Router 7 app with server-side rendering powers both the customer storefront and the merchant admin—catalog, cart, checkout, orders, customer accounts, and staff tools—backed by Prisma (SQLite locally), Stripe for payments, and Resend for email. It is designed so you can own your stack and extend the commerce engine in `app/core/*` without stitching together many separate products.
+**Own your commerce stack.** bermooda is an open-source ecommerce platform that runs as a single deployable app: themed storefront, merchant admin, and REST API—together.
 
-## Features
+Clone it, scaffold a shop in minutes, and ship real catalog, cart, checkout, orders, and staff tools without bolting together a half-dozen SaaS products. Domain logic lives in one place (`app/core/*`), so you can read, change, and extend the engine like any other Node app.
 
-- Storefront and back office in one codebase
-- Server-side rendering, loaders, and actions with React Router 7
-- Hot Module Replacement (HMR) in development
-- Prisma ORM and SQLite for local development; migrate or point at PostgreSQL for production
-- Tailwind CSS for styling
-- Stripe, authentication, and transactional email wired for real shops (configure via `.env`)
+If you want a full shop you can fork, understand, and grow—welcome.
 
-## Getting Started
+## Why engineers try it
 
-### Recommended: bermooda CLI
+- **One service, three surfaces** — storefront, admin, and public/admin REST APIs in a single React Router app
+- **Real commerce primitives** — catalog, cart, checkout, payments, shipping, customers, discounts, inventory, and more under `app/core/*`
+- **Themes & plugins** — swap storefront UI under `app/themes/*`; extend behavior with hook-based plugins under `app/plugins/*`
+- **Local-first** — SQLite for development, PostgreSQL when you need it; no Docker or external DB required to start
+- **CLI-first setup** — `bermooda install` scaffolds deps, env, database, admin user, and store name for you
 
-Scaffold a new shop with the global CLI ([bermooda-cli](https://github.com/bermooda/bermooda-cli)):
+## Stack
+
+| Layer         | Choice                                                                                   |
+| ------------- | ---------------------------------------------------------------------------------------- |
+| Runtime       | Node.js ≥ 22.22                                                                          |
+| App framework | [React Router 8](https://reactrouter.com/) (SSR, loaders, actions)                       |
+| UI            | React 19, Tailwind CSS 4                                                                 |
+| Build         | Vite 8                                                                                   |
+| Data          | Prisma 7 · SQLite (local) · PostgreSQL (production-ready)                                |
+| Auth          | [better-auth](https://www.better-auth.com/) (separate admin/staff and customer sessions) |
+| Payments      | Stripe                                                                                   |
+| Email         | Resend (+ React Email templates)                                                         |
+| Deploy        | Fly.io + LiteFS (SQLite replication) or plain Node / Docker                              |
+| Quality       | Vitest, oxlint, oxfmt                                                                    |
+
+## Quick start (recommended)
+
+Scaffold a shop with the global CLI:
 
 ```bash
 npm i -g bermooda-cli@latest
+
 bermooda install --local --dir ./my-shop -y \
   --admin-email admin@example.com \
   --admin-password 'TestPass123!' \
   --store-name 'Demo Shop'
+
 cd my-shop
 bermooda dev
 ```
 
-### Manual installation
+Open [http://localhost:3000](http://localhost:3000). Admin is typically at `/admin`.
 
-From this repository:
+### Install the CLI
 
 ```bash
-npm i
-cp .env.example .env   # if needed
-npm run setup
+npm i -g bermooda-cli@latest
+```
+
+Requires **Node.js ≥ 22.22**. After install, the `bermooda` binary is available globally.
+
+### CLI commands (overview)
+
+| Command                                | What it does                                                         |
+| -------------------------------------- | -------------------------------------------------------------------- |
+| `bermooda install [--local\|--server]` | Download app, install deps, configure env & DB, create admin + store |
+| `bermooda dev`                         | Start the dev server (no 1Password wrapper)                          |
+| `bermooda start`                       | Run production server (builds if needed)                             |
+| `bermooda update`                      | Update the shop to the latest app version                            |
+| `bermooda plugin …`                    | Add / update / remove / list plugins                                 |
+| `bermooda theme …`                     | Add / update / remove / list themes                                  |
+| `bermooda version`                     | Show CLI and shop versions                                           |
+| `bermooda upgrade`                     | Upgrade the CLI itself                                               |
+| `bermooda help [command]`              | Built-in help                                                        |
+
+**Full command reference, flags, and design notes:** see the [bermooda-cli README](https://github.com/bermooda/bermooda-cli#readme) and [DESIGN.md](https://github.com/bermooda/bermooda-cli/blob/main/DESIGN.md). In-repo product checklist: [docs/cli-specs.md](docs/cli-specs.md).
+
+Offline install from a local checkout of this repo:
+
+```bash
+bermooda install --local --source /path/to/bermooda --dir ./my-shop -y \
+  --admin-email admin@example.com \
+  --admin-password 'TestPass123!' \
+  --store-name 'Demo Shop'
+```
+
+## Working from this repository
+
+Useful if you are contributing to the platform itself:
+
+```bash
+npm install
+cp .env.example .env   # placeholders are fine for basic local work
+npm run setup          # prisma generate + migrate deploy
 npm run seed           # optional demo catalog + admin
 ```
 
 ### Development
 
-Start the development server with HMR:
-
 ```bash
-# With 1Password CLI wrapping env (local default):
+# Default local script (wraps env with 1Password CLI if you use it):
 npm run dev
 
-# Without 1Password (Cloud Agent / plain env file):
+# Plain env file (no 1Password):
 npx react-router dev --port 3000 --host
-# or, after install: bermooda dev
+# or, with the CLI installed:
+bermooda dev
 ```
 
-Your application will be available at `http://localhost:3000`.
+App: [http://localhost:3000](http://localhost:3000)
 
-## Building for Production
+### Common scripts
 
-Create a production build:
+| Task             | Command                                   |
+| ---------------- | ----------------------------------------- |
+| Setup DB         | `npm run setup`                           |
+| Seed demo data   | `npm run seed`                            |
+| Tests            | `npm run test`                            |
+| Lint             | `npm run lint`                            |
+| Format           | `npm run fmt`                             |
+| Production build | `npm run build`                           |
+| New migration    | `npm run prisma:migrate -- --name <name>` |
+
+Reset local SQLite: delete `prisma/dev.db` and re-run `npm run setup`.
+
+## Architecture (at a glance)
+
+```
+app/
+  core/       # Domain workflows (catalog, cart, orders, payments, …)
+  libs/       # Infrastructure (auth, Prisma, queue, alerting, SDKs)
+  routes/     # Storefront, admin, API, webhooks, auth
+  themes/     # Storefront themes (active theme renders the shop)
+  plugins/    # Hook-based extensions (blocks, admin pages, providers)
+  components/ # Shared admin / auth / UI primitives
+```
+
+- **Routes** stay thin: loaders/actions call `app/core/*`.
+- **Themes** receive data via props/loaders; they do not import server core modules.
+- **Plugins** register hooks, providers, and optional admin/storefront UI.
+
+Deeper reading:
+
+- [docs/themes.md](docs/themes.md) — storefront themes
+- [docs/plugins.md](docs/plugins.md) — plugin system
+- [docs/api.md](docs/api.md) — public & admin REST API
+- [docs/auth.md](docs/auth.md) — dual admin / customer auth
+- [docs/testing.md](docs/testing.md) — Vitest setup
+
+## Configuration
+
+Copy [`.env.example`](.env.example) to `.env`. Placeholder values are enough to boot the app; wire real keys when you need payments, email, OAuth, or object storage.
+
+Notable variables:
+
+| Variable                                    | Purpose                                                         |
+| ------------------------------------------- | --------------------------------------------------------------- |
+| `DATABASE_URL`                              | SQLite (`file:./prisma/dev.db`) or PostgreSQL connection string |
+| `BETTER_AUTH_SECRET`                        | Auth secret (use a strong value in production)                  |
+| `STRIPE_*`                                  | Payments                                                        |
+| `RESEND_API_KEY`                            | Transactional email                                             |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional Google OAuth                                           |
+| `STORAGE_*`                                 | S3-compatible object storage (e.g. Tigris on Fly.io)            |
+
+### Google OAuth (optional)
+
+1. Create a project in the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create OAuth client credentials (Web application)
+3. Authorized redirect URIs:
+   - Development: `http://localhost:3000/auth/callback/google`
+   - Production: `https://your-domain/auth/callback/google`
+4. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`
+
+## Production
+
+### Build
 
 ```bash
 npm run build
+npm start   # or: bermooda start
 ```
 
-## Deployment
+Build output:
 
-### Docker Deployment
+```
+build/
+  client/   # Static assets
+  server/   # Server bundle
+```
 
-To build and run using Docker:
+### Docker
 
 ```bash
-# For npm
 docker build -t bermooda .
-
-# Run the container
 docker run -p 3000:3000 bermooda
 
-# Run the container without LiteFS
-docker run -p 8081:8081 -p 8080:8080 --env-file .env -e DATABASE_URL=file:/app/sqlite.db bermooda npm run start
+# With env file and SQLite path (example):
+docker run -p 8081:8081 -p 8080:8080 --env-file .env \
+  -e DATABASE_URL=file:/app/sqlite.db bermooda npm run start
 ```
 
-### Deploying to Fly.io
+### Fly.io
 
-Prior to your first deployment, you'll need to do a few things:
+bermooda ships with `fly.toml`, LiteFS config, and a production-oriented Dockerfile. High-level flow:
 
-1. [Install Fly](https://fly.io/docs/getting-started/installing-flyctl/).
+1. [Install flyctl](https://fly.io/docs/getting-started/installing-flyctl/) and `fly auth login`
+2. Create apps (production + optional staging); match names in `fly.toml`
+3. Import secrets: `fly secrets import < .env` (plus a strong `BETTER_AUTH_SECRET`)
+4. Create a data volume, attach Consul for LiteFS leases, and create Tigris storage if you need uploads
+5. Deploy via Fly or your preferred CI
 
-   > **Note**: Try `flyctl` instead of `fly` if the commands below won't work.
+See [docs/storage.md](docs/storage.md) and [docs/postgres.md](docs/postgres.md) when you move beyond local SQLite.
 
-2. Sign up and log in to Fly:
+## Contributing
 
-   ```sh
-   fly auth signup
-   ```
+Issues and PRs that improve the commerce core, themes, plugins, docs, or DX are welcome. Prefer small, focused changes that match patterns in nearby files. Project conventions live in [AGENTS.md](AGENTS.md) / [Claude.md](Claude.md).
 
-   > **Note**: If you have more than one Fly account, ensure that you are signed
-   > into the same account in the Fly CLI as you are in the browser. In your
-   > terminal, run `fly auth whoami` and ensure the email matches the Fly
-   > account signed into the browser.
-
-3. Create two apps on Fly, one for staging and one for production:
-
-   ```sh
-   fly apps create [YOUR_APP_NAME]
-   fly apps create [YOUR_APP_NAME]-staging
-   ```
-
-   > **Note**: Make sure this name matches the `app` set in your `fly.toml`
-   > file. Otherwise, you will not be able to deploy.
-
-4. Initialize Git.
-
-   ```sh
-   git init
-   ```
-
-- Create a new [GitHub Repository](https://repo.new), and then add it as the
-  remote for your project. **Do not push your app yet!**
-
-  ```sh
-  git remote add origin <ORIGIN_URL>
-  ```
-
-5. Add secrets:
-
-- Add a `FLY_API_TOKEN` to your GitHub repo. To do this, go to your user
-  settings on Fly and create a new
-  [token](https://web.fly.io/user/personal_access_tokens/new), then add it to
-  [your repo secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
-  with the name `FLY_API_TOKEN`.
-
-- Add all environment variables to your fly app secrets, to do this you can run the following command:
-
-  ```sh
-  fly secrets import < .env
-  ```
-
-- OPTIONAL:Add a `SESSION_SECRET` and `HONEYPOT_SECRET` to your fly app secrets, to do
-  this you can run the following commands:
-
-  ```sh
-  fly secrets set SESSION_SECRET=$(openssl rand -hex 32) HONEYPOT_SECRET=$(openssl rand -hex 32) --app [YOUR_APP_NAME]
-  fly secrets set SESSION_SECRET=$(openssl rand -hex 32) HONEYPOT_SECRET=$(openssl rand -hex 32) --app [YOUR_APP_NAME]-staging
-  ```
-
-  > **Note**: If you don't have openssl installed, you can also use
-  > [1Password](https://1password.com/password-generator) to generate a random
-  > secret, just replace `$(openssl rand -hex 32)` with the generated secret.
-
-- OPTIONAL:Add a `ALLOW_INDEXING` with `false` value to your non-production fly app
-  secrets, this is to prevent duplicate content from being indexed multiple
-  times by search engines. To do this you can run the following commands:
-
-  ```sh
-  fly secrets set ALLOW_INDEXING=false --app [YOUR_APP_NAME]-staging
-  ```
-
-6. Create production database:
-
-   Create a persistent volume for the sqlite database for both your staging and
-   production environments. Run the following (feel free to change the GB size
-   based on your needs and the region of your choice
-   (`https://fly.io/docs/reference/regions/`). If you do change the region, make
-   sure you change the `primary_region` in fly.toml as well):
-
-   ```sh
-   fly volumes create data --region syd --size 1 --app [YOUR_APP_NAME]
-   fly volumes create data --region syd --size 1 --app [YOUR_APP_NAME]-staging
-   ```
-
-7. Attach Consul:
-
-- Consul is a fly-managed service that manages your primary instance for data
-  replication
-  ([learn more about configuring consul](https://fly.io/docs/litefs/getting-started/#lease-configuration)).
-
-  ```sh
-  fly consul attach --app [YOUR_APP_NAME]
-  fly consul attach --app [YOUR_APP_NAME]-staging
-  ```
-
-8. Set up Tigris object storage:
-
-   ```sh
-   fly storage create --app [YOUR_APP_NAME]
-   fly storage create --app [YOUR_APP_NAME]-staging
-   ```
-
-   This will create a Tigris object storage bucket for both your production and
-   staging environments. The bucket will be used for storing uploaded files and
-   other objects in your application. This will also automatically create the
-   necessary environment variables for your app. During local development, this
-   is completely mocked out so you don't need to worry about it.
-
-9. Commit!
-
-bermooda comes with a GitHub Action that handles automatically
-deploying your app to production and staging environments.
-
-Now that everything is set up you can commit and push your changes to your
-repo. Every commit to your `main` branch will trigger a deployment to your
-production environment, and every commit to your `dev` branch will trigger a
-deployment to your staging environment.
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
+```bash
+npm run test
+npm run lint
 ```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for a practical default. You can use whatever CSS approach you prefer for themes and custom storefronts.
-
-## Google OAuth Setup
-
-To enable Google authentication, you need to set up the following environment variables:
-
-1. Create a project in the [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable the Google API
-3. Create OAuth credentials:
-   - Go to "Credentials" → "Create Credentials" → "OAuth client ID"
-   - Select "Web application" as the application type
-   - Add authorized redirect URIs:
-     - For development: `http://localhost:3000/auth/callback/google`
-     - For production: `https://[app].fly.dev/auth/callback/google`
-4. Copy the Client ID and Client Secret
-
-Add these environment variables to your `.env` file:
-
-```
-GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
-```
-
-## Authentication
-
-Make sure to set a strong `BETTER_AUTH_SECRET` environment variable in production.
