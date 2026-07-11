@@ -2,18 +2,18 @@
 
 The **bermooda-cli** design and implementation live in a **standalone repository**:
 
-- **Repo:** https://github.com/bermooda/bermooda-cli  
-- **Local (this workspace):** `../bermooda-cli/`  
-- **Full design:** [`bermooda-cli/DESIGN.md`](../../bermooda-cli/DESIGN.md)  
+- **Repo:** https://github.com/bermooda/bermooda-cli
+- **Local (this workspace):** `../bermooda-cli/`
+- **Full design:** [`bermooda-cli/DESIGN.md`](../../bermooda-cli/DESIGN.md)
 - **Product checklist:** [cli-specs.md](./cli-specs.md)
 
 ### Summary
 
-| Item | Value |
-| --- | --- |
-| npm package | `bermooda-cli` |
-| Binary | `bermooda` |
-| Install | `npm i -g bermooda-cli@latest` |
+| Item        | Value                                            |
+| ----------- | ------------------------------------------------ |
+| npm package | `bermooda-cli`                                   |
+| Binary      | `bermooda`                                       |
+| Install     | `npm i -g bermooda-cli@latest`                   |
 | Shop source | Downloaded from `bermooda/bermooda` on `install` |
 
 ### App-side work still needed
