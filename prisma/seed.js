@@ -1,16 +1,66 @@
 import 'dotenv/config';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcryptjs';
+import pg from 'pg';
 
-import {
-  DEFAULT_ENABLED_PLUGINS,
-  DEFAULT_PLUGIN_ORDER,
-  SETTING_DEFAULTS,
-} from '../app/core/settings/defaults.js';
 import { PrismaClient } from './generated/client.ts';
 
-const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL });
-const prisma = new PrismaClient({ adapter });
+// Inline seed defaults so `node prisma/seed.js` works without Vite `#/` aliases.
+// Keep in sync with app/core/settings/defaults.js where practical.
+const DEFAULT_ENABLED_PLUGINS = [];
+const DEFAULT_PLUGIN_ORDER = [];
+const SETTING_DEFAULTS = {
+  defaultCurrency: 'USD',
+  currencies: ['USD', 'EUR', 'AUD'],
+  defaultLocale: 'en',
+  locales: ['en', 'de', 'fr'],
+  activeTheme: 'default',
+  pluginOrder: DEFAULT_PLUGIN_ORDER,
+};
+
+/**
+ * Resolve DB provider from DATABASE_PROVIDER or DATABASE_URL.
+ * @returns {'sqlite' | 'postgresql'}
+ */
+function getDatabaseProvider() {
+  const explicit = process.env.DATABASE_PROVIDER?.trim().toLowerCase();
+  if (explicit === 'postgresql' || explicit === 'postgres') {
+    return 'postgresql';
+  }
+  if (explicit === 'sqlite') {
+    return 'sqlite';
+  }
+  const url = process.env.DATABASE_URL ?? '';
+  if (url.startsWith('postgresql://') || url.startsWith('postgres://')) {
+    return 'postgresql';
+  }
+  return 'sqlite';
+}
+
+/**
+ * Create Prisma client with the adapter matching env (SQLite or PostgreSQL).
+ * Required for bermooda-cli --server installs; seed previously hard-coded SQLite.
+ */
+function createPrismaClient() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL is required for seed / cli-bootstrap');
+  }
+  const provider = getDatabaseProvider();
+  if (provider === 'postgresql') {
+    const pool = new pg.Pool({ connectionString: databaseUrl });
+    return new PrismaClient({ adapter: new PrismaPg(pool) });
+  }
+  return new PrismaClient({
+    adapter: new PrismaBetterSqlite3({ url: databaseUrl }),
+  });
+}
+
+const prisma = createPrismaClient();
+const minimalSeed =
+  process.env.BERMOODA_MINIMAL_SEED === '1' ||
+  process.env.BERMOODA_MINIMAL_SEED === 'true';
 
 const PRICE_CURRENCIES = [
   { currency: 'USD', priceCents: 2999 },
@@ -147,10 +197,13 @@ async function linkProductToCategory(productId, categoryId, position = 0) {
 }
 
 async function main() {
-  console.log('Seeding database…');
+  console.log(
+    `Seeding database… (provider=${getDatabaseProvider()}${minimalSeed ? ', minimal' : ''})`
+  );
 
   const adminEmail = process.env.SEED_ADMIN_EMAIL ?? 'admin@bermooda.dev';
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? 'changeme123!';
+  const shopName = process.env.SEED_SHOP_NAME ?? null;
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
   const admin = await prisma.user.upsert({
@@ -171,6 +224,29 @@ async function main() {
     update: { role: 'admin', emailVerified: true },
   });
 
+  // Keep credential password in sync on re-seed / CLI re-bootstrap
+  const credential = await prisma.account.findFirst({
+    where: {
+      userId: admin.id,
+      providerId: 'credential',
+    },
+  });
+  if (credential) {
+    await prisma.account.update({
+      where: { id: credential.id },
+      data: { password: passwordHash },
+    });
+  } else {
+    await prisma.account.create({
+      data: {
+        userId: admin.id,
+        accountId: adminEmail,
+        providerId: 'credential',
+        password: passwordHash,
+      },
+    });
+  }
+
   console.log(`Admin user: ${admin.email} (id: ${admin.id})`);
 
   await upsertSetting('defaultCurrency', SETTING_DEFAULTS.defaultCurrency);
@@ -189,7 +265,17 @@ async function main() {
       : ['sample-analytics']
   );
 
+  if (shopName) {
+    await upsertSetting('shopName', shopName);
+    console.log(`Shop name setting: ${shopName}`);
+  }
+
   console.log('Settings seeded.');
+
+  if (minimalSeed) {
+    console.log('Minimal seed complete (demo catalog skipped).');
+    return;
+  }
 
   const categories = [
     {
