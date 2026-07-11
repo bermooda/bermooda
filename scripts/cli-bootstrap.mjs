@@ -13,10 +13,10 @@
  */
 
 import 'dotenv/config';
+import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const shopRoot = join(__dirname, '..');
