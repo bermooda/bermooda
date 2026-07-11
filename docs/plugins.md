@@ -616,9 +616,7 @@ export const routes = [
   {
     path: '',
     async loader() {
-      const data = await prisma.pluginData.findUnique({
-        /* ... */
-      });
+      const data = await prisma.pluginData.findUnique({/* ... */});
       return { items: data ? JSON.parse(data.value) : [] };
     },
     Component: MyAdminPage,
