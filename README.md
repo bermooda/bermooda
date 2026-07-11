@@ -13,12 +13,29 @@
 
 ## Getting Started
 
-### Installation
+### Recommended: bermooda CLI
 
-Install the dependencies:
+Scaffold a new shop with the global CLI ([bermooda-cli](https://github.com/bermooda/bermooda-cli)):
+
+```bash
+npm i -g bermooda-cli@latest
+bermooda install --local --dir ./my-shop -y \
+  --admin-email admin@example.com \
+  --admin-password 'TestPass123!' \
+  --store-name 'Demo Shop'
+cd my-shop
+bermooda dev
+```
+
+### Manual installation
+
+From this repository:
 
 ```bash
 npm i
+cp .env.example .env   # if needed
+npm run setup
+npm run seed           # optional demo catalog + admin
 ```
 
 ### Development
@@ -26,7 +43,12 @@ npm i
 Start the development server with HMR:
 
 ```bash
+# With 1Password CLI wrapping env (local default):
 npm run dev
+
+# Without 1Password (Cloud Agent / plain env file):
+npx react-router dev --port 3000 --host
+# or, after install: bermooda dev
 ```
 
 Your application will be available at `http://localhost:3000`.
