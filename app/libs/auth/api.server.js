@@ -3,7 +3,6 @@
 
 import { createContext } from 'react-router';
 
-import { enforceRateLimit } from '#/libs/rate-limit.server';
 import { validateApiKey } from '#/core/api-keys/index.server';
 
 /**
@@ -55,13 +54,4 @@ export async function requireApiKey(request, requiredScopes = []) {
       { status: err.status ?? 401 }
     );
   }
-}
-
-/**
- * Enforce public API rate limits for unauthenticated storefront endpoints.
- *
- * @param {Request} request
- */
-export function enforcePublicApiRateLimit(request) {
-  enforceRateLimit(request, 'api-public');
 }

@@ -4,16 +4,6 @@
 
 // -- Hooks ------------------------------------------------------------------
 
-/**
- * Returns current shop context from Settings + i18n + currency services.
- * Stub: returns hard-coded defaults until the storefront layout wires in
- * the real values from the i18n/currency loaders.
- * @returns {{ currency: string, locale: string }}
- */
-export function useShop() {
-  return { currency: 'USD', locale: 'en' };
-}
-
 export { useT, translate } from '#/core/i18n/index';
 
 // -- Utilities --------------------------------------------------------------
@@ -33,13 +23,6 @@ export {
 } from '#/core/catalog/display';
 
 export { parseShippingAddressSnapshot } from '#/core/orders/address-snapshot';
-
-// -- Components -------------------------------------------------------------
-
-// Slot intentionally returns children as-is (no JSX) so this file stays .js.
-export function Slot({ name: _name, children }) {
-  return children ?? null;
-}
 
 // -- Selectors --------------------------------------------------------------
 

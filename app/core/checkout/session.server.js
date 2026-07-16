@@ -92,6 +92,3 @@ export function normaliseCheckoutSessionForDisplay(session) {
     shippingOptionId: shippingOption?.id ?? null,
   };
 }
-
-// Re-export under the name used by session.js if needed elsewhere
-export { normaliseCheckoutSessionForDisplay as normaliseCheckoutSession };

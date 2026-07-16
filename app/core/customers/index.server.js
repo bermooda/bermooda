@@ -91,6 +91,39 @@ export async function getCustomer(id) {
 }
 
 /**
+ * Load admin customer detail with addresses and recent orders.
+ *
+ * @param {string} id
+ * @returns {Promise<object|null>}
+ */
+export async function getCustomerAdminDetail(id) {
+  return prisma.customer.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      phone: true,
+      preferredLocale: true,
+      createdAt: true,
+      addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
+      orders: {
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          currency: true,
+          totalCents: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+}
+
+/**
  * Update allowed profile fields for a customer.
  * Only name, phone, and preferredLocale may be updated.
  * @param {string} id
