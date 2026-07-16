@@ -237,6 +237,10 @@ export default [
         'routes/api/admin/v1/marketing/abandoned-cart-sequences.jsx'
       ),
       route(
+        'marketing/abandoned-cart-sequences/run',
+        'routes/api/admin/v1/marketing/abandoned-cart-sequences/run.jsx'
+      ),
+      route(
         'marketing/abandoned-cart-sequences/:id',
         'routes/api/admin/v1/marketing/abandoned-cart-sequences/$id.jsx'
       ),

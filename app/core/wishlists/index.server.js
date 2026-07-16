@@ -4,6 +4,8 @@
 import prisma from '#/libs/prisma.server';
 import { containsFilter } from '#/libs/prisma/filters.server';
 import {
+  buildPaginationMeta,
+  buildPrismaPagination,
   parseListPagination,
   readQueryParam,
 } from '#/libs/prisma/pagination.server';
@@ -396,6 +398,7 @@ async function requireVariantRecord(variantId) {
  *   limit?: number,
  *   locale?: string,
  * }} options
+ * @returns {Promise<{ items: object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listWishlistItems(options) {
   const params =
@@ -413,12 +416,17 @@ export async function listWishlistItems(options) {
     });
   }
 
-  const safePage = Math.max(1, params.page ?? 1);
-  const safeLimit = Math.min(
-    Math.max(1, params.limit ?? DEFAULT_WISHLIST_LIST_LIMIT),
-    MAX_WISHLIST_LIST_RESULTS
-  );
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_WISHLIST_LIST_LIMIT,
+    maxLimit: MAX_WISHLIST_LIST_RESULTS,
+  });
   const where = buildWishlistItemWhere(params);
 
   const [items, total] = await Promise.all([
@@ -427,7 +435,7 @@ export async function listWishlistItems(options) {
       include: WISHLIST_ITEM_LIST_INCLUDE,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.wishlistItem.count({ where }),
   ]);
@@ -439,10 +447,7 @@ export async function listWishlistItems(options) {
 
   return {
     items: serializedItems,
-    total,
-    page: safePage,
-    limit: safeLimit,
-    totalPages: Math.ceil(total / safeLimit) || 1,
+    ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
   };
 }
 
@@ -457,6 +462,7 @@ export async function listWishlistItems(options) {
  *   limit?: number,
  *   locale?: string,
  * }} [options]
+ * @returns {Promise<{ items: object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listWishlistItemsAdmin(options = {}) {
   const params =
@@ -468,12 +474,17 @@ export async function listWishlistItemsAdmin(options = {}) {
       ? options
       : parseWishlistAdminListParams(options);
 
-  const safePage = Math.max(1, params.page ?? 1);
-  const safeLimit = Math.min(
-    Math.max(1, params.limit ?? DEFAULT_WISHLIST_LIST_LIMIT),
-    MAX_WISHLIST_LIST_RESULTS
-  );
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_WISHLIST_LIST_LIMIT,
+    maxLimit: MAX_WISHLIST_LIST_RESULTS,
+  });
   const where = buildWishlistItemWhere(params);
 
   const [items, total] = await Promise.all([
@@ -482,7 +493,7 @@ export async function listWishlistItemsAdmin(options = {}) {
       include: WISHLIST_ITEM_LIST_INCLUDE,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.wishlistItem.count({ where }),
   ]);
@@ -494,10 +505,7 @@ export async function listWishlistItemsAdmin(options = {}) {
 
   return {
     items: serializedItems,
-    total,
-    page: safePage,
-    limit: safeLimit,
-    totalPages: Math.ceil(total / safeLimit) || 1,
+    ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
   };
 }
 

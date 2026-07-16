@@ -3,6 +3,12 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import {
+  buildPaginationMeta,
+  buildPrismaPagination,
+  parseListPagination,
+  readQueryParam,
+} from '#/libs/prisma/pagination.server';
 import { emit } from '#/core/events/index.server';
 import { incrementInventory } from '#/core/inventory/index.server';
 import { inventoryItemsFromLines } from '#/core/inventory/items';
@@ -44,31 +50,17 @@ const RETURN_LIST_INCLUDE = {
  * Parse return list query params from URLSearchParams or a plain object.
  *
  * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ * @returns {{ page: number, limit: number, orderId?: string, customerId?: string, status?: string }}
  */
 export function parseReturnListParams(source = {}) {
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
+  const { page, limit } = parseListPagination(source, {
+    limit: DEFAULT_RETURN_LIST_LIMIT,
+    max: MAX_RETURN_LIST_RESULTS,
+  });
 
-  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
-  const limit = Math.min(
-    Math.max(
-      1,
-      parseInt(get('limit') ?? String(DEFAULT_RETURN_LIST_LIMIT), 10) ||
-        DEFAULT_RETURN_LIST_LIMIT
-    ),
-    MAX_RETURN_LIST_RESULTS
-  );
-
-  const orderId = get('orderId')?.trim();
-  const customerId = get('customerId')?.trim();
-  const status = get('status')?.trim();
+  const orderId = readQueryParam(source, 'orderId')?.trim();
+  const customerId = readQueryParam(source, 'customerId')?.trim();
+  const status = readQueryParam(source, 'status')?.trim();
 
   if (status && !RETURN_STATUS_SET.has(status)) {
     throw Object.assign(new Error('Invalid return status filter.'), {
@@ -607,6 +599,7 @@ export async function getReturn(returnId) {
  *   page?: number,
  *   limit?: number,
  * }} options
+ * @returns {Promise<{ returns: object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listReturns(options = {}) {
   const params =
@@ -614,12 +607,17 @@ export async function listReturns(options = {}) {
       ? options
       : parseReturnListParams(options);
 
-  const safePage = Math.max(1, params.page ?? 1);
-  const safeLimit = Math.min(
-    Math.max(1, params.limit ?? DEFAULT_RETURN_LIST_LIMIT),
-    MAX_RETURN_LIST_RESULTS
-  );
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_RETURN_LIST_LIMIT,
+    maxLimit: MAX_RETURN_LIST_RESULTS,
+  });
   const where = buildReturnWhere(params);
 
   const [items, total] = await Promise.all([
@@ -628,16 +626,13 @@ export async function listReturns(options = {}) {
       include: RETURN_LIST_INCLUDE,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.return.count({ where }),
   ]);
 
   return {
     returns: items.map(serializeReturn),
-    total,
-    page: safePage,
-    limit: safeLimit,
-    totalPages: Math.ceil(total / safeLimit) || 1,
+    ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
   };
 }

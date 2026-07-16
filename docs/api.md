@@ -554,6 +554,10 @@ Get a sequence step by id.
 
 Update a sequence step (including `active` toggle).
 
+#### `POST /api/admin/v1/marketing/abandoned-cart-sequences/run`
+
+Queue abandoned-cart sequence processing. Returns `{ queued: true }` with status 202.
+
 ---
 
 ### Reports

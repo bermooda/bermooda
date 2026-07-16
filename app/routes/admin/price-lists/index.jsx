@@ -3,7 +3,7 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
+import { listRecentVariantsForInventory } from '#/core/inventory/index.server';
 import {
   listPriceLists,
   upsertPriceListEntry,
@@ -17,14 +17,15 @@ import PageHeader from '#/components/admin/page-header';
 import Button from '#/components/ui/button';
 
 export async function loader() {
-  const [priceLists, variants] = await Promise.all([
+  const [priceLists, recentVariants] = await Promise.all([
     listPriceLists(),
-    prisma.productVariant.findMany({
-      take: 50,
-      orderBy: { updatedAt: 'desc' },
-      select: { id: true, sku: true },
-    }),
+    listRecentVariantsForInventory({ take: 50 }),
   ]);
+
+  const variants = recentVariants.map((variant) => ({
+    id: variant.id,
+    sku: variant.sku,
+  }));
 
   return { priceLists, variants };
 }

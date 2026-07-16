@@ -4,6 +4,8 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import {
+  buildPaginationMeta,
+  buildPrismaPagination,
   parseListPagination,
   readQueryParam,
 } from '#/libs/prisma/pagination.server';
@@ -318,6 +320,7 @@ async function requireOpenSession(sessionId) {
  *   page?: number,
  *   limit?: number,
  * }} [options]
+ * @returns {Promise<{ sessions: object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listPosSessions(options = {}) {
   const params =
@@ -329,12 +332,17 @@ export async function listPosSessions(options = {}) {
       ? options
       : parseSessionListParams(options);
 
-  const safePage = Math.max(1, params.page ?? 1);
-  const safeLimit = Math.min(
-    Math.max(1, params.limit ?? DEFAULT_SESSION_LIST_LIMIT),
-    MAX_SESSION_LIST_RESULTS
-  );
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_SESSION_LIST_LIMIT,
+    maxLimit: MAX_SESSION_LIST_RESULTS,
+  });
   const where = buildSessionWhere({
     staffId: params.staffId,
     locationId: params.locationId,
@@ -347,17 +355,14 @@ export async function listPosSessions(options = {}) {
       include: SESSION_LIST_INCLUDE,
       orderBy: { openedAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.posSession.count({ where }),
   ]);
 
   return {
     sessions: items.map(serializeSession),
-    total,
-    page: safePage,
-    limit: safeLimit,
-    totalPages: Math.ceil(total / safeLimit) || 1,
+    ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
   };
 }
 
