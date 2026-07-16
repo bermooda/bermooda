@@ -392,7 +392,6 @@ model Cart {
   salesChannel SalesChannel? @relation(fields: [salesChannelId], references: [id])
   lines      CartLine[]
   checkouts  CheckoutSession[]
-  discounts  CartDiscount[]
 
   @@index([customerId])
   @@index([salesChannelId])
@@ -585,7 +584,6 @@ model Discount {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  cartDiscounts  CartDiscount[]
   orderDiscounts OrderDiscount[]
 
   @@index([automatic, active])
@@ -744,22 +742,6 @@ model TaxClass {
   updatedAt DateTime @updatedAt
 
   variants ProductVariant[]
-}
-
-model CartDiscount {
-  id            String   @id @default(cuid())
-  cartId        String
-  discountId    String
-  code          String?
-  discountCents Int      @default(0)
-  createdAt     DateTime @default(now())
-
-  cart     Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  discount Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
-
-  @@unique([cartId, discountId])
-  @@index([cartId])
-  @@index([discountId])
 }
 
 model OrderDiscount {

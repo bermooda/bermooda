@@ -424,7 +424,6 @@ export const ModelName = {
   WebhookSubscription: 'WebhookSubscription',
   WebhookDelivery: 'WebhookDelivery',
   TaxClass: 'TaxClass',
-  CartDiscount: 'CartDiscount',
   OrderDiscount: 'OrderDiscount',
   Return: 'Return',
   ReturnLine: 'ReturnLine',
@@ -490,7 +489,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "twoFactor" | "customer" | "customerSession" | "customerAccount" | "customerVerification" | "customerTwoFactor" | "address" | "product" | "productVariant" | "variantPrice" | "productOption" | "productOptionValue" | "category" | "productCategory" | "media" | "productMedia" | "cart" | "cartLine" | "checkoutSession" | "order" | "orderLine" | "shipment" | "shipmentLine" | "refund" | "discount" | "pluginData" | "setting" | "translation" | "slug" | "productAttribute" | "productAttributeValue" | "webhookEvent" | "apiKey" | "webhookSubscription" | "webhookDelivery" | "taxClass" | "cartDiscount" | "orderDiscount" | "return" | "returnLine" | "storeCreditLedger" | "page" | "menu" | "menuItem" | "review" | "auditLog" | "scheduledExport" | "exportRun" | "location" | "inventoryLevel" | "customerGroup" | "customerGroupMember" | "priceList" | "priceListEntry" | "giftCard" | "giftCardRedemption" | "wishlist" | "wishlistItem" | "backInStockSubscription" | "digitalAsset" | "bundleItem" | "rolePermission" | "loyaltyTransaction" | "referralCode" | "referral" | "marketingSegment" | "marketingCampaign" | "campaignDelivery" | "abandonedCartSequence" | "abandonedCartSend" | "salesChannel" | "channelProduct" | "channelPriceOverride" | "collection" | "collectionProduct" | "productTag" | "productTagAssignment" | "productRelation" | "variantOptionValue" | "subscriptionPlan" | "subscription" | "posSession" | "posOrder" | "company" | "companyMember" | "quote" | "quoteLine"
+    modelProps: "user" | "session" | "account" | "verification" | "twoFactor" | "customer" | "customerSession" | "customerAccount" | "customerVerification" | "customerTwoFactor" | "address" | "product" | "productVariant" | "variantPrice" | "productOption" | "productOptionValue" | "category" | "productCategory" | "media" | "productMedia" | "cart" | "cartLine" | "checkoutSession" | "order" | "orderLine" | "shipment" | "shipmentLine" | "refund" | "discount" | "pluginData" | "setting" | "translation" | "slug" | "productAttribute" | "productAttributeValue" | "webhookEvent" | "apiKey" | "webhookSubscription" | "webhookDelivery" | "taxClass" | "orderDiscount" | "return" | "returnLine" | "storeCreditLedger" | "page" | "menu" | "menuItem" | "review" | "auditLog" | "scheduledExport" | "exportRun" | "location" | "inventoryLevel" | "customerGroup" | "customerGroupMember" | "priceList" | "priceListEntry" | "giftCard" | "giftCardRedemption" | "wishlist" | "wishlistItem" | "backInStockSubscription" | "digitalAsset" | "bundleItem" | "rolePermission" | "loyaltyTransaction" | "referralCode" | "referral" | "marketingSegment" | "marketingCampaign" | "campaignDelivery" | "abandonedCartSequence" | "abandonedCartSend" | "salesChannel" | "channelProduct" | "channelPriceOverride" | "collection" | "collectionProduct" | "productTag" | "productTagAssignment" | "productRelation" | "variantOptionValue" | "subscriptionPlan" | "subscription" | "posSession" | "posOrder" | "company" | "companyMember" | "quote" | "quoteLine"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3451,80 +3450,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.TaxClassCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.TaxClassCountAggregateOutputType> | number
-        }
-      }
-    }
-    CartDiscount: {
-      payload: Prisma.$CartDiscountPayload<ExtArgs>
-      fields: Prisma.CartDiscountFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.CartDiscountFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CartDiscountPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.CartDiscountFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CartDiscountPayload>
-        }
-        findFirst: {
-          args: Prisma.CartDiscountFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CartDiscountPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.CartDiscountFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CartDiscountPayload>
-        }
-        findMany: {
-          args: Prisma.CartDiscountFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CartDiscountPayload>[]
-        }
-        create: {
-          args: Prisma.CartDiscountCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CartDiscountPayload>
-        }
-        createMany: {
-          args: Prisma.CartDiscountCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.CartDiscountCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CartDiscountPayload>[]
-        }
-        delete: {
-          args: Prisma.CartDiscountDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CartDiscountPayload>
-        }
-        update: {
-          args: Prisma.CartDiscountUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CartDiscountPayload>
-        }
-        deleteMany: {
-          args: Prisma.CartDiscountDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.CartDiscountUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.CartDiscountUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CartDiscountPayload>[]
-        }
-        upsert: {
-          args: Prisma.CartDiscountUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$CartDiscountPayload>
-        }
-        aggregate: {
-          args: Prisma.CartDiscountAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateCartDiscount>
-        }
-        groupBy: {
-          args: Prisma.CartDiscountGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.CartDiscountGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.CartDiscountCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.CartDiscountCountAggregateOutputType> | number
         }
       }
     }
@@ -7863,18 +7788,6 @@ export const TaxClassScalarFieldEnum = {
 export type TaxClassScalarFieldEnum = (typeof TaxClassScalarFieldEnum)[keyof typeof TaxClassScalarFieldEnum]
 
 
-export const CartDiscountScalarFieldEnum = {
-  id: 'id',
-  cartId: 'cartId',
-  discountId: 'discountId',
-  code: 'code',
-  discountCents: 'discountCents',
-  createdAt: 'createdAt'
-} as const
-
-export type CartDiscountScalarFieldEnum = (typeof CartDiscountScalarFieldEnum)[keyof typeof CartDiscountScalarFieldEnum]
-
-
 export const OrderDiscountScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
@@ -8740,7 +8653,6 @@ export type GlobalOmitConfig = {
   webhookSubscription?: Prisma.WebhookSubscriptionOmit
   webhookDelivery?: Prisma.WebhookDeliveryOmit
   taxClass?: Prisma.TaxClassOmit
-  cartDiscount?: Prisma.CartDiscountOmit
   orderDiscount?: Prisma.OrderDiscountOmit
   return?: Prisma.ReturnOmit
   returnLine?: Prisma.ReturnLineOmit

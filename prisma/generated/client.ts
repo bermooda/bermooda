@@ -242,11 +242,6 @@ export type WebhookDelivery = Prisma.WebhookDeliveryModel
  */
 export type TaxClass = Prisma.TaxClassModel
 /**
- * Model CartDiscount
- * 
- */
-export type CartDiscount = Prisma.CartDiscountModel
-/**
  * Model OrderDiscount
  * 
  */

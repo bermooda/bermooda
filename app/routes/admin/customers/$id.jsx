@@ -34,6 +34,7 @@ import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
+import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
 import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 import SlotBlocks from '#/components/slot-blocks';
@@ -276,23 +277,6 @@ export async function action({ request, params }) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const STATUS_TONES = {
-  pending: 'warn',
-  pending_payment: 'warn',
-  paid: 'accent',
-  fulfilled: 'success',
-  cancelled: 'danger',
-  refunded: 'neutral',
-};
-
-function StatusBadge({ status }) {
-  return <Badge tone={STATUS_TONES[status] ?? 'neutral'}>{status}</Badge>;
-}
-
-function formatCents(cents, currency = 'USD') {
-  return formatPrice(cents, currency);
-}
-
 function SectionCard({ title, description, children }) {
   return (
     <Card>
@@ -483,7 +467,7 @@ export default function AdminCustomerRoute() {
         <div className="border-border bg-surface-2 mb-6 rounded-lg border p-4">
           <p className="text-text-muted text-sm">Current balance</p>
           <p className="text-text text-2xl font-semibold">
-            {formatCents(storeCredit.balanceCents)}
+            {formatPrice(storeCredit.balanceCents)}
           </p>
         </div>
 
@@ -546,10 +530,10 @@ export default function AdminCustomerRoute() {
                     )}
                   >
                     {entry.amountCents >= 0 ? '+' : ''}
-                    {formatCents(entry.amountCents)}
+                    {formatPrice(entry.amountCents)}
                   </Td>
                   <Td className="text-text text-right">
-                    {formatCents(entry.balanceAfterCents)}
+                    {formatPrice(entry.balanceAfterCents)}
                   </Td>
                 </tr>
               ))}
@@ -653,10 +637,10 @@ export default function AdminCustomerRoute() {
                     </Link>
                   </Td>
                   <Td>
-                    <StatusBadge status={order.status} />
+                    <OrderStatusBadge status={order.status} />
                   </Td>
                   <Td className="text-text text-right">
-                    {formatCents(order.totalCents, order.currency)}
+                    {formatPrice(order.totalCents, order.currency)}
                   </Td>
                   <Td>
                     {new Date(order.createdAt).toLocaleDateString('en-US', {

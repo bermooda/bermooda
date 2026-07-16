@@ -3,6 +3,12 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import {
+  buildPaginationMeta,
+  buildPrismaPagination,
+  parseListPagination,
+  readQueryParam,
+} from '#/libs/prisma/pagination.server';
 import { loadProductTitleMap } from '#/core/catalog/translations.server';
 
 export const REVIEW_STATUSES = ['pending', 'approved', 'rejected'];
@@ -35,31 +41,17 @@ const REVIEW_PUBLIC_INCLUDE = {
  * Parse review list query params from URLSearchParams or a plain object.
  *
  * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ * @returns {{ page: number, limit: number, productId?: string, customerId?: string, status?: string }}
  */
 export function parseReviewListParams(source = {}) {
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
+  const { page, limit } = parseListPagination(source, {
+    limit: DEFAULT_REVIEW_LIST_LIMIT,
+    max: MAX_REVIEW_LIST_RESULTS,
+  });
 
-  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
-  const limit = Math.min(
-    Math.max(
-      1,
-      parseInt(get('limit') ?? String(DEFAULT_REVIEW_LIST_LIMIT), 10) ||
-        DEFAULT_REVIEW_LIST_LIMIT
-    ),
-    MAX_REVIEW_LIST_RESULTS
-  );
-
-  const productId = get('productId')?.trim();
-  const customerId = get('customerId')?.trim();
-  const status = get('status')?.trim();
+  const productId = readQueryParam(source, 'productId')?.trim();
+  const customerId = readQueryParam(source, 'customerId')?.trim();
+  const status = readQueryParam(source, 'status')?.trim();
 
   if (status && status !== 'all' && !REVIEW_STATUS_SET.has(status)) {
     throw Object.assign(new Error('Invalid review status filter.'), {
@@ -339,6 +331,7 @@ export async function hasVerifiedPurchase(customerId, productId) {
  *   locale?: string,
  *   public?: boolean,
  * }} options
+ * @returns {Promise<{ reviews: object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listReviews(options = {}) {
   const params =
@@ -346,12 +339,17 @@ export async function listReviews(options = {}) {
       ? options
       : parseReviewListParams(options);
 
-  const safePage = Math.max(1, params.page ?? 1);
-  const safeLimit = Math.min(
-    Math.max(1, params.limit ?? DEFAULT_REVIEW_LIST_LIMIT),
-    MAX_REVIEW_LIST_RESULTS
-  );
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_REVIEW_LIST_LIMIT,
+    maxLimit: MAX_REVIEW_LIST_RESULTS,
+  });
   const where = buildReviewWhere(params);
   const include = options.public ? REVIEW_PUBLIC_INCLUDE : REVIEW_LIST_INCLUDE;
 
@@ -361,7 +359,7 @@ export async function listReviews(options = {}) {
       include,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.review.count({ where }),
   ]);
@@ -372,10 +370,7 @@ export async function listReviews(options = {}) {
 
   return {
     reviews,
-    total,
-    page: safePage,
-    limit: safeLimit,
-    totalPages: Math.ceil(total / safeLimit) || 1,
+    ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
   };
 }
 

@@ -8,10 +8,11 @@ import {
 import { useLoaderData } from 'react-router';
 
 import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
+import { formatPrice } from '#/core/currency/format';
 import { loadAdminDashboardData } from '#/core/reporting/index.server';
-import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
+import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
 import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
 import SlotBlocks from '#/components/slot-blocks';
@@ -53,21 +54,6 @@ export async function loader() {
 // ---------------------------------------------------------------------------
 
 /**
- * Format cents as a localised currency string using Intl.NumberFormat.
- *
- * @param {number} cents
- * @param {string} [currency='USD']
- * @returns {string}
- */
-function formatCents(cents, currency = 'USD') {
-  return new Intl.NumberFormat('en', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(cents / 100);
-}
-
-/**
  * Format an ISO date string as a short localised date.
  *
  * @param {string} iso
@@ -80,31 +66,6 @@ function formatDate(iso) {
     day: 'numeric',
   });
 }
-
-// ---------------------------------------------------------------------------
-// Status badge
-// ---------------------------------------------------------------------------
-
-const STATUS_TONES = {
-  pending: 'warn',
-  paid: 'accent',
-  fulfilled: 'success',
-  cancelled: 'danger',
-  refunded: 'neutral',
-};
-
-/**
- * Pill badge for order status.
- *
- * @param {{ status: string }} props
- */
-function StatusBadge({ status }) {
-  return <Badge tone={STATUS_TONES[status] ?? 'neutral'}>{status}</Badge>;
-}
-
-// ---------------------------------------------------------------------------
-// KPI tile
-// ---------------------------------------------------------------------------
 
 /**
  * Single KPI metric tile.
@@ -166,7 +127,7 @@ export default function AdminDashboardRoute() {
         <KpiTile
           icon={BanknotesIcon}
           label="Total Revenue"
-          value={formatCents(totalRevenueCents)}
+          value={formatPrice(totalRevenueCents)}
         />
         <KpiTile
           icon={ArchiveBoxXMarkIcon}
@@ -219,10 +180,10 @@ export default function AdminDashboardRoute() {
                   </Td>
                   <Td>{order.customer?.email ?? order.email}</Td>
                   <Td>
-                    <StatusBadge status={order.status} />
+                    <OrderStatusBadge status={order.status} />
                   </Td>
                   <Td className="text-text">
-                    {formatCents(order.totalCents, order.currency)}
+                    {formatPrice(order.totalCents, order.currency)}
                   </Td>
                   <Td>{formatDate(order.createdAt)}</Td>
                 </tr>

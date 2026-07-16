@@ -15,10 +15,10 @@ import {
 
 import { formatPrice } from '#/core/currency/format';
 import { loadOrdersAdminIndexData } from '#/core/orders/index.server';
-import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import { controlClasses } from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
+import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
 import Stat from '#/components/admin/stat';
@@ -29,23 +29,6 @@ const PAGE_SIZE = 20;
 
 export async function loader({ request }) {
   return loadOrdersAdminIndexData(request, { pageSize: PAGE_SIZE });
-}
-
-const STATUS_TONES = {
-  pending: 'warn',
-  pending_payment: 'warn',
-  paid: 'accent',
-  fulfilled: 'success',
-  cancelled: 'danger',
-  refunded: 'neutral',
-};
-
-function StatusBadge({ status }) {
-  return <Badge tone={STATUS_TONES[status] ?? 'neutral'}>{status}</Badge>;
-}
-
-function formatCents(cents, currency = 'USD') {
-  return formatPrice(cents, currency);
 }
 
 function formatDate(iso) {
@@ -192,10 +175,10 @@ export default function AdminOrdersRoute() {
                   <span className="block truncate">{row.email}</span>
                 </Td>
                 <Td>
-                  <StatusBadge status={row.status} />
+                  <OrderStatusBadge status={row.status} />
                 </Td>
                 <Td className="text-text text-right tabular-nums">
-                  {formatCents(row.totalCents, row.currency)}
+                  {formatPrice(row.totalCents, row.currency)}
                 </Td>
                 <Td className="tabular-nums">{formatDate(row.createdAt)}</Td>
               </Tr>
@@ -226,12 +209,12 @@ export default function AdminOrdersRoute() {
                   <span className="text-accent font-mono text-sm font-medium">
                     {row.orderNumber}
                   </span>
-                  <StatusBadge status={row.status} />
+                  <OrderStatusBadge status={row.status} />
                 </div>
                 <p className="text-text mt-2 truncate text-sm">{row.email}</p>
                 <div className="text-text-muted mt-3 flex items-center justify-between text-xs">
                   <span className="text-text font-medium">
-                    {formatCents(row.totalCents, row.currency)}
+                    {formatPrice(row.totalCents, row.currency)}
                   </span>
                   <span>{formatDate(row.createdAt)}</span>
                 </div>

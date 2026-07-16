@@ -18,7 +18,10 @@ import { registerBackInStockSubscribers } from '#/core/back-in-stock/index.serve
 import { seedDefaultChannel } from '#/core/channels/index.server';
 import { on } from '#/core/events/index.server';
 import { registerLoyaltySubscribers } from '#/core/loyalty/index.server';
-import { seedDefaultAbandonedCartSequences } from '#/core/marketing/index.server';
+import {
+  queueAbandonedCartSequence,
+  seedDefaultAbandonedCartSequences,
+} from '#/core/marketing/index.server';
 import { registerPaymentEventHandlers } from '#/core/orders/index.server';
 import { registerProvider as registerPayment } from '#/core/payments/index.server';
 import { klarnaProvider } from '#/core/payments/klarna.server';
@@ -123,6 +126,30 @@ export function registerBuiltins() {
   logger.info('Bootstrap complete: built-in providers + theme registered');
 }
 
+/** Interval between abandoned-cart sequence job runs (15 minutes). */
+export const ABANDONED_CART_SEQUENCE_INTERVAL_MS = 15 * 60 * 1000;
+
+/** @type {ReturnType<typeof setInterval> | null} */
+let _abandonedCartSequenceTimer = null;
+
+/**
+ * Start the periodic abandoned-cart sequence scheduler.
+ * Idempotent. Skipped in test environments.
+ */
+export function startAbandonedCartSequenceScheduler() {
+  if (process.env.NODE_ENV === 'test') return;
+  if (_abandonedCartSequenceTimer) return;
+
+  queueAbandonedCartSequence();
+  _abandonedCartSequenceTimer = setInterval(() => {
+    queueAbandonedCartSequence();
+  }, ABANDONED_CART_SEQUENCE_INTERVAL_MS);
+
+  if (typeof _abandonedCartSequenceTimer.unref === 'function') {
+    _abandonedCartSequenceTimer.unref();
+  }
+}
+
 /**
  * Async bootstrap tasks that require DB access. Safe to fire-and-forget at
  * process start — failures are logged but do not block request handling.
@@ -134,6 +161,7 @@ export async function initializeAsync() {
     await enablePersistedPlugins();
     await seedDefaultChannel();
     await seedDefaultAbandonedCartSequences();
+    startAbandonedCartSequenceScheduler();
     logger.info('Async bootstrap complete: RBAC seeded, plugins enabled');
   } catch (err) {
     logger.error({ err }, 'Async bootstrap failed');
@@ -146,4 +174,8 @@ export { _bootstrapped as _isBootstrapped };
 /** Reset bootstrap state. Test use only — never call in production. */
 export function __resetBootstrap() {
   _bootstrapped = false;
+  if (_abandonedCartSequenceTimer) {
+    clearInterval(_abandonedCartSequenceTimer);
+    _abandonedCartSequenceTimer = null;
+  }
 }

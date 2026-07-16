@@ -8,22 +8,13 @@ import {
   parseReturnListParams,
   RETURN_STATUSES,
 } from '#/core/returns/index.server';
-import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
+import { ReturnStatusBadge } from '#/components/admin/return-status-badge';
 import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
 
 const PAGE_SIZE = 20;
-
-const STATUS_TONES = {
-  requested: 'warn',
-  approved: 'accent',
-  received: 'accent',
-  refunded: 'success',
-  exchanged: 'success',
-  cancelled: 'neutral',
-};
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -120,9 +111,7 @@ export default function AdminReturnsRoute() {
                   </Td>
                   <Td className="text-text-muted">{ret.order?.email ?? '—'}</Td>
                   <Td>
-                    <Badge tone={STATUS_TONES[ret.status] ?? 'neutral'}>
-                      {ret.status}
-                    </Badge>
+                    <ReturnStatusBadge status={ret.status} />
                   </Td>
                   <Td className="capitalize">{ret.resolution ?? '—'}</Td>
                   <Td className="text-text-muted">

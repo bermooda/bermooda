@@ -6,6 +6,7 @@ import { Form, Link, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
+import { formatPrice } from '#/core/currency/format';
 import {
   EXPORT_SCHEDULES,
   EXPORT_TYPES,
@@ -97,14 +98,6 @@ export async function action({ request }) {
   return { ok: false, error: 'Unknown intent.' };
 }
 
-function formatCents(cents, currency = 'USD') {
-  return new Intl.NumberFormat('en', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(cents / 100);
-}
-
 function MetricCard({ label, value, sub }) {
   return (
     <Card>
@@ -161,24 +154,24 @@ export default function AdminReportsRoute() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Revenue"
-          value={formatCents(overview.revenueCents, defaultCurrency)}
+          value={formatPrice(overview.revenueCents, defaultCurrency)}
           sub={`${overview.paidOrders} paid orders`}
         />
         <MetricCard
           label="Average order value"
-          value={formatCents(overview.aovCents, defaultCurrency)}
+          value={formatPrice(overview.aovCents, defaultCurrency)}
         />
         <MetricCard
           label="Tax collected"
-          value={formatCents(overview.taxCents, defaultCurrency)}
+          value={formatPrice(overview.taxCents, defaultCurrency)}
         />
         <MetricCard
           label="Discounts applied"
-          value={formatCents(overview.discountCents, defaultCurrency)}
+          value={formatPrice(overview.discountCents, defaultCurrency)}
         />
         <MetricCard
           label="Refunds"
-          value={formatCents(overview.refundCents, defaultCurrency)}
+          value={formatPrice(overview.refundCents, defaultCurrency)}
           sub={`${overview.refundCount} refunds`}
         />
         <MetricCard
@@ -199,9 +192,9 @@ export default function AdminReportsRoute() {
           rows={salesOverTime.map((row) => [
             row.date,
             row.orders,
-            formatCents(row.revenueCents, defaultCurrency),
-            formatCents(row.taxCents, defaultCurrency),
-            formatCents(row.discountCents, defaultCurrency),
+            formatPrice(row.revenueCents, defaultCurrency),
+            formatPrice(row.taxCents, defaultCurrency),
+            formatPrice(row.discountCents, defaultCurrency),
           ])}
           empty="No sales in this period."
         />
@@ -211,7 +204,7 @@ export default function AdminReportsRoute() {
           rows={salesByProduct.map((row) => [
             row.title,
             row.quantity,
-            formatCents(row.revenueCents, defaultCurrency),
+            formatPrice(row.revenueCents, defaultCurrency),
           ])}
           empty="No product sales in this period."
         />
@@ -220,7 +213,7 @@ export default function AdminReportsRoute() {
           headers={['Category', 'Revenue']}
           rows={salesByCategory.map((row) => [
             row.title,
-            formatCents(row.revenueCents, defaultCurrency),
+            formatPrice(row.revenueCents, defaultCurrency),
           ])}
           empty="No category sales in this period."
         />

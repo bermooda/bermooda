@@ -3,7 +3,10 @@
 
 import logger from '#/utils/logger.server';
 import queue, { defineQueueJob } from '#/libs/queue.server';
-import { processAbandonedCarts } from '#/core/marketing/index.server';
+import {
+  processAbandonedCarts,
+  setAbandonedCartSequenceJobEnqueuer,
+} from '#/core/marketing/index.server';
 
 const abandonedCartSequenceJob = defineQueueJob(
   queue,
@@ -26,3 +29,5 @@ const abandonedCartSequenceJob = defineQueueJob(
 export function queueAbandonedCartSequenceJob() {
   abandonedCartSequenceJob.add({});
 }
+
+setAbandonedCartSequenceJobEnqueuer(queueAbandonedCartSequenceJob);
