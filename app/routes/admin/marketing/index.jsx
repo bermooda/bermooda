@@ -7,6 +7,7 @@ import {
   listAbandonedCartSequences,
   listCampaigns,
   listSegments,
+  queueAbandonedCartSequence,
   sendCampaign,
 } from '#/core/marketing/index.server';
 import Card from '#/components/admin/card';
@@ -45,6 +46,11 @@ export async function action({ request }) {
       }
       throw err;
     }
+  }
+
+  if (intent === 'run-abandoned-cart-sequence') {
+    queueAbandonedCartSequence();
+    return { ok: true, intent, queued: true };
   }
 
   return { ok: false, error: 'Unknown action.' };
@@ -148,10 +154,22 @@ export default function AdminMarketingRoute() {
             <h2 className="text-text text-lg font-semibold">
               Abandoned cart sequences
             </h2>
-            <Link to="/admin/marketing/sequences/new" className={CTA_CLASS}>
-              <PlusIcon className="h-4 w-4" />
-              New step
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Form method="post">
+                <input
+                  type="hidden"
+                  name="intent"
+                  value="run-abandoned-cart-sequence"
+                />
+                <button type="submit" className={CTA_CLASS}>
+                  Run now
+                </button>
+              </Form>
+              <Link to="/admin/marketing/sequences/new" className={CTA_CLASS}>
+                <PlusIcon className="h-4 w-4" />
+                New step
+              </Link>
+            </div>
           </div>
           <ul className="text-text-muted mt-4 space-y-1 text-sm">
             {sequences.length === 0 ? (

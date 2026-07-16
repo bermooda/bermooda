@@ -91,7 +91,6 @@ export const ModelName = {
   WebhookSubscription: 'WebhookSubscription',
   WebhookDelivery: 'WebhookDelivery',
   TaxClass: 'TaxClass',
-  CartDiscount: 'CartDiscount',
   OrderDiscount: 'OrderDiscount',
   Return: 'Return',
   ReturnLine: 'ReturnLine',
@@ -754,18 +753,6 @@ export const TaxClassScalarFieldEnum = {
 } as const
 
 export type TaxClassScalarFieldEnum = (typeof TaxClassScalarFieldEnum)[keyof typeof TaxClassScalarFieldEnum]
-
-
-export const CartDiscountScalarFieldEnum = {
-  id: 'id',
-  cartId: 'cartId',
-  discountId: 'discountId',
-  code: 'code',
-  discountCents: 'discountCents',
-  createdAt: 'createdAt'
-} as const
-
-export type CartDiscountScalarFieldEnum = (typeof CartDiscountScalarFieldEnum)[keyof typeof CartDiscountScalarFieldEnum]
 
 
 export const OrderDiscountScalarFieldEnum = {

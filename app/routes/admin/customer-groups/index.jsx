@@ -3,7 +3,7 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
+import { listCustomers } from '#/core/customers/index.server';
 import {
   addCustomerToGroup,
   listCustomerGroupMembers,
@@ -16,17 +16,17 @@ import PageHeader from '#/components/admin/page-header';
 import Button from '#/components/ui/button';
 
 export async function loader() {
-  const [groups, customers, memberships] = await Promise.all([
+  const [groups, customersResult, memberships] = await Promise.all([
     listCustomerGroups(),
-    prisma.customer.findMany({
-      take: 100,
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, email: true, name: true },
-    }),
+    listCustomers({ limit: 100 }),
     listCustomerGroupMembers(),
   ]);
 
-  return { groups, customers, memberships };
+  return {
+    groups,
+    customers: customersResult.customers,
+    memberships,
+  };
 }
 
 export async function action({ request }) {
