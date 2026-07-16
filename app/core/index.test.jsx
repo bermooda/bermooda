@@ -1,42 +1,7 @@
 // app/core/index.test.jsx
-import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import {
-  Slot,
-  dto,
-  formatPrice,
-  selectors,
-  translate,
-  useShop,
-} from '#/core/index';
-
-// ---------------------------------------------------------------------------
-// useShop
-// ---------------------------------------------------------------------------
-
-describe('useShop', () => {
-  it('returns default currency and locale', () => {
-    const { result } = renderHook(() => useShop());
-    expect(result.current.currency).toBe('USD');
-    expect(result.current.locale).toBe('en');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Slot
-// ---------------------------------------------------------------------------
-
-describe('Slot', () => {
-  it('returns children when provided', () => {
-    const children = 'hello';
-    expect(Slot({ name: 'test', children })).toBe('hello');
-  });
-
-  it('returns null when no children', () => {
-    expect(Slot({ name: 'test' })).toBeNull();
-  });
-});
+import { dto, formatPrice, selectors, translate } from '#/core/index';
 
 // ---------------------------------------------------------------------------
 // selectors

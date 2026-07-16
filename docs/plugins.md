@@ -317,9 +317,9 @@ Load and persist manifest-driven plugin settings stored under `plugin.<pluginId>
 
 ---
 
-### `reorderPlugin(pluginId, direction)`
+### `setPluginOrder(orderedIds)`
 
-Moves a plugin earlier or later in the persisted `pluginOrder` array. `direction` is `'up'` or `'down'`.
+Persist the full plugin display order. `orderedIds` must be a permutation of all registered plugin ids.
 
 ---
 

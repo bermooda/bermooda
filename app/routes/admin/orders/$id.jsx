@@ -10,8 +10,13 @@ import {
 } from 'react-router';
 
 import { handleAdminActionError } from '#/libs/api/admin-ui.server';
-import prisma from '#/libs/prisma.server';
 import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
+import { formatPrice } from '#/core/currency/format';
+import {
+  loadOrderAdminDetailData,
+  transitionOrderStatus,
+  updateOrderNotes,
+} from '#/core/orders/index.server';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -33,92 +38,15 @@ export async function loader({ params }) {
   const { id } = params;
 
   const [order, slotBlocks] = await Promise.all([
-    prisma.order.findUniqueOrThrow({
-      where: { id },
-      include: {
-        lines: { orderBy: { createdAt: 'asc' } },
-        shipments: {
-          orderBy: { createdAt: 'asc' },
-          include: { lines: { include: { orderLine: true } } },
-        },
-        refunds: { orderBy: { createdAt: 'asc' } },
-        returns: {
-          orderBy: { createdAt: 'asc' },
-          include: { lines: { include: { orderLine: true } } },
-        },
-        customer: { select: { email: true, name: true } },
-      },
-    }),
+    loadOrderAdminDetailData(id),
     getAdminSlotBlocksMap(['order.detail']),
   ]);
 
-  return {
-    slotBlocks,
-    order: {
-      id: order.id,
-      orderNumber: order.orderNumber,
-      email: order.email,
-      status: order.status,
-      currency: order.currency,
-      subtotalCents: order.subtotalCents,
-      shippingCents: order.shippingCents,
-      taxCents: order.taxCents,
-      discountCents: order.discountCents,
-      totalCents: order.totalCents,
-      shippingAddressJson: order.shippingAddressJson,
-      billingAddressJson: order.billingAddressJson ?? null,
-      paymentProvider: order.paymentProvider ?? null,
-      paymentIntentId: order.paymentIntentId ?? null,
-      couponCode: order.couponCode ?? null,
-      notes: order.notes ?? '',
-      createdAt: order.createdAt.toISOString(),
-      customer: order.customer
-        ? { email: order.customer.email, name: order.customer.name ?? null }
-        : null,
-      lines: order.lines.map((l) => ({
-        id: l.id,
-        title: l.title,
-        sku: l.sku ?? null,
-        quantity: l.quantity,
-        fulfilledQuantity: l.fulfilledQuantity ?? 0,
-        returnedQuantity: l.returnedQuantity ?? 0,
-        priceCents: l.priceCents,
-        totalCents: l.totalCents,
-      })),
-      shipments: order.shipments.map((s) => ({
-        id: s.id,
-        status: s.status,
-        carrier: s.carrier ?? null,
-        trackingNumber: s.trackingNumber ?? null,
-        trackingUrl: s.trackingUrl ?? null,
-        shippedAt: s.shippedAt?.toISOString() ?? null,
-        deliveredAt: s.deliveredAt?.toISOString() ?? null,
-        createdAt: s.createdAt.toISOString(),
-      })),
-      refunds: order.refunds.map((r) => ({
-        id: r.id,
-        amountCents: r.amountCents,
-        reason: r.reason ?? null,
-        status: r.status,
-        createdAt: r.createdAt.toISOString(),
-      })),
-      returns: order.returns.map((ret) => ({
-        id: ret.id,
-        status: ret.status,
-        reason: ret.reason ?? null,
-        resolution: ret.resolution ?? null,
-        storeCreditCents: ret.storeCreditCents ?? null,
-        createdAt: ret.createdAt.toISOString(),
-        lines: ret.lines.map((l) => ({
-          id: l.id,
-          orderLineId: l.orderLineId,
-          title: l.orderLine?.title ?? '',
-          quantity: l.quantity,
-          restocked: l.restocked,
-        })),
-      })),
-    },
-  };
+  if (!order) {
+    throw new Response('Not Found', { status: 404 });
+  }
+
+  return { slotBlocks, order };
 }
 
 // ---------------------------------------------------------------------------
@@ -151,29 +79,19 @@ export async function action({ request, params }) {
 
   if (intent === 'update-status') {
     const newStatus = formData.get('status');
-
-    const VALID_TRANSITIONS = {
-      pending: ['paid'],
-      pending_payment: ['paid', 'cancelled'],
-      paid: ['fulfilled', 'cancelled'],
-      fulfilled: ['cancelled', 'refunded'],
-    };
-
-    const current = await prisma.order.findUniqueOrThrow({
-      where: { id },
-      select: { status: true },
-    });
-
-    const allowed = VALID_TRANSITIONS[current.status] ?? [];
-    if (!allowed.includes(newStatus)) {
-      return { ok: false, error: 'Invalid status transition.' };
+    try {
+      await transitionOrderStatus(id, newStatus);
+      return { ok: true, intent };
+    } catch (err) {
+      if (err?.code === 'INVALID_ORDER_STATUS_TRANSITION') {
+        return { ok: false, error: 'Invalid status transition.' };
+      }
+      return handleAdminActionError(err, {
+        source: 'admin.orders.update-status',
+        intent,
+        userMessage: 'Could not update order status.',
+      });
     }
-
-    await prisma.order.update({
-      where: { id },
-      data: { status: newStatus },
-    });
-    return { ok: true, intent };
   }
 
   if (intent === 'add-shipment') {
@@ -306,11 +224,16 @@ export async function action({ request, params }) {
 
   if (intent === 'update-notes') {
     const notes = formData.get('notes')?.toString() ?? '';
-    await prisma.order.update({
-      where: { id },
-      data: { notes },
-    });
-    return { ok: true, intent };
+    try {
+      await updateOrderNotes(id, notes);
+      return { ok: true, intent };
+    } catch (err) {
+      return handleAdminActionError(err, {
+        source: 'admin.orders.update-notes',
+        intent,
+        userMessage: 'Could not update notes.',
+      });
+    }
   }
 
   return { ok: false, error: 'Unknown intent.' };
@@ -334,11 +257,7 @@ function StatusBadge({ status }) {
 }
 
 function formatCents(cents, currency = 'USD') {
-  return new Intl.NumberFormat('en', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(cents / 100);
+  return formatPrice(cents, currency);
 }
 
 function SectionCard({ title, description, children }) {

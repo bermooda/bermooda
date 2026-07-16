@@ -17,6 +17,7 @@ vi.mock('#/libs/prisma.server', () => ({
       findUnique: vi.fn(),
       findFirst: vi.fn(),
       findMany: vi.fn(),
+      count: vi.fn(),
       update: vi.fn(),
     },
     shipment: {
@@ -116,6 +117,8 @@ import {
   getOrderByOrderNumber,
   listOrders,
   updateOrderStatus,
+  transitionOrderStatus,
+  updateOrderNotes,
   syncOrderFulfillmentStatus,
   cancelOrder,
   addShipment,
@@ -441,7 +444,7 @@ describe('placeOrder', () => {
 // ---------------------------------------------------------------------------
 
 describe('getOrder', () => {
-  it('fetches order by id with lines, shipments, and refunds', async () => {
+  it('fetches order by id with admin detail relations', async () => {
     const order = { ...makeOrder(), lines: [], shipments: [], refunds: [] };
     prisma.order.findUnique.mockResolvedValue(order);
 
@@ -450,12 +453,17 @@ describe('getOrder', () => {
     expect(prisma.order.findUnique).toHaveBeenCalledWith({
       where: { id: 'order_1' },
       include: {
-        lines: true,
+        lines: { orderBy: { createdAt: 'asc' } },
         shipments: {
+          orderBy: { createdAt: 'asc' },
           include: { lines: { include: { orderLine: true } } },
         },
-        refunds: true,
-        returns: { include: { lines: true } },
+        refunds: { orderBy: { createdAt: 'asc' } },
+        returns: {
+          orderBy: { createdAt: 'asc' },
+          include: { lines: { include: { orderLine: true } } },
+        },
+        customer: { select: { email: true, name: true } },
       },
     });
     expect(result).toEqual(order);
@@ -469,9 +477,21 @@ describe('getOrder', () => {
 describe('listOrders', () => {
   it('lists orders with lines, newest first, filtered by customerId', async () => {
     prisma.order.findMany.mockResolvedValue([]);
+    prisma.order.count.mockResolvedValue(0);
 
-    await listOrders({ customerId: 'cust_1', page: 1, limit: 10 });
+    const result = await listOrders({
+      customerId: 'cust_1',
+      page: 1,
+      limit: 10,
+    });
 
+    expect(result).toEqual({
+      orders: [],
+      total: 0,
+      page: 1,
+      limit: 10,
+      totalPages: 1,
+    });
     expect(prisma.order.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { customerId: 'cust_1' },
@@ -481,6 +501,9 @@ describe('listOrders', () => {
         take: 10,
       })
     );
+    expect(prisma.order.count).toHaveBeenCalledWith({
+      where: { customerId: 'cust_1' },
+    });
   });
 });
 
@@ -563,6 +586,44 @@ describe('updateOrderStatus', () => {
       await expect(updateOrderStatus('order_1', status)).resolves.not.toThrow();
     }
   );
+});
+
+describe('transitionOrderStatus', () => {
+  it('rejects disallowed transitions', async () => {
+    prisma.order.findUnique.mockResolvedValue(makeOrder({ status: 'pending' }));
+
+    await expect(transitionOrderStatus('order_1', 'fulfilled')).rejects.toThrow(
+      'Invalid status transition.'
+    );
+    expect(prisma.order.update).not.toHaveBeenCalled();
+  });
+
+  it('applies allowed admin transitions via updateOrderStatus', async () => {
+    prisma.order.findUnique
+      .mockResolvedValueOnce(makeOrder({ status: 'pending' }))
+      .mockResolvedValueOnce(makeOrder({ status: 'pending' }));
+    prisma.order.update.mockResolvedValue(makeOrder({ status: 'paid' }));
+
+    await transitionOrderStatus('order_1', 'paid');
+
+    expect(prisma.order.update).toHaveBeenCalledWith({
+      where: { id: 'order_1' },
+      data: { status: 'paid' },
+    });
+  });
+});
+
+describe('updateOrderNotes', () => {
+  it('persists notes on the order', async () => {
+    prisma.order.update.mockResolvedValue(makeOrder({ notes: 'Rush' }));
+
+    await updateOrderNotes('order_1', 'Rush');
+
+    expect(prisma.order.update).toHaveBeenCalledWith({
+      where: { id: 'order_1' },
+      data: { notes: 'Rush' },
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

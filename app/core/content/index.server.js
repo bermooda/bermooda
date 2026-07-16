@@ -524,18 +524,6 @@ export async function getPage(id, { locale } = {}) {
 }
 
 /**
- * Get a page for admin/API with 404 on missing.
- *
- * @param {string} id
- * @param {{ locale?: string }} [options]
- */
-export async function getPageOrThrow(id, { locale } = {}) {
-  const page = await getPage(id, { locale });
-  if (!page) throwPageNotFound(id);
-  return page;
-}
-
-/**
  * Load admin page editor data.
  *
  * @param {string} id
