@@ -5,11 +5,13 @@ import clsx from 'clsx';
 import { Form, Link, useActionData, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin.server';
-import prisma from '#/libs/prisma.server';
 import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
+import { formatPrice } from '#/core/currency/format';
 import {
   deleteAddress,
+  getCustomer,
+  getCustomerAdminDetail,
   setDefaultAddress,
   updateCustomer,
 } from '#/core/customers/index.server';
@@ -52,35 +54,16 @@ export async function loader({ params }) {
     storeCreditSummary,
     storeCreditLedger,
   ] = await Promise.all([
-    prisma.customer.findUniqueOrThrow({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        preferredLocale: true,
-        createdAt: true,
-        addresses: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
-        orders: {
-          orderBy: { createdAt: 'desc' },
-          take: 20,
-          select: {
-            id: true,
-            orderNumber: true,
-            status: true,
-            currency: true,
-            totalCents: true,
-            createdAt: true,
-          },
-        },
-      },
-    }),
+    getCustomerAdminDetail(id),
     getCustomerConsentSummary(id),
     getAdminSlotBlocksMap(['customer.detail']),
     getCustomerStoreCreditSummary(id),
     listLedgerEntries(id, { limit: 20 }),
   ]);
+
+  if (!customer) {
+    throw new Response('Not Found', { status: 404 });
+  }
 
   return {
     slotBlocks,
@@ -148,10 +131,14 @@ export async function action({ request, params }) {
     const preferredLocale =
       formData.get('preferredLocale')?.toString().trim() || null;
 
-    const before = await prisma.customer.findUnique({
-      where: { id },
-      select: { name: true, phone: true, preferredLocale: true },
-    });
+    const before = await getCustomer(id);
+    const beforeProfile = before
+      ? {
+          name: before.name,
+          phone: before.phone,
+          preferredLocale: before.preferredLocale,
+        }
+      : null;
 
     await updateCustomer(id, { name, phone, preferredLocale });
 
@@ -160,7 +147,10 @@ export async function action({ request, params }) {
       action: 'customer.updated',
       entityType: 'customer',
       entityId: id,
-      diff: { before, after: { name, phone, preferredLocale } },
+      diff: {
+        before: beforeProfile,
+        after: { name, phone, preferredLocale },
+      },
     });
 
     return { ok: true, intent };
@@ -300,11 +290,7 @@ function StatusBadge({ status }) {
 }
 
 function formatCents(cents, currency = 'USD') {
-  return new Intl.NumberFormat('en', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(cents / 100);
+  return formatPrice(cents, currency);
 }
 
 function SectionCard({ title, description, children }) {

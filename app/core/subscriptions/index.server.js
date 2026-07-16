@@ -556,13 +556,6 @@ export async function listSubscriptions(options = {}) {
   };
 }
 
-export async function listCustomerSubscriptions(customerId) {
-  return listSubscriptions({
-    customerId,
-    limit: MAX_SUBSCRIPTION_LIST_RESULTS,
-  });
-}
-
 export async function getSubscription(subscriptionId) {
   const subscription = await requireSubscriptionRecord(subscriptionId);
   return serializeSubscription(subscription);

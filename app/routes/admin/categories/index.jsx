@@ -30,6 +30,7 @@ import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Textarea from '#/components/admin/form/textarea';
+import LocaleTabs from '#/components/admin/locale-tabs';
 import PageHeader from '#/components/admin/page-header';
 import SortableList, { SortableGrip } from '#/components/admin/sortable-list';
 import { SuccessAlert } from '#/components/ui/alert';
@@ -159,28 +160,6 @@ function rebuildCategoryTree(tree, parentId, orderedSiblingIds) {
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
-
-function LocaleTabs({ locales, activeLocale, onSelect }) {
-  return (
-    <div className="border-border flex gap-1 border-b">
-      {locales.map((locale) => (
-        <button
-          key={locale}
-          type="button"
-          onClick={() => onSelect(locale)}
-          className={clsx(
-            'rounded-t px-4 py-2 text-sm font-medium transition-colors',
-            activeLocale === locale
-              ? 'border-accent text-accent border-b-2'
-              : 'text-text-muted hover:text-text'
-          )}
-        >
-          {locale.toUpperCase()}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 /** Inline edit form shown below the category row */
 function InlineEditForm({ category, locales, onClose }) {

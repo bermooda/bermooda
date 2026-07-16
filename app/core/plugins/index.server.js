@@ -391,36 +391,6 @@ export async function setPluginOrder(orderedIds) {
   return fullOrder;
 }
 
-/**
- * Moves a plugin one position earlier or later in pluginOrder.
- *
- * @param {string} pluginId
- * @param {'up' | 'down'} direction
- * @returns {Promise<string[]>}
- */
-export async function reorderPlugin(pluginId, direction) {
-  const pluginIds = listRegisteredPlugins().map((manifest) => manifest.id);
-  const storedOrderRaw = await settingsGet('pluginOrder');
-  const fullOrder = buildFullPluginOrder(
-    Array.isArray(storedOrderRaw) ? storedOrderRaw : [],
-    pluginIds
-  );
-
-  const idx = fullOrder.indexOf(pluginId);
-  if (idx === -1) {
-    throw new Error('Plugin not found');
-  }
-
-  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-  if (swapIdx < 0 || swapIdx >= fullOrder.length) {
-    return fullOrder;
-  }
-
-  [fullOrder[idx], fullOrder[swapIdx]] = [fullOrder[swapIdx], fullOrder[idx]];
-  await settingsSet('pluginOrder', fullOrder);
-  return fullOrder;
-}
-
 // ---------------------------------------------------------------------------
 // Plugin context factory
 // ---------------------------------------------------------------------------

@@ -13,7 +13,8 @@ import {
   useSearchParams,
 } from 'react-router';
 
-import prisma from '#/libs/prisma.server';
+import { formatPrice } from '#/core/currency/format';
+import { loadOrdersAdminIndexData } from '#/core/orders/index.server';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import { controlClasses } from '#/components/admin/form/input';
@@ -27,71 +28,7 @@ import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
 const PAGE_SIZE = 20;
 
 export async function loader({ request }) {
-  const url = new URL(request.url);
-  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10));
-  const q = url.searchParams.get('q')?.trim() ?? '';
-  const status = url.searchParams.get('status')?.trim() ?? '';
-
-  const where = {};
-
-  if (status && status !== 'all') {
-    where.status = status;
-  }
-
-  if (q) {
-    where.OR = [{ orderNumber: { contains: q } }, { email: { contains: q } }];
-  }
-
-  const [total, pendingCount, paidCount, fulfilledCount, orders] =
-    await Promise.all([
-      prisma.order.count({ where }),
-      prisma.order.count({
-        where: {
-          ...where,
-          status: { in: ['pending', 'pending_payment'] },
-        },
-      }),
-      prisma.order.count({ where: { ...where, status: 'paid' } }),
-      prisma.order.count({ where: { ...where, status: 'fulfilled' } }),
-      prisma.order.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * PAGE_SIZE,
-        take: PAGE_SIZE,
-        select: {
-          id: true,
-          orderNumber: true,
-          email: true,
-          status: true,
-          currency: true,
-          totalCents: true,
-          createdAt: true,
-        },
-      }),
-    ]);
-
-  const rows = orders.map((o) => ({
-    id: o.id,
-    orderNumber: o.orderNumber,
-    email: o.email,
-    status: o.status,
-    currency: o.currency,
-    totalCents: o.totalCents,
-    createdAt: o.createdAt.toISOString(),
-  }));
-
-  return {
-    rows,
-    total,
-    pendingCount,
-    paidCount,
-    fulfilledCount,
-    page,
-    pageSize: PAGE_SIZE,
-    totalPages: Math.ceil(total / PAGE_SIZE),
-    q,
-    status: status || 'all',
-  };
+  return loadOrdersAdminIndexData(request, { pageSize: PAGE_SIZE });
 }
 
 const STATUS_TONES = {
@@ -108,11 +45,7 @@ function StatusBadge({ status }) {
 }
 
 function formatCents(cents, currency = 'USD') {
-  return new Intl.NumberFormat('en', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(cents / 100);
+  return formatPrice(cents, currency);
 }
 
 function formatDate(iso) {
