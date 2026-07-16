@@ -17,10 +17,10 @@ import {
   transitionOrderStatus,
   updateOrderNotes,
 } from '#/core/orders/index.server';
-import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
 import { controlClasses } from '#/components/admin/form/input';
+import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
 import { Td, Th } from '#/components/admin/table';
 import SlotBlocks from '#/components/slot-blocks';
@@ -243,23 +243,6 @@ export async function action({ request, params }) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const STATUS_TONES = {
-  pending: 'warn',
-  pending_payment: 'warn',
-  paid: 'accent',
-  fulfilled: 'success',
-  cancelled: 'danger',
-  refunded: 'neutral',
-};
-
-function StatusBadge({ status }) {
-  return <Badge tone={STATUS_TONES[status] ?? 'neutral'}>{status}</Badge>;
-}
-
-function formatCents(cents, currency = 'USD') {
-  return formatPrice(cents, currency);
-}
-
 function SectionCard({ title, description, children }) {
   return (
     <Card>
@@ -357,7 +340,7 @@ export default function AdminOrderRoute() {
         title={`Order ${order.orderNumber}`}
         subtitle={
           <span className="inline-flex flex-wrap items-center gap-2">
-            <StatusBadge status={order.status} />
+            <OrderStatusBadge status={order.status} />
             <span>Placed {createdDate}</span>
           </span>
         }
@@ -429,10 +412,10 @@ export default function AdminOrderRoute() {
                     {line.returnedQuantity}
                   </Td>
                   <Td className="text-text text-right">
-                    {formatCents(line.priceCents, order.currency)}
+                    {formatPrice(line.priceCents, order.currency)}
                   </Td>
                   <Td className="text-text text-right font-medium">
-                    {formatCents(line.totalCents, order.currency)}
+                    {formatPrice(line.totalCents, order.currency)}
                   </Td>
                 </tr>
               ))}
@@ -443,7 +426,7 @@ export default function AdminOrderRoute() {
                   Subtotal
                 </Td>
                 <Td className="text-text text-right">
-                  {formatCents(order.subtotalCents, order.currency)}
+                  {formatPrice(order.subtotalCents, order.currency)}
                 </Td>
               </tr>
               {order.shippingCents > 0 && (
@@ -452,7 +435,7 @@ export default function AdminOrderRoute() {
                     Shipping
                   </Td>
                   <Td className="text-text text-right">
-                    {formatCents(order.shippingCents, order.currency)}
+                    {formatPrice(order.shippingCents, order.currency)}
                   </Td>
                 </tr>
               )}
@@ -462,7 +445,7 @@ export default function AdminOrderRoute() {
                     Tax
                   </Td>
                   <Td className="text-text text-right">
-                    {formatCents(order.taxCents, order.currency)}
+                    {formatPrice(order.taxCents, order.currency)}
                   </Td>
                 </tr>
               )}
@@ -472,7 +455,7 @@ export default function AdminOrderRoute() {
                     Discount
                   </Td>
                   <Td className="text-success text-right">
-                    -{formatCents(order.discountCents, order.currency)}
+                    -{formatPrice(order.discountCents, order.currency)}
                   </Td>
                 </tr>
               )}
@@ -481,7 +464,7 @@ export default function AdminOrderRoute() {
                   Total
                 </Td>
                 <Td className="text-text text-right font-semibold">
-                  {formatCents(order.totalCents, order.currency)}
+                  {formatPrice(order.totalCents, order.currency)}
                 </Td>
               </tr>
             </tfoot>
@@ -820,7 +803,7 @@ export default function AdminOrderRoute() {
                 {order.refunds.map((r) => (
                   <tr key={r.id}>
                     <Td className="text-text font-medium">
-                      {formatCents(r.amountCents, order.currency)}
+                      {formatPrice(r.amountCents, order.currency)}
                     </Td>
                     <Td className="text-text">{r.reason ?? '—'}</Td>
                     <Td className="text-text capitalize">{r.status}</Td>
