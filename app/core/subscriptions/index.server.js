@@ -4,6 +4,8 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import {
+  buildPaginationMeta,
+  buildPrismaPagination,
   parseListPagination,
   readQueryParam,
 } from '#/libs/prisma/pagination.server';
@@ -426,6 +428,7 @@ export async function loadSubscriptionPlanAdminData() {
  *   page?: number,
  *   limit?: number,
  * }} [options]
+ * @returns {Promise<{ plans: object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listSubscriptionPlans(options = {}) {
   const params =
@@ -433,12 +436,17 @@ export async function listSubscriptionPlans(options = {}) {
       ? options
       : parsePlanListParams(options);
 
-  const safePage = Math.max(1, params.page ?? 1);
-  const safeLimit = Math.min(
-    Math.max(1, params.limit ?? DEFAULT_PLAN_LIST_LIMIT),
-    MAX_PLAN_LIST_RESULTS
-  );
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_PLAN_LIST_LIMIT,
+    maxLimit: MAX_PLAN_LIST_RESULTS,
+  });
   const where = buildPlanWhere({
     activeOnly: params.activeOnly ?? true,
   });
@@ -449,17 +457,14 @@ export async function listSubscriptionPlans(options = {}) {
       include: PLAN_LIST_INCLUDE,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.subscriptionPlan.count({ where }),
   ]);
 
   return {
     plans: items.map(serializePlan),
-    total,
-    page: safePage,
-    limit: safeLimit,
-    totalPages: Math.ceil(total / safeLimit) || 1,
+    ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
   };
 }
 
@@ -521,6 +526,7 @@ export async function updateSubscriptionPlan(planId, input) {
  *   page?: number,
  *   limit?: number,
  * }} [options]
+ * @returns {Promise<{ subscriptions: object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listSubscriptions(options = {}) {
   const params =
@@ -528,12 +534,17 @@ export async function listSubscriptions(options = {}) {
       ? options
       : parseSubscriptionListParams(options);
 
-  const safePage = Math.max(1, params.page ?? 1);
-  const safeLimit = Math.min(
-    Math.max(1, params.limit ?? DEFAULT_SUBSCRIPTION_LIST_LIMIT),
-    MAX_SUBSCRIPTION_LIST_RESULTS
-  );
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_SUBSCRIPTION_LIST_LIMIT,
+    maxLimit: MAX_SUBSCRIPTION_LIST_RESULTS,
+  });
   const where = buildSubscriptionWhere(params);
 
   const [items, total] = await Promise.all([
@@ -542,17 +553,14 @@ export async function listSubscriptions(options = {}) {
       include: SUBSCRIPTION_LIST_INCLUDE,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.subscription.count({ where }),
   ]);
 
   return {
     subscriptions: items.map(serializeSubscription),
-    total,
-    page: safePage,
-    limit: safeLimit,
-    totalPages: Math.ceil(total / safeLimit) || 1,
+    ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
   };
 }
 

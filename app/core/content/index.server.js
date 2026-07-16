@@ -5,6 +5,12 @@ import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { containsFilter } from '#/libs/prisma/filters.server';
 import {
+  buildPaginationMeta,
+  buildPrismaPagination,
+  parseListPagination,
+  readQueryParam,
+} from '#/libs/prisma/pagination.server';
+import {
   getTranslations,
   resolveSlug,
   setSlug,
@@ -50,29 +56,15 @@ const PAGE_FIELDS = ['title', 'body', 'metaTitle', 'metaDescription'];
  * Parse page list query params from URLSearchParams or a plain object.
  *
  * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ * @returns {{ page: number, limit: number, status?: string, q?: string }}
  */
 export function parsePageListParams(source = {}) {
-  const get = (key) => {
-    if (source instanceof URLSearchParams) {
-      const value = source.get(key);
-      return value === null || value === '' ? undefined : value;
-    }
-    const value = source[key];
-    if (value === null || value === undefined || value === '') return undefined;
-    return value.toString();
-  };
-
-  const page = Math.max(1, parseInt(get('page') ?? '1', 10) || 1);
-  const limit = Math.min(
-    Math.max(
-      1,
-      parseInt(get('limit') ?? String(DEFAULT_PAGE_LIST_LIMIT), 10) ||
-        DEFAULT_PAGE_LIST_LIMIT
-    ),
-    MAX_PAGE_LIST_RESULTS
-  );
-  const status = get('status')?.trim();
-  const q = get('q')?.trim();
+  const { page, limit } = parseListPagination(source, {
+    limit: DEFAULT_PAGE_LIST_LIMIT,
+    max: MAX_PAGE_LIST_RESULTS,
+  });
+  const status = readQueryParam(source, 'status')?.trim();
+  const q = readQueryParam(source, 'q')?.trim();
 
   if (status && status !== 'all' && !PAGE_STATUS_SET.has(status)) {
     throw Object.assign(new Error('Invalid page status filter.'), {
@@ -449,6 +441,7 @@ export function isReservedPageSlug(slug) {
  *   limit?: number,
  *   locale?: string,
  * }} [options]
+ * @returns {Promise<{ pages: object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listPages(options = {}) {
   const params =
@@ -456,12 +449,17 @@ export async function listPages(options = {}) {
       ? options
       : parsePageListParams(options);
 
-  const safePage = Math.max(1, params.page ?? 1);
-  const safeLimit = Math.min(
-    Math.max(1, params.limit ?? DEFAULT_PAGE_LIST_LIMIT),
-    MAX_PAGE_LIST_RESULTS
-  );
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_PAGE_LIST_LIMIT,
+    maxLimit: MAX_PAGE_LIST_RESULTS,
+  });
   const where = await buildPageSearchWhere(params);
   const locale = params.locale ?? 'en';
 
@@ -469,25 +467,39 @@ export async function listPages(options = {}) {
     prisma.page.findMany({
       where,
       skip,
-      take: safeLimit,
+      take,
       orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
     }),
     prisma.page.count({ where }),
   ]);
 
   const pages = await serializePagesWithTitles(rows, locale);
-  return { pages, total, page: safePage, limit: safeLimit };
+  return {
+    pages,
+    ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
+  };
 }
 
 /**
  * Admin pages index payload with status counts.
  *
  * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ * @returns {Promise<{ pages: object[], total: number, publishedCount: number, draftCount: number, page: number, pageSize: number, totalPages: number, status: string, q: string }>}
  */
 export async function listPagesAdmin(source = {}) {
   const params = parsePageListParams(source);
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_PAGE_LIST_LIMIT,
+    maxLimit: MAX_PAGE_LIST_RESULTS,
+  });
   const where = await buildPageSearchWhere(params);
-  const skip = (params.page - 1) * params.limit;
 
   const [total, publishedCount, draftCount, rows] = await Promise.all([
     prisma.page.count({ where }),
@@ -497,20 +509,25 @@ export async function listPagesAdmin(source = {}) {
       where,
       orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
       skip,
-      take: params.limit,
+      take,
     }),
   ]);
 
   const pages = await serializePagesWithTitles(rows);
+  const pagination = buildPaginationMeta({
+    page: safePage,
+    limit: safeLimit,
+    total,
+  });
 
   return {
     pages,
-    total,
+    total: pagination.total,
     publishedCount,
     draftCount,
-    page: params.page,
-    pageSize: params.limit,
-    totalPages: Math.ceil(total / params.limit) || 1,
+    page: pagination.page,
+    pageSize: pagination.limit,
+    totalPages: pagination.totalPages,
     status: params.status ?? 'all',
     q: params.q ?? '',
   };

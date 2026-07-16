@@ -3,6 +3,12 @@
 
 import prisma from '#/libs/prisma.server';
 import { containsFilter } from '#/libs/prisma/filters.server';
+import {
+  buildPaginationMeta,
+  buildPrismaPagination,
+  parseListPagination,
+  readQueryParam,
+} from '#/libs/prisma/pagination.server';
 
 export const QUOTE_STATUSES = [
   'draft',
@@ -64,35 +70,19 @@ const QUOTE_DETAIL_INCLUDE = {
 // Input parsing
 // ---------------------------------------------------------------------------
 
-function readParam(source, key) {
-  if (source instanceof URLSearchParams) {
-    const value = source.get(key);
-    return value === null || value === '' ? undefined : value;
-  }
-  const value = source[key];
-  if (value === null || value === undefined || value === '') return undefined;
-  return value.toString();
-}
-
 /**
  * Parse company list query params from URLSearchParams or a plain object.
  *
  * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ * @returns {{ page: number, limit: number, q?: string, active?: boolean }}
  */
 export function parseCompanyListParams(source = {}) {
-  const page = Math.max(1, parseInt(readParam(source, 'page') ?? '1', 10) || 1);
-  const limit = Math.min(
-    Math.max(
-      1,
-      parseInt(
-        readParam(source, 'limit') ?? String(DEFAULT_COMPANY_LIST_LIMIT),
-        10
-      ) || DEFAULT_COMPANY_LIST_LIMIT
-    ),
-    MAX_COMPANY_LIST_RESULTS
-  );
-  const q = readParam(source, 'q')?.trim();
-  const active = readParam(source, 'active');
+  const { page, limit } = parseListPagination(source, {
+    limit: DEFAULT_COMPANY_LIST_LIMIT,
+    max: MAX_COMPANY_LIST_RESULTS,
+  });
+  const q = readQueryParam(source, 'q')?.trim();
+  const active = readQueryParam(source, 'active');
 
   return {
     page,
@@ -221,23 +211,17 @@ export function parseAddCompanyMemberForm(formData) {
  * Parse quote list query params from URLSearchParams or a plain object.
  *
  * @param {URLSearchParams|Record<string, string|undefined|null>} [source]
+ * @returns {{ page: number, limit: number, companyId?: string, customerId?: string, status?: string }}
  */
 export function parseQuoteListParams(source = {}) {
-  const page = Math.max(1, parseInt(readParam(source, 'page') ?? '1', 10) || 1);
-  const limit = Math.min(
-    Math.max(
-      1,
-      parseInt(
-        readParam(source, 'limit') ?? String(DEFAULT_QUOTE_LIST_LIMIT),
-        10
-      ) || DEFAULT_QUOTE_LIST_LIMIT
-    ),
-    MAX_QUOTE_LIST_RESULTS
-  );
+  const { page, limit } = parseListPagination(source, {
+    limit: DEFAULT_QUOTE_LIST_LIMIT,
+    max: MAX_QUOTE_LIST_RESULTS,
+  });
 
-  const companyId = readParam(source, 'companyId')?.trim();
-  const customerId = readParam(source, 'customerId')?.trim();
-  const status = readParam(source, 'status')?.trim();
+  const companyId = readQueryParam(source, 'companyId')?.trim();
+  const customerId = readQueryParam(source, 'customerId')?.trim();
+  const status = readQueryParam(source, 'status')?.trim();
 
   if (status && !QUOTE_STATUS_SET.has(status)) {
     throw Object.assign(new Error('Invalid quote status filter.'), {
@@ -566,6 +550,7 @@ async function hydrateQuoteLineSnapshots(lines) {
  * List companies with optional search and pagination.
  *
  * @param {object} [options]
+ * @returns {Promise<{ companies: object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listCompanies(options = {}) {
   const params =
@@ -573,12 +558,17 @@ export async function listCompanies(options = {}) {
       ? options
       : parseCompanyListParams(options);
 
-  const safePage = Math.max(1, params.page ?? 1);
-  const safeLimit = Math.min(
-    Math.max(1, params.limit ?? DEFAULT_COMPANY_LIST_LIMIT),
-    MAX_COMPANY_LIST_RESULTS
-  );
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_COMPANY_LIST_LIMIT,
+    maxLimit: MAX_COMPANY_LIST_RESULTS,
+  });
   const where = buildCompanyWhere(params);
 
   const [items, total] = await Promise.all([
@@ -587,17 +577,14 @@ export async function listCompanies(options = {}) {
       include: COMPANY_LIST_INCLUDE,
       orderBy: { name: 'asc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.company.count({ where }),
   ]);
 
   return {
     companies: items.map(serializeCompany),
-    total,
-    page: safePage,
-    limit: safeLimit,
-    totalPages: Math.ceil(total / safeLimit) || 1,
+    ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
   };
 }
 
@@ -664,6 +651,7 @@ export async function addCompanyMember(input) {
  * List quotes with optional filters and pagination.
  *
  * @param {object} [options]
+ * @returns {Promise<{ quotes: object[], total: number, page: number, limit: number, totalPages: number }>}
  */
 export async function listQuotes(options = {}) {
   const params =
@@ -671,12 +659,17 @@ export async function listQuotes(options = {}) {
       ? options
       : parseQuoteListParams(options);
 
-  const safePage = Math.max(1, params.page ?? 1);
-  const safeLimit = Math.min(
-    Math.max(1, params.limit ?? DEFAULT_QUOTE_LIST_LIMIT),
-    MAX_QUOTE_LIST_RESULTS
-  );
-  const skip = (safePage - 1) * safeLimit;
+  const {
+    page: safePage,
+    limit: safeLimit,
+    skip,
+    take,
+  } = buildPrismaPagination({
+    page: params.page,
+    limit: params.limit,
+    defaultLimit: DEFAULT_QUOTE_LIST_LIMIT,
+    maxLimit: MAX_QUOTE_LIST_RESULTS,
+  });
   const where = buildQuoteWhere(params);
 
   const [items, total] = await Promise.all([
@@ -685,17 +678,14 @@ export async function listQuotes(options = {}) {
       include: QUOTE_LIST_INCLUDE,
       orderBy: { createdAt: 'desc' },
       skip,
-      take: safeLimit,
+      take,
     }),
     prisma.quote.count({ where }),
   ]);
 
   return {
     quotes: items.map(serializeQuote),
-    total,
-    page: safePage,
-    limit: safeLimit,
-    totalPages: Math.ceil(total / safeLimit) || 1,
+    ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
   };
 }
 
