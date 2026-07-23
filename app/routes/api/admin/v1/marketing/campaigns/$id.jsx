@@ -1,7 +1,7 @@
 // GET /api/admin/v1/marketing/campaigns/:id — get campaign
 // Requires admin-scoped API key.
 
-import { createDomainErrorMapper } from '#/libs/api/admin.server';
+import { createDomainErrorMapper } from '#/libs/api/admin/index.server';
 import { getCampaign } from '#/core/marketing/index.server';
 
 const mapCampaignError = createDomainErrorMapper({

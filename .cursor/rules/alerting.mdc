@@ -8,16 +8,16 @@ alwaysApply: false
 
 Production error alerts and operational notifications go through a **provider registry** (same pattern as payments/shipping). Telegram is the built-in default.
 
-Relevant modules: [app/libs/alerting.server.js](mdc:app/libs/alerting.server.js), [app/libs/alerting-types.server.js](mdc:app/libs/alerting-types.server.js), [app/libs/error.server.js](mdc:app/libs/error.server.js), [app/libs/alerting/telegram.server.js](mdc:app/libs/alerting/telegram.server.js), [app/libs/telegram.server.js](mdc:app/libs/telegram.server.js).
+Relevant modules: [app/libs/alerting/index.server.js](mdc:app/libs/alerting/index.server.js), [app/libs/alerting-types.server.js](mdc:app/libs/alerting-types.server.js), [app/libs/error/index.server.js](mdc:app/libs/error/index.server.js), [app/libs/alerting/telegram.server.js](mdc:app/libs/alerting/telegram.server.js), [app/libs/telegram.server.js](mdc:app/libs/telegram.server.js).
 
 ## What to call
 
 | Use case | Import | Notes |
 | -------- | ------ | ----- |
-| Route/action errors | `handleError` from `#/libs/error.server` | Logs + sends `sendErrorAlert` in production |
-| Direct error alerts | `sendErrorAlert` from `#/libs/alerting.server` | Jobs, bootstrap, background workers |
-| General notifications | `sendAlertMessage` from `#/libs/alerting.server` | Same provider as errors |
-| Custom provider | `registerProvider` from `#/libs/alerting.server` | Register at startup (e.g. bootstrap) |
+| Route/action errors | `handleError` from `#/libs/error/index.server` | Logs + sends `sendErrorAlert` in production |
+| Direct error alerts | `sendErrorAlert` from `#/libs/alerting/index.server` | Jobs, bootstrap, background workers |
+| General notifications | `sendAlertMessage` from `#/libs/alerting/index.server` | Same provider as errors |
+| Custom provider | `registerProvider` from `#/libs/alerting/index.server` | Register at startup (e.g. bootstrap) |
 
 Do **not** call `sendTelegramError` or `sendTelegramMessage` in new code — those legacy helpers were removed. Use the alerting handlers above.
 
@@ -36,7 +36,7 @@ Alerts and messages are skipped in `NODE_ENV=development`.
 Register a provider that implements `sendError(errorData, options?)`. Optionally implement `sendMessage(message, options?)` for general notifications.
 
 ```js
-import { registerProvider } from '#/libs/alerting.server';
+import { registerProvider } from '#/libs/alerting/index.server';
 
 registerProvider('slack', {
   id: 'slack',
@@ -58,4 +58,4 @@ Built-in Telegram adapter: `#/libs/alerting/telegram.server.js` (wraps `#/libs/t
 
 ## Route errors
 
-In loader/action `catch` blocks, return `handleError` from `#/libs/error.server` — do not call alerting handlers directly from routes unless you have a non-HTTP use case.
+In loader/action `catch` blocks, return `handleError` from `#/libs/error/index.server` — do not call alerting handlers directly from routes unless you have a non-HTTP use case.

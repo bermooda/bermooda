@@ -3,7 +3,7 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import { buildPrismaPagination } from '#/libs/prisma/pagination.server';
+import { buildPrismaPagination } from '#/libs/prisma/pagination/index.server';
 import { emit } from '#/core/events/index.server';
 import { hasMarketingConsent } from '#/core/gdpr/index.server';
 import { sendCampaignEmail } from '#/emails/index.server';

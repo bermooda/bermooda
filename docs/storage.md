@@ -59,7 +59,7 @@ Keys are stored in `Media.storageKey` in the database so they can be used to del
 
 The storage layer is split into two modules:
 
-- `app/core/storage/client.server.js` — low-level S3-compatible primitives
+- `app/core/storage/client/index.server.js` — low-level S3-compatible primitives
 - `app/core/storage/index.server.js` — public API that re-exports the primitives and adds `uploadMedia`
 
 ### Low-level primitives (`client.server.js`)

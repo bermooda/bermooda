@@ -42,11 +42,11 @@ vi.mock('#/utils/logger.server', () => ({
   default: { error: vi.fn() },
 }));
 
-vi.mock('#/libs/alerting.server', () => ({
+vi.mock('#/libs/alerting/index.server', () => ({
   sendErrorAlert: vi.fn(),
 }));
 
-import { action, loader } from '#/routes/admin/discounts/index';
+import { action, loader } from '#/routes/admin/discounts';
 
 function buildRequest(intent, fields = {}) {
   const formData = new FormData();

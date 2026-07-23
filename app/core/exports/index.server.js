@@ -2,7 +2,7 @@
 // CSV data exports and scheduled export management.
 
 import prisma from '#/libs/prisma.server';
-import { buildPrismaPagination } from '#/libs/prisma/pagination.server';
+import { buildPrismaPagination } from '#/libs/prisma/pagination/index.server';
 import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import {

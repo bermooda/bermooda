@@ -6,7 +6,7 @@ import {
   createDomainErrorMapper,
   parseJsonBody,
   requireMethod,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import {
   closePosSession,
   createPosDraftOrder,

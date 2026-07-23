@@ -1,7 +1,7 @@
 // GET /api/admin/v1/customers/:id/data-export — portable JSON export
 // Requires admin-scoped API key.
 
-import { createDomainErrorMapper } from '#/libs/api/admin.server';
+import { createDomainErrorMapper } from '#/libs/api/admin/index.server';
 import { exportCustomerData } from '#/core/gdpr/index.server';
 
 const mapDataExportError = createDomainErrorMapper({

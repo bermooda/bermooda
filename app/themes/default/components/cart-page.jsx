@@ -3,16 +3,16 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { Link, Form, useNavigation } from 'react-router';
 
-import { useT } from '#/core/i18n/index';
+import { useT } from '#/core/i18n';
+import { resolveCatalogMediaUrl } from '#/core/storage/media';
+import SlotBlocks from '#/components/slot-blocks';
+
 import {
   cartLineTotal,
   formatPrice,
   resolveProductHref,
   summarizeCartLines,
-} from '#/core/index';
-import { resolveCatalogMediaUrl } from '#/core/storage/media';
-import SlotBlocks from '#/components/slot-blocks';
-
+} from '#/core';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';

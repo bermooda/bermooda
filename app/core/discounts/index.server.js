@@ -2,7 +2,7 @@
 // Promotions engine: validation, stacking, automatic discounts, CRUD.
 
 import prisma from '#/libs/prisma.server';
-import { equalsFilter } from '#/libs/prisma/filters.server';
+import { equalsFilter } from '#/libs/prisma/filters/index.server';
 import { summarizeCartLines } from '#/core/cart/lines';
 
 // ---------------------------------------------------------------------------

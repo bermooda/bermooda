@@ -3,7 +3,7 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 
-import { parseAdminSearchParams } from '#/libs/api/admin-ui.server';
+import { parseAdminSearchParams } from '#/libs/api/admin-ui/index.server';
 import { listGiftCards } from '#/core/gift-cards/index.server';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';

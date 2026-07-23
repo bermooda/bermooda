@@ -5,7 +5,7 @@ import {
   parseAdminListPagination,
   parseJsonBody,
   requireMethod,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import { getCustomer } from '#/core/customers/index.server';
 import {
   getCustomerStoreCreditSummary,

@@ -12,7 +12,7 @@ import {
 import config from '#/config';
 import logger from '#/utils/logger.server';
 import { adminAuthClient } from '#/libs/auth/admin-client';
-import { adminAuth } from '#/libs/auth/admin.server';
+import { adminAuth } from '#/libs/auth/admin/index.server';
 import {
   createFirstAdmin,
   mapOnboardingActionError,

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFetcher } from 'react-router';
 
-import { LOCALE_OPTIONS } from '#/core/i18n/index';
+import { LOCALE_OPTIONS } from '#/core/i18n';
 import {
   CHECKBOX_CLASS,
   RADIO_CLASS,

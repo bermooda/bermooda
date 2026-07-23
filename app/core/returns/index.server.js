@@ -8,7 +8,7 @@ import {
   buildPrismaPagination,
   parseListPagination,
   readQueryParam,
-} from '#/libs/prisma/pagination.server';
+} from '#/libs/prisma/pagination/index.server';
 import { emit } from '#/core/events/index.server';
 import { incrementInventory } from '#/core/inventory/index.server';
 import { inventoryItemsFromLines } from '#/core/inventory/items';

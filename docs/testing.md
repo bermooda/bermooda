@@ -19,12 +19,27 @@ The philosophy is to test behavior through mocks and factories rather than hitti
 
 Server tests use the `.test.server.js` / `.test.server.jsx` suffix so the `unit` project excludes them and the `server` project picks them up exclusively.
 
+**Colocation:** place each test next to the module it covers. Named modules are
+wrapped into a folder with an `index` entry so the test mirrors that name:
+
+```
+app/utils/slugify.js + slugify.test.js
+  → app/utils/slugify/index.js + index.test.js
+
+app/libs/error.server.js + error.server.test.js
+  → app/libs/error/index.server.js + index.test.server.js
+```
+
+Dynamic-segment and layout route modules keep their filenames; tests sit beside
+them (`$provider.test.jsx`, `_layout.test.jsx`).
+
 **Examples:**
 
 ```
-app/core/cart/index.test.server.js   # Mirrors index.server.js — Prisma mock, Node env
-app/core/totals/totals.test.js       # Pure logic, happy-dom
-app/components/ProductCard/ProductCard.test.jsx  # React component, happy-dom
+app/core/cart/index.test.server.js              # Mirrors index.server.js — Prisma mock, Node env
+app/core/cart/lines/index.test.js               # Pure logic, happy-dom
+app/components/admin/slug-field/index.test.jsx  # React component, happy-dom
+app/routes/webhooks/$provider.test.jsx          # Route module, Node via routes include
 ```
 
 ---

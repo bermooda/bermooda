@@ -5,7 +5,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Form, Link, useLocation } from 'react-router';
 
-import { formatPrice } from '#/core/index';
+import { formatPrice } from '#/core';
 
 const SORT_OPTIONS = [
   { value: 'relevance', label: 'Relevance' },

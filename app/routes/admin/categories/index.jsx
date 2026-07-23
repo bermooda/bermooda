@@ -18,13 +18,13 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { handleAdminActionError } from '#/libs/api/admin-ui.server';
+import { handleAdminActionError } from '#/libs/api/admin-ui/index.server';
 import {
   deleteCategoryRecursive,
   loadCategoryAdminTreeData,
   saveCategoryAdminForm,
   setCategorySiblingOrder,
-} from '#/core/catalog/admin.server';
+} from '#/core/catalog/admin/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';

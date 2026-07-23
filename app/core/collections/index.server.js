@@ -2,7 +2,7 @@
 // Manual and smart product collections.
 
 import prisma from '#/libs/prisma.server';
-import { containsFilter } from '#/libs/prisma/filters.server';
+import { containsFilter } from '#/libs/prisma/filters/index.server';
 import {
   getTranslations,
   setSlug,
@@ -13,7 +13,7 @@ import {
   parseCollectionRulesFromForm,
   parseCollectionRulesInput,
   productMatchesCollectionRules,
-} from '#/core/collections/rules.server';
+} from '#/core/collections/rules/index.server';
 
 const COLLECTION_LIST_INCLUDE = {
   _count: { select: { products: true } },

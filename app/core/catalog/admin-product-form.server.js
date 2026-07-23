@@ -3,7 +3,7 @@
 
 import prisma from '#/libs/prisma.server';
 import { publishProduct, unpublishProduct } from '#/core/catalog/index.server';
-import { setDefaultLocationQuantity } from '#/core/inventory/locations.server';
+import { setDefaultLocationQuantity } from '#/core/inventory/locations/index.server';
 import { get } from '#/core/settings/index.server';
 
 /** Placeholder variant id used in the create-product form before persistence. */

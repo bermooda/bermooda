@@ -1,7 +1,7 @@
 // app/core/themes/index.server.js
 // Theme loader: define, register, and resolve storefront themes.
 
-import cache, { getCachedResult } from '#/utils/cache.server';
+import cache, { getCachedResult } from '#/utils/cache/index.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';

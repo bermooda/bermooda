@@ -19,7 +19,7 @@ vi.mock('#/core/settings/index.server', () => ({
   get: vi.fn(),
 }));
 
-import { action } from '#/routes/admin/plugins/index';
+import { action } from '#/routes/admin/plugins';
 
 function buildRequest(intent, pluginId, extra = {}) {
   const formData = new FormData();

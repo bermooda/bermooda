@@ -7,12 +7,12 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { handleAdminActionError } from '#/libs/api/admin-ui.server';
+import { handleAdminActionError } from '#/libs/api/admin-ui/index.server';
 import {
   createCategoryFromAdminInput,
   loadCategoryAdminSelectOptions,
   parseCategoryCreateInput,
-} from '#/core/catalog/admin.server';
+} from '#/core/catalog/admin/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';

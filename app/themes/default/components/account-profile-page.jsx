@@ -1,6 +1,6 @@
 import { Form, useNavigation } from 'react-router';
 
-import { useT } from '#/core/i18n/index';
+import { useT } from '#/core/i18n';
 
 export default function AccountProfilePage({ customer }) {
   const t = useT();

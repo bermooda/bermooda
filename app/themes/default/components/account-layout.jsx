@@ -9,7 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Link, NavLink } from 'react-router';
 
-import { useT } from '#/core/i18n/index';
+import { useT } from '#/core/i18n';
 
 import StorefrontShell from '#/themes/default/components/storefront-chrome';
 

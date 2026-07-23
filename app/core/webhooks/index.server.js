@@ -7,7 +7,7 @@ import prisma from '#/libs/prisma.server';
 import {
   buildPrismaPagination,
   normalizePagination,
-} from '#/libs/prisma/pagination.server';
+} from '#/libs/prisma/pagination/index.server';
 import {
   DOMAIN_EVENT_WILDCARD,
   DOMAIN_EVENTS,

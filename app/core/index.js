@@ -4,7 +4,7 @@
 
 // -- Hooks ------------------------------------------------------------------
 
-export { useT, translate } from '#/core/i18n/index';
+export { useT, translate } from '#/core/i18n';
 
 // -- Utilities --------------------------------------------------------------
 

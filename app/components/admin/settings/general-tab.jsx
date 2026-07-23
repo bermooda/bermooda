@@ -1,6 +1,6 @@
 import { useFetcher, useLocation } from 'react-router';
 
-import { LOCALE_LABELS, LOCALE_OPTIONS } from '#/core/i18n/index';
+import { LOCALE_LABELS, LOCALE_OPTIONS } from '#/core/i18n';
 import { AVAILABLE_CURRENCIES } from '#/core/settings/defaults';
 import {
   FieldLabel,

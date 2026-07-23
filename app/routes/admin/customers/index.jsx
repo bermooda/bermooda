@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from 'react-router';
 
-import { parseAdminUiPagination } from '#/libs/api/admin-ui.server';
+import { parseAdminUiPagination } from '#/libs/api/admin-ui/index.server';
 import {
   countCustomersWithOrders,
   listCustomers,

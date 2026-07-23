@@ -7,7 +7,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useLoaderData } from 'react-router';
 
-import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
+import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
 import { formatPrice } from '#/core/currency/format';
 import { loadAdminDashboardData } from '#/core/reporting/index.server';
 import Card from '#/components/admin/card';

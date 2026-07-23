@@ -1,7 +1,7 @@
 import { Telegraf } from 'telegraf';
 
 import logger from '#/utils/logger.server';
-import { normalizeErrorAlert } from '#/libs/alerting/shared.server';
+import { normalizeErrorAlert } from '#/libs/alerting/shared/index.server';
 
 /**
  * @typedef {Object} TelegramConfig

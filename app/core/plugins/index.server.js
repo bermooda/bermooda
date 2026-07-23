@@ -10,7 +10,7 @@ import {
 } from '#/core/address-validation/index.server';
 import { emit, isHookAbort, off, on } from '#/core/events/index.server';
 import { isBeforeHookEvent } from '#/core/events/names';
-import { translate } from '#/core/i18n/index';
+import { translate } from '#/core/i18n';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import {
   registerProvider as registerPaymentProvider,
@@ -720,15 +720,17 @@ export async function getPluginBlocksForSlot(slotName) {
 // ---------------------------------------------------------------------------
 
 const adminRoutesByPlugin = buildPluginRouteRegistry(
-  import.meta.glob('#/plugins/*/admin/routes.server.js', { eager: true }),
-  /\/plugins\/([^/]+)\/admin\/routes\.server\.js$/
+  import.meta.glob('#/plugins/*/admin/routes/index.server.js', {
+    eager: true,
+  }),
+  /\/plugins\/([^/]+)\/admin\/routes\/index\.server\.js$/
 );
 
 const storefrontRoutesByPlugin = buildPluginRouteRegistry(
-  import.meta.glob('#/plugins/*/storefront/routes.server.js', {
+  import.meta.glob('#/plugins/*/storefront/routes/index.server.js', {
     eager: true,
   }),
-  /\/plugins\/([^/]+)\/storefront\/routes\.server\.js$/
+  /\/plugins\/([^/]+)\/storefront\/routes\/index\.server\.js$/
 );
 
 /**

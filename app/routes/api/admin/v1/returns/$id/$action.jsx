@@ -8,7 +8,7 @@ import {
   createDomainErrorMapper,
   parseOptionalJsonBody,
   requireMethod,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import {
   approveReturn,
   cancelReturn,

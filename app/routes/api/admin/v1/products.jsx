@@ -9,7 +9,7 @@ import {
   parseBooleanQueryParam,
   parseJsonBody,
   requireMethod,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import { listProducts, createProduct } from '#/core/catalog/index.server';
 
 export async function loader({ request }) {
