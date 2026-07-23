@@ -1,5 +1,6 @@
-import { useT } from '#/core/i18n/index';
-import { formatPrice } from '#/core/index';
+import { useT } from '#/core/i18n';
+
+import { formatPrice } from '#/core';
 
 export default function AccountLoyaltyPage({
   config,

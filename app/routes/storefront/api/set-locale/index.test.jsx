@@ -17,7 +17,7 @@ vi.mock('#/core/i18n/index.server', () => ({
 
 import { setLocaleCookie } from '#/core/i18n/index.server';
 
-import { action as setLocaleAction } from '#/routes/storefront/api/set-locale/index';
+import { action as setLocaleAction } from '#/routes/storefront/api/set-locale';
 
 describe('storefront set-locale action', () => {
   beforeEach(() => {

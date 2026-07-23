@@ -9,7 +9,7 @@ import {
   resolveCatalogMediaUrl,
   resolveMediaUrl,
   serializeMediaRecord,
-} from '#/core/storage/media/index';
+} from '#/core/storage/media';
 
 describe('parseMediaVariants', () => {
   it('returns an empty object for missing input', () => {

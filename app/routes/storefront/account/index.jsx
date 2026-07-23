@@ -5,7 +5,7 @@ import { listOrders } from '#/core/customers/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
   const themeId = await preloadStorefrontTheme();

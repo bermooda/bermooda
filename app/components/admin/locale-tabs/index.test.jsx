@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import LocaleTabs from '#/components/admin/locale-tabs/index';
+import LocaleTabs from '#/components/admin/locale-tabs';
 
 describe('LocaleTabs', () => {
   it('renders locale labels and calls onSelect when a tab is clicked', () => {

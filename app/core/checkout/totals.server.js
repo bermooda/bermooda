@@ -1,7 +1,7 @@
 // app/core/checkout/totals.server.js
 // Totals engine: subtotal, multi-discount, shipping, tax-class-aware tax, total.
 
-import { summarizeCartLines } from '#/core/cart/lines/index';
+import { summarizeCartLines } from '#/core/cart/lines';
 import { resolvePromotions } from '#/core/discounts/index.server';
 import { resolveGiftCardRedemption } from '#/core/gift-cards/index.server';
 import { resolveLoyaltyRedemption } from '#/core/loyalty/index.server';

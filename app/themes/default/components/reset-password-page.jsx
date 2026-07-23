@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import { customerAuthClient } from '#/libs/auth/customer-client';
-import { useT } from '#/core/i18n/index';
+import { useT } from '#/core/i18n';
 
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,

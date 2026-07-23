@@ -4,7 +4,7 @@
 import Stripe from 'stripe';
 
 import logger from '#/utils/logger.server';
-import { summarizeCartLines } from '#/core/cart/lines/index';
+import { summarizeCartLines } from '#/core/cart/lines';
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;

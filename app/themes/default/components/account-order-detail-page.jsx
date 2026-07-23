@@ -5,8 +5,7 @@ import {
   cartLineTotal,
   formatPrice,
   parseShippingAddressSnapshot,
-} from '#/core/index';
-
+} from '#/core';
 import AccountStatusBadge from '#/themes/default/components/account-status-badge';
 
 export default function AccountOrderDetailPage({ order, locale, currency }) {

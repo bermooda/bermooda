@@ -1,13 +1,13 @@
 import { Link } from 'react-router';
 
+import { resolveCatalogMediaUrl } from '#/core/storage/media';
+
 import {
   formatPrice,
   resolveProductDisplayPrice,
   resolveProductHref,
   resolveProductSlug,
-} from '#/core/index';
-import { resolveCatalogMediaUrl } from '#/core/storage/media/index';
-
+} from '#/core';
 import {
   STOREFRONT_CREAM as CREAM,
   STOREFRONT_SAND as SAND,

@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { cartLineTotal, summarizeCartLines } from '#/core/cart/lines/index';
+import { cartLineTotal, summarizeCartLines } from '#/core/cart/lines';
 
 describe('cartLineTotal', () => {
   it('returns priceCentsSnapshot multiplied by quantity', () => {

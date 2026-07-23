@@ -1,7 +1,7 @@
 // GET /api/v1/catalog/:id — single product by id (public)
 
 import { getProduct } from '#/core/catalog/index.server';
-import { parsePublicCatalogDetailParams } from '#/core/catalog/params/index';
+import { parsePublicCatalogDetailParams } from '#/core/catalog/params';
 
 export async function loader({ request, params }) {
   const url = new URL(request.url);

@@ -142,7 +142,7 @@ Themes render slots by calling `getSlotBlocks(slotName)` or `getSlotBlocksMap(sl
 Example:
 
 ```jsx
-import SlotBlocks from '#/components/slot-blocks/index';
+import SlotBlocks from '#/components/slot-blocks';
 
 <SlotBlocks
   blocks={slotBlocks['product.afterDescription']}

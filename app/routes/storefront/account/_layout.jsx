@@ -4,7 +4,7 @@ import { Outlet, useLoaderData } from 'react-router';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { buildLoginRedirectUrl } from '#/libs/auth/shared/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
   const themeId = await preloadStorefrontTheme();

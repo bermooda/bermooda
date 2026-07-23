@@ -8,7 +8,7 @@ import { Link, useFetcher, useLoaderData } from 'react-router';
 import { authenticate } from '#/libs/auth/admin/index.server';
 import { revokeApiKey, listApiKeys } from '#/core/api-keys/index.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
-import { DOMAIN_EVENTS } from '#/core/events/names/index';
+import { DOMAIN_EVENTS } from '#/core/events/names';
 import {
   deleteSubscription,
   listSubscriptions,

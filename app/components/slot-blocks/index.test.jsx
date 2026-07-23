@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import SlotBlocks from '#/components/slot-blocks/index';
+import SlotBlocks from '#/components/slot-blocks';
 
 describe('SlotBlocks', () => {
   it('forwards slot props to each plugin block', () => {

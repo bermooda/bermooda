@@ -2,7 +2,7 @@
 // In-process domain event bus. No external broker required.
 
 import logger from '#/utils/logger.server';
-import { beforeHookKey } from '#/core/events/names/index';
+import { beforeHookKey } from '#/core/events/names';
 
 /** @type {Map<string, Function[]>} */
 const handlers = new Map();

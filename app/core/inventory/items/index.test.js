@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { inventoryItemsFromLines } from '#/core/inventory/items/index';
+import { inventoryItemsFromLines } from '#/core/inventory/items';
 
 describe('inventoryItemsFromLines', () => {
   it('maps tracked lines to variant inventory payloads', () => {

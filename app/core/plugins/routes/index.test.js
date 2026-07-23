@@ -4,7 +4,7 @@ import {
   buildPluginRouteRegistry,
   normalizePluginRoutePath,
   resolvePluginRouteDescriptor,
-} from '#/core/plugins/routes/index';
+} from '#/core/plugins/routes';
 
 describe('normalizePluginRoutePath', () => {
   it('strips leading and trailing slashes and query strings', () => {

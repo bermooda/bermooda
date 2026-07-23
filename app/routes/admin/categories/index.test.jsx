@@ -27,7 +27,7 @@ vi.mock('#/libs/alerting/index.server', () => ({
   sendErrorAlert: vi.fn(),
 }));
 
-import { action, loader } from '#/routes/admin/categories/index';
+import { action, loader } from '#/routes/admin/categories';
 
 function buildRequest(intent, fields = {}) {
   const formData = new FormData();

@@ -21,7 +21,7 @@ vi.mock('#/core/settings/index.server', () => ({
 
 import { setCurrencyCookie } from '#/core/currency/index.server';
 
-import { action as setCurrencyAction } from '#/routes/storefront/api/set-currency/index';
+import { action as setCurrencyAction } from '#/routes/storefront/api/set-currency';
 
 describe('storefront set-currency action', () => {
   beforeEach(() => {

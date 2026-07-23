@@ -10,7 +10,7 @@ import {
   isBeforeHookEvent,
   isDomainEvent,
   isDomainEventOrWildcard,
-} from '#/core/events/names/index';
+} from '#/core/events/names';
 
 describe('domain event names', () => {
   it('includes public lifecycle events and excludes cart churn', () => {

@@ -23,7 +23,7 @@ import { controlClasses } from '#/components/admin/form/input';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
 import { Td, Th } from '#/components/admin/table';
-import SlotBlocks from '#/components/slot-blocks/index';
+import SlotBlocks from '#/components/slot-blocks';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 

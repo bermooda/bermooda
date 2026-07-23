@@ -3,7 +3,7 @@
 
 import prisma from '#/libs/prisma.server';
 import { equalsFilter } from '#/libs/prisma/filters/index.server';
-import { summarizeCartLines } from '#/core/cart/lines/index';
+import { summarizeCartLines } from '#/core/cart/lines';
 
 // ---------------------------------------------------------------------------
 // Internal helpers

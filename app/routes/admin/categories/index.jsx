@@ -30,7 +30,7 @@ import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Textarea from '#/components/admin/form/textarea';
-import LocaleTabs from '#/components/admin/locale-tabs/index';
+import LocaleTabs from '#/components/admin/locale-tabs';
 import PageHeader from '#/components/admin/page-header';
 import SortableList, { SortableGrip } from '#/components/admin/sortable-list';
 import { SuccessAlert } from '#/components/ui/alert';

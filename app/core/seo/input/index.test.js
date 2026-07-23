@@ -9,7 +9,7 @@ import {
   serializeJsonLd,
   serializeSeoSettings,
   truncateMetaDescription,
-} from '#/core/seo/input/index';
+} from '#/core/seo/input';
 import { SETTING_KEYS } from '#/core/settings/keys';
 
 describe('parseSeoSettingsInput', () => {

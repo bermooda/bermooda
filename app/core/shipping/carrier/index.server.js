@@ -1,7 +1,7 @@
 // Carrier shipping provider — flat fallback with optional live rates via env.
 
 import logger from '#/utils/logger.server';
-import { summarizeCartLines } from '#/core/cart/lines/index';
+import { summarizeCartLines } from '#/core/cart/lines';
 
 const CARRIER_RATES = {
   domestic: { standard: 599, express: 1299 },

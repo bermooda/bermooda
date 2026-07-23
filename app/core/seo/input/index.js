@@ -38,7 +38,7 @@ export function truncateMetaDescription(text, maxLength = 160) {
   return trimmed.slice(0, maxLength);
 }
 
-import { resolveCatalogMediaUrl } from '#/core/storage/media/index';
+import { resolveCatalogMediaUrl } from '#/core/storage/media';
 
 /**
  * Resolve the first media URL from catalog entities.

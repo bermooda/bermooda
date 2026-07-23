@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   parsePublicSearchParams,
   resolveSearchSort,
-} from '#/core/search/params/index';
+} from '#/core/search/params';
 
 describe('resolveSearchSort', () => {
   it('maps relevance to relevance', () => {

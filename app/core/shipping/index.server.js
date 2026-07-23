@@ -1,7 +1,7 @@
 // app/core/shipping/index.server.js
 // Shipping provider registry + built-in flat-rate adapter.
 
-import { summarizeCartLines } from '#/core/cart/lines/index';
+import { summarizeCartLines } from '#/core/cart/lines';
 import { get as settingsGet } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------

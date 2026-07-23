@@ -2,7 +2,7 @@
 // Requires admin-scoped API key.
 
 import { listAuditLogs, parseAuditListParams } from '#/core/audit/index.server';
-import { DOMAIN_EVENTS } from '#/core/events/names/index';
+import { DOMAIN_EVENTS } from '#/core/events/names';
 
 export async function loader({ request }) {
   const url = new URL(request.url);

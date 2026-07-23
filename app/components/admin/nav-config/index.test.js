@@ -4,7 +4,7 @@ import {
   filterCommandItems,
   getAllCommandItems,
   groupCommandItems,
-} from '#/components/admin/nav-config/index';
+} from '#/components/admin/nav-config';
 
 describe('admin nav-config', () => {
   it('includes quick actions and sidebar destinations', () => {

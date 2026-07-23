@@ -7,7 +7,7 @@ import {
   resolveProductDisplayPrice,
   resolveProductHref,
   resolveProductSlug,
-} from '#/core/catalog/display/index';
+} from '#/core/catalog/display';
 import { parseShippingAddressSnapshot } from '#/core/orders/address-snapshot';
 
 describe('catalog display helpers', () => {

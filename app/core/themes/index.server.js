@@ -11,7 +11,7 @@ import {
   REQUIRED_MANIFEST_FIELDS,
   SLOT_NAMES,
 } from '#/core/themes/manifest';
-import { registerStorefrontTheme } from '#/core/themes/storefront-components/index';
+import { registerStorefrontTheme } from '#/core/themes/storefront-components';
 
 export { SLOT_NAMES };
 

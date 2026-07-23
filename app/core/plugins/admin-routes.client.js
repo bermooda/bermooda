@@ -3,7 +3,7 @@
 import {
   buildPluginRouteRegistry,
   resolvePluginRouteDescriptor,
-} from '#/core/plugins/routes/index';
+} from '#/core/plugins/routes';
 
 const adminRoutesByPlugin = buildPluginRouteRegistry(
   import.meta.glob('#/plugins/*/admin/routes.client.js', { eager: true }),

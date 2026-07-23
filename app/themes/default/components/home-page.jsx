@@ -8,14 +8,14 @@ import {
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { Link } from 'react-router';
 
+import { resolveCatalogMediaUrl } from '#/core/storage/media';
+import SlotBlocks from '#/components/slot-blocks';
+
 import {
   formatPrice,
   resolveProductDisplayPrice,
   resolveProductSlug,
-} from '#/core/index';
-import { resolveCatalogMediaUrl } from '#/core/storage/media/index';
-import SlotBlocks from '#/components/slot-blocks/index';
-
+} from '#/core';
 import StorefrontShell, {
   STOREFRONT_CREAM as CREAM,
   STOREFRONT_GREEN as GREEN,

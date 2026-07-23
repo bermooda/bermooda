@@ -9,8 +9,8 @@ import {
   unregisterProvider as unregisterAddressValidationProvider,
 } from '#/core/address-validation/index.server';
 import { emit, isHookAbort, off, on } from '#/core/events/index.server';
-import { isBeforeHookEvent } from '#/core/events/names/index';
-import { translate } from '#/core/i18n/index';
+import { isBeforeHookEvent } from '#/core/events/names';
+import { translate } from '#/core/i18n';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import {
   registerProvider as registerPaymentProvider,
@@ -19,7 +19,7 @@ import {
 import {
   buildPluginRouteRegistry,
   resolvePluginRouteDescriptor,
-} from '#/core/plugins/routes/index';
+} from '#/core/plugins/routes';
 import {
   getDefaultProviderId as getDefaultSearchProviderId,
   registerProvider as registerSearchProvider,

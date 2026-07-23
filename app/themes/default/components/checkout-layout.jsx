@@ -8,10 +8,10 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { useT } from '#/core/i18n/index';
-import { cartLineTotal, formatPrice, summarizeCartLines } from '#/core/index';
-import SlotBlocks from '#/components/slot-blocks/index';
+import { useT } from '#/core/i18n';
+import SlotBlocks from '#/components/slot-blocks';
 
+import { cartLineTotal, formatPrice, summarizeCartLines } from '#/core';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';

@@ -1,7 +1,7 @@
 // app/core/index.test.jsx
 import { describe, expect, it } from 'vitest';
 
-import { dto, formatPrice, selectors, translate } from '#/core/index';
+import { dto, formatPrice, selectors, translate } from '#/core';
 
 // ---------------------------------------------------------------------------
 // selectors

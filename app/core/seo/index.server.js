@@ -12,7 +12,7 @@ import {
   resolveEntityMediaUrl,
   STATIC_SITEMAP_ROUTES,
   truncateMetaDescription,
-} from '#/core/seo/input/index';
+} from '#/core/seo/input';
 import {
   get as settingsGet,
   getMany as settingsGetMany,
@@ -26,7 +26,7 @@ export {
   serializeJsonLd,
   STATIC_SITEMAP_ROUTES,
   truncateMetaDescription,
-} from '#/core/seo/input/index';
+} from '#/core/seo/input';
 
 const SEO_SETTING_KEYS = [
   SETTING_KEYS.SEO_META_TITLE,

@@ -13,7 +13,7 @@ import {
 } from '#/core/seo/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import { JsonLd } from '#/components/seo/json-ld';
 
 export async function loader({ request, params }) {

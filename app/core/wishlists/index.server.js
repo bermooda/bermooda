@@ -14,7 +14,7 @@ import {
   loadProductTitleMap,
 } from '#/core/catalog/translations.server';
 import { getCustomer } from '#/core/customers/index.server';
-import { resolveCatalogMediaUrl } from '#/core/storage/media/index';
+import { resolveCatalogMediaUrl } from '#/core/storage/media';
 
 export const DEFAULT_WISHLIST_LIST_LIMIT = 20;
 export const MAX_WISHLIST_LIST_RESULTS = 100;

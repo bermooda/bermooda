@@ -3,7 +3,7 @@ import { useLoaderData } from 'react-router';
 import { clearCheckoutSessionCookie } from '#/utils/checkout-cookie.server';
 import { loadStorefrontPageContext } from '#/libs/api/storefront/index.server';
 import { getOrderByOrderNumber } from '#/core/orders/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request, params }) {
   const { themeId, locale, currency } =

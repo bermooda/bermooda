@@ -15,7 +15,7 @@ import EmptyState from '#/components/admin/empty-state';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
 import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
-import SlotBlocks from '#/components/slot-blocks/index';
+import SlotBlocks from '#/components/slot-blocks';
 
 // ---------------------------------------------------------------------------
 // Meta

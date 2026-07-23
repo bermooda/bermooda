@@ -9,7 +9,7 @@ import {
 } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin/index.server';
-import { DOMAIN_EVENTS } from '#/core/events/names/index';
+import { DOMAIN_EVENTS } from '#/core/events/names';
 import { createSubscription } from '#/core/webhooks/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';

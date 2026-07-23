@@ -5,7 +5,7 @@ import { useLoaderData, useActionData, useRouteLoaderData } from 'react-router';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import {
   addToWishlist,
   listWishlistItems,

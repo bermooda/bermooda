@@ -12,7 +12,7 @@ vi.mock('#/libs/api/storefront/index.server', () => ({
   }),
 }));
 
-vi.mock('#/core/themes/storefront-components/index', () => ({
+vi.mock('#/core/themes/storefront-components', () => ({
   getStorefrontComponent: vi.fn(() => () => null),
 }));
 

@@ -23,15 +23,15 @@ import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 
 import config from '#/config';
 import { authenticate } from '#/libs/auth/admin/index.server';
+import { ADMIN_AVAILABLE_LOCALES, translate } from '#/core/i18n';
 import { I18nContext } from '#/core/i18n/context';
-import { ADMIN_AVAILABLE_LOCALES, translate } from '#/core/i18n/index';
 import { getRequestLocale, loadMessages } from '#/core/i18n/index.server';
 import useCommandPalette, {
   getCommandPaletteShortcutLabel,
 } from '#/hooks/use-command-palette';
 import useTheme from '#/hooks/use-theme';
 import CommandPalette from '#/components/admin/command-palette';
-import { NAV_GROUPS } from '#/components/admin/nav-config/index';
+import { NAV_GROUPS } from '#/components/admin/nav-config';
 import Logo from '#/components/ui/logo';
 
 /**

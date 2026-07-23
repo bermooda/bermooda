@@ -24,13 +24,13 @@ vi.mock('#/core/themes/index.server', () => ({
   preloadStorefrontTheme: vi.fn().mockResolvedValue('default'),
 }));
 
-vi.mock('#/core/themes/storefront-components/index', () => ({
+vi.mock('#/core/themes/storefront-components', () => ({
   getStorefrontComponent: vi.fn(() => () => null),
 }));
 
 import { createCart, getCart, addLine } from '#/core/cart/index.server';
 
-import { action } from '#/routes/storefront/cart/index';
+import { action } from '#/routes/storefront/cart';
 
 describe('storefront cart action', () => {
   beforeEach(() => {

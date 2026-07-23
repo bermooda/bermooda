@@ -30,14 +30,14 @@ vi.mock('#/core/themes/index.server', () => ({
   preloadStorefrontTheme: vi.fn().mockResolvedValue('default'),
 }));
 
-vi.mock('#/core/themes/storefront-components/index', () => ({
+vi.mock('#/core/themes/storefront-components', () => ({
   getStorefrontComponent: vi.fn(() => () => null),
 }));
 
 import { listCategories, listProducts } from '#/core/catalog/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 
-import { loader } from '#/routes/storefront/index';
+import { loader } from '#/routes/storefront';
 
 describe('storefront home loader', () => {
   beforeEach(() => {

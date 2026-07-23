@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { slugify } from '#/utils/slugify/index';
+import { slugify } from '#/utils/slugify';
 
 describe('slugify', () => {
   it('lowercases and hyphenates text', () => {

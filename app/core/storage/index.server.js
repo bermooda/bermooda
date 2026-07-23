@@ -13,7 +13,7 @@ import {
   collectStorageKeys,
   RESPONSIVE_WIDTHS,
   serializeMediaRecord,
-} from '#/core/storage/media/index';
+} from '#/core/storage/media';
 
 export {
   collectStorageKeys,
@@ -24,7 +24,7 @@ export {
   resolveMediaUrl,
   RESPONSIVE_WIDTHS,
   serializeMediaRecord,
-} from '#/core/storage/media/index';
+} from '#/core/storage/media';
 
 export const putObject = client.putObject;
 export const getObjectUrl = client.getObjectUrl;

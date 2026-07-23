@@ -6,7 +6,7 @@ import { useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin/index.server';
 import { listProvidersWithDetails as listAddressValidationProviders } from '#/core/address-validation/index.server';
-import { ADMIN_AVAILABLE_LOCALES } from '#/core/i18n/index';
+import { ADMIN_AVAILABLE_LOCALES } from '#/core/i18n';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import {
   listAdminUsers,
@@ -14,7 +14,7 @@ import {
   SETTINGS_MANAGE_PERMISSION,
   updateAdminUserRole,
 } from '#/core/rbac/index.server';
-import { parseSeoSettingsFormData } from '#/core/seo/input/index';
+import { parseSeoSettingsFormData } from '#/core/seo/input';
 import {
   getAdminSettingsSnapshot,
   saveGeneralSettings,

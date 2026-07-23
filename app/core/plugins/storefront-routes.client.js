@@ -3,7 +3,7 @@
 import {
   buildPluginRouteRegistry,
   resolvePluginRouteDescriptor,
-} from '#/core/plugins/routes/index';
+} from '#/core/plugins/routes';
 
 const storefrontRoutesByPlugin = buildPluginRouteRegistry(
   import.meta.glob('#/plugins/*/storefront/routes.client.js', {

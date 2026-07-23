@@ -44,7 +44,7 @@ vi.mock('#/core/plugins/index.server', () => ({
   getPluginBlocksForSlot: vi.fn(async () => []),
 }));
 
-vi.mock('#/core/themes/storefront-components/index', () => ({
+vi.mock('#/core/themes/storefront-components', () => ({
   registerStorefrontTheme: vi.fn(),
 }));
 
@@ -73,7 +73,7 @@ import cache from '#/utils/cache/index.server';
 import prisma from '#/libs/prisma.server';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
-import { registerStorefrontTheme } from '#/core/themes/storefront-components/index';
+import { registerStorefrontTheme } from '#/core/themes/storefront-components';
 
 // ---------------------------------------------------------------------------
 // Helpers

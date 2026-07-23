@@ -4,7 +4,7 @@ import {
   parsePublicCatalogDetailParams,
   parsePublicCatalogListParams,
   parsePublicCategoryListParams,
-} from '#/core/catalog/params/index';
+} from '#/core/catalog/params';
 
 describe('parsePublicCatalogListParams', () => {
   it('applies defaults and caps limit', () => {

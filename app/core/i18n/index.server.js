@@ -18,7 +18,7 @@ import {
 } from '#/core/i18n/locales';
 import { get as settingsGet } from '#/core/settings/index.server';
 
-export { translate as t } from '#/core/i18n/index';
+export { translate as t } from '#/core/i18n';
 
 const APP_DIR = new URL('../../../app', import.meta.url).pathname;
 

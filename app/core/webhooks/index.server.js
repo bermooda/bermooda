@@ -12,7 +12,7 @@ import {
   DOMAIN_EVENT_WILDCARD,
   DOMAIN_EVENTS,
   isDomainEventOrWildcard,
-} from '#/core/events/names/index';
+} from '#/core/events/names';
 
 // Enqueuer set by job.server.js to avoid a circular import.
 let _enqueuer = null;

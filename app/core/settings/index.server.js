@@ -12,7 +12,7 @@ import {
   parseSeoSettingsInput,
   seoSettingsToKeyValues,
   serializeSeoSettings,
-} from '#/core/seo/input/index';
+} from '#/core/seo/input';
 import {
   DEFAULT_CURRENCIES,
   DEFAULT_CURRENCY,

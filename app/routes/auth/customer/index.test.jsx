@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { customerAuthHandlerMiddleware } from '#/libs/auth/customer/index.server';
 
-import { middleware as customerMiddleware } from '#/routes/auth/customer/index';
+import { middleware as customerMiddleware } from '#/routes/auth/customer';
 
 describe('auth customer route middleware', () => {
   it('customer route composes auth rate limiting and handler middleware', () => {

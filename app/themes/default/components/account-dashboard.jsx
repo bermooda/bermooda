@@ -1,9 +1,9 @@
 import { Link } from 'react-router';
 
-import { useT } from '#/core/i18n/index';
-import { formatPrice } from '#/core/index';
-import SlotBlocks from '#/components/slot-blocks/index';
+import { useT } from '#/core/i18n';
+import SlotBlocks from '#/components/slot-blocks';
 
+import { formatPrice } from '#/core';
 import AccountStatusBadge from '#/themes/default/components/account-status-badge';
 
 export default function AccountDashboard({

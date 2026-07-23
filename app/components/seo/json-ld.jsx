@@ -1,4 +1,4 @@
-import { serializeJsonLd } from '#/core/seo/input/index';
+import { serializeJsonLd } from '#/core/seo/input';
 
 export function JsonLd({ data }) {
   if (!data) return null;

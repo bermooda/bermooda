@@ -40,7 +40,7 @@ import {
   normalizeTwitterHandle,
   resolveRobotsMeta,
 } from '#/core/seo/index.server';
-import { serializeJsonLd } from '#/core/seo/input/index';
+import { serializeJsonLd } from '#/core/seo/input';
 import {
   get as settingsGet,
   getMany as settingsGetMany,
