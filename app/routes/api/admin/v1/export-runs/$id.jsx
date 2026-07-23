@@ -1,7 +1,7 @@
 // GET /api/admin/v1/export-runs/:id — get export run metadata or CSV content
 // Requires admin-scoped API key.
 
-import { createDomainErrorMapper } from '#/libs/api/admin.server';
+import { createDomainErrorMapper } from '#/libs/api/admin/index.server';
 import { getExportRun } from '#/core/exports/index.server';
 
 const mapExportRunError = createDomainErrorMapper({

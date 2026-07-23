@@ -2,9 +2,9 @@
 
 import { Form, redirect, useActionData, useLoaderData } from 'react-router';
 
-import { getCustomerSession } from '#/libs/auth/customer.server';
-import { buildLoginRedirectUrl } from '#/libs/auth/shared.server';
-import { handleError } from '#/libs/error.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
+import { buildLoginRedirectUrl } from '#/libs/auth/shared/index.server';
+import { handleError } from '#/libs/error/index.server';
 import { getOrder } from '#/core/customers/index.server';
 import {
   parseReturnLinesFromForm,

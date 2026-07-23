@@ -2,19 +2,19 @@
 // Customer wishlists.
 
 import prisma from '#/libs/prisma.server';
-import { containsFilter } from '#/libs/prisma/filters.server';
+import { containsFilter } from '#/libs/prisma/filters/index.server';
 import {
   buildPaginationMeta,
   buildPrismaPagination,
   parseListPagination,
   readQueryParam,
-} from '#/libs/prisma/pagination.server';
+} from '#/libs/prisma/pagination/index.server';
 import {
   loadProductSlugMap,
   loadProductTitleMap,
 } from '#/core/catalog/translations.server';
 import { getCustomer } from '#/core/customers/index.server';
-import { resolveCatalogMediaUrl } from '#/core/storage/media';
+import { resolveCatalogMediaUrl } from '#/core/storage/media/index';
 
 export const DEFAULT_WISHLIST_LIST_LIMIT = 20;
 export const MAX_WISHLIST_LIST_RESULTS = 100;

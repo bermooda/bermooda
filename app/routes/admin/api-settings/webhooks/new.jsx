@@ -8,8 +8,8 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
-import { DOMAIN_EVENTS } from '#/core/events/names';
+import { authenticate } from '#/libs/auth/admin/index.server';
+import { DOMAIN_EVENTS } from '#/core/events/names/index';
 import { createSubscription } from '#/core/webhooks/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';

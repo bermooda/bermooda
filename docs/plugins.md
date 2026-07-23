@@ -50,8 +50,8 @@ A manifest is a plain JavaScript object that describes the plugin to the platfor
   description: '...',        // string, optional — short description shown in admin
   hooks: { ... },            // object, optional — event handler map (see defineHooks)
   providers: { ... },        // object, optional — payment/shipping/tax/search provider specs
-  adminRoutes: '#/plugins/my-plugin/admin/routes.server', // string, optional
-  storefrontRoutes: '#/plugins/my-plugin/storefront/routes.server', // string, optional
+  adminRoutes: '#/plugins/my-plugin/admin/routes/index.server', // string, optional
+  storefrontRoutes: '#/plugins/my-plugin/storefront/routes/index.server', // string, optional
   onEnable: async (ctx) => {},     // function, optional — called when plugin is enabled
   onDisable: async (ctx) => {},    // function, optional — called when plugin is disabled
 }
@@ -165,7 +165,7 @@ For `search`, pass the search implementation as `spec.provider`. Set `isDefault:
 import { definePlugin, defineProvider } from '#/core/plugins/index.server';
 
 import manifest from '#/plugins/meilisearch/manifest';
-import { meilisearchProvider } from '#/plugins/meilisearch/provider.server';
+import { meilisearchProvider } from '#/plugins/meilisearch/provider/index.server';
 
 export const pluginManifest = definePlugin({
   ...manifest,
@@ -594,7 +594,7 @@ A plugin that sets `adminRoutes` in its manifest gets a dedicated admin page mou
 
 Admin routes are defined as a server/client pair:
 
-- `admin/routes.server.js` — exports route descriptors with optional `loader`
+- `admin/routes/index.server.js` — exports route descriptors with optional `loader`
 - `admin/routes.client.js` — exports route descriptors with the client `Component`
 
 Both files must export the same `routes` array shape. Each route entry follows React Router conventions and must have the shape:
@@ -607,7 +607,7 @@ Both files must export the same `routes` array shape. Each route entry follows R
 }
 ```
 
-Example server routes file (`admin/routes.server.js`):
+Example server routes file (`admin/routes/index.server.js`):
 
 ```js
 import prisma from '#/libs/prisma.server';
@@ -641,7 +641,7 @@ A plugin that sets `storefrontRoutes` in its manifest gets a dedicated storefron
 
 Storefront routes follow the same split-module pattern as admin routes:
 
-- `storefront/routes.server.js` — exports route descriptors with optional `loader`
+- `storefront/routes/index.server.js` — exports route descriptors with optional `loader`
 - `storefront/routes.client.js` — exports route descriptors with the client `Component`
 
 Each route entry has the same shape:
@@ -733,7 +733,7 @@ Admin and storefront slots share the same manifest `blocks` map — use distinct
 | `customer.detail`   | Customer detail page — below the page header |
 | `product.editor`    | Product editor — below the page header       |
 
-The canonical list lives in `ADMIN_SLOT_NAMES` in `app/core/admin/slots.server.js`.
+The canonical list lives in `ADMIN_SLOT_NAMES` in `app/core/admin/slots/index.server.js`.
 
 ### Contributing a Block
 
@@ -756,7 +756,7 @@ export const pluginManifest = definePlugin({
 });
 ```
 
-Admin route loaders resolve blocks server-side with `getAdminSlotBlocksMap()` from `app/core/admin/slots.server.js` and pass them to the shared `SlotBlocks` component in `app/components/slot-blocks.jsx`.
+Admin route loaders resolve blocks server-side with `getAdminSlotBlocksMap()` from `app/core/admin/slots/index.server.js` and pass them to the shared `SlotBlocks` component in `app/components/slot-blocks/index.jsx`.
 
 ### Slot props
 
@@ -796,8 +796,8 @@ export default {
   version: '1.0.0',
   description:
     'Captures order.created events and surfaces them in admin and storefront pages.',
-  adminRoutes: '#/plugins/sample-analytics/admin/routes.server',
-  storefrontRoutes: '#/plugins/sample-analytics/storefront/routes.server',
+  adminRoutes: '#/plugins/sample-analytics/admin/routes/index.server',
+  storefrontRoutes: '#/plugins/sample-analytics/storefront/routes/index.server',
 };
 ```
 
@@ -863,7 +863,7 @@ Key points:
 
 ### Step 3 — The admin routes
 
-`app/plugins/sample-analytics/admin/routes.server.js` exports a server route that reads the stored events, while `admin/routes.client.js` exports the matching client component:
+`app/plugins/sample-analytics/admin/routes/index.server.js` exports a server route that reads the stored events, while `admin/routes.client.js` exports the matching client component:
 
 ```js
 import prisma from '#/libs/prisma.server';
@@ -890,7 +890,7 @@ The `loader` fetches data server-side; `RecentEventsPage` renders it client-side
 
 ### Step 4 — The storefront routes
 
-`app/plugins/sample-analytics/storefront/routes.server.js` exposes a public summary page at `/apps/sample-analytics/`:
+`app/plugins/sample-analytics/storefront/routes/index.server.js` exposes a public summary page at `/apps/sample-analytics/`:
 
 ```js
 import prisma from '#/libs/prisma.server';
@@ -960,10 +960,14 @@ app/plugins/
     manifest.js              Static metadata — id, name, version, description, adminRoutes, storefrontRoutes.
     index.server.js          Main entry point. Calls definePlugin() and exports pluginManifest.
     admin/
-      routes.server.js       Server route descriptors with optional loaders.
+      routes/
+        index.server.js      Server route descriptors with optional loaders.
+        index.test.server.js Colocated server route tests (optional).
       routes.client.js       Client route descriptors with Components.
     storefront/
-      routes.server.js       Server route descriptors with optional loaders.
+      routes/
+        index.server.js      Server route descriptors with optional loaders.
+        index.test.server.js Colocated server route tests (optional).
       routes.client.js       Client route descriptors with Components.
     blocks/
       <slot-name>.jsx        One file per slot. Filename must match the slot name exactly.

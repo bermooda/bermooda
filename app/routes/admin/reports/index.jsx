@@ -4,7 +4,7 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
 import { formatPrice } from '#/core/currency/format';
 import {

@@ -6,7 +6,7 @@ import {
   jsonDomainError,
   parseJsonBody,
   requireMethod,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import { getAdminUser, updateAdminUserRole } from '#/core/rbac/index.server';
 
 export async function loader({ params }) {

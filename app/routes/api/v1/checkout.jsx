@@ -4,7 +4,7 @@ import {
   jsonDomainError,
   parseJsonBody,
   requireMethod,
-} from '#/libs/api/public.server';
+} from '#/libs/api/public/index.server';
 import { createCheckoutSessionFromCartToken } from '#/core/checkout/index.server';
 
 export async function action({ request }) {

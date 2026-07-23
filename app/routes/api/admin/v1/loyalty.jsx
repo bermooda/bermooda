@@ -1,4 +1,4 @@
-import { parseJsonBody, requireMethod } from '#/libs/api/admin.server';
+import { parseJsonBody, requireMethod } from '#/libs/api/admin/index.server';
 import {
   getLoyaltyConfig,
   parseLoyaltySettingsInput,

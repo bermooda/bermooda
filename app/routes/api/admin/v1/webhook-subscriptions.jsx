@@ -8,8 +8,8 @@ import {
   parseAdminListPagination,
   parseJsonBody,
   requireMethod,
-} from '#/libs/api/admin.server';
-import { DOMAIN_EVENTS } from '#/core/events/names';
+} from '#/libs/api/admin/index.server';
+import { DOMAIN_EVENTS } from '#/core/events/names/index';
 import {
   listSubscriptions,
   createSubscription,

@@ -9,7 +9,7 @@
 import { Outlet, useLoaderData } from 'react-router';
 
 import { ensurePrimary } from '#/utils/litefs.server';
-import { getCustomerSession } from '#/libs/auth/customer.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { getMenuByHandle } from '#/core/content/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';

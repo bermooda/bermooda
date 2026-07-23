@@ -1,7 +1,7 @@
 // app/libs/rate-limit.server.js
 // Preset rate-limit policies and enforcement helpers.
 
-import { consumeRateLimit } from '#/utils/rate-limit.server';
+import { consumeRateLimit } from '#/utils/rate-limit/index.server';
 
 /** @type {Record<string, { limit: number, windowMs: number }>} */
 export const RATE_LIMITS = {

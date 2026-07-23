@@ -30,7 +30,7 @@ vi.mock('#/libs/prisma.server', () => ({
   },
 }));
 
-vi.mock('#/utils/cache.server', () => ({
+vi.mock('#/utils/cache/index.server', () => ({
   default: { delete: vi.fn() },
   getCachedResult: vi.fn(async (_key, callback) => callback()),
 }));
@@ -44,7 +44,7 @@ vi.mock('#/core/plugins/index.server', () => ({
   getPluginBlocksForSlot: vi.fn(async () => []),
 }));
 
-vi.mock('#/core/themes/storefront-components', () => ({
+vi.mock('#/core/themes/storefront-components/index', () => ({
   registerStorefrontTheme: vi.fn(),
 }));
 
@@ -69,11 +69,11 @@ const {
   __resetRegistry,
 } = await import('#/core/themes/index.server');
 
-import cache from '#/utils/cache.server';
+import cache from '#/utils/cache/index.server';
 import prisma from '#/libs/prisma.server';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
-import { registerStorefrontTheme } from '#/core/themes/storefront-components';
+import { registerStorefrontTheme } from '#/core/themes/storefront-components/index';
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -28,7 +28,7 @@ vi.mock('#/utils/logger.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-import { DOMAIN_EVENT_WILDCARD } from '#/core/events/names';
+import { DOMAIN_EVENT_WILDCARD } from '#/core/events/names/index';
 
 import {
   buildWebhookDispatchPayload,

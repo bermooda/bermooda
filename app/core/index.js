@@ -11,7 +11,7 @@ export { useT, translate } from '#/core/i18n/index';
 // formatPrice is a pure Intl helper — client-safe.
 export { formatPrice } from '#/core/currency/format';
 
-export { cartLineTotal, summarizeCartLines } from '#/core/cart/lines';
+export { cartLineTotal, summarizeCartLines } from '#/core/cart/lines/index';
 
 export {
   findVariantBySelectedOptions,
@@ -20,13 +20,13 @@ export {
   resolveProductDisplayPrice,
   resolveProductHref,
   resolveProductSlug,
-} from '#/core/catalog/display';
+} from '#/core/catalog/display/index';
 
 export { parseShippingAddressSnapshot } from '#/core/orders/address-snapshot';
 
 // -- Selectors --------------------------------------------------------------
 
-import { summarizeCartLines } from '#/core/cart/lines';
+import { summarizeCartLines } from '#/core/cart/lines/index';
 
 export const selectors = {
   cartLineCount: (cart) => cart?.lines?.length ?? 0,

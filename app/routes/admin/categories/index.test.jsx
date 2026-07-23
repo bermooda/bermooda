@@ -12,7 +12,7 @@ const {
   mockSaveCategoryAdminForm: vi.fn(),
 }));
 
-vi.mock('#/core/catalog/admin.server', () => ({
+vi.mock('#/core/catalog/admin/index.server', () => ({
   deleteCategoryRecursive: mockDeleteCategoryRecursive,
   loadCategoryAdminTreeData: mockLoadCategoryAdminTreeData,
   setCategorySiblingOrder: mockSetCategorySiblingOrder,
@@ -23,7 +23,7 @@ vi.mock('#/utils/logger.server', () => ({
   default: { error: vi.fn() },
 }));
 
-vi.mock('#/libs/alerting.server', () => ({
+vi.mock('#/libs/alerting/index.server', () => ({
   sendErrorAlert: vi.fn(),
 }));
 

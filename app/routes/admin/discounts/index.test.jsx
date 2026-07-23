@@ -42,7 +42,7 @@ vi.mock('#/utils/logger.server', () => ({
   default: { error: vi.fn() },
 }));
 
-vi.mock('#/libs/alerting.server', () => ({
+vi.mock('#/libs/alerting/index.server', () => ({
   sendErrorAlert: vi.fn(),
 }));
 

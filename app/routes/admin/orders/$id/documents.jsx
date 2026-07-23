@@ -1,6 +1,6 @@
 // GET /admin/orders/:id/documents — download invoice PDF
 
-import { authenticate } from '#/libs/auth/admin.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
 import {
   buildDocumentPdfResponse,
   buildInvoiceFilename,

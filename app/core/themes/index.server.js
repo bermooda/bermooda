@@ -1,7 +1,7 @@
 // app/core/themes/index.server.js
 // Theme loader: define, register, and resolve storefront themes.
 
-import cache, { getCachedResult } from '#/utils/cache.server';
+import cache, { getCachedResult } from '#/utils/cache/index.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
@@ -11,7 +11,7 @@ import {
   REQUIRED_MANIFEST_FIELDS,
   SLOT_NAMES,
 } from '#/core/themes/manifest';
-import { registerStorefrontTheme } from '#/core/themes/storefront-components';
+import { registerStorefrontTheme } from '#/core/themes/storefront-components/index';
 
 export { SLOT_NAMES };
 

@@ -1,7 +1,7 @@
 import { Column, Row, Section, Text } from '@react-email/components';
 
 import config from '#/config';
-import { cartLineTotal } from '#/core/cart/lines';
+import { cartLineTotal } from '#/core/cart/lines/index';
 import EmailButton from '#/emails/components/button';
 import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';

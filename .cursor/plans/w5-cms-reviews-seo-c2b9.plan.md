@@ -58,7 +58,7 @@ Re-confirm these findings still hold before writing code:
 | Static sitemap                    | `INDEXED_ROUTES` only, no DB entities           | `app/routes/sitemap.jsx`, `app/routes.js`                                                       |
 | Translation/Slug ready for `page` | Infrastructure exists; `page` entityType unused | `Translation`, `Slug` models; phase-1-plan reserved `page`                                      |
 | W1 search done                    | `/search` route + search box                    | `app/routes/storefront/search.jsx`, `storefront-chrome.jsx`                                     |
-| W0-6 theme decision               | Import-based; manifest lists components         | `app/core/bootstrap.server.js`, `app/themes/default/manifest.js`                                |
+| W0-6 theme decision               | Import-based; manifest lists components         | `app/core/bootstrap/index.server.js`, `app/themes/default/manifest.js`                          |
 
 ---
 
@@ -462,16 +462,16 @@ Verify `/admin/*`, `/account/*` (except login/register), `/checkout/*`, `/cart` 
 
 ## Shared surfaces & coordination
 
-| Surface                             | W5 touch                                                   | Conflict risk                                             |
-| ----------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------- |
-| `prisma/schema.prisma`              | New section only                                           | Low — no concurrent Phase 2 chunk should edit same models |
-| `app/routes.js`                     | Append admin + storefront routes                           | Low — append-only                                         |
-| `app/core/catalog/index.server.js`  | Optional: `attachReviewSummaries`, meta translation fields | Medium — read-only extension preferred                    |
-| `app/core/bootstrap.server.js`      | No registration needed unless event subscribers added      | None                                                      |
-| `app/core/webhooks/index.server.js` | Optional: add review events                                | Low                                                       |
-| `app/core/audit/index.server.js`    | Optional: page/review events                               | Low                                                       |
-| Default theme                       | New components + nav consumption                           | None — W5 owns theme content UI                           |
-| `docs/api.md`                       | Optional: document review/page admin API if added          | Stretch                                                   |
+| Surface                              | W5 touch                                                   | Conflict risk                                             |
+| ------------------------------------ | ---------------------------------------------------------- | --------------------------------------------------------- |
+| `prisma/schema.prisma`               | New section only                                           | Low — no concurrent Phase 2 chunk should edit same models |
+| `app/routes.js`                      | Append admin + storefront routes                           | Low — append-only                                         |
+| `app/core/catalog/index.server.js`   | Optional: `attachReviewSummaries`, meta translation fields | Medium — read-only extension preferred                    |
+| `app/core/bootstrap/index.server.js` | No registration needed unless event subscribers added      | None                                                      |
+| `app/core/webhooks/index.server.js`  | Optional: add review events                                | Low                                                       |
+| `app/core/audit/index.server.js`     | Optional: page/review events                               | Low                                                       |
+| Default theme                        | New components + nav consumption                           | None — W5 owns theme content UI                           |
+| `docs/api.md`                        | Optional: document review/page admin API if added          | Stretch                                                   |
 
 **Do not edit:** `Order`/`OrderLine`, `Discount`, inventory seam, totals engine.
 

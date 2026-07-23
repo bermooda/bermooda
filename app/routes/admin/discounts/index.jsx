@@ -12,7 +12,7 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { Link, useFetcher, useLoaderData } from 'react-router';
 
-import { handleAdminActionError } from '#/libs/api/admin-ui.server';
+import { handleAdminActionError } from '#/libs/api/admin-ui/index.server';
 import {
   deleteDiscount,
   listDiscounts,

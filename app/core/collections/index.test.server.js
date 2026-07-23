@@ -15,7 +15,7 @@ vi.mock('#/libs/prisma.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-import { containsFilter } from '#/libs/prisma/filters.server';
+import { containsFilter } from '#/libs/prisma/filters/index.server';
 import {
   buildCollectionSearchWhere,
   parseCreateCollectionInput,

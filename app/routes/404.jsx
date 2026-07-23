@@ -1,7 +1,7 @@
 import { useLoaderData } from 'react-router';
 
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
 
 export function meta() {
   return [

@@ -8,7 +8,7 @@ import {
   jsonResourceOr404,
   parseJsonBody,
   requireOneOfMethods,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import {
   getDiscount,
   updateDiscount,

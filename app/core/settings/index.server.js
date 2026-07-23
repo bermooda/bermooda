@@ -1,7 +1,7 @@
 // app/core/settings/index.server.js
 // Settings service: read-through TTL-cached get/set with seed defaults.
 
-import cache, { getCachedResult } from '#/utils/cache.server';
+import cache, { getCachedResult } from '#/utils/cache/index.server';
 import prisma from '#/libs/prisma.server';
 import {
   parseAddressValidationSettingsInput,
@@ -12,7 +12,7 @@ import {
   parseSeoSettingsInput,
   seoSettingsToKeyValues,
   serializeSeoSettings,
-} from '#/core/seo/input';
+} from '#/core/seo/input/index';
 import {
   DEFAULT_CURRENCIES,
   DEFAULT_CURRENCY,

@@ -1,7 +1,7 @@
 // GET /api/v1/search — storefront search (public)
 
 import { search } from '#/core/search/index.server';
-import { parsePublicSearchParams } from '#/core/search/params';
+import { parsePublicSearchParams } from '#/core/search/params/index';
 
 export async function loader({ request }) {
   const url = new URL(request.url);

@@ -6,8 +6,8 @@ import {
   appendCheckoutSessionCookie,
   getCheckoutSessionIdFromRequest,
 } from '#/utils/checkout-cookie.server';
-import { getCustomerSession } from '#/libs/auth/customer.server';
-import { handleError } from '#/libs/error.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
+import { handleError } from '#/libs/error/index.server';
 import { normalizeAddressForSession } from '#/core/address-validation/index.server';
 import { getCart } from '#/core/cart/index.server';
 import {
@@ -29,7 +29,7 @@ import {
 import { computeTotals } from '#/core/checkout/totals.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
 
 export async function loader({ request }) {
   const themeId = await preloadStorefrontTheme();

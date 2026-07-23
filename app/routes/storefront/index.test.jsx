@@ -30,7 +30,7 @@ vi.mock('#/core/themes/index.server', () => ({
   preloadStorefrontTheme: vi.fn().mockResolvedValue('default'),
 }));
 
-vi.mock('#/core/themes/storefront-components', () => ({
+vi.mock('#/core/themes/storefront-components/index', () => ({
   getStorefrontComponent: vi.fn(() => () => null),
 }));
 

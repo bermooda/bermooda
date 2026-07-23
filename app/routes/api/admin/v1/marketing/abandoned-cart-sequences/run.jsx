@@ -1,7 +1,7 @@
 // POST /api/admin/v1/marketing/abandoned-cart-sequences/run
 // Queue abandoned-cart sequence processing. Requires admin-scoped API key.
 
-import { requireMethod } from '#/libs/api/admin.server';
+import { requireMethod } from '#/libs/api/admin/index.server';
 import { queueAbandonedCartSequence } from '#/core/marketing/index.server';
 
 /**

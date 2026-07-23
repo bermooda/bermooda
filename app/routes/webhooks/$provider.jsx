@@ -1,10 +1,10 @@
 // Generic payment webhook dispatcher — POST /webhooks/:provider
 
 import logger from '#/utils/logger.server';
-import { requireMethod } from '#/libs/api/public.server';
-import { jsonPaymentWebhookError } from '#/libs/api/webhooks.server';
+import { requireMethod } from '#/libs/api/public/index.server';
+import { jsonPaymentWebhookError } from '#/libs/api/webhooks/index.server';
 import { rateLimitMiddleware } from '#/libs/rate-limit.server';
-import { processPaymentProviderWebhook } from '#/core/payments/inbound.server';
+import { processPaymentProviderWebhook } from '#/core/payments/inbound/index.server';
 
 export const middleware = [rateLimitMiddleware('webhooks')];
 

@@ -5,13 +5,13 @@
 import { useActionData, useLoaderData, useNavigation } from 'react-router';
 import { redirect } from 'react-router';
 
-import { handleAdminActionError } from '#/libs/api/admin-ui.server';
-import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
+import { handleAdminActionError } from '#/libs/api/admin-ui/index.server';
+import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
 import {
   loadAdminProductEditorContext,
   persistAdminProduct,
 } from '#/core/catalog/admin-product-form.server';
-import { loadAdminProductEditorData } from '#/core/catalog/admin.server';
+import { loadAdminProductEditorData } from '#/core/catalog/admin/index.server';
 import {
   deleteProduct,
   detachMedia,

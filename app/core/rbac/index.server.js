@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 
 import { isValidEmail, normalizeEmail } from '#/utils/email';
 import prisma from '#/libs/prisma.server';
-import { DEFAULT_MAX_LIST_RESULTS } from '#/libs/prisma/pagination.server';
+import { DEFAULT_MAX_LIST_RESULTS } from '#/libs/prisma/pagination/index.server';
 import {
   ADMIN_ROLES,
   ADMIN_WILDCARD,

@@ -1,7 +1,7 @@
 // GET /api/admin/v1/api-keys — list API keys
 // Requires admin-scoped API key. (Key creation is via the admin UI only.)
 
-import { createDomainErrorMapper } from '#/libs/api/admin.server';
+import { createDomainErrorMapper } from '#/libs/api/admin/index.server';
 import {
   listApiKeys,
   parseApiKeyListParams,

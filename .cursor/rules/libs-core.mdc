@@ -11,7 +11,7 @@ alwaysApply: false
 - Infrastructure and integrations (auth setup, db clients, queue, third-party SDK wrappers, alerting).
 - Keep modules reusable and low-level.
 - Do not put domain workflows here.
-- Error alerts and ops notifications: use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting.server` (see [alerting.mdc](mdc:.cursor/rules/alerting.mdc)). Do not call Telegram helpers directly in new code.
+- Error alerts and ops notifications: use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting/index.server` (see [alerting.mdc](mdc:.cursor/rules/alerting.mdc)). Do not call Telegram helpers directly in new code.
 
 ## `app/core`
 

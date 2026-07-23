@@ -137,12 +137,12 @@ Slots are named injection points in the storefront layout where plugins can cont
 
 The default theme renders all 10 of these slots. Route loaders fetch blocks server-side and pass a `slotBlocks` map into the theme component or shell that owns the slot.
 
-Themes render slots by calling `getSlotBlocks(slotName)` or `getSlotBlocksMap(slotNames)` and mounting each returned `{ pluginId, component }` entry. The shared `SlotBlocks` component in `app/components/slot-blocks.jsx` accepts optional `slotProps`, which are spread into every plugin block so blocks can receive page-specific data like `product`, `cart`, `category`, or checkout state.
+Themes render slots by calling `getSlotBlocks(slotName)` or `getSlotBlocksMap(slotNames)` and mounting each returned `{ pluginId, component }` entry. The shared `SlotBlocks` component in `app/components/slot-blocks/index.jsx` accepts optional `slotProps`, which are spread into every plugin block so blocks can receive page-specific data like `product`, `cart`, `category`, or checkout state.
 
 Example:
 
 ```jsx
-import SlotBlocks from '#/components/slot-blocks';
+import SlotBlocks from '#/components/slot-blocks/index';
 
 <SlotBlocks
   blocks={slotBlocks['product.afterDescription']}

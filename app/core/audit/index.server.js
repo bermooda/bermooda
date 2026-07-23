@@ -8,8 +8,8 @@ import {
   buildPrismaPagination,
   parseListPagination,
   readQueryParam,
-} from '#/libs/prisma/pagination.server';
-import { DOMAIN_EVENTS } from '#/core/events/names';
+} from '#/libs/prisma/pagination/index.server';
+import { DOMAIN_EVENTS } from '#/core/events/names/index';
 
 const DEFAULT_LIST_LIMIT = 50;
 

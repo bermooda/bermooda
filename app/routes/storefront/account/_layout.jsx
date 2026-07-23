@@ -1,10 +1,10 @@
 import { redirect } from 'react-router';
 import { Outlet, useLoaderData } from 'react-router';
 
-import { getCustomerSession } from '#/libs/auth/customer.server';
-import { buildLoginRedirectUrl } from '#/libs/auth/shared.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
+import { buildLoginRedirectUrl } from '#/libs/auth/shared/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
 
 export async function loader({ request }) {
   const themeId = await preloadStorefrontTheme();

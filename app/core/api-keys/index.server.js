@@ -6,7 +6,7 @@ import { createHash, randomBytes } from 'crypto';
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import { parseListPagination } from '#/libs/prisma/pagination.server';
+import { parseListPagination } from '#/libs/prisma/pagination/index.server';
 import { API_KEY_SCOPES } from '#/core/api-keys/scopes';
 
 export { API_KEY_SCOPES } from '#/core/api-keys/scopes';

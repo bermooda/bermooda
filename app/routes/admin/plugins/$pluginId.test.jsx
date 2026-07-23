@@ -34,7 +34,7 @@ import AdminPluginDispatcher, {
 const sampleManifest = {
   id: 'sample-analytics',
   name: 'Sample Analytics',
-  adminRoutes: '#/plugins/sample-analytics/admin/routes.server',
+  adminRoutes: '#/plugins/sample-analytics/admin/routes/index.server',
 };
 
 describe('admin plugin dispatcher', () => {

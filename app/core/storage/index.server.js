@@ -8,12 +8,12 @@ import sharp from 'sharp';
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import * as client from '#/core/storage/client.server';
+import * as client from '#/core/storage/client/index.server';
 import {
   collectStorageKeys,
   RESPONSIVE_WIDTHS,
   serializeMediaRecord,
-} from '#/core/storage/media';
+} from '#/core/storage/media/index';
 
 export {
   collectStorageKeys,
@@ -24,7 +24,7 @@ export {
   resolveMediaUrl,
   RESPONSIVE_WIDTHS,
   serializeMediaRecord,
-} from '#/core/storage/media';
+} from '#/core/storage/media/index';
 
 export const putObject = client.putObject;
 export const getObjectUrl = client.getObjectUrl;

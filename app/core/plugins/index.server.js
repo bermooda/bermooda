@@ -9,7 +9,7 @@ import {
   unregisterProvider as unregisterAddressValidationProvider,
 } from '#/core/address-validation/index.server';
 import { emit, isHookAbort, off, on } from '#/core/events/index.server';
-import { isBeforeHookEvent } from '#/core/events/names';
+import { isBeforeHookEvent } from '#/core/events/names/index';
 import { translate } from '#/core/i18n/index';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import {
@@ -19,7 +19,7 @@ import {
 import {
   buildPluginRouteRegistry,
   resolvePluginRouteDescriptor,
-} from '#/core/plugins/routes';
+} from '#/core/plugins/routes/index';
 import {
   getDefaultProviderId as getDefaultSearchProviderId,
   registerProvider as registerSearchProvider,
@@ -720,15 +720,17 @@ export async function getPluginBlocksForSlot(slotName) {
 // ---------------------------------------------------------------------------
 
 const adminRoutesByPlugin = buildPluginRouteRegistry(
-  import.meta.glob('#/plugins/*/admin/routes.server.js', { eager: true }),
-  /\/plugins\/([^/]+)\/admin\/routes\.server\.js$/
+  import.meta.glob('#/plugins/*/admin/routes/index.server.js', {
+    eager: true,
+  }),
+  /\/plugins\/([^/]+)\/admin\/routes\/index\.server\.js$/
 );
 
 const storefrontRoutesByPlugin = buildPluginRouteRegistry(
-  import.meta.glob('#/plugins/*/storefront/routes.server.js', {
+  import.meta.glob('#/plugins/*/storefront/routes/index.server.js', {
     eager: true,
   }),
-  /\/plugins\/([^/]+)\/storefront\/routes\.server\.js$/
+  /\/plugins\/([^/]+)\/storefront\/routes\/index\.server\.js$/
 );
 
 /**

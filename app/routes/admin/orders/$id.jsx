@@ -9,8 +9,8 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { handleAdminActionError } from '#/libs/api/admin-ui.server';
-import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
+import { handleAdminActionError } from '#/libs/api/admin-ui/index.server';
+import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
 import { formatPrice } from '#/core/currency/format';
 import {
   loadOrderAdminDetailData,
@@ -23,7 +23,7 @@ import { controlClasses } from '#/components/admin/form/input';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
 import { Td, Th } from '#/components/admin/table';
-import SlotBlocks from '#/components/slot-blocks';
+import SlotBlocks from '#/components/slot-blocks/index';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 

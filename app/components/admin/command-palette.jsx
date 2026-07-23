@@ -8,7 +8,7 @@ import {
   filterCommandItems,
   getAllCommandItems,
   groupCommandItems,
-} from '#/components/admin/nav-config';
+} from '#/components/admin/nav-config/index';
 
 /**
  * Command palette overlay for keyboard-driven admin navigation.

@@ -1,7 +1,7 @@
 import { redirect, useLoaderData, useRouteLoaderData } from 'react-router';
 
-import { getCustomerSession } from '#/libs/auth/customer.server';
-import { buildLoginRedirectUrl } from '#/libs/auth/shared.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
+import { buildLoginRedirectUrl } from '#/libs/auth/shared/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import {
@@ -10,7 +10,7 @@ import {
   listLoyaltyTransactions,
 } from '#/core/loyalty/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
 
 export async function loader({ request }) {
   const session = await getCustomerSession(request);

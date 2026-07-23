@@ -1,7 +1,7 @@
 // GET /api/v1/categories — list categories (public)
 
 import { listCategories } from '#/core/catalog/index.server';
-import { parsePublicCategoryListParams } from '#/core/catalog/params';
+import { parsePublicCategoryListParams } from '#/core/catalog/params/index';
 
 export async function loader({ request }) {
   const url = new URL(request.url);

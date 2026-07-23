@@ -1,5 +1,5 @@
 import logger from '#/utils/logger.server';
-import { readPluginData } from '#/core/plugins/data.server';
+import { readPluginData } from '#/core/plugins/data/index.server';
 import { defineHooks, definePlugin, deny } from '#/core/plugins/index.server';
 
 import manifest from '#/plugins/fraud-guard/manifest';

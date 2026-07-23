@@ -1,9 +1,9 @@
 import { useLoaderData } from 'react-router';
 
 import { clearCheckoutSessionCookie } from '#/utils/checkout-cookie.server';
-import { loadStorefrontPageContext } from '#/libs/api/storefront.server';
+import { loadStorefrontPageContext } from '#/libs/api/storefront/index.server';
 import { getOrderByOrderNumber } from '#/core/orders/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
 
 export async function loader({ request, params }) {
   const { themeId, locale, currency } =

@@ -24,7 +24,7 @@ export default [
     route('search', 'routes/storefront/search.jsx'),
 
     // Cart
-    route('cart', 'routes/storefront/cart.jsx'),
+    route('cart', 'routes/storefront/cart/index.jsx'),
 
     // Checkout — single-page flow
     route('checkout', 'routes/storefront/checkout/index.jsx'),
@@ -69,8 +69,8 @@ export default [
   ]),
 
   // Locale + currency cookie API endpoints (POST-redirect pattern)
-  route('api/set-locale', 'routes/storefront/api/set-locale.jsx'),
-  route('api/set-currency', 'routes/storefront/api/set-currency.jsx'),
+  route('api/set-locale', 'routes/storefront/api/set-locale/index.jsx'),
+  route('api/set-currency', 'routes/storefront/api/set-currency/index.jsx'),
 
   // ---------------------------------------------------------------------------
   // W2: Storefront public REST API (/api/v1/*) — no API key required for catalog
@@ -263,8 +263,8 @@ export default [
   // Better Auth API handlers
   // ---------------------------------------------------------------------------
 
-  route('admin/auth/*', 'routes/auth/admin.jsx'),
-  route('account/auth/*', 'routes/auth/customer.jsx'),
+  route('admin/auth/*', 'routes/auth/admin/index.jsx'),
+  route('account/auth/*', 'routes/auth/customer/index.jsx'),
 
   // ---------------------------------------------------------------------------
   // Webhooks + infrastructure

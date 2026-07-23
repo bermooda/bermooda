@@ -5,7 +5,7 @@ import { randomBytes } from 'crypto';
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import { containsFilter } from '#/libs/prisma/filters.server';
+import { containsFilter } from '#/libs/prisma/filters/index.server';
 
 // ---------------------------------------------------------------------------
 // Constants

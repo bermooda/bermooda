@@ -13,8 +13,8 @@ import {
   resolveProductDisplayPrice,
   resolveProductSlug,
 } from '#/core/index';
-import { resolveCatalogMediaUrl } from '#/core/storage/media';
-import SlotBlocks from '#/components/slot-blocks';
+import { resolveCatalogMediaUrl } from '#/core/storage/media/index';
+import SlotBlocks from '#/components/slot-blocks/index';
 
 import StorefrontShell, {
   STOREFRONT_CREAM as CREAM,

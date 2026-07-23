@@ -7,12 +7,12 @@ import prisma from '#/libs/prisma.server';
 import {
   buildPrismaPagination,
   normalizePagination,
-} from '#/libs/prisma/pagination.server';
+} from '#/libs/prisma/pagination/index.server';
 import {
   DOMAIN_EVENT_WILDCARD,
   DOMAIN_EVENTS,
   isDomainEventOrWildcard,
-} from '#/core/events/names';
+} from '#/core/events/names/index';
 
 // Enqueuer set by job.server.js to avoid a circular import.
 let _enqueuer = null;

@@ -1,7 +1,7 @@
 // GET /api/admin/v1/returns — list returns
 // Requires admin-scoped API key.
 
-import { createDomainErrorMapper } from '#/libs/api/admin.server';
+import { createDomainErrorMapper } from '#/libs/api/admin/index.server';
 import {
   listReturns,
   parseReturnListParams,

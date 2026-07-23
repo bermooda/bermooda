@@ -5,7 +5,7 @@
 import {
   createDomainErrorMapper,
   requireMethod,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import {
   deleteScheduledExport,
   getScheduledExport,

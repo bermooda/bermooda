@@ -8,7 +8,7 @@ import clsx from 'clsx';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Form, Link, useFetcher, useRevalidator } from 'react-router';
 
-import { slugify } from '#/utils/slugify';
+import { slugify } from '#/utils/slugify/index';
 import ActionBar from '#/components/admin/action-bar';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
@@ -16,12 +16,12 @@ import Card, { CardHeader } from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Textarea from '#/components/admin/form/textarea';
-import LocaleTabs from '#/components/admin/locale-tabs';
+import LocaleTabs from '#/components/admin/locale-tabs/index';
 import PageHeader from '#/components/admin/page-header';
 import SeoFields from '#/components/admin/seo-fields';
-import SlugField from '#/components/admin/slug-field';
+import SlugField from '#/components/admin/slug-field/index';
 import { Th } from '#/components/admin/table';
-import SlotBlocks from '#/components/slot-blocks';
+import SlotBlocks from '#/components/slot-blocks/index';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 

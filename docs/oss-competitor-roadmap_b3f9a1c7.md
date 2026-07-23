@@ -96,7 +96,7 @@ These were flagged as broken or missing; they are now wired in the default theme
 
 ## W0 — Fix the broken purchase loop (treat as bugs, do first)
 
-> **Status: completed (2026-07).** All tasks below shipped via `app/core/bootstrap.server.js`, checkout totals, Stripe webhook reconciliation, and theme runtime resolution.
+> **Status: completed (2026-07).** All tasks below shipped via `app/core/bootstrap/index.server.js`, checkout totals, Stripe webhook reconciliation, and theme runtime resolution.
 
 **Goal.** Make a real guest purchase work end-to-end on a fresh DB. These are not new features; they are wiring gaps in shipped v1 code, so they block everything customer-facing.
 
@@ -110,7 +110,7 @@ These were flagged as broken or missing; they are now wired in the default theme
 
 **Tasks**
 
-- **W0-1. Startup bootstrap.** Reveal `app/entry.server.jsx` (or add a server-only singleton) and create `app/core/bootstrap.server.js` exporting `registerBuiltins()` that registers Stripe/flat-rate/simple-percent providers and the default theme, and discovers enabled plugins from `Setting.enabledPlugins`. Call it once at server start. Add a test asserting `listProviders()` is non-empty after bootstrap.
+- **W0-1. Startup bootstrap.** Reveal `app/entry.server.jsx` (or add a server-only singleton) and create `app/core/bootstrap/index.server.js` exporting `registerBuiltins()` that registers Stripe/flat-rate/simple-percent providers and the default theme, and discovers enabled plugins from `Setting.enabledPlugins`. Call it once at server start. Add a test asserting `listProviders()` is non-empty after bootstrap.
 - **W0-2. Persist tax on order.** In the checkout `review` step, snapshot computed totals (`subtotal/discount/shipping/tax/total`) onto `CheckoutSession` (add columns) — or recompute tax inside `placeOrder()` using the session's `shippingAddressJson` via `computeActiveTax`. Remove the `taxCents = 0` shortcut and cover with a totals-on-order test.
 - **W0-3. Wire Stripe initiation + reconciliation.** At the payment step, create the provider checkout session with `success_url`/`cancel_url` and `metadata.orderId` (create the `Order` in `pending` first, or pass the checkout session id and create the order on webhook — pick one and document it). Redirect the customer to the hosted Checkout. On `checkout.session.completed`, mark the order paid.
 - **W0-4. Order status on payment events.** Add an event subscriber (registered in bootstrap) for `payment.succeeded`/`payment.failed`/`payment.refunded` that transitions order status and emits `order.confirmed`. Expand `VALID_ORDER_STATUSES` to include `paid`/`fulfilled` as needed (today the dashboard renders `paid`/`fulfilled` badges that the order service can't set).
@@ -169,7 +169,7 @@ These were flagged as broken or missing; they are now wired in the default theme
 
 **Tasks**
 
-- **W3-1. PayPal provider.** Implement the payment provider interface in `app/core/payments/paypal.server.js`; register in bootstrap; surface at the payment step alongside Stripe.
+- **W3-1. PayPal provider.** Implement the payment provider interface in `app/core/payments/paypal/index.server.js`; register in bootstrap; surface at the payment step alongside Stripe.
 - **W3-2. Manual/offline method.** Bank transfer / cash-on-delivery / "pay on invoice" provider that places the order in a `pending_payment` state for admin confirmation — important for many self-hosted merchants.
 - **W3-3. Saved payment methods + express checkout.** Optional Stripe customer + Payment Element path; Apple/Google Pay via the Element.
 - **W3-4. Address validation/autocomplete.** Pluggable provider interface (built-in no-op; Google/Loqate via plugin).

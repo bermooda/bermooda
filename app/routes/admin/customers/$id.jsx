@@ -4,8 +4,8 @@
 import clsx from 'clsx';
 import { Form, Link, useActionData, useLoaderData } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
-import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
+import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
 import { formatPrice } from '#/core/currency/format';
 import {
@@ -37,7 +37,7 @@ import Input from '#/components/admin/form/input';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
 import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
-import SlotBlocks from '#/components/slot-blocks';
+import SlotBlocks from '#/components/slot-blocks/index';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 

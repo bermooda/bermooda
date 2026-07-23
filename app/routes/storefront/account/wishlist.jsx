@@ -2,10 +2,10 @@
 
 import { useLoaderData, useActionData, useRouteLoaderData } from 'react-router';
 
-import { getCustomerSession } from '#/libs/auth/customer.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
 import {
   addToWishlist,
   listWishlistItems,

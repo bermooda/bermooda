@@ -1,9 +1,9 @@
 import { redirect } from 'react-router';
 import { useLoaderData } from 'react-router';
 
-import { getCustomerSession } from '#/libs/auth/customer.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
 
 export async function loader({ request }) {
   const themeId = await preloadStorefrontTheme();

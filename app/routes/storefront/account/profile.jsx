@@ -1,11 +1,11 @@
 import { useLoaderData, useRouteLoaderData } from 'react-router';
 
-import { getCustomerSession } from '#/libs/auth/customer.server';
-import { handleError } from '#/libs/error.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
+import { handleError } from '#/libs/error/index.server';
 import { updateCustomer } from '#/core/customers/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
 
 export async function loader({ request }) {
   const themeId = await preloadStorefrontTheme();

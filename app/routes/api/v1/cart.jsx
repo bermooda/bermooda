@@ -1,6 +1,6 @@
 // POST /api/v1/cart — create a cart (public)
 
-import { parseJsonBody, requireMethod } from '#/libs/api/public.server';
+import { parseJsonBody, requireMethod } from '#/libs/api/public/index.server';
 import { createCart } from '#/core/cart/index.server';
 
 export async function action({ request }) {

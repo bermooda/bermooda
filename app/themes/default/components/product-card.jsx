@@ -6,7 +6,7 @@ import {
   resolveProductHref,
   resolveProductSlug,
 } from '#/core/index';
-import { resolveCatalogMediaUrl } from '#/core/storage/media';
+import { resolveCatalogMediaUrl } from '#/core/storage/media/index';
 
 import {
   STOREFRONT_CREAM as CREAM,

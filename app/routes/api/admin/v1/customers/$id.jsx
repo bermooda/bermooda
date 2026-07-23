@@ -6,7 +6,7 @@ import {
   jsonDomainError,
   parseJsonBody,
   requireMethod,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import { getCustomer, updateCustomer } from '#/core/customers/index.server';
 
 export async function loader({ params }) {

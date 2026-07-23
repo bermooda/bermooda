@@ -7,7 +7,7 @@ import {
   createDomainErrorMapper,
   parseJsonBody,
   requireOneOfMethods,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import {
   deletePage,
   loadPageEditorData,

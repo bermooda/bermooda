@@ -9,10 +9,10 @@ import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import Textarea from '#/components/admin/form/textarea';
-import LocaleTabs from '#/components/admin/locale-tabs';
+import LocaleTabs from '#/components/admin/locale-tabs/index';
 import PageHeader from '#/components/admin/page-header';
 import SeoFields from '#/components/admin/seo-fields';
-import SlugField from '#/components/admin/slug-field';
+import SlugField from '#/components/admin/slug-field/index';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 

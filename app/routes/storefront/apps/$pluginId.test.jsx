@@ -49,7 +49,7 @@ import StorefrontPluginDispatcher, {
 const sampleManifest = {
   id: 'sample-analytics',
   name: 'Sample Analytics',
-  storefrontRoutes: '#/plugins/sample-analytics/storefront/routes.server',
+  storefrontRoutes: '#/plugins/sample-analytics/storefront/routes/index.server',
 };
 
 describe('storefront plugin dispatcher', () => {

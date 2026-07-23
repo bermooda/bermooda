@@ -1,6 +1,6 @@
 import { useActionData, useLoaderData } from 'react-router';
 
-import { getCustomerSession } from '#/libs/auth/customer.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import {
   parseSubscribeFromForm,
   subscribeBackInStock,
@@ -21,7 +21,7 @@ import {
 } from '#/core/seo/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
-import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import { getStorefrontComponent } from '#/core/themes/storefront-components/index';
 import {
   addToWishlist,
   getWishlistedVariantIds,

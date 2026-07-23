@@ -1,7 +1,10 @@
 // app/core/catalog/index.server.js
 // Catalog service: product/variant/category CRUD, slug resolution, translations, media.
 
-import { getCachedResult, invalidateCachePrefix } from '#/utils/cache.server';
+import {
+  getCachedResult,
+  invalidateCachePrefix,
+} from '#/utils/cache/index.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { localizeEntity } from '#/core/catalog/locale.server';

@@ -49,8 +49,8 @@ Admin/staff and customers are **separate** better-auth instances with isolated c
 
 | Audience | Server module | Client module | Base path |
 | -------- | ------------- | ------------- | --------- |
-| Admin/staff | `#/libs/auth/admin.server` | `#/libs/auth/admin-client` | `/admin/auth` |
-| Customer | `#/libs/auth/customer.server` | `#/libs/auth/customer-client` | `/account/auth` |
+| Admin/staff | `#/libs/auth/admin/index.server` | `#/libs/auth/admin-client` | `/admin/auth` |
+| Customer | `#/libs/auth/customer/index.server` | `#/libs/auth/customer-client` | `/account/auth` |
 
 Protect routes with `adminAuthMiddleware` / `customerAuthMiddleware`, or call `authenticate(request)` / `getCustomerSession(request)` in layout loaders — follow the pattern in the nearest sibling route.
 

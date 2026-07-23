@@ -7,7 +7,7 @@ import {
   useSearchParams,
 } from 'react-router';
 
-import { adminAuth } from '#/libs/auth/admin.server';
+import { adminAuth } from '#/libs/auth/admin/index.server';
 import AuthLayout from '#/components/auth/auth-layout';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';

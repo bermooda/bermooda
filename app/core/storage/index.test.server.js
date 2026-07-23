@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('#/core/storage/client.server', () => ({
+vi.mock('#/core/storage/client/index.server', () => ({
   putObject: vi.fn(),
   getObjectUrl: vi.fn(),
   deleteObject: vi.fn(),

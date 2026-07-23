@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useLoaderData } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
 import { listProvidersWithDetails as listAddressValidationProviders } from '#/core/address-validation/index.server';
 import { ADMIN_AVAILABLE_LOCALES } from '#/core/i18n/index';
 import { getRequestLocale } from '#/core/i18n/index.server';
@@ -14,7 +14,7 @@ import {
   SETTINGS_MANAGE_PERMISSION,
   updateAdminUserRole,
 } from '#/core/rbac/index.server';
-import { parseSeoSettingsFormData } from '#/core/seo/input';
+import { parseSeoSettingsFormData } from '#/core/seo/input/index';
 import {
   getAdminSettingsSnapshot,
   saveGeneralSettings,
