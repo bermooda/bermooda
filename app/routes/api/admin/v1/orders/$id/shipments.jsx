@@ -6,7 +6,7 @@ import {
   jsonDomainError,
   parseJsonBody,
   requireMethod,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import { addShipment } from '#/core/orders/index.server';
 
 export async function action({ request, params }) {

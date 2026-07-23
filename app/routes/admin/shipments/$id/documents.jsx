@@ -1,6 +1,6 @@
 // GET /admin/shipments/:id/documents — download packing slip PDF
 
-import { authenticate } from '#/libs/auth/admin.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
 import {
   buildDocumentPdfResponse,
   buildPackingSlipFilename,

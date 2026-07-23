@@ -4,8 +4,8 @@
 import clsx from 'clsx';
 import { Form, Link, useActionData, useLoaderData } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
-import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
+import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
 import { formatPrice } from '#/core/currency/format';
 import {

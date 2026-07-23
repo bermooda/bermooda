@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigation } from 'react-router';
 
-import { useT } from '#/core/i18n/index';
+import { useT } from '#/core/i18n';
 import SlotBlocks from '#/components/slot-blocks';
 
 import {

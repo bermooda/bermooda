@@ -4,7 +4,7 @@
 import {
   jsonListResponse,
   parseAdminListPagination,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import { listCustomers } from '#/core/customers/index.server';
 
 export async function loader({ request }) {

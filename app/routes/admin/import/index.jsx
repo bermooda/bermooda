@@ -1,7 +1,7 @@
 import { Form, useActionData, useLoaderData } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
-import { handleError } from '#/libs/error.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
+import { handleError } from '#/libs/error/index.server';
 import {
   IMPORT_TYPES,
   resolveImportTemplate,

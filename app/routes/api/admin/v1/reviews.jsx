@@ -1,7 +1,7 @@
 // GET /api/admin/v1/reviews — list reviews
 // Requires admin-scoped API key.
 
-import { createDomainErrorMapper } from '#/libs/api/admin.server';
+import { createDomainErrorMapper } from '#/libs/api/admin/index.server';
 import {
   listReviews,
   parseReviewListParams,

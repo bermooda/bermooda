@@ -8,7 +8,7 @@ import {
   buildPrismaPagination,
   parseListPagination,
   readQueryParam,
-} from '#/libs/prisma/pagination.server';
+} from '#/libs/prisma/pagination/index.server';
 import { loadProductTitleMap } from '#/core/catalog/translations.server';
 
 export const REVIEW_STATUSES = ['pending', 'approved', 'rejected'];

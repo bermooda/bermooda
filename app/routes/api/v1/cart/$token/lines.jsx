@@ -5,7 +5,7 @@ import {
   jsonDomainError,
   parseJsonBody,
   requireMethod,
-} from '#/libs/api/public.server';
+} from '#/libs/api/public/index.server';
 import { addLine, getCart } from '#/core/cart/index.server';
 
 export async function action({ request, params }) {

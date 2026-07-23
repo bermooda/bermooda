@@ -1,7 +1,7 @@
 // GET /api/admin/v1/audit-logs/:id — get a single audit log entry
 // Requires admin-scoped API key.
 
-import { createDomainErrorMapper } from '#/libs/api/admin.server';
+import { createDomainErrorMapper } from '#/libs/api/admin/index.server';
 import { getAuditLog } from '#/core/audit/index.server';
 
 const mapAuditLogError = createDomainErrorMapper({

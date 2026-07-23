@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('#/utils/cache.server', () => ({
+vi.mock('#/utils/cache/index.server', () => ({
   getCachedResult: vi.fn(async (_k, cb) => cb()),
   default: { delete: vi.fn() },
 }));
@@ -12,7 +12,7 @@ vi.mock('#/core/settings/index.server', () => ({
   get: vi.fn(),
 }));
 
-vi.mock('#/libs/auth/customer.server', () => ({
+vi.mock('#/libs/auth/customer/index.server', () => ({
   getCustomerSession: vi.fn(),
 }));
 
@@ -30,7 +30,7 @@ vi.mock('fs', () => ({
 
 import { readFileSync } from 'fs';
 
-import { getCustomerSession } from '#/libs/auth/customer.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import prisma from '#/libs/prisma.server';
 import {
   getAvailableLocales,

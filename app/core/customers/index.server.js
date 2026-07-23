@@ -1,10 +1,10 @@
 // app/core/customers/index.server.js
 // Customer service: profile, address book, and order history.
-// Auth is handled by better-auth (app/libs/auth/customer.server.js).
+// Auth is handled by better-auth (app/libs/auth/customer/index.server.js).
 // This service is data-only — no auth imports.
 
 import prisma from '#/libs/prisma.server';
-import { containsFilter } from '#/libs/prisma/filters.server';
+import { containsFilter } from '#/libs/prisma/filters/index.server';
 
 // ---------------------------------------------------------------------------
 // Constants

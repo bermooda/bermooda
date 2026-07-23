@@ -29,7 +29,7 @@ vi.mock('#/core/catalog/translations.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-import { containsFilter } from '#/libs/prisma/filters.server';
+import { containsFilter } from '#/libs/prisma/filters/index.server';
 import {
   buildSubscriptionWhere,
   deleteBackInStockSubscription,

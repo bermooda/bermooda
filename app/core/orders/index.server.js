@@ -6,9 +6,9 @@ import prisma from '#/libs/prisma.server';
 import {
   buildPaginationMeta,
   buildPrismaPagination,
-} from '#/libs/prisma/pagination.server';
+} from '#/libs/prisma/pagination/index.server';
 import { cartLineTotal } from '#/core/cart/lines';
-import { expandBundleInventoryItems } from '#/core/catalog/types.server';
+import { expandBundleInventoryItems } from '#/core/catalog/types/index.server';
 import {
   buildComputeTotalsParams,
   CHECKOUT_CART_INCLUDE,

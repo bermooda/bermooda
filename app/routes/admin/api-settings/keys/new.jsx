@@ -2,7 +2,7 @@ import { CheckIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { Form, Link, useActionData, useNavigation } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
 import {
   createApiKey,
   parseCreateApiKeyFormData,

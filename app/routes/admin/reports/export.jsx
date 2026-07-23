@@ -1,7 +1,7 @@
 // app/routes/admin/reports/export.jsx
 // CSV download endpoint for immediate and scheduled exports.
 
-import { authenticate } from '#/libs/auth/admin.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
 import {
   parseExportDownloadParams,

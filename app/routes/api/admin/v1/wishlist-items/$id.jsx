@@ -5,7 +5,7 @@
 import {
   createDomainErrorMapper,
   requireOneOfMethods,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import {
   deleteWishlistItem,
   getWishlistItem,

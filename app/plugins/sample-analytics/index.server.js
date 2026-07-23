@@ -3,7 +3,7 @@ import { defineHooks, definePlugin } from '#/core/plugins/index.server';
 
 import DashboardWidgetsBlock from '#/plugins/sample-analytics/blocks/dashboard/widgets.jsx';
 import ProductAfterDescriptionBlock from '#/plugins/sample-analytics/blocks/product/after-description.jsx';
-import { appendRecentEvent } from '#/plugins/sample-analytics/data.server';
+import { appendRecentEvent } from '#/plugins/sample-analytics/data/index.server';
 import manifest from '#/plugins/sample-analytics/manifest';
 
 // Hooks only receive the event payload — access plugin data helpers directly.

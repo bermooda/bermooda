@@ -8,7 +8,7 @@ import {
   buildPrismaPagination,
   parseListPagination,
   readQueryParam,
-} from '#/libs/prisma/pagination.server';
+} from '#/libs/prisma/pagination/index.server';
 import { listLocations } from '#/core/inventory/index.server';
 
 export const POS_SESSION_STATUSES = ['open', 'closed'];

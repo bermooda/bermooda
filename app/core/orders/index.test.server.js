@@ -74,7 +74,7 @@ vi.mock('#/core/checkout/totals.server', () => ({
   computeTotals: vi.fn(),
 }));
 
-vi.mock('#/core/catalog/types.server', () => ({
+vi.mock('#/core/catalog/types/index.server', () => ({
   expandBundleInventoryItems: vi.fn(),
 }));
 
@@ -103,7 +103,7 @@ vi.mock('#/utils/logger.server', () => ({
 // ---------------------------------------------------------------------------
 
 import prisma from '#/libs/prisma.server';
-import { expandBundleInventoryItems } from '#/core/catalog/types.server';
+import { expandBundleInventoryItems } from '#/core/catalog/types/index.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { persistOrderDiscounts } from '#/core/discounts/index.server';
 import { emit, emitBefore } from '#/core/events/index.server';

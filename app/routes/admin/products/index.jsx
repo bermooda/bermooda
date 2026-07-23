@@ -10,8 +10,8 @@ import {
   useSearchParams,
 } from 'react-router';
 
-import { parseAdminSearchParams } from '#/libs/api/admin-ui.server';
-import { loadProductsAdminIndexData } from '#/core/catalog/admin.server';
+import { parseAdminSearchParams } from '#/libs/api/admin-ui/index.server';
+import { loadProductsAdminIndexData } from '#/core/catalog/admin/index.server';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';

@@ -12,13 +12,13 @@ vi.mock('#/core/events/index.server', () => ({
   emit: vi.fn(),
 }));
 
-vi.mock('#/core/inventory/locations.server', () => ({
+vi.mock('#/core/inventory/locations/index.server', () => ({
   getTotalAvailableQuantity: vi.fn(),
   decrementLocationLevels: vi.fn(),
   incrementLocationLevels: vi.fn(),
 }));
 
-vi.mock('#/core/inventory/tracking.server', () => ({
+vi.mock('#/core/inventory/tracking/index.server', () => ({
   filterTrackedInventoryItems: vi.fn(),
 }));
 
@@ -32,8 +32,8 @@ import {
   decrementLocationLevels,
   getTotalAvailableQuantity,
   incrementLocationLevels,
-} from '#/core/inventory/locations.server';
-import { filterTrackedInventoryItems } from '#/core/inventory/tracking.server';
+} from '#/core/inventory/locations/index.server';
+import { filterTrackedInventoryItems } from '#/core/inventory/tracking/index.server';
 
 const txClient = {};
 

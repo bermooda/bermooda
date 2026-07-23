@@ -5,8 +5,8 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-import { getCachedResult } from '#/utils/cache.server';
-import { getCustomerSession } from '#/libs/auth/customer.server';
+import { getCachedResult } from '#/utils/cache/index.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import prisma from '#/libs/prisma.server';
 import {
   DEFAULT_LOCALE,
@@ -18,7 +18,7 @@ import {
 } from '#/core/i18n/locales';
 import { get as settingsGet } from '#/core/settings/index.server';
 
-export { translate as t } from '#/core/i18n/index';
+export { translate as t } from '#/core/i18n';
 
 const APP_DIR = new URL('../../../app', import.meta.url).pathname;
 

@@ -1,7 +1,7 @@
 // GET /api/admin/v1/media/:id — get a media record
 // Requires admin-scoped API key.
 
-import { createDomainErrorMapper } from '#/libs/api/admin.server';
+import { createDomainErrorMapper } from '#/libs/api/admin/index.server';
 import { getMedia } from '#/core/storage/index.server';
 
 const mapMediaError = createDomainErrorMapper({

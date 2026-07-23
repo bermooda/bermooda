@@ -7,7 +7,7 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
 import {
   EXPORT_SCHEDULES,

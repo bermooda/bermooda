@@ -1,6 +1,9 @@
 // GET/DELETE /api/v1/cart/:token
 
-import { cartNotFoundResponse, requireMethod } from '#/libs/api/public.server';
+import {
+  cartNotFoundResponse,
+  requireMethod,
+} from '#/libs/api/public/index.server';
 import { deleteCart, getCart } from '#/core/cart/index.server';
 
 export async function loader({ params }) {

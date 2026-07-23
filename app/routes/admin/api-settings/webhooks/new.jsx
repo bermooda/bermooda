@@ -8,7 +8,7 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
 import { DOMAIN_EVENTS } from '#/core/events/names';
 import { createSubscription } from '#/core/webhooks/index.server';
 import ActionBar from '#/components/admin/action-bar';

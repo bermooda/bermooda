@@ -1,7 +1,7 @@
 import { redirect } from 'react-router';
 import { Form, useLoaderData } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
 import {
   listProductAttributes,
   createProductAttribute,

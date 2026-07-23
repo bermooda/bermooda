@@ -8,7 +8,7 @@ import {
   parseAdminListPagination,
   parseJsonBody,
   requireMethod,
-} from '#/libs/api/admin.server';
+} from '#/libs/api/admin/index.server';
 import { createSegment, listSegments } from '#/core/marketing/index.server';
 
 export async function loader({ request }) {

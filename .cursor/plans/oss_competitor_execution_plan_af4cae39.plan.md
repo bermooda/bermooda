@@ -90,7 +90,7 @@ Nothing customer-facing is real until this lands. **Internal order:** W0-1 (boot
 
 - Depends on: nothing.
 - Unblocks: **everything** (W1, W2, W3, W6 cannot start meaningfully until the purchase loop + bootstrap pattern exist).
-- Owns: new `app/core/bootstrap.server.js` (`registerBuiltins()`), startup hook in [app/entry.server.jsx](app/entry.server.jsx); changes to [app/core/orders/index.server.js](app/core/orders/index.server.js), [app/core/payments/stripe.server.js](app/core/payments/stripe.server.js), checkout review step [app/routes/storefront/checkout/$step.jsx](app/routes/storefront/checkout/$step.jsx); event subscriber for `payment.*`; `CheckoutSession` totals columns.
+- Owns: new `app/core/bootstrap/index.server.js` (`registerBuiltins()`), startup hook in [app/entry.server.jsx](app/entry.server.jsx); changes to [app/core/orders/index.server.js](app/core/orders/index.server.js), [app/core/payments/stripe.server.js](app/core/payments/stripe.server.js), checkout review step [app/routes/storefront/checkout/$step.jsx](app/routes/storefront/checkout/$step.jsx); event subscriber for `payment.*`; `CheckoutSession` totals columns.
 - Shared surfaces (establishes the seams everyone else builds on): the **bootstrap extension pattern**, the **domain-event names + subscriber registration**, the **inventory mutation seam** (`incrementInventory`/`decrementInventory`), and the **totals computation** location.
 - Done: roadmap W0 validation gate — seed → cart → 4-step checkout → Stripe test card → webhook marks paid → confirmation email → refund restores stock; totals include tax; lint + build + targeted tests green.
 - Detail: roadmap "W0".
@@ -118,7 +118,7 @@ All four gate only on W0 and live in mostly separate domains. Coordinate only on
 **W3 — Payment breadth + promotions engine** (lane C)
 
 - Depends on: W0. Unblocks: W4, W7.
-- Owns: `app/core/payments/paypal.server.js` + manual/offline provider, saved methods/Payment Element, address-validation provider interface, promotions rules engine in [app/core/discounts/index.server.js](app/core/discounts/index.server.js), tax classes; `CartDiscount`/`OrderDiscount`/`TaxClass` schema + `Discount` extensions.
+- Owns: `app/core/payments/paypal/index.server.js` + manual/offline provider, saved methods/Payment Element, address-validation provider interface, promotions rules engine in [app/core/discounts/index.server.js](app/core/discounts/index.server.js), tax classes; `CartDiscount`/`OrderDiscount`/`TaxClass` schema + `Discount` extensions.
 - Shared: **owns the totals-engine refactor** (multi-discount + tax classes) — W7 builds on it; `prisma/schema.prisma` (touches `Order`/`Discount`); bootstrap (register new payment providers).
 - Done: roadmap W3 gate (>=2 payment methods; stacked + automatic discounts persist; tax classes apply).
 
@@ -155,7 +155,7 @@ These are the seams where parallel chunks collide. Owners must follow these cont
 
 - **`prisma/schema.prisma` (top conflict risk).** Every chunk adds models here. Rule: add new models in a clearly delimited per-chunk section; **never edit the same existing model concurrently** without a heads-up. Known hot models: `Order`/`OrderLine` (W0, W3, W4), `Discount` (W3), `ProductVariant.inventoryCount` (W0 seam vs W7 migration), `CheckoutSession` (W0). Designate a **schema integrator** to serialize migration generation (Prisma migration history is linear — parallel `prisma:migrate` causes ordering/drift). Merge schema PRs small and often; regenerate `prisma/generated/` on every merge.
 - **[app/routes.js](app/routes.js).** Append-only registration → low textual conflict but everyone edits it. Each chunk appends its own block; rebase frequently. Keep route module + `routes.js` change in one commit (repo rule).
-- **`app/core/bootstrap.server.js` (created by W0).** W0 defines `registerBuiltins()` with a per-domain `registerX()` extension pattern. Downstream chunks (W1 search provider, W3 payment providers, W2/W4/W6 event subscribers) add one call + their own register fn — no rewrites.
+- **`app/core/bootstrap/index.server.js` (created by W0).** W0 defines `registerBuiltins()` with a per-domain `registerX()` extension pattern. Downstream chunks (W1 search provider, W3 payment providers, W2/W4/W6 event subscribers) add one call + their own register fn — no rewrites.
 - **Domain-event names + bus.** W0 establishes canonical events (`payment.succeeded`, `order.confirmed`, ...). W2 (webhook fan-out), W4 (`order.returned`, lifecycle emails), W6 (audit), W7 (inventory/back-in-stock) **subscribe**. Maintain a single shared list of event names; don't rename without notice.
 - **Totals/pricing engine.** Single computation path (checkout review + `placeOrder`). W0-2 (tax persist) lands first; **W3 owns the multi-discount + tax-class refactor**; W7 extends it for price-list resolution. Sequence W3 totals work before W7 totals work.
 - **Inventory seam.** W0-5 calls `incrementInventory`/`decrementInventory`; W7 swaps the implementation to location-aware. Keep these function signatures stable so W7 is a drop-in.

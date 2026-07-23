@@ -4,9 +4,9 @@
 import { useState } from 'react';
 import { useLoaderData } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
 import { listProvidersWithDetails as listAddressValidationProviders } from '#/core/address-validation/index.server';
-import { ADMIN_AVAILABLE_LOCALES } from '#/core/i18n/index';
+import { ADMIN_AVAILABLE_LOCALES } from '#/core/i18n';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import {
   listAdminUsers,

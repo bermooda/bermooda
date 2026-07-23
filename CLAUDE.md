@@ -61,7 +61,7 @@ Keep component rules short and practical. Favor existing patterns in nearby file
 
 **`app/libs`** — infrastructure and integrations (auth setup, db clients, queue, third-party SDK wrappers, alerting). Keep modules reusable and low-level. Do not put domain workflows here.
 
-**Alerting** — production errors and ops notifications use the provider registry in `#/libs/alerting.server` (`sendErrorAlert`, `sendAlertMessage`). Default provider is Telegram. Route handlers use `handleError` from `#/libs/error.server`. See [.cursor/rules/alerting.mdc](.cursor/rules/alerting.mdc).
+**Alerting** — production errors and ops notifications use the provider registry in `#/libs/alerting/index.server` (`sendErrorAlert`, `sendAlertMessage`). Default provider is Telegram. Route handlers use `handleError` from `#/libs/error/index.server`. See [.cursor/rules/alerting.mdc](.cursor/rules/alerting.mdc).
 
 **`app/core`** — domain/business workflows that orchestrate libs and persistence (catalog, cart, orders, payments, shipping, customers, etc.). Core modules may depend on libs and other core modules. **Do not add new ecommerce code under `app/services`.**
 
@@ -139,10 +139,10 @@ Configure explicit URLs in [app/routes.js](app/routes.js) to match this tree.
 
 Dual auth — admin/staff and customers are separate better-auth instances ([docs/auth.md](docs/auth.md)).
 
-- **Admin routes** — `adminAuthMiddleware` from `#/libs/auth/admin.server`, or `authenticate(request)` in layout loaders.
-- **Customer account routes** — `customerAuthMiddleware` from `#/libs/auth/customer.server`, or `getCustomerSession(request)` in layout loaders.
-- In loader/action `catch` blocks, return `handleError` from `#/libs/error.server` (logs + production alert via `#/libs/alerting.server`).
-- For background jobs or direct alerts, use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting.server`.
+- **Admin routes** — `adminAuthMiddleware` from `#/libs/auth/admin/index.server`, or `authenticate(request)` in layout loaders.
+- **Customer account routes** — `customerAuthMiddleware` from `#/libs/auth/customer/index.server`, or `getCustomerSession(request)` in layout loaders.
+- In loader/action `catch` blocks, return `handleError` from `#/libs/error/index.server` (logs + production alert via `#/libs/alerting/index.server`).
+- For background jobs or direct alerts, use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting/index.server`.
 
 **Boundaries**
 

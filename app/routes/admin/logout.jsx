@@ -1,7 +1,7 @@
 import { redirect } from 'react-router';
 
 import logger from '#/utils/logger.server';
-import { adminAuth } from '#/libs/auth/admin.server';
+import { adminAuth } from '#/libs/auth/admin/index.server';
 
 /**
  * Admin logout — signs out via the admin Better Auth instance.

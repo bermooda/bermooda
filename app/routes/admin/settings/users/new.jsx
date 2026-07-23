@@ -1,6 +1,6 @@
 import { Form, Link, useActionData, useNavigation } from 'react-router';
 
-import { authenticate } from '#/libs/auth/admin.server';
+import { authenticate } from '#/libs/auth/admin/index.server';
 import {
   createAdminStaffUser,
   requirePermission,

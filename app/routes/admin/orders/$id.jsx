@@ -9,8 +9,8 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { handleAdminActionError } from '#/libs/api/admin-ui.server';
-import { getAdminSlotBlocksMap } from '#/core/admin/slots.server';
+import { handleAdminActionError } from '#/libs/api/admin-ui/index.server';
+import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
 import { formatPrice } from '#/core/currency/format';
 import {
   loadOrderAdminDetailData,

@@ -1,6 +1,6 @@
 import { useActionData, useLoaderData } from 'react-router';
 
-import { getCustomerSession } from '#/libs/auth/customer.server';
+import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import {
   parseSubscribeFromForm,
   subscribeBackInStock,

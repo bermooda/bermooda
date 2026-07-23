@@ -7,8 +7,8 @@ import {
   decrementLocationLevels,
   getTotalAvailableQuantity,
   incrementLocationLevels,
-} from '#/core/inventory/locations.server';
-import { filterTrackedInventoryItems } from '#/core/inventory/tracking.server';
+} from '#/core/inventory/locations/index.server';
+import { filterTrackedInventoryItems } from '#/core/inventory/tracking/index.server';
 
 // ---------------------------------------------------------------------------
 // decrementInventory
@@ -98,4 +98,4 @@ export {
   listRecentVariantsForInventory,
   listVariantInventoryLevels,
   setInventoryLevelQuantity,
-} from '#/core/inventory/locations.server';
+} from '#/core/inventory/locations/index.server';

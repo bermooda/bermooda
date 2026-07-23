@@ -1,6 +1,6 @@
 import { Form, Link } from 'react-router';
 
-import { useT } from '#/core/i18n/index';
+import { useT } from '#/core/i18n';
 
 export default function AccountWishlistPage({ itemsData, actionData }) {
   const t = useT();

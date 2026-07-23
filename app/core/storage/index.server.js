@@ -8,7 +8,7 @@ import sharp from 'sharp';
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import * as client from '#/core/storage/client.server';
+import * as client from '#/core/storage/client/index.server';
 import {
   collectStorageKeys,
   RESPONSIVE_WIDTHS,

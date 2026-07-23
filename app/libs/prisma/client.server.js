@@ -3,7 +3,7 @@ import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 
-import { getDatabaseProvider } from '#/libs/prisma/provider.server';
+import { getDatabaseProvider } from '#/libs/prisma/provider/index.server';
 
 /**
  * Re-export Prisma model types

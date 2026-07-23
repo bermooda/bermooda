@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 
 import config from '#/config';
-import { useT } from '#/core/i18n/index';
+import { useT } from '#/core/i18n';
 
 const accountHome = config.auth.customerCallbackUrl;
 

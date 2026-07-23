@@ -55,11 +55,11 @@ Dual auth — admin/staff and customers are separate better-auth instances. See 
 
 | Area | Protection |
 | ---- | ---------- |
-| Admin (`/admin/*`) | `adminAuthMiddleware` from `#/libs/auth/admin.server`, or `authenticate(request)` in layout loaders |
-| Customer account (`/account/*`) | `customerAuthMiddleware` from `#/libs/auth/customer.server`, or `getCustomerSession(request)` in layout loaders |
+| Admin (`/admin/*`) | `adminAuthMiddleware` from `#/libs/auth/admin/index.server`, or `authenticate(request)` in layout loaders |
+| Customer account (`/account/*`) | `customerAuthMiddleware` from `#/libs/auth/customer/index.server`, or `getCustomerSession(request)` in layout loaders |
 
-In loader/action `catch` blocks, return `handleError` from `#/libs/error.server` (logs + production alert via `#/libs/alerting.server`).
-For background jobs or direct alerts, use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting.server`. See [alerting.mdc](mdc:.cursor/rules/alerting.mdc).
+In loader/action `catch` blocks, return `handleError` from `#/libs/error/index.server` (logs + production alert via `#/libs/alerting/index.server`).
+For background jobs or direct alerts, use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting/index.server`. See [alerting.mdc](mdc:.cursor/rules/alerting.mdc).
 
 ## Boundaries
 

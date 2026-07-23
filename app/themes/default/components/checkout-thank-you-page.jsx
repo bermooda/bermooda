@@ -1,13 +1,13 @@
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router';
 
-import { useT } from '#/core/i18n/index';
+import { useT } from '#/core/i18n';
+
 import {
   cartLineTotal,
   formatPrice,
   parseShippingAddressSnapshot,
-} from '#/core/index';
-
+} from '#/core';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
 } from '#/themes/default/components/storefront-chrome';

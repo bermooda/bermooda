@@ -2,13 +2,13 @@
 // Customer wishlists.
 
 import prisma from '#/libs/prisma.server';
-import { containsFilter } from '#/libs/prisma/filters.server';
+import { containsFilter } from '#/libs/prisma/filters/index.server';
 import {
   buildPaginationMeta,
   buildPrismaPagination,
   parseListPagination,
   readQueryParam,
-} from '#/libs/prisma/pagination.server';
+} from '#/libs/prisma/pagination/index.server';
 import {
   loadProductSlugMap,
   loadProductTitleMap,

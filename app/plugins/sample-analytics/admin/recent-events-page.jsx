@@ -1,4 +1,4 @@
-import { useT } from '#/core/i18n/index';
+import { useT } from '#/core/i18n';
 
 export function RecentEventsPage({ loaderData }) {
   const t = useT();

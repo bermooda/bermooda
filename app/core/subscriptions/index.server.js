@@ -8,7 +8,7 @@ import {
   buildPrismaPagination,
   parseListPagination,
   readQueryParam,
-} from '#/libs/prisma/pagination.server';
+} from '#/libs/prisma/pagination/index.server';
 import { listRecentVariantsForInventory } from '#/core/inventory/index.server';
 
 export const SUBSCRIPTION_INTERVALS = ['day', 'week', 'month', 'year'];

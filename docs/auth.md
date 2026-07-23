@@ -12,7 +12,7 @@ instances share no session state and no cookies.
 
 | Property      | Value                                        |
 | ------------- | -------------------------------------------- |
-| File          | `app/libs/auth/admin.server.js`              |
+| File          | `app/libs/auth/admin/index.server.js`        |
 | Client file   | `app/libs/auth/admin-client.js`              |
 | Base path     | `/admin/auth`                                |
 | Cookie prefix | `bermooda_admin_`                            |
@@ -28,7 +28,7 @@ Prisma schema.
 
 | Property      | Value                                                                    |
 | ------------- | ------------------------------------------------------------------------ |
-| File          | `app/libs/auth/customer.server.js`                                       |
+| File          | `app/libs/auth/customer/index.server.js`                                 |
 | Client file   | `app/libs/auth/customer-client.js`                                       |
 | Base path     | `/account/auth`                                                          |
 | Cookie prefix | `bermooda_customer_`                                                     |
@@ -92,15 +92,15 @@ instance.
 ## Route handlers
 
 ```
-GET/POST  /admin/auth/*    app/routes/auth/admin.jsx     (adminAuth)
-GET/POST  /account/auth/*  app/routes/auth/customer.jsx  (customerAuth)
+GET/POST  /admin/auth/*    app/routes/auth/admin/index.jsx     (adminAuth)
+GET/POST  /account/auth/*  app/routes/auth/customer/index.jsx  (customerAuth)
 ```
 
 Each file is a thin React Router route that applies middleware before proxying
 to the corresponding better-auth handler:
 
 ```js
-import { adminAuthHandlerMiddleware } from '#/libs/auth/admin.server';
+import { adminAuthHandlerMiddleware } from '#/libs/auth/admin/index.server';
 import { rateLimitMiddleware } from '#/libs/rate-limit.server';
 
 export const middleware = [
