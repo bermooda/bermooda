@@ -2,7 +2,7 @@
 
 ## Context
 
-Build **bermooda**, an open-source ecommerce shop using React Router 7 SSR + Prisma 7/SQLite + better-auth + Tailwind 4 + LiteQuu + Resend + Pino + Fly.io/LiteFS, with manually configured Tigris/S3-compatible storage. Single app serves both the storefront (themed) and admin back office. Designed for extensibility: third-party developers author **themes** (folder-based React components) and **plugins** (folder-based, hook-based, JSON storage). Public REST API is reserved at `/api/*` but deferred to a later phase. v1 adds multi-currency + i18n and a Vitest test suite.
+Build **bermooda**, an open-source ecommerce shop using React Router 7 SSR + Prisma 7/SQLite + better-auth + Tailwind 4 + LiteQuu + Resend + Pino + Docker/Node deploy, with manually configured S3-compatible storage. Single app serves both the storefront (themed) and admin back office. Designed for extensibility: third-party developers author **themes** (folder-based React components) and **plugins** (folder-based, hook-based, JSON storage). Public REST API is reserved at `/api/*` but deferred to a later phase. v1 adds multi-currency + i18n and a Vitest test suite.
 
 **Tenancy:** single shop per install. **Admin/staff and customers are separate user models** (no shared accounts; isolated sessions). All keep-it-simple defaults: Stripe Checkout for v1 payment, flat-rate shipping, simple-percent tax — all pluggable via the provider API. **Default currency `USD`**, also-enabled-by-default `EUR` and `AUD`. **Locale is cookie-driven, never in URLs** — every storefront URL is locale-agnostic and the active locale comes from the `locale` cookie.
 
@@ -16,8 +16,8 @@ These are implementation constraints verified against this repository and must b
 - **`app/core/*` is the new canonical ecommerce domain layer.** Rewrite the repo's agent rules and docs that currently point domain workflows at `app/services` so future work consistently uses `app/core/*` for shop engine code. Keep `app/libs/*` for low-level infrastructure clients.
 - **Server-only modules must use `*.server.js`.** Provider adapters such as Stripe should be named `stripe.server.js`, not plain `stripe.js`.
 - **Dual better-auth stacks are required.** The current app has one better-auth instance with `User`, `Session`, `Account`, `Verification`, `TwoFactor`, and the `organization()` plugin. Phase 1 splits this into an admin auth instance and a customer auth instance with separate base paths, cookie prefixes, models, clients, and route middleware.
-- **Storage is manually configured.** The README describes `fly storage create`, but there is no storage client, env mapping, upload service, or package-level integration today. Phase 1 must document manual storage setup and make the app read explicit env vars; do not rely on automated provisioning.
-- **Testing and CI are new work.** The repo has no Vitest config/scripts today, and the existing Fly workflow is under `.github/_workflows/`, not GitHub's runnable `.github/workflows/` path.
+- **Storage is manually configured.** Phase 1 must document manual S3-compatible storage setup and make the app read explicit env vars; do not rely on automated provisioning.
+- **Testing and CI are new work.** The repo has no Vitest config/scripts today, and CI workflow stubs live under `.github/_workflows/`, not GitHub's runnable `.github/workflows/` path.
 
 ---
 
@@ -48,7 +48,7 @@ app/
     themes/              # theme loader, active-theme resolver, slot system
     i18n/                # locale resolver, translation service, message catalogs
     currency/            # currency resolver, VariantPrice lookup, Intl formatting
-    storage/             # media storage abstraction + Tigris adapter
+    storage/             # media storage abstraction + S3-compatible adapter
   themes/
     default/             # bundled default theme
       manifest.js        # name, version, settings schema, links, locales
@@ -193,7 +193,7 @@ app/
 
 - Media storage is configured manually by the operator, not automatically provisioned by the app.
 - Add `app/core/storage/` with a small server-only client wrapper that reads explicit env vars for endpoint, region, bucket, access key, secret key, and public URL/base URL.
-- Treat Tigris as the documented Fly.io storage target for production, but keep the app-side interface provider-neutral enough for any S3-compatible service.
+- Keep the app-side interface provider-neutral for any S3-compatible service (AWS S3, MinIO, Cloudflare R2, etc.).
 - Update `.env.example` and `docs/storage.md` with exact manual setup steps, required env vars, local-development behavior, and failure modes.
 - Admin media upload UI talks only to `app/core/storage/*`; no route or admin component imports a storage SDK directly.
 
@@ -360,7 +360,7 @@ Computed on every cart mutation, every checkout step, and re-run server-side at 
 - [app/utils/logger.server.js](../app/utils/logger.server.js) — change the default Pino `name` from the stale `easyedit-order-editing` to `bermooda`.
 - [README.md](../README.md) — fix the dev URL from `http://localhost:5173` to `http://localhost:3000`.
 
-**Kept:** better-auth, Resend + React Email, LiteQuu, Pino, `@isaacs/ttlcache` (used for the `Setting` cache via [app/utils/cache/index.server.js](../app/utils/cache/index.server.js)), Telegram, Tailwind, Headless UI, Heroicons, oxlint/oxfmt, LiteFS, manually configured Tigris/S3-compatible storage, `fly.toml`.
+**Kept:** better-auth, Resend + React Email, LiteQuu, Pino, `@isaacs/ttlcache` (used for the `Setting` cache via [app/utils/cache/index.server.js](../app/utils/cache/index.server.js)), Telegram, Tailwind, Headless UI, Heroicons, oxlint/oxfmt, manually configured S3-compatible storage, Docker.
 
 ---
 
@@ -427,8 +427,8 @@ Tasks P0-1..P0-4 are parallel. P0-5 runs last because P0-2 and P0-3 remove the c
 
 - **P1-A. Dual better-auth instances.** Create [app/libs/auth/admin/index.server.js](../app/libs/auth/admin/index.server.js) (from current `index.server.js`: drop `organization`, cookie prefix `bermooda_admin_`, `baseURL` path `/admin/auth/*`, keep `twoFactor`). Create [app/libs/auth/customer/index.server.js](../app/libs/auth/customer/index.server.js) with a separate `betterAuth()` instance using the `Customer*` models via `prismaAdapter` schema mapping, cookie prefix `bermooda_customer_`, base path `/account/auth/*`. Add [app/libs/auth/admin-client.js](../app/libs/auth/admin-client.js) and [app/libs/auth/customer-client.js](../app/libs/auth/customer-client.js). Prove coexistence on one Prisma client; if the Prisma 7 adapter cannot map `Customer*` directly, ship the smallest table-mapping shim. Smoke: staff + customer logged in simultaneously with two cookies. Record mapping + smoke in [docs/auth.md](./auth.md).
 - **P1-B. Static dispatcher routing proof.** Add skeleton `app/core/plugins/index.server.js` with `loadPlugins()` and `resolvePluginRoute(id, path)`. Add skeleton `app/core/themes/index.server.js` with `resolveActiveTheme()` + `getStorefrontComponent(name)`. Wire `/apps/:pluginId/*` as a static dispatcher in [app/routes.js](../app/routes.js) rendering the resolved descriptor, and add one storefront route that delegates rendering to a theme component. Confirm no path mutates routes at runtime.
-- **P1-C. Storage client API.** Create `app/core/storage/client/index.server.js` with an S3-compatible wrapper reading `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_PUBLIC_URL`. Expose `putObject`, `getObjectUrl`, `deleteObject`. Add vars to [.env.example](../.env.example). Write [docs/storage.md](./storage.md) with `fly storage create` steps, local-dev behavior, failure modes.
-- **P1-D. CI workflows.** Create `.github/workflows/ci.yml` with `lint` and `build` jobs (test job added in Phase 8). Decide: move existing `.github/_workflows/fly.yml` to `.github/workflows/fly.yml` or delete it — document the choice in the PR.
+- **P1-C. Storage client API.** Create `app/core/storage/client/index.server.js` with an S3-compatible wrapper reading `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_PUBLIC_URL`. Expose `putObject`, `getObjectUrl`, `deleteObject`. Add vars to [.env.example](../.env.example). Write [docs/storage.md](./storage.md) with setup steps, local-dev behavior, failure modes.
+- **P1-D. CI workflows.** Create `.github/workflows/ci.yml` with `lint` and `build` jobs (test job added in Phase 8).
 - **P1-E. Vitest skeleton.** Add `vitest`, `@vitest/coverage-v8`, `@testing-library/react`, `@testing-library/jest-dom`, `happy-dom`, `supertest`. Create `vitest.config.js` (unit + server projects, `#` alias, non-enforcing coverage threshold `{'app/core/**': 80}`). Scripts: `test`, `test:watch`, `test:coverage`. Add one smoke test so CI has something to run.
 
 ### Phase 2 — Shop schema rewrite
@@ -570,7 +570,7 @@ P8-1 + P8-2 come first; P8-3..P8-19 are one coverage target each, all parallel.
 - **P9-2. [docs/plugins.md](./plugins.md)** — contract, manifest, hook list, `ctx` reference, sample plugin walkthrough.
 - **P9-3. [docs/testing.md](./testing.md)** — conventions, factories, db-per-worker pattern, coverage targets.
 - **P9-4. Finalize [docs/auth.md](./auth.md)** — both instances, cookie layout, middleware, isolation.
-- **P9-5. Finalize [docs/storage.md](./storage.md)** — Tigris provisioning, env vars, local fallback, failure modes.
+- **P9-5. Finalize [docs/storage.md](./storage.md)** — S3-compatible provisioning, env vars, local fallback, failure modes.
 - **P9-6. E2E smoke run.** Execute the 11 steps below on a freshly seeded DB.
 - **P9-7. Green build.** `npm run lint`, `npm run build`, `npm run test:coverage` all pass with `app/core/**` ≥ 80%.
 
