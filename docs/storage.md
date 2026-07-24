@@ -4,14 +4,14 @@ bermooda uses S3-compatible object storage for product media and other uploads. 
 
 ## Environment variables
 
-| Variable             | Description                         | Example                                         |
-| -------------------- | ----------------------------------- | ----------------------------------------------- |
-| `STORAGE_ENDPOINT`   | S3-compatible endpoint URL          | `https://s3.amazonaws.com`                      |
-| `STORAGE_REGION`     | Storage region                      | `us-east-1`                                     |
-| `STORAGE_BUCKET`     | Bucket name                         | `bermooda-media`                                |
-| `STORAGE_ACCESS_KEY` | Access key ID                       | —                                               |
-| `STORAGE_SECRET_KEY` | Secret access key                   | —                                               |
-| `STORAGE_PUBLIC_URL` | Public base URL for serving objects | `https://bermooda-media.s3.amazonaws.com`       |
+| Variable             | Description                         | Example                                   |
+| -------------------- | ----------------------------------- | ----------------------------------------- |
+| `STORAGE_ENDPOINT`   | S3-compatible endpoint URL          | `https://s3.amazonaws.com`                |
+| `STORAGE_REGION`     | Storage region                      | `us-east-1`                               |
+| `STORAGE_BUCKET`     | Bucket name                         | `bermooda-media`                          |
+| `STORAGE_ACCESS_KEY` | Access key ID                       | —                                         |
+| `STORAGE_SECRET_KEY` | Secret access key                   | —                                         |
+| `STORAGE_PUBLIC_URL` | Public base URL for serving objects | `https://bermooda-media.s3.amazonaws.com` |
 
 ## Local development
 

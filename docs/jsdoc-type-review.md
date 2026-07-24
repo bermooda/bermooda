@@ -49,8 +49,8 @@ Skip `*.test.*` files in area checks unless you add `paths` for `#/*` (tests imp
 
 ## Shared utilities (`app/utils/`)
 
-| Module             | Status | Notes                                                                                                                                                           |
-| ------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module             | Status | Notes                                                                                                                                     |
+| ------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `app/utils/` (all) | ✅     | Added JSDoc on cart/checkout cookie helpers; fixed `getCookieValue` nullability; generic `getCachedResult<T>`; typed cache key iteration. |
 
 ---
