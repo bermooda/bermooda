@@ -85,17 +85,6 @@ export function off(event, handler) {
 }
 
 /**
- * Run a single before-hook handler and normalize its outcome.
- *
- * @param {Function} handler
- * @param {object} payload
- * @returns {Promise<void>}
- */
-async function runBeforeHandler(handler, payload) {
-  await handler(payload);
-}
-
-/**
  * Pick which failure to rethrow after parallel before-hooks settle.
  * Prefers the first-registered HookAbortError; otherwise the first-registered error.
  *
@@ -131,7 +120,7 @@ export async function emitBefore(event, payload) {
   }
 
   const results = await Promise.allSettled(
-    eventHandlers.map((handler) => runBeforeHandler(handler, payload))
+    eventHandlers.map(async (handler) => handler(payload))
   );
 
   /** @type {Array<{ index: number, err: unknown }>} */
