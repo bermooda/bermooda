@@ -438,7 +438,7 @@ These are the core platform events that bermooda emits today. Declare handlers i
 
 ### Post-action hooks
 
-These events fire after the underlying domain work has happened. Post-hooks are fault-tolerant: if a handler throws, the event bus logs the error and continues with the remaining handlers. Post-hooks do not receive `ctx`; they receive only the payload.
+These events fire after the underlying domain work has happened. Post-hooks are **fire-and-forget**: `emit()` returns immediately and handlers run in parallel in the background. They are fault-tolerant: if a handler throws, the event bus logs the error and the remaining handlers still run. Post-hooks do not receive `ctx`; they receive only the payload.
 
 #### Orders and checkout
 
@@ -503,7 +503,7 @@ hooks: defineHooks({
 }),
 ```
 
-Handlers are invoked by the event bus when the corresponding event fires. If a post-hook handler throws, the error is contained by the event bus and does not affect other handlers or the caller.
+Handlers are invoked by the event bus when the corresponding event fires. Completion order is not guaranteed. If a post-hook handler throws, the error is contained by the event bus and does not affect other handlers or the caller.
 
 ### Before-hooks (blocking filters)
 
@@ -529,12 +529,13 @@ export const pluginManifest = definePlugin({
 
 **Contract:**
 
-| Aspect      | Behavior                                                                          |
-| ----------- | --------------------------------------------------------------------------------- |
-| Allow       | Return normally (return value ignored in MVP).                                    |
-| Block       | Call `deny(reason, { code })` — or throw any error (fail-closed).                 |
-| Ordering    | Registration order = plugin enable order. First veto wins.                        |
-| Performance | Filters run on the request critical path before the transaction — keep them fast. |
+| Aspect      | Behavior                                                                                                                                     |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Allow       | Return normally (return value ignored in MVP).                                                                                               |
+| Block       | Call `deny(reason, { code })` — or throw any error (fail-closed).                                                                            |
+| Dispatch    | Handlers run **in parallel**; `emitBefore` still **awaits all** before returning. Every handler runs even if another fails.                  |
+| Errors      | Fail-closed: if any handler throws, the action aborts. Prefers the first-registered `HookAbortError`, else the first-registered plain error. |
+| Performance | Filters run on the request critical path before the transaction — keep them fast and avoid mutating the shared payload.                      |
 
 Import `deny`, `emitBefore`, `HookAbortError`, and `isHookAbort` from `#/core/plugins/index.server` (re-exported from the event bus).
 
