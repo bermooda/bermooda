@@ -26,7 +26,7 @@ If you want a full shop you can fork, understand, and grow—welcome.
 | Auth          | [better-auth](https://www.better-auth.com/) (separate admin/staff and customer sessions) |
 | Payments      | Stripe                                                                                   |
 | Email         | Resend (+ React Email templates)                                                         |
-| Deploy        | Fly.io + LiteFS (SQLite replication) or plain Node / Docker                              |
+| Deploy        | Plain Node / Docker                                                                      |
 | Quality       | Vitest, oxlint, oxfmt                                                                    |
 
 ## Quick start (recommended)
@@ -156,7 +156,7 @@ Notable variables:
 | `STRIPE_*`                                  | Payments                                                        |
 | `RESEND_API_KEY`                            | Transactional email                                             |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional Google OAuth                                           |
-| `STORAGE_*`                                 | S3-compatible object storage (e.g. Tigris on Fly.io)            |
+| `STORAGE_*`                                 | S3-compatible object storage (AWS S3, MinIO, R2, etc.)          |
 
 ### Google OAuth (optional)
 
@@ -191,19 +191,9 @@ docker build -t bermooda .
 docker run -p 3000:3000 bermooda
 
 # With env file and SQLite path (example):
-docker run -p 8081:8081 -p 8080:8080 --env-file .env \
-  -e DATABASE_URL=file:/app/sqlite.db bermooda npm run start
+docker run -p 3000:3000 --env-file .env \
+  -e DATABASE_URL=file:/data/sqlite.db bermooda
 ```
-
-### Fly.io
-
-bermooda ships with `fly.toml`, LiteFS config, and a production-oriented Dockerfile. High-level flow:
-
-1. [Install flyctl](https://fly.io/docs/getting-started/installing-flyctl/) and `fly auth login`
-2. Create apps (production + optional staging); match names in `fly.toml`
-3. Import secrets: `fly secrets import < .env` (plus a strong `BETTER_AUTH_SECRET`)
-4. Create a data volume, attach Consul for LiteFS leases, and create Tigris storage if you need uploads
-5. Deploy via Fly or your preferred CI
 
 See [docs/storage.md](docs/storage.md) and [docs/postgres.md](docs/postgres.md) when you move beyond local SQLite.
 

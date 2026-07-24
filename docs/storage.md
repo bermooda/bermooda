@@ -6,21 +6,12 @@ bermooda uses S3-compatible object storage for product media and other uploads. 
 
 | Variable             | Description                         | Example                                         |
 | -------------------- | ----------------------------------- | ----------------------------------------------- |
-| `STORAGE_ENDPOINT`   | S3-compatible endpoint URL          | `https://fly.storage.tigris.dev`                |
-| `STORAGE_REGION`     | Storage region                      | `auto`                                          |
+| `STORAGE_ENDPOINT`   | S3-compatible endpoint URL          | `https://s3.amazonaws.com`                      |
+| `STORAGE_REGION`     | Storage region                      | `us-east-1`                                     |
 | `STORAGE_BUCKET`     | Bucket name                         | `bermooda-media`                                |
 | `STORAGE_ACCESS_KEY` | Access key ID                       | —                                               |
 | `STORAGE_SECRET_KEY` | Secret access key                   | —                                               |
-| `STORAGE_PUBLIC_URL` | Public base URL for serving objects | `https://fly.storage.tigris.dev/bermooda-media` |
-
-## Provisioning on Fly.io (Tigris)
-
-1. Install the Fly CLI: `brew install flyctl`
-2. Create a storage bucket: `fly storage create --name bermooda-media`
-3. The CLI prints the endpoint, region, access key, and secret key — copy these to your `.env` file and to Fly.io secrets:
-   ```
-   fly secrets set STORAGE_ENDPOINT=... STORAGE_REGION=... STORAGE_BUCKET=... STORAGE_ACCESS_KEY=... STORAGE_SECRET_KEY=... STORAGE_PUBLIC_URL=...
-   ```
+| `STORAGE_PUBLIC_URL` | Public base URL for serving objects | `https://bermooda-media.s3.amazonaws.com`       |
 
 ## Local development
 
@@ -70,7 +61,7 @@ getObjectUrl(key); // → string
 deleteObject(key); // → Promise<void>
 ```
 
-`putObject` performs a plain HTTP PUT with the `x-amz-acl: public-read` header. This is sufficient for Tigris and MinIO in development. For production deployments that require proper AWS Signature V4 request signing, replace the fetch-based implementation with `@aws-sdk/client-s3` (`PutObjectCommand`).
+`putObject` performs a plain HTTP PUT with the `x-amz-acl: public-read` header. This is sufficient for MinIO in development and many S3-compatible providers. For production deployments that require proper AWS Signature V4 request signing, replace the fetch-based implementation with `@aws-sdk/client-s3` (`PutObjectCommand`).
 
 ### High-level API (`index.server.js`)
 

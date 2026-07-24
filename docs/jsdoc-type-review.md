@@ -51,7 +51,7 @@ Skip `*.test.*` files in area checks unless you add `paths` for `#/*` (tests imp
 
 | Module             | Status | Notes                                                                                                                                                           |
 | ------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `app/utils/` (all) | ✅     | Added JSDoc on cart/checkout cookie helpers; fixed `getCookieValue` nullability; generic `getCachedResult<T>`; typed cache key iteration; fixed litefs comment. |
+| `app/utils/` (all) | ✅     | Added JSDoc on cart/checkout cookie helpers; fixed `getCookieValue` nullability; generic `getCachedResult<T>`; typed cache key iteration. |
 
 ---
 

@@ -3,7 +3,7 @@ import { redirect } from 'react-router';
 import prisma from '#/libs/prisma.server';
 
 export async function loader({ request }) {
-  // Only allow requests from fly.io healthcheck service
+  // Only allow requests that present the configured health token
   const token = request.headers.get('X-Health-Token');
   if (token !== process.env.HEALTH_TOKEN) {
     throw redirect('/404');

@@ -20,30 +20,21 @@ RUN npm run build
 # Build production image
 FROM node:24-alpine
 
-ENV LITEFS_DIR="/litefs/data"
 ENV DATABASE_FILENAME="sqlite.db"
-ENV DATABASE_PATH="$LITEFS_DIR/$DATABASE_FILENAME"
+ENV DATABASE_PATH="/data/$DATABASE_FILENAME"
 ENV DATABASE_URL="file:$DATABASE_PATH"
 ENV QUEUE_DATABASE_FILENAME="queue.db"
-ENV QUEUE_DATABASE_PATH="$LITEFS_DIR/$QUEUE_DATABASE_FILENAME"
-ENV INTERNAL_PORT="8080"
-ENV PORT="8081"
+ENV QUEUE_DATABASE_PATH="/data/$QUEUE_DATABASE_FILENAME"
+ENV PORT="3000"
 ENV NODE_ENV="production"
 # For WAL support: https://github.com/prisma/prisma-engines/issues/4675#issuecomment-1914383246
 ENV PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK="1"
 
 # Add shortcut for connecting to the database CLI.
-RUN printf '%s\n' '#!/bin/sh' 'exec sqlite3 "$DATABASE_URL" "$@"' > /usr/local/bin/dbcli && chmod +x /usr/local/bin/dbcli
+RUN printf '%s\n' '#!/bin/sh' 'exec sqlite3 "$DATABASE_PATH" "$@"' > /usr/local/bin/dbcli && chmod +x /usr/local/bin/dbcli
 
-# Install necessary dependencies for LiteFS
-RUN apk add ca-certificates fuse3 sqlite
-
-# Create directories for LiteFS and the database
-RUN mkdir -p /data ${LITEFS_DIR}
-ADD etc/litefs.yml /etc/litefs.yml
-
-# Pull in LiteFS binary
-COPY --from=flyio/litefs:0.5.11 /usr/local/bin/litefs /usr/local/bin/litefs
+RUN apk add ca-certificates sqlite
+RUN mkdir -p /data
 
 # Copy application files
 COPY ./package.json package-lock.json /app/
@@ -53,6 +44,5 @@ COPY --from=build-env /app/prisma.config.js /app/prisma.config.js
 COPY --from=build-env /app/build /app/build
 WORKDIR /app
 
-# Run LiteFS as the entrypoint. After it has connected and sync'd with the
-# cluster, it will run the commands listed in the "exec" field of the config.
-CMD ["litefs", "mount"]
+EXPOSE 3000
+CMD ["npm", "start"]

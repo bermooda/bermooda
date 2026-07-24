@@ -133,7 +133,6 @@ Configure explicit URLs in [app/routes.js](app/routes.js) to match this tree.
 - Read data in `loader`.
 - Handle mutations in `action`, typically from `<Form>` or `fetcher` submissions.
 - Call `app/core/*` for domain logic; keep routes thin.
-- Production runs on Fly.io with LiteFS — in `loader`s that perform database writes, call `await ensurePrimary()` from `#/utils/litefs.server` as the **first line** (before any reads). Actions and read-only loaders do not need it. See [.cursor/rules/litefs.mdc](.cursor/rules/litefs.mdc).
 
 **Auth and errors**
 
