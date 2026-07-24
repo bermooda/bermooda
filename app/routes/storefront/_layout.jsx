@@ -8,7 +8,6 @@
  */
 import { Outlet, useLoaderData } from 'react-router';
 
-import { ensurePrimary } from '#/utils/litefs.server';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { getMenuByHandle } from '#/core/content/index.server';
@@ -42,7 +41,6 @@ export async function loader({ request }) {
   const session = await getCustomerSession(request);
 
   if (effectiveRef && session?.user?.id) {
-    await ensurePrimary();
     try {
       await trackReferral(effectiveRef, session.user.id);
     } catch {

@@ -47,7 +47,6 @@ See [ecommerce-architecture.mdc](mdc:.cursor/rules/ecommerce-architecture.mdc) f
 - Handle mutations in `action`, typically from `<Form>` or `fetcher` submissions.
 - Call `app/core/*` for domain logic; keep routes thin.
 - JSDoc any exported route helpers (parsers, serializers) — see [jsdoc-types.mdc](mdc:.cursor/rules/jsdoc-types.mdc).
-- Production runs on Fly.io with LiteFS — in `loader`s that perform database writes, call `await ensurePrimary()` from `#/utils/litefs.server` as the **first line** (before any reads). Actions and read-only loaders do not need it. See [litefs.mdc](mdc:.cursor/rules/litefs.mdc).
 
 ## Auth and errors
 

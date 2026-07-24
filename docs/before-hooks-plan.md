@@ -501,8 +501,7 @@ Notes / cleanup for the implementer:
   be documented as: **`enabledPlugins` array = persisted intent; `enable()` =
   live wiring**. Keep both writes; do not delete the array write (startup relies
   on it).
-- LiteFS: this runs in a route **action**, so writes route to the primary
-  automatically — **no `ensurePrimary()`** needed (per `.cursor/rules/litefs.mdc`).
+- Plugin enable/disable runs in a route **action**; no special primary-routing step is required for SQLite writes.
 - **Attribution wrapper:** update `enable()` so that when it registers a
   `before.*` handler it wraps it to stamp `pluginId` onto any thrown
   `HookAbortError`:
