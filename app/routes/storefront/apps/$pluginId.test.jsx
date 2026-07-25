@@ -3,14 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   mockClientResolve,
-  mockGetRegisteredPlugin,
+  mockGetRegisteredPluginBySlug,
   mockIsPluginEnabled,
   mockPreloadStorefrontTheme,
   mockServerResolve,
   mockUseLoaderData,
 } = vi.hoisted(() => ({
   mockClientResolve: vi.fn(),
-  mockGetRegisteredPlugin: vi.fn(),
+  mockGetRegisteredPluginBySlug: vi.fn(),
   mockIsPluginEnabled: vi.fn(),
   mockPreloadStorefrontTheme: vi.fn(),
   mockServerResolve: vi.fn(),
@@ -26,7 +26,7 @@ vi.mock('#/core/plugins/storefront-routes.client', () => ({
 }));
 
 vi.mock('#/core/plugins/index.server', () => ({
-  getRegisteredPlugin: mockGetRegisteredPlugin,
+  getRegisteredPluginBySlug: mockGetRegisteredPluginBySlug,
   isPluginEnabled: mockIsPluginEnabled,
   resolvePluginStorefrontRoute: mockServerResolve,
 }));
@@ -47,16 +47,16 @@ import StorefrontPluginDispatcher, {
 } from '#/routes/storefront/apps/$pluginId';
 
 const sampleManifest = {
-  id: 'sample-analytics',
-  name: 'Sample Analytics',
-  storefrontRoutes: '#/plugins/sample-analytics/storefront/routes/index.server',
+  id: '@bermooda/sample-analytics',
+  title: 'Sample Analytics',
+  slug: 'sample-analytics',
 };
 
 describe('storefront plugin dispatcher', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPreloadStorefrontTheme.mockResolvedValue('default');
-    mockGetRegisteredPlugin.mockReturnValue(sampleManifest);
+    mockGetRegisteredPluginBySlug.mockReturnValue(sampleManifest);
     mockIsPluginEnabled.mockResolvedValue(true);
   });
 
@@ -65,7 +65,7 @@ describe('storefront plugin dispatcher', () => {
       meta({
         loaderData: {
           status: 'ok',
-          manifest: { name: 'Sample Analytics' },
+          manifest: { title: 'Sample Analytics' },
         },
         params: { pluginId: 'sample-analytics' },
       })
@@ -81,10 +81,10 @@ describe('storefront plugin dispatcher', () => {
   it('uses the splat path and returns loader data for a matched plugin route', async () => {
     const pluginLoaderData = { eventCount: 3 };
 
-    mockServerResolve.mockReturnValue({
-      path: 'reports/daily',
+    mockServerResolve.mockImplementation((_pluginSlug, path) => ({
+      path,
       loader: vi.fn().mockResolvedValue(pluginLoaderData),
-    });
+    }));
 
     const result = await loader({
       request: new Request('http://localhost/apps/sample-analytics/wrong-path'),
@@ -95,8 +95,12 @@ describe('storefront plugin dispatcher', () => {
     });
 
     expect(mockPreloadStorefrontTheme).toHaveBeenCalledOnce();
-    expect(mockGetRegisteredPlugin).toHaveBeenCalledWith('sample-analytics');
-    expect(mockIsPluginEnabled).toHaveBeenCalledWith('sample-analytics');
+    expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith(
+      'sample-analytics'
+    );
+    expect(mockIsPluginEnabled).toHaveBeenCalledWith(
+      '@bermooda/sample-analytics'
+    );
     expect(mockServerResolve).toHaveBeenCalledWith(
       'sample-analytics',
       'reports/daily'
@@ -104,6 +108,7 @@ describe('storefront plugin dispatcher', () => {
     expect(result).toMatchObject({
       status: 'ok',
       pluginId: 'sample-analytics',
+      manifest: sampleManifest,
       splatPath: 'reports/daily',
       pluginLoaderData,
       themeId: 'default',
@@ -133,7 +138,7 @@ describe('storefront plugin dispatcher', () => {
     mockUseLoaderData.mockReturnValue({
       status: 'ok',
       pluginId: 'sample-analytics',
-      manifest: { name: 'Sample Analytics' },
+      manifest: { title: 'Sample Analytics' },
       splatPath: '',
       pluginLoaderData: { eventCount: 7 },
       themeId: 'default',

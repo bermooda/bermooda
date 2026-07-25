@@ -5,6 +5,10 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef } from 'react';
 import { Form, useActionData, useLoaderData } from 'react-router';
 
+import {
+  LEGACY_THEME_ID_MAP,
+  normalizeLegacyIds,
+} from '#/core/extensions/package-meta';
 import { get } from '#/core/settings/index.server';
 import {
   getRegisteredTheme,
@@ -43,11 +47,14 @@ export function meta() {
  * Loads all registered themes and the active theme manifest + settings.
  */
 export async function loader() {
-  const [themes, activeThemeId, activeTheme] = await Promise.all([
+  const [themes, activeThemeRaw, activeTheme] = await Promise.all([
     Promise.resolve(listRegisteredThemes()),
     get('activeTheme'),
     resolveActiveTheme(),
   ]);
+  const activeThemeId = activeThemeRaw
+    ? normalizeLegacyIds([activeThemeRaw], LEGACY_THEME_ID_MAP)[0]
+    : null;
   const themeSettings = await loadThemeSettings(activeTheme);
 
   return { themes, activeThemeId, activeTheme, themeSettings };
@@ -118,7 +125,7 @@ function ThemeCard({ manifest, isActive }) {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="text-text truncate text-sm font-semibold">
-              {manifest.name}
+              {manifest.title}
             </h3>
             {isActive && <Badge tone="success">Active</Badge>}
           </div>
@@ -172,7 +179,7 @@ function ThemeSettingsForm({ manifest, values }) {
         <h2 className="text-text text-base font-semibold">Theme Settings</h2>
         <p className="text-text-muted mt-0.5 text-sm">
           Configure options for{' '}
-          <span className="text-text font-medium">{manifest.name}</span>.
+          <span className="text-text font-medium">{manifest.title}</span>.
         </p>
       </div>
 

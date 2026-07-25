@@ -13,7 +13,7 @@ export const DEFAULT_LOCALES = ['en', 'de', 'fr'];
 
 export const DEFAULT_STOREFRONT_LOCALES = ['en'];
 
-export const DEFAULT_ACTIVE_THEME = 'default';
+export const DEFAULT_ACTIVE_THEME = '@bermooda/theme-default';
 
 export const DEFAULT_PLUGIN_ORDER = [];
 

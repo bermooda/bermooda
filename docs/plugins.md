@@ -7,7 +7,7 @@ This document describes the bermooda plugin architecture and serves as the refer
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Plugin Manifest](#plugin-manifest)
+2. [Package.json contract and runtime entry](#packagejson-contract-and-runtime-entry)
 3. [API Reference](#api-reference)
 4. [The ctx Object](#the-ctx-object)
 5. [Event Hook Catalog](#event-hook-catalog)
@@ -23,14 +23,17 @@ This document describes the bermooda plugin architecture and serves as the refer
 
 ## Overview
 
-Plugins extend the bermooda platform without modifying core code. Each plugin is a self-contained directory under `app/plugins/<plugin-id>/` that declares a manifest, registers event hook handlers, optionally contributes admin pages, and optionally renders UI blocks into storefront and admin slots.
+Plugins extend the bermooda platform without modifying core code. Each plugin is a self-contained directory under `app/plugins/<slug>/` where the folder name matches `package.json` `bermooda.slug`. Identity lives in `package.json`; runtime behavior lives in `index.server.js`.
+
+The registered plugin `id` is always the full package name from `package.json` `name` (for example `@bermooda/sample-analytics`). URLs use `bermooda.slug` (for example `/admin/plugins/sample-analytics/*` and `/apps/sample-analytics/*`). The slug must be lowercase hyphenated.
 
 The plugin lifecycle is:
 
-1. **Define** — the plugin calls `definePlugin(manifest)` at module load time to validate its manifest.
-2. **Register** — `register(manifest)` adds the plugin to the in-memory registry. This is typically done at application startup when the plugin's `index.server.js` is imported.
-3. **Enable** — `enable(pluginId)` wires hook handlers onto the event bus, registers providers from `manifest.providers`, and calls `onEnable(ctx)`. Admin toggles persist the `enabledPlugins` array via `setPluginEnabledState()` and call `enable()` immediately.
-4. **Disable** — `disable(pluginId)` calls `onDisable(ctx)`, unregisters providers, and removes hook handlers. Admin toggles use `setPluginEnabledState()` to update `enabledPlugins` and call `disable()` immediately.
+1. **Define runtime** — the plugin calls `definePlugin({ hooks, providers, blocks, ... })` at module load time to validate runtime behavior only.
+2. **Discover** — the plugin engine globs `app/plugins/*/index.server.js` and sibling `package.json` files, verifies `app/plugins/<slug>/` matches `bermooda.slug`, and merges package identity with the runtime export.
+3. **Register** — `register(manifest)` adds the merged plugin manifest to the in-memory registry by full package id and indexes it by slug for URL dispatch.
+4. **Enable** — `enable(pluginId)` wires hook handlers onto the event bus, registers providers from `manifest.providers`, and calls `onEnable(ctx)`. Admin toggles persist the `enabledPlugins` array using full package ids via `setPluginEnabledState()` and call `enable()` immediately.
+5. **Disable** — `disable(pluginId)` calls `onDisable(ctx)`, unregisters providers, and removes hook handlers. Admin toggles use `setPluginEnabledState()` to update `enabledPlugins` and call `disable()` immediately.
 
 In the admin plugins screen, toggling a plugin updates the persisted `enabledPlugins` array for startup and also calls `enable()` or `disable()` immediately so hooks, providers, and lifecycle callbacks are wired live without waiting for a restart.
 
@@ -38,39 +41,71 @@ All plugin infrastructure lives in `app/core/plugins/index.server.js`.
 
 ---
 
-## Plugin Manifest
+## Package.json contract and runtime entry
 
-A manifest is a plain JavaScript object that describes the plugin to the platform.
+Every plugin has a `package.json` for identity and display metadata:
 
-```js
+```json
 {
-  id: 'my-plugin',           // string, required — globally unique identifier
-  name: 'My Plugin',         // string, required — human-readable display name
-  version: '1.0.0',          // string, required — semver version string
-  description: '...',        // string, optional — short description shown in admin
-  hooks: { ... },            // object, optional — event handler map (see defineHooks)
-  providers: { ... },        // object, optional — payment/shipping/tax/search provider specs
-  adminRoutes: '#/plugins/my-plugin/admin/routes/index.server', // string, optional
-  storefrontRoutes: '#/plugins/my-plugin/storefront/routes/index.server', // string, optional
-  onEnable: async (ctx) => {},     // function, optional — called when plugin is enabled
-  onDisable: async (ctx) => {},    // function, optional — called when plugin is disabled
+  "name": "@bermooda/my-plugin",
+  "version": "1.0.0",
+  "description": "Adds a custom integration.",
+  "private": true,
+  "bermooda": {
+    "title": "My Plugin",
+    "slug": "my-plugin",
+    "settings": [{ "key": "apiKey", "label": "API Key", "type": "text" }]
+  }
 }
 ```
 
 ### Field Reference
 
-| Field              | Type           | Required | Description                                                                                                          |
-| ------------------ | -------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
-| `id`               | string         | yes      | Unique plugin identifier. Used as namespace key for PluginData and settings. Must be non-empty.                      |
-| `name`             | string         | yes      | Display name shown in the admin UI. Must be non-empty.                                                               |
-| `version`          | string         | yes      | Plugin version. Must be non-empty. Semver recommended.                                                               |
-| `description`      | string         | no       | Short description of what the plugin does.                                                                           |
-| `hooks`            | object         | no       | Map of event names to handler functions. Pass through `defineHooks()`.                                               |
-| `providers`        | object         | no       | Map of provider specs. Each value should be created with `defineProvider()` (or validated with `defineProviders()`). |
-| `adminRoutes`      | string         | no       | Module id for the plugin's admin server routes. Enables pages at `/admin/plugins/<id>/*`.                            |
-| `storefrontRoutes` | string         | no       | Module id for the plugin's storefront server routes. Enables pages at `/apps/<id>/*` when the plugin is enabled.     |
-| `onEnable`         | async function | no       | Called with `ctx` after hook handlers are registered. Use for initialization tasks.                                  |
-| `onDisable`        | async function | no       | Called with `ctx` before hook handlers are removed. Use for cleanup tasks.                                           |
+| Runtime field | Source              | Required | Description                                                                  |
+| ------------- | ------------------- | -------- | ---------------------------------------------------------------------------- |
+| `id`          | `name`              | yes      | Full package name, including scope. This is the registry and persistence id. |
+| `version`     | `version`           | yes      | Plugin version. Semver recommended.                                          |
+| `description` | `description`       | no       | Short description shown in admin.                                            |
+| `title`       | `bermooda.title`    | yes      | Human-readable display title shown in admin.                                 |
+| `slug`        | `bermooda.slug`     | yes      | Lowercase hyphenated URL and folder key.                                     |
+| `settings`    | `bermooda.settings` | no       | Package-driven admin settings schema.                                        |
+
+Rules:
+
+- `id` is the full `package.json` `name`, such as `@bermooda/sample-analytics`.
+- `bermooda.slug` must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
+- URLs use slug, not id: `/admin/plugins/<slug>/*` and `/apps/<slug>/*`.
+- Bundled folders use `app/plugins/<slug>/`; the folder name must equal `bermooda.slug`.
+- `enabledPlugins` and plugin data namespaces store full package ids.
+- `adminRoutes` and `storefrontRoutes` do not belong in package metadata. Route presence is discovered from `admin/routes` and `storefront/routes` files.
+
+Runtime behavior is declared in `index.server.js`:
+
+```js
+import { defineHooks, definePlugin } from '#/core/plugins/index.server';
+
+export const pluginManifest = definePlugin({
+  hooks: defineHooks({
+    'order.created': handleOrderCreated,
+  }),
+  providers: {
+    // optional provider specs
+  },
+  blocks: {
+    // optional storefront/admin slot components
+  },
+  onEnable: async (ctx) => {
+    // optional startup work
+  },
+  onDisable: async (ctx) => {
+    // optional cleanup work
+  },
+});
+
+export default pluginManifest;
+```
+
+Discovery merges `package.json` identity with this runtime export before registration. `definePlugin()` validates runtime only; it does not accept or validate identity fields.
 
 ---
 
@@ -78,27 +113,27 @@ A manifest is a plain JavaScript object that describes the plugin to the platfor
 
 All functions are exported from `app/core/plugins/index.server.js`. Import with the `#/core/plugins/index.server` alias.
 
-### `definePlugin(manifest)`
+### `definePlugin(runtime)`
 
-Validates a plugin manifest and returns it unchanged. Throws if `id`, `name`, or `version` is missing, not a string, or empty.
+Validates plugin runtime configuration and returns it unchanged. Identity comes from sibling `package.json`, so do not pass `id`, `title`, `name`, `version`, or `slug` here.
 
 ```js
 import { definePlugin } from '#/core/plugins/index.server';
 
 export const pluginManifest = definePlugin({
-  id: 'my-plugin',
-  name: 'My Plugin',
-  version: '1.0.0',
+  providers: {
+    // provider specs
+  },
 });
 ```
 
-**Throws:** `Error` if any required field is absent or not a non-empty string.
+**Throws:** `Error` if runtime is not an object or if `providers` contains invalid provider specs.
 
 ---
 
 ### `defineHooks(hookMap)`
 
-Validates that every value in the hook map is a function, then returns the map. Use this when declaring the `hooks` field of your manifest.
+Validates that every value in the hook map is a function, then returns the map. Use this when declaring the runtime `hooks` field.
 
 ```js
 import { defineHooks } from '#/core/plugins/index.server';
@@ -164,11 +199,9 @@ For `search`, pass the search implementation as `spec.provider`. Set `isDefault:
 ```js
 import { definePlugin, defineProvider } from '#/core/plugins/index.server';
 
-import manifest from '#/plugins/meilisearch/manifest';
 import { meilisearchProvider } from '#/plugins/meilisearch/provider/index.server';
 
 export const pluginManifest = definePlugin({
-  ...manifest,
   providers: {
     meilisearch: defineProvider('search', {
       provider: meilisearchProvider,
@@ -199,9 +232,6 @@ import {
 } from '#/core/plugins/index.server';
 
 export const pluginManifest = definePlugin({
-  id: 'my-plugin',
-  name: 'My Plugin',
-  version: '1.0.0',
   providers: defineProviders({
     my_gateway: defineProvider('payment', {
       name: 'My Gateway',
@@ -219,13 +249,15 @@ Use this when you want explicit validation of the entire provider map at declara
 
 ### `register(manifest)`
 
-Adds a validated manifest to the in-memory plugin registry. Internally calls `definePlugin()` again, so validation is always enforced.
+Adds a fully merged manifest to the in-memory plugin registry. Registration validates package identity (`id`, `title`, `version`, `slug`) plus runtime fields and indexes the plugin by both id and slug.
 
 ```js
 import { register } from '#/core/plugins/index.server';
-import { pluginManifest } from './index.server.js';
+import { mergeExtensionPackage } from '#/core/extensions/package-meta';
+import runtime from '#/plugins/my-plugin/index.server';
+import pkg from '#/plugins/my-plugin/package.json';
 
-register(pluginManifest);
+register(mergeExtensionPackage(pkg, runtime));
 ```
 
 Calling `register()` does not enable the plugin or wire any handlers. Call `enable()` separately to activate the plugin.
@@ -243,14 +275,14 @@ Enables a registered plugin in-process. This is an async function that:
 ```js
 import { enable } from '#/core/plugins/index.server';
 
-await enable('my-plugin');
+await enable('@bermooda/my-plugin');
 ```
 
 **Throws:** `Error` if the plugin is not in the registry.
 
 If the plugin is already enabled, `enable()` returns immediately without re-registering hooks/providers or calling `onEnable` again.
 
-Admin UI toggles should call `setPluginEnabledState(pluginId, true)` instead of `enable()` directly so the `enabledPlugins` setting stays in sync.
+Admin UI toggles should call `setPluginEnabledState(pluginId, true)` with the full package id instead of `enable()` directly so the `enabledPlugins` setting stays in sync.
 
 ---
 
@@ -265,12 +297,12 @@ Disables a registered plugin in-process. This is an async function that:
 ```js
 import { disable } from '#/core/plugins/index.server';
 
-await disable('my-plugin');
+await disable('@bermooda/my-plugin');
 ```
 
 **Throws:** `Error` if the plugin is not in the registry.
 
-Admin UI toggles should call `setPluginEnabledState(pluginId, false)` instead of `disable()` directly so the `enabledPlugins` setting stays in sync.
+Admin UI toggles should call `setPluginEnabledState(pluginId, false)` with the full package id instead of `disable()` directly so the `enabledPlugins` setting stays in sync.
 
 ---
 
@@ -281,8 +313,8 @@ Persists the plugin in the `enabledPlugins` setting array and wires or unwires t
 ```js
 import { setPluginEnabledState } from '#/core/plugins/index.server';
 
-await setPluginEnabledState('my-plugin', true);
-await setPluginEnabledState('my-plugin', false);
+await setPluginEnabledState('@bermooda/my-plugin', true);
+await setPluginEnabledState('@bermooda/my-plugin', false);
 ```
 
 ---
@@ -307,13 +339,13 @@ Returns a registered plugin manifest by id, or `null`.
 
 ### `getEnabledPluginIds()` / `isPluginEnabled(pluginId)`
 
-Read helpers for the persisted `enabledPlugins` setting array.
+Read helpers for the persisted `enabledPlugins` setting array. The setting stores full package ids, such as `@bermooda/sample-analytics`; legacy short ids are normalized on read.
 
 ---
 
 ### `loadPluginSettings(manifest)` / `savePluginSettings(pluginId, manifest, formData)`
 
-Load and persist manifest-driven plugin settings stored under `plugin.<pluginId>.<key>`.
+Load and persist package-driven plugin settings stored under `plugin.<pluginId>.<key>`, where `pluginId` is the full package id.
 
 ---
 
@@ -325,11 +357,11 @@ Persist the full plugin display order. `orderedIds` must be a permutation of all
 
 ### `resolvePluginAdminRoute(pluginId, path)`
 
-Resolves an admin route descriptor for a plugin using the splat path relative to `/admin/plugins/<pluginId>/`.
+Resolves an admin route descriptor for a plugin folder slug using the splat path relative to `/admin/plugins/<slug>/`.
 
 ### `resolvePluginStorefrontRoute(pluginId, path)`
 
-Resolves a storefront route descriptor for a plugin using the splat path relative to `/apps/<pluginId>/`.
+Resolves a storefront route descriptor for a plugin folder slug using the splat path relative to `/apps/<slug>/`.
 
 ---
 
@@ -434,7 +466,7 @@ Translation keys are contributed via your plugin's `i18n/en.json` file (see [Plu
 
 ## Event Hook Catalog
 
-These are the core platform events that bermooda emits today. Declare handlers in your manifest's `hooks` field using `defineHooks()`.
+These are the core platform events that bermooda emits today. Declare handlers in the runtime `hooks` field using `defineHooks()`.
 
 ### Post-action hooks
 
@@ -507,13 +539,12 @@ Handlers are invoked by the event bus when the corresponding event fires. Comple
 
 ### Before-hooks (blocking filters)
 
-Before-hooks let a plugin **veto** a domain action before any database write occurs. Register them in your manifest's `hooks` field using keys that start with `before.`:
+Before-hooks let a plugin **veto** a domain action before any database write occurs. Register them in the runtime `hooks` field using keys that start with `before.`:
 
 ```js
 import { defineHooks, definePlugin, deny } from '#/core/plugins/index.server';
 
 export const pluginManifest = definePlugin({
-  ...manifest,
   hooks: defineHooks({
     'before.shipment.ship': async ({ orderId, order }) => {
       if (order.status === 'on_hold') {
@@ -591,7 +622,7 @@ In v1, `PluginData` is the only storage mechanism plugins have. Plugins cannot d
 
 ## Admin Routes
 
-A plugin that sets `adminRoutes` in its manifest gets a dedicated admin page mounted at `/admin/plugins/<pluginId>/*`.
+A plugin that includes `admin/routes/index.server.js` and `admin/routes.client.js` gets a dedicated admin page mounted at `/admin/plugins/<slug>/*`. The `<slug>` segment is `bermooda.slug`, not the full package id.
 
 Admin routes are defined as a server/client pair:
 
@@ -602,7 +633,7 @@ Both files must export the same `routes` array shape. Each route entry follows R
 
 ```js
 {
-  path: '',              // string — path relative to /admin/plugins/<pluginId>/
+  path: '',              // string — path relative to /admin/plugins/<slug>/
   loader: async () => { /* return data */ },  // optional
   Component: MyComponent,                     // required — React component
 }
@@ -632,13 +663,13 @@ function MyAdminPage({ loaderData }) {
 
 The `loader` function runs on the server before the component renders, matching standard React Router loader behavior. Components receive loader data via the `loaderData` prop.
 
-The dispatcher resolves admin pages with `resolvePluginAdminRoute(pluginId, params['*'])`.
+The dispatcher resolves admin pages with `resolvePluginAdminRoute(pluginSlug, params['*'])`. Route presence is glob-driven; do not add `adminRoutes` to package metadata.
 
 ---
 
 ## Storefront Routes
 
-A plugin that sets `storefrontRoutes` in its manifest gets a dedicated storefront page mounted at `/apps/<pluginId>/*`.
+A plugin that includes `storefront/routes/index.server.js` and `storefront/routes.client.js` gets a dedicated storefront page mounted at `/apps/<slug>/*`. The `<slug>` segment is `bermooda.slug`.
 
 Storefront routes follow the same split-module pattern as admin routes:
 
@@ -649,7 +680,7 @@ Each route entry has the same shape:
 
 ```js
 {
-  path: '',              // string — path relative to /apps/<pluginId>/
+  path: '',              // string — path relative to /apps/<slug>/
   loader: async () => { /* return data */ },  // optional
   Component: MyComponent,                     // required
 }
@@ -659,7 +690,7 @@ The storefront dispatcher:
 
 - uses `params['*']` as the splat path
 - only exposes storefront routes for enabled plugins
-- resolves the server descriptor with `resolvePluginStorefrontRoute(pluginId, params['*'])`
+- resolves the server descriptor with `resolvePluginStorefrontRoute(pluginSlug, params['*'])`
 - runs the descriptor `loader` on the server when present
 - resolves the client component from `storefront/routes.client.js`
 
@@ -747,10 +778,9 @@ app/plugins/my-plugin/blocks/dashboard/widgets.jsx
 Register the component in your plugin's `index.server.js`:
 
 ```js
-import DashboardWidgetsBlock from '#/plugins/my-plugin/blocks/dashboard/widgets.jsx';
+import DashboardWidgetsBlock from '#/plugins/my-plugin/blocks/dashboard/widgets';
 
 export const pluginManifest = definePlugin({
-  ...manifest,
   blocks: {
     'dashboard.widgets': DashboardWidgetsBlock,
   },
@@ -786,70 +816,52 @@ The `sample-analytics` plugin is the canonical reference implementation. It capt
 - Contributes a UI block to the `product.afterDescription` storefront slot.
 - Contributes a dashboard widget to the `dashboard.widgets` admin slot.
 
-### Step 1 — The manifest
+### Step 1 — Package identity
 
-`app/plugins/sample-analytics/manifest.js` declares the static metadata. Keeping the manifest in a separate file lets it be imported without pulling in any hook handler code:
+`app/plugins/sample-analytics/package.json` declares identity and display metadata. The package `name` becomes the registered plugin id; `bermooda.slug` is used for the folder and URLs:
 
-```js
-export default {
-  id: 'sample-analytics',
-  name: 'Sample Analytics',
-  version: '1.0.0',
-  description:
-    'Captures order.created events and surfaces them in admin and storefront pages.',
-  adminRoutes: '#/plugins/sample-analytics/admin/routes/index.server',
-  storefrontRoutes: '#/plugins/sample-analytics/storefront/routes/index.server',
-};
+```json
+{
+  "name": "@bermooda/sample-analytics",
+  "version": "1.0.0",
+  "description": "Captures order.created events and surfaces them in admin and storefront pages.",
+  "private": true,
+  "bermooda": {
+    "title": "Sample Analytics",
+    "slug": "sample-analytics"
+  }
+}
 ```
 
-### Step 2 — The entry point
+### Step 2 — The runtime entry point
 
-`app/plugins/sample-analytics/index.server.js` imports the manifest, defines the hook handler, and exports the assembled manifest:
+`app/plugins/sample-analytics/index.server.js` defines hook handlers, blocks, providers, and lifecycle callbacks. It does not pass identity fields to `definePlugin()`:
 
 ```js
 import logger from '#/utils/logger.server';
-import prisma from '#/libs/prisma.server';
 
 import { defineHooks, definePlugin } from '#/core/plugins/index.server';
-import manifest from './manifest.js';
+import DashboardWidgetsBlock from '#/plugins/sample-analytics/blocks/dashboard/widgets';
+import ProductAfterDescriptionBlock from '#/plugins/sample-analytics/blocks/product/after-description';
+import { appendRecentEvent } from '#/plugins/sample-analytics/data/index.server';
 
-const PLUGIN_ID = manifest.id;
-const EVENTS_KEY = 'recentEvents';
-const MAX_EVENTS = 100;
-
-// Hook handlers import Prisma directly — they do not receive ctx.
+// Hook handlers import helpers directly — they do not receive ctx.
 async function handleOrderCreated(payload) {
   try {
-    const row = await prisma.pluginData.findUnique({
-      where: { pluginId_key: { pluginId: PLUGIN_ID, key: EVENTS_KEY } },
-    });
-
-    const existing = row ? JSON.parse(row.value) : [];
-    const event = {
-      type: 'order.created',
-      orderId: payload.orderId,
-      orderNumber: payload.orderNumber,
-      totalCents: payload.totalCents,
-      currency: payload.currency,
-      capturedAt: new Date().toISOString(),
-    };
-    const updated = JSON.stringify([event, ...existing].slice(0, MAX_EVENTS));
-
-    await prisma.pluginData.upsert({
-      where: { pluginId_key: { pluginId: PLUGIN_ID, key: EVENTS_KEY } },
-      create: { pluginId: PLUGIN_ID, key: EVENTS_KEY, value: updated },
-      update: { value: updated },
-    });
+    await appendRecentEvent(payload);
   } catch (err) {
     logger.error({ err }, 'sample-analytics: failed to capture order.created');
   }
 }
 
 export const pluginManifest = definePlugin({
-  ...manifest,
   hooks: defineHooks({
     'order.created': handleOrderCreated,
   }),
+  blocks: {
+    'product.afterDescription': ProductAfterDescriptionBlock,
+    'dashboard.widgets': DashboardWidgetsBlock,
+  },
 });
 
 export default pluginManifest;
@@ -857,10 +869,18 @@ export default pluginManifest;
 
 Key points:
 
-- `definePlugin` validates the manifest at module load time. Any missing required field throws immediately.
+- `definePlugin` validates runtime fields at module load time, such as `providers`.
 - `defineHooks` validates that all values are functions.
-- Spreading `...manifest` keeps static metadata in one place and avoids duplication.
-- The hook handler uses Prisma directly because handlers do not receive `ctx`. Errors are caught and logged rather than re-thrown to avoid crashing the event bus.
+- Discovery merges `package.json` identity with this runtime export before registration.
+- The hook handler imports data helpers directly because handlers do not receive `ctx`. Errors are caught and logged rather than re-thrown to avoid crashing the event bus.
+
+The data helper imports the package id from `package.json` so persistence uses the full id:
+
+```js
+import pkg from '#/plugins/sample-analytics/package.json';
+
+export const PLUGIN_ID = pkg.name;
+```
 
 ### Step 3 — The admin routes
 
@@ -869,7 +889,7 @@ Key points:
 ```js
 import prisma from '#/libs/prisma.server';
 
-const PLUGIN_ID = 'sample-analytics';
+const PLUGIN_ID = '@bermooda/sample-analytics';
 const EVENTS_KEY = 'recentEvents';
 
 export const routes = [
@@ -898,7 +918,7 @@ import prisma from '#/libs/prisma.server';
 
 import { AnalyticsPage } from '#/plugins/sample-analytics/storefront/analytics-page';
 
-const PLUGIN_ID = 'sample-analytics';
+const PLUGIN_ID = '@bermooda/sample-analytics';
 const EVENTS_KEY = 'recentEvents';
 
 export const routes = [
@@ -949,7 +969,7 @@ export default function ProductAfterDescriptionBlock({ product }) {
 }
 ```
 
-Keys should be prefixed with a camelCase version of the plugin id to avoid collisions.
+Keys should be prefixed with a camelCase version of the plugin slug to avoid collisions.
 
 ---
 
@@ -957,9 +977,9 @@ Keys should be prefixed with a camelCase version of the plugin id to avoid colli
 
 ```
 app/plugins/
-  <plugin-id>/
-    manifest.js              Static metadata — id, name, version, description, adminRoutes, storefrontRoutes.
-    index.server.js          Main entry point. Calls definePlugin() and exports pluginManifest.
+  <slug>/
+    package.json             Identity — name/id, version, description, bermooda.title, bermooda.slug, settings.
+    index.server.js          Runtime entry. Calls definePlugin() and exports pluginManifest.
     admin/
       routes/
         index.server.js      Server route descriptors with optional loaders.
@@ -976,6 +996,6 @@ app/plugins/
       en.json                Translation key/value pairs. Merged into the platform i18n catalog.
 ```
 
-All files except `manifest.js` and `index.server.js` are optional. Only create the ones your plugin needs.
+All files except `package.json` and `index.server.js` are optional. Only create the ones your plugin needs.
 
-The `index.server.js` file is the module that gets imported at startup. It must export `pluginManifest` as a named export and as the default export.
+The `index.server.js` file is the runtime module imported at startup. It must export `pluginManifest` as a named export and as the default export. The plugin folder name must equal `bermooda.slug`; route modules are discovered from folders, not from `adminRoutes` or `storefrontRoutes` metadata.

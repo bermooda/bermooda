@@ -15,7 +15,7 @@ export function makeSettings(map = {}) {
     defaultCurrency: 'USD',
     currencies: JSON.stringify(['USD', 'EUR', 'AUD']),
     defaultLocale: 'en',
-    activeTheme: 'default',
+    activeTheme: '@bermooda/theme-default',
   };
   return { ...defaults, ...map };
 }

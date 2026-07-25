@@ -10,12 +10,20 @@ import {
 } from '#/core/address-validation/index.server';
 import { emit, isHookAbort, off, on } from '#/core/events/index.server';
 import { isBeforeHookEvent } from '#/core/events/names';
+import {
+  LEGACY_PLUGIN_ID_MAP,
+  SLUG_PATTERN,
+  assertSlugMatchesFolder,
+  mergeExtensionPackage,
+  normalizeLegacyIds,
+} from '#/core/extensions/package-meta';
 import { translate } from '#/core/i18n';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import {
   registerProvider as registerPaymentProvider,
   unregisterProvider as unregisterPaymentProvider,
 } from '#/core/payments/index.server';
+import { REQUIRED_MANIFEST_FIELDS } from '#/core/plugins/manifest';
 import {
   buildPluginRouteRegistry,
   resolvePluginRouteDescriptor,
@@ -46,14 +54,13 @@ import {
 /**
  * @typedef {Object} PluginManifest
  * @property {string} id
- * @property {string} name
+ * @property {string} title
  * @property {string} version
+ * @property {string} slug
  * @property {string} [description]
  * @property {Object} [hooks]
  * @property {Object} [providers]
  * @property {Object} [blocks]
- * @property {string} [adminRoutes]
- * @property {string} [storefrontRoutes]
  */
 
 /**
@@ -62,35 +69,33 @@ import {
 
 /** @type {Map<string, { manifest: PluginManifest, handlers: Map<string, Function>, providers: WiredProvider[], isEnabled: boolean }>} */
 const registry = new Map();
+/** @type {Map<string, string>} */
+const slugIndex = new Map();
 
 // ---------------------------------------------------------------------------
-// definePlugin — validates a plugin manifest
+// definePlugin — validates plugin runtime configuration
 // ---------------------------------------------------------------------------
 
 /**
- * Validates a plugin manifest and returns it.
- * Throws if any required field is missing or invalid.
+ * Validates plugin runtime configuration and returns it.
  *
- * @param {PluginManifest} manifest
- * @returns {PluginManifest}
+ * @param {Record<string, unknown>} runtime
+ * @returns {Record<string, unknown>}
  */
-export function definePlugin(manifest) {
-  if (!manifest || typeof manifest !== 'object') {
+export function definePlugin(runtime) {
+  if (!runtime || typeof runtime !== 'object') {
     throw new Error('Plugin manifest must be an object');
   }
 
-  for (const field of ['id', 'name', 'version']) {
-    const value = manifest[field];
-    if (!value || typeof value !== 'string' || value.trim() === '') {
-      throw new Error(`Plugin manifest missing required field: "${field}"`);
-    }
+  if (runtime.providers) {
+    defineProviders(
+      /** @type {Record<string, { type: string } & Object>} */ (
+        runtime.providers
+      )
+    );
   }
 
-  if (manifest.providers) {
-    defineProviders(manifest.providers);
-  }
-
-  return manifest;
+  return runtime;
 }
 
 // ---------------------------------------------------------------------------
@@ -207,13 +212,25 @@ export function getRegisteredPlugin(pluginId) {
 }
 
 /**
+ * Returns a registered plugin manifest by slug, or null.
+ *
+ * @param {string} slug
+ * @returns {PluginManifest|null}
+ */
+export function getRegisteredPluginBySlug(slug) {
+  const pluginId = slugIndex.get(slug);
+  return pluginId ? (registry.get(pluginId)?.manifest ?? null) : null;
+}
+
+/**
  * Returns persisted enabled plugin ids.
  *
  * @returns {Promise<string[]>}
  */
 export async function getEnabledPluginIds() {
   const enabledRaw = await settingsGet('enabledPlugins');
-  return Array.isArray(enabledRaw) ? enabledRaw : [];
+  const enabled = Array.isArray(enabledRaw) ? enabledRaw : [];
+  return normalizeLegacyIds(enabled, LEGACY_PLUGIN_ID_MAP);
 }
 
 /**
@@ -631,19 +648,44 @@ export async function disable(pluginId) {
 // ---------------------------------------------------------------------------
 
 /**
+ * Validates a fully merged plugin manifest and returns it.
+ *
+ * @param {PluginManifest} manifest
+ * @returns {PluginManifest}
+ */
+function validateRegisteredPlugin(manifest) {
+  definePlugin(/** @type {Record<string, unknown>} */ (manifest));
+  const manifestRecord = /** @type {Record<string, unknown>} */ (manifest);
+
+  for (const field of REQUIRED_MANIFEST_FIELDS) {
+    const value = manifestRecord[field];
+    if (!value || typeof value !== 'string' || value.trim() === '') {
+      throw new Error(`Plugin manifest missing required field: "${field}"`);
+    }
+  }
+
+  if (!SLUG_PATTERN.test(manifest.slug)) {
+    throw new Error(`Plugin manifest has invalid slug "${manifest.slug}"`);
+  }
+
+  return manifest;
+}
+
+/**
  * Register a plugin manifest into the in-memory registry.
- * The manifest must have been created via `definePlugin()`.
+ * The manifest must include merged package identity metadata.
  *
  * @param {PluginManifest} manifest
  */
 export function register(manifest) {
-  const validated = definePlugin(manifest);
+  const validated = validateRegisteredPlugin(manifest);
   registry.set(validated.id, {
     manifest: validated,
     handlers: new Map(),
     providers: [],
     isEnabled: false,
   });
+  slugIndex.set(validated.slug, validated.id);
 }
 
 // ---------------------------------------------------------------------------
@@ -653,16 +695,50 @@ export function register(manifest) {
 const pluginModules = import.meta.glob('#/plugins/*/index.server.js', {
   eager: true,
 });
+const pluginPackages = import.meta.glob('#/plugins/*/package.json', {
+  eager: true,
+  import: 'default',
+});
+
+/**
+ * Returns the plugin folder segment from an import.meta.glob path.
+ *
+ * @param {string} modulePath
+ * @returns {string}
+ */
+function pluginFolderFromPath(modulePath) {
+  const match = modulePath.match(/\/plugins\/([^/]+)\//);
+  if (!match) {
+    throw new Error(`Cannot parse plugin folder from "${modulePath}"`);
+  }
+  return match[1];
+}
 
 /**
  * Register all bundled plugins from app/plugins/*.
  */
 export function discoverPlugins() {
-  for (const mod of Object.values(pluginModules)) {
-    const manifest = mod.pluginManifest ?? mod.default;
-    if (manifest?.id) {
-      register(manifest);
+  const seenSlugs = new Set();
+
+  for (const [modPath, mod] of Object.entries(pluginModules)) {
+    const folder = pluginFolderFromPath(modPath);
+    const pkgEntry = Object.entries(pluginPackages).find(([pkgPath]) =>
+      pkgPath.includes(`/plugins/${folder}/`)
+    );
+    if (!pkgEntry) {
+      throw new Error(`Missing package.json for plugin folder "${folder}"`);
     }
+    const pkg = pkgEntry[1];
+    const runtime = mod.pluginManifest ?? mod.default ?? {};
+    const manifest = /** @type {PluginManifest} */ (
+      mergeExtensionPackage(pkg, runtime)
+    );
+    assertSlugMatchesFolder(manifest.slug, folder, 'plugin');
+    if (seenSlugs.has(manifest.slug)) {
+      throw new Error(`Duplicate plugin slug "${manifest.slug}"`);
+    }
+    seenSlugs.add(manifest.slug);
+    register(manifest);
   }
 }
 
@@ -768,6 +844,7 @@ export {
 
 export function __resetRegistry() {
   registry.clear();
+  slugIndex.clear();
 }
 
 export { registry as _registry, buildCtx as _buildCtx };

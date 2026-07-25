@@ -9,6 +9,14 @@ import { getCachedResult } from '#/utils/cache/index.server';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import prisma from '#/libs/prisma.server';
 import {
+  BUNDLED_PLUGIN_SLUGS,
+  BUNDLED_THEME_SLUGS,
+  LEGACY_PLUGIN_ID_MAP,
+  LEGACY_THEME_ID_MAP,
+  normalizeLegacyIds,
+  resolveBundledSlug,
+} from '#/core/extensions/package-meta';
+import {
   DEFAULT_LOCALE,
   isValidLocaleTag,
   normalizeLocaleList,
@@ -41,21 +49,31 @@ export async function getAvailableLocales() {
  */
 export async function loadMessages(locale) {
   return getCachedResult(`i18n:${locale}`, async () => {
-    const [activeTheme, pluginOrder] = await Promise.all([
+    const [activeThemeRaw, pluginOrderRaw] = await Promise.all([
       settingsGet('activeTheme'),
       settingsGet('pluginOrder'),
     ]);
 
-    const plugins = Array.isArray(pluginOrder) ? pluginOrder : [];
-    const theme = activeTheme ?? null;
+    const activeThemeId = activeThemeRaw
+      ? normalizeLegacyIds([activeThemeRaw], LEGACY_THEME_ID_MAP)[0]
+      : null;
+    const themeSlug = resolveBundledSlug(activeThemeId, BUNDLED_THEME_SLUGS);
+
+    const pluginIds = normalizeLegacyIds(
+      Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [],
+      LEGACY_PLUGIN_ID_MAP
+    );
+    const pluginSlugs = pluginIds
+      .map((id) => resolveBundledSlug(id, BUNDLED_PLUGIN_SLUGS))
+      .filter(Boolean);
 
     const filePaths = [
       join(APP_DIR, 'core', 'i18n', 'messages', `${locale}.json`),
-      ...(theme
-        ? [join(APP_DIR, 'themes', theme, 'i18n', `${locale}.json`)]
+      ...(themeSlug
+        ? [join(APP_DIR, 'themes', themeSlug, 'i18n', `${locale}.json`)]
         : []),
-      ...plugins.map((pluginId) =>
-        join(APP_DIR, 'plugins', pluginId, 'i18n', `${locale}.json`)
+      ...pluginSlugs.map((slug) =>
+        join(APP_DIR, 'plugins', slug, 'i18n', `${locale}.json`)
       ),
     ];
 

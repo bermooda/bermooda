@@ -4,16 +4,18 @@
 import cache, { getCachedResult } from '#/utils/cache/index.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import {
+  LEGACY_THEME_ID_MAP,
+  SLUG_PATTERN,
+  normalizeLegacyIds,
+} from '#/core/extensions/package-meta';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
-import {
-  REQUIRED_COMPONENTS,
-  REQUIRED_MANIFEST_FIELDS,
-  SLOT_NAMES,
-} from '#/core/themes/manifest';
+import { defineTheme } from '#/core/themes/define';
+import { REQUIRED_MANIFEST_FIELDS, SLOT_NAMES } from '#/core/themes/manifest';
 import { registerStorefrontTheme } from '#/core/themes/storefront-components';
 
-export { SLOT_NAMES };
+export { SLOT_NAMES, defineTheme };
 
 // ---------------------------------------------------------------------------
 // In-memory theme registry
@@ -21,51 +23,51 @@ export { SLOT_NAMES };
 
 /** @type {Map<string, object>} theme id → validated manifest */
 const _registry = new Map();
+/** @type {Map<string, string>} theme slug → theme id */
+const _slugIndex = new Map();
 
 let cachedThemeId = null;
 let cachedAt = 0;
 const PRELOAD_CACHE_TTL_MS = 60_000;
 
 // ---------------------------------------------------------------------------
-// defineTheme
+// validateRegisteredTheme
 // ---------------------------------------------------------------------------
 
 /**
- * Validates a theme manifest at build time.
- * Throws if required fields or required components are missing.
+ * Validates a fully merged theme manifest before registration.
  *
- * @param {object} manifest
+ * @param {Record<string, unknown>} manifest
  * @returns {object} the manifest, unchanged
  */
-export function defineTheme(manifest) {
+function validateRegisteredTheme(manifest) {
   if (manifest === null || typeof manifest !== 'object') {
-    throw new TypeError('defineTheme: manifest must be a non-null object');
+    throw new TypeError('registerTheme: manifest must be a non-null object');
   }
 
   for (const field of REQUIRED_MANIFEST_FIELDS) {
     if (!manifest[field]) {
       throw new Error(
-        `defineTheme: manifest is missing required field "${field}"`
+        `registerTheme: manifest is missing required field "${field}"`
       );
     }
   }
 
-  for (const field of ['id', 'name', 'version']) {
+  for (const field of ['id', 'title', 'version', 'slug']) {
     if (typeof manifest[field] !== 'string' || !manifest[field].trim()) {
       throw new Error(
-        `defineTheme: manifest field "${field}" must be a non-empty string`
+        `registerTheme: manifest field "${field}" must be a non-empty string`
       );
     }
   }
 
-  for (const name of REQUIRED_COMPONENTS) {
-    if (!(name in manifest.components)) {
-      throw new Error(
-        `defineTheme: manifest.components is missing required component "${name}"`
-      );
-    }
+  if (!SLUG_PATTERN.test(manifest.slug)) {
+    throw new Error(
+      `registerTheme: manifest slug must be lowercase hyphenated, got "${manifest.slug}"`
+    );
   }
 
+  defineTheme(manifest);
   return manifest;
 }
 
@@ -81,8 +83,9 @@ export function defineTheme(manifest) {
  * @returns {object} the validated manifest
  */
 export function registerTheme(manifest) {
-  const validated = defineTheme(manifest);
+  const validated = validateRegisteredTheme(manifest);
   _registry.set(validated.id, validated);
+  _slugIndex.set(validated.slug, validated.id);
   registerStorefrontTheme(validated);
   logger.info({ themeId: validated.id }, 'Theme registered');
   return validated;
@@ -111,6 +114,17 @@ export function getRegisteredTheme(themeId) {
   return _registry.get(themeId) ?? null;
 }
 
+/**
+ * Returns a registered theme manifest by slug, or null.
+ *
+ * @param {string} slug
+ * @returns {object|null}
+ */
+export function getRegisteredThemeBySlug(slug) {
+  const themeId = _slugIndex.get(slug);
+  return themeId ? getRegisteredTheme(themeId) : null;
+}
+
 // ---------------------------------------------------------------------------
 // resolveActiveTheme
 // ---------------------------------------------------------------------------
@@ -128,7 +142,10 @@ export async function resolveActiveTheme() {
       const row = await prisma.setting.findUnique({
         where: { key: 'activeTheme' },
       });
-      return row?.value ?? null;
+      const rawId = row?.value ?? null;
+      return rawId
+        ? (normalizeLegacyIds([rawId], LEGACY_THEME_ID_MAP)[0] ?? rawId)
+        : null;
     },
     5 * 60 * 1000
   );
@@ -148,7 +165,7 @@ export async function preloadStorefrontTheme() {
   }
 
   const theme = await resolveActiveTheme();
-  cachedThemeId = theme?.id ?? 'default';
+  cachedThemeId = theme?.id ?? '@bermooda/theme-default';
   cachedAt = Date.now();
   return cachedThemeId;
 }
@@ -267,7 +284,8 @@ export async function getSlotBlocksMap(slotNames = []) {
 
 export function __resetRegistry() {
   _registry.clear();
+  _slugIndex.clear();
   invalidateThemeCache();
 }
 
-export { _registry };
+export { _registry, _slugIndex };

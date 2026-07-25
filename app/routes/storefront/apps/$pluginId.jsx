@@ -1,7 +1,7 @@
 import { useLoaderData } from 'react-router';
 
 import {
-  getRegisteredPlugin,
+  getRegisteredPluginBySlug,
   isPluginEnabled,
   resolvePluginStorefrontRoute as resolveServerRoute,
 } from '#/core/plugins/index.server';
@@ -27,41 +27,60 @@ function StorefrontMessage({ title, children }) {
   );
 }
 
+/**
+ * @param {{ loaderData?: { manifest?: { title?: string } } | null, params: { pluginId?: string } }} args
+ * @returns {Array<{ title: string } | { name: string, content: string }>}
+ */
 export function meta({ loaderData, params }) {
-  const pluginName = loaderData?.manifest?.name ?? params.pluginId;
+  const pluginTitle = loaderData?.manifest?.title ?? params.pluginId;
 
   return [
-    { title: `${pluginName} — Storefront` },
+    { title: `${pluginTitle} — Storefront` },
     {
       name: 'description',
-      content: `Storefront page for plugin ${pluginName}`,
+      content: `Storefront page for plugin ${pluginTitle}`,
     },
   ];
 }
 
+/**
+ * @param {{ request: Request, params: Record<string, string | undefined> }} args
+ */
 export async function loader({ request, params }) {
   const themeId = await preloadStorefrontTheme();
-  const { pluginId } = params;
+  const pluginSlug = params.pluginId ?? '';
   const splatPath = params['*'] ?? '';
 
-  const manifest = getRegisteredPlugin(pluginId);
+  const manifest = getRegisteredPluginBySlug(pluginSlug);
 
   if (!manifest) {
-    return { status: 'not-found', pluginId, themeId };
+    return { status: 'not-found', pluginId: pluginSlug, themeId };
   }
 
-  if (!(await isPluginEnabled(pluginId))) {
-    return { status: 'disabled', pluginId, manifest, themeId };
+  if (!(await isPluginEnabled(manifest.id))) {
+    return { status: 'disabled', pluginId: pluginSlug, manifest, themeId };
   }
 
-  if (!manifest.storefrontRoutes && !resolveServerRoute(pluginId, splatPath)) {
-    return { status: 'no-storefront-routes', pluginId, manifest, themeId };
-  }
+  const rootDescriptor = resolveServerRoute(pluginSlug, '');
+  const descriptor = resolveServerRoute(pluginSlug, splatPath);
 
-  const descriptor = resolveServerRoute(pluginId, splatPath);
+  if (!rootDescriptor && !descriptor) {
+    return {
+      status: 'no-storefront-routes',
+      pluginId: pluginSlug,
+      manifest,
+      themeId,
+    };
+  }
 
   if (!descriptor) {
-    return { status: 'no-match', pluginId, manifest, splatPath, themeId };
+    return {
+      status: 'no-match',
+      pluginId: pluginSlug,
+      manifest,
+      splatPath,
+      themeId,
+    };
   }
 
   let pluginLoaderData = null;
@@ -71,7 +90,7 @@ export async function loader({ request, params }) {
 
   return {
     status: 'ok',
-    pluginId,
+    pluginId: pluginSlug,
     manifest,
     splatPath,
     pluginLoaderData,
@@ -79,6 +98,9 @@ export async function loader({ request, params }) {
   };
 }
 
+/**
+ * @returns {React.ReactElement}
+ */
 export default function StorefrontPluginDispatcher() {
   const data = useLoaderData();
 
@@ -93,7 +115,7 @@ export default function StorefrontPluginDispatcher() {
 
   if (data.status === 'disabled') {
     return (
-      <StorefrontMessage title={data.manifest.name}>
+      <StorefrontMessage title={data.manifest.title}>
         This plugin&apos;s storefront pages are unavailable until the plugin is
         enabled in admin.
       </StorefrontMessage>
@@ -102,7 +124,7 @@ export default function StorefrontPluginDispatcher() {
 
   if (data.status === 'no-storefront-routes') {
     return (
-      <StorefrontMessage title={data.manifest.name}>
+      <StorefrontMessage title={data.manifest.title}>
         This plugin has no storefront pages.
       </StorefrontMessage>
     );
@@ -110,7 +132,7 @@ export default function StorefrontPluginDispatcher() {
 
   if (data.status === 'no-match') {
     return (
-      <StorefrontMessage title={data.manifest.name}>
+      <StorefrontMessage title={data.manifest.title}>
         This plugin has no storefront page for this path.
       </StorefrontMessage>
     );
@@ -121,7 +143,7 @@ export default function StorefrontPluginDispatcher() {
 
   if (!PluginComponent) {
     return (
-      <StorefrontMessage title={data.manifest.name}>
+      <StorefrontMessage title={data.manifest.title}>
         This plugin has no storefront page for this path.
       </StorefrontMessage>
     );

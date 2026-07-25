@@ -6,30 +6,77 @@ This document covers the bermooda theme system for developers building or custom
 
 ## Overview
 
-Themes control the visual presentation of the storefront. Each theme is a folder under `app/themes/<name>/` that exports a manifest object, a set of React components, and optionally i18n translations and route mappings.
+Themes control the visual presentation of the storefront. Each theme is a folder under `app/themes/<slug>/` with `package.json`, a client-safe `index.js`, `components/`, and optional `i18n/` translations. The folder name matches `package.json` `bermooda.slug`.
+
+The registered theme `id` is always the full package name from `package.json` `name` (for example `@bermooda/theme-default`). The filesystem path and i18n path use `bermooda.slug` (for example `app/themes/default/`).
 
 The theme engine has three responsibilities:
 
-1. **Validation** — `defineTheme` checks manifests at startup and throws on any structural problem.
-2. **Registration** — `registerTheme` loads validated manifests into an in-memory registry keyed by theme `id`.
-3. **Resolution** — `resolveActiveTheme` reads the `activeTheme` setting from the database (TTL-cached for 5 minutes) and returns the matching manifest from the registry.
+1. **Runtime validation** — `defineTheme({ components })` validates the component map in a client-safe entry module.
+2. **Discovery and registration** — theme bootstrap merges `package.json` identity with the `index.js` runtime export and registers the result in an in-memory registry keyed by full package id.
+3. **Resolution** — `resolveActiveTheme` reads the `activeTheme` setting from the database (TTL-cached for 5 minutes) and returns the matching manifest from the registry. The setting stores the full package id.
 
-All theme engine code lives in `app/core/themes/index.server.js`. The module is server-only; never import it in client bundles.
+Theme registry code lives in `app/core/themes/index.server.js`. The module is server-only; never import it in client bundles.
 
 ---
 
-## Theme Manifest Structure
+## Theme package contract
 
-A manifest is a plain JavaScript object with the following shape:
+Every theme has a `package.json` for identity and display metadata:
+
+```json
+{
+  "name": "@bermooda/theme-default",
+  "version": "1.0.0",
+  "description": "The default bermooda storefront theme.",
+  "private": true,
+  "bermooda": {
+    "title": "Default",
+    "slug": "default",
+    "settings": [
+      { "key": "accentColor", "label": "Accent Color", "type": "text" }
+    ]
+  }
+}
+```
+
+### Field reference
+
+| Runtime field | Source              | Required | Description                                                                  |
+| ------------- | ------------------- | -------- | ---------------------------------------------------------------------------- |
+| `id`          | `name`              | yes      | Full package name, including scope. This is the registry and activeTheme id. |
+| `version`     | `version`           | yes      | Theme version. Semver recommended.                                           |
+| `description` | `description`       | no       | Short description shown in admin.                                            |
+| `title`       | `bermooda.title`    | yes      | Human-readable display title shown in admin.                                 |
+| `slug`        | `bermooda.slug`     | yes      | Lowercase hyphenated folder and i18n key.                                    |
+| `settings`    | `bermooda.settings` | no       | Package-driven admin settings schema.                                        |
+| `components`  | `index.js` runtime  | yes      | Map of component names to React components.                                  |
+
+Rules:
+
+- `id` is the full `package.json` `name`, such as `@bermooda/theme-default`.
+- `bermooda.slug` must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
+- Bundled folders use `app/themes/<slug>/`; the folder name must equal `bermooda.slug`.
+- `activeTheme` stores the full package id.
+- Filesystem and i18n resolution use slug, such as `app/themes/default/i18n/en.json`.
+
+### Runtime entry
+
+Theme components are registered from `index.js` with `defineTheme({ components })`. Do not pass identity fields to `defineTheme()`.
 
 ```js
-export default {
-  id: 'my-theme', // required — unique string identifier
-  name: 'My Theme', // required — human-readable display name
-  version: '1.0.0', // required — semver string
-  description: '...', // optional — shown in the admin themes list
+import { defineTheme } from '#/core/themes/define';
+
+import CartPage from '#/themes/default/components/cart-page';
+import CategoryPage from '#/themes/default/components/category-page';
+import CheckoutLayout from '#/themes/default/components/checkout-layout';
+import HomePage from '#/themes/default/components/home-page';
+import Layout from '#/themes/default/components/layout';
+import NotFoundPage from '#/themes/default/components/not-found-page';
+import ProductPage from '#/themes/default/components/product-page';
+
+export default defineTheme({
   components: {
-    // required — map of component name → component
     Layout,
     HomePage,
     ProductPage,
@@ -37,36 +84,28 @@ export default {
     CartPage,
     CheckoutLayout,
     NotFoundPage,
-    // ... additional optional components
   },
-  settings: [
-    // optional — manifest-driven admin settings
-    {
-      key: 'accentColor',
-      label: 'Accent Color',
-      type: 'text',
-      default: '#6366f1',
-    },
-    { key: 'darkMode', label: 'Dark Mode', type: 'toggle', default: false },
-    {
-      key: 'layout',
-      label: 'Layout Style',
-      type: 'select',
-      options: ['wide', 'boxed'],
-      default: 'wide',
-    },
-  ],
-};
+});
 ```
 
-### Required fields
+### Folder layout
 
-| Field        | Type     | Description                                                                            |
-| ------------ | -------- | -------------------------------------------------------------------------------------- |
-| `id`         | `string` | Unique theme identifier. Used as the registry key and stored in `Setting.activeTheme`. |
-| `name`       | `string` | Display name shown in the admin themes UI.                                             |
-| `version`    | `string` | Version string (semver recommended).                                                   |
-| `components` | `object` | Map of component names to React components. Must include all required components.      |
+```
+app/themes/
+  <slug>/
+    package.json        Identity — name/id, version, description, bermooda.title, bermooda.slug, settings.
+    index.js            Runtime entry. Calls defineTheme({ components }).
+    components/
+      layout.jsx
+      home-page.jsx
+      product-page.jsx
+      category-page.jsx
+      cart-page.jsx
+      checkout-layout.jsx
+      not-found-page.jsx
+    i18n/
+      en.json           Translation key/value pairs for this theme slug.
+```
 
 ### Required components
 
@@ -106,15 +145,15 @@ The default theme ships additional components that themes may implement. These a
 
 ### Theme settings
 
-The optional `settings` array lets themes declare admin-configurable options. Each entry has:
+The optional `bermooda.settings` array lets themes declare admin-configurable options. Each entry has:
 
-| Key       | Type                             | Description                                                     |
-| --------- | -------------------------------- | --------------------------------------------------------------- |
-| `key`     | `string`                         | Storage key (prefixed `theme.<id>.<key>` in the settings table) |
-| `label`   | `string`                         | Label shown in the admin form                                   |
-| `type`    | `'text' \| 'select' \| 'toggle'` | Input type rendered in the admin UI                             |
-| `options` | `string[] \| {value,label}[]`    | Choices for `select` type                                       |
-| `default` | `any`                            | Fallback value when nothing is saved                            |
+| Key       | Type                             | Description                                                                                         |
+| --------- | -------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `key`     | `string`                         | Storage key (prefixed `theme.<id>.<key>` in the settings table, where id is the full package name). |
+| `label`   | `string`                         | Label shown in the admin form                                                                       |
+| `type`    | `'text' \| 'select' \| 'toggle'` | Input type rendered in the admin UI                                                                 |
+| `options` | `string[] \| {value,label}[]`    | Choices for `select` type                                                                           |
+| `default` | `any`                            | Fallback value when nothing is saved                                                                |
 
 ---
 
@@ -154,23 +193,20 @@ import SlotBlocks from '#/components/slot-blocks';
 
 ## API Reference
 
-All functions are exported from `app/core/themes/index.server.js`.
+Server functions are exported from `app/core/themes/index.server.js`. The client-safe `defineTheme` helper is exported from `app/core/themes/define.js`.
 
 ---
 
-### `defineTheme(manifest)`
+### `defineTheme(runtime)`
 
-Validates a theme manifest. Throws a `TypeError` if the manifest is not a non-null object. Throws an `Error` if any required field (`id`, `name`, `version`, `components`) is missing or empty, or if any required component is absent from `manifest.components`.
+Validates theme runtime configuration. Throws a `TypeError` if runtime is not a non-null object. Throws an `Error` if `components` is missing or if any required component is absent from `runtime.components`.
 
-Returns the manifest unchanged on success. Use this when you want to validate a manifest without registering it.
+Returns the runtime object unchanged on success. Use this from theme `index.js`; identity comes from sibling `package.json`.
 
 ```js
-import { defineTheme } from '#/core/themes/index.server';
+import { defineTheme } from '#/core/themes/define';
 
-const manifest = defineTheme({
-  id: 'my-theme',
-  name: 'My Theme',
-  version: '1.0.0',
+export default defineTheme({
   components: {
     Layout,
     HomePage,
@@ -187,22 +223,24 @@ const manifest = defineTheme({
 
 ### `registerTheme(manifest)`
 
-Calls `defineTheme`, then stores the validated manifest in the in-memory registry under `manifest.id`. Logs `Theme registered` at info level. Returns the validated manifest.
+Validates a fully merged manifest, then stores it in the in-memory registry under `manifest.id`. Logs `Theme registered` at info level. Returns the validated manifest.
 
-Call this at application startup for every bundled theme. Calling `registerTheme` with an `id` that is already registered overwrites the previous entry.
+Call this at application startup for every bundled theme after merging `package.json` identity with the `index.js` runtime export. Calling `registerTheme` with an `id` that is already registered overwrites the previous entry.
 
 ```js
+import { mergeExtensionPackage } from '#/core/extensions/package-meta';
 import { registerTheme } from '#/core/themes/index.server';
-import manifest from '#/themes/my-theme/manifest.js';
+import runtime from '#/themes/aurora/index';
+import pkg from '#/themes/aurora/package.json';
 
-registerTheme(manifest);
+registerTheme(mergeExtensionPackage(pkg, runtime));
 ```
 
 ---
 
 ### `resolveActiveTheme()`
 
-Async. Reads `Setting.activeTheme` from the database (cached for 5 minutes under the key `theme:active`). Returns the manifest from the in-memory registry whose `id` matches the stored value, or `null` if the setting is unset or the id is not registered.
+Async. Reads `Setting.activeTheme` from the database (cached for 5 minutes under the key `theme:active`). Returns the manifest from the in-memory registry whose full package id matches the stored value, or `null` if the setting is unset or the id is not registered.
 
 ```js
 import { resolveActiveTheme } from '#/core/themes/index.server';
@@ -276,26 +314,52 @@ The simplest way to build a new theme is to copy the default theme folder and mo
 cp -r app/themes/default app/themes/aurora
 ```
 
-### Step 2 — Update the manifest
+### Step 2 — Update package metadata
 
-Open `app/themes/aurora/manifest.js`. Change `id` and `name` to match your theme. The `id` must be unique across all registered themes.
+Open `app/themes/aurora/package.json`. Change `name`, `description`, `bermooda.title`, and `bermooda.slug` to match your theme. The registered id is the full package `name`, and the folder must match `bermooda.slug`.
+
+```json
+{
+  "name": "@bermooda/theme-aurora",
+  "version": "1.0.0",
+  "description": "A custom theme forked from the default.",
+  "private": true,
+  "bermooda": {
+    "title": "Aurora",
+    "slug": "aurora"
+  }
+}
+```
+
+### Step 3 — Update the runtime entry
+
+Open `app/themes/aurora/index.js`. Keep the component imports you want and export `defineTheme({ components })` without identity fields:
 
 ```js
-// app/themes/aurora/manifest.js
-export default {
-  id: 'aurora',
-  name: 'Aurora',
-  version: '1.0.0',
-  description: 'A custom theme forked from the default.',
+import { defineTheme } from '#/core/themes/define';
+
+import CartPage from '#/themes/aurora/components/cart-page';
+import CategoryPage from '#/themes/aurora/components/category-page';
+import CheckoutLayout from '#/themes/aurora/components/checkout-layout';
+import HomePage from '#/themes/aurora/components/home-page';
+import Layout from '#/themes/aurora/components/layout';
+import NotFoundPage from '#/themes/aurora/components/not-found-page';
+import ProductPage from '#/themes/aurora/components/product-page';
+
+export default defineTheme({
   components: {
     Layout,
     HomePage,
-    // ... all other imports unchanged until you replace them
+    ProductPage,
+    CategoryPage,
+    CartPage,
+    CheckoutLayout,
+    NotFoundPage,
   },
-};
+});
 ```
 
-### Step 3 — Implement required components
+### Step 4 — Implement required components
 
 At minimum you must implement all seven required components. The copied files from the default theme are already valid implementations — start by editing them rather than writing from scratch.
 
@@ -311,26 +375,28 @@ app/themes/aurora/components/checkout-layout.jsx
 app/themes/aurora/components/not-found-page.jsx
 ```
 
-Optional components you do not intend to customize can be left as copied from the default, or removed from the manifest if they are not needed.
+Optional components you do not intend to customize can be left as copied from the default, or removed from the `components` map if they are not needed.
 
-### Step 4 — Update i18n translations (optional)
+### Step 5 — Update i18n translations (optional)
 
 If you want to ship custom translation strings, edit `app/themes/aurora/i18n/en.json`. The theme i18n keys follow the same format used by the default theme. Add additional locale files as needed (e.g. `de.json`, `fr.json`).
 
-### Step 5 — Register the theme at startup
+### Step 6 — Register the theme at startup
 
-Import the manifest and call `registerTheme` early in your server initialization. The right place is wherever you register other startup-time resources (for example, alongside plugin registrations).
+Import the package metadata and runtime entry, merge them, and call `registerTheme` early in your server initialization. The right place is wherever you register other startup-time resources.
 
 ```js
+import { mergeExtensionPackage } from '#/core/extensions/package-meta';
 import { registerTheme } from '#/core/themes/index.server';
-import auroraManifest from '#/themes/aurora/manifest.js';
+import auroraRuntime from '#/themes/aurora/index';
+import auroraPkg from '#/themes/aurora/package.json';
 
-registerTheme(auroraManifest);
+registerTheme(mergeExtensionPackage(auroraPkg, auroraRuntime));
 ```
 
 Both the `default` and `aurora` themes can be registered simultaneously. The active theme is determined by the database setting, not by registration order.
 
-### Step 6 — Activate the theme
+### Step 7 — Activate the theme
 
 See the next section for how to activate your theme via the admin UI or the database seed.
 
@@ -340,16 +406,16 @@ See the next section for how to activate your theme via the admin UI or the data
 
 ### Via the admin UI
 
-Navigate to `/admin/themes`. Every registered theme is displayed as a card. Click **Activate** on the theme you want to make active. The action writes the theme `id` to `Setting.activeTheme` and immediately invalidates the in-memory cache (`theme:active`), so the storefront picks up the new theme on the next request.
+Navigate to `/admin/themes`. Every registered theme is displayed as a card. Click **Activate** on the theme you want to make active. The action writes the full package theme `id` to `Setting.activeTheme` and immediately invalidates the in-memory cache (`theme:active`), so the storefront picks up the new theme on the next request.
 
-If the admin UI shows a warning that "the active theme ID is set to X but no matching theme is registered", the theme has not been registered at startup. Register it (Step 5 above) and restart the server.
+If the admin UI shows a warning that "the active theme ID is set to X but no matching theme is registered", the theme has not been registered at startup. Register it (Step 6 above) and restart the server.
 
 ### Via the database seed
 
 For local development or CI environments, set the active theme directly in `prisma/seed.js`:
 
 ```js
-await upsertSetting('activeTheme', 'aurora');
+await upsertSetting('activeTheme', '@bermooda/theme-aurora');
 ```
 
 Then re-run the seed:
@@ -364,8 +430,9 @@ The TTL cache will expire within 5 minutes, or restart the dev server to pick up
 
 ## Notes and Constraints
 
-- **Server-only module.** `app/core/themes/index.server.js` must never be imported in client code. The `.server.js` suffix enforces this in React Router / Vite builds.
+- **Client-safe runtime entry.** Theme `index.js` imports `defineTheme` from `#/core/themes/define`, not from the server-only registry.
+- **Server-only registry.** `app/core/themes/index.server.js` must never be imported in client code. The `.server.js` suffix enforces this in React Router / Vite builds.
 - **In-memory registry.** The registry is process-local. In a multi-process deployment (e.g. multiple Node workers) every process registers themes independently at startup from the same source files, so the registry is consistent across processes without any shared state.
-- **No npm-package themes in v1.** Themes must live under `app/themes/<name>/` as local folders. External theme packages installed via npm are not supported in the current version.
+- **No npm-package themes in v1.** Themes must live under `app/themes/<slug>/` as local folders with package-style metadata. External theme packages installed via npm are not supported in the current version.
 - **TTL cache window.** After an admin activates a theme, storefronts that have already cached the previous active theme ID will continue to serve the old theme for up to 5 minutes. The admin action busts the cache for the current process immediately; other processes will observe the change when their cache TTL expires.
 - **Testing.** The `__resetRegistry()` export is provided exclusively for test teardown. Do not call it in production code.
