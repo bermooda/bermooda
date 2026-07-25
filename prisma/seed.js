@@ -169,8 +169,13 @@ async function createBootstrapApiKeyIfNeeded() {
 
   // Persist for `bermooda mcp init` (gitignored / local-only).
   try {
-    const { mkdirSync, writeFileSync, appendFileSync, existsSync, readFileSync } =
-      await import('node:fs');
+    const {
+      mkdirSync,
+      writeFileSync,
+      appendFileSync,
+      existsSync,
+      readFileSync,
+    } = await import('node:fs');
     const { join } = await import('node:path');
     const shopRoot = process.cwd();
     const bermoodaDir = join(shopRoot, '.bermooda');
@@ -179,7 +184,9 @@ async function createBootstrapApiKeyIfNeeded() {
       encoding: 'utf8',
       mode: 0o600,
     });
-    console.log('Wrote .bermooda/bootstrap-api-key for CLI `bermooda mcp init`.');
+    console.log(
+      'Wrote .bermooda/bootstrap-api-key for CLI `bermooda mcp init`.'
+    );
 
     const envPath = join(shopRoot, '.env');
     if (existsSync(envPath)) {
