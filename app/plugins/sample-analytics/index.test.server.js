@@ -30,15 +30,23 @@ vi.mock('#/utils/logger.server', () => ({
 // ---------------------------------------------------------------------------
 
 import prisma from '#/libs/prisma.server';
+import { mergeExtensionPackage } from '#/core/extensions/package-meta';
+import {
+  __resetRegistry,
+  listRegisteredPlugins,
+  register,
+} from '#/core/plugins/index.server';
 
 import {
   EVENTS_KEY,
   PLUGIN_ID,
 } from '#/plugins/sample-analytics/data/index.server';
 import { pluginManifest } from '#/plugins/sample-analytics/index.server';
+import pkg from '#/plugins/sample-analytics/package.json';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  __resetRegistry();
 });
 
 // ---------------------------------------------------------------------------
@@ -46,10 +54,10 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('pluginManifest', () => {
-  it('has correct id and name', () => {
-    expect(pluginManifest.id).toBe(PLUGIN_ID);
-    expect(pluginManifest.name).toBeTruthy();
-    expect(pluginManifest.version).toBeTruthy();
+  it('exposes runtime hooks and blocks', () => {
+    expect(typeof pluginManifest.hooks?.['order.created']).toBe('function');
+    expect(pluginManifest.blocks).toHaveProperty('product.afterDescription');
+    expect(pluginManifest.blocks).toHaveProperty('dashboard.widgets');
   });
 
   it('registers an order.created hook', () => {
@@ -179,36 +187,7 @@ describe('handleOrderCreated (via pluginManifest.hooks)', () => {
 
 describe('plugin contract end-to-end', () => {
   it('can be registered and enabled via the plugin loader', async () => {
-    vi.resetModules();
-
-    vi.mock('#/libs/prisma.server', () => ({
-      default: {
-        pluginData: { findUnique: vi.fn(), upsert: vi.fn(), delete: vi.fn() },
-      },
-    }));
-    vi.mock('#/utils/logger.server', () => ({
-      default: {
-        info: vi.fn(),
-        error: vi.fn(),
-        child: vi.fn(() => ({ info: vi.fn(), error: vi.fn() })),
-      },
-    }));
-    vi.mock('#/core/events/index.server', () => ({
-      emit: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-    }));
-    vi.mock('#/core/settings/index.server', () => ({
-      get: vi.fn().mockResolvedValue(null),
-      set: vi.fn().mockResolvedValue(undefined),
-    }));
-
-    const { register, listRegisteredPlugins } =
-      await import('#/core/plugins/index.server');
-    const { pluginManifest: manifest } =
-      await import('#/plugins/sample-analytics/index.server');
-
-    register(manifest);
+    register(mergeExtensionPackage(pkg, pluginManifest));
     const plugins = listRegisteredPlugins();
 
     expect(plugins.some((p) => p.id === PLUGIN_ID)).toBe(true);

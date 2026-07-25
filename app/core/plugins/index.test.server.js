@@ -57,6 +57,16 @@ const {
   getDefaultSearchProviderId: vi.fn(),
 }));
 
+const { settingsGet, settingsSet } = vi.hoisted(() => ({
+  settingsGet: vi.fn().mockResolvedValue(null),
+  settingsSet: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('#/core/settings/index.server', () => ({
+  get: settingsGet,
+  set: settingsSet,
+}));
+
 vi.mock('#/core/payments/index.server', () => ({
   registerProvider: registerPaymentProvider,
   unregisterProvider: unregisterPaymentProvider,
@@ -109,12 +119,15 @@ const {
   defineProviders,
   register,
   listRegisteredPlugins,
+  getRegisteredPluginBySlug,
+  getEnabledPluginIds,
   resolvePluginAdminRoute,
   resolvePluginStorefrontRoute,
   sortPluginsByOrder,
   buildFullPluginOrder,
   enable: _enable,
   disable: _disable,
+  __resetRegistry,
   _registry,
   _buildCtx,
 } = await import('#/core/plugins/index.server');
@@ -123,11 +136,12 @@ const {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function validManifest(overrides = {}) {
+function validPlugin(overrides = {}) {
   return {
-    id: 'test-plugin',
-    name: 'Test Plugin',
+    id: '@bermooda/test-plugin',
+    title: 'Test Plugin',
     version: '1.0.0',
+    slug: 'test-plugin',
     ...overrides,
   };
 }
@@ -137,66 +151,31 @@ function validManifest(overrides = {}) {
 // ---------------------------------------------------------------------------
 
 describe('definePlugin', () => {
-  it('returns the manifest when all required fields are present', () => {
-    const manifest = validManifest();
-    expect(definePlugin(manifest)).toEqual(manifest);
+  it('returns runtime hooks without requiring identity fields', () => {
+    const runtime = { hooks: {} };
+    expect(definePlugin(runtime)).toBe(runtime);
   });
 
-  it('throws when "id" is missing', () => {
-    expect(() => definePlugin({ name: 'Test', version: '1.0.0' })).toThrow(
-      /id/
-    );
+  it('returns runtime providers after validation', () => {
+    const providers = {
+      test_search: defineProvider('search', {
+        provider: { search: vi.fn() },
+      }),
+    };
+    const runtime = { providers };
+    expect(definePlugin(runtime)).toBe(runtime);
   });
 
-  it('throws when "id" is an empty string', () => {
+  it('throws when providers are invalid', () => {
     expect(() =>
-      definePlugin({ id: '', name: 'Test', version: '1.0.0' })
-    ).toThrow(/id/);
-  });
-
-  it('throws when "id" is whitespace only', () => {
-    expect(() =>
-      definePlugin({ id: '   ', name: 'Test', version: '1.0.0' })
-    ).toThrow(/id/);
-  });
-
-  it('throws when "name" is missing', () => {
-    expect(() => definePlugin({ id: 'my-plugin', version: '1.0.0' })).toThrow(
-      /name/
-    );
-  });
-
-  it('throws when "name" is an empty string', () => {
-    expect(() =>
-      definePlugin({ id: 'my-plugin', name: '', version: '1.0.0' })
-    ).toThrow(/name/);
-  });
-
-  it('throws when "version" is missing', () => {
-    expect(() => definePlugin({ id: 'my-plugin', name: 'My Plugin' })).toThrow(
-      /version/
-    );
-  });
-
-  it('throws when "version" is an empty string', () => {
-    expect(() =>
-      definePlugin({ id: 'my-plugin', name: 'My Plugin', version: '' })
-    ).toThrow(/version/);
+      definePlugin({ providers: { broken: { type: 'inventory' } } })
+    ).toThrow(/inventory/);
   });
 
   it('throws when manifest is not an object', () => {
     expect(() => definePlugin(null)).toThrow();
     expect(() => definePlugin('string')).toThrow();
     expect(() => definePlugin(42)).toThrow();
-  });
-
-  it('accepts optional fields without throwing', () => {
-    const manifest = validManifest({
-      description: 'A test plugin',
-      adminRoutes: '/plugins/test/routes',
-      storefrontRoutes: '/plugins/test/storefront/routes',
-    });
-    expect(() => definePlugin(manifest)).not.toThrow();
   });
 });
 
@@ -414,7 +393,7 @@ describe('Plugin ctx — plugin.get / plugin.set / plugin.delete', () => {
 
 describe('listRegisteredPlugins', () => {
   beforeEach(() => {
-    _registry.clear();
+    __resetRegistry();
   });
 
   it('returns an empty array when no plugins are registered', () => {
@@ -422,10 +401,50 @@ describe('listRegisteredPlugins', () => {
   });
 
   it('returns registered plugins after register()', () => {
-    register(validManifest({ id: 'plugin-a', name: 'Plugin A' }));
+    register(validPlugin({ id: 'plugin-a', title: 'Plugin A' }));
     const plugins = listRegisteredPlugins();
     expect(plugins).toHaveLength(1);
     expect(plugins[0].id).toBe('plugin-a');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// register — full plugin identity validation
+// ---------------------------------------------------------------------------
+
+describe('register', () => {
+  beforeEach(() => {
+    __resetRegistry();
+  });
+
+  it('requires full package identity fields', () => {
+    for (const field of ['id', 'title', 'version', 'slug']) {
+      expect(() =>
+        register({ ...validPlugin(), [field]: undefined })
+      ).toThrow(new RegExp(field));
+    }
+  });
+
+  it('requires a lowercase hyphenated slug', () => {
+    expect(() => register(validPlugin({ slug: 'Test_Plugin' }))).toThrow(
+      /slug/
+    );
+  });
+
+  it('getRegisteredPluginBySlug returns plugin registered under slug', () => {
+    register(validPlugin());
+    expect(getRegisteredPluginBySlug('test-plugin')?.id).toBe(
+      '@bermooda/test-plugin'
+    );
+  });
+});
+
+describe('getEnabledPluginIds', () => {
+  it('rewrites legacy short ids', async () => {
+    settingsGet.mockResolvedValueOnce(['sample-analytics']);
+    await expect(getEnabledPluginIds()).resolves.toEqual([
+      '@bermooda/sample-analytics',
+    ]);
   });
 });
 
@@ -509,7 +528,7 @@ describe('resolvePluginStorefrontRoute', () => {
 
 describe('enable', () => {
   beforeEach(() => {
-    _registry.clear();
+    __resetRegistry();
     vi.clearAllMocks();
     getDefaultSearchProviderId.mockReturnValue('db');
   });
@@ -522,9 +541,9 @@ describe('enable', () => {
 
   it('registers hooks and marks the plugin enabled', async () => {
     const handler = vi.fn();
-    const manifest = validManifest({
+    const manifest = validPlugin({
       id: 'plugin-a',
-      name: 'Plugin A',
+      title: 'Plugin A',
       hooks: { 'order.created': handler },
     });
     register(manifest);
@@ -540,9 +559,9 @@ describe('enable', () => {
     const { deny, emitBefore, _handlers } =
       await import('#/core/events/index.server');
 
-    const manifest = validManifest({
+    const manifest = validPlugin({
       id: 'plugin-before',
-      name: 'Plugin Before',
+      title: 'Plugin Before',
       hooks: {
         'before.shipment.create': () => {
           deny('Blocked', { code: 'FRAUD_HOLD' });
@@ -568,9 +587,9 @@ describe('enable', () => {
     const { deny, emitBefore, _handlers } =
       await import('#/core/events/index.server');
 
-    const manifest = validManifest({
+    const manifest = validPlugin({
       id: 'plugin-before-2',
-      name: 'Plugin Before 2',
+      title: 'Plugin Before 2',
       hooks: {
         'before.shipment.ship': () => {
           deny('Blocked', { code: 'FRAUD_HOLD', pluginId: 'custom-id' });
@@ -592,9 +611,9 @@ describe('enable', () => {
 
   it('calls onEnable(ctx) when present', async () => {
     const onEnable = vi.fn().mockResolvedValue(undefined);
-    const manifest = validManifest({
+    const manifest = validPlugin({
       id: 'plugin-b',
-      name: 'Plugin B',
+      title: 'Plugin B',
       onEnable,
     });
     register(manifest);
@@ -612,9 +631,9 @@ describe('enable', () => {
 
   it('registers payment providers declared in manifest.providers', async () => {
     register(
-      validManifest({
+      validPlugin({
         id: 'plugin-payment',
-        name: 'Plugin Payment',
+        title: 'Plugin Payment',
         providers: {
           acme_pay: defineProvider('payment', {
             name: 'Acme Pay',
@@ -640,9 +659,9 @@ describe('enable', () => {
     const onEnable = vi.fn().mockResolvedValue(undefined);
 
     register(
-      validManifest({
+      validPlugin({
         id: 'plugin-search',
-        name: 'Plugin Search',
+        title: 'Plugin Search',
         providers: {
           meilisearch: defineProvider('search', {
             provider: { search: vi.fn() },
@@ -667,9 +686,9 @@ describe('enable', () => {
 
   it('is idempotent — second call does nothing when already enabled', async () => {
     const handler = vi.fn();
-    const manifest = validManifest({
+    const manifest = validPlugin({
       id: 'plugin-c',
-      name: 'Plugin C',
+      title: 'Plugin C',
       hooks: { 'order.created': handler },
     });
     register(manifest);
@@ -683,9 +702,9 @@ describe('enable', () => {
 
   it('is idempotent for plugins that only register providers', async () => {
     register(
-      validManifest({
+      validPlugin({
         id: 'plugin-providers-only',
-        name: 'Plugin Providers Only',
+        title: 'Plugin Providers Only',
         providers: {
           meilisearch: defineProvider('search', {
             provider: { search: vi.fn() },
@@ -708,7 +727,7 @@ describe('enable', () => {
 
 describe('disable', () => {
   beforeEach(() => {
-    _registry.clear();
+    __resetRegistry();
     vi.clearAllMocks();
     getDefaultSearchProviderId.mockReturnValue('db');
   });
@@ -720,7 +739,7 @@ describe('disable', () => {
   });
 
   it('marks the plugin disabled and clears handlers', async () => {
-    const manifest = validManifest({ id: 'plugin-d', name: 'Plugin D' });
+    const manifest = validPlugin({ id: 'plugin-d', title: 'Plugin D' });
     register(manifest);
 
     await _disable('plugin-d');
@@ -730,9 +749,9 @@ describe('disable', () => {
 
   it('calls off() for each registered handler and clears handlers', async () => {
     const handler = vi.fn();
-    const manifest = validManifest({
+    const manifest = validPlugin({
       id: 'plugin-e',
-      name: 'Plugin E',
+      title: 'Plugin E',
       hooks: { 'order.created': handler },
     });
     register(manifest);
@@ -753,9 +772,9 @@ describe('disable', () => {
     const { deny, emitBefore, _handlers } =
       await import('#/core/events/index.server');
 
-    const manifest = validManifest({
+    const manifest = validPlugin({
       id: 'plugin-before-disable',
-      name: 'Plugin Before Disable',
+      title: 'Plugin Before Disable',
       hooks: {
         'before.shipment.create': () => {
           deny('Blocked');
@@ -776,9 +795,9 @@ describe('disable', () => {
 
   it('calls onDisable(ctx) when present', async () => {
     const onDisable = vi.fn().mockResolvedValue(undefined);
-    const manifest = validManifest({
+    const manifest = validPlugin({
       id: 'plugin-f',
-      name: 'Plugin F',
+      title: 'Plugin F',
       onDisable,
     });
     register(manifest);
@@ -792,9 +811,9 @@ describe('disable', () => {
 
   it('unregisters manifest providers and restores the previous search default', async () => {
     register(
-      validManifest({
+      validPlugin({
         id: 'plugin-search-disable',
-        name: 'Plugin Search Disable',
+        title: 'Plugin Search Disable',
         providers: {
           meilisearch: defineProvider('search', {
             provider: { search: vi.fn() },
@@ -820,17 +839,18 @@ describe('disable', () => {
 
   it('supports meilisearch-style manifests without manual lifecycle wiring', async () => {
     register(
-      definePlugin({
+      {
         id: 'meilisearch-style',
-        name: 'Meilisearch Style',
+        title: 'Meilisearch Style',
         version: '1.0.0',
+        slug: 'meilisearch-style',
         providers: {
           meilisearch: defineProvider('search', {
             provider: { search: vi.fn() },
             isDefault: true,
           }),
         },
-      })
+      }
     );
 
     await _enable('meilisearch-style');
