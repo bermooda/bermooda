@@ -17,7 +17,7 @@ Storefront catalog, search, cart, and checkout endpoints are **public** — no A
 
 ### Admin API
 
-Most `/api/admin/v1/*` endpoints require an `admin`-scoped API key in the `Authorization` header:
+Most `/api/admin/v1/*` endpoints require an Admin API key in the `Authorization` header:
 
 ```
 Authorization: Bearer berm_<your_key>
@@ -25,15 +25,29 @@ Authorization: Bearer berm_<your_key>
 
 **Bootstrap (no existing key):**
 
-1. Prefer **CLI seed / `npm run cli:bootstrap`** — creates the first admin (if needed), marks setup complete, and prints a one-time bootstrap `berm_` key when none exist.
+1. Prefer **CLI seed / `npm run cli:bootstrap`** — creates the first admin (if needed), marks setup complete, prints a one-time bootstrap `berm_` key, writes `.bermooda/bootstrap-api-key`, and may append `BERMOODA_API_KEY` to `.env`. Then run `bermooda mcp init` from [bermooda-cli](https://github.com/bermooda/bermooda-cli).
 2. Or use the unauthenticated setup endpoints below with a one-shot `SETUP_TOKEN` (see `.env.example`).
 
 **Creating additional keys:** `POST /api/admin/v1/api-keys` (requires an existing admin key), or **Admin → API**.
 
 **Scopes:**
 
-- `admin` — access to `/api/admin/v1/*` (except setup routes)
-- `storefront` — reserved for future storefront-scoped credentials
+| Scope | Access |
+| ----- | ------ |
+| `admin` | Full Admin API (recommended for agents / MCP). Implies all granular scopes below except `storefront`. |
+| `storefront` | Reserved for future storefront-scoped credentials |
+| `settings:read` / `settings:write` | Shop settings |
+| `products:read` / `products:write` | Catalog products |
+| `categories:read` / `categories:write` | Categories |
+| `orders:read` / `orders:write` | Orders |
+| `media:read` / `media:write` | Media metadata + upload |
+| `inventory:read` / `inventory:write` | Locations + inventory levels |
+| `webhooks:read` / `webhooks:write` | Webhook subscriptions |
+| `themes:write` / `plugins:write` | Theme activate / plugin enable |
+| `audit:read` | Audit log read |
+| `imports:write` | CSV imports |
+
+Keys may call `/api/admin/v1` when they have `admin` or any granular admin-area scope. Individual routes may require a specific scope; `admin` always satisfies those checks.
 
 ### Setup endpoints (no API key)
 
@@ -356,9 +370,13 @@ List locations with inventory levels.
 
 #### `POST /api/admin/v1/inventory/locations`
 
-Create a location.
+Create a location. Body: `{ "name": "Warehouse", "code": "WH1", "allowsPickup": false }`.
 
-**Body:** `{ "name": "Main warehouse", "code": "MAIN", "allowsPickup": false }`
+#### `PUT /api/admin/v1/inventory/levels`
+
+Set stock for a variant at a location. Requires `inventory:write` (or `admin`).
+
+**Body:** `{ "variantId": "…", "locationId": "…", "quantity": 10 }`
 
 ### Orders
 
@@ -512,6 +530,8 @@ Update an admin/staff user's role.
 
 ### Audit log
 
+Successful Admin API mutations (non-GET) are recorded with `actorType: api_key` (API key id / label). Admin UI mutations use `actorType: admin`. Domain events use `actorType: system`.
+
 #### `GET /api/admin/v1/audit-logs`
 
 List audit log entries with pagination. Also returns `supportedEvents` (domain events recorded by the system subscriber).
@@ -521,6 +541,18 @@ List audit log entries with pagination. Also returns `supportedEvents` (domain e
 #### `GET /api/admin/v1/audit-logs/:id`
 
 Get a single audit log entry.
+
+---
+
+### Media
+
+#### `POST /api/admin/v1/media`
+
+Upload a file (`multipart/form-data`, field `file`). Requires `media:write` (or `admin`). Returns `{ media }` (201).
+
+#### `GET /api/admin/v1/media/:id`
+
+Get media metadata. Requires `media:read` (or `admin`).
 
 ---
 
@@ -767,7 +799,7 @@ Also registered (see route modules under `app/routes/api/admin/v1/`):
 | `gift-cards`, `loyalty`, `wishlists` | Engagement                                                |
 | `pos`, `subscriptions` (+ plans)     | POS / subscriptions                                       |
 | `storage`                            | Storage provider status                                   |
-| `media/:id`                          | Get media metadata (**upload not yet exposed** — Phase D) |
+| `media`, `media/:id`                 | Upload + get media metadata                               |
 | `address-validation/*`               | Providers + validate                                      |
 | `back-in-stock-subscriptions`        | Waitlist management                                       |
 | Order/shipment PDF documents         | Invoice + packing slip                                    |

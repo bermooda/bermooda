@@ -205,6 +205,41 @@ export async function recordAdminAudit({
 }
 
 /**
+ * Record an Admin API (API key / agent) mutation.
+ *
+ * @param {{
+ *   apiKey: { id: string, label?: string|null },
+ *   action: string,
+ *   entityType?: string|null,
+ *   entityId?: string|null,
+ *   diff?: object|null,
+ *   metadata?: object|null,
+ * }} params
+ */
+export async function recordApiKeyAudit({
+  apiKey,
+  action,
+  entityType = null,
+  entityId = null,
+  diff = null,
+  metadata = null,
+}) {
+  return recordAuditLog({
+    actorType: 'api_key',
+    actorId: apiKey.id,
+    actorEmail: apiKey.label ?? null,
+    action,
+    entityType,
+    entityId,
+    diff,
+    metadata: {
+      ...(metadata ?? {}),
+      keyLabel: apiKey.label ?? null,
+    },
+  });
+}
+
+/**
  * Get a single audit log entry by id.
  *
  * @param {string} id

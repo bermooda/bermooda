@@ -359,6 +359,64 @@ paths:
         '201':
           description: Location created
 
+  /api/admin/v1/inventory/levels:
+    put:
+      summary: Set inventory level quantity
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [variantId, locationId, quantity]
+              properties:
+                variantId: { type: string }
+                locationId: { type: string }
+                quantity: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: Level updated
+
+  /api/admin/v1/media:
+    post:
+      summary: Upload media
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: Media created
+
+  /api/admin/v1/media/{id}:
+    get:
+      summary: Get media metadata
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Media
+
+  /api/admin/v1/audit-logs:
+    get:
+      summary: List audit log entries
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Audit logs
+
   /api/admin/v1/imports:
     post:
       summary: Import products (CSV)
@@ -383,6 +441,35 @@ paths:
       responses:
         '201':
           description: Created
+
+  /api/admin/v1/webhook-subscriptions/{id}:
+    get:
+      summary: Get webhook subscription and recent deliveries
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Subscription
+    patch:
+      summary: Update webhook subscription
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Delete webhook subscription
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Deleted
 
   /api/admin/v1/gift-cards:
     get:
