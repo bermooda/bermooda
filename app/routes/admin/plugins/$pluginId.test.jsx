@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   mockClientResolve,
-  mockGetRegisteredPlugin,
+  mockGetRegisteredPluginBySlug,
   mockServerResolve,
   mockUseLoaderData,
 } = vi.hoisted(() => ({
   mockClientResolve: vi.fn(),
-  mockGetRegisteredPlugin: vi.fn(),
+  mockGetRegisteredPluginBySlug: vi.fn(),
   mockServerResolve: vi.fn(),
   mockUseLoaderData: vi.fn(),
 }));
@@ -22,7 +22,7 @@ vi.mock('#/core/plugins/admin-routes.client', () => ({
 }));
 
 vi.mock('#/core/plugins/index.server', () => ({
-  getRegisteredPlugin: mockGetRegisteredPlugin,
+  getRegisteredPluginBySlug: mockGetRegisteredPluginBySlug,
   resolvePluginAdminRoute: mockServerResolve,
 }));
 
@@ -32,15 +32,15 @@ import AdminPluginDispatcher, {
 } from '#/routes/admin/plugins/$pluginId';
 
 const sampleManifest = {
-  id: 'sample-analytics',
-  name: 'Sample Analytics',
-  adminRoutes: '#/plugins/sample-analytics/admin/routes/index.server',
+  id: '@bermooda/sample-analytics',
+  title: 'Sample Analytics',
+  slug: 'sample-analytics',
 };
 
 describe('admin plugin dispatcher', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetRegisteredPlugin.mockReturnValue(sampleManifest);
+    mockGetRegisteredPluginBySlug.mockReturnValue(sampleManifest);
   });
 
   it('builds meta tags from the plugin id', () => {
@@ -58,7 +58,7 @@ describe('admin plugin dispatcher', () => {
   });
 
   it('returns not-found when the plugin is not registered', async () => {
-    mockGetRegisteredPlugin.mockReturnValue(null);
+    mockGetRegisteredPluginBySlug.mockReturnValue(null);
 
     const result = await loader({
       request: new Request('http://localhost/admin/plugins/missing'),
@@ -72,9 +72,10 @@ describe('admin plugin dispatcher', () => {
   });
 
   it('returns no-admin-routes when the plugin has no admin pages', async () => {
-    mockGetRegisteredPlugin.mockReturnValue({
-      id: 'fraud-guard',
-      name: 'Fraud Guard',
+    mockGetRegisteredPluginBySlug.mockReturnValue({
+      id: '@bermooda/fraud-guard',
+      title: 'Fraud Guard',
+      slug: 'fraud-guard',
     });
     mockServerResolve.mockReturnValue(null);
 
@@ -86,12 +87,14 @@ describe('admin plugin dispatcher', () => {
     expect(result).toMatchObject({
       status: 'no-admin-routes',
       pluginId: 'fraud-guard',
-      manifest: { id: 'fraud-guard', name: 'Fraud Guard' },
+      manifest: { id: '@bermooda/fraud-guard', title: 'Fraud Guard' },
     });
   });
 
   it('returns no-match when the splat path does not resolve', async () => {
-    mockServerResolve.mockReturnValue(null);
+    mockServerResolve.mockImplementation((_pluginSlug, path) =>
+      path === '' ? { path: '' } : null
+    );
 
     const result = await loader({
       request: new Request(
@@ -110,21 +113,24 @@ describe('admin plugin dispatcher', () => {
   it('uses the splat path and returns loader data for a matched plugin route', async () => {
     const pluginLoaderData = { events: [{ orderId: 'order_1' }] };
 
-    mockServerResolve.mockReturnValue({
+    mockServerResolve.mockImplementation(() => ({
       path: '',
       loader: vi.fn().mockResolvedValue(pluginLoaderData),
-    });
+    }));
 
     const result = await loader({
       request: new Request('http://localhost/admin/plugins/sample-analytics'),
       params: { 'pluginId': 'sample-analytics', '*': '' },
     });
 
-    expect(mockGetRegisteredPlugin).toHaveBeenCalledWith('sample-analytics');
+    expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith(
+      'sample-analytics'
+    );
     expect(mockServerResolve).toHaveBeenCalledWith('sample-analytics', '');
     expect(result).toMatchObject({
       status: 'ok',
       pluginId: 'sample-analytics',
+      manifest: sampleManifest,
       splatPath: '',
       pluginLoaderData,
     });
@@ -138,7 +144,7 @@ describe('admin plugin dispatcher', () => {
     mockUseLoaderData.mockReturnValue({
       status: 'ok',
       pluginId: 'sample-analytics',
-      manifest: { name: 'Sample Analytics' },
+      manifest: { title: 'Sample Analytics' },
       splatPath: '',
       pluginLoaderData: { events: [{ orderId: 'order_1' }] },
     });

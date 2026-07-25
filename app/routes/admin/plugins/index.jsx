@@ -11,6 +11,10 @@ import {
 } from 'react-router';
 
 import {
+  LEGACY_PLUGIN_ID_MAP,
+  normalizeLegacyIds,
+} from '#/core/extensions/package-meta';
+import {
   getRegisteredPlugin,
   listRegisteredPlugins,
   loadAllPluginSettings,
@@ -59,9 +63,17 @@ export async function loader() {
     get('enabledPlugins'),
     get('pluginOrder'),
   ]);
-  const enabledPluginIds = Array.isArray(enabledPlugins) ? enabledPlugins : [];
-  const pluginOrder = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
-  const plugins = [...allPlugins].sort((a, b) => a.name.localeCompare(b.name));
+  const enabledPluginIds = normalizeLegacyIds(
+    Array.isArray(enabledPlugins) ? enabledPlugins : [],
+    LEGACY_PLUGIN_ID_MAP
+  );
+  const pluginOrder = normalizeLegacyIds(
+    Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [],
+    LEGACY_PLUGIN_ID_MAP
+  );
+  const plugins = [...allPlugins].sort((a, b) =>
+    a.title.localeCompare(b.title)
+  );
   const orderedPlugins = sortPluginsByOrder(allPlugins, pluginOrder);
   const pluginSettings = await loadAllPluginSettings(allPlugins);
 
@@ -287,7 +299,7 @@ function PluginCard({ manifest, isEnabled, pluginSettings }) {
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="text-text truncate text-sm font-semibold">
-            {manifest.name}
+            {manifest.title}
           </h3>
           {isEnabled && <Badge tone="success">Enabled</Badge>}
         </div>
@@ -311,14 +323,12 @@ function PluginCard({ manifest, isEnabled, pluginSettings }) {
       <div className="mt-auto pt-4">
         <div className="border-border flex items-center justify-between gap-2 border-t pt-3">
           <div>
-            {manifest.adminPath && (
-              <a
-                href={manifest.adminPath}
-                className="border-border text-text hover:bg-surface-2 rounded-md border px-3 py-1.5 text-xs font-medium transition"
-              >
-                Plugin Admin &rarr;
-              </a>
-            )}
+            <a
+              href={`/admin/plugins/${manifest.slug}`}
+              className="border-border text-text hover:bg-surface-2 rounded-md border px-3 py-1.5 text-xs font-medium transition"
+            >
+              Plugin Admin &rarr;
+            </a>
           </div>
           <Form method="post">
             <input type="hidden" name="intent" value={toggleIntent} />
@@ -401,7 +411,7 @@ function BlockOrderTab({ orderedPlugins, enabledPlugins }) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-text truncate text-sm font-medium">
-                    {manifest.name}
+                    {manifest.title}
                   </span>
                   {enabledPlugins.includes(manifest.id) && (
                     <Badge tone="success">Enabled</Badge>

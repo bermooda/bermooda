@@ -5,10 +5,14 @@ import { useLoaderData } from 'react-router';
 
 import { resolvePluginAdminRoute } from '#/core/plugins/admin-routes.client';
 import {
-  getRegisteredPlugin,
+  getRegisteredPluginBySlug,
   resolvePluginAdminRoute as resolveAdminRoute,
 } from '#/core/plugins/index.server';
 
+/**
+ * @param {{ params: { pluginId?: string } }} args
+ * @returns {Array<{ title: string } | { name: string, content: string }>}
+ */
 export function meta({ params }) {
   return [
     { title: `Plugin: ${params.pluginId} — Admin` },
@@ -16,24 +20,28 @@ export function meta({ params }) {
   ];
 }
 
+/**
+ * @param {{ params: Record<string, string | undefined>, request: Request }} args
+ */
 export async function loader({ params, request }) {
-  const { pluginId } = params;
+  const pluginSlug = params.pluginId ?? '';
   const splatPath = params['*'] ?? '';
 
-  const manifest = getRegisteredPlugin(pluginId);
+  const manifest = getRegisteredPluginBySlug(pluginSlug);
 
   if (!manifest) {
-    return { status: 'not-found', pluginId };
+    return { status: 'not-found', pluginId: pluginSlug };
   }
 
-  if (!manifest.adminRoutes && !resolveAdminRoute(pluginId, splatPath)) {
-    return { status: 'no-admin-routes', pluginId, manifest };
-  }
+  const rootDescriptor = resolveAdminRoute(pluginSlug, '');
+  const descriptor = resolveAdminRoute(pluginSlug, splatPath);
 
-  const descriptor = resolveAdminRoute(pluginId, splatPath);
+  if (!rootDescriptor && !descriptor) {
+    return { status: 'no-admin-routes', pluginId: pluginSlug, manifest };
+  }
 
   if (!descriptor) {
-    return { status: 'no-match', pluginId, manifest, splatPath };
+    return { status: 'no-match', pluginId: pluginSlug, manifest, splatPath };
   }
 
   let pluginLoaderData = null;
@@ -43,13 +51,16 @@ export async function loader({ params, request }) {
 
   return {
     status: 'ok',
-    pluginId,
+    pluginId: pluginSlug,
     manifest,
     splatPath,
     pluginLoaderData,
   };
 }
 
+/**
+ * @returns {React.ReactElement}
+ */
 export default function AdminPluginDispatcher() {
   const data = useLoaderData();
 
@@ -68,7 +79,7 @@ export default function AdminPluginDispatcher() {
   if (data.status === 'no-admin-routes') {
     return (
       <div className="space-y-2">
-        <h1 className="text-text text-2xl font-bold">{data.manifest.name}</h1>
+        <h1 className="text-text text-2xl font-bold">{data.manifest.title}</h1>
         <p className="text-text-muted text-sm">
           This plugin has no admin pages.
         </p>
@@ -79,7 +90,7 @@ export default function AdminPluginDispatcher() {
   if (data.status === 'no-match') {
     return (
       <div className="space-y-2">
-        <h1 className="text-text text-2xl font-bold">{data.manifest.name}</h1>
+        <h1 className="text-text text-2xl font-bold">{data.manifest.title}</h1>
         <p className="text-text-muted text-sm">
           This plugin has no admin pages for this path.
         </p>
@@ -93,7 +104,7 @@ export default function AdminPluginDispatcher() {
   if (!PluginComponent) {
     return (
       <div className="space-y-2">
-        <h1 className="text-text text-2xl font-bold">{data.manifest.name}</h1>
+        <h1 className="text-text text-2xl font-bold">{data.manifest.title}</h1>
         <p className="text-text-muted text-sm">
           This plugin has no admin pages for this path.
         </p>

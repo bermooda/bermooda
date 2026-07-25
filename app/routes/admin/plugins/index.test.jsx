@@ -44,12 +44,12 @@ describe('admin plugins action', () => {
     mockSetPluginEnabledState.mockResolvedValue(undefined);
 
     const result = await action({
-      request: buildRequest('enable', 'sample-analytics'),
+      request: buildRequest('enable', '@bermooda/sample-analytics'),
     });
 
     expect(result).toEqual({ success: true, intent: 'enable' });
     expect(mockSetPluginEnabledState).toHaveBeenCalledWith(
-      'sample-analytics',
+      '@bermooda/sample-analytics',
       true
     );
   });
@@ -58,12 +58,12 @@ describe('admin plugins action', () => {
     mockSetPluginEnabledState.mockResolvedValue(undefined);
 
     const result = await action({
-      request: buildRequest('disable', 'sample-analytics'),
+      request: buildRequest('disable', '@bermooda/sample-analytics'),
     });
 
     expect(result).toEqual({ success: true, intent: 'disable' });
     expect(mockSetPluginEnabledState).toHaveBeenCalledWith(
-      'sample-analytics',
+      '@bermooda/sample-analytics',
       false
     );
   });
@@ -74,22 +74,24 @@ describe('admin plugins action', () => {
     );
 
     const result = await action({
-      request: buildRequest('enable', 'sample-analytics'),
+      request: buildRequest('enable', '@bermooda/sample-analytics'),
     });
 
     expect(result).toEqual({ error: 'Live wiring failed' });
   });
 
   it('reorders plugins through the core helper', async () => {
-    mockSetPluginOrder.mockResolvedValue(['sample-analytics']);
+    mockSetPluginOrder.mockResolvedValue(['@bermooda/sample-analytics']);
 
     const result = await action({
       request: buildRequest('reorder', null, {
-        order: JSON.stringify(['sample-analytics']),
+        order: JSON.stringify(['@bermooda/sample-analytics']),
       }),
     });
 
     expect(result).toEqual({ success: true, intent: 'reorder' });
-    expect(mockSetPluginOrder).toHaveBeenCalledWith(['sample-analytics']);
+    expect(mockSetPluginOrder).toHaveBeenCalledWith([
+      '@bermooda/sample-analytics',
+    ]);
   });
 });
