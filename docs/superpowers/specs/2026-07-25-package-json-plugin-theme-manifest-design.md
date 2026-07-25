@@ -1,7 +1,7 @@
 # Design: Replace plugin/theme `manifest.js` with `package.json`
 
 **Date:** 2026-07-25  
-**Status:** Approved (conversation); pending file review
+**Status:** Approved
 
 ## Goal
 
