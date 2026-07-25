@@ -772,6 +772,28 @@ Operational metrics: abandoned checkouts and recent orders (date-ranged); low st
 
 **Response:** `{ "ops": { "range", "asOf", "abandonedCheckouts", "recentOrders", "lowStock" } }`
 
+#### `GET /api/admin/v1/reports/customers`
+
+Customer analytics for the range: new customers, returning customers, paid orders split new vs returning, top customers by revenue.
+
+Guest orders (no `customerId`) are excluded from order-based metrics.
+
+**Response:** `{ "customers": { ... } }`
+
+#### `GET /api/admin/v1/reports/inventory`
+
+Snapshot inventory analytics: low stock, out of stock, stock value, by location.
+
+Optional query: `currency` (default shop default), `threshold` (default 5). Date params are ignored.
+
+**Response:** `{ "inventory": { ... } }`
+
+#### `GET /api/admin/v1/reports/exports`
+
+Scheduled export health: schedule counts, recent runs (no CSV body), failure rate in range.
+
+**Response:** `{ "exports": { ... } }`
+
 #### `GET /api/admin/v1/reports/dashboard`
 
 Composed payload: overview, salesOverTime, salesByProduct, salesByCategory, and ops.
