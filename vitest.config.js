@@ -19,6 +19,7 @@ export default defineConfig({
           setupFiles: ['./app/test-setup.js'],
           alias: {
             '#': path.resolve('./app'),
+            '#bermooda.config': path.resolve('./bermooda.config.js'),
             '#prisma/client': path.resolve('./prisma/generated/client'),
           },
         },
@@ -36,6 +37,7 @@ export default defineConfig({
           setupFiles: ['./app/test-setup.js'],
           alias: {
             '#': path.resolve('./app'),
+            '#bermooda.config': path.resolve('./bermooda.config.js'),
             '#prisma/client': path.resolve('./prisma/generated/client'),
           },
         },

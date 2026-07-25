@@ -3,10 +3,10 @@ const config = {
   // A short description of your app for SEO tags (can be changed per route)
   appDescription:
     'Open-source ecommerce platform: storefront and admin on React Router 7, Prisma, and Stripe.',
-  baseUrl:
-    process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3000'
-      : 'https://bermooda.fly.dev',
+  // Public site URL. Required in production. Optional in development/test —
+  // when omitted, `#/core/config` defaults to http://localhost:3000. When set,
+  // this value overrides the auto-dev URL in every environment.
+  // baseUrl: 'https://bermooda.fly.dev',
   auth: {
     adminCookiePrefix: 'bermooda_admin_',
     customerCookiePrefix: 'bermooda_customer_',

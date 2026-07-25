@@ -1,6 +1,6 @@
 import { Img, Section } from '@react-email/components';
 
-import config from '#/config';
+import config from '#/core/config';
 
 /**
  * Email template for logo
