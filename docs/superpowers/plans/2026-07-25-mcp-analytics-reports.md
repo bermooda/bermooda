@@ -21,28 +21,28 @@
 
 ## File Structure
 
-| File | Responsibility |
-| --- | --- |
-| `app/core/reporting/index.server.js` | Add `getOpsMetrics`; extend `getDashboardReport` with `ops` |
-| `app/core/reporting/index.test.server.js` | Unit tests for ops + updated dashboard composition |
-| `app/routes/api/admin/v1/reports/overview.jsx` | `GET` → `{ overview }` |
-| `app/routes/api/admin/v1/reports/sales-over-time.jsx` | `GET` → `{ salesOverTime }` |
-| `app/routes/api/admin/v1/reports/sales-by-product.jsx` | `GET` → `{ salesByProduct }` |
-| `app/routes/api/admin/v1/reports/sales-by-category.jsx` | `GET` → `{ salesByCategory }` |
-| `app/routes/api/admin/v1/reports/ops.jsx` | `GET` → `{ ops }` |
-| `app/routes/api/admin/v1/reports/dashboard.jsx` | Unchanged handler (picks up `ops` from core) |
-| `app/routes.js` | Register new report routes |
-| `docs/api.md` | Document all report paths |
-| `docs/openapi.yaml` | Add report paths |
-| `docs/agent-integration.md` | Mention reporting tools |
-| `.cursor/skills/bermooda-agent/SKILL.md` | Tool table row for reporting |
-| `bermooda-mcp/src/client.js` | Report client methods |
-| `bermooda-mcp/src/tools/reporting.js` | Hybrid MCP tools |
-| `bermooda-mcp/src/tools/index.js` | Export `registerReportingTools` |
-| `bermooda-mcp/src/server.js` | Register reporting tools |
-| `bermooda-mcp/test/client.test.js` | Client URL/auth coverage for reports |
-| `bermooda-mcp/test/server.test.js` | Expect new tool names |
-| `bermooda-mcp/README.md` | Tool table |
+| File                                                    | Responsibility                                              |
+| ------------------------------------------------------- | ----------------------------------------------------------- |
+| `app/core/reporting/index.server.js`                    | Add `getOpsMetrics`; extend `getDashboardReport` with `ops` |
+| `app/core/reporting/index.test.server.js`               | Unit tests for ops + updated dashboard composition          |
+| `app/routes/api/admin/v1/reports/overview.jsx`          | `GET` → `{ overview }`                                      |
+| `app/routes/api/admin/v1/reports/sales-over-time.jsx`   | `GET` → `{ salesOverTime }`                                 |
+| `app/routes/api/admin/v1/reports/sales-by-product.jsx`  | `GET` → `{ salesByProduct }`                                |
+| `app/routes/api/admin/v1/reports/sales-by-category.jsx` | `GET` → `{ salesByCategory }`                               |
+| `app/routes/api/admin/v1/reports/ops.jsx`               | `GET` → `{ ops }`                                           |
+| `app/routes/api/admin/v1/reports/dashboard.jsx`         | Unchanged handler (picks up `ops` from core)                |
+| `app/routes.js`                                         | Register new report routes                                  |
+| `docs/api.md`                                           | Document all report paths                                   |
+| `docs/openapi.yaml`                                     | Add report paths                                            |
+| `docs/agent-integration.md`                             | Mention reporting tools                                     |
+| `.cursor/skills/bermooda-agent/SKILL.md`                | Tool table row for reporting                                |
+| `bermooda-mcp/src/client.js`                            | Report client methods                                       |
+| `bermooda-mcp/src/tools/reporting.js`                   | Hybrid MCP tools                                            |
+| `bermooda-mcp/src/tools/index.js`                       | Export `registerReportingTools`                             |
+| `bermooda-mcp/src/server.js`                            | Register reporting tools                                    |
+| `bermooda-mcp/test/client.test.js`                      | Client URL/auth coverage for reports                        |
+| `bermooda-mcp/test/server.test.js`                      | Expect new tool names                                       |
+| `bermooda-mcp/README.md`                                | Tool table                                                  |
 
 ---
 
@@ -58,85 +58,85 @@
 In `app/core/reporting/index.test.server.js`, add `findMany` under `productVariant` in the `vi.mock`, import `getOpsMetrics`, and add:
 
 ```js
-  it('getOpsMetrics ranges abandoned/recent and snapshots low stock', async () => {
-    prisma.checkoutSession.count.mockResolvedValue(4);
-    prisma.order.findMany.mockResolvedValue([
-      {
-        id: 'ord_1',
-        orderNumber: 1001,
-        email: 'buyer@example.com',
-        status: 'paid',
-        totalCents: 2500,
-        currency: 'USD',
-        createdAt: new Date('2026-01-15T12:00:00.000Z'),
-        customer: { email: 'buyer@example.com' },
-      },
-    ]);
-    prisma.productVariant.count.mockResolvedValue(2);
-    prisma.productVariant.findMany.mockResolvedValue([
-      {
+it('getOpsMetrics ranges abandoned/recent and snapshots low stock', async () => {
+  prisma.checkoutSession.count.mockResolvedValue(4);
+  prisma.order.findMany.mockResolvedValue([
+    {
+      id: 'ord_1',
+      orderNumber: 1001,
+      email: 'buyer@example.com',
+      status: 'paid',
+      totalCents: 2500,
+      currency: 'USD',
+      createdAt: new Date('2026-01-15T12:00:00.000Z'),
+      customer: { email: 'buyer@example.com' },
+    },
+  ]);
+  prisma.productVariant.count.mockResolvedValue(2);
+  prisma.productVariant.findMany.mockResolvedValue([
+    {
+      id: 'var_1',
+      sku: 'SKU-1',
+      inventoryCount: 1,
+      product: { title: 'Hat' },
+    },
+  ]);
+
+  const ops = await getOpsMetrics({
+    startDate: '2026-01-01',
+    endDate: '2026-01-31',
+    limit: 10,
+  });
+
+  expect(ops.abandonedCheckouts).toBe(4);
+  expect(ops.recentOrders).toEqual([
+    expect.objectContaining({
+      id: 'ord_1',
+      createdAt: '2026-01-15T12:00:00.000Z',
+    }),
+  ]);
+  expect(ops.lowStock).toEqual({
+    threshold: 5,
+    count: 2,
+    variants: [
+      expect.objectContaining({
         id: 'var_1',
         sku: 'SKU-1',
         inventoryCount: 1,
-        product: { title: 'Hat' },
-      },
-    ]);
-
-    const ops = await getOpsMetrics({
-      startDate: '2026-01-01',
-      endDate: '2026-01-31',
-      limit: 10,
-    });
-
-    expect(ops.abandonedCheckouts).toBe(4);
-    expect(ops.recentOrders).toEqual([
-      expect.objectContaining({
-        id: 'ord_1',
-        createdAt: '2026-01-15T12:00:00.000Z',
+        title: 'Hat',
       }),
-    ]);
-    expect(ops.lowStock).toEqual({
-      threshold: 5,
-      count: 2,
-      variants: [
-        expect.objectContaining({
-          id: 'var_1',
-          sku: 'SKU-1',
-          inventoryCount: 1,
-          title: 'Hat',
-        }),
-      ],
-    });
-    expect(ops.range.start).toBe('2026-01-01T00:00:00.000Z');
-    expect(ops.range.end).toBe('2026-01-31T23:59:59.999Z');
-    expect(typeof ops.asOf).toBe('string');
-
-    const abandonedWhere = prisma.checkoutSession.count.mock.calls[0][0].where;
-    expect(abandonedWhere.step).toEqual({ not: 'complete' });
-    expect(abandonedWhere.createdAt.gte.toISOString()).toBe(
-      '2026-01-01T00:00:00.000Z'
-    );
-    expect(abandonedWhere.createdAt.lte.toISOString()).toBe(
-      '2026-01-31T23:59:59.999Z'
-    );
-    expect(abandonedWhere.createdAt.lt).toBeInstanceOf(Date);
-
-    const recentArgs = prisma.order.findMany.mock.calls[0][0];
-    expect(recentArgs.take).toBe(10);
-    expect(recentArgs.where.createdAt).toEqual({
-      gte: expect.any(Date),
-      lte: expect.any(Date),
-    });
-
-    const lowStockWhere = prisma.productVariant.count.mock.calls[0][0].where;
-    expect(lowStockWhere).toEqual({
-      inventoryTracked: true,
-      inventoryCount: { lt: 5 },
-    });
-    expect(prisma.productVariant.findMany.mock.calls[0][0].where).toEqual(
-      lowStockWhere
-    );
+    ],
   });
+  expect(ops.range.start).toBe('2026-01-01T00:00:00.000Z');
+  expect(ops.range.end).toBe('2026-01-31T23:59:59.999Z');
+  expect(typeof ops.asOf).toBe('string');
+
+  const abandonedWhere = prisma.checkoutSession.count.mock.calls[0][0].where;
+  expect(abandonedWhere.step).toEqual({ not: 'complete' });
+  expect(abandonedWhere.createdAt.gte.toISOString()).toBe(
+    '2026-01-01T00:00:00.000Z'
+  );
+  expect(abandonedWhere.createdAt.lte.toISOString()).toBe(
+    '2026-01-31T23:59:59.999Z'
+  );
+  expect(abandonedWhere.createdAt.lt).toBeInstanceOf(Date);
+
+  const recentArgs = prisma.order.findMany.mock.calls[0][0];
+  expect(recentArgs.take).toBe(10);
+  expect(recentArgs.where.createdAt).toEqual({
+    gte: expect.any(Date),
+    lte: expect.any(Date),
+  });
+
+  const lowStockWhere = prisma.productVariant.count.mock.calls[0][0].where;
+  expect(lowStockWhere).toEqual({
+    inventoryTracked: true,
+    inventoryCount: { lt: 5 },
+  });
+  expect(prisma.productVariant.findMany.mock.calls[0][0].where).toEqual(
+    lowStockWhere
+  );
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -303,46 +303,46 @@ EOF
 Change the `getDashboardReport composes all sections` test to stub ops Prisma calls and expect `ops`:
 
 ```js
-  it('getDashboardReport composes all sections', async () => {
-    prisma.order.aggregate.mockResolvedValue({
-      _sum: {
-        totalCents: 1000,
-        taxCents: 100,
-        discountCents: 0,
-        subtotalCents: 900,
-      },
-      _count: 1,
-    });
-    prisma.order.count.mockResolvedValue(1);
-    prisma.refund.aggregate.mockResolvedValue({
-      _sum: { amountCents: 0 },
-      _count: 0,
-    });
-    prisma.checkoutSession.count
-      .mockResolvedValueOnce(1) // overview completed
-      .mockResolvedValueOnce(1) // overview started
-      .mockResolvedValueOnce(0); // ops abandoned
-    prisma.order.findMany.mockResolvedValue([]);
-    prisma.orderLine.findMany.mockResolvedValue([]);
-    prisma.productVariant.count.mockResolvedValue(0);
-    prisma.productVariant.findMany.mockResolvedValue([]);
-
-    const report = await getDashboardReport({
-      startDate: '2026-01-01',
-      endDate: '2026-01-31',
-    });
-
-    expect(report).toEqual({
-      overview: expect.objectContaining({ revenueCents: 1000 }),
-      salesOverTime: [],
-      salesByProduct: [],
-      salesByCategory: [],
-      ops: expect.objectContaining({
-        abandonedCheckouts: 0,
-        lowStock: expect.objectContaining({ count: 0, threshold: 5 }),
-      }),
-    });
+it('getDashboardReport composes all sections', async () => {
+  prisma.order.aggregate.mockResolvedValue({
+    _sum: {
+      totalCents: 1000,
+      taxCents: 100,
+      discountCents: 0,
+      subtotalCents: 900,
+    },
+    _count: 1,
   });
+  prisma.order.count.mockResolvedValue(1);
+  prisma.refund.aggregate.mockResolvedValue({
+    _sum: { amountCents: 0 },
+    _count: 0,
+  });
+  prisma.checkoutSession.count
+    .mockResolvedValueOnce(1) // overview completed
+    .mockResolvedValueOnce(1) // overview started
+    .mockResolvedValueOnce(0); // ops abandoned
+  prisma.order.findMany.mockResolvedValue([]);
+  prisma.orderLine.findMany.mockResolvedValue([]);
+  prisma.productVariant.count.mockResolvedValue(0);
+  prisma.productVariant.findMany.mockResolvedValue([]);
+
+  const report = await getDashboardReport({
+    startDate: '2026-01-01',
+    endDate: '2026-01-31',
+  });
+
+  expect(report).toEqual({
+    overview: expect.objectContaining({ revenueCents: 1000 }),
+    salesOverTime: [],
+    salesByProduct: [],
+    salesByCategory: [],
+    ops: expect.objectContaining({
+      abandonedCheckouts: 0,
+      lowStock: expect.objectContaining({ count: 0, threshold: 5 }),
+    }),
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -478,7 +478,10 @@ export async function loader({ request }) {
 
 ```js
 // GET /api/admin/v1/reports/ops — abandoned checkouts, recent orders, low stock
-import { getOpsMetrics, parseReportParams } from '#/core/reporting/index.server';
+import {
+  getOpsMetrics,
+  parseReportParams,
+} from '#/core/reporting/index.server';
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -595,86 +598,106 @@ Composed payload: overview, salesOverTime, salesByProduct, salesByCategory, and 
 Insert before `components:` (or near other admin paths) in `docs/openapi.yaml`:
 
 ```yaml
-  /api/admin/v1/reports/overview:
-    get:
-      summary: Sales overview KPIs
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - { name: startDate, in: query, schema: { type: string, format: date } }
-        - { name: endDate, in: query, schema: { type: string, format: date } }
-        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
-        - { name: locale, in: query, schema: { type: string } }
-      responses:
-        '200':
-          description: Overview metrics
+/api/admin/v1/reports/overview:
+  get:
+    summary: Sales overview KPIs
+    tags: [Admin]
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - { name: startDate, in: query, schema: { type: string, format: date } }
+      - { name: endDate, in: query, schema: { type: string, format: date } }
+      - {
+          name: limit,
+          in: query,
+          schema: { type: integer, minimum: 1, maximum: 100 },
+        }
+      - { name: locale, in: query, schema: { type: string } }
+    responses:
+      '200':
+        description: Overview metrics
 
-  /api/admin/v1/reports/sales-over-time:
-    get:
-      summary: Daily sales buckets
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - { name: startDate, in: query, schema: { type: string, format: date } }
-        - { name: endDate, in: query, schema: { type: string, format: date } }
-      responses:
-        '200':
-          description: Sales over time
+/api/admin/v1/reports/sales-over-time:
+  get:
+    summary: Daily sales buckets
+    tags: [Admin]
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - { name: startDate, in: query, schema: { type: string, format: date } }
+      - { name: endDate, in: query, schema: { type: string, format: date } }
+    responses:
+      '200':
+        description: Sales over time
 
-  /api/admin/v1/reports/sales-by-product:
-    get:
-      summary: Top products by revenue
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - { name: startDate, in: query, schema: { type: string, format: date } }
-        - { name: endDate, in: query, schema: { type: string, format: date } }
-        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
-        - { name: locale, in: query, schema: { type: string } }
-      responses:
-        '200':
-          description: Sales by product
+/api/admin/v1/reports/sales-by-product:
+  get:
+    summary: Top products by revenue
+    tags: [Admin]
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - { name: startDate, in: query, schema: { type: string, format: date } }
+      - { name: endDate, in: query, schema: { type: string, format: date } }
+      - {
+          name: limit,
+          in: query,
+          schema: { type: integer, minimum: 1, maximum: 100 },
+        }
+      - { name: locale, in: query, schema: { type: string } }
+    responses:
+      '200':
+        description: Sales by product
 
-  /api/admin/v1/reports/sales-by-category:
-    get:
-      summary: Revenue by category
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - { name: startDate, in: query, schema: { type: string, format: date } }
-        - { name: endDate, in: query, schema: { type: string, format: date } }
-        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
-        - { name: locale, in: query, schema: { type: string } }
-      responses:
-        '200':
-          description: Sales by category
+/api/admin/v1/reports/sales-by-category:
+  get:
+    summary: Revenue by category
+    tags: [Admin]
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - { name: startDate, in: query, schema: { type: string, format: date } }
+      - { name: endDate, in: query, schema: { type: string, format: date } }
+      - {
+          name: limit,
+          in: query,
+          schema: { type: integer, minimum: 1, maximum: 100 },
+        }
+      - { name: locale, in: query, schema: { type: string } }
+    responses:
+      '200':
+        description: Sales by category
 
-  /api/admin/v1/reports/ops:
-    get:
-      summary: Operational metrics (abandoned, recent orders, low stock)
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - { name: startDate, in: query, schema: { type: string, format: date } }
-        - { name: endDate, in: query, schema: { type: string, format: date } }
-        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
-      responses:
-        '200':
-          description: Ops metrics
+/api/admin/v1/reports/ops:
+  get:
+    summary: Operational metrics (abandoned, recent orders, low stock)
+    tags: [Admin]
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - { name: startDate, in: query, schema: { type: string, format: date } }
+      - { name: endDate, in: query, schema: { type: string, format: date } }
+      - {
+          name: limit,
+          in: query,
+          schema: { type: integer, minimum: 1, maximum: 100 },
+        }
+    responses:
+      '200':
+        description: Ops metrics
 
-  /api/admin/v1/reports/dashboard:
-    get:
-      summary: Composed sales + ops dashboard report
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - { name: startDate, in: query, schema: { type: string, format: date } }
-        - { name: endDate, in: query, schema: { type: string, format: date } }
-        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
-        - { name: locale, in: query, schema: { type: string } }
-      responses:
-        '200':
-          description: Full dashboard report
+/api/admin/v1/reports/dashboard:
+  get:
+    summary: Composed sales + ops dashboard report
+    tags: [Admin]
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - { name: startDate, in: query, schema: { type: string, format: date } }
+      - { name: endDate, in: query, schema: { type: string, format: date } }
+      - {
+          name: limit,
+          in: query,
+          schema: { type: integer, minimum: 1, maximum: 100 },
+        }
+      - { name: locale, in: query, schema: { type: string } }
+    responses:
+      '200':
+        description: Full dashboard report
 ```
 
 - [ ] **Step 3: Commit (bermooda)**
@@ -704,43 +727,46 @@ EOF
 Add to `test/client.test.js` inside `describe('AdminClient')`:
 
 ```js
-  it('getDashboardReport and slice methods hit report routes', async () => {
-    const fetchFn = vi.fn(async (url) => {
-      const href = String(url);
-      expect(href).toContain('/api/admin/v1/reports/');
-      return {
-        ok: true,
-        status: 200,
-        text: async () => JSON.stringify({ ok: true, href }),
-      };
-    });
-
-    const client = new AdminClient(
-      { baseUrl: 'http://localhost:5173', apiKey: 'berm_test' },
-      { fetch: fetchFn }
-    );
-
-    await client.getOverviewKpis({ startDate: '2026-01-01', endDate: '2026-01-31' });
-    await client.getSalesOverTime({ startDate: '2026-01-01' });
-    await client.getTopProducts({ limit: 5 });
-    await client.getSalesByCategory({ locale: 'en' });
-    await client.getOpsMetrics({ limit: 10 });
-    await client.getDashboardReport({
-      startDate: '2026-01-01',
-      endDate: '2026-01-31',
-      limit: 20,
-    });
-
-    const urls = fetchFn.mock.calls.map(([u]) => String(u));
-    expect(urls[0]).toContain('/reports/overview?');
-    expect(urls[0]).toContain('startDate=2026-01-01');
-    expect(urls[1]).toContain('/reports/sales-over-time?');
-    expect(urls[2]).toContain('/reports/sales-by-product?');
-    expect(urls[2]).toContain('limit=5');
-    expect(urls[3]).toContain('/reports/sales-by-category?');
-    expect(urls[4]).toContain('/reports/ops?');
-    expect(urls[5]).toContain('/reports/dashboard?');
+it('getDashboardReport and slice methods hit report routes', async () => {
+  const fetchFn = vi.fn(async (url) => {
+    const href = String(url);
+    expect(href).toContain('/api/admin/v1/reports/');
+    return {
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ ok: true, href }),
+    };
   });
+
+  const client = new AdminClient(
+    { baseUrl: 'http://localhost:5173', apiKey: 'berm_test' },
+    { fetch: fetchFn }
+  );
+
+  await client.getOverviewKpis({
+    startDate: '2026-01-01',
+    endDate: '2026-01-31',
+  });
+  await client.getSalesOverTime({ startDate: '2026-01-01' });
+  await client.getTopProducts({ limit: 5 });
+  await client.getSalesByCategory({ locale: 'en' });
+  await client.getOpsMetrics({ limit: 10 });
+  await client.getDashboardReport({
+    startDate: '2026-01-01',
+    endDate: '2026-01-31',
+    limit: 20,
+  });
+
+  const urls = fetchFn.mock.calls.map(([u]) => String(u));
+  expect(urls[0]).toContain('/reports/overview?');
+  expect(urls[0]).toContain('startDate=2026-01-01');
+  expect(urls[1]).toContain('/reports/sales-over-time?');
+  expect(urls[2]).toContain('/reports/sales-by-product?');
+  expect(urls[2]).toContain('limit=5');
+  expect(urls[3]).toContain('/reports/sales-by-category?');
+  expect(urls[4]).toContain('/reports/ops?');
+  expect(urls[5]).toContain('/reports/dashboard?');
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -892,7 +918,8 @@ export function registerReportingTools(server, client) {
     'get_sales_over_time',
     {
       title: 'Get sales over time',
-      description: 'Daily sales buckets (orders, revenue, tax, discounts) for a date range.',
+      description:
+        'Daily sales buckets (orders, revenue, tax, discounts) for a date range.',
       inputSchema: {
         startDate: reportQuerySchema.startDate,
         endDate: reportQuerySchema.endDate,
@@ -915,7 +942,8 @@ export function registerReportingTools(server, client) {
     'get_sales_by_category',
     {
       title: 'Get sales by category',
-      description: 'Paid revenue rolled up by product category for a date range.',
+      description:
+        'Paid revenue rolled up by product category for a date range.',
       inputSchema: reportQuerySchema,
     },
     async (args) => runTool(() => client.getSalesByCategory(args))
@@ -972,28 +1000,28 @@ registerReportingTools(server, client);
 In `test/server.test.js`:
 
 ```js
-  it('get_overview_kpis forwards query to client', async () => {
-    const client = {
-      getOverviewKpis: vi.fn(async () => ({
-        overview: { revenueCents: 1000 },
-      })),
-    };
-    const { server } = createServer({
-      config: BASE_CONFIG,
-      client: /** @type {any} */ (client),
-    });
-    const handler = server._registeredTools.get_overview_kpis.handler;
-    const result = await handler(
-      { startDate: '2026-01-01', endDate: '2026-01-31' },
-      {}
-    );
-    expect(client.getOverviewKpis).toHaveBeenCalledWith({
-      startDate: '2026-01-01',
-      endDate: '2026-01-31',
-    });
-    expect(result.isError).toBeFalsy();
-    expect(result.content[0].text).toContain('1000');
+it('get_overview_kpis forwards query to client', async () => {
+  const client = {
+    getOverviewKpis: vi.fn(async () => ({
+      overview: { revenueCents: 1000 },
+    })),
+  };
+  const { server } = createServer({
+    config: BASE_CONFIG,
+    client: /** @type {any} */ (client),
   });
+  const handler = server._registeredTools.get_overview_kpis.handler;
+  const result = await handler(
+    { startDate: '2026-01-01', endDate: '2026-01-31' },
+    {}
+  );
+  expect(client.getOverviewKpis).toHaveBeenCalledWith({
+    startDate: '2026-01-01',
+    endDate: '2026-01-31',
+  });
+  expect(result.isError).toBeFalsy();
+  expect(result.content[0].text).toContain('1000');
+});
 ```
 
 - [ ] **Step 5: Run MCP tests**
@@ -1031,21 +1059,21 @@ EOF
 
 Add a Reports section (or rows) listing:
 
-| Tool | Purpose |
-| --- | --- |
-| `get_overview_kpis` | Revenue, orders, AOV, conversion for a range |
-| `get_sales_over_time` | Daily sales buckets |
-| `get_top_products` | Top products by revenue |
-| `get_sales_by_category` | Revenue by category |
-| `get_ops_metrics` | Abandoned checkouts, recent orders, low stock |
-| `get_dashboard_report` | Full composed analytics payload |
+| Tool                    | Purpose                                       |
+| ----------------------- | --------------------------------------------- |
+| `get_overview_kpis`     | Revenue, orders, AOV, conversion for a range  |
+| `get_sales_over_time`   | Daily sales buckets                           |
+| `get_top_products`      | Top products by revenue                       |
+| `get_sales_by_category` | Revenue by category                           |
+| `get_ops_metrics`       | Abandoned checkouts, recent orders, low stock |
+| `get_dashboard_report`  | Full composed analytics payload               |
 
 - [ ] **Step 2: Update bermooda-agent skill table**
 
 Add row:
 
-| Need | Tool |
-| --- | --- |
+| Need             | Tool                                                                                                                               |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Analytics / KPIs | `get_dashboard_report`, `get_overview_kpis`, `get_sales_over_time`, `get_top_products`, `get_sales_by_category`, `get_ops_metrics` |
 
 - [ ] **Step 3: Mention reporting in `docs/agent-integration.md`**
@@ -1108,17 +1136,17 @@ Expected: JSON with `overview` / `ops` keys, HTTP 200.
 
 ## Spec coverage checklist
 
-| Spec requirement | Task |
-| --- | --- |
-| `getOpsMetrics` (ranged abandoned/recent, snapshot low stock) | Task 1 |
-| `getDashboardReport` includes `ops` | Task 2 |
-| Split Admin API routes | Task 3 |
-| Keep `/reports/dashboard` composer | Task 3 (existing file) |
-| api.md + OpenAPI | Task 4 |
-| MCP hybrid tools | Tasks 5–6 |
-| Agent docs / skill / README | Task 7 |
-| Phase 2 customers/inventory/exports | Out of scope (design only) |
-| No new API scopes / no Admin UI migration | Honored in Global Constraints |
+| Spec requirement                                              | Task                          |
+| ------------------------------------------------------------- | ----------------------------- |
+| `getOpsMetrics` (ranged abandoned/recent, snapshot low stock) | Task 1                        |
+| `getDashboardReport` includes `ops`                           | Task 2                        |
+| Split Admin API routes                                        | Task 3                        |
+| Keep `/reports/dashboard` composer                            | Task 3 (existing file)        |
+| api.md + OpenAPI                                              | Task 4                        |
+| MCP hybrid tools                                              | Tasks 5–6                     |
+| Agent docs / skill / README                                   | Task 7                        |
+| Phase 2 customers/inventory/exports                           | Out of scope (design only)    |
+| No new API scopes / no Admin UI migration                     | Honored in Global Constraints |
 
 ## Out of scope reminder
 

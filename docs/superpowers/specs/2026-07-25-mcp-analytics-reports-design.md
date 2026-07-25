@@ -10,16 +10,16 @@ Let agents query shop analytics via MCP: overview KPIs, sales over time, top pro
 
 ## Decisions
 
-| Decision | Choice |
-| --- | --- |
-| v1 scope | Sales report slices + ops metrics |
-| Ops date behavior | Abandoned checkouts and recent orders respect `startDate`/`endDate`; low stock is a current snapshot |
-| Admin API shape | Split routes per report slice (not a single sections query on one endpoint) |
-| Dashboard composer | Keep `GET /reports/dashboard`; extend with `ops`; additive / backward compatible |
-| MCP tool surface | Hybrid: one full `get_dashboard_report` + focused tools per slice |
-| API key scopes | No new `reports:read` scope in v1 (existing admin API key gate) |
-| Admin UI home | Keep `loadAdminDashboardData` for now; optional later migration to `getOpsMetrics` |
-| Phase 2 | Design customers / inventory / export metric endpoints; implement later |
+| Decision           | Choice                                                                                               |
+| ------------------ | ---------------------------------------------------------------------------------------------------- |
+| v1 scope           | Sales report slices + ops metrics                                                                    |
+| Ops date behavior  | Abandoned checkouts and recent orders respect `startDate`/`endDate`; low stock is a current snapshot |
+| Admin API shape    | Split routes per report slice (not a single sections query on one endpoint)                          |
+| Dashboard composer | Keep `GET /reports/dashboard`; extend with `ops`; additive / backward compatible                     |
+| MCP tool surface   | Hybrid: one full `get_dashboard_report` + focused tools per slice                                    |
+| API key scopes     | No new `reports:read` scope in v1 (existing admin API key gate)                                      |
+| Admin UI home      | Keep `loadAdminDashboardData` for now; optional later migration to `getOpsMetrics`                   |
+| Phase 2            | Design customers / inventory / export metric endpoints; implement later                              |
 
 ## Architecture
 
@@ -37,23 +37,23 @@ Existing sales aggregations already live in `app/core/reporting/index.server.js`
 
 Shared query params (where relevant):
 
-| Param | Default | Notes |
-| --- | --- | --- |
-| `startDate` | 30 days before `endDate` | `YYYY-MM-DD` |
-| `endDate` | today (UTC end of day) | `YYYY-MM-DD` |
-| `limit` | 20 (max 100) | Top products/categories, recent orders, low-stock sample |
-| `locale` | shop default | Category title resolution |
+| Param       | Default                  | Notes                                                    |
+| ----------- | ------------------------ | -------------------------------------------------------- |
+| `startDate` | 30 days before `endDate` | `YYYY-MM-DD`                                             |
+| `endDate`   | today (UTC end of day)   | `YYYY-MM-DD`                                             |
+| `limit`     | 20 (max 100)             | Top products/categories, recent orders, low-stock sample |
+| `locale`    | shop default             | Category title resolution                                |
 
 ### Routes
 
-| Method | Path | Core function | Response envelope |
-| --- | --- | --- | --- |
-| `GET` | `/api/admin/v1/reports/overview` | `getOverviewMetrics` | `{ overview }` |
-| `GET` | `/api/admin/v1/reports/sales-over-time` | `getSalesOverTime` | `{ salesOverTime }` |
-| `GET` | `/api/admin/v1/reports/sales-by-product` | `getSalesByProduct` | `{ salesByProduct }` |
-| `GET` | `/api/admin/v1/reports/sales-by-category` | `getSalesByCategory` | `{ salesByCategory }` |
-| `GET` | `/api/admin/v1/reports/ops` | `getOpsMetrics` (new) | `{ ops }` |
-| `GET` | `/api/admin/v1/reports/dashboard` | `getDashboardReport` (extended) | `{ report }` with all sections including `ops` |
+| Method | Path                                      | Core function                   | Response envelope                              |
+| ------ | ----------------------------------------- | ------------------------------- | ---------------------------------------------- |
+| `GET`  | `/api/admin/v1/reports/overview`          | `getOverviewMetrics`            | `{ overview }`                                 |
+| `GET`  | `/api/admin/v1/reports/sales-over-time`   | `getSalesOverTime`              | `{ salesOverTime }`                            |
+| `GET`  | `/api/admin/v1/reports/sales-by-product`  | `getSalesByProduct`             | `{ salesByProduct }`                           |
+| `GET`  | `/api/admin/v1/reports/sales-by-category` | `getSalesByCategory`            | `{ salesByCategory }`                          |
+| `GET`  | `/api/admin/v1/reports/ops`               | `getOpsMetrics` (new)           | `{ ops }`                                      |
+| `GET`  | `/api/admin/v1/reports/dashboard`         | `getDashboardReport` (extended) | `{ report }` with all sections including `ops` |
 
 Route modules live under `app/routes/api/admin/v1/reports/` and are registered in `app/routes.js`. Handlers stay thin: `parseReportParams` → core → `Response.json`.
 
@@ -65,13 +65,13 @@ Includes range, order counts, paid revenue/tax/discount, refunds, AOV, checkout 
 
 `getOpsMetrics({ startDate?, endDate?, limit? })` returns:
 
-| Field | Behavior |
-| --- | --- |
-| `range` | Parsed start/end ISO for date-filtered fields |
-| `asOf` | ISO timestamp for snapshot fields |
-| `abandonedCheckouts` | Count of checkout sessions with `step !== 'complete'`, `createdAt` in range, and older than 1 hour (same abandonment age rule as admin home) |
-| `recentOrders` | Up to `limit` orders in range, newest first (same select shape as admin home recent orders) |
-| `lowStock` | Snapshot: `{ threshold: 5, count, variants[] }` where `variants` is up to `limit` tracked variants with `inventoryCount < threshold`, lowest stock first |
+| Field                | Behavior                                                                                                                                                 |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `range`              | Parsed start/end ISO for date-filtered fields                                                                                                            |
+| `asOf`               | ISO timestamp for snapshot fields                                                                                                                        |
+| `abandonedCheckouts` | Count of checkout sessions with `step !== 'complete'`, `createdAt` in range, and older than 1 hour (same abandonment age rule as admin home)             |
+| `recentOrders`       | Up to `limit` orders in range, newest first (same select shape as admin home recent orders)                                                              |
+| `lowStock`           | Snapshot: `{ threshold: 5, count, variants[] }` where `variants` is up to `limit` tracked variants with `inventoryCount < threshold`, lowest stock first |
 
 `getDashboardReport` gains `ops` via `Promise.all` alongside existing sections.
 
@@ -79,14 +79,14 @@ Invalid dates or out-of-range `limit` → `400` with the existing Admin API erro
 
 ## v1 MCP tools (bermooda-mcp)
 
-| Tool | Admin API |
-| --- | --- |
-| `get_overview_kpis` | `GET /reports/overview` |
-| `get_sales_over_time` | `GET /reports/sales-over-time` |
-| `get_top_products` | `GET /reports/sales-by-product` |
+| Tool                    | Admin API                        |
+| ----------------------- | -------------------------------- |
+| `get_overview_kpis`     | `GET /reports/overview`          |
+| `get_sales_over_time`   | `GET /reports/sales-over-time`   |
+| `get_top_products`      | `GET /reports/sales-by-product`  |
 | `get_sales_by_category` | `GET /reports/sales-by-category` |
-| `get_ops_metrics` | `GET /reports/ops` |
-| `get_dashboard_report` | `GET /reports/dashboard` |
+| `get_ops_metrics`       | `GET /reports/ops`               |
+| `get_dashboard_report`  | `GET /reports/dashboard`         |
 
 Implementation pattern (match existing tools):
 
@@ -104,12 +104,12 @@ Sibling report routes and MCP tools. Dashboard composer stays sales + ops until 
 
 ### Customers — `GET /api/admin/v1/reports/customers`
 
-| Metric | Meaning |
-| --- | --- |
-| `newCustomers` | Customers with `createdAt` in range |
-| `returningCustomers` | Distinct customers with ≥2 paid orders all-time who also ordered in range |
-| `ordersByNewVsReturning` | Paid order counts + revenue split for the range |
-| `topCustomers` | Top N by paid revenue in range (`limit`) |
+| Metric                   | Meaning                                                                   |
+| ------------------------ | ------------------------------------------------------------------------- |
+| `newCustomers`           | Customers with `createdAt` in range                                       |
+| `returningCustomers`     | Distinct customers with ≥2 paid orders all-time who also ordered in range |
+| `ordersByNewVsReturning` | Paid order counts + revenue split for the range                           |
+| `topCustomers`           | Top N by paid revenue in range (`limit`)                                  |
 
 MCP: `get_customer_metrics`.
 
@@ -117,12 +117,12 @@ MCP: `get_customer_metrics`.
 
 Snapshot-oriented aggregates (CRUD remains on existing inventory tools/API):
 
-| Metric | Meaning |
-| --- | --- |
-| `lowStock` | Variants below threshold (default 5), with sku/title/count/location summary |
-| `outOfStock` | Tracked variants at 0 |
-| `stockValueCents` | Sum of `inventoryCount * priceCents` for tracked variants |
-| `byLocation` | Counts / value rolled up by inventory location |
+| Metric            | Meaning                                                                     |
+| ----------------- | --------------------------------------------------------------------------- |
+| `lowStock`        | Variants below threshold (default 5), with sku/title/count/location summary |
+| `outOfStock`      | Tracked variants at 0                                                       |
+| `stockValueCents` | Sum of `inventoryCount * priceCents` for tracked variants                   |
+| `byLocation`      | Counts / value rolled up by inventory location                              |
 
 MCP: `get_inventory_metrics`.
 
@@ -130,11 +130,11 @@ MCP: `get_inventory_metrics`.
 
 Aggregation over scheduled-export / export-run data (not CSV download):
 
-| Metric | Meaning |
-| --- | --- |
-| `schedules` | Count by export type / schedule |
-| `recentRuns` | Last N runs (status, type, createdAt, error summary) |
-| `failureRate` | Failed vs total runs in range |
+| Metric        | Meaning                                              |
+| ------------- | ---------------------------------------------------- |
+| `schedules`   | Count by export type / schedule                      |
+| `recentRuns`  | Last N runs (status, type, createdAt, error summary) |
+| `failureRate` | Failed vs total runs in range                        |
 
 MCP: `get_export_metrics`. Run-now / download stay on existing export Admin API.
 
