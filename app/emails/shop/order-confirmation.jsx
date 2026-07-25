@@ -58,6 +58,7 @@ function fmt(cents, currency) {
 /**
  * @param {Object} props
  * @param {string} [props.locale]
+ * @param {string} [props.brandName]
  * @param {string} props.name - Customer name
  * @param {string} props.orderNumber
  * @param {string} props.orderUrl
@@ -81,12 +82,16 @@ export default function OrderConfirmationEmail({
   discountCents = 0,
   totalCents = 0,
   currency = 'USD',
+  brandName,
 }) {
   const t = labels[locale] ?? labels.en;
   const url = orderUrl ?? `${config.baseUrl}/account/orders`;
 
   return (
-    <EmailLayout preview={`${t.heading} — ${orderNumber}`}>
+    <EmailLayout
+      brandName={brandName}
+      preview={`${t.heading} — ${orderNumber}`}
+    >
       <EmailHeading>{t.heading}</EmailHeading>
       <EmailSubheading>{t.subheading(name)}</EmailSubheading>
 

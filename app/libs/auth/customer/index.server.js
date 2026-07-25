@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { createContext, redirect } from 'react-router';
 
-import config from '#/core/config';
+import config, { PLATFORM_NAME } from '#/core/config';
 import logger from '#/utils/logger.server';
 import {
   buildAuthAdvancedConfig,
@@ -36,7 +36,7 @@ const CUSTOMER_AUTH_BASE_URL = config.baseUrl + config.auth.customerBasePath;
  *   verification -> CustomerVerification
  */
 export const customerAuth = betterAuth({
-  appName: config.appName,
+  appName: PLATFORM_NAME,
 
   database: prismaAdapter(prisma, {
     provider: getBetterAuthProvider(),

@@ -1,6 +1,6 @@
 import { Section, Text } from '@react-email/components';
 
-import config from '#/core/config';
+import { PLATFORM_NAME } from '#/core/config';
 import EmailButton from '#/emails/components/button';
 import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
@@ -16,7 +16,7 @@ import EmailSubheading from '#/emails/components/subheading';
  */
 export default function ResetPasswordTemplate({ name = 'there', resetUrl }) {
   return (
-    <EmailLayout preview={`Reset your ${config.appName} password`}>
+    <EmailLayout preview={`Reset your ${PLATFORM_NAME} password`}>
       <EmailHeading>Reset Your Password</EmailHeading>
       <EmailSubheading>
         Hi {name}, we received a request to reset your password.

@@ -3,19 +3,37 @@ import { networkInterfaces } from 'os';
 import bcrypt from 'bcryptjs';
 import { createAuthMiddleware } from 'better-auth/api';
 
-import config from '#/core/config';
+import config, { resolveDevPort } from '#/core/config';
 import logger from '#/utils/logger.server';
 import { queueVerifyEmail } from '#/emails/job.server';
 
 export const IS_DEV = process.env.NODE_ENV === 'development';
 
 /**
+ * Read the listen port from a public base URL, falling back to {@link resolveDevPort}.
+ *
+ * @param {string} baseUrl
+ * @returns {number}
+ */
+function portFromBaseUrl(baseUrl) {
+  try {
+    const url = new URL(baseUrl);
+    if (url.port) {
+      return Number(url.port);
+    }
+    return url.protocol === 'https:' ? 443 : 80;
+  } catch {
+    return resolveDevPort();
+  }
+}
+
+/**
  * Get local network address for dev mode with --host flag.
  *
- * @param {number} [port=3000]
+ * @param {number} [port]
  * @returns {string|null}
  */
-export function getLocalNetworkUrl(port = 3000) {
+export function getLocalNetworkUrl(port = resolveDevPort()) {
   const nets = networkInterfaces();
   for (const name of Object.keys(nets)) {
     for (const net of nets[name]) {
@@ -36,7 +54,7 @@ export function getTrustedOrigins() {
   const origins = [config.baseUrl];
 
   if (IS_DEV) {
-    const networkUrl = getLocalNetworkUrl();
+    const networkUrl = getLocalNetworkUrl(portFromBaseUrl(config.baseUrl));
     if (networkUrl) {
       origins.push(networkUrl);
     }

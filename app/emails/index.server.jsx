@@ -1,7 +1,8 @@
 import { Resend } from 'resend';
 
-import config from '#/core/config';
+import config, { PLATFORM_NAME } from '#/core/config';
 import logger from '#/utils/logger.server';
+import { get as settingsGet, SETTING_KEYS } from '#/core/settings/index.server';
 import AbandonedCartEmail from '#/emails/shop/abandoned-cart';
 import BackInStockEmail from '#/emails/shop/back-in-stock';
 import CustomerWelcomeEmail from '#/emails/shop/customer-welcome';
@@ -16,6 +17,17 @@ import ResetPasswordTemplate from '#/emails/templates/reset-password.server';
 import TwoFactorOtpTemplate from '#/emails/templates/two-factor-otp.server';
 import VerifyEmailTemplate from '#/emails/templates/verify-email.server';
 import WelcomeEmail from '#/emails/templates/welcome.server';
+
+/**
+ * Merchant shop brand for shop-facing email chrome. Falls back to the platform name.
+ *
+ * @returns {Promise<string>}
+ */
+async function resolveShopBrandName() {
+  const name = await settingsGet(SETTING_KEYS.SHOP_NAME);
+  if (typeof name === 'string' && name.trim()) return name.trim();
+  return PLATFORM_NAME;
+}
 
 // Initialize Resend with your API key
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -34,7 +46,7 @@ const SUBJECT_ORDER_REFUNDED = 'Refund processed';
 const SUBJECT_RETURN_RECEIVED = 'Return received';
 const SUBJECT_PASSWORD_RESET_ADMIN = 'Reset your admin password';
 const SUBJECT_PASSWORD_RESET_CUSTOMER = 'Reset your password';
-const SUBJECT_CUSTOMER_WELCOME = `Welcome to ${config.appName}`;
+const SUBJECT_CUSTOMER_WELCOME_PREFIX = 'Welcome to';
 const SUBJECT_ABANDONED_CART = 'You left something behind';
 const SUBJECT_BACK_IN_STOCK = 'An item is back in stock';
 
@@ -50,7 +62,7 @@ export async function sendWelcomeEmail({ email, name }) {
   try {
     // Send the email using Resend
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_WELCOME,
       react: (
@@ -82,7 +94,7 @@ export async function sendVerificationEmail({ email, name, verificationUrl }) {
   try {
     // Send the email using Resend
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_VERIFY_EMAIL,
       react: (
@@ -111,7 +123,7 @@ export async function sendPasswordResetEmail({ email, name, resetUrl }) {
   try {
     // Send the email using Resend
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_RESET_PASSWORD,
       react: <ResetPasswordTemplate name={name} resetUrl={resetUrl} />,
@@ -139,7 +151,7 @@ export async function sendTwoFactorOtpEmail({ email, name, otp }) {
     const firstName = name.split(' ')[0];
 
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_TWO_FACTOR_OTP,
       react: <TwoFactorOtpTemplate name={firstName} otp={otp} />,
@@ -161,11 +173,18 @@ export async function sendOrderConfirmationEmail({
   ...props
 }) {
   try {
+    const brandName = await resolveShopBrandName();
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_ORDER_CONFIRMATION,
-      react: <OrderConfirmationEmail locale={locale} {...props} />,
+      react: (
+        <OrderConfirmationEmail
+          locale={locale}
+          brandName={brandName}
+          {...props}
+        />
+      ),
     });
 
     logger.info({ email }, 'Order confirmation email sent successfully');
@@ -182,11 +201,14 @@ export async function sendOrderShippedEmail({
   ...props
 }) {
   try {
+    const brandName = await resolveShopBrandName();
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_ORDER_SHIPPED,
-      react: <OrderShippedEmail locale={locale} {...props} />,
+      react: (
+        <OrderShippedEmail locale={locale} brandName={brandName} {...props} />
+      ),
     });
 
     logger.info({ email }, 'Order shipped email sent successfully');
@@ -203,11 +225,14 @@ export async function sendOrderDeliveredEmail({
   ...props
 }) {
   try {
+    const brandName = await resolveShopBrandName();
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_ORDER_DELIVERED,
-      react: <OrderDeliveredEmail locale={locale} {...props} />,
+      react: (
+        <OrderDeliveredEmail locale={locale} brandName={brandName} {...props} />
+      ),
     });
 
     logger.info({ email }, 'Order delivered email sent successfully');
@@ -224,11 +249,14 @@ export async function sendOrderRefundedEmail({
   ...props
 }) {
   try {
+    const brandName = await resolveShopBrandName();
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_ORDER_REFUNDED,
-      react: <OrderRefundedEmail locale={locale} {...props} />,
+      react: (
+        <OrderRefundedEmail locale={locale} brandName={brandName} {...props} />
+      ),
     });
 
     logger.info({ email }, 'Order refunded email sent successfully');
@@ -245,11 +273,14 @@ export async function sendReturnReceivedEmail({
   ...props
 }) {
   try {
+    const brandName = await resolveShopBrandName();
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_RETURN_RECEIVED,
-      react: <ReturnReceivedEmail locale={locale} {...props} />,
+      react: (
+        <ReturnReceivedEmail locale={locale} brandName={brandName} {...props} />
+      ),
     });
 
     logger.info({ email }, 'Return received email sent successfully');
@@ -268,7 +299,7 @@ export async function sendPasswordResetAdminEmail({
 }) {
   try {
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_PASSWORD_RESET_ADMIN,
       react: (
@@ -295,8 +326,9 @@ export async function sendPasswordResetCustomerEmail({
   resetUrl,
 }) {
   try {
+    const brandName = await resolveShopBrandName();
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_PASSWORD_RESET_CUSTOMER,
       react: (
@@ -304,6 +336,7 @@ export async function sendPasswordResetCustomerEmail({
           locale={locale}
           name={name}
           resetUrl={resetUrl}
+          brandName={brandName}
         />
       ),
     });
@@ -323,15 +356,17 @@ export async function sendCustomerWelcomeEmail({
   accountUrl,
 }) {
   try {
+    const shopName = await resolveShopBrandName();
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
-      subject: SUBJECT_CUSTOMER_WELCOME,
+      subject: `${SUBJECT_CUSTOMER_WELCOME_PREFIX} ${shopName}`,
       react: (
         <CustomerWelcomeEmail
           locale={locale}
           name={name}
           accountUrl={accountUrl}
+          shopName={shopName}
         />
       ),
     });
@@ -350,11 +385,14 @@ export async function sendAbandonedCartEmail({
   ...props
 }) {
   try {
+    const brandName = await resolveShopBrandName();
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to: email,
       subject: SUBJECT_ABANDONED_CART,
-      react: <AbandonedCartEmail locale={locale} {...props} />,
+      react: (
+        <AbandonedCartEmail locale={locale} brandName={brandName} {...props} />
+      ),
     });
 
     logger.info({ email }, 'Abandoned cart email sent successfully');
@@ -367,11 +405,12 @@ export async function sendAbandonedCartEmail({
 
 export async function sendBackInStockEmail({ to, variant }) {
   try {
+    const brandName = await resolveShopBrandName();
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to,
       subject: SUBJECT_BACK_IN_STOCK,
-      react: <BackInStockEmail variant={variant} />,
+      react: <BackInStockEmail brandName={brandName} variant={variant} />,
     });
 
     logger.info({ to }, 'Back-in-stock email sent successfully');
@@ -386,7 +425,7 @@ export async function sendCampaignEmail({ to, subject, bodyHtml, name }) {
   try {
     const html = bodyHtml.replace(/\{\{name\}\}/g, name ?? 'there');
     const data = await resend.emails.send({
-      from: config.resend.fromNoReply,
+      from: config.email.fromNoReply,
       to,
       subject,
       html,

@@ -3,7 +3,7 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { twoFactor } from 'better-auth/plugins';
 import { createContext, redirect } from 'react-router';
 
-import config from '#/core/config';
+import config, { PLATFORM_NAME } from '#/core/config';
 import logger from '#/utils/logger.server';
 import {
   buildAuthAdvancedConfig,
@@ -33,7 +33,7 @@ const ADMIN_AUTH_BASE_URL = config.baseUrl + config.auth.adminBasePath;
  * Cookie prefix: bermooda_admin_
  */
 export const adminAuth = betterAuth({
-  appName: config.appName,
+  appName: PLATFORM_NAME,
 
   database: prismaAdapter(prisma, {
     provider: getBetterAuthProvider(),

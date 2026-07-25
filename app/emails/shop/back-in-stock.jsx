@@ -7,14 +7,16 @@ import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 
 /**
- * @param {{ variant?: { sku?: string|null } }} props
+ * @param {Object} props
+ * @param {string} [props.brandName]
+ * @param {{ sku?: string|null }} [props.variant]
  */
-export default function BackInStockEmail({ variant }) {
+export default function BackInStockEmail({ brandName, variant }) {
   const sku = variant?.sku ?? 'this item';
   const shopUrl = `${config.baseUrl}/search?q=${encodeURIComponent(sku)}`;
 
   return (
-    <EmailLayout preview={`${sku} is back in stock`}>
+    <EmailLayout brandName={brandName} preview={`${sku} is back in stock`}>
       <EmailHeading>Back in stock</EmailHeading>
       <Section className="dark-mode-bg rounded-xl bg-indigo-50 px-6 py-4">
         <Text className="dark-mode-text text-base text-slate-700">

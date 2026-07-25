@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "react-router build",
-    "dev": "op run --env-file=.env -- react-router dev --port 3000 --host",
+    "dev": "op run --env-file=.env -- react-router dev --host",
     "start": "react-router-serve ./build/server/index.js",
     "docker:build": "docker build -t bermooda .",
     "docker:run": "docker run -p 3000:3000 --env-file .env -e DATABASE_URL=file:/data/sqlite.db bermooda",

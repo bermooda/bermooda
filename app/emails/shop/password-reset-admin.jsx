@@ -1,6 +1,6 @@
 import { Section, Text } from '@react-email/components';
 
-import config from '#/core/config';
+import { PLATFORM_NAME } from '#/core/config';
 import EmailButton from '#/emails/components/button';
 import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
@@ -9,7 +9,7 @@ import EmailSubheading from '#/emails/components/subheading';
 
 const labels = {
   en: {
-    preview: `Reset your ${config.appName} admin password`,
+    preview: `Reset your ${PLATFORM_NAME} admin password`,
     heading: 'Reset Your Admin Password',
     subheading: (name) =>
       `Hi ${name}, we received a request to reset your admin password.`,
@@ -19,7 +19,7 @@ const labels = {
     cta: 'Reset Admin Password',
   },
   de: {
-    preview: `Ihr ${config.appName}-Admin-Passwort zurücksetzen`,
+    preview: `Ihr ${PLATFORM_NAME}-Admin-Passwort zurücksetzen`,
     heading: 'Admin-Passwort zurücksetzen',
     subheading: (name) =>
       `Hallo ${name}, wir haben eine Anfrage zum Zurücksetzen Ihres Admin-Passworts erhalten.`,
