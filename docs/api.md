@@ -738,11 +738,45 @@ Queue abandoned-cart sequence processing. Returns `{ queued: true }` with status
 
 ### Reports
 
+Shared query params (where relevant): `startDate`, `endDate` (ISO date `YYYY-MM-DD`), `limit` (default 20, max 100), `locale` (default shop locale).
+
+Paid sales metrics use order statuses `paid`, `fulfilled`, and `refunded`.
+
+#### `GET /api/admin/v1/reports/overview`
+
+Overview KPIs for the range: revenue, paid/total orders, tax, discounts, refunds, AOV, checkout conversion.
+
+**Response:** `{ "overview": { ... } }`
+
+#### `GET /api/admin/v1/reports/sales-over-time`
+
+Daily buckets: orders, revenue, tax, discounts.
+
+**Response:** `{ "salesOverTime": [ ... ] }`
+
+#### `GET /api/admin/v1/reports/sales-by-product`
+
+Top products by revenue (`limit`).
+
+**Response:** `{ "salesByProduct": [ ... ] }`
+
+#### `GET /api/admin/v1/reports/sales-by-category`
+
+Revenue by category (`limit`, titles honor `locale`).
+
+**Response:** `{ "salesByCategory": [ ... ] }`
+
+#### `GET /api/admin/v1/reports/ops`
+
+Operational metrics: abandoned checkouts and recent orders (date-ranged); low stock count + sample variants (current snapshot).
+
+**Response:** `{ "ops": { "range", "asOf", "abandonedCheckouts", "recentOrders", "lowStock" } }`
+
 #### `GET /api/admin/v1/reports/dashboard`
 
-Sales analytics dashboard payload: overview KPIs, sales over time, top products, and sales by category.
+Composed payload: overview, salesOverTime, salesByProduct, salesByCategory, and ops.
 
-**Query params:** `startDate`, `endDate` (ISO date strings), `limit` (default 20, max 100 for product/category breakdowns), `locale` (default shop locale)
+**Response:** `{ "report": { ... } }`
 
 ---
 
