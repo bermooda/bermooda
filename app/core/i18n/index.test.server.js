@@ -206,6 +206,28 @@ describe('loadMessages', () => {
     expect(messages.common.loading).toBe('Loading...');
     expect(readFileSync).toHaveBeenCalledTimes(1);
   });
+
+  it('resolves package ids to bundled theme/plugin slug paths', async () => {
+    settingsGet.mockImplementation(async (key) => {
+      if (key === 'activeTheme') return '@bermooda/theme-default';
+      if (key === 'pluginOrder') return ['@bermooda/sample-analytics'];
+      return null;
+    });
+
+    const enoent = new Error('ENOENT: no such file');
+    enoent.code = 'ENOENT';
+    readFileSync.mockImplementation(() => {
+      throw enoent;
+    });
+
+    await loadMessages('en');
+
+    const paths = readFileSync.mock.calls.map(([filePath]) => filePath);
+    expect(paths.some((p) => p.includes('/themes/default/i18n/'))).toBe(true);
+    expect(
+      paths.some((p) => p.includes('/plugins/sample-analytics/i18n/'))
+    ).toBe(true);
+  });
 });
 
 describe('t', () => {

@@ -13,6 +13,29 @@ export const LEGACY_THEME_ID_MAP = {
   default: '@bermooda/theme-default',
 };
 
+export const BUNDLED_PLUGIN_SLUGS = {
+  '@bermooda/sample-analytics': 'sample-analytics',
+  '@bermooda/fraud-guard': 'fraud-guard',
+  '@bermooda/meilisearch': 'meilisearch',
+};
+
+export const BUNDLED_THEME_SLUGS = {
+  '@bermooda/theme-default': 'default',
+};
+
+/**
+ * @param {string | null | undefined} id
+ * @param {Record<string, string>} table
+ * @returns {string | null}
+ */
+export function resolveBundledSlug(id, table) {
+  if (!id) return null;
+  if (table[id]) return table[id];
+  // already a slug?
+  if (SLUG_PATTERN.test(id)) return id;
+  return null;
+}
+
 /**
  * @param {unknown} value
  * @param {string} label

@@ -7,6 +7,9 @@ import {
   mergeExtensionPackage,
   normalizeLegacyIds,
   parseExtensionPackage,
+  resolveBundledSlug,
+  BUNDLED_PLUGIN_SLUGS,
+  BUNDLED_THEME_SLUGS,
 } from '#/core/extensions/package-meta';
 
 const validPkg = {
@@ -97,5 +100,26 @@ describe('assertSlugMatchesFolder', () => {
     expect(() =>
       assertSlugMatchesFolder('sample-analytics', 'other', 'plugin')
     ).toThrow(/sample-analytics/);
+  });
+});
+
+describe('resolveBundledSlug', () => {
+  it('maps packaged id to slug', () => {
+    expect(
+      resolveBundledSlug('@bermooda/sample-analytics', BUNDLED_PLUGIN_SLUGS)
+    ).toBe('sample-analytics');
+    expect(
+      resolveBundledSlug('@bermooda/theme-default', BUNDLED_THEME_SLUGS)
+    ).toBe('default');
+  });
+
+  it('passes through an already-valid slug', () => {
+    expect(resolveBundledSlug('my-theme', BUNDLED_THEME_SLUGS)).toBe(
+      'my-theme'
+    );
+  });
+
+  it('returns null for unknown scoped package ids', () => {
+    expect(resolveBundledSlug('@acme/other', BUNDLED_PLUGIN_SLUGS)).toBeNull();
   });
 });

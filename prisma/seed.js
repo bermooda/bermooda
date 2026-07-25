@@ -15,7 +15,7 @@ const SETTING_DEFAULTS = {
   currencies: ['USD', 'EUR', 'AUD'],
   defaultLocale: 'en',
   locales: ['en', 'de', 'fr'],
-  activeTheme: 'default',
+  activeTheme: '@bermooda/theme-default',
   pluginOrder: DEFAULT_PLUGIN_ORDER,
 };
 
@@ -256,13 +256,15 @@ async function main() {
   await upsertSetting('activeTheme', SETTING_DEFAULTS.activeTheme);
   await upsertSetting(
     'pluginOrder',
-    DEFAULT_PLUGIN_ORDER.length ? DEFAULT_PLUGIN_ORDER : ['sample-analytics']
+    DEFAULT_PLUGIN_ORDER.length
+      ? DEFAULT_PLUGIN_ORDER
+      : ['@bermooda/sample-analytics']
   );
   await upsertSetting(
     'enabledPlugins',
     DEFAULT_ENABLED_PLUGINS.length
       ? DEFAULT_ENABLED_PLUGINS
-      : ['sample-analytics']
+      : ['@bermooda/sample-analytics']
   );
 
   if (shopName) {
