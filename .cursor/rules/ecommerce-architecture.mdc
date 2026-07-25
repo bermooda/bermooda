@@ -12,14 +12,14 @@ bermooda is a single-shop, open-source ecommerce platform. One React Router app 
 
 | Surface | Route prefix | UI location |
 | ------- | ------------ | ----------- |
-| Storefront | `/` (via `app/routes/storefront/`) | Active theme in `app/themes/<name>/components/` |
+| Storefront | `/` (via `app/routes/storefront/`) | Active theme in `app/themes/<slug>/components/` |
 | Admin | `/admin/*` | Core-owned UI in `app/components/admin/` |
 | Public API | `/api/v1/*` | Thin route handlers over `app/core/*` |
 | Admin API | `/api/admin/v1/*` | API-key auth; thin handlers over `app/core/*` |
 | Webhooks | `/webhooks/:provider` | Generic dispatcher to payment/shipping providers |
 | Auth handlers | `/admin/auth/*`, `/account/auth/*` | Proxies to better-auth (`app/routes/auth/`) |
 
-Plugin dispatchers (static routes, not runtime mutation): `/admin/plugins/:pluginId/*`, `/apps/:pluginId/*`.
+Plugin dispatchers (static routes, not runtime mutation): `/admin/plugins/:pluginSlug/*`, `/apps/:pluginSlug/*`.
 
 All public URLs must be registered in [app/routes.js](mdc:app/routes.js).
 
@@ -28,19 +28,19 @@ All public URLs must be registered in [app/routes.js](mdc:app/routes.js).
 - **Routes** orchestrate loaders/actions and call `app/core/*`.
 - **`app/core/*`** owns domain logic (catalog, cart, checkout, orders, payments, etc.).
 - **Themes** render storefront UI only. Theme components receive data from route loaders; they do not import `app/core/*` server modules directly. Client-safe helpers come from `#/core/index.js`.
-- **Plugins** extend via manifests, hooks, blocks, and optional admin/storefront route descriptors resolved by static dispatchers. See [docs/plugins.md](mdc:docs/plugins.md).
+- **Plugins** extend via package.json identity, hooks, blocks, and optional admin/storefront route descriptors resolved by static dispatchers. See [docs/plugins.md](mdc:docs/plugins.md).
 
 Do not put ecommerce domain workflows in `app/services`, `app/utils`, or `app/components`.
 
 ## Themes
 
-- Each theme lives under `app/themes/<name>/` with `manifest.js`, `components/`, and optional `i18n/<locale>.json`.
+- Each theme lives under `app/themes/<slug>/` with `package.json`, `index.js` (`defineTheme({ components })`), `components/`, and optional `i18n/<locale>.json`.
 - Storefront page components belong in the active theme, not in `app/components/`.
 - Theme engine: `#/core/themes/index.server`. See [docs/themes.md](mdc:docs/themes.md).
 
 ## Plugins
 
-- Each plugin lives under `app/plugins/<id>/` with `manifest.js`, optional `index.server.js` (hooks), `admin/routes.js`, and `blocks/`.
+- Each plugin lives under `app/plugins/<slug>/` with `package.json`, `index.server.js` (runtime via `definePlugin`), optional `admin/routes`, `storefront/routes`, and `blocks/`.
 - Plugin engine: `#/core/plugins/index.server`. See [docs/plugins.md](mdc:docs/plugins.md).
 
 ## Dual auth
