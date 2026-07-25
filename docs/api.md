@@ -17,18 +17,43 @@ Storefront catalog, search, cart, and checkout endpoints are **public** — no A
 
 ### Admin API
 
-Every `/api/admin/v1/*` endpoint requires an `admin`-scoped API key in the `Authorization` header:
+Most `/api/admin/v1/*` endpoints require an `admin`-scoped API key in the `Authorization` header:
 
 ```
 Authorization: Bearer berm_<your_key>
 ```
 
-**Creating a key:** Go to **Admin → API** and create a key there. Keys are shown once — store them securely. Only the SHA-256 hash is persisted.
+**Bootstrap (no existing key):**
+
+1. Prefer **CLI seed / `npm run cli:bootstrap`** — creates the first admin (if needed), marks setup complete, and prints a one-time bootstrap `berm_` key when none exist.
+2. Or use the unauthenticated setup endpoints below with a one-shot `SETUP_TOKEN` (see `.env.example`).
+
+**Creating additional keys:** `POST /api/admin/v1/api-keys` (requires an existing admin key), or **Admin → API**.
 
 **Scopes:**
 
-- `admin` — access to `/api/admin/v1/*`
+- `admin` — access to `/api/admin/v1/*` (except setup routes)
 - `storefront` — reserved for future storefront-scoped credentials
+
+### Setup endpoints (no API key)
+
+These live under `/api/admin/v1/setup*` and are rate-limited but **not** API-key authenticated.
+
+#### `GET /api/admin/v1/setup`
+
+Bootstrap readiness snapshot: `onboardingAvailable`, `adminExists`, `adminSetupComplete`, `apiKeyCount`, `bootstrapApiKeyAvailable`, `setupTokenConfigured`.
+
+#### `POST /api/admin/v1/setup/admin`
+
+Create the first admin when onboarding is still available (same gate as the Admin UI).
+
+**Body:** `{ "name": "...", "email": "...", "password": "...", "confirmPassword": "..." }` — `confirmPassword` defaults to `password` when omitted.
+
+#### `POST /api/admin/v1/setup/api-key`
+
+Create the **first** API key when none exist. Requires `SETUP_TOKEN` via `X-Setup-Token` or `Authorization: Bearer <SETUP_TOKEN>`. Returns `{ "key": "berm_...", "apiKey": { ... } }` once.
+
+When `SETUP_TOKEN` is unset, use CLI seed/bootstrap instead.
 
 ## Error responses
 
@@ -202,7 +227,86 @@ Update checkout session fields (address, shipping option, payment provider, tend
 
 ## Admin API (`/api/admin/v1`)
 
-All endpoints require `Authorization: Bearer berm_<key>` with `admin` scope.
+Authenticated endpoints require `Authorization: Bearer berm_<key>` with `admin` scope. Setup routes are listed under Authentication above.
+
+### Settings
+
+#### `GET /api/admin/v1/settings`
+
+Shop settings snapshot: general, currencies, locales, tax, shipping zones, SEO, address validation.
+
+#### `PATCH /api/admin/v1/settings`
+
+Update **one section per request**.
+
+**Body examples:**
+
+```json
+{ "general": { "shopName": "Acme", "contactEmail": "hello@acme.test" } }
+{ "currencies": { "defaultCurrency": "USD", "currencies": ["USD", "EUR"] } }
+{ "locales": { "defaultLocale": "en", "locales": ["en", "de"] } }
+{ "tax": { "mode": "exclusive", "regions": [] } }
+{ "shipping": { "zones": [] } }
+{ "seo": { "metaTitle": "Acme Shop" } }
+{ "addressValidation": { "provider": "noop" } }
+```
+
+Theme activation and plugin enablement use dedicated `/themes` and `/plugins` routes (not settings PATCH).
+
+### Themes
+
+#### `GET /api/admin/v1/themes`
+
+List registered themes, active theme id/manifest, and active theme settings values.
+
+#### `PATCH /api/admin/v1/themes`
+
+Activate a theme and/or save settings for the active theme.
+
+```json
+{ "themeId": "@bermooda/theme-default" }
+{ "settings": { "someKey": "value" } }
+```
+
+### Plugins
+
+#### `GET /api/admin/v1/plugins`
+
+List registered plugins, enabled ids, display order, and per-plugin settings.
+
+#### `PATCH /api/admin/v1/plugins`
+
+Enable/disable, reorder, and/or save settings.
+
+```json
+{ "pluginId": "@bermooda/sample-analytics", "enabled": true }
+{ "order": ["@bermooda/sample-analytics"] }
+{ "pluginId": "@bermooda/sample-analytics", "settings": { "apiKey": "..." } }
+```
+
+### Categories
+
+#### `GET /api/admin/v1/categories`
+
+List category tree. Query: `locale`.
+
+#### `POST /api/admin/v1/categories`
+
+Create a category.
+
+**Body:** `{ "title": "Shirts", "slug": "shirts", "locale": "en", "parentId": null, "position": 0 }` — `name` is accepted as an alias for `title`.
+
+#### `GET /api/admin/v1/categories/:id`
+
+Get a category (with children/products). Query: `locale`.
+
+#### `PATCH /api/admin/v1/categories/:id`
+
+Update title/slug/parent/position.
+
+#### `DELETE /api/admin/v1/categories/:id`
+
+Recursively delete a category and its descendants.
 
 ### Products
 
@@ -228,7 +332,33 @@ Update a product.
 
 Delete a product.
 
----
+### Collections
+
+#### `GET /api/admin/v1/collections` / `POST /api/admin/v1/collections`
+
+List or create collections. Query: `page`, `limit`, `q`, `published`.
+
+#### `GET|PATCH|DELETE /api/admin/v1/collections/:id`
+
+Get, update, or delete a collection.
+
+### Imports
+
+#### `POST /api/admin/v1/imports`
+
+Import products from CSV (multipart or JSON payload — see route module).
+
+### Inventory
+
+#### `GET /api/admin/v1/inventory/locations`
+
+List locations with inventory levels.
+
+#### `POST /api/admin/v1/inventory/locations`
+
+Create a location.
+
+**Body:** `{ "name": "Main warehouse", "code": "MAIN", "allowsPickup": false }`
 
 ### Orders
 
@@ -424,9 +554,23 @@ Delete a discount.
 
 #### `GET /api/admin/v1/api-keys`
 
-List all API keys (key hashes are never returned).
+List all API keys (key hashes are never returned). Query: `page`, `limit`.
 
-> API key creation and revocation are managed through the admin UI at `/admin/api-settings` to prevent bootstrap circular dependency.
+#### `POST /api/admin/v1/api-keys`
+
+Create an API key. The raw `key` is returned **once**.
+
+**Body:** `{ "label": "CI", "scopes": ["admin"], "expiresAt": null }`
+
+#### `GET /api/admin/v1/api-keys/:id`
+
+Get an API key metadata record.
+
+#### `DELETE /api/admin/v1/api-keys/:id`
+
+Revoke (permanently delete) an API key.
+
+For the **first** key with no existing credentials, use CLI seed/bootstrap or `POST /api/admin/v1/setup/api-key`.
 
 ---
 
@@ -609,6 +753,24 @@ Queue an immediate run of a scheduled export.
 #### `GET /api/admin/v1/export-runs/:id`
 
 Get export run metadata. Pass `includeContent=true` to include the CSV payload.
+
+---
+
+### Other admin resources
+
+Also registered (see route modules under `app/routes/api/admin/v1/`):
+
+| Resource                             | Notes                                                     |
+| ------------------------------------ | --------------------------------------------------------- |
+| `pages`, `menus`                     | CMS content                                               |
+| `channels`, `companies`, `quotes`    | Channels / B2B                                            |
+| `gift-cards`, `loyalty`, `wishlists` | Engagement                                                |
+| `pos`, `subscriptions` (+ plans)     | POS / subscriptions                                       |
+| `storage`                            | Storage provider status                                   |
+| `media/:id`                          | Get media metadata (**upload not yet exposed** — Phase D) |
+| `address-validation/*`               | Providers + validate                                      |
+| `back-in-stock-subscriptions`        | Waitlist management                                       |
+| Order/shipment PDF documents         | Invoice + packing slip                                    |
 
 ---
 

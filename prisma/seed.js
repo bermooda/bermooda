@@ -124,6 +124,51 @@ async function upsertTranslation(
   });
 }
 
+/**
+ * Create a one-time bootstrap API key when none exist.
+ * Mirrors app/core/api-keys (seed cannot use #/ Vite aliases).
+ * @returns {Promise<string|null>} raw key or null when skipped
+ */
+async function createBootstrapApiKeyIfNeeded() {
+  const existing = await prisma.apiKey.count();
+  if (existing > 0) {
+    console.log(
+      'API keys already exist; skipping bootstrap key (use Admin API or UI).'
+    );
+    return null;
+  }
+
+  const { createHash, randomBytes } = await import('node:crypto');
+  const rawKey = 'berm_' + randomBytes(32).toString('hex');
+  const keyHash = createHash('sha256').update(rawKey).digest('hex');
+  const record = await prisma.apiKey.create({
+    data: {
+      label: 'bootstrap',
+      keyHash,
+      scopes: JSON.stringify(['admin']),
+    },
+  });
+
+  console.log('');
+  console.log('Bootstrap API key created (shown once — store securely):');
+  console.log(`  ${rawKey}`);
+  console.log(`  id: ${record.id}`);
+  console.log('');
+  console.log('Agent / MCP config snippet:');
+  console.log(
+    JSON.stringify(
+      {
+        BERMOODA_URL: process.env.BERMOODA_URL || 'http://localhost:3000',
+        BERMOODA_API_KEY: rawKey,
+      },
+      null,
+      2
+    )
+  );
+  console.log('');
+  return rawKey;
+}
+
 async function upsertCategory(category) {
   const { id, slug, title, description, position, parentId } = category;
   await prisma.category.upsert({
@@ -249,6 +294,9 @@ async function main() {
 
   console.log(`Admin user: ${admin.email} (id: ${admin.id})`);
 
+  // Mark setup complete so Admin UI skips onboarding after seed/CLI bootstrap.
+  await upsertSetting('adminSetupComplete', true);
+
   await upsertSetting('defaultCurrency', SETTING_DEFAULTS.defaultCurrency);
   await upsertSetting('currencies', SETTING_DEFAULTS.currencies);
   await upsertSetting('defaultLocale', SETTING_DEFAULTS.defaultLocale);
@@ -273,6 +321,8 @@ async function main() {
   }
 
   console.log('Settings seeded.');
+
+  await createBootstrapApiKeyIfNeeded();
 
   if (minimalSeed) {
     console.log('Minimal seed complete (demo catalog skipped).');

@@ -100,12 +100,25 @@ export default [
   ]),
 
   // ---------------------------------------------------------------------------
+  // Admin setup (no API key) — first admin + bootstrap key via SETUP_TOKEN
+  // ---------------------------------------------------------------------------
+  ...prefix('api/admin/v1', [
+    route('setup', 'routes/api/admin/v1/setup.jsx'),
+    route('setup/admin', 'routes/api/admin/v1/setup/admin.jsx'),
+    route('setup/api-key', 'routes/api/admin/v1/setup/api-key.jsx'),
+  ]),
+
+  // ---------------------------------------------------------------------------
   // W2: Admin REST API (/api/admin/v1/*) — requires admin-scoped API key
   // ---------------------------------------------------------------------------
   layout('routes/api/admin/v1/_layout.jsx', [
     ...prefix('api/admin/v1', [
       route('products', 'routes/api/admin/v1/products.jsx'),
       route('products/:id', 'routes/api/admin/v1/products/$id.jsx'),
+      route('categories', 'routes/api/admin/v1/categories.jsx'),
+      route('categories/:id', 'routes/api/admin/v1/categories/$id.jsx'),
+      route('themes', 'routes/api/admin/v1/themes.jsx'),
+      route('plugins', 'routes/api/admin/v1/plugins.jsx'),
       route('orders', 'routes/api/admin/v1/orders.jsx'),
       route('orders/:id', 'routes/api/admin/v1/orders/$id.jsx'),
       route('orders/:id/refunds', 'routes/api/admin/v1/orders/$id/refunds.jsx'),

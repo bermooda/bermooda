@@ -384,13 +384,40 @@ export async function getCategoryBySlug(slug, opts = {}) {
   return getCategory(resolved.entityId, opts);
 }
 
+/**
+ * Resolve display title for category create/update.
+ * Admin UI and seed use `title`; older callers may pass `name`.
+ *
+ * @param {{ title?: string, name?: string }} data
+ * @returns {string|undefined}
+ */
+function resolveCategoryTitle(data) {
+  if (data.title !== undefined) return data.title;
+  if (data.name !== undefined) return data.name;
+  return undefined;
+}
+
 export async function createCategory(data) {
-  const { name, locale, slug: slugValue, ...categoryData } = data;
+  const {
+    name: _name,
+    title: _title,
+    locale,
+    slug: slugValue,
+    ...categoryData
+  } = data;
+  const displayTitle = resolveCategoryTitle(data);
 
   const category = await prisma.category.create({ data: categoryData });
 
-  if (locale && name) {
-    await setTranslation('category', category.id, locale, 'name', name);
+  if (locale && displayTitle) {
+    // Persist as `title` to match admin UI / seed / storefront.
+    await setTranslation(
+      'category',
+      category.id,
+      locale,
+      'title',
+      displayTitle
+    );
   }
   if (locale && slugValue) {
     await setSlug('category', category.id, locale, slugValue);
@@ -402,15 +429,22 @@ export async function createCategory(data) {
 }
 
 export async function updateCategory(id, data) {
-  const { name, locale, slug: slugValue, ...categoryData } = data;
+  const {
+    name: _name,
+    title: _title,
+    locale,
+    slug: slugValue,
+    ...categoryData
+  } = data;
+  const displayTitle = resolveCategoryTitle(data);
 
   const category = await prisma.category.update({
     where: { id },
     data: categoryData,
   });
 
-  if (locale && name !== undefined) {
-    await setTranslation('category', id, locale, 'name', name);
+  if (locale && displayTitle !== undefined) {
+    await setTranslation('category', id, locale, 'title', displayTitle);
   }
   if (locale && slugValue) {
     await setSlug('category', id, locale, slugValue);
