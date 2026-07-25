@@ -498,13 +498,14 @@ export async function getOpsMetrics(params = {}) {
  * @param {{ startDate?: string, endDate?: string, limit?: number, locale?: string }} params
  */
 export async function getDashboardReport(params = {}) {
-  const [overview, salesOverTime, salesByProduct, salesByCategory] =
+  const [overview, salesOverTime, salesByProduct, salesByCategory, ops] =
     await Promise.all([
       getOverviewMetrics(params),
       getSalesOverTime(params),
       getSalesByProduct(params),
       getSalesByCategory(params),
+      getOpsMetrics(params),
     ]);
 
-  return { overview, salesOverTime, salesByProduct, salesByCategory };
+  return { overview, salesOverTime, salesByProduct, salesByCategory, ops };
 }

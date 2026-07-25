@@ -253,10 +253,13 @@ describe('reporting', () => {
       _count: 0,
     });
     prisma.checkoutSession.count
-      .mockResolvedValueOnce(1)
-      .mockResolvedValueOnce(1);
+      .mockResolvedValueOnce(1) // overview completed
+      .mockResolvedValueOnce(1) // overview started
+      .mockResolvedValueOnce(0); // ops abandoned
     prisma.order.findMany.mockResolvedValue([]);
     prisma.orderLine.findMany.mockResolvedValue([]);
+    prisma.productVariant.count.mockResolvedValue(0);
+    prisma.productVariant.findMany.mockResolvedValue([]);
 
     const report = await getDashboardReport({
       startDate: '2026-01-01',
@@ -268,6 +271,10 @@ describe('reporting', () => {
       salesOverTime: [],
       salesByProduct: [],
       salesByCategory: [],
+      ops: expect.objectContaining({
+        abandonedCheckouts: 0,
+        lowStock: expect.objectContaining({ count: 0, threshold: 5 }),
+      }),
     });
   });
 
