@@ -25,6 +25,10 @@ vi.mock('#/libs/prisma.server', () => ({
     translation: {
       findMany: vi.fn(),
     },
+    customer: {
+      count: vi.fn(),
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -39,11 +43,12 @@ import {
   getDashboardReport,
   loadAdminDashboardData,
   getOpsMetrics,
+  getCustomerMetrics,
 } from '#/core/reporting/index.server';
 
 describe('reporting', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it('parseDateRange defaults to last 30 days', () => {
@@ -356,6 +361,74 @@ describe('reporting', () => {
     expect(prisma.productVariant.findMany.mock.calls[0][0].where).toEqual(
       lowStockWhere
     );
+  });
+
+  it('getCustomerMetrics splits new vs returning and ranks top spenders', async () => {
+    prisma.customer.count.mockResolvedValue(3);
+    prisma.order.findMany
+      // all-time paid: c1×2, c2×2, c3×1 → returning candidates {c1,c2}
+      .mockResolvedValueOnce([
+        { customerId: 'c1' },
+        { customerId: 'c1' },
+        { customerId: 'c2' },
+        { customerId: 'c2' },
+        { customerId: 'c3' },
+      ])
+      // in-range paid: c1 once (signup before range), c2 twice (signup in range)
+      .mockResolvedValueOnce([
+        {
+          customerId: 'c1',
+          totalCents: 5000,
+          customer: {
+            id: 'c1',
+            email: 'a@example.com',
+            name: 'A',
+            createdAt: new Date('2025-06-01T00:00:00.000Z'),
+          },
+        },
+        {
+          customerId: 'c2',
+          totalCents: 3000,
+          customer: {
+            id: 'c2',
+            email: 'b@example.com',
+            name: 'B',
+            createdAt: new Date('2026-01-15T00:00:00.000Z'),
+          },
+        },
+        {
+          customerId: 'c2',
+          totalCents: 2000,
+          customer: {
+            id: 'c2',
+            email: 'b@example.com',
+            name: 'B',
+            createdAt: new Date('2026-01-15T00:00:00.000Z'),
+          },
+        },
+      ]);
+
+    const result = await getCustomerMetrics({
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      limit: 10,
+    });
+
+    expect(result.newCustomers).toBe(3);
+    expect(result.returningCustomers).toBe(2);
+    expect(result.ordersByNewVsReturning).toEqual({
+      new: { orders: 2, revenueCents: 5000 },
+      returning: { orders: 1, revenueCents: 5000 },
+    });
+    expect(result.topCustomers[0]).toEqual(
+      expect.objectContaining({
+        customerId: 'c2',
+        email: 'b@example.com',
+        revenueCents: 5000,
+        orderCount: 2,
+      })
+    );
+    expect(result.range.start).toBe('2026-01-01T00:00:00.000Z');
   });
 
   it('loadAdminDashboardData returns KPI payload', async () => {

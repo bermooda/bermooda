@@ -392,6 +392,134 @@ export async function loadAdminDashboardData() {
 const LOW_STOCK_THRESHOLD = 5;
 
 /**
+ * Customer analytics for a date range.
+ * Guest orders (null customerId) are excluded from order-based metrics.
+ *
+ * @param {{ startDate?: string, endDate?: string, limit?: number }} [params]
+ * @returns {Promise<{
+ *   range: { start: string, end: string },
+ *   newCustomers: number,
+ *   returningCustomers: number,
+ *   ordersByNewVsReturning: {
+ *     new: { orders: number, revenueCents: number },
+ *     returning: { orders: number, revenueCents: number },
+ *   },
+ *   topCustomers: Array<{
+ *     customerId: string,
+ *     email: string | null,
+ *     name: string | null,
+ *     revenueCents: number,
+ *     orderCount: number,
+ *   }>,
+ * }>}
+ */
+export async function getCustomerMetrics(params = {}) {
+  const range = parseDateRange(params);
+  const dateFilter = buildCreatedAtFilter(range);
+  const limit = Math.min(
+    Math.max(Number(params.limit) || DEFAULT_REPORT_LIMIT, 1),
+    MAX_REPORT_LIMIT
+  );
+  const paid = { status: { in: PAID_ORDER_STATUSES } };
+
+  const [newCustomers, allTimePaidCustomerIds, rangedPaidOrders] =
+    await Promise.all([
+      prisma.customer.count({ where: { createdAt: dateFilter } }),
+      prisma.order.findMany({
+        where: { ...paid, customerId: { not: null } },
+        select: { customerId: true },
+      }),
+      prisma.order.findMany({
+        where: {
+          ...paid,
+          customerId: { not: null },
+          createdAt: dateFilter,
+        },
+        select: {
+          customerId: true,
+          totalCents: true,
+          customer: {
+            select: { id: true, email: true, name: true, createdAt: true },
+          },
+        },
+      }),
+    ]);
+
+  /** @type {Map<string, number>} */
+  const allTimeCount = new Map();
+  for (const row of allTimePaidCustomerIds) {
+    if (!row.customerId) continue;
+    allTimeCount.set(
+      row.customerId,
+      (allTimeCount.get(row.customerId) ?? 0) + 1
+    );
+  }
+
+  const returningIds = new Set(
+    [...allTimeCount.entries()]
+      .filter(([, count]) => count >= 2)
+      .map(([id]) => id)
+  );
+
+  const rangedCustomerIds = new Set(
+    rangedPaidOrders.map((o) => o.customerId).filter(Boolean)
+  );
+  let returningCustomers = 0;
+  for (const id of returningIds) {
+    if (rangedCustomerIds.has(id)) returningCustomers += 1;
+  }
+
+  const ordersByNewVsReturning = {
+    new: { orders: 0, revenueCents: 0 },
+    returning: { orders: 0, revenueCents: 0 },
+  };
+
+  /** @type {Map<string, { customerId: string, email: string | null, name: string | null, revenueCents: number, orderCount: number }>} */
+  const topMap = new Map();
+
+  for (const order of rangedPaidOrders) {
+    if (!order.customerId || !order.customer) continue;
+    const isNew =
+      order.customer.createdAt.getTime() >= range.start.getTime() &&
+      order.customer.createdAt.getTime() <= range.end.getTime();
+    const bucket = isNew
+      ? ordersByNewVsReturning.new
+      : ordersByNewVsReturning.returning;
+    bucket.orders += 1;
+    bucket.revenueCents += order.totalCents;
+
+    const row = topMap.get(order.customerId) ?? {
+      customerId: order.customerId,
+      email: order.customer.email,
+      name: order.customer.name,
+      revenueCents: 0,
+      orderCount: 0,
+    };
+    row.revenueCents += order.totalCents;
+    row.orderCount += 1;
+    topMap.set(order.customerId, row);
+  }
+
+  const topCustomers = [...topMap.values()]
+    .sort(
+      (a, b) =>
+        b.revenueCents - a.revenueCents || b.orderCount - a.orderCount
+    )
+    .slice(0, limit);
+
+  return {
+    range: {
+      start: range.start.toISOString(),
+      end: range.end.toISOString(),
+    },
+    newCustomers,
+    returningCustomers,
+    ordersByNewVsReturning,
+    topCustomers,
+  };
+}
+
+/**
  * Operational metrics for agents and dashboards.
  * Abandoned checkouts and recent orders respect the date range;
  * low stock is a current snapshot.
