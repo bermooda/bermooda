@@ -1,0 +1,10 @@
+{
+  "name": "@bermooda/sample-analytics",
+  "version": "1.0.0",
+  "description": "Captures order.created events and surfaces them in admin and storefront pages.",
+  "private": true,
+  "bermooda": {
+    "title": "Sample Analytics",
+    "slug": "sample-analytics"
+  }
+}

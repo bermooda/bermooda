@@ -1,0 +1,10 @@
+{
+  "name": "@bermooda/meilisearch",
+  "version": "1.0.0",
+  "description": "External search engine provider for fast faceted product search on large catalogs.",
+  "private": true,
+  "bermooda": {
+    "title": "Meilisearch",
+    "slug": "meilisearch"
+  }
+}

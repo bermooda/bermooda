@@ -30,4 +30,8 @@ describe('default theme storefront components', () => {
     expect(Layout).toBeTypeOf('function');
     expect(NotFoundPage).toBeTypeOf('function');
   });
+
+  it('supports the legacy default theme id', () => {
+    expect(getStorefrontComponent('Layout', 'default')).toBeTypeOf('function');
+  });
 });

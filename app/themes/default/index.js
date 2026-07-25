@@ -1,3 +1,5 @@
+import { defineTheme } from '#/core/themes/define';
+
 import AccountAddressesPage from '#/themes/default/components/account-addresses-page';
 import AccountDashboard from '#/themes/default/components/account-dashboard';
 import AccountLayout from '#/themes/default/components/account-layout';
@@ -22,11 +24,7 @@ import RegisterPage from '#/themes/default/components/register-page';
 import ResetPasswordPage from '#/themes/default/components/reset-password-page';
 import SearchPage from '#/themes/default/components/search-page';
 
-export default {
-  id: 'default',
-  name: 'Default',
-  version: '1.0.0',
-  description: 'The default bermooda storefront theme.',
+export default defineTheme({
   components: {
     Layout,
     HomePage,
@@ -52,4 +50,4 @@ export default {
     ResetPasswordPage,
     SearchPage,
   },
-};
+});

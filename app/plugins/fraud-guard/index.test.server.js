@@ -51,19 +51,21 @@ vi.mock('#/core/i18n/index.server', () => ({
 }));
 
 import { deny, emitBefore, _handlers } from '#/core/events/index.server';
-import { enable, register, _registry } from '#/core/plugins/index.server';
+import { mergeExtensionPackage } from '#/core/extensions/package-meta';
+import { __resetRegistry, enable, register } from '#/core/plugins/index.server';
 
 import { pluginManifest } from '#/plugins/fraud-guard/index.server';
+import pkg from '#/plugins/fraud-guard/package.json';
 
-const PLUGIN_ID = 'fraud-guard';
+const PLUGIN_ID = '@bermooda/fraud-guard';
 const HOLD_KEY = 'holds';
 
 describe('fraud-guard plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     _handlers.clear();
-    _registry.clear();
-    register(pluginManifest);
+    __resetRegistry();
+    register(mergeExtensionPackage(pkg, pluginManifest));
     mockSetting.upsert.mockResolvedValue({});
   });
 

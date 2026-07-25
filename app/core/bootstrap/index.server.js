@@ -17,6 +17,7 @@ import { registerAuditSubscribers } from '#/core/audit/index.server';
 import { registerBackInStockSubscribers } from '#/core/back-in-stock/index.server';
 import { seedDefaultChannel } from '#/core/channels/index.server';
 import { on } from '#/core/events/index.server';
+import { mergeExtensionPackage } from '#/core/extensions/package-meta';
 import { registerLoyaltySubscribers } from '#/core/loyalty/index.server';
 import {
   queueAbandonedCartSequence,
@@ -58,7 +59,8 @@ import '#/core/exports/job.server';
 // W9: marketing automation worker
 import '#/core/marketing/job.server';
 
-import defaultThemeManifest from '#/themes/default/manifest';
+import defaultRuntime from '#/themes/default/index';
+import defaultPkg from '#/themes/default/package.json';
 
 let _bootstrapped = false;
 
@@ -101,7 +103,7 @@ export function registerBuiltins() {
   registerSearch('db', dbSearchProvider);
 
   // Default storefront theme — runtime resolution via preloadStorefrontTheme()
-  registerTheme(defaultThemeManifest);
+  registerTheme(mergeExtensionPackage(defaultPkg, defaultRuntime));
 
   // Domain-event subscribers
   // W0-4: payment events → order status transitions
