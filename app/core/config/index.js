@@ -4,6 +4,10 @@
 
 import rootConfig from '#bermooda.config';
 
+import { resolveDevPort } from '#/core/config/port';
+
+export { DEFAULT_DEV_PORT, resolveDevPort } from '#/core/config/port';
+
 /** Hardcoded platform brand for admin chrome and auth product naming. */
 export const PLATFORM_NAME = 'bermooda';
 
@@ -57,17 +61,16 @@ export const DEFAULT_AUTH = {
  * @property {EmailConfig} email
  */
 
-const DEV_BASE_URL = 'http://localhost:3000';
-
 /**
  * Resolve the public site base URL.
  *
  * - Uses `root.baseUrl` when set (overrides the auto-dev URL).
- * - Outside production, defaults to http://localhost:3000 when unset.
+ * - Outside production, defaults to `http://localhost:${PORT}` when unset
+ *   (`PORT` env, else 3000). Matches Vite `server.port`.
  * - In production, `root.baseUrl` is required.
  *
  * @param {RootConfig | Record<string, unknown> | null | undefined} root
- * @param {{ nodeEnv?: string }} [options]
+ * @param {{ nodeEnv?: string, port?: string | number | null }} [options]
  * @returns {string}
  */
 export function resolveBaseUrl(root, options = {}) {
@@ -81,7 +84,7 @@ export function resolveBaseUrl(root, options = {}) {
   }
 
   if (nodeEnv !== 'production') {
-    return DEV_BASE_URL;
+    return `http://localhost:${resolveDevPort(options)}`;
   }
 
   throw new Error(
@@ -94,7 +97,7 @@ export function resolveBaseUrl(root, options = {}) {
  * Auth defaults live in this module; root may optionally override them.
  *
  * @param {RootConfig | Record<string, unknown>} root
- * @param {{ nodeEnv?: string }} [options]
+ * @param {{ nodeEnv?: string, port?: string | number | null }} [options]
  * @returns {AppConfig}
  */
 export function createConfig(root, options = {}) {

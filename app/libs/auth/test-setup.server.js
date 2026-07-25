@@ -83,6 +83,7 @@ vi.mock('#/core/events/index.server', () => ({
 
 vi.mock('#/core/config', () => ({
   PLATFORM_NAME: 'bermooda',
+  resolveDevPort: () => 3000,
   default: {
     baseUrl: 'http://localhost:3000',
     auth: {
