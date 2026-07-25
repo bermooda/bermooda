@@ -24,24 +24,24 @@
 
 ## File Structure
 
-| File | Responsibility |
-| ---- | -------------- |
-| `app/core/extensions/package-meta.js` | Parse/validate/merge `package.json`; slug pattern; legacy id maps |
-| `app/core/extensions/package-meta.test.js` | Unit tests for package-meta |
-| `app/core/plugins/index.server.js` | Runtime-only `definePlugin`; discover+merge; slug index; legacy normalize on read |
-| `app/core/plugins/manifest.js` | Update required field constants (`title`/`slug` instead of `name`) |
-| `app/core/themes/index.server.js` | Runtime-only `defineTheme`; merge on register; slug index |
-| `app/core/themes/manifest.js` | Required fields: `id`, `title`, `version`, `components`, `slug` |
-| `app/core/themes/storefront-components/index.js` | Import theme `index.js` + `package.json`, merge, key by id |
-| `app/core/bootstrap/index.server.js` | Register default theme from `index.js` + `package.json` |
-| `app/core/i18n/index.server.js` | Resolve theme/plugin filesystem paths via **slug** |
-| `app/core/settings/defaults.js` | `DEFAULT_ACTIVE_THEME` → `@bermooda/theme-default` |
-| `app/plugins/*/package.json` | Identity for each plugin |
-| `app/plugins/*/index.server.js` | Drop manifest imports; runtime-only `definePlugin` |
-| `app/themes/default/package.json` | Identity for default theme |
-| `app/themes/default/index.js` | `defineTheme({ components })` (replaces `manifest.js`) |
-| Admin/storefront plugin routes | Resolve by slug; display `title` |
-| `docs/plugins.md`, `docs/themes.md`, `.cursor/rules/ecommerce-architecture.mdc` | Document contract |
+| File                                                                            | Responsibility                                                                    |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `app/core/extensions/package-meta.js`                                           | Parse/validate/merge `package.json`; slug pattern; legacy id maps                 |
+| `app/core/extensions/package-meta.test.js`                                      | Unit tests for package-meta                                                       |
+| `app/core/plugins/index.server.js`                                              | Runtime-only `definePlugin`; discover+merge; slug index; legacy normalize on read |
+| `app/core/plugins/manifest.js`                                                  | Update required field constants (`title`/`slug` instead of `name`)                |
+| `app/core/themes/index.server.js`                                               | Runtime-only `defineTheme`; merge on register; slug index                         |
+| `app/core/themes/manifest.js`                                                   | Required fields: `id`, `title`, `version`, `components`, `slug`                   |
+| `app/core/themes/storefront-components/index.js`                                | Import theme `index.js` + `package.json`, merge, key by id                        |
+| `app/core/bootstrap/index.server.js`                                            | Register default theme from `index.js` + `package.json`                           |
+| `app/core/i18n/index.server.js`                                                 | Resolve theme/plugin filesystem paths via **slug**                                |
+| `app/core/settings/defaults.js`                                                 | `DEFAULT_ACTIVE_THEME` → `@bermooda/theme-default`                                |
+| `app/plugins/*/package.json`                                                    | Identity for each plugin                                                          |
+| `app/plugins/*/index.server.js`                                                 | Drop manifest imports; runtime-only `definePlugin`                                |
+| `app/themes/default/package.json`                                               | Identity for default theme                                                        |
+| `app/themes/default/index.js`                                                   | `defineTheme({ components })` (replaces `manifest.js`)                            |
+| Admin/storefront plugin routes                                                  | Resolve by slug; display `title`                                                  |
+| `docs/plugins.md`, `docs/themes.md`, `.cursor/rules/ecommerce-architecture.mdc` | Document contract                                                                 |
 
 Delete after migration: all `app/plugins/*/manifest.js`, `app/themes/default/manifest.js`.
 
@@ -50,10 +50,12 @@ Delete after migration: all `app/plugins/*/manifest.js`, `app/themes/default/man
 ### Task 1: Shared `package-meta` helper
 
 **Files:**
+
 - Create: `app/core/extensions/package-meta.js`
 - Create: `app/core/extensions/package-meta.test.js`
 
 **Interfaces:**
+
 - Produces:
   - `SLUG_PATTERN` — `RegExp`
   - `LEGACY_PLUGIN_ID_MAP` — `Record<string, string>`
@@ -146,7 +148,10 @@ describe('mergeExtensionPackage', () => {
 describe('normalizeLegacyIds', () => {
   it('rewrites known short plugin ids', () => {
     expect(
-      normalizeLegacyIds(['sample-analytics', '@acme/other'], LEGACY_PLUGIN_ID_MAP)
+      normalizeLegacyIds(
+        ['sample-analytics', '@acme/other'],
+        LEGACY_PLUGIN_ID_MAP
+      )
     ).toEqual(['@bermooda/sample-analytics', '@acme/other']);
   });
 
@@ -183,7 +188,7 @@ export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const LEGACY_PLUGIN_ID_MAP = {
   'sample-analytics': '@bermooda/sample-analytics',
   'fraud-guard': '@bermooda/fraud-guard',
-  meilisearch: '@bermooda/meilisearch',
+  'meilisearch': '@bermooda/meilisearch',
 };
 
 export const LEGACY_THEME_ID_MAP = {
@@ -216,7 +221,9 @@ export function parseExtensionPackage(pkg) {
       /** @type {Record<string, unknown>} */ (pkg).bermooda
     );
   if (!bermooda || typeof bermooda !== 'object') {
-    throw new Error('Extension package.json missing required "bermooda" object');
+    throw new Error(
+      'Extension package.json missing required "bermooda" object'
+    );
   }
 
   const id = requireNonEmptyString(
@@ -304,6 +311,7 @@ git commit -m "feat: add extension package.json metadata helper"
 ### Task 2: Plugin `package.json` files + runtime-only entries
 
 **Files:**
+
 - Create: `app/plugins/sample-analytics/package.json`
 - Create: `app/plugins/fraud-guard/package.json`
 - Create: `app/plugins/meilisearch/package.json`
@@ -314,6 +322,7 @@ git commit -m "feat: add extension package.json metadata helper"
 - Delete: `app/plugins/*/manifest.js` (after Task 3 wires discovery — delete in Task 3 if tests still import manifests)
 
 **Interfaces:**
+
 - Consumes: none from Task 1 yet in plugin files themselves
 - Produces: each plugin root has valid `package.json`; `definePlugin({ hooks|blocks|providers... })` only
 
@@ -408,6 +417,7 @@ git commit -m "feat: add plugin package.json and drop identity from definePlugin
 ### Task 3: Plugin engine — merge on discover, slug index, legacy ids
 
 **Files:**
+
 - Modify: `app/core/plugins/index.server.js`
 - Modify: `app/core/plugins/manifest.js`
 - Modify: `app/core/plugins/index.test.server.js`
@@ -415,6 +425,7 @@ git commit -m "feat: add plugin package.json and drop identity from definePlugin
 - Delete: `app/plugins/*/manifest.js`
 
 **Interfaces:**
+
 - Consumes: `mergeExtensionPackage`, `assertSlugMatchesFolder`, `normalizeLegacyIds`, `LEGACY_PLUGIN_ID_MAP` from `#/core/extensions/package-meta`
 - Produces:
   - `definePlugin(runtime)` — no longer requires `id`/`name`/`version`
@@ -555,6 +566,7 @@ git commit -m "feat: discover plugins from package.json with slug index"
 ### Task 4: Theme `package.json` + `index.js` + engine
 
 **Files:**
+
 - Create: `app/themes/default/package.json`
 - Create: `app/themes/default/index.js` (move component map from `manifest.js`)
 - Delete: `app/themes/default/manifest.js`
@@ -566,6 +578,7 @@ git commit -m "feat: discover plugins from package.json with slug index"
 - Modify: `app/core/bootstrap/index.server.js`
 
 **Interfaces:**
+
 - Consumes: `mergeExtensionPackage`, `LEGACY_THEME_ID_MAP`, `normalizeLegacyIds`
 - Produces:
   - `defineTheme({ components, settings? })` — requires `components` only (plus optional runtime settings)
@@ -595,7 +608,6 @@ Move all component imports from `manifest.js`. Export:
 ```js
 import { defineTheme } from '#/core/themes/index.server';
 // NOTE: defineTheme must be importable from a client-safe path OR index.js must not import .server
-
 ```
 
 **Critical:** `#/core/themes/index.server` cannot be imported from client-bundled `themes/default/index.js`.
@@ -688,15 +700,14 @@ const THEMES = {
   [defaultThemeManifest.id]: defaultThemeManifest,
 };
 
-export function getStorefrontComponent(name, themeId = defaultThemeManifest.id) {
+export function getStorefrontComponent(
+  name,
+  themeId = defaultThemeManifest.id
+) {
   const manifest =
-    THEMES[themeId] ??
-    THEMES[defaultThemeManifest.id] ??
-    defaultThemeManifest;
+    THEMES[themeId] ?? THEMES[defaultThemeManifest.id] ?? defaultThemeManifest;
   return (
-    manifest.components[name] ??
-    defaultThemeManifest.components[name] ??
-    null
+    manifest.components[name] ?? defaultThemeManifest.components[name] ?? null
   );
 }
 ```
@@ -731,6 +742,7 @@ git commit -m "feat: load themes from package.json and index.js"
 ### Task 5: Settings defaults, seed, i18n paths
 
 **Files:**
+
 - Modify: `app/core/settings/defaults.js`
 - Modify: `app/test/factories/setting.js`
 - Modify: `prisma/seed.js`
@@ -738,6 +750,7 @@ git commit -m "feat: load themes from package.json and index.js"
 - Modify: `app/core/i18n/index.test.server.js`
 
 **Interfaces:**
+
 - Consumes: `getRegisteredTheme`, `getRegisteredPlugin`, slug fields; `normalizeLegacyIds` / maps
 - Produces: defaults and seed use full package ids; i18n joins `themes/<slug>/i18n` and `plugins/<slug>/i18n`
 
@@ -852,6 +865,7 @@ git commit -m "feat: persist extension package ids; resolve i18n via slugs"
 ### Task 6: Routes and admin UI (`title` + slug URLs)
 
 **Files:**
+
 - Modify: `app/routes/admin/plugins/index.jsx`
 - Modify: `app/routes/admin/plugins/$pluginId.jsx`
 - Modify: `app/routes/admin/plugins/index.test.jsx` / `$pluginId.test.jsx`
@@ -861,6 +875,7 @@ git commit -m "feat: persist extension package ids; resolve i18n via slugs"
 - Modify: any `Link`/`to=` that embeds plugin id
 
 **Interfaces:**
+
 - Consumes: `getRegisteredPluginBySlug`, manifest.`title`, manifest.`slug`, manifest.`id`
 - Produces: URL param is slug; enable/disable still passes **id**; UI shows **title** (and optionally monospace **id**)
 
@@ -924,12 +939,14 @@ git commit -m "feat: use plugin/theme slugs in URLs and title in admin UI"
 ### Task 7: Docs and architecture rules
 
 **Files:**
+
 - Modify: `docs/plugins.md`
 - Modify: `docs/themes.md`
 - Modify: `.cursor/rules/ecommerce-architecture.mdc`
 - Modify: `docs/superpowers/specs/2026-07-25-package-json-plugin-theme-manifest-design.md` (status → Approved)
 
 **Content requirements:**
+
 - Document `package.json` contract and field table.
 - Explicitly state: **id = full package name**; **URLs use `bermooda.slug`** (lowercase hyphens).
 - `definePlugin` / `defineTheme` examples without identity fields.
@@ -996,23 +1013,23 @@ git push -u origin HEAD
 
 ## Spec coverage checklist
 
-| Spec requirement | Task |
-| ---------------- | ---- |
-| package.json identity mapping | 1, 2, 4 |
-| `bermooda.title` / `bermooda.slug` + slug regex | 1 |
-| id = full package name | 1–6 |
-| Auto-merge; no identity in definePlugin/defineTheme | 2, 3, 4 |
-| Plugin discover glob + folder===slug | 3 |
-| Slug index + URL params | 3, 6 |
-| Drop adminRoutes/storefrontRoutes from package meta | 3, 6 |
-| Theme `index.js` + components | 4 |
-| Client-safe defineTheme (no `.server` in theme entry) | 4 |
-| activeTheme / enabledPlugins store ids | 5 |
-| Legacy short-id normalization | 1, 3, 5 |
-| i18n via slug paths | 5 |
-| Admin title display | 6 |
-| Docs + architecture rules | 7 |
-| Delete manifest.js | 3, 4 |
+| Spec requirement                                      | Task    |
+| ----------------------------------------------------- | ------- |
+| package.json identity mapping                         | 1, 2, 4 |
+| `bermooda.title` / `bermooda.slug` + slug regex       | 1       |
+| id = full package name                                | 1–6     |
+| Auto-merge; no identity in definePlugin/defineTheme   | 2, 3, 4 |
+| Plugin discover glob + folder===slug                  | 3       |
+| Slug index + URL params                               | 3, 6    |
+| Drop adminRoutes/storefrontRoutes from package meta   | 3, 6    |
+| Theme `index.js` + components                         | 4       |
+| Client-safe defineTheme (no `.server` in theme entry) | 4       |
+| activeTheme / enabledPlugins store ids                | 5       |
+| Legacy short-id normalization                         | 1, 3, 5 |
+| i18n via slug paths                                   | 5       |
+| Admin title display                                   | 6       |
+| Docs + architecture rules                             | 7       |
+| Delete manifest.js                                    | 3, 4    |
 
 ## Execution handoff
 
@@ -1020,7 +1037,7 @@ Plan complete and saved to `docs/superpowers/plans/2026-07-25-package-json-plugi
 
 **Two execution options:**
 
-1. **Subagent-Driven (recommended)** — fresh subagent per task, review between tasks  
-2. **Inline Execution** — execute tasks in this session with checkpoints  
+1. **Subagent-Driven (recommended)** — fresh subagent per task, review between tasks
+2. **Inline Execution** — execute tasks in this session with checkpoints
 
 Which approach?

@@ -9,18 +9,18 @@ Remove `manifest.js` from plugins and themes. Identity and display metadata live
 
 ## Decisions
 
-| Decision | Choice |
-| -------- | ------ |
-| Identity `id` | Full `package.json` `name`, including scope (e.g. `@bermooda/sample-analytics`) |
-| Display name | `bermooda.title` (required) — replaces former manifest `name` |
-| Version / description | Top-level `version` and `description` |
-| URL key | `bermooda.slug` (required) — not the package name |
-| Slug format | Lowercase hyphenated: `^[a-z0-9]+(?:-[a-z0-9]+)*$` |
-| Theme component registration | Thin `defineTheme({ components })` in JS; metadata auto-merged from `package.json` |
-| Theme entry filename | `index.js` (client-safe; storefront component registry) |
-| Plugin entry filename | `index.server.js` (unchanged) |
-| Passing metadata into `definePlugin` / `defineTheme` | Not required; auto-loaded from sibling `package.json` |
-| `adminRoutes` / `storefrontRoutes` in package metadata | Dropped; route presence remains glob-driven |
+| Decision                                               | Choice                                                                             |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| Identity `id`                                          | Full `package.json` `name`, including scope (e.g. `@bermooda/sample-analytics`)    |
+| Display name                                           | `bermooda.title` (required) — replaces former manifest `name`                      |
+| Version / description                                  | Top-level `version` and `description`                                              |
+| URL key                                                | `bermooda.slug` (required) — not the package name                                  |
+| Slug format                                            | Lowercase hyphenated: `^[a-z0-9]+(?:-[a-z0-9]+)*$`                                 |
+| Theme component registration                           | Thin `defineTheme({ components })` in JS; metadata auto-merged from `package.json` |
+| Theme entry filename                                   | `index.js` (client-safe; storefront component registry)                            |
+| Plugin entry filename                                  | `index.server.js` (unchanged)                                                      |
+| Passing metadata into `definePlugin` / `defineTheme`   | Not required; auto-loaded from sibling `package.json`                              |
+| `adminRoutes` / `storefrontRoutes` in package metadata | Dropped; route presence remains glob-driven                                        |
 
 ## Package.json contract
 
@@ -40,14 +40,14 @@ Every plugin and theme root includes a `package.json`:
 
 ### Field mapping
 
-| Runtime field | Source | Required |
-| ------------- | ------ | -------- |
-| `id` | `name` | yes |
-| `version` | `version` | yes |
-| `description` | `description` | no |
-| `title` | `bermooda.title` | yes |
-| `slug` | `bermooda.slug` | yes |
-| `settings` | `bermooda.settings` | no (JSON schema for admin forms) |
+| Runtime field | Source              | Required                         |
+| ------------- | ------------------- | -------------------------------- |
+| `id`          | `name`              | yes                              |
+| `version`     | `version`           | yes                              |
+| `description` | `description`       | no                               |
+| `title`       | `bermooda.title`    | yes                              |
+| `slug`        | `bermooda.slug`     | yes                              |
+| `settings`    | `bermooda.settings` | no (JSON schema for admin forms) |
 
 ### Slug rules
 
@@ -57,12 +57,12 @@ Every plugin and theme root includes a `package.json`:
 
 ### First-party examples
 
-| Package | `name` (id) | `bermooda.slug` | Folder |
-| ------- | ------------- | --------------- | ------ |
+| Package          | `name` (id)                  | `bermooda.slug`    | Folder                          |
+| ---------------- | ---------------------------- | ------------------ | ------------------------------- |
 | Sample Analytics | `@bermooda/sample-analytics` | `sample-analytics` | `app/plugins/sample-analytics/` |
-| Fraud Guard | `@bermooda/fraud-guard` | `fraud-guard` | `app/plugins/fraud-guard/` |
-| Meilisearch | `@bermooda/meilisearch` | `meilisearch` | `app/plugins/meilisearch/` |
-| Default theme | `@bermooda/theme-default` | `default` | `app/themes/default/` |
+| Fraud Guard      | `@bermooda/fraud-guard`      | `fraud-guard`      | `app/plugins/fraud-guard/`      |
+| Meilisearch      | `@bermooda/meilisearch`      | `meilisearch`      | `app/plugins/meilisearch/`      |
+| Default theme    | `@bermooda/theme-default`    | `default`          | `app/themes/default/`           |
 
 Folder name for bundled first-party packages equals `slug` so filesystem globs and i18n paths stay simple.
 
