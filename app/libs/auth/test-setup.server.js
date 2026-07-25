@@ -82,8 +82,8 @@ vi.mock('#/core/events/index.server', () => ({
 }));
 
 vi.mock('#/core/config', () => ({
+  PLATFORM_NAME: 'bermooda',
   default: {
-    appName: 'bermooda',
     baseUrl: 'http://localhost:3000',
     auth: {
       adminBasePath: '/admin/auth',
@@ -92,6 +92,9 @@ vi.mock('#/core/config', () => ({
       customerBasePath: '/account/auth',
       customerCallbackUrl: '/account',
       customerCookiePrefix: 'bermooda_customer_',
+    },
+    email: {
+      fromNoReply: 'bermooda <noreply@example.com>',
     },
   },
 }));

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { createConfig, resolveBaseUrl } from '#/core/config';
+import {
+  createConfig,
+  DEFAULT_AUTH,
+  PLATFORM_NAME,
+  resolveBaseUrl,
+} from '#/core/config';
 
 describe('resolveBaseUrl', () => {
   it('uses the root baseUrl when set, including in development', () => {
@@ -44,26 +49,44 @@ describe('resolveBaseUrl', () => {
 });
 
 describe('createConfig', () => {
-  it('derives runtime config from the root export', () => {
+  it('applies auth defaults from the core module', () => {
     const config = createConfig(
       {
-        appName: 'demo',
         baseUrl: 'https://demo.example',
-        auth: { adminBasePath: '/admin/auth' },
+        email: { fromNoReply: 'shop <noreply@example.com>' },
       },
       { nodeEnv: 'production' }
     );
 
-    expect(config.appName).toBe('demo');
     expect(config.baseUrl).toBe('https://demo.example');
-    expect(config.auth.adminBasePath).toBe('/admin/auth');
+    expect(config.auth).toEqual(DEFAULT_AUTH);
+    expect(config.email.fromNoReply).toBe('shop <noreply@example.com>');
+    expect(config).not.toHaveProperty('appName');
+    expect(config).not.toHaveProperty('appDescription');
+    expect(config).not.toHaveProperty('stripe');
+    expect(config).not.toHaveProperty('resend');
+  });
+
+  it('allows root auth overrides on top of defaults', () => {
+    const config = createConfig(
+      {
+        auth: { adminCallbackUrl: '/admin/home' },
+      },
+      { nodeEnv: 'development' }
+    );
+
+    expect(config.auth.adminCallbackUrl).toBe('/admin/home');
+    expect(config.auth.adminBasePath).toBe(DEFAULT_AUTH.adminBasePath);
   });
 
   it('fills the auto-dev baseUrl when the root omits it', () => {
-    const config = createConfig(
-      { appName: 'demo' },
-      { nodeEnv: 'development' }
-    );
+    const config = createConfig({}, { nodeEnv: 'development' });
     expect(config.baseUrl).toBe('http://localhost:3000');
+  });
+});
+
+describe('PLATFORM_NAME', () => {
+  it('is the hardcoded platform brand', () => {
+    expect(PLATFORM_NAME).toBe('bermooda');
   });
 });

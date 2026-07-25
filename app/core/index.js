@@ -8,7 +8,7 @@ export { useT, translate } from '#/core/i18n';
 
 // -- Config -----------------------------------------------------------------
 
-export { default as config } from '#/core/config';
+export { default as config, PLATFORM_NAME } from '#/core/config';
 
 // -- Utilities --------------------------------------------------------------
 

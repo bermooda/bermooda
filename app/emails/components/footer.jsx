@@ -1,14 +1,17 @@
 import { Text } from '@react-email/components';
 
-import config from '#/core/config';
+import { PLATFORM_NAME } from '#/core/config';
 
 /**
  * Email template for footer
+ *
+ * @param {Object} props
+ * @param {string} [props.brandName]
  */
-export default function EmailFooter() {
+export default function EmailFooter({ brandName = PLATFORM_NAME }) {
   return (
     <Text className="dark-mode-text-secondary text-center text-sm text-slate-500">
-      © {new Date().getFullYear()} {config.appName}. All rights reserved.
+      © {new Date().getFullYear()} {brandName}. All rights reserved.
     </Text>
   );
 }

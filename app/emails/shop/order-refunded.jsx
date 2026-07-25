@@ -27,12 +27,16 @@ export default function OrderRefundedEmail({
   orderUrl,
   amountCents = 0,
   currency = 'USD',
+  brandName,
 }) {
   const t = labels[locale] ?? labels.en;
   const url = orderUrl ?? `${config.baseUrl}/account/orders`;
 
   return (
-    <EmailLayout preview={`${t.heading} — ${orderNumber}`}>
+    <EmailLayout
+      brandName={brandName}
+      preview={`${t.heading} — ${orderNumber}`}
+    >
       <EmailHeading>{t.heading}</EmailHeading>
       <EmailSubheading>{t.subheading(orderNumber)}</EmailSubheading>
 

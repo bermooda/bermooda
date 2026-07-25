@@ -44,6 +44,7 @@ function fmt(cents, currency) {
 /**
  * @param {Object} props
  * @param {string} [props.locale]
+ * @param {string} [props.brandName]
  * @param {string} props.name
  * @param {string} [props.cartUrl]
  * @param {Array<{title: string, quantity: number, priceCentsSnapshot: number}>} [props.lines]
@@ -55,12 +56,13 @@ export default function AbandonedCartEmail({
   cartUrl,
   lines = [],
   currency = 'USD',
+  brandName,
 }) {
   const t = labels[locale] ?? labels.en;
   const url = cartUrl ?? `${config.baseUrl}/cart`;
 
   return (
-    <EmailLayout preview={t.preview}>
+    <EmailLayout brandName={brandName} preview={t.preview}>
       <EmailHeading>{t.heading}</EmailHeading>
       <EmailSubheading>{t.subheading(name)}</EmailSubheading>
       <Section className="dark-mode-bg rounded-xl bg-indigo-50 px-6 py-4">

@@ -3,8 +3,9 @@
 
 import PDFDocument from 'pdfkit';
 
-import config from '#/core/config';
+import { PLATFORM_NAME } from '#/core/config';
 import prisma from '#/libs/prisma.server';
+import { get as settingsGet, SETTING_KEYS } from '#/core/settings/index.server';
 
 const INVOICE_ORDER_INCLUDE = {
   lines: { orderBy: { createdAt: 'asc' } },
@@ -210,6 +211,15 @@ export function buildPackingSlipFilename(shipment) {
 // ---------------------------------------------------------------------------
 
 /**
+ * @returns {Promise<string>}
+ */
+async function resolveShopBrandName() {
+  const name = await settingsGet(SETTING_KEYS.SHOP_NAME);
+  if (typeof name === 'string' && name.trim()) return name.trim();
+  return PLATFORM_NAME;
+}
+
+/**
  * Generate an invoice PDF for an order.
  *
  * @param {string} orderId
@@ -219,8 +229,9 @@ export async function generateInvoicePdf(orderId) {
   const order = await loadOrderForInvoice(orderId);
   const doc = new PDFDocument({ margin: 50, size: 'A4' });
   const addr = parseAddressJson(order.shippingAddressJson);
+  const shopName = await resolveShopBrandName();
 
-  doc.fontSize(20).text(config.appName ?? 'bermooda', { align: 'left' });
+  doc.fontSize(20).text(shopName, { align: 'left' });
   doc.moveDown(0.5);
   doc.fontSize(14).text('Invoice', { align: 'left' });
   doc.moveDown();

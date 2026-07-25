@@ -21,7 +21,7 @@ import { UserIcon as UserIconSolid } from '@heroicons/react/24/solid';
 import { useState } from 'react';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 
-import config from '#/core/config';
+import { PLATFORM_NAME } from '#/core/config';
 import { authenticate } from '#/libs/auth/admin/index.server';
 import { ADMIN_AVAILABLE_LOCALES, translate } from '#/core/i18n';
 import { I18nContext } from '#/core/i18n/context';
@@ -256,7 +256,7 @@ function SidebarContent({ onClose, onOpenCommandPalette }) {
           onClick={onClose}
         >
           <Logo alt="Admin" className="-m-1 h-7 w-auto shrink-0" />
-          <span className="truncate text-base font-bold">{config.appName}</span>
+          <span className="truncate text-base font-bold">{PLATFORM_NAME}</span>
         </Link>
 
         <div className="flex shrink-0 items-center gap-1">
