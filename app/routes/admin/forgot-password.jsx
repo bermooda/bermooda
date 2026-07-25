@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Form, Link, useActionData } from 'react-router';
 
-import config from '#/config';
+import config from '#/core/config';
 import { adminAuth } from '#/libs/auth/admin/index.server';
 import AuthLayout from '#/components/auth/auth-layout';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';

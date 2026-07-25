@@ -6,6 +6,10 @@
 
 export { useT, translate } from '#/core/i18n';
 
+// -- Config -----------------------------------------------------------------
+
+export { default as config } from '#/core/config';
+
 // -- Utilities --------------------------------------------------------------
 
 // formatPrice is a pure Intl helper — client-safe.
