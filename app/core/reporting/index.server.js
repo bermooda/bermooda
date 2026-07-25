@@ -7,8 +7,8 @@ import {
   loadProductTitleMap,
 } from '#/core/catalog/translations.server';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
-import { get } from '#/core/settings/index.server';
 import { DEFAULT_CURRENCY } from '#/core/settings/defaults';
+import { get } from '#/core/settings/index.server';
 import { SETTING_KEYS } from '#/core/settings/keys';
 
 export const PAID_ORDER_STATUSES = ['paid', 'fulfilled', 'refunded'];
@@ -508,8 +508,7 @@ export async function getCustomerMetrics(params = {}) {
 
   const topCustomers = [...topMap.values()]
     .sort(
-      (a, b) =>
-        b.revenueCents - a.revenueCents || b.orderCount - a.orderCount
+      (a, b) => b.revenueCents - a.revenueCents || b.orderCount - a.orderCount
     )
     .slice(0, limit);
 
