@@ -29,8 +29,31 @@ vi.mock('#/libs/prisma.server', () => ({
       count: vi.fn(),
       findMany: vi.fn(),
     },
+    inventoryLevel: {
+      findMany: vi.fn(),
+    },
+    location: {
+      findMany: vi.fn(),
+    },
+    variantPrice: {
+      findMany: vi.fn(),
+    },
   },
 }));
+
+vi.mock('#/core/catalog/translations.server', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    loadProductTitleMap: vi.fn(
+      async () =>
+        new Map([
+          ['p1', 'Hat'],
+          ['p2', 'Cap'],
+        ])
+    ),
+  };
+});
 
 import prisma from '#/libs/prisma.server';
 import {
@@ -44,6 +67,7 @@ import {
   loadAdminDashboardData,
   getOpsMetrics,
   getCustomerMetrics,
+  getInventoryMetrics,
 } from '#/core/reporting/index.server';
 
 describe('reporting', () => {
@@ -429,6 +453,47 @@ describe('reporting', () => {
       })
     );
     expect(result.range.start).toBe('2026-01-01T00:00:00.000Z');
+  });
+
+  it('getInventoryMetrics snapshots stock, value, and by-location', async () => {
+    prisma.productVariant.findMany.mockResolvedValue([
+      {
+        id: 'v1',
+        sku: 'SKU-1',
+        inventoryCount: 2,
+        productId: 'p1',
+      },
+      {
+        id: 'v2',
+        sku: 'SKU-2',
+        inventoryCount: 0,
+        productId: 'p2',
+      },
+    ]);
+    prisma.variantPrice.findMany.mockResolvedValue([
+      { variantId: 'v1', priceCents: 1000 },
+      { variantId: 'v2', priceCents: 500 },
+    ]);
+    prisma.inventoryLevel.findMany.mockResolvedValue([
+      { locationId: 'loc1', variantId: 'v1', quantity: 2 },
+      { locationId: 'loc1', variantId: 'v2', quantity: 0 },
+    ]);
+    prisma.location.findMany.mockResolvedValue([
+      { id: 'loc1', name: 'Warehouse', code: 'WH' },
+    ]);
+
+    const inv = await getInventoryMetrics({ currency: 'USD', limit: 10 });
+    expect(inv.asOf).toEqual(expect.any(String));
+    expect(inv.lowStock.count).toBe(1);
+    expect(inv.outOfStock.count).toBe(1);
+    expect(inv.stockValueCents).toBe(2000);
+    expect(inv.byLocation[0]).toEqual(
+      expect.objectContaining({
+        locationId: 'loc1',
+        name: 'Warehouse',
+        units: 2,
+      })
+    );
   });
 
   it('loadAdminDashboardData returns KPI payload', async () => {
