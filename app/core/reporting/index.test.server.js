@@ -38,6 +38,15 @@ vi.mock('#/libs/prisma.server', () => ({
     variantPrice: {
       findMany: vi.fn(),
     },
+    scheduledExport: {
+      groupBy: vi.fn(),
+      count: vi.fn(),
+    },
+    exportRun: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+      groupBy: vi.fn(),
+    },
   },
 }));
 
@@ -68,6 +77,7 @@ import {
   getOpsMetrics,
   getCustomerMetrics,
   getInventoryMetrics,
+  getExportMetrics,
 } from '#/core/reporting/index.server';
 
 describe('reporting', () => {
@@ -494,6 +504,56 @@ describe('reporting', () => {
         units: 2,
       })
     );
+  });
+
+  it('getExportMetrics returns schedules, recent runs, and failure rate', async () => {
+    prisma.scheduledExport.groupBy.mockResolvedValue([
+      { exportType: 'orders', schedule: 'weekly', _count: { _all: 2 } },
+    ]);
+    prisma.exportRun.findMany.mockResolvedValue([
+      {
+        id: 'run1',
+        scheduledExportId: 'se1',
+        exportType: 'orders',
+        status: 'failed',
+        rowCount: null,
+        error: 'boom',
+        createdAt: new Date('2026-01-10T00:00:00.000Z'),
+        completedAt: new Date('2026-01-10T00:01:00.000Z'),
+        fileContent: 'x',
+      },
+    ]);
+    prisma.exportRun.count
+      .mockResolvedValueOnce(10) // total in range
+      .mockResolvedValueOnce(2); // failed in range
+
+    const result = await getExportMetrics({
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      limit: 5,
+    });
+
+    expect(result.schedules).toEqual([
+      expect.objectContaining({
+        exportType: 'orders',
+        schedule: 'weekly',
+        count: 2,
+      }),
+    ]);
+    expect(result.recentRuns[0]).toEqual(
+      expect.objectContaining({
+        id: 'run1',
+        status: 'failed',
+        error: 'boom',
+        hasFileContent: true,
+      })
+    );
+    expect(result.recentRuns[0].fileContent).toBeUndefined();
+    expect(result.failureRate).toEqual({
+      total: 10,
+      failed: 2,
+      rate: 20,
+    });
   });
 
   it('loadAdminDashboardData returns KPI payload', async () => {
