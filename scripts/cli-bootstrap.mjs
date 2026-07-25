@@ -99,10 +99,10 @@ async function main() {
   }
   console.log('cli-bootstrap complete.');
   console.log(
-    'Next: configure MCP with BERMOODA_URL + the bootstrap API key printed above,'
+    'Next: run `bermooda mcp init` in the shop (uses .bermooda/bootstrap-api-key or BERMOODA_API_KEY),'
   );
   console.log(
-    'or call POST /api/admin/v1/setup/api-key with SETUP_TOKEN when no key exists.'
+    'or configure MCP with BERMOODA_URL + the bootstrap API key printed above.'
   );
 }
 

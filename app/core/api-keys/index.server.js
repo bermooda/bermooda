@@ -7,9 +7,17 @@ import { createHash, randomBytes } from 'crypto';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { parseListPagination } from '#/libs/prisma/pagination/index.server';
-import { API_KEY_SCOPES } from '#/core/api-keys/scopes';
+import {
+  API_KEY_SCOPES,
+  apiKeySatisfiesScope,
+} from '#/core/api-keys/scopes';
 
-export { API_KEY_SCOPES } from '#/core/api-keys/scopes';
+export {
+  ADMIN_API_SCOPES,
+  API_KEY_SCOPES,
+  apiKeyCanAccessAdminApi,
+  apiKeySatisfiesScope,
+} from '#/core/api-keys/scopes';
 
 export const DEFAULT_API_KEY_LIST_LIMIT = 20;
 export const MAX_API_KEY_LIST_RESULTS = 100;
@@ -233,7 +241,7 @@ export async function validateApiKey(rawKey, requiredScopes = []) {
   const scopes = JSON.parse(record.scopes);
   if (
     requiredScopes.length > 0 &&
-    !requiredScopes.every((s) => scopes.includes(s))
+    !requiredScopes.every((s) => apiKeySatisfiesScope(scopes, s))
   ) {
     throw Object.assign(new Error('Insufficient scope'), {
       code: 'INSUFFICIENT_SCOPE',
