@@ -259,6 +259,20 @@ export default [
         'marketing/abandoned-cart-sequences/:id',
         'routes/api/admin/v1/marketing/abandoned-cart-sequences/$id.jsx'
       ),
+      route('reports/overview', 'routes/api/admin/v1/reports/overview.jsx'),
+      route(
+        'reports/sales-over-time',
+        'routes/api/admin/v1/reports/sales-over-time.jsx'
+      ),
+      route(
+        'reports/sales-by-product',
+        'routes/api/admin/v1/reports/sales-by-product.jsx'
+      ),
+      route(
+        'reports/sales-by-category',
+        'routes/api/admin/v1/reports/sales-by-category.jsx'
+      ),
+      route('reports/ops', 'routes/api/admin/v1/reports/ops.jsx'),
       route('reports/dashboard', 'routes/api/admin/v1/reports/dashboard.jsx'),
       route('scheduled-exports', 'routes/api/admin/v1/scheduled-exports.jsx'),
       route(
