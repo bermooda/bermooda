@@ -3,9 +3,9 @@ import {
   writePluginData,
 } from '#/core/plugins/data/index.server';
 
-import manifest from '#/plugins/sample-analytics/manifest';
+import pkg from '#/plugins/sample-analytics/package.json';
 
-export const PLUGIN_ID = manifest.id;
+export const PLUGIN_ID = pkg.name;
 export const EVENTS_KEY = 'recentEvents';
 const MAX_EVENTS = 100;
 
