@@ -27,33 +27,33 @@
 
 ## Locked product decisions
 
-| Topic | Decision |
-| --- | --- |
-| `newCustomers` | `Customer.createdAt` in range (signup), not first order |
-| `returningCustomers` | Distinct `customerId` with ≥2 **all-time** paid orders and ≥1 paid order **in range** |
+| Topic                    | Decision                                                                                                                                     |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `newCustomers`           | `Customer.createdAt` in range (signup), not first order                                                                                      |
+| `returningCustomers`     | Distinct `customerId` with ≥2 **all-time** paid orders and ≥1 paid order **in range**                                                        |
 | `ordersByNewVsReturning` | Paid orders in range with `customerId`; **new** = customer’s `createdAt` in range; **returning** = customer’s `createdAt` before range start |
-| `topCustomers` | Paid revenue in range by `customerId`, top `limit`, include email/name |
-| Low-stock threshold | Reuse/export `LOW_STOCK_THRESHOLD = 5` (same as ops) |
-| Product titles | `loadProductTitleMap` from `#/core/catalog/translations.server` (Product has no `title` column) |
-| Stock value currency | Shop `defaultCurrency` from settings (optional query `currency` override) |
-| `byLocation` | Aggregate `InventoryLevel.quantity` joined to `Location` |
+| `topCustomers`           | Paid revenue in range by `customerId`, top `limit`, include email/name                                                                       |
+| Low-stock threshold      | Reuse/export `LOW_STOCK_THRESHOLD = 5` (same as ops)                                                                                         |
+| Product titles           | `loadProductTitleMap` from `#/core/catalog/translations.server` (Product has no `title` column)                                              |
+| Stock value currency     | Shop `defaultCurrency` from settings (optional query `currency` override)                                                                    |
+| `byLocation`             | Aggregate `InventoryLevel.quantity` joined to `Location`                                                                                     |
 
 ## File Structure
 
-| File | Responsibility |
-| --- | --- |
-| `app/core/reporting/index.server.js` | Add `getCustomerMetrics`, `getInventoryMetrics`, `getExportMetrics`; export `LOW_STOCK_THRESHOLD` |
-| `app/core/reporting/index.test.server.js` | Unit tests for the three reporters |
-| `app/routes/api/admin/v1/reports/customers.jsx` | `GET` → `{ customers }` |
-| `app/routes/api/admin/v1/reports/inventory.jsx` | `GET` → `{ inventory }` |
-| `app/routes/api/admin/v1/reports/exports.jsx` | `GET` → `{ exports }` |
-| `app/routes.js` | Register the three routes |
-| `docs/api.md`, `docs/openapi.yaml` | Document paths |
-| `.cursor/skills/bermooda-agent/SKILL.md`, `docs/agent-integration.md` | Agent tool table |
-| `bermooda-mcp/src/client.js` | Three client methods |
-| `bermooda-mcp/src/tools/reporting.js` | Three MCP tools |
-| `bermooda-mcp/test/client.test.js`, `test/server.test.js` | Coverage |
-| `bermooda-mcp/README.md` | Tool rows |
+| File                                                                  | Responsibility                                                                                    |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `app/core/reporting/index.server.js`                                  | Add `getCustomerMetrics`, `getInventoryMetrics`, `getExportMetrics`; export `LOW_STOCK_THRESHOLD` |
+| `app/core/reporting/index.test.server.js`                             | Unit tests for the three reporters                                                                |
+| `app/routes/api/admin/v1/reports/customers.jsx`                       | `GET` → `{ customers }`                                                                           |
+| `app/routes/api/admin/v1/reports/inventory.jsx`                       | `GET` → `{ inventory }`                                                                           |
+| `app/routes/api/admin/v1/reports/exports.jsx`                         | `GET` → `{ exports }`                                                                             |
+| `app/routes.js`                                                       | Register the three routes                                                                         |
+| `docs/api.md`, `docs/openapi.yaml`                                    | Document paths                                                                                    |
+| `.cursor/skills/bermooda-agent/SKILL.md`, `docs/agent-integration.md` | Agent tool table                                                                                  |
+| `bermooda-mcp/src/client.js`                                          | Three client methods                                                                              |
+| `bermooda-mcp/src/tools/reporting.js`                                 | Three MCP tools                                                                                   |
+| `bermooda-mcp/test/client.test.js`, `test/server.test.js`             | Coverage                                                                                          |
+| `bermooda-mcp/README.md`                                              | Tool rows                                                                                         |
 
 ---
 
@@ -78,73 +78,73 @@ In the test file’s `vi.mock`, ensure:
 (keep existing `order` mocks). Import `getCustomerMetrics`. Add:
 
 ```js
-  it('getCustomerMetrics splits new vs returning and ranks top spenders', async () => {
-    prisma.customer.count.mockResolvedValue(3);
-    prisma.order.findMany
-      // all-time paid: c1×2, c2×2, c3×1 → returning candidates {c1,c2}
-      .mockResolvedValueOnce([
-        { customerId: 'c1' },
-        { customerId: 'c1' },
-        { customerId: 'c2' },
-        { customerId: 'c2' },
-        { customerId: 'c3' },
-      ])
-      // in-range paid: c1 once (signup before range), c2 twice (signup in range)
-      .mockResolvedValueOnce([
-        {
-          customerId: 'c1',
-          totalCents: 5000,
-          customer: {
-            id: 'c1',
-            email: 'a@example.com',
-            name: 'A',
-            createdAt: new Date('2025-06-01T00:00:00.000Z'),
-          },
+it('getCustomerMetrics splits new vs returning and ranks top spenders', async () => {
+  prisma.customer.count.mockResolvedValue(3);
+  prisma.order.findMany
+    // all-time paid: c1×2, c2×2, c3×1 → returning candidates {c1,c2}
+    .mockResolvedValueOnce([
+      { customerId: 'c1' },
+      { customerId: 'c1' },
+      { customerId: 'c2' },
+      { customerId: 'c2' },
+      { customerId: 'c3' },
+    ])
+    // in-range paid: c1 once (signup before range), c2 twice (signup in range)
+    .mockResolvedValueOnce([
+      {
+        customerId: 'c1',
+        totalCents: 5000,
+        customer: {
+          id: 'c1',
+          email: 'a@example.com',
+          name: 'A',
+          createdAt: new Date('2025-06-01T00:00:00.000Z'),
         },
-        {
-          customerId: 'c2',
-          totalCents: 3000,
-          customer: {
-            id: 'c2',
-            email: 'b@example.com',
-            name: 'B',
-            createdAt: new Date('2026-01-15T00:00:00.000Z'),
-          },
-        },
-        {
-          customerId: 'c2',
-          totalCents: 2000,
-          customer: {
-            id: 'c2',
-            email: 'b@example.com',
-            name: 'B',
-            createdAt: new Date('2026-01-15T00:00:00.000Z'),
-          },
-        },
-      ]);
-
-    const result = await getCustomerMetrics({
-      startDate: '2026-01-01',
-      endDate: '2026-01-31',
-      limit: 10,
-    });
-
-    expect(result.newCustomers).toBe(3);
-    expect(result.returningCustomers).toBe(2);
-    expect(result.ordersByNewVsReturning).toEqual({
-      new: { orders: 2, revenueCents: 5000 },
-      returning: { orders: 1, revenueCents: 5000 },
-    });
-    expect(result.topCustomers[0]).toEqual(
-      expect.objectContaining({
+      },
+      {
         customerId: 'c2',
-        email: 'b@example.com',
-        revenueCents: 5000,
-        orderCount: 2,
-      })
-    );
-    expect(result.range.start).toBe('2026-01-01T00:00:00.000Z');
+        totalCents: 3000,
+        customer: {
+          id: 'c2',
+          email: 'b@example.com',
+          name: 'B',
+          createdAt: new Date('2026-01-15T00:00:00.000Z'),
+        },
+      },
+      {
+        customerId: 'c2',
+        totalCents: 2000,
+        customer: {
+          id: 'c2',
+          email: 'b@example.com',
+          name: 'B',
+          createdAt: new Date('2026-01-15T00:00:00.000Z'),
+        },
+      },
+    ]);
+
+  const result = await getCustomerMetrics({
+    startDate: '2026-01-01',
+    endDate: '2026-01-31',
+    limit: 10,
   });
+
+  expect(result.newCustomers).toBe(3);
+  expect(result.returningCustomers).toBe(2);
+  expect(result.ordersByNewVsReturning).toEqual({
+    new: { orders: 2, revenueCents: 5000 },
+    returning: { orders: 1, revenueCents: 5000 },
+  });
+  expect(result.topCustomers[0]).toEqual(
+    expect.objectContaining({
+      customerId: 'c2',
+      email: 'b@example.com',
+      revenueCents: 5000,
+      orderCount: 2,
+    })
+  );
+  expect(result.range.start).toBe('2026-01-01T00:00:00.000Z');
+});
 ```
 
 - [ ] **Step 2: Run test — expect FAIL** (`getCustomerMetrics` missing)
@@ -316,43 +316,49 @@ Extend prisma mock:
 Mock settings if needed — prefer injecting currency via params for the unit test:
 
 ```js
-  it('getInventoryMetrics snapshots stock, value, and by-location', async () => {
-    prisma.productVariant.findMany.mockResolvedValue([
-      {
-        id: 'v1',
-        sku: 'SKU-1',
-        inventoryCount: 2,
-        productId: 'p1',
-      },
-      {
-        id: 'v2',
-        sku: 'SKU-2',
-        inventoryCount: 0,
-        productId: 'p2',
-      },
-    ]);
-    prisma.variantPrice.findMany.mockResolvedValue([
-      { variantId: 'v1', priceCents: 1000 },
-      { variantId: 'v2', priceCents: 500 },
-    ]);
-    prisma.inventoryLevel.findMany.mockResolvedValue([
-      { locationId: 'loc1', variantId: 'v1', quantity: 2 },
-      { locationId: 'loc1', variantId: 'v2', quantity: 0 },
-    ]);
-    prisma.location.findMany.mockResolvedValue([
-      { id: 'loc1', name: 'Warehouse', code: 'WH' },
-    ]);
+it('getInventoryMetrics snapshots stock, value, and by-location', async () => {
+  prisma.productVariant.findMany.mockResolvedValue([
+    {
+      id: 'v1',
+      sku: 'SKU-1',
+      inventoryCount: 2,
+      productId: 'p1',
+    },
+    {
+      id: 'v2',
+      sku: 'SKU-2',
+      inventoryCount: 0,
+      productId: 'p2',
+    },
+  ]);
+  prisma.variantPrice.findMany.mockResolvedValue([
+    { variantId: 'v1', priceCents: 1000 },
+    { variantId: 'v2', priceCents: 500 },
+  ]);
+  prisma.inventoryLevel.findMany.mockResolvedValue([
+    { locationId: 'loc1', variantId: 'v1', quantity: 2 },
+    { locationId: 'loc1', variantId: 'v2', quantity: 0 },
+  ]);
+  prisma.location.findMany.mockResolvedValue([
+    { id: 'loc1', name: 'Warehouse', code: 'WH' },
+  ]);
 
-    // Mock translation titles via vi.mock on translations if getInventoryMetrics calls loadProductTitleMap.
-    // Prefer stubbing loadProductTitleMap:
-  });
+  // Mock translation titles via vi.mock on translations if getInventoryMetrics calls loadProductTitleMap.
+  // Prefer stubbing loadProductTitleMap:
+});
 ```
 
 Prefer mocking the translations module:
 
 ```js
 vi.mock('#/core/catalog/translations.server', () => ({
-  loadProductTitleMap: vi.fn(async () => new Map([['p1', 'Hat'], ['p2', 'Cap']])),
+  loadProductTitleMap: vi.fn(
+    async () =>
+      new Map([
+        ['p1', 'Hat'],
+        ['p2', 'Cap'],
+      ])
+  ),
   loadCategoryTitleMap: vi.fn(async () => new Map()),
 }));
 ```
@@ -367,7 +373,11 @@ vi.mock('#/core/catalog/translations.server', async (importOriginal) => {
   return {
     ...actual,
     loadProductTitleMap: vi.fn(
-      async () => new Map([['p1', 'Hat'], ['p2', 'Cap']])
+      async () =>
+        new Map([
+          ['p1', 'Hat'],
+          ['p2', 'Cap'],
+        ])
     ),
   };
 });
@@ -376,18 +386,18 @@ vi.mock('#/core/catalog/translations.server', async (importOriginal) => {
 Assertions:
 
 ```js
-    const inv = await getInventoryMetrics({ currency: 'USD', limit: 10 });
-    expect(inv.asOf).toEqual(expect.any(String));
-    expect(inv.lowStock.count).toBe(1); // v1 only (< 5 and > 0) OR include OOS — design: lowStock = below threshold; OOS separate
-    expect(inv.outOfStock.count).toBe(1);
-    expect(inv.stockValueCents).toBe(2000); // 2*1000 + 0*500
-    expect(inv.byLocation[0]).toEqual(
-      expect.objectContaining({
-        locationId: 'loc1',
-        name: 'Warehouse',
-        units: 2,
-      })
-    );
+const inv = await getInventoryMetrics({ currency: 'USD', limit: 10 });
+expect(inv.asOf).toEqual(expect.any(String));
+expect(inv.lowStock.count).toBe(1); // v1 only (< 5 and > 0) OR include OOS — design: lowStock = below threshold; OOS separate
+expect(inv.outOfStock.count).toBe(1);
+expect(inv.stockValueCents).toBe(2000); // 2*1000 + 0*500
+expect(inv.byLocation[0]).toEqual(
+  expect.objectContaining({
+    locationId: 'loc1',
+    name: 'Warehouse',
+    units: 2,
+  })
+);
 ```
 
 Define **lowStock** as tracked variants with `0 < inventoryCount < threshold` **or** `inventoryCount < threshold` including zero? Spec lists lowStock and outOfStock separately → **lowStock = `inventoryCount > 0 && inventoryCount < threshold`**, **outOfStock = `inventoryCount === 0`**. Both require `inventoryTracked: true`.
@@ -550,55 +560,55 @@ EOF
 ```
 
 ```js
-  it('getExportMetrics returns schedules, recent runs, and failure rate', async () => {
-    prisma.scheduledExport.groupBy.mockResolvedValue([
-      { exportType: 'orders', schedule: 'weekly', _count: { _all: 2 } },
-    ]);
-    prisma.exportRun.findMany.mockResolvedValue([
-      {
-        id: 'run1',
-        scheduledExportId: 'se1',
-        exportType: 'orders',
-        status: 'failed',
-        rowCount: null,
-        error: 'boom',
-        createdAt: new Date('2026-01-10T00:00:00.000Z'),
-        completedAt: new Date('2026-01-10T00:01:00.000Z'),
-        fileContent: 'x',
-      },
-    ]);
-    prisma.exportRun.count
-      .mockResolvedValueOnce(10) // total in range
-      .mockResolvedValueOnce(2); // failed in range
+it('getExportMetrics returns schedules, recent runs, and failure rate', async () => {
+  prisma.scheduledExport.groupBy.mockResolvedValue([
+    { exportType: 'orders', schedule: 'weekly', _count: { _all: 2 } },
+  ]);
+  prisma.exportRun.findMany.mockResolvedValue([
+    {
+      id: 'run1',
+      scheduledExportId: 'se1',
+      exportType: 'orders',
+      status: 'failed',
+      rowCount: null,
+      error: 'boom',
+      createdAt: new Date('2026-01-10T00:00:00.000Z'),
+      completedAt: new Date('2026-01-10T00:01:00.000Z'),
+      fileContent: 'x',
+    },
+  ]);
+  prisma.exportRun.count
+    .mockResolvedValueOnce(10) // total in range
+    .mockResolvedValueOnce(2); // failed in range
 
-    const result = await getExportMetrics({
-      startDate: '2026-01-01',
-      endDate: '2026-01-31',
-      limit: 5,
-    });
-
-    expect(result.schedules).toEqual([
-      expect.objectContaining({
-        exportType: 'orders',
-        schedule: 'weekly',
-        count: 2,
-      }),
-    ]);
-    expect(result.recentRuns[0]).toEqual(
-      expect.objectContaining({
-        id: 'run1',
-        status: 'failed',
-        error: 'boom',
-        hasFileContent: true,
-      })
-    );
-    expect(result.recentRuns[0].fileContent).toBeUndefined();
-    expect(result.failureRate).toEqual({
-      total: 10,
-      failed: 2,
-      rate: 20,
-    });
+  const result = await getExportMetrics({
+    startDate: '2026-01-01',
+    endDate: '2026-01-31',
+    limit: 5,
   });
+
+  expect(result.schedules).toEqual([
+    expect.objectContaining({
+      exportType: 'orders',
+      schedule: 'weekly',
+      count: 2,
+    }),
+  ]);
+  expect(result.recentRuns[0]).toEqual(
+    expect.objectContaining({
+      id: 'run1',
+      status: 'failed',
+      error: 'boom',
+      hasFileContent: true,
+    })
+  );
+  expect(result.recentRuns[0].fileContent).toBeUndefined();
+  expect(result.failureRate).toEqual({
+    total: 10,
+    failed: 2,
+    rate: 20,
+  });
+});
 ```
 
 - [ ] **Step 2: FAIL**
@@ -896,47 +906,47 @@ EOF
 - [ ] **Step 3: Register tools** in `registerReportingTools`:
 
 ```js
-  server.registerTool(
-    'get_customer_metrics',
-    {
-      title: 'Get customer metrics',
-      description:
-        'New/returning customers, paid order split, and top customers by revenue for a date range.',
-      inputSchema: reportQuerySchema,
-    },
-    async (args) => runTool(() => client.getCustomerMetrics(args))
-  );
+server.registerTool(
+  'get_customer_metrics',
+  {
+    title: 'Get customer metrics',
+    description:
+      'New/returning customers, paid order split, and top customers by revenue for a date range.',
+    inputSchema: reportQuerySchema,
+  },
+  async (args) => runTool(() => client.getCustomerMetrics(args))
+);
 
-  server.registerTool(
-    'get_inventory_metrics',
-    {
-      title: 'Get inventory metrics',
-      description:
-        'Snapshot low/out-of-stock lists, stock value, and per-location units (not date-ranged).',
-      inputSchema: {
-        limit: reportQuerySchema.limit,
-        locale: reportQuerySchema.locale,
-        currency: z.string().optional(),
-        threshold: z.number().int().positive().optional(),
-      },
+server.registerTool(
+  'get_inventory_metrics',
+  {
+    title: 'Get inventory metrics',
+    description:
+      'Snapshot low/out-of-stock lists, stock value, and per-location units (not date-ranged).',
+    inputSchema: {
+      limit: reportQuerySchema.limit,
+      locale: reportQuerySchema.locale,
+      currency: z.string().optional(),
+      threshold: z.number().int().positive().optional(),
     },
-    async (args) => runTool(() => client.getInventoryMetrics(args))
-  );
+  },
+  async (args) => runTool(() => client.getInventoryMetrics(args))
+);
 
-  server.registerTool(
-    'get_export_metrics',
-    {
-      title: 'Get export metrics',
-      description:
-        'Scheduled export counts, recent runs (no CSV), and failure rate for a date range.',
-      inputSchema: {
-        startDate: reportQuerySchema.startDate,
-        endDate: reportQuerySchema.endDate,
-        limit: reportQuerySchema.limit,
-      },
+server.registerTool(
+  'get_export_metrics',
+  {
+    title: 'Get export metrics',
+    description:
+      'Scheduled export counts, recent runs (no CSV), and failure rate for a date range.',
+    inputSchema: {
+      startDate: reportQuerySchema.startDate,
+      endDate: reportQuerySchema.endDate,
+      limit: reportQuerySchema.limit,
     },
-    async (args) => runTool(() => client.getExportMetrics(args))
-  );
+  },
+  async (args) => runTool(() => client.getExportMetrics(args))
+);
 ```
 
 Add one smoke test forwarding `get_customer_metrics` → `client.getCustomerMetrics`.
@@ -993,14 +1003,14 @@ EOF
 
 ## Spec coverage checklist
 
-| Spec item | Task |
-| --- | --- |
-| `GET /reports/customers` + metrics | Tasks 1, 4 |
-| `GET /reports/inventory` + metrics | Tasks 2, 4 |
-| `GET /reports/exports` + metrics | Tasks 3, 4 |
-| MCP `get_customer_metrics` / `get_inventory_metrics` / `get_export_metrics` | Tasks 6–7 |
-| Dashboard stays sales+ops only | Honored (Global Constraints) |
-| Docs / OpenAPI / skill | Tasks 5, 8 |
+| Spec item                                                                   | Task                         |
+| --------------------------------------------------------------------------- | ---------------------------- |
+| `GET /reports/customers` + metrics                                          | Tasks 1, 4                   |
+| `GET /reports/inventory` + metrics                                          | Tasks 2, 4                   |
+| `GET /reports/exports` + metrics                                            | Tasks 3, 4                   |
+| MCP `get_customer_metrics` / `get_inventory_metrics` / `get_export_metrics` | Tasks 6–7                    |
+| Dashboard stays sales+ops only                                              | Honored (Global Constraints) |
+| Docs / OpenAPI / skill                                                      | Tasks 5, 8                   |
 
 ## Out of scope
 
