@@ -74,7 +74,7 @@ Ship `@bermooda/mcp` (or `bermooda-mcp`) as a **thin tool facade** over Admin AP
 
 - **Transport:** stdio for local Cursor/Claude Desktop; optional Streamable HTTP later for hosted shops
 - **Config:** `BERMOODA_URL` + `BERMOODA_API_KEY` (or MCP server config JSON)
-- **Tools** grouped by intent, not 1:1 every REST route — e.g. `list_products`, `upsert_product`, `get_settings`, `update_settings`, `list_orders`, `update_order_status`, `import_products_csv`, `setup_shop` (orchestrates settings + seed catalog)
+- **Tools** grouped by intent, not 1:1 every REST route — e.g. `list_products`, `upsert_product`, `get_settings`, `update_settings`, `list_orders`, `update_order_status`, `import_products_csv`, `setup_shop` (orchestrates settings + seed catalog). Reporting tools map to `/api/admin/v1/reports/*` (overview, sales slices, ops, dashboard).
 - **Resources** (optional): `bermooda://settings`, `bermooda://catalog/summary` for read-heavy context
 - **Safety:** destructive tools require explicit confirm args; prefer dry-run flags on bulk ops
 
