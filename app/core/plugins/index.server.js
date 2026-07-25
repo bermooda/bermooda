@@ -351,6 +351,53 @@ export async function savePluginSettings(pluginId, manifest, formData) {
 }
 
 /**
+ * Normalize a plugin setting value from a JSON object payload.
+ *
+ * @param {object} setting
+ * @param {unknown} raw
+ * @returns {unknown}
+ */
+export function parsePluginSettingJsonValue(setting, raw) {
+  if (setting.type === 'toggle') {
+    return Boolean(raw);
+  }
+  if (raw === undefined || raw === null) {
+    return setting.default ?? '';
+  }
+  return raw;
+}
+
+/**
+ * Persists plugin settings from a JSON object (Admin API).
+ *
+ * @param {string} pluginId
+ * @param {PluginManifest} manifest
+ * @param {Record<string, unknown>} values
+ * @returns {Promise<void>}
+ */
+export async function savePluginSettingsValues(
+  pluginId,
+  manifest,
+  values = {}
+) {
+  if (!manifest?.settings?.length) {
+    throw Object.assign(new Error('No settings for plugin'), {
+      code: 'PLUGIN_INVALID',
+      status: 400,
+    });
+  }
+
+  await Promise.all(
+    manifest.settings.map(async (setting) => {
+      const value = Object.prototype.hasOwnProperty.call(values, setting.key)
+        ? parsePluginSettingJsonValue(setting, values[setting.key])
+        : (setting.default ?? (setting.type === 'toggle' ? false : ''));
+      await settingsSet(`plugin.${pluginId}.${setting.key}`, value);
+    })
+  );
+}
+
+/**
  * Persists enabled state and wires or unwires the plugin live.
  *
  * @param {string} pluginId

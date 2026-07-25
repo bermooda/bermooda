@@ -779,7 +779,7 @@ describe('getCategoryBySlug', () => {
 // ---------------------------------------------------------------------------
 
 describe('createCategory', () => {
-  it('creates a category with name translation and slug', async () => {
+  it('creates a category with title translation and slug', async () => {
     prisma.category.create.mockResolvedValue({ id: 'cat_new' });
     prisma.translation.upsert.mockResolvedValue({});
     prisma.slug.findUnique.mockResolvedValue(null);
@@ -787,7 +787,7 @@ describe('createCategory', () => {
 
     await createCategory({
       locale: 'en',
-      name: 'Electronics',
+      title: 'Electronics',
       slug: 'electronics',
     });
 
@@ -796,12 +796,31 @@ describe('createCategory', () => {
       expect.objectContaining({
         create: expect.objectContaining({
           entityId: 'cat_new',
-          field: 'name',
+          field: 'title',
           value: 'Electronics',
         }),
       })
     );
     expect(prisma.slug.upsert).toHaveBeenCalled();
+  });
+
+  it('accepts name as an alias for title', async () => {
+    prisma.category.create.mockResolvedValue({ id: 'cat_new' });
+    prisma.translation.upsert.mockResolvedValue({});
+
+    await createCategory({
+      locale: 'en',
+      name: 'Electronics',
+    });
+
+    expect(prisma.translation.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          field: 'title',
+          value: 'Electronics',
+        }),
+      })
+    );
   });
 
   it('creates a category without translation when no locale', async () => {

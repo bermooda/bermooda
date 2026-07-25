@@ -1,17 +1,24 @@
 openapi: 3.1.0
 info:
   title: bermooda REST API
-  version: 1.0.0
-  description: Storefront and admin REST API for bermooda ecommerce.
+  version: 1.1.0
+  description: |
+    Storefront and admin REST API for bermooda ecommerce.
+    Admin routes require Bearer berm_ API keys unless noted (setup/*).
+    See docs/api.md for full narrative docs. This file tracks the agent-facing
+    contract for MCP/SDK derivation (Phase A).
 
 servers:
-  - url: /api/v1
-    description: Storefront API
-  - url: /api/admin/v1
-    description: Admin API (Bearer API key)
+  - url: /
+    description: Application origin
+
+tags:
+  - name: Storefront
+  - name: Setup
+  - name: Admin
 
 paths:
-  /catalog:
+  /api/v1/catalog:
     get:
       summary: List published products
       tags: [Storefront]
@@ -20,11 +27,22 @@ paths:
         - { name: limit, in: query, schema: { type: integer, maximum: 100 } }
         - { name: locale, in: query, schema: { type: string } }
         - { name: currency, in: query, schema: { type: string } }
+        - { name: categoryId, in: query, schema: { type: string } }
       responses:
         '200':
           description: Product list
 
-  /cart:
+  /api/v1/categories:
+    get:
+      summary: List storefront categories
+      tags: [Storefront]
+      parameters:
+        - { name: locale, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Categories
+
+  /api/v1/cart:
     post:
       summary: Create cart
       tags: [Storefront]
@@ -32,7 +50,7 @@ paths:
         '201':
           description: Cart created
 
-  /products/{productId}/reviews:
+  /api/v1/products/{productId}/reviews:
     get:
       summary: List product reviews
       tags: [Storefront]
@@ -60,7 +78,7 @@ paths:
         '201':
           description: Review created
 
-  /checkout:
+  /api/v1/checkout:
     post:
       summary: Create checkout session
       tags: [Storefront]
@@ -68,7 +86,146 @@ paths:
         '201':
           description: Checkout session
 
-  /products:
+  /api/admin/v1/setup:
+    get:
+      summary: Bootstrap readiness status
+      tags: [Setup]
+      responses:
+        '200':
+          description: Setup status snapshot
+
+  /api/admin/v1/setup/admin:
+    post:
+      summary: Create first admin (when onboarding available)
+      tags: [Setup]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string }
+                email: { type: string }
+                password: { type: string }
+                confirmPassword: { type: string }
+      responses:
+        '201':
+          description: Admin created
+        '409':
+          description: Setup already complete
+
+  /api/admin/v1/setup/api-key:
+    post:
+      summary: Create first bootstrap API key
+      description: Requires SETUP_TOKEN via X-Setup-Token or Bearer.
+      tags: [Setup]
+      security: [{ setupToken: [] }]
+      parameters:
+        - name: X-Setup-Token
+          in: header
+          schema: { type: string }
+      responses:
+        '201':
+          description: Bootstrap key created (raw key returned once)
+        '401':
+          description: SETUP_TOKEN missing or invalid
+        '409':
+          description: API key already exists
+
+  /api/admin/v1/settings:
+    get:
+      summary: Get shop settings snapshot
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Settings
+    patch:
+      summary: Patch one settings section
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Updated settings
+
+  /api/admin/v1/themes:
+    get:
+      summary: List themes and active theme
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Themes
+    patch:
+      summary: Activate theme and/or save settings
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Updated themes payload
+
+  /api/admin/v1/plugins:
+    get:
+      summary: List plugins and enabled state
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Plugins
+    patch:
+      summary: Enable/disable, reorder, or save plugin settings
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Updated plugins payload
+
+  /api/admin/v1/categories:
+    get:
+      summary: List admin categories
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: locale, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Categories
+    post:
+      summary: Create category
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Category created
+
+  /api/admin/v1/categories/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Get category
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Category
+    patch:
+      summary: Update category
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Category updated
+    delete:
+      summary: Delete category recursively
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Deleted
+
+  /api/admin/v1/products:
     get:
       summary: List products (admin)
       tags: [Admin]
@@ -84,7 +241,48 @@ paths:
         '201':
           description: Product created
 
-  /orders:
+  /api/admin/v1/products/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Get product
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Product
+    patch:
+      summary: Update product
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Product updated
+    delete:
+      summary: Delete product
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Deleted
+
+  /api/admin/v1/collections:
+    get:
+      summary: List collections
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Collections
+    post:
+      summary: Create collection
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Collection created
+
+  /api/admin/v1/orders:
     get:
       summary: List orders
       tags: [Admin]
@@ -93,7 +291,59 @@ paths:
         '200':
           description: Orders
 
-  /inventory/locations:
+  /api/admin/v1/orders/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Get order
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Order
+    patch:
+      summary: Update order status
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Order updated
+
+  /api/admin/v1/api-keys:
+    get:
+      summary: List API keys
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: API keys
+    post:
+      summary: Create API key
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Key created (raw key returned once)
+
+  /api/admin/v1/api-keys/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Get API key
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: API key
+    delete:
+      summary: Revoke API key
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Revoked
+
+  /api/admin/v1/inventory/locations:
     get:
       summary: List inventory locations and levels
       tags: [Admin]
@@ -101,8 +351,40 @@ paths:
       responses:
         '200':
           description: Locations
+    post:
+      summary: Create inventory location
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Location created
 
-  /gift-cards:
+  /api/admin/v1/imports:
+    post:
+      summary: Import products (CSV)
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Import result
+
+  /api/admin/v1/webhook-subscriptions:
+    get:
+      summary: List webhook subscriptions
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Subscriptions
+    post:
+      summary: Create webhook subscription
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Created
+
+  /api/admin/v1/gift-cards:
     get:
       summary: List gift cards
       tags: [Admin]
@@ -118,7 +400,7 @@ paths:
         '201':
           description: Gift card issued
 
-  /wishlists:
+  /api/admin/v1/wishlists:
     get:
       summary: Get customer wishlist items
       tags: [Admin]
@@ -141,7 +423,7 @@ paths:
         '200':
           description: Updated wishlist
 
-  /pos:
+  /api/admin/v1/pos:
     post:
       summary: POS session and draft order actions
       tags: [Admin]
@@ -150,7 +432,7 @@ paths:
         '200':
           description: POS action result
 
-  /subscriptions/plans:
+  /api/admin/v1/subscriptions/plans:
     get:
       summary: List subscription plans
       tags: [Admin]
@@ -172,3 +454,8 @@ components:
       type: http
       scheme: bearer
       description: Admin API key (berm_...)
+    setupToken:
+      type: apiKey
+      in: header
+      name: X-Setup-Token
+      description: One-shot SETUP_TOKEN for bootstrap API key creation

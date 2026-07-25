@@ -124,6 +124,16 @@ Phase reality: **full zero-touch from bare metal without CLI is unnecessary** �
 
 Bootstrap key path, categories CRUD, theme/plugin API hooks, OpenAPI + docs. Unblocks any agent client.
 
+**Status (implemented in-repo):**
+
+- `GET/POST /api/admin/v1/setup*` — first admin + first API key (`SETUP_TOKEN`)
+- CLI/`prisma/seed.js` prints a bootstrap `berm_` key when none exist; sets `adminSetupComplete`
+- `POST /api/admin/v1/api-keys` + `DELETE /api/admin/v1/api-keys/:id`
+- Categories admin CRUD; themes/plugins list+activate; inventory location create
+- `docs/api.md` + `docs/openapi.yaml` expanded for agent contract
+
+**Still deferred (Phase D / later):** media upload, inventory level mutations, granular key scopes, staff user create via API.
+
 ### Phase B — MCP MVP (new package)
 
 stdio server: auth, settings, products, categories, orders list/status, CSV import. Cursor + Claude Desktop config examples.
