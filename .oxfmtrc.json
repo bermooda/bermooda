@@ -11,7 +11,7 @@
       {
         "groupName": "internal-config",
         "selector": "import",
-        "elementNamePattern": ["#bermooda.config", "#bermooda.config.*"]
+        "elementNamePattern": ["#/core/config", "#/core/config/**"]
       },
       {
         "groupName": "internal-utils",

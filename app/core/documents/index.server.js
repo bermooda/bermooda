@@ -3,7 +3,7 @@
 
 import PDFDocument from 'pdfkit';
 
-import config from '#bermooda.config';
+import config from '#/core/config';
 import prisma from '#/libs/prisma.server';
 
 const INVOICE_ORDER_INCLUDE = {

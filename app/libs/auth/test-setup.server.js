@@ -81,7 +81,7 @@ vi.mock('#/core/events/index.server', () => ({
   emit: vi.fn(),
 }));
 
-vi.mock('#bermooda.config', () => ({
+vi.mock('#/core/config', () => ({
   default: {
     appName: 'bermooda',
     baseUrl: 'http://localhost:3000',

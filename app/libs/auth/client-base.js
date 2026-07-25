@@ -1,4 +1,4 @@
-import config from '#bermooda.config';
+import config from '#/core/config';
 
 /**
  * Base URL for better-auth browser clients.

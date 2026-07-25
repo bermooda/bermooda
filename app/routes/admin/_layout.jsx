@@ -21,7 +21,7 @@ import { UserIcon as UserIconSolid } from '@heroicons/react/24/solid';
 import { useState } from 'react';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 
-import config from '#bermooda.config';
+import config from '#/core/config';
 import { authenticate } from '#/libs/auth/admin/index.server';
 import { ADMIN_AVAILABLE_LOCALES, translate } from '#/core/i18n';
 import { I18nContext } from '#/core/i18n/context';
