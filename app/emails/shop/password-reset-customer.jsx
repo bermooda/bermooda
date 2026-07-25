@@ -40,6 +40,7 @@ const labels = {
 /**
  * @param {Object} props
  * @param {string} [props.locale]
+ * @param {string} [props.brandName]
  * @param {string} props.name
  * @param {string} props.resetUrl
  */
@@ -47,11 +48,12 @@ export default function PasswordResetCustomerEmail({
   locale = 'en',
   name = 'there',
   resetUrl,
+  brandName,
 }) {
   const t = labels[locale] ?? labels.en;
 
   return (
-    <EmailLayout preview={t.preview}>
+    <EmailLayout brandName={brandName} preview={t.preview}>
       <EmailHeading>{t.heading}</EmailHeading>
       <EmailSubheading>{t.subheading(name)}</EmailSubheading>
       <Section className="dark-mode-bg rounded-xl bg-indigo-50 px-6 py-4">

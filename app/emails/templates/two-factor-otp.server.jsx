@@ -1,6 +1,6 @@
 import { Section, Text } from '@react-email/components';
 
-import config from '#/core/config';
+import { PLATFORM_NAME } from '#/core/config';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';
@@ -14,12 +14,12 @@ import EmailSubheading from '#/emails/components/subheading';
  */
 export default function TwoFactorOtpTemplate({ name = 'there', otp }) {
   return (
-    <EmailLayout preview={`Your ${config.appName} verification code: ${otp}`}>
+    <EmailLayout preview={`Your ${PLATFORM_NAME} verification code: ${otp}`}>
       <EmailHeading>Two-Factor Authentication</EmailHeading>
       <EmailSubheading>Hi {name},</EmailSubheading>
       <Section className="dark-mode-bg rounded-xl bg-indigo-50 px-6 py-2">
         <Text className="dark-mode-text mb-4 pb-4 text-base text-slate-700">
-          You&apos;ve requested to sign in to your {config.appName} account.
+          You&apos;ve requested to sign in to your {PLATFORM_NAME} account.
           Please use the verification code below to complete your login:
         </Text>
         <Section className="text-center">
@@ -36,7 +36,7 @@ export default function TwoFactorOtpTemplate({ name = 'there', otp }) {
             🔒 Security reminder:
           </Text>
           <Text className="dark-mode-text m-0 mt-2 text-sm text-amber-700">
-            Never share this code with anyone. {config.appName} will never ask
+            Never share this code with anyone. {PLATFORM_NAME} will never ask
             you for this code via phone or email.
           </Text>
         </Section>

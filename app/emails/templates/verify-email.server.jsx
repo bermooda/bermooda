@@ -1,6 +1,6 @@
 import { Section, Text } from '@react-email/components';
 
-import config from '#/core/config';
+import { PLATFORM_NAME } from '#/core/config';
 import EmailButton from '#/emails/components/button';
 import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
@@ -20,9 +20,9 @@ export default function VerifyEmailTemplate({
 }) {
   return (
     <EmailLayout
-      preview={`Welcome to ${config.appName}! Please verify your email`}
+      preview={`Welcome to ${PLATFORM_NAME}! Please verify your email`}
     >
-      <EmailHeading>Welcome to {config.appName}</EmailHeading>
+      <EmailHeading>Welcome to {PLATFORM_NAME}</EmailHeading>
       <EmailSubheading>Thanks for signing up, {name}!</EmailSubheading>
       <Section className="dark-mode-bg rounded-xl bg-indigo-50 px-6 py-2">
         <Text className="dark-mode-text mb-4 pb-4 text-base text-slate-700">

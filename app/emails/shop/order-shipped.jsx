@@ -24,12 +24,16 @@ export default function OrderShippedEmail({
   carrier,
   trackingNumber,
   trackingUrl,
+  brandName,
 }) {
   const t = labels[locale] ?? labels.en;
   const url = trackingUrl ?? orderUrl ?? `${config.baseUrl}/account/orders`;
 
   return (
-    <EmailLayout preview={`${t.heading} — ${orderNumber}`}>
+    <EmailLayout
+      brandName={brandName}
+      preview={`${t.heading} — ${orderNumber}`}
+    >
       <EmailHeading>{t.heading}</EmailHeading>
       <EmailSubheading>{t.subheading(orderNumber)}</EmailSubheading>
 

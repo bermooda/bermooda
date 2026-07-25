@@ -11,7 +11,13 @@ vi.mock('#/libs/prisma.server', () => ({
 }));
 
 vi.mock('#/core/config', () => ({
-  default: { appName: 'bermooda' },
+  PLATFORM_NAME: 'bermooda',
+  default: {},
+}));
+
+vi.mock('#/core/settings/index.server', () => ({
+  SETTING_KEYS: { SHOP_NAME: 'shopName' },
+  get: vi.fn(async () => 'Acme Shop'),
 }));
 
 import prisma from '#/libs/prisma.server';
