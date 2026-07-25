@@ -389,19 +389,123 @@ export async function loadAdminDashboardData() {
   };
 }
 
+const LOW_STOCK_THRESHOLD = 5;
+
+/**
+ * Operational metrics for agents and dashboards.
+ * Abandoned checkouts and recent orders respect the date range;
+ * low stock is a current snapshot.
+ *
+ * @param {{ startDate?: string, endDate?: string, limit?: number }} [params]
+ * @returns {Promise<{
+ *   range: { start: string, end: string },
+ *   asOf: string,
+ *   abandonedCheckouts: number,
+ *   recentOrders: Array<Record<string, unknown>>,
+ *   lowStock: {
+ *     threshold: number,
+ *     count: number,
+ *     variants: Array<{
+ *       id: string,
+ *       sku: string | null,
+ *       inventoryCount: number,
+ *       title: string | null,
+ *     }>,
+ *   },
+ * }>}
+ */
+export async function getOpsMetrics(params = {}) {
+  const range = parseDateRange(params);
+  const dateFilter = buildCreatedAtFilter(range);
+  const limit = Math.min(
+    Math.max(Number(params.limit) || DEFAULT_REPORT_LIMIT, 1),
+    MAX_REPORT_LIMIT
+  );
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const lowStockWhere = {
+    inventoryTracked: true,
+    inventoryCount: { lt: LOW_STOCK_THRESHOLD },
+  };
+
+  const [abandonedCheckouts, recentOrders, lowStockCount, lowStockVariants] =
+    await Promise.all([
+      prisma.checkoutSession.count({
+        where: {
+          step: { not: 'complete' },
+          createdAt: {
+            gte: dateFilter.gte,
+            lte: dateFilter.lte,
+            lt: oneHourAgo,
+          },
+        },
+      }),
+      prisma.order.findMany({
+        where: { createdAt: dateFilter },
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          orderNumber: true,
+          email: true,
+          status: true,
+          totalCents: true,
+          currency: true,
+          createdAt: true,
+          customer: { select: { email: true } },
+        },
+      }),
+      prisma.productVariant.count({ where: lowStockWhere }),
+      prisma.productVariant.findMany({
+        where: lowStockWhere,
+        take: limit,
+        orderBy: { inventoryCount: 'asc' },
+        select: {
+          id: true,
+          sku: true,
+          inventoryCount: true,
+          product: { select: { title: true } },
+        },
+      }),
+    ]);
+
+  return {
+    range: {
+      start: range.start.toISOString(),
+      end: range.end.toISOString(),
+    },
+    asOf: new Date().toISOString(),
+    abandonedCheckouts,
+    recentOrders: recentOrders.map((order) => ({
+      ...order,
+      createdAt: order.createdAt.toISOString(),
+    })),
+    lowStock: {
+      threshold: LOW_STOCK_THRESHOLD,
+      count: lowStockCount,
+      variants: lowStockVariants.map((variant) => ({
+        id: variant.id,
+        sku: variant.sku,
+        inventoryCount: variant.inventoryCount,
+        title: variant.product?.title ?? null,
+      })),
+    },
+  };
+}
+
 /**
  * Full dashboard report payload.
  *
  * @param {{ startDate?: string, endDate?: string, limit?: number, locale?: string }} params
  */
 export async function getDashboardReport(params = {}) {
-  const [overview, salesOverTime, salesByProduct, salesByCategory] =
+  const [overview, salesOverTime, salesByProduct, salesByCategory, ops] =
     await Promise.all([
       getOverviewMetrics(params),
       getSalesOverTime(params),
       getSalesByProduct(params),
       getSalesByCategory(params),
+      getOpsMetrics(params),
     ]);
 
-  return { overview, salesOverTime, salesByProduct, salesByCategory };
+  return { overview, salesOverTime, salesByProduct, salesByCategory, ops };
 }

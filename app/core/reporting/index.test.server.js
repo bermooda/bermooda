@@ -17,6 +17,7 @@ vi.mock('#/libs/prisma.server', () => ({
     },
     productVariant: {
       count: vi.fn(),
+      findMany: vi.fn(),
     },
     orderLine: {
       findMany: vi.fn(),
@@ -37,6 +38,7 @@ import {
   getSalesByCategory,
   getDashboardReport,
   loadAdminDashboardData,
+  getOpsMetrics,
 } from '#/core/reporting/index.server';
 
 describe('reporting', () => {
@@ -251,10 +253,13 @@ describe('reporting', () => {
       _count: 0,
     });
     prisma.checkoutSession.count
-      .mockResolvedValueOnce(1)
-      .mockResolvedValueOnce(1);
+      .mockResolvedValueOnce(1) // overview completed
+      .mockResolvedValueOnce(1) // overview started
+      .mockResolvedValueOnce(0); // ops abandoned
     prisma.order.findMany.mockResolvedValue([]);
     prisma.orderLine.findMany.mockResolvedValue([]);
+    prisma.productVariant.count.mockResolvedValue(0);
+    prisma.productVariant.findMany.mockResolvedValue([]);
 
     const report = await getDashboardReport({
       startDate: '2026-01-01',
@@ -266,7 +271,91 @@ describe('reporting', () => {
       salesOverTime: [],
       salesByProduct: [],
       salesByCategory: [],
+      ops: expect.objectContaining({
+        abandonedCheckouts: 0,
+        lowStock: expect.objectContaining({ count: 0, threshold: 5 }),
+      }),
     });
+  });
+
+  it('getOpsMetrics ranges abandoned/recent and snapshots low stock', async () => {
+    prisma.checkoutSession.count.mockResolvedValue(4);
+    prisma.order.findMany.mockResolvedValue([
+      {
+        id: 'ord_1',
+        orderNumber: 1001,
+        email: 'buyer@example.com',
+        status: 'paid',
+        totalCents: 2500,
+        currency: 'USD',
+        createdAt: new Date('2026-01-15T12:00:00.000Z'),
+        customer: { email: 'buyer@example.com' },
+      },
+    ]);
+    prisma.productVariant.count.mockResolvedValue(2);
+    prisma.productVariant.findMany.mockResolvedValue([
+      {
+        id: 'var_1',
+        sku: 'SKU-1',
+        inventoryCount: 1,
+        product: { title: 'Hat' },
+      },
+    ]);
+
+    const ops = await getOpsMetrics({
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      limit: 10,
+    });
+
+    expect(ops.abandonedCheckouts).toBe(4);
+    expect(ops.recentOrders).toEqual([
+      expect.objectContaining({
+        id: 'ord_1',
+        createdAt: '2026-01-15T12:00:00.000Z',
+      }),
+    ]);
+    expect(ops.lowStock).toEqual({
+      threshold: 5,
+      count: 2,
+      variants: [
+        expect.objectContaining({
+          id: 'var_1',
+          sku: 'SKU-1',
+          inventoryCount: 1,
+          title: 'Hat',
+        }),
+      ],
+    });
+    expect(ops.range.start).toBe('2026-01-01T00:00:00.000Z');
+    expect(ops.range.end).toBe('2026-01-31T23:59:59.999Z');
+    expect(typeof ops.asOf).toBe('string');
+
+    const abandonedWhere = prisma.checkoutSession.count.mock.calls[0][0].where;
+    expect(abandonedWhere.step).toEqual({ not: 'complete' });
+    expect(abandonedWhere.createdAt.gte.toISOString()).toBe(
+      '2026-01-01T00:00:00.000Z'
+    );
+    expect(abandonedWhere.createdAt.lte.toISOString()).toBe(
+      '2026-01-31T23:59:59.999Z'
+    );
+    expect(abandonedWhere.createdAt.lt).toBeInstanceOf(Date);
+
+    const recentArgs = prisma.order.findMany.mock.calls[0][0];
+    expect(recentArgs.take).toBe(10);
+    expect(recentArgs.where.createdAt).toEqual({
+      gte: expect.any(Date),
+      lte: expect.any(Date),
+    });
+
+    const lowStockWhere = prisma.productVariant.count.mock.calls[0][0].where;
+    expect(lowStockWhere).toEqual({
+      inventoryTracked: true,
+      inventoryCount: { lt: 5 },
+    });
+    expect(prisma.productVariant.findMany.mock.calls[0][0].where).toEqual(
+      lowStockWhere
+    );
   });
 
   it('loadAdminDashboardData returns KPI payload', async () => {

@@ -535,6 +535,107 @@ paths:
         '201':
           description: Plan created
 
+  /api/admin/v1/reports/overview:
+    get:
+      summary: Sales overview KPIs
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date } }
+        - { name: endDate, in: query, schema: { type: string, format: date } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100 },
+          }
+        - { name: locale, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Overview metrics
+
+  /api/admin/v1/reports/sales-over-time:
+    get:
+      summary: Daily sales buckets
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date } }
+        - { name: endDate, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Sales over time
+
+  /api/admin/v1/reports/sales-by-product:
+    get:
+      summary: Top products by revenue
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date } }
+        - { name: endDate, in: query, schema: { type: string, format: date } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100 },
+          }
+        - { name: locale, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Sales by product
+
+  /api/admin/v1/reports/sales-by-category:
+    get:
+      summary: Revenue by category
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date } }
+        - { name: endDate, in: query, schema: { type: string, format: date } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100 },
+          }
+        - { name: locale, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Sales by category
+
+  /api/admin/v1/reports/ops:
+    get:
+      summary: Operational metrics (abandoned, recent orders, low stock)
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date } }
+        - { name: endDate, in: query, schema: { type: string, format: date } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100 },
+          }
+      responses:
+        '200':
+          description: Ops metrics
+
+  /api/admin/v1/reports/dashboard:
+    get:
+      summary: Composed sales + ops dashboard report
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date } }
+        - { name: endDate, in: query, schema: { type: string, format: date } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100 },
+          }
+        - { name: locale, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Full dashboard report
+
 components:
   securitySchemes:
     bearerAuth:
