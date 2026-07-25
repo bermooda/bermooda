@@ -32,20 +32,20 @@ Authorization: Bearer berm_<your_key>
 
 **Scopes:**
 
-| Scope | Access |
-| ----- | ------ |
-| `admin` | Full Admin API (recommended for agents / MCP). Implies all granular scopes below except `storefront`. |
-| `storefront` | Reserved for future storefront-scoped credentials |
-| `settings:read` / `settings:write` | Shop settings |
-| `products:read` / `products:write` | Catalog products |
-| `categories:read` / `categories:write` | Categories |
-| `orders:read` / `orders:write` | Orders |
-| `media:read` / `media:write` | Media metadata + upload |
-| `inventory:read` / `inventory:write` | Locations + inventory levels |
-| `webhooks:read` / `webhooks:write` | Webhook subscriptions |
-| `themes:write` / `plugins:write` | Theme activate / plugin enable |
-| `audit:read` | Audit log read |
-| `imports:write` | CSV imports |
+| Scope                                  | Access                                                                                                |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `admin`                                | Full Admin API (recommended for agents / MCP). Implies all granular scopes below except `storefront`. |
+| `storefront`                           | Reserved for future storefront-scoped credentials                                                     |
+| `settings:read` / `settings:write`     | Shop settings                                                                                         |
+| `products:read` / `products:write`     | Catalog products                                                                                      |
+| `categories:read` / `categories:write` | Categories                                                                                            |
+| `orders:read` / `orders:write`         | Orders                                                                                                |
+| `media:read` / `media:write`           | Media metadata + upload                                                                               |
+| `inventory:read` / `inventory:write`   | Locations + inventory levels                                                                          |
+| `webhooks:read` / `webhooks:write`     | Webhook subscriptions                                                                                 |
+| `themes:write` / `plugins:write`       | Theme activate / plugin enable                                                                        |
+| `audit:read`                           | Audit log read                                                                                        |
+| `imports:write`                        | CSV imports                                                                                           |
 
 Keys may call `/api/admin/v1` when they have `admin` or any granular admin-area scope. Individual routes may require a specific scope; `admin` always satisfies those checks.
 
@@ -792,17 +792,17 @@ Get export run metadata. Pass `includeContent=true` to include the CSV payload.
 
 Also registered (see route modules under `app/routes/api/admin/v1/`):
 
-| Resource                             | Notes                                                     |
-| ------------------------------------ | --------------------------------------------------------- |
-| `pages`, `menus`                     | CMS content                                               |
-| `channels`, `companies`, `quotes`    | Channels / B2B                                            |
-| `gift-cards`, `loyalty`, `wishlists` | Engagement                                                |
-| `pos`, `subscriptions` (+ plans)     | POS / subscriptions                                       |
-| `storage`                            | Storage provider status                                   |
-| `media`, `media/:id`                 | Upload + get media metadata                               |
-| `address-validation/*`               | Providers + validate                                      |
-| `back-in-stock-subscriptions`        | Waitlist management                                       |
-| Order/shipment PDF documents         | Invoice + packing slip                                    |
+| Resource                             | Notes                       |
+| ------------------------------------ | --------------------------- |
+| `pages`, `menus`                     | CMS content                 |
+| `channels`, `companies`, `quotes`    | Channels / B2B              |
+| `gift-cards`, `loyalty`, `wishlists` | Engagement                  |
+| `pos`, `subscriptions` (+ plans)     | POS / subscriptions         |
+| `storage`                            | Storage provider status     |
+| `media`, `media/:id`                 | Upload + get media metadata |
+| `address-validation/*`               | Providers + validate        |
+| `back-in-stock-subscriptions`        | Waitlist management         |
+| Order/shipment PDF documents         | Invoice + packing slip      |
 
 ---
 
