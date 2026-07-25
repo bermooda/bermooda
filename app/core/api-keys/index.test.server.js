@@ -219,6 +219,24 @@ describe('validateApiKey', () => {
     });
   });
 
+  it('accepts granular scope when key has admin', async () => {
+    const record = makeRecord({ scopes: '["admin"]' });
+    prisma.apiKey.findUnique.mockResolvedValue(record);
+    prisma.apiKey.update.mockResolvedValue(record);
+
+    const result = await validateApiKey('berm_key', ['products:write']);
+    expect(result.scopes).toContain('admin');
+  });
+
+  it('accepts exact granular scope without admin', async () => {
+    const record = makeRecord({ scopes: '["products:write"]' });
+    prisma.apiKey.findUnique.mockResolvedValue(record);
+    prisma.apiKey.update.mockResolvedValue(record);
+
+    const result = await validateApiKey('berm_key', ['products:write']);
+    expect(result.scopes).toContain('products:write');
+  });
+
   it('accepts when required scopes are a subset of key scopes', async () => {
     const record = makeRecord({ scopes: '["admin","storefront"]' });
     prisma.apiKey.findUnique.mockResolvedValue(record);
@@ -306,7 +324,10 @@ describe('revokeApiKey', () => {
 });
 
 describe('API_KEY_SCOPES', () => {
-  it('includes admin and storefront', () => {
-    expect(API_KEY_SCOPES).toEqual(['admin', 'storefront']);
+  it('includes admin, storefront, and granular scopes', () => {
+    expect(API_KEY_SCOPES).toContain('admin');
+    expect(API_KEY_SCOPES).toContain('storefront');
+    expect(API_KEY_SCOPES).toContain('products:write');
+    expect(API_KEY_SCOPES).toContain('media:write');
   });
 });

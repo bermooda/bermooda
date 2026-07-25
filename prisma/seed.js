@@ -166,6 +166,39 @@ async function createBootstrapApiKeyIfNeeded() {
     )
   );
   console.log('');
+
+  // Persist for `bermooda mcp init` (gitignored / local-only).
+  try {
+    const { mkdirSync, writeFileSync, appendFileSync, existsSync, readFileSync } =
+      await import('node:fs');
+    const { join } = await import('node:path');
+    const shopRoot = process.cwd();
+    const bermoodaDir = join(shopRoot, '.bermooda');
+    mkdirSync(bermoodaDir, { recursive: true });
+    writeFileSync(join(bermoodaDir, 'bootstrap-api-key'), `${rawKey}\n`, {
+      encoding: 'utf8',
+      mode: 0o600,
+    });
+    console.log('Wrote .bermooda/bootstrap-api-key for CLI `bermooda mcp init`.');
+
+    const envPath = join(shopRoot, '.env');
+    if (existsSync(envPath)) {
+      const envText = readFileSync(envPath, 'utf8');
+      if (!/^BERMOODA_API_KEY=/m.test(envText)) {
+        appendFileSync(
+          envPath,
+          `\n# Bootstrap Admin API key (from seed; rotate in production)\nBERMOODA_API_KEY=${rawKey}\n`
+        );
+        console.log('Appended BERMOODA_API_KEY to .env');
+      }
+    }
+  } catch (err) {
+    console.warn(
+      'Could not write bootstrap key file:',
+      err instanceof Error ? err.message : err
+    );
+  }
+
   return rawKey;
 }
 

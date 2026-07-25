@@ -169,6 +169,7 @@ export default [
         'inventory/locations',
         'routes/api/admin/v1/inventory/locations.jsx'
       ),
+      route('inventory/levels', 'routes/api/admin/v1/inventory/levels.jsx'),
       route('gift-cards', 'routes/api/admin/v1/gift-cards.jsx'),
       route('loyalty', 'routes/api/admin/v1/loyalty.jsx'),
       route('settings', 'routes/api/admin/v1/settings.jsx'),
@@ -181,6 +182,7 @@ export default [
         'address-validation/validate',
         'routes/api/admin/v1/address-validation/validate.jsx'
       ),
+      route('media', 'routes/api/admin/v1/media.jsx'),
       route('media/:id', 'routes/api/admin/v1/media/$id.jsx'),
       route('admin-users', 'routes/api/admin/v1/admin-users.jsx'),
       route('admin-users/:id', 'routes/api/admin/v1/admin-users/$id.jsx'),

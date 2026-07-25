@@ -59,7 +59,8 @@ export function enforceRateLimit(request, policy) {
  * @param {keyof typeof RATE_LIMITS} policy
  */
 export function rateLimitMiddleware(policy) {
-  return async function rateLimitMiddlewareHandler({ request }) {
+  return async function rateLimitMiddlewareHandler({ request }, next) {
     enforceRateLimit(request, policy);
+    return next();
   };
 }
