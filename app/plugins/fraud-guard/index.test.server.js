@@ -52,11 +52,7 @@ vi.mock('#/core/i18n/index.server', () => ({
 
 import { deny, emitBefore, _handlers } from '#/core/events/index.server';
 import { mergeExtensionPackage } from '#/core/extensions/package-meta';
-import {
-  __resetRegistry,
-  enable,
-  register,
-} from '#/core/plugins/index.server';
+import { __resetRegistry, enable, register } from '#/core/plugins/index.server';
 
 import { pluginManifest } from '#/plugins/fraud-guard/index.server';
 import pkg from '#/plugins/fraud-guard/package.json';

@@ -10,8 +10,6 @@ import {
 } from '#/core/address-validation/index.server';
 import { emit, isHookAbort, off, on } from '#/core/events/index.server';
 import { isBeforeHookEvent } from '#/core/events/names';
-import { translate } from '#/core/i18n';
-import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import {
   LEGACY_PLUGIN_ID_MAP,
   SLUG_PATTERN,
@@ -19,6 +17,8 @@ import {
   mergeExtensionPackage,
   normalizeLegacyIds,
 } from '#/core/extensions/package-meta';
+import { translate } from '#/core/i18n';
+import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import {
   registerProvider as registerPaymentProvider,
   unregisterProvider as unregisterPaymentProvider,

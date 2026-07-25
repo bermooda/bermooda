@@ -419,9 +419,9 @@ describe('register', () => {
 
   it('requires full package identity fields', () => {
     for (const field of ['id', 'title', 'version', 'slug']) {
-      expect(() =>
-        register({ ...validPlugin(), [field]: undefined })
-      ).toThrow(new RegExp(field));
+      expect(() => register({ ...validPlugin(), [field]: undefined })).toThrow(
+        new RegExp(field)
+      );
     }
   });
 
@@ -838,20 +838,18 @@ describe('disable', () => {
   });
 
   it('supports meilisearch-style manifests without manual lifecycle wiring', async () => {
-    register(
-      {
-        id: 'meilisearch-style',
-        title: 'Meilisearch Style',
-        version: '1.0.0',
-        slug: 'meilisearch-style',
-        providers: {
-          meilisearch: defineProvider('search', {
-            provider: { search: vi.fn() },
-            isDefault: true,
-          }),
-        },
-      }
-    );
+    register({
+      id: 'meilisearch-style',
+      title: 'Meilisearch Style',
+      version: '1.0.0',
+      slug: 'meilisearch-style',
+      providers: {
+        meilisearch: defineProvider('search', {
+          provider: { search: vi.fn() },
+          isDefault: true,
+        }),
+      },
+    });
 
     await _enable('meilisearch-style');
 

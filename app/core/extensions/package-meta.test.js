@@ -1,5 +1,6 @@
 // app/core/extensions/package-meta.test.js
 import { describe, expect, it } from 'vitest';
+
 import {
   LEGACY_PLUGIN_ID_MAP,
   LEGACY_THEME_ID_MAP,
