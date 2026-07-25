@@ -18,7 +18,7 @@ Use **bermooda-mcp** (stdio by default) against a running shop. Do not invent sh
 | Themes / plugins  | `list_themes`, `activate_theme`, `list_plugins`, `update_plugins`                                                                  |
 | Media / inventory | `upload_media`, `list_inventory_locations`, `set_inventory_level`                                                                  |
 | Webhooks          | `list/create/update/delete_webhook_subscription`                                                                                   |
-| Analytics / KPIs  | `get_dashboard_report`, `get_overview_kpis`, `get_sales_over_time`, `get_top_products`, `get_sales_by_category`, `get_ops_metrics` |
+| Analytics / KPIs  | `get_dashboard_report`, `get_overview_kpis`, `get_sales_over_time`, `get_top_products`, `get_sales_by_category`, `get_ops_metrics`, `get_customer_metrics`, `get_inventory_metrics`, `get_export_metrics` |
 
 Destructive ops require `confirm=true`. Prefer `dryRun=true` on `setup_shop` / CSV import first.
 
