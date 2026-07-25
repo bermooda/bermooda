@@ -9,15 +9,16 @@ description: How agents (Cursor, Claude) operate on a bermooda shop via MCP and 
 
 Use **bermooda-mcp** (stdio by default) against a running shop. Do not invent shell flags for catalog ops.
 
-| Need              | Tool                                                                 |
-| ----------------- | -------------------------------------------------------------------- |
-| Auth check        | `ping`, `get_setup_status`                                           |
-| Configure shop    | `setup_shop` (or `get_settings` / `update_settings`)                 |
-| Catalog           | `list_*` / `upsert_product` / category tools / `import_products_csv` |
-| Orders            | `list_orders`, `get_order`, `update_order_status`                    |
-| Themes / plugins  | `list_themes`, `activate_theme`, `list_plugins`, `update_plugins`    |
-| Media / inventory | `upload_media`, `list_inventory_locations`, `set_inventory_level`    |
-| Webhooks          | `list/create/update/delete_webhook_subscription`                     |
+| Need              | Tool                                                                                                                               |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Auth check        | `ping`, `get_setup_status`                                                                                                         |
+| Configure shop    | `setup_shop` (or `get_settings` / `update_settings`)                                                                               |
+| Catalog           | `list_*` / `upsert_product` / category tools / `import_products_csv`                                                               |
+| Orders            | `list_orders`, `get_order`, `update_order_status`                                                                                  |
+| Themes / plugins  | `list_themes`, `activate_theme`, `list_plugins`, `update_plugins`                                                                  |
+| Media / inventory | `upload_media`, `list_inventory_locations`, `set_inventory_level`                                                                  |
+| Webhooks          | `list/create/update/delete_webhook_subscription`                                                                                   |
+| Analytics / KPIs  | `get_dashboard_report`, `get_overview_kpis`, `get_sales_over_time`, `get_top_products`, `get_sales_by_category`, `get_ops_metrics` |
 
 Destructive ops require `confirm=true`. Prefer `dryRun=true` on `setup_shop` / CSV import first.
 
