@@ -6,11 +6,11 @@ Architecture plan for letting tools like Cursor and Claude operate on a bermooda
 
 **MCP is the right primary agent surface** for Cursor, Claude, and similar tools. **CLI alone is not.** A **direct REST Admin API remains the contract** both should call. You want all three in layers — not a single winner.
 
-| Surface | Role |
-| --- | --- |
-| **Admin REST API** (`/api/admin/v1`) | Source of truth for read/write shop ops |
-| **MCP server** | First-class agent UX: typed tools, auth, discovery in Cursor/Claude |
-| **CLI** (`bermooda-cli`) | Install, update, plugins/themes, local bootstrap — not day-to-day catalog ops |
+| Surface                              | Role                                                                          |
+| ------------------------------------ | ----------------------------------------------------------------------------- |
+| **Admin REST API** (`/api/admin/v1`) | Source of truth for read/write shop ops                                       |
+| **MCP server**                       | First-class agent UX: typed tools, auth, discovery in Cursor/Claude           |
+| **CLI** (`bermooda-cli`)             | Install, update, plugins/themes, local bootstrap — not day-to-day catalog ops |
 
 Why not CLI-as-primary: agents must shell out, scrape stdout, and invent flags. That is brittle compared to MCP tool schemas. Why not MCP-only: install and first-boot still need a process outside a running shop (your existing CLI path). Why not invent a new proprietary agent protocol: MCP is already what those clients speak.
 
