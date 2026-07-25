@@ -1,7 +1,13 @@
 // Shared theme manifest constants (client-safe).
 
 /** Required top-level fields in a theme manifest. */
-export const REQUIRED_MANIFEST_FIELDS = ['id', 'name', 'version', 'components'];
+export const REQUIRED_MANIFEST_FIELDS = [
+  'id',
+  'title',
+  'version',
+  'slug',
+  'components',
+];
 
 /** Required component names that every theme must supply. */
 export const REQUIRED_COMPONENTS = [

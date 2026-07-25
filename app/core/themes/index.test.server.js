@@ -60,6 +60,7 @@ const {
   invalidateThemeCache,
   listRegisteredThemes,
   getRegisteredTheme,
+  getRegisteredThemeBySlug,
   loadThemeSettings,
   parseThemeSettingValue,
   saveThemeSettings,
@@ -81,9 +82,19 @@ import { registerStorefrontTheme } from '#/core/themes/storefront-components';
 
 function validManifest(overrides = {}) {
   return {
-    id: 'test-theme',
-    name: 'Test Theme',
+    id: '@bermooda/test-theme',
+    title: 'Test Theme',
     version: '1.0.0',
+    slug: 'test-theme',
+    components: Object.fromEntries(
+      REQUIRED_COMPONENTS.map((name) => [name, () => null])
+    ),
+    ...overrides,
+  };
+}
+
+function validRuntime(overrides = {}) {
+  return {
     components: Object.fromEntries(
       REQUIRED_COMPONENTS.map((name) => [name, () => null])
     ),
@@ -92,36 +103,34 @@ function validManifest(overrides = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// defineTheme — manifest field validation
+// defineTheme — runtime validation
 // ---------------------------------------------------------------------------
 
-describe('defineTheme — required manifest fields', () => {
-  it('returns the manifest when all required fields are present', () => {
-    const manifest = validManifest();
-    expect(defineTheme(manifest)).toBe(manifest);
+describe('defineTheme — runtime fields', () => {
+  it('returns the runtime when required components are present', () => {
+    const runtime = validRuntime();
+    expect(defineTheme(runtime)).toBe(runtime);
   });
 
-  it('throws when "id" is missing', () => {
-    const { id: _id, ...noId } = validManifest();
-    expect(() => defineTheme(noId)).toThrow(/id/);
+  it('does not require package identity fields', () => {
+    expect(() => defineTheme(validRuntime())).not.toThrow();
   });
 
-  it('throws when manifest is null', () => {
+  it('throws when runtime is null', () => {
     expect(() => defineTheme(null)).toThrow();
   });
 
-  it('accepts optional description field without throwing', () => {
-    const manifest = validManifest({ description: 'A storefront theme' });
-    expect(() => defineTheme(manifest)).not.toThrow();
+  it('throws when components is missing', () => {
+    expect(() => defineTheme({})).toThrow(/components/);
   });
 });
 
 describe('defineTheme — required component presence', () => {
   for (const componentName of REQUIRED_COMPONENTS) {
-    it(`throws when "${componentName}" is absent from manifest.components`, () => {
-      const manifest = validManifest();
-      delete manifest.components[componentName];
-      expect(() => defineTheme(manifest)).toThrow(new RegExp(componentName));
+    it(`throws when "${componentName}" is absent from runtime.components`, () => {
+      const runtime = validRuntime();
+      delete runtime.components[componentName];
+      expect(() => defineTheme(runtime)).toThrow(new RegExp(componentName));
     });
   }
 });
@@ -137,12 +146,26 @@ describe('registerTheme + registry helpers', () => {
   });
 
   it('registers the theme in server and client registries', () => {
-    const manifest = validManifest({ id: 'my-theme' });
+    const manifest = validManifest({
+      id: '@bermooda/my-theme',
+      slug: 'my-theme',
+    });
     registerTheme(manifest);
 
     expect(listRegisteredThemes()).toEqual([manifest]);
-    expect(getRegisteredTheme('my-theme')).toBe(manifest);
+    expect(getRegisteredTheme('@bermooda/my-theme')).toBe(manifest);
+    expect(getRegisteredThemeBySlug('my-theme')).toBe(manifest);
     expect(registerStorefrontTheme).toHaveBeenCalledWith(manifest);
+  });
+
+  it('requires package identity when registering a theme', () => {
+    const { id: _id, ...noId } = validManifest();
+    const { title: _title, ...noTitle } = validManifest();
+    const { slug: _slug, ...noSlug } = validManifest();
+
+    expect(() => registerTheme(noId)).toThrow(/id/);
+    expect(() => registerTheme(noTitle)).toThrow(/title/);
+    expect(() => registerTheme(noSlug)).toThrow(/slug/);
   });
 });
 
@@ -153,12 +176,16 @@ describe('registerTheme + resolveActiveTheme', () => {
   });
 
   it('returns the registered theme when DB returns its id', async () => {
-    const manifest = validManifest({ id: 'my-theme', name: 'My Theme' });
+    const manifest = validManifest({
+      id: '@bermooda/my-theme',
+      title: 'My Theme',
+      slug: 'my-theme',
+    });
     registerTheme(manifest);
 
     prisma.setting.findUnique.mockResolvedValueOnce({
       key: 'activeTheme',
-      value: 'my-theme',
+      value: '@bermooda/my-theme',
     });
 
     const result = await resolveActiveTheme();
@@ -181,6 +208,23 @@ describe('registerTheme + resolveActiveTheme', () => {
     const result = await resolveActiveTheme();
     expect(result).toBeNull();
   });
+
+  it('normalizes legacy default theme id from the database', async () => {
+    const manifest = validManifest({
+      id: '@bermooda/theme-default',
+      title: 'Default',
+      slug: 'default',
+    });
+    registerTheme(manifest);
+
+    prisma.setting.findUnique.mockResolvedValueOnce({
+      key: 'activeTheme',
+      value: 'default',
+    });
+
+    const result = await resolveActiveTheme();
+    expect(result).toBe(manifest);
+  });
 });
 
 describe('preloadStorefrontTheme', () => {
@@ -190,23 +234,32 @@ describe('preloadStorefrontTheme', () => {
   });
 
   it('returns the active theme id and falls back to default', async () => {
-    const manifest = validManifest({ id: 'shop-theme' });
+    const manifest = validManifest({
+      id: '@bermooda/shop-theme',
+      slug: 'shop-theme',
+    });
     registerTheme(manifest);
 
     prisma.setting.findUnique.mockResolvedValue({
       key: 'activeTheme',
-      value: 'shop-theme',
+      value: '@bermooda/shop-theme',
     });
 
-    await expect(preloadStorefrontTheme()).resolves.toBe('shop-theme');
-    await expect(preloadStorefrontTheme()).resolves.toBe('shop-theme');
+    await expect(preloadStorefrontTheme()).resolves.toBe(
+      '@bermooda/shop-theme'
+    );
+    await expect(preloadStorefrontTheme()).resolves.toBe(
+      '@bermooda/shop-theme'
+    );
     expect(prisma.setting.findUnique).toHaveBeenCalledTimes(1);
   });
 
   it('returns default when no active theme is configured', async () => {
     prisma.setting.findUnique.mockResolvedValueOnce(null);
 
-    await expect(preloadStorefrontTheme()).resolves.toBe('default');
+    await expect(preloadStorefrontTheme()).resolves.toBe(
+      '@bermooda/theme-default'
+    );
   });
 
   it('invalidates the preload cache', async () => {
@@ -215,7 +268,9 @@ describe('preloadStorefrontTheme', () => {
       value: 'missing-theme',
     });
 
-    await expect(preloadStorefrontTheme()).resolves.toBe('default');
+    await expect(preloadStorefrontTheme()).resolves.toBe(
+      '@bermooda/theme-default'
+    );
     invalidateThemeCache();
 
     prisma.setting.findUnique.mockResolvedValueOnce({
@@ -223,7 +278,9 @@ describe('preloadStorefrontTheme', () => {
       value: 'missing-theme',
     });
 
-    await expect(preloadStorefrontTheme()).resolves.toBe('default');
+    await expect(preloadStorefrontTheme()).resolves.toBe(
+      '@bermooda/theme-default'
+    );
     expect(prisma.setting.findUnique).toHaveBeenCalledTimes(2);
   });
 });

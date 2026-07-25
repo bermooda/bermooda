@@ -73,7 +73,14 @@ vi.mock('#/core/search/index.server', () => ({
   dbProvider: { name: 'Database' },
 }));
 vi.mock('#/core/themes/index.server', () => ({ registerTheme: vi.fn() }));
-vi.mock('#/themes/default/manifest', () => ({ default: { id: 'default' } }));
+vi.mock('#/themes/default/index', () => ({ default: { components: {} } }));
+vi.mock('#/themes/default/package.json', () => ({
+  default: {
+    name: '@bermooda/theme-default',
+    version: '1.0.0',
+    bermooda: { title: 'Default', slug: 'default' },
+  },
+}));
 vi.mock('#/utils/logger.server', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
@@ -178,7 +185,7 @@ describe('bootstrap.server', () => {
       expect.any(Object)
     );
     expect(registerTheme).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'default' })
+      expect.objectContaining({ id: '@bermooda/theme-default' })
     );
     expect(registerPaymentEventHandlers).toHaveBeenCalledOnce();
     expect(registerAuditSubscribers).toHaveBeenCalledOnce();
