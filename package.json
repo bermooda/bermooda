@@ -2,6 +2,9 @@
   "name": "bermooda",
   "private": true,
   "type": "module",
+  "imports": {
+    "#bermooda.config": "./bermooda.config.js"
+  },
   "engines": {
     "node": ">=22.22.0"
   },

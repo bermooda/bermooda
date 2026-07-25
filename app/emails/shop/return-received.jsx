@@ -1,6 +1,6 @@
 import { Section, Text } from '@react-email/components';
 
-import config from '#/config';
+import config from '#bermooda.config';
 import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';

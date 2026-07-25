@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-import config from '#/config';
+import config from '#bermooda.config';
 import logger from '#/utils/logger.server';
 import AbandonedCartEmail from '#/emails/shop/abandoned-cart';
 import BackInStockEmail from '#/emails/shop/back-in-stock';

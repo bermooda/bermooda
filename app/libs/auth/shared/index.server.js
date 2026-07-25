@@ -3,7 +3,7 @@ import { networkInterfaces } from 'os';
 import bcrypt from 'bcryptjs';
 import { createAuthMiddleware } from 'better-auth/api';
 
-import config from '#/config';
+import config from '#bermooda.config';
 import logger from '#/utils/logger.server';
 import { queueVerifyEmail } from '#/emails/job.server';
 

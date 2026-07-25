@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { createContext, redirect } from 'react-router';
 
-import config from '#/config';
+import config from '#bermooda.config';
 import logger from '#/utils/logger.server';
 import {
   buildAuthAdvancedConfig,

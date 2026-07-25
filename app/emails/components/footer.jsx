@@ -1,6 +1,6 @@
 import { Text } from '@react-email/components';
 
-import config from '#/config';
+import config from '#bermooda.config';
 
 /**
  * Email template for footer
