@@ -6,6 +6,10 @@
  *   SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD, SEED_SHOP_NAME
  *   BERMOODA_MINIMAL_SEED=1  — skip demo catalog (server default)
  *   DATABASE_URL / DATABASE_PROVIDER — selects SQLite or PostgreSQL adapter
+ *   BERMOODA_URL — optional; printed in MCP config snippet with bootstrap key
+ *
+ * After seed: creates first admin (if needed), marks setup complete, and prints
+ * a one-time bootstrap API key when none exist yet.
  *
  * Usage:
  *   node scripts/cli-bootstrap.mjs
@@ -94,6 +98,12 @@ async function main() {
     process.exit(code);
   }
   console.log('cli-bootstrap complete.');
+  console.log(
+    'Next: configure MCP with BERMOODA_URL + the bootstrap API key printed above,'
+  );
+  console.log(
+    'or call POST /api/admin/v1/setup/api-key with SETUP_TOKEN when no key exists.'
+  );
 }
 
 main().catch((err) => {

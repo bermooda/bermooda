@@ -235,6 +235,49 @@ export async function saveThemeSettings(themeId, manifest, formData) {
 }
 
 /**
+ * Normalize a theme setting value from a JSON object payload.
+ *
+ * @param {object} setting
+ * @param {unknown} raw
+ * @returns {unknown}
+ */
+export function parseThemeSettingJsonValue(setting, raw) {
+  if (setting.type === 'toggle') {
+    return Boolean(raw);
+  }
+  if (raw === undefined || raw === null) {
+    return setting.default ?? '';
+  }
+  return raw;
+}
+
+/**
+ * Persists theme settings from a JSON object (Admin API).
+ *
+ * @param {string} themeId
+ * @param {object} manifest
+ * @param {Record<string, unknown>} values
+ * @returns {Promise<void>}
+ */
+export async function saveThemeSettingsValues(themeId, manifest, values = {}) {
+  if (!manifest?.settings?.length) {
+    throw Object.assign(new Error('No settings for theme'), {
+      code: 'THEME_SETTINGS_INVALID',
+      status: 400,
+    });
+  }
+
+  await Promise.all(
+    manifest.settings.map(async (setting) => {
+      const value = Object.prototype.hasOwnProperty.call(values, setting.key)
+        ? parseThemeSettingJsonValue(setting, values[setting.key])
+        : (setting.default ?? (setting.type === 'toggle' ? false : ''));
+      await set(`theme.${themeId}.${setting.key}`, value);
+    })
+  );
+}
+
+/**
  * Activates a theme by id and busts resolution caches.
  *
  * @param {string} themeId
