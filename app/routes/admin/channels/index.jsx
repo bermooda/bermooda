@@ -82,7 +82,14 @@ export default function AdminChannelsRoute() {
             <TBody>
               {channels.map((channel) => (
                 <tr key={channel.id}>
-                  <Td className="text-text">{channel.name}</Td>
+                  <Td className="text-text">
+                    <Link
+                      to={`/admin/channels/${channel.id}`}
+                      className="hover:text-accent font-medium"
+                    >
+                      {channel.name}
+                    </Link>
+                  </Td>
                   <Td>{channel.handle}</Td>
                   <Td>{channel.domain ?? '—'}</Td>
                   <Td>{channel.currency}</Td>

@@ -300,6 +300,27 @@ export async function listCustomerGroups() {
   });
 }
 
+/**
+ * Load a customer group with members for the admin detail page.
+ *
+ * @param {string} id
+ * @returns {Promise<object | null>}
+ */
+export async function getCustomerGroup(id) {
+  return prisma.customerGroup.findUnique({
+    where: { id },
+    include: {
+      _count: { select: { members: true, priceLists: true } },
+      members: {
+        include: {
+          customer: { select: { id: true, email: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  });
+}
+
 export async function listCustomerGroupMembers() {
   return prisma.customerGroupMember.findMany({
     include: {
@@ -343,6 +364,34 @@ export async function listPriceLists() {
     include: {
       customerGroup: true,
       _count: { select: { entries: true } },
+    },
+  });
+}
+
+/**
+ * Load a price list with entries for the admin detail page.
+ *
+ * @param {string} id
+ * @returns {Promise<object | null>}
+ */
+export async function getPriceList(id) {
+  return prisma.priceList.findUnique({
+    where: { id },
+    include: {
+      customerGroup: true,
+      _count: { select: { entries: true } },
+      entries: {
+        include: {
+          variant: {
+            select: {
+              id: true,
+              sku: true,
+              product: { select: { id: true, title: true } },
+            },
+          },
+        },
+        orderBy: [{ variantId: 'asc' }, { minQuantity: 'asc' }],
+      },
     },
   });
 }

@@ -320,6 +320,42 @@ export async function loadCategoryAdminSelectOptions() {
 }
 
 /**
+ * Load a single category for the admin edit page.
+ *
+ * @param {string} id
+ * @returns {Promise<{ category: object, locales: string[], allForSelect: Array<{ id: string, title: string }> } | null>}
+ */
+export async function loadCategoryAdminEditData(id) {
+  const [locales, { categories, translationMap, slugMap }] = await Promise.all([
+    loadCategoryAdminLocales(),
+    loadCategoryAdminRecords(),
+  ]);
+
+  const record = categories.find((category) => category.id === id);
+  if (!record) return null;
+
+  return {
+    category: {
+      id: record.id,
+      parentId: record.parentId ?? null,
+      position: record.position,
+      enTitle: translationMap[record.id]?.en?.title ?? '',
+      translations: translationMap[record.id] ?? {},
+      slugs: slugMap[record.id] ?? {},
+    },
+    locales,
+    allForSelect: categories
+      .filter((category) => category.id !== id)
+      .map((category) => ({
+        id: category.id,
+        title:
+          translationMap[category.id]?.en?.title ??
+          `(${category.id.slice(0, 6)})`,
+      })),
+  };
+}
+
+/**
  * Parse create-category form input.
  *
  * @param {FormData} formData
