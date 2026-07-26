@@ -34,7 +34,7 @@ If you want a full shop you can fork, understand, and grow—welcome.
 Scaffold a shop with the global CLI:
 
 ```bash
-npm i -g bermooda-cli@latest
+npm i -g @bermooda/cli@latest
 
 bermooda install --local --dir ./my-shop -y \
   --admin-email admin@example.com \
@@ -50,7 +50,7 @@ Open [http://localhost:3000](http://localhost:3000). Admin is typically at `/adm
 ### Install the CLI
 
 ```bash
-npm i -g bermooda-cli@latest
+npm i -g @bermooda/cli@latest
 ```
 
 Requires **Node.js ≥ 22.22**. After install, the `bermooda` binary is available globally.
@@ -69,7 +69,7 @@ Requires **Node.js ≥ 22.22**. After install, the `bermooda` binary is availabl
 | `bermooda upgrade`                     | Upgrade the CLI itself                                               |
 | `bermooda help [command]`              | Built-in help                                                        |
 
-**Full command reference, flags, and design notes:** see the [bermooda-cli README](https://github.com/bermooda/bermooda-cli#readme) and [DESIGN.md](https://github.com/bermooda/bermooda-cli/blob/main/DESIGN.md). In-repo product checklist: [docs/cli-specs.md](docs/cli-specs.md).
+**Full command reference, flags, and design notes:** see the [@bermooda/cli README](https://github.com/bermooda/cli#readme) and [DESIGN.md](https://github.com/bermooda/cli/blob/main/DESIGN.md). In-repo product checklist: [docs/cli-specs.md](docs/cli-specs.md).
 
 Offline install from a local checkout of this repo:
 

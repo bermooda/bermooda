@@ -40,7 +40,7 @@ function getDatabaseProvider() {
 
 /**
  * Create Prisma client with the adapter matching env (SQLite or PostgreSQL).
- * Required for bermooda-cli --server installs; seed previously hard-coded SQLite.
+ * Required for @bermooda/cli --server installs; seed previously hard-coded SQLite.
  */
 function createPrismaClient() {
   const databaseUrl = process.env.DATABASE_URL;

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Adapter-aware bootstrap for bermooda-cli install.
+ * Adapter-aware bootstrap for @bermooda/cli install.
  *
  * Invoked from the shop root with env:
  *   SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD, SEED_SHOP_NAME

@@ -6,7 +6,7 @@
 
 **Architecture:** Same as v1 — MCP thin HTTP client → `/api/admin/v1/reports/*` → `app/core/reporting` → Prisma. Domain logic stays in the shop. Do **not** fold Phase 2 into `getDashboardReport` (keep composer = sales + ops only).
 
-**Tech Stack:** React Router 7 Admin API routes, Prisma, Vitest, bermooda-mcp (`AdminClient`, Zod, `runTool`).
+**Tech Stack:** React Router 7 Admin API routes, Prisma, Vitest, @bermooda/mcp (`AdminClient`, Zod, `runTool`).
 
 **Spec:** [docs/superpowers/specs/2026-07-25-mcp-analytics-reports-design.md](../specs/2026-07-25-mcp-analytics-reports-design.md) — Phase 2 section.
 
@@ -23,7 +23,7 @@
 - Do not re-implement inventory CRUD or scheduled-export run/download as “metrics.”
 - No new `reports:read` API key scope.
 - In `app/`, JavaScript + JSDoc; `#/*` imports; no file extensions.
-- Work spans two repos: bermooda then bermooda-mcp.
+- Work spans two repos: bermooda then @bermooda/mcp.
 
 ## Locked product decisions
 
@@ -50,10 +50,10 @@
 | `app/routes.js`                                                       | Register the three routes                                                                         |
 | `docs/api.md`, `docs/openapi.yaml`                                    | Document paths                                                                                    |
 | `.cursor/skills/bermooda-agent/SKILL.md`, `docs/agent-integration.md` | Agent tool table                                                                                  |
-| `bermooda-mcp/src/client.js`                                          | Three client methods                                                                              |
-| `bermooda-mcp/src/tools/reporting.js`                                 | Three MCP tools                                                                                   |
-| `bermooda-mcp/test/client.test.js`, `test/server.test.js`             | Coverage                                                                                          |
-| `bermooda-mcp/README.md`                                              | Tool rows                                                                                         |
+| `@bermooda/mcp/src/client.js`                                         | Three client methods                                                                              |
+| `@bermooda/mcp/src/tools/reporting.js`                                | Three MCP tools                                                                                   |
+| `@bermooda/mcp/test/client.test.js`, `test/server.test.js`            | Coverage                                                                                          |
+| `@bermooda/mcp/README.md`                                             | Tool rows                                                                                         |
 
 ---
 
@@ -841,9 +841,9 @@ EOF
 
 ---
 
-### Task 6: bermooda-mcp AdminClient methods
+### Task 6: @bermooda/mcp AdminClient methods
 
-**Files (bermooda-mcp):**
+**Files (@bermooda/mcp):**
 
 - Modify: `src/client.js`
 - Modify: `test/client.test.js`
@@ -887,7 +887,7 @@ EOF
 
 ### Task 7: MCP tools
 
-**Files (bermooda-mcp):**
+**Files (@bermooda/mcp):**
 
 - Modify: `src/tools/reporting.js`
 - Modify: `test/server.test.js`
@@ -985,7 +985,7 @@ npm run test -- app/core/reporting/index.test.server.js
 npm run lint
 npm run build
 
-# bermooda-mcp
+# @bermooda/mcp
 npm test
 npm run lint
 ```
