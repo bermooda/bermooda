@@ -11,12 +11,12 @@
 - [x] Setup the admin user (ask for the email and password)
 - [x] Setup the store (ask for the store name)
 
-> Implementation: global package [`bermooda-cli`](https://github.com/bermooda/bermooda-cli) (`bermooda` binary). See that repo’s README and DESIGN.md.
+> Implementation: global package [`@bermooda/cli`](https://github.com/bermooda/cli) (`bermooda` binary). See that repo’s README and DESIGN.md.
 
 ### Install the CLI
 
 ```bash
-npm i -g bermooda-cli@latest
+npm i -g @bermooda/cli@latest
 ```
 
 ### Use the CLI

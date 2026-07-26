@@ -10,7 +10,7 @@ Architecture plan for letting tools like Cursor and Claude operate on a bermooda
 | ------------------------------------ | ----------------------------------------------------------------------------- |
 | **Admin REST API** (`/api/admin/v1`) | Source of truth for read/write shop ops                                       |
 | **MCP server**                       | First-class agent UX: typed tools, auth, discovery in Cursor/Claude           |
-| **CLI** (`bermooda-cli`)             | Install, update, plugins/themes, local bootstrap — not day-to-day catalog ops |
+| **CLI** (`@bermooda/cli`)            | Install, update, plugins/themes, local bootstrap — not day-to-day catalog ops |
 
 Why not CLI-as-primary: agents must shell out, scrape stdout, and invent flags. That is brittle compared to MCP tool schemas. Why not MCP-only: install and first-boot still need a process outside a running shop (your existing CLI path). Why not invent a new proprietary agent protocol: MCP is already what those clients speak.
 
@@ -39,7 +39,7 @@ Strong foundation in this repo:
 
 - Admin API + `berm_` keys ([api.md](./api.md), [app/libs/auth/api/index.server.js](../app/libs/auth/api/index.server.js))
 - Product CRUD, settings `GET/PATCH`, orders, discounts, imports, webhooks, etc. under [app/routes/api/admin/v1/](../app/routes/api/admin/v1/)
-- Install CLI elsewhere ([cli-design.md](./cli-design.md) → `bermooda-cli`); in-app hook [scripts/cli-bootstrap.mjs](../scripts/cli-bootstrap.mjs)
+- Install CLI elsewhere ([cli-design.md](./cli-design.md) → `@bermooda/cli`); in-app hook [scripts/cli-bootstrap.mjs](../scripts/cli-bootstrap.mjs)
 
 Gaps that block “agent sets up a shop from scratch”:
 
@@ -70,7 +70,7 @@ Do **not** put ecommerce workflows in MCP; MCP should call API → `app/core/*`.
 
 ### Layer 2 — MCP server (new package, likely sibling repo like CLI)
 
-Ship `@bermooda/mcp` (or `bermooda-mcp`) as a **thin tool facade** over Admin API:
+Ship `@bermooda/mcp` as a **thin tool facade** over Admin API:
 
 - **Transport:** stdio for local Cursor/Claude Desktop; optional Streamable HTTP later for hosted shops
 - **Config:** `BERMOODA_URL` + `BERMOODA_API_KEY` (or MCP server config JSON)
@@ -82,7 +82,7 @@ MCP implementation detail: reuse typed HTTP client against `/api/admin/v1`; no P
 
 ### Layer 3 — CLI stays lifecycle-focused
 
-Keep [bermooda-cli](https://github.com/bermooda/bermooda-cli) for `install` / `update` / plugins / themes. Add only agent-friendly bootstrap helpers there, e.g.:
+Keep [@bermooda/cli](https://github.com/bermooda/cli) for `install` / `update` / plugins / themes. Add only agent-friendly bootstrap helpers there, e.g.:
 
 - After install: print/create bootstrap API key into `.env` / MCP config snippet
 - `bermooda mcp init` → writes Cursor MCP config pointing at local/remote shop
@@ -136,7 +136,7 @@ Bootstrap key path, categories CRUD, theme/plugin API hooks, OpenAPI + docs. Unb
 
 stdio server: auth, settings, products, categories, orders list/status, CSV import. Cursor + Claude Desktop config examples.
 
-**Status:** Implemented in [bermooda-mcp](https://github.com/bermooda/bermooda-mcp).
+**Status:** Implemented in [@bermooda/mcp](https://github.com/bermooda/mcp).
 
 ### Phase C — Setup orchestration
 
