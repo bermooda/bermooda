@@ -25,8 +25,44 @@ vi.mock('#/libs/prisma.server', () => ({
     translation: {
       findMany: vi.fn(),
     },
+    customer: {
+      count: vi.fn(),
+      findMany: vi.fn(),
+    },
+    inventoryLevel: {
+      findMany: vi.fn(),
+    },
+    location: {
+      findMany: vi.fn(),
+    },
+    variantPrice: {
+      findMany: vi.fn(),
+    },
+    scheduledExport: {
+      groupBy: vi.fn(),
+      count: vi.fn(),
+    },
+    exportRun: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+      groupBy: vi.fn(),
+    },
   },
 }));
+
+vi.mock('#/core/catalog/translations.server', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    loadProductTitleMap: vi.fn(
+      async () =>
+        new Map([
+          ['p1', 'Hat'],
+          ['p2', 'Cap'],
+        ])
+    ),
+  };
+});
 
 import prisma from '#/libs/prisma.server';
 import {
@@ -39,11 +75,14 @@ import {
   getDashboardReport,
   loadAdminDashboardData,
   getOpsMetrics,
+  getCustomerMetrics,
+  getInventoryMetrics,
+  getExportMetrics,
 } from '#/core/reporting/index.server';
 
 describe('reporting', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it('parseDateRange defaults to last 30 days', () => {
@@ -356,6 +395,165 @@ describe('reporting', () => {
     expect(prisma.productVariant.findMany.mock.calls[0][0].where).toEqual(
       lowStockWhere
     );
+  });
+
+  it('getCustomerMetrics splits new vs returning and ranks top spenders', async () => {
+    prisma.customer.count.mockResolvedValue(3);
+    prisma.order.findMany
+      // all-time paid: c1×2, c2×2, c3×1 → returning candidates {c1,c2}
+      .mockResolvedValueOnce([
+        { customerId: 'c1' },
+        { customerId: 'c1' },
+        { customerId: 'c2' },
+        { customerId: 'c2' },
+        { customerId: 'c3' },
+      ])
+      // in-range paid: c1 once (signup before range), c2 twice (signup in range)
+      .mockResolvedValueOnce([
+        {
+          customerId: 'c1',
+          totalCents: 5000,
+          customer: {
+            id: 'c1',
+            email: 'a@example.com',
+            name: 'A',
+            createdAt: new Date('2025-06-01T00:00:00.000Z'),
+          },
+        },
+        {
+          customerId: 'c2',
+          totalCents: 3000,
+          customer: {
+            id: 'c2',
+            email: 'b@example.com',
+            name: 'B',
+            createdAt: new Date('2026-01-15T00:00:00.000Z'),
+          },
+        },
+        {
+          customerId: 'c2',
+          totalCents: 2000,
+          customer: {
+            id: 'c2',
+            email: 'b@example.com',
+            name: 'B',
+            createdAt: new Date('2026-01-15T00:00:00.000Z'),
+          },
+        },
+      ]);
+
+    const result = await getCustomerMetrics({
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      limit: 10,
+    });
+
+    expect(result.newCustomers).toBe(3);
+    expect(result.returningCustomers).toBe(2);
+    expect(result.ordersByNewVsReturning).toEqual({
+      new: { orders: 2, revenueCents: 5000 },
+      returning: { orders: 1, revenueCents: 5000 },
+    });
+    expect(result.topCustomers[0]).toEqual(
+      expect.objectContaining({
+        customerId: 'c2',
+        email: 'b@example.com',
+        revenueCents: 5000,
+        orderCount: 2,
+      })
+    );
+    expect(result.range.start).toBe('2026-01-01T00:00:00.000Z');
+  });
+
+  it('getInventoryMetrics snapshots stock, value, and by-location', async () => {
+    prisma.productVariant.findMany.mockResolvedValue([
+      {
+        id: 'v1',
+        sku: 'SKU-1',
+        inventoryCount: 2,
+        productId: 'p1',
+      },
+      {
+        id: 'v2',
+        sku: 'SKU-2',
+        inventoryCount: 0,
+        productId: 'p2',
+      },
+    ]);
+    prisma.variantPrice.findMany.mockResolvedValue([
+      { variantId: 'v1', priceCents: 1000 },
+      { variantId: 'v2', priceCents: 500 },
+    ]);
+    prisma.inventoryLevel.findMany.mockResolvedValue([
+      { locationId: 'loc1', variantId: 'v1', quantity: 2 },
+      { locationId: 'loc1', variantId: 'v2', quantity: 0 },
+    ]);
+    prisma.location.findMany.mockResolvedValue([
+      { id: 'loc1', name: 'Warehouse', code: 'WH' },
+    ]);
+
+    const inv = await getInventoryMetrics({ currency: 'USD', limit: 10 });
+    expect(inv.asOf).toEqual(expect.any(String));
+    expect(inv.lowStock.count).toBe(1);
+    expect(inv.outOfStock.count).toBe(1);
+    expect(inv.stockValueCents).toBe(2000);
+    expect(inv.byLocation[0]).toEqual(
+      expect.objectContaining({
+        locationId: 'loc1',
+        name: 'Warehouse',
+        units: 2,
+      })
+    );
+  });
+
+  it('getExportMetrics returns schedules, recent runs, and failure rate', async () => {
+    prisma.scheduledExport.groupBy.mockResolvedValue([
+      { exportType: 'orders', schedule: 'weekly', _count: { _all: 2 } },
+    ]);
+    prisma.exportRun.findMany.mockResolvedValue([
+      {
+        id: 'run1',
+        scheduledExportId: 'se1',
+        exportType: 'orders',
+        status: 'failed',
+        rowCount: null,
+        error: 'boom',
+        createdAt: new Date('2026-01-10T00:00:00.000Z'),
+        completedAt: new Date('2026-01-10T00:01:00.000Z'),
+        fileContent: 'x',
+      },
+    ]);
+    prisma.exportRun.count
+      .mockResolvedValueOnce(10) // total in range
+      .mockResolvedValueOnce(2); // failed in range
+
+    const result = await getExportMetrics({
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      limit: 5,
+    });
+
+    expect(result.schedules).toEqual([
+      expect.objectContaining({
+        exportType: 'orders',
+        schedule: 'weekly',
+        count: 2,
+      }),
+    ]);
+    expect(result.recentRuns[0]).toEqual(
+      expect.objectContaining({
+        id: 'run1',
+        status: 'failed',
+        error: 'boom',
+        hasFileContent: true,
+      })
+    );
+    expect(result.recentRuns[0].fileContent).toBeUndefined();
+    expect(result.failureRate).toEqual({
+      total: 10,
+      failed: 2,
+      rate: 20,
+    });
   });
 
   it('loadAdminDashboardData returns KPI payload', async () => {

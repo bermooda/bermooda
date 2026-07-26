@@ -2,8 +2,14 @@
 // Sales analytics and operational reports for the admin dashboard.
 
 import prisma from '#/libs/prisma.server';
-import { loadCategoryTitleMap } from '#/core/catalog/translations.server';
+import {
+  loadCategoryTitleMap,
+  loadProductTitleMap,
+} from '#/core/catalog/translations.server';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
+import { DEFAULT_CURRENCY } from '#/core/settings/defaults';
+import { get } from '#/core/settings/index.server';
+import { SETTING_KEYS } from '#/core/settings/keys';
 
 export const PAID_ORDER_STATUSES = ['paid', 'fulfilled', 'refunded'];
 const REFUND_COMPLETED_STATUSES = ['completed', 'succeeded', 'paid'];
@@ -389,7 +395,359 @@ export async function loadAdminDashboardData() {
   };
 }
 
-const LOW_STOCK_THRESHOLD = 5;
+export const LOW_STOCK_THRESHOLD = 5;
+
+/**
+ * Customer analytics for a date range.
+ * Guest orders (null customerId) are excluded from order-based metrics.
+ *
+ * @param {{ startDate?: string, endDate?: string, limit?: number }} [params]
+ * @returns {Promise<{
+ *   range: { start: string, end: string },
+ *   newCustomers: number,
+ *   returningCustomers: number,
+ *   ordersByNewVsReturning: {
+ *     new: { orders: number, revenueCents: number },
+ *     returning: { orders: number, revenueCents: number },
+ *   },
+ *   topCustomers: Array<{
+ *     customerId: string,
+ *     email: string | null,
+ *     name: string | null,
+ *     revenueCents: number,
+ *     orderCount: number,
+ *   }>,
+ * }>}
+ */
+export async function getCustomerMetrics(params = {}) {
+  const range = parseDateRange(params);
+  const dateFilter = buildCreatedAtFilter(range);
+  const limit = Math.min(
+    Math.max(Number(params.limit) || DEFAULT_REPORT_LIMIT, 1),
+    MAX_REPORT_LIMIT
+  );
+  const paid = { status: { in: PAID_ORDER_STATUSES } };
+
+  const [newCustomers, allTimePaidCustomerIds, rangedPaidOrders] =
+    await Promise.all([
+      prisma.customer.count({ where: { createdAt: dateFilter } }),
+      prisma.order.findMany({
+        where: { ...paid, customerId: { not: null } },
+        select: { customerId: true },
+      }),
+      prisma.order.findMany({
+        where: {
+          ...paid,
+          customerId: { not: null },
+          createdAt: dateFilter,
+        },
+        select: {
+          customerId: true,
+          totalCents: true,
+          customer: {
+            select: { id: true, email: true, name: true, createdAt: true },
+          },
+        },
+      }),
+    ]);
+
+  /** @type {Map<string, number>} */
+  const allTimeCount = new Map();
+  for (const row of allTimePaidCustomerIds) {
+    if (!row.customerId) continue;
+    allTimeCount.set(
+      row.customerId,
+      (allTimeCount.get(row.customerId) ?? 0) + 1
+    );
+  }
+
+  const returningIds = new Set(
+    [...allTimeCount.entries()]
+      .filter(([, count]) => count >= 2)
+      .map(([id]) => id)
+  );
+
+  const rangedCustomerIds = new Set(
+    rangedPaidOrders.map((o) => o.customerId).filter(Boolean)
+  );
+  let returningCustomers = 0;
+  for (const id of returningIds) {
+    if (rangedCustomerIds.has(id)) returningCustomers += 1;
+  }
+
+  const ordersByNewVsReturning = {
+    new: { orders: 0, revenueCents: 0 },
+    returning: { orders: 0, revenueCents: 0 },
+  };
+
+  /** @type {Map<string, { customerId: string, email: string | null, name: string | null, revenueCents: number, orderCount: number }>} */
+  const topMap = new Map();
+
+  for (const order of rangedPaidOrders) {
+    if (!order.customerId || !order.customer) continue;
+    const isNew =
+      order.customer.createdAt.getTime() >= range.start.getTime() &&
+      order.customer.createdAt.getTime() <= range.end.getTime();
+    const bucket = isNew
+      ? ordersByNewVsReturning.new
+      : ordersByNewVsReturning.returning;
+    bucket.orders += 1;
+    bucket.revenueCents += order.totalCents;
+
+    const row = topMap.get(order.customerId) ?? {
+      customerId: order.customerId,
+      email: order.customer.email,
+      name: order.customer.name,
+      revenueCents: 0,
+      orderCount: 0,
+    };
+    row.revenueCents += order.totalCents;
+    row.orderCount += 1;
+    topMap.set(order.customerId, row);
+  }
+
+  const topCustomers = [...topMap.values()]
+    .sort(
+      (a, b) => b.revenueCents - a.revenueCents || b.orderCount - a.orderCount
+    )
+    .slice(0, limit);
+
+  return {
+    range: {
+      start: range.start.toISOString(),
+      end: range.end.toISOString(),
+    },
+    newCustomers,
+    returningCustomers,
+    ordersByNewVsReturning,
+    topCustomers,
+  };
+}
+
+/**
+ * Snapshot inventory analytics (not date-ranged).
+ *
+ * @param {{ limit?: number, locale?: string, currency?: string, threshold?: number }} [params]
+ * @returns {Promise<{
+ *   asOf: string,
+ *   currency: string,
+ *   threshold: number,
+ *   lowStock: {
+ *     count: number,
+ *     variants: Array<{
+ *       id: string,
+ *       sku: string | null,
+ *       inventoryCount: number,
+ *       title: string | null,
+ *     }>,
+ *   },
+ *   outOfStock: {
+ *     count: number,
+ *     variants: Array<{
+ *       id: string,
+ *       sku: string | null,
+ *       inventoryCount: number,
+ *       title: string | null,
+ *     }>,
+ *   },
+ *   stockValueCents: number,
+ *   byLocation: Array<{
+ *     locationId: string,
+ *     name: string,
+ *     code: string | null,
+ *     units: number,
+ *     stockValueCents: number,
+ *   }>,
+ * }>}
+ */
+export async function getInventoryMetrics(params = {}) {
+  const limit = Math.min(
+    Math.max(Number(params.limit) || DEFAULT_REPORT_LIMIT, 1),
+    MAX_REPORT_LIMIT
+  );
+  const threshold = Math.max(
+    Number(params.threshold) || LOW_STOCK_THRESHOLD,
+    1
+  );
+  const locale = params.locale;
+  const currency =
+    params.currency?.trim() ||
+    (await get(SETTING_KEYS.DEFAULT_CURRENCY)) ||
+    DEFAULT_CURRENCY;
+
+  const tracked = await prisma.productVariant.findMany({
+    where: { inventoryTracked: true },
+    select: {
+      id: true,
+      sku: true,
+      inventoryCount: true,
+      productId: true,
+    },
+  });
+
+  const titleByProductId = await loadProductTitleMap(
+    tracked.map((v) => v.productId),
+    locale || undefined
+  );
+
+  const prices = await prisma.variantPrice.findMany({
+    where: {
+      variantId: { in: tracked.map((v) => v.id) },
+      currency,
+    },
+    select: { variantId: true, priceCents: true },
+  });
+  const priceByVariant = new Map(
+    prices.map((p) => [p.variantId, p.priceCents])
+  );
+
+  const lowStockVariants = tracked
+    .filter((v) => v.inventoryCount > 0 && v.inventoryCount < threshold)
+    .sort((a, b) => a.inventoryCount - b.inventoryCount);
+  const outOfStockVariants = tracked.filter((v) => v.inventoryCount === 0);
+
+  let stockValueCents = 0;
+  for (const v of tracked) {
+    stockValueCents += v.inventoryCount * (priceByVariant.get(v.id) ?? 0);
+  }
+
+  const levels = await prisma.inventoryLevel.findMany({
+    select: { locationId: true, variantId: true, quantity: true },
+  });
+  const locations = await prisma.location.findMany({
+    where: { active: true },
+    select: { id: true, name: true, code: true },
+  });
+  const locById = new Map(locations.map((l) => [l.id, l]));
+
+  /** @type {Map<string, { locationId: string, name: string, code: string | null, units: number, stockValueCents: number }>} */
+  const byLoc = new Map();
+  for (const level of levels) {
+    const loc = locById.get(level.locationId);
+    if (!loc) continue;
+    const row = byLoc.get(loc.id) ?? {
+      locationId: loc.id,
+      name: loc.name,
+      code: loc.code,
+      units: 0,
+      stockValueCents: 0,
+    };
+    row.units += level.quantity;
+    row.stockValueCents +=
+      level.quantity * (priceByVariant.get(level.variantId) ?? 0);
+    byLoc.set(loc.id, row);
+  }
+
+  /**
+   * @param {{ id: string, sku: string | null, inventoryCount: number, productId: string }} v
+   */
+  const mapVariant = (v) => ({
+    id: v.id,
+    sku: v.sku,
+    inventoryCount: v.inventoryCount,
+    title: titleByProductId.get(v.productId) ?? null,
+  });
+
+  return {
+    asOf: new Date().toISOString(),
+    currency,
+    threshold,
+    lowStock: {
+      count: lowStockVariants.length,
+      variants: lowStockVariants.slice(0, limit).map(mapVariant),
+    },
+    outOfStock: {
+      count: outOfStockVariants.length,
+      variants: outOfStockVariants.slice(0, limit).map(mapVariant),
+    },
+    stockValueCents,
+    byLocation: [...byLoc.values()].sort((a, b) => b.units - a.units),
+  };
+}
+
+/**
+ * Scheduled export health metrics.
+ *
+ * @param {{ startDate?: string, endDate?: string, limit?: number }} [params]
+ * @returns {Promise<{
+ *   range: { start: string, end: string },
+ *   schedules: Array<{ exportType: string, schedule: string, count: number }>,
+ *   recentRuns: Array<{
+ *     id: string,
+ *     scheduledExportId: string | null,
+ *     exportType: string,
+ *     status: string,
+ *     rowCount: number | null,
+ *     error: string | null,
+ *     createdAt: string,
+ *     completedAt: string | null,
+ *     hasFileContent: boolean,
+ *   }>,
+ *   failureRate: { total: number, failed: number, rate: number },
+ * }>}
+ */
+export async function getExportMetrics(params = {}) {
+  const range = parseDateRange(params);
+  const dateFilter = buildCreatedAtFilter(range);
+  const limit = Math.min(
+    Math.max(Number(params.limit) || DEFAULT_REPORT_LIMIT, 1),
+    MAX_REPORT_LIMIT
+  );
+
+  const [grouped, recentRuns, total, failed] = await Promise.all([
+    prisma.scheduledExport.groupBy({
+      by: ['exportType', 'schedule'],
+      _count: { _all: true },
+    }),
+    prisma.exportRun.findMany({
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        scheduledExportId: true,
+        exportType: true,
+        status: true,
+        rowCount: true,
+        error: true,
+        createdAt: true,
+        completedAt: true,
+        fileContent: true,
+      },
+    }),
+    prisma.exportRun.count({ where: { createdAt: dateFilter } }),
+    prisma.exportRun.count({
+      where: { createdAt: dateFilter, status: 'failed' },
+    }),
+  ]);
+
+  return {
+    range: {
+      start: range.start.toISOString(),
+      end: range.end.toISOString(),
+    },
+    schedules: grouped.map((row) => ({
+      exportType: row.exportType,
+      schedule: row.schedule,
+      count: row._count._all,
+    })),
+    recentRuns: recentRuns.map((run) => ({
+      id: run.id,
+      scheduledExportId: run.scheduledExportId,
+      exportType: run.exportType,
+      status: run.status,
+      rowCount: run.rowCount,
+      error: run.error,
+      createdAt: run.createdAt.toISOString(),
+      completedAt: run.completedAt?.toISOString() ?? null,
+      hasFileContent: Boolean(run.fileContent),
+    })),
+    failureRate: {
+      total,
+      failed,
+      rate: total > 0 ? Math.round((failed / total) * 10000) / 100 : 0,
+    },
+  };
+}
 
 /**
  * Operational metrics for agents and dashboards.
