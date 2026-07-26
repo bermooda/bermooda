@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-25  
 **Status:** Approved  
-**Repos:** bermooda (Admin API + `app/core/reporting`), bermooda-mcp (tools + client)
+**Repos:** bermooda (Admin API + `app/core/reporting`), @bermooda/mcp (tools + client)
 
 ## Goal
 
@@ -24,7 +24,7 @@ Let agents query shop analytics via MCP: overview KPIs, sales over time, top pro
 ## Architecture
 
 ```
-MCP tools (bermooda-mcp)
+MCP tools (@bermooda/mcp)
   → AdminClient HTTP methods
     → /api/admin/v1/reports/*
       → app/core/reporting/*.server
@@ -77,7 +77,7 @@ Includes range, order counts, paid revenue/tax/discount, refunds, AOV, checkout 
 
 Invalid dates or out-of-range `limit` → `400` with the existing Admin API error shape. Auth unchanged (admin API key middleware on `/api/admin/v1`).
 
-## v1 MCP tools (bermooda-mcp)
+## v1 MCP tools (@bermooda/mcp)
 
 | Tool                    | Admin API                        |
 | ----------------------- | -------------------------------- |
@@ -146,7 +146,7 @@ MCP: `get_export_metrics`. Run-now / download stay on existing export Admin API.
 - Extend `getDashboardReport` test to assert `ops` is present.
 - Route loaders remain thin; follow existing Admin API test patterns if present.
 
-**bermooda-mcp**
+**@bermooda/mcp**
 
 - Client method coverage for each new path.
 - Tool registration / happy-path tests matching inventory/webhook suites.
@@ -163,7 +163,7 @@ MCP: `get_export_metrics`. Run-now / download stay on existing export Admin API.
 
 1. Core: `getOpsMetrics`; extend `getDashboardReport`.
 2. Admin API: split routes + extended dashboard (additive `ops`).
-3. bermooda-mcp: client + hybrid tools + README.
+3. @bermooda/mcp: client + hybrid tools + README.
 4. Docs / OpenAPI / agent skill.
 5. Phase 2: separate implementation plan later.
 

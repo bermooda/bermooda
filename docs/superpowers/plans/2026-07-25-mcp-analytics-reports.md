@@ -4,20 +4,20 @@
 
 **Goal:** Expose sales and ops analytics to agents via split Admin API report routes and hybrid MCP tools (`get_dashboard_report` + focused slice tools).
 
-**Architecture:** Domain logic stays in `app/core/reporting`. New `getOpsMetrics` powers `GET /api/admin/v1/reports/ops` and is composed into the existing dashboard report. Split Admin API routes wrap existing sales helpers 1:1. bermooda-mcp adds thin `AdminClient` methods and `registerReportingTools`.
+**Architecture:** Domain logic stays in `app/core/reporting`. New `getOpsMetrics` powers `GET /api/admin/v1/reports/ops` and is composed into the existing dashboard report. Split Admin API routes wrap existing sales helpers 1:1. @bermooda/mcp adds thin `AdminClient` methods and `registerReportingTools`.
 
-**Tech Stack:** React Router 7 Admin API routes, Prisma via `#/libs/prisma.server`, Vitest, bermooda-mcp (`@modelcontextprotocol/sdk`, Zod, `runTool`).
+**Tech Stack:** React Router 7 Admin API routes, Prisma via `#/libs/prisma.server`, Vitest, @bermooda/mcp (`@modelcontextprotocol/sdk`, Zod, `runTool`).
 
 **Spec:** [docs/superpowers/specs/2026-07-25-mcp-analytics-reports-design.md](../specs/2026-07-25-mcp-analytics-reports-design.md)
 
 ## Global Constraints
 
-- MCP is a thin HTTP client over `/api/admin/v1` — no Prisma in bermooda-mcp.
+- MCP is a thin HTTP client over `/api/admin/v1` — no Prisma in @bermooda/mcp.
 - Do not implement Phase 2 (customers / inventory / export metrics) in this plan.
 - Do not add `reports:read` API key scope; do not migrate Admin UI home off `loadAdminDashboardData`.
 - Dashboard response is additive: existing fields unchanged; add `ops` only.
 - In `app/`, JavaScript + JSDoc; `#/*` imports; no file extensions in imports.
-- Work spans two repos: commit bermooda changes in `/Users/cvgellhorn/dev/bermooda`, MCP changes in `/Users/cvgellhorn/dev/bermooda-mcp`.
+- Work spans two repos: commit bermooda changes in `/Users/cvgellhorn/dev/bermooda/bermooda`, MCP changes in `/Users/cvgellhorn/dev/bermooda/mcp`.
 
 ## File Structure
 
@@ -36,13 +36,13 @@
 | `docs/openapi.yaml`                                     | Add report paths                                            |
 | `docs/agent-integration.md`                             | Mention reporting tools                                     |
 | `.cursor/skills/bermooda-agent/SKILL.md`                | Tool table row for reporting                                |
-| `bermooda-mcp/src/client.js`                            | Report client methods                                       |
-| `bermooda-mcp/src/tools/reporting.js`                   | Hybrid MCP tools                                            |
-| `bermooda-mcp/src/tools/index.js`                       | Export `registerReportingTools`                             |
-| `bermooda-mcp/src/server.js`                            | Register reporting tools                                    |
-| `bermooda-mcp/test/client.test.js`                      | Client URL/auth coverage for reports                        |
-| `bermooda-mcp/test/server.test.js`                      | Expect new tool names                                       |
-| `bermooda-mcp/README.md`                                | Tool table                                                  |
+| `@bermooda/mcp/src/client.js`                           | Report client methods                                       |
+| `@bermooda/mcp/src/tools/reporting.js`                  | Hybrid MCP tools                                            |
+| `@bermooda/mcp/src/tools/index.js`                      | Export `registerReportingTools`                             |
+| `@bermooda/mcp/src/server.js`                           | Register reporting tools                                    |
+| `@bermooda/mcp/test/client.test.js`                     | Client URL/auth coverage for reports                        |
+| `@bermooda/mcp/test/server.test.js`                     | Expect new tool names                                       |
+| `@bermooda/mcp/README.md`                               | Tool table                                                  |
 
 ---
 
@@ -715,12 +715,12 @@ EOF
 
 ---
 
-### Task 5: bermooda-mcp AdminClient report methods
+### Task 5: @bermooda/mcp AdminClient report methods
 
 **Files:**
 
-- Modify: `/Users/cvgellhorn/dev/bermooda-mcp/src/client.js`
-- Modify: `/Users/cvgellhorn/dev/bermooda-mcp/test/client.test.js`
+- Modify: `/Users/cvgellhorn/dev/bermooda/mcp/src/client.js`
+- Modify: `/Users/cvgellhorn/dev/bermooda/mcp/test/client.test.js`
 
 - [ ] **Step 1: Write failing client test**
 
@@ -772,7 +772,7 @@ it('getDashboardReport and slice methods hit report routes', async () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /Users/cvgellhorn/dev/bermooda-mcp && npm test -- test/client.test.js
+cd /Users/cvgellhorn/dev/bermooda/mcp && npm test -- test/client.test.js
 ```
 
 Expected: FAIL — methods undefined.
@@ -820,15 +820,15 @@ Confirm `request` already serializes `query` (same as `listProducts`).
 - [ ] **Step 4: Run client tests**
 
 ```bash
-cd /Users/cvgellhorn/dev/bermooda-mcp && npm test -- test/client.test.js
+cd /Users/cvgellhorn/dev/bermooda/mcp && npm test -- test/client.test.js
 ```
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit (bermooda-mcp)**
+- [ ] **Step 5: Commit (@bermooda/mcp)**
 
 ```bash
-cd /Users/cvgellhorn/dev/bermooda-mcp
+cd /Users/cvgellhorn/dev/bermooda/mcp
 git add src/client.js test/client.test.js
 git commit -m "$(cat <<'EOF'
 feat(client): add Admin API methods for report endpoints
@@ -844,10 +844,10 @@ EOF
 
 **Files:**
 
-- Create: `/Users/cvgellhorn/dev/bermooda-mcp/src/tools/reporting.js`
-- Modify: `/Users/cvgellhorn/dev/bermooda-mcp/src/tools/index.js`
-- Modify: `/Users/cvgellhorn/dev/bermooda-mcp/src/server.js`
-- Modify: `/Users/cvgellhorn/dev/bermooda-mcp/test/server.test.js`
+- Create: `/Users/cvgellhorn/dev/bermooda/mcp/src/tools/reporting.js`
+- Modify: `/Users/cvgellhorn/dev/bermooda/mcp/src/tools/index.js`
+- Modify: `/Users/cvgellhorn/dev/bermooda/mcp/src/server.js`
+- Modify: `/Users/cvgellhorn/dev/bermooda/mcp/test/server.test.js`
 
 - [ ] **Step 1: Update server test expectations (fail first)**
 
@@ -865,7 +865,7 @@ In `test/server.test.js`, extend `expected` with:
 - [ ] **Step 2: Run server test to verify it fails**
 
 ```bash
-cd /Users/cvgellhorn/dev/bermooda-mcp && npm test -- test/server.test.js
+cd /Users/cvgellhorn/dev/bermooda/mcp && npm test -- test/server.test.js
 ```
 
 Expected: FAIL — tools missing.
@@ -1027,12 +1027,12 @@ it('get_overview_kpis forwards query to client', async () => {
 - [ ] **Step 5: Run MCP tests**
 
 ```bash
-cd /Users/cvgellhorn/dev/bermooda-mcp && npm test
+cd /Users/cvgellhorn/dev/bermooda/mcp && npm test
 ```
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit (bermooda-mcp)**
+- [ ] **Step 6: Commit (@bermooda/mcp)**
 
 ```bash
 git add src/tools/reporting.js src/tools/index.js src/server.js test/server.test.js
@@ -1051,9 +1051,9 @@ EOF
 
 **Files:**
 
-- Modify: `/Users/cvgellhorn/dev/bermooda-mcp/README.md`
-- Modify: `/Users/cvgellhorn/dev/bermooda/.cursor/skills/bermooda-agent/SKILL.md`
-- Modify: `/Users/cvgellhorn/dev/bermooda/docs/agent-integration.md`
+- Modify: `/Users/cvgellhorn/dev/bermooda/mcp/README.md`
+- Modify: `/Users/cvgellhorn/dev/bermooda/bermooda/.cursor/skills/bermooda-agent/SKILL.md`
+- Modify: `/Users/cvgellhorn/dev/bermooda/bermooda/docs/agent-integration.md`
 
 - [ ] **Step 1: Update MCP README tool table**
 
@@ -1083,7 +1083,7 @@ Near the tools bullet list, add that reporting tools map to `/api/admin/v1/repor
 - [ ] **Step 4: Commit each repo**
 
 ```bash
-cd /Users/cvgellhorn/dev/bermooda-mcp
+cd /Users/cvgellhorn/dev/bermooda/mcp
 git add README.md
 git commit -m "$(cat <<'EOF'
 docs: list reporting MCP tools in README
@@ -1112,10 +1112,10 @@ npm run lint
 
 If `oxfmt --check` fails: `npm run fmt`, then re-run `npm run lint`.
 
-- [ ] **Step 2: bermooda-mcp full test**
+- [ ] **Step 2: @bermooda/mcp full test**
 
 ```bash
-cd /Users/cvgellhorn/dev/bermooda-mcp
+cd /Users/cvgellhorn/dev/bermooda/mcp
 npm test
 ```
 

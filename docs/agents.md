@@ -4,9 +4,9 @@ Short guide for Cursor / Claude agents operating on a shop. Full architecture: [
 
 ## Quick path
 
-1. Install with [bermooda-cli](https://github.com/bermooda/bermooda-cli) (`bermooda install`)
+1. Install with [@bermooda/cli](https://github.com/bermooda/cli) (`bermooda install`)
 2. Run `bermooda mcp init` in the shop (uses bootstrap key / `.env`)
-3. Use [bermooda-mcp](https://github.com/bermooda/bermooda-mcp) tools from Cursor or Claude Desktop
+3. Use [@bermooda/mcp](https://github.com/bermooda/mcp) tools from Cursor or Claude Desktop
 
 ## Config
 
@@ -15,7 +15,7 @@ Short guide for Cursor / Claude agents operating on a shop. Full architecture: [
   "mcpServers": {
     "bermooda": {
       "command": "npx",
-      "args": ["-y", "bermooda-mcp"],
+      "args": ["-y", "@bermooda/mcp"],
       "env": {
         "BERMOODA_URL": "http://localhost:3000",
         "BERMOODA_API_KEY": "berm_REPLACE_ME"
@@ -25,7 +25,7 @@ Short guide for Cursor / Claude agents operating on a shop. Full architecture: [
 }
 ```
 
-Optional hosted transport: `bermooda-mcp` `npm run start:http` (Streamable HTTP) when stdio is not available.
+Optional hosted transport: `@bermooda/mcp` `npm run start:http` (Streamable HTTP) when stdio is not available.
 
 ## First agent tasks
 

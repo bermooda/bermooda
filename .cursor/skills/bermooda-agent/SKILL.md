@@ -7,7 +7,7 @@ description: How agents (Cursor, Claude) operate on a bermooda shop via MCP and 
 
 ## Preferred surface
 
-Use **bermooda-mcp** (stdio by default) against a running shop. Do not invent shell flags for catalog ops.
+Use **@bermooda/mcp** (stdio by default) against a running shop. Do not invent shell flags for catalog ops.
 
 | Need              | Tool                                                                                                                                                                                                      |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
