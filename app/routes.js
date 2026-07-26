@@ -273,6 +273,9 @@ export default [
         'routes/api/admin/v1/reports/sales-by-category.jsx'
       ),
       route('reports/ops', 'routes/api/admin/v1/reports/ops.jsx'),
+      route('reports/customers', 'routes/api/admin/v1/reports/customers.jsx'),
+      route('reports/inventory', 'routes/api/admin/v1/reports/inventory.jsx'),
+      route('reports/exports', 'routes/api/admin/v1/reports/exports.jsx'),
       route('reports/dashboard', 'routes/api/admin/v1/reports/dashboard.jsx'),
       route('scheduled-exports', 'routes/api/admin/v1/scheduled-exports.jsx'),
       route(

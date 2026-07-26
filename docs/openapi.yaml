@@ -618,6 +618,58 @@ paths:
         '200':
           description: Ops metrics
 
+  /api/admin/v1/reports/customers:
+    get:
+      summary: Customer analytics (new/returning, top spenders)
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date } }
+        - { name: endDate, in: query, schema: { type: string, format: date } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100 },
+          }
+      responses:
+        '200':
+          description: Customer metrics
+
+  /api/admin/v1/reports/inventory:
+    get:
+      summary: Inventory snapshot (low/out of stock, value, by location)
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100 },
+          }
+        - { name: locale, in: query, schema: { type: string } }
+        - { name: currency, in: query, schema: { type: string } }
+        - { name: threshold, in: query, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: Inventory metrics
+
+  /api/admin/v1/reports/exports:
+    get:
+      summary: Scheduled export health metrics
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date } }
+        - { name: endDate, in: query, schema: { type: string, format: date } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100 },
+          }
+      responses:
+        '200':
+          description: Export metrics
+
   /api/admin/v1/reports/dashboard:
     get:
       summary: Composed sales + ops dashboard report
