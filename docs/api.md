@@ -25,7 +25,7 @@ Authorization: Bearer berm_<your_key>
 
 **Bootstrap (no existing key):**
 
-1. Prefer **CLI seed / `npm run cli:bootstrap`** — creates the first admin (if needed), marks setup complete, prints a one-time bootstrap `berm_` key, writes `.bermooda/bootstrap-api-key`, and may append `BERMOODA_API_KEY` to `.env`. Then run `bermooda mcp init` from [bermooda-cli](https://github.com/bermooda/bermooda-cli).
+1. Prefer **CLI seed / `npm run cli:bootstrap`** — creates the first admin (if needed), marks setup complete, prints a one-time bootstrap `berm_` key, writes `.bermooda/bootstrap-api-key`, and may append `BERMOODA_API_KEY` to `.env`. Then run `bermooda mcp init` from [@bermooda/cli](https://github.com/bermooda/cli).
 2. Or use the unauthenticated setup endpoints below with a one-shot `SETUP_TOKEN` (see `.env.example`).
 
 **Creating additional keys:** `POST /api/admin/v1/api-keys` (requires an existing admin key), or **Admin → API**.
