@@ -1,12 +1,10 @@
 // app/routes/admin/categories/index.jsx
-// Category tree editor — inline create, inline edit with locale tabs,
-// drag-and-drop reorder, delete.
+// Category tree — list, drag-and-drop reorder, delete. Edit on /:id.
 
 import {
   PencilSquareIcon,
   TrashIcon,
   PlusIcon,
-  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
@@ -22,19 +20,12 @@ import { handleAdminActionError } from '#/libs/api/admin-ui/index.server';
 import {
   deleteCategoryRecursive,
   loadCategoryAdminTreeData,
-  saveCategoryAdminForm,
   setCategorySiblingOrder,
 } from '#/core/catalog/admin/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
-import Field from '#/components/admin/form/field';
-import Input from '#/components/admin/form/input';
-import Textarea from '#/components/admin/form/textarea';
-import LocaleTabs from '#/components/admin/locale-tabs';
 import PageHeader from '#/components/admin/page-header';
 import SortableList, { SortableGrip } from '#/components/admin/sortable-list';
-import { SuccessAlert } from '#/components/ui/alert';
-import Button, { ButtonSubmit } from '#/components/ui/button';
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -51,23 +42,6 @@ export async function loader() {
 export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get('intent');
-
-  // ── Save (edit) ────────────────────────────────────────────────────────────
-  if (intent === 'save') {
-    const id = formData.get('id')?.toString();
-    if (!id) return { ok: false, error: 'Missing id.' };
-
-    try {
-      await saveCategoryAdminForm(id, formData);
-      return { ok: true, intent: 'save' };
-    } catch (err) {
-      return handleAdminActionError(err, {
-        source: 'admin.categories.save',
-        intent: 'save',
-        userMessage: 'Could not save category.',
-      });
-    }
-  }
 
   // ── Delete ─────────────────────────────────────────────────────────────────
   if (intent === 'delete') {
@@ -158,112 +132,14 @@ function rebuildCategoryTree(tree, parentId, orderedSiblingIds) {
 }
 
 // ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
-
-/** Inline edit form shown below the category row */
-function InlineEditForm({ category, locales, onClose }) {
-  const fetcher = useFetcher();
-  const [activeLocale, setActiveLocale] = useState(locales[0] ?? 'en');
-  const isSaving = fetcher.state !== 'idle';
-
-  const saved =
-    fetcher.state === 'idle' &&
-    fetcher.data?.ok &&
-    fetcher.data?.intent === 'save';
-
-  return (
-    <div className="border-border bg-surface-2 rounded-lg border p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-text text-sm font-semibold">Edit category</span>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-text-muted hover:text-text rounded p-1"
-        >
-          <XMarkIcon className="h-4 w-4" />
-        </button>
-      </div>
-
-      {saved && <SuccessAlert message="Saved." />}
-
-      <fetcher.Form method="post">
-        <input type="hidden" name="intent" value="save" />
-        <input type="hidden" name="id" value={category.id} />
-        {locales.map((l) => (
-          <input key={l} type="hidden" name="locales[]" value={l} />
-        ))}
-
-        <LocaleTabs
-          locales={locales}
-          activeLocale={activeLocale}
-          onSelect={setActiveLocale}
-        />
-
-        {locales.map((locale) => (
-          <div
-            key={locale}
-            className={clsx(
-              'mt-3 space-y-3',
-              locale !== activeLocale && 'hidden'
-            )}
-          >
-            <Field label={`Title (${locale})`} className="space-y-1">
-              <Input
-                type="text"
-                name={`title[${locale}]`}
-                defaultValue={category.translations[locale]?.title ?? ''}
-                placeholder="Category title"
-              />
-            </Field>
-            <Field label={`Slug (${locale})`} className="space-y-1">
-              <Input
-                type="text"
-                name={`slug[${locale}]`}
-                defaultValue={category.slugs[locale] ?? ''}
-                placeholder="url-slug"
-              />
-            </Field>
-            <Field label={`Meta title (${locale})`} className="space-y-1">
-              <Input
-                type="text"
-                name={`metaTitle[${locale}]`}
-                defaultValue={category.translations[locale]?.metaTitle ?? ''}
-              />
-            </Field>
-            <Field label={`Meta description (${locale})`} className="space-y-1">
-              <Textarea
-                name={`metaDescription[${locale}]`}
-                rows={2}
-                defaultValue={
-                  category.translations[locale]?.metaDescription ?? ''
-                }
-              />
-            </Field>
-          </div>
-        ))}
-
-        <div className="mt-4 flex items-center gap-3">
-          <ButtonSubmit loading={isSaving}>Save</ButtonSubmit>
-          <Button variant="ghost" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </fetcher.Form>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
 export default function AdminCategoriesRoute() {
-  const { tree: loaderTree, locales } = useLoaderData();
+  const { tree: loaderTree } = useLoaderData();
   const navigation = useNavigation();
   const reorderFetcher = useFetcher();
   const [tree, setTree] = useState(loaderTree);
-  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     setTree(loaderTree);
@@ -299,7 +175,6 @@ export default function AdminCategoriesRoute() {
         className="mb-6"
       />
 
-      {/* Tree table */}
       <Card padded={false} className="overflow-hidden">
         {tree.length === 0 ? (
           <div className="text-text-muted px-4 py-10 text-center text-sm">
@@ -363,93 +238,76 @@ export default function AdminCategoriesRoute() {
               setTree(nextTree);
             }}
             renderItem={(cat, _index, { handleRef, isDragging }) => (
-              <div>
-                <div
-                  className={clsx(
-                    'hover:bg-surface-2/50 flex items-center gap-3 px-4 py-3',
-                    (isReordering || isDragging) && 'opacity-60'
-                  )}
-                  style={{ paddingLeft: `${16 + cat.depth * 24}px` }}
-                >
-                  <SortableGrip
-                    handleRef={handleRef}
-                    disabled={isReordering}
-                    className="shrink-0"
-                  />
-
-                  {cat.depth > 0 && (
-                    <span className="text-text-muted mr-1 shrink-0 select-none">
-                      {'└'}
-                    </span>
-                  )}
-
-                  <span className="text-text flex-1 text-sm font-medium">
-                    {cat.enTitle || (
-                      <span className="text-text-muted italic">(untitled)</span>
-                    )}
-                  </span>
-
-                  <span className="bg-surface-2 text-text-muted shrink-0 rounded px-1.5 py-0.5 font-mono text-xs">
-                    pos {cat.position}
-                  </span>
-
-                  {cat.childCount > 0 && (
-                    <Badge tone="accent">
-                      {cat.childCount} child{cat.childCount !== 1 ? 'ren' : ''}
-                    </Badge>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditingId((prev) => (prev === cat.id ? null : cat.id))
-                    }
-                    title="Edit"
-                    className={clsx(
-                      'rounded p-1 transition-colors',
-                      editingId === cat.id
-                        ? 'text-accent'
-                        : 'text-text-muted hover:text-text'
-                    )}
-                  >
-                    <PencilSquareIcon className="h-4 w-4" />
-                  </button>
-
-                  <Form
-                    method="post"
-                    onSubmit={(e) => {
-                      if (
-                        !window.confirm(
-                          cat.childCount > 0
-                            ? `Delete "${cat.enTitle || 'this category'}" and its ${cat.childCount} child categor${cat.childCount !== 1 ? 'ies' : 'y'}? This cannot be undone.`
-                            : `Delete "${cat.enTitle || 'this category'}"? This cannot be undone.`
-                        )
-                      ) {
-                        e.preventDefault();
-                      }
-                    }}
-                  >
-                    <input type="hidden" name="intent" value="delete" />
-                    <input type="hidden" name="id" value={cat.id} />
-                    <button
-                      type="submit"
-                      title="Delete"
-                      className="text-text-muted hover:text-danger rounded p-1"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
-                  </Form>
-                </div>
-
-                {editingId === cat.id && (
-                  <div className="px-4 pb-4">
-                    <InlineEditForm
-                      category={cat}
-                      locales={locales}
-                      onClose={() => setEditingId(null)}
-                    />
-                  </div>
+              <div
+                className={clsx(
+                  'hover:bg-surface-2/50 flex items-center gap-3 px-4 py-3',
+                  (isReordering || isDragging) && 'opacity-60'
                 )}
+                style={{ paddingLeft: `${16 + cat.depth * 24}px` }}
+              >
+                <SortableGrip
+                  handleRef={handleRef}
+                  disabled={isReordering}
+                  className="shrink-0"
+                />
+
+                {cat.depth > 0 && (
+                  <span className="text-text-muted mr-1 shrink-0 select-none">
+                    {'└'}
+                  </span>
+                )}
+
+                <Link
+                  to={`/admin/categories/${cat.id}`}
+                  className="text-text hover:text-accent flex-1 text-sm font-medium"
+                >
+                  {cat.enTitle || (
+                    <span className="text-text-muted italic">(untitled)</span>
+                  )}
+                </Link>
+
+                <span className="bg-surface-2 text-text-muted shrink-0 rounded px-1.5 py-0.5 font-mono text-xs">
+                  pos {cat.position}
+                </span>
+
+                {cat.childCount > 0 && (
+                  <Badge tone="accent">
+                    {cat.childCount} child{cat.childCount !== 1 ? 'ren' : ''}
+                  </Badge>
+                )}
+
+                <Link
+                  to={`/admin/categories/${cat.id}`}
+                  title="Edit"
+                  className="text-text-muted hover:text-text rounded p-1"
+                >
+                  <PencilSquareIcon className="h-4 w-4" />
+                </Link>
+
+                <Form
+                  method="post"
+                  onSubmit={(e) => {
+                    if (
+                      !window.confirm(
+                        cat.childCount > 0
+                          ? `Delete "${cat.enTitle || 'this category'}" and its ${cat.childCount} child categor${cat.childCount !== 1 ? 'ies' : 'y'}? This cannot be undone.`
+                          : `Delete "${cat.enTitle || 'this category'}"? This cannot be undone.`
+                      )
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  <input type="hidden" name="intent" value="delete" />
+                  <input type="hidden" name="id" value={cat.id} />
+                  <button
+                    type="submit"
+                    title="Delete"
+                    className="text-text-muted hover:text-danger rounded p-1"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </Form>
               </div>
             )}
           />

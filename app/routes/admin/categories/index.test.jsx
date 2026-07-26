@@ -4,19 +4,16 @@ const {
   mockDeleteCategoryRecursive,
   mockLoadCategoryAdminTreeData,
   mockSetCategorySiblingOrder,
-  mockSaveCategoryAdminForm,
 } = vi.hoisted(() => ({
   mockDeleteCategoryRecursive: vi.fn(),
   mockLoadCategoryAdminTreeData: vi.fn(),
   mockSetCategorySiblingOrder: vi.fn(),
-  mockSaveCategoryAdminForm: vi.fn(),
 }));
 
 vi.mock('#/core/catalog/admin/index.server', () => ({
   deleteCategoryRecursive: mockDeleteCategoryRecursive,
   loadCategoryAdminTreeData: mockLoadCategoryAdminTreeData,
   setCategorySiblingOrder: mockSetCategorySiblingOrder,
-  saveCategoryAdminForm: mockSaveCategoryAdminForm,
 }));
 
 vi.mock('#/utils/logger.server', () => ({
@@ -64,18 +61,6 @@ describe('admin categories route', () => {
     expect(mockLoadCategoryAdminTreeData).toHaveBeenCalled();
   });
 
-  it('save action delegates to saveCategoryAdminForm', async () => {
-    const response = await action({
-      request: buildRequest('save', { id: 'cat_1' }),
-    });
-
-    expect(response).toEqual({ ok: true, intent: 'save' });
-    expect(mockSaveCategoryAdminForm).toHaveBeenCalledWith(
-      'cat_1',
-      expect.any(FormData)
-    );
-  });
-
   it('delete action delegates to deleteCategoryRecursive', async () => {
     const response = await action({
       request: buildRequest('delete', { id: 'cat_1' }),
@@ -89,14 +74,14 @@ describe('admin categories route', () => {
     const response = await action({
       request: buildRequest('reorder', {
         parentId: '',
-        order: JSON.stringify(['cat_1', 'cat_2']),
+        order: JSON.stringify(['cat_2', 'cat_1']),
       }),
     });
 
     expect(response).toEqual({ ok: true, intent: 'reorder' });
     expect(mockSetCategorySiblingOrder).toHaveBeenCalledWith(null, [
-      'cat_1',
       'cat_2',
+      'cat_1',
     ]);
   });
 });
