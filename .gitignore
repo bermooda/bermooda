@@ -5,6 +5,7 @@
 
 # React Router
 /.react-router/
+/artifacts/
 /build/
 /coverage/
 

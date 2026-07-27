@@ -1,6 +1,4 @@
 import {
-  Form,
-  Link,
   redirect,
   useActionData,
   useLoaderData,
@@ -13,15 +11,27 @@ import {
   loadCategoryAdminSelectOptions,
   parseCategoryCreateInput,
 } from '#/core/catalog/admin/index.server';
-import ActionBar from '#/components/admin/action-bar';
-import Breadcrumbs from '#/components/admin/breadcrumbs';
-import Card, { CardHeader } from '#/components/admin/card';
-import Field from '#/components/admin/form/field';
-import Input from '#/components/admin/form/input';
-import Select from '#/components/admin/form/select';
-import PageHeader from '#/components/admin/page-header';
-import { ErrorAlert } from '#/components/ui/alert';
-import { ButtonSubmit } from '#/components/ui/button';
+import CreatePage from '#/components/admin/create-page';
+
+/** @typedef {import('#/components/admin/create-page/spec').CreatePageSpec} CreatePageSpec */
+
+/**
+ * Typefaces used by the create-page design candidates. Trim this to the
+ * winning design's pair once a candidate is adopted, and move it to
+ * `app/root.jsx` when the design ships to every admin create page.
+ */
+export const links = () => [
+  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+  {
+    rel: 'preconnect',
+    href: 'https://fonts.gstatic.com',
+    crossOrigin: 'anonymous',
+  },
+  {
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Black&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Karla:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap',
+  },
+];
 
 export async function loader() {
   return loadCategoryAdminSelectOptions();
@@ -51,77 +61,62 @@ export default function AdminNewCategoryRoute() {
   const { allForSelect } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
-  const isSaving = navigation.state === 'submitting';
+
+  /** @type {CreatePageSpec} */
+  const spec = {
+    eyebrow: 'Catalog',
+    title: 'New category',
+    subtitle: 'Add a category to organize your product catalog.',
+    breadcrumbs: [
+      { label: 'Categories', href: '/admin/categories' },
+      { label: 'New category' },
+    ],
+    sections: [
+      {
+        id: 'details',
+        title: 'Category details',
+        description:
+          'English name and slug. Parent is optional for nested categories.',
+        fields: [
+          {
+            name: 'title',
+            label: 'Name (EN)',
+            required: true,
+            placeholder: 'e.g. Apparel',
+          },
+          {
+            name: 'slug',
+            label: 'Slug (EN)',
+            placeholder: 'apparel',
+            hint: 'Leave empty to add a URL later.',
+          },
+          {
+            name: 'parentId',
+            label: 'Parent category',
+            type: 'select',
+            options: [
+              { value: '', label: '— None (root) —' },
+              ...allForSelect.map((category) => ({
+                value: category.id,
+                label: category.title,
+              })),
+            ],
+          },
+        ],
+      },
+    ],
+    cancelHref: '/admin/categories',
+    submitLabel: 'Create category',
+    submittingLabel: 'Creating…',
+    error: actionData?.error,
+    preview: {
+      pathPrefix: '/categories/',
+      slugField: 'slug',
+      summaryFields: ['title', 'slug', 'parentId'],
+    },
+  };
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <PageHeader
-        breadcrumbs={
-          <Breadcrumbs
-            items={[
-              { label: 'Categories', href: '/admin/categories' },
-              { label: 'New category' },
-            ]}
-          />
-        }
-        title="New category"
-        subtitle="Add a category to organize your product catalog."
-      />
-
-      <ErrorAlert message={actionData?.error} />
-
-      <Form method="post" className="space-y-6">
-        <Card>
-          <CardHeader
-            title="Category details"
-            description="English name and slug. Parent is optional for nested categories."
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name (EN) *" htmlFor="category-title">
-              <Input
-                id="category-title"
-                type="text"
-                name="title"
-                required
-                placeholder="e.g. Apparel"
-              />
-            </Field>
-            <Field label="Slug (EN)" htmlFor="category-slug">
-              <Input
-                id="category-slug"
-                type="text"
-                name="slug"
-                placeholder="apparel"
-              />
-            </Field>
-            <Field label="Parent (optional)" htmlFor="category-parent">
-              <Select id="category-parent" name="parentId" defaultValue="">
-                <option value="">— None (root) —</option>
-                {allForSelect.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.title}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </div>
-        </Card>
-
-        <ActionBar>
-          <span />
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/categories"
-              className="text-text-muted hover:text-text text-sm transition-colors"
-            >
-              Cancel
-            </Link>
-            <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Create category'}
-            </ButtonSubmit>
-          </div>
-        </ActionBar>
-      </Form>
-    </div>
+    <CreatePage spec={spec} isSaving={navigation.state === 'submitting'} />
   );
 }
