@@ -1,9 +1,6 @@
 import useAdminCreateDesign from '#/hooks/use-admin-create-design';
 import DesignSwitcher from '#/components/admin/create-page/design-switcher';
 
-// @ts-ignore -- side-effect stylesheet for the design candidates
-import '#/styles/admin-create-page.css';
-
 /** @typedef {import('#/components/admin/create-page/spec').CreatePageSpec} CreatePageSpec */
 
 /**

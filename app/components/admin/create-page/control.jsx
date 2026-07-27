@@ -13,6 +13,10 @@ import { fieldDomId } from '#/components/admin/create-page/spec';
  * @param {string} props.sectionId
  * @param {string} props.className
  * @param {(name: string, value: string) => void} [props.onValueChange]
+ * @param {boolean} [props.required] Overrides `field.required`. Designs that
+ *   hide fields (step flows) must opt out of native validation, which cannot
+ *   focus an invisible control.
+ * @param {string} [props.autoComplete]
  * @returns {React.ReactElement}
  */
 export default function FieldControl({
@@ -20,6 +24,8 @@ export default function FieldControl({
   sectionId,
   className,
   onValueChange,
+  required,
+  autoComplete = 'off',
 }) {
   const id = fieldDomId(sectionId, field.name);
 
@@ -32,7 +38,8 @@ export default function FieldControl({
     id,
     name: field.name,
     className,
-    required: field.required,
+    autoComplete,
+    required: required ?? field.required,
     onChange: onValueChange ? handleChange : undefined,
   };
 
