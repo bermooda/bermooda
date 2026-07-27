@@ -10,12 +10,18 @@ export const DEFAULT_DEV_PORT = 3000;
  * Resolve the local dev server port.
  *
  * Prefers `options.port`, then `process.env.PORT`, then {@link DEFAULT_DEV_PORT}.
+ * `process` is guarded so this module is safe to import in the browser
+ * (Vite does not polyfill `process.env.PORT`).
  *
  * @param {{ port?: string | number | null }} [options]
  * @returns {number}
  */
 export function resolveDevPort(options = {}) {
-  const raw = options.port ?? process.env.PORT;
+  const envPort =
+    typeof process !== 'undefined' && process.env
+      ? process.env.PORT
+      : undefined;
+  const raw = options.port ?? envPort;
   const n =
     typeof raw === 'number'
       ? raw
