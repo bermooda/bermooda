@@ -1,93 +1,257 @@
 /**
- * Atmosphere and motion for the admin create-page design candidates.
+ * Design tokens for the admin create-page candidates.
+ *
+ * Each candidate owns one `.cpd-*` class holding a full palette, and a
+ * matching `.dark .cpd-*` block. Components only ever reference
+ * `var(--cpd-…)`, so every design renders correctly under the global light
+ * and dark themes without branching in JSX.
+ *
  * Loaded only by `#/components/admin/create-page`. When a single design is
  * adopted, delete the blocks belonging to the discarded candidates.
  */
 
-/* --- Atelier -------------------------------------------------------- */
+/* ==================================================================== */
+/* Console — terminal sheet                                             */
+/* ==================================================================== */
 
-/* Laid-paper tooth: two offset hairline grids at very low contrast. */
-.cp-paper-grain {
+.cpd-console {
+  --cpd-font-body: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --cpd-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --cpd-bg: #fbfbf9;
+  --cpd-panel: #ffffff;
+  --cpd-panel-2: #f2f2ee;
+  --cpd-line: #e3e3dc;
+  --cpd-line-strong: #c8c8bf;
+  --cpd-text: #1a1b18;
+  --cpd-muted: #62655c;
+  --cpd-faint: #9b9d93;
+  --cpd-accent: #1c7a4b;
+  --cpd-accent-soft: rgb(28 122 75 / 0.1);
+  --cpd-accent-fg: #ffffff;
+  --cpd-danger: #b23428;
+  --cpd-danger-soft: rgb(178 52 40 / 0.09);
+}
+
+.dark .cpd-console {
+  --cpd-bg: #0c0e0d;
+  --cpd-panel: #121513;
+  --cpd-panel-2: #181c1a;
+  --cpd-line: #262b28;
+  --cpd-line-strong: #3a423d;
+  --cpd-text: #dbe4de;
+  --cpd-muted: #8a968e;
+  --cpd-faint: #5a645d;
+  --cpd-accent: #4ade80;
+  --cpd-accent-soft: rgb(74 222 128 / 0.13);
+  --cpd-accent-fg: #06210f;
+  --cpd-danger: #f87171;
+  --cpd-danger-soft: rgb(248 113 113 / 0.12);
+}
+
+/* ==================================================================== */
+/* Studio — split canvas with a dark context rail                       */
+/* ==================================================================== */
+
+.cpd-studio {
+  --cpd-font-body: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+  --cpd-font-display:
+    'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+
+  --cpd-bg: #ffffff;
+  --cpd-panel-2: #f5f6f8;
+  --cpd-line: #e4e6eb;
+  --cpd-text: #14161a;
+  --cpd-muted: #666c76;
+  --cpd-faint: #a3a8b1;
+  --cpd-accent: #dc4634;
+  --cpd-accent-soft: rgb(220 70 52 / 0.11);
+  --cpd-accent-fg: #ffffff;
+  --cpd-danger: #c0392b;
+  --cpd-danger-soft: rgb(192 57 43 / 0.09);
+
+  /* The rail stays dark in both themes — it is the anchor of the split. */
+  --cpd-rail-bg: #17191e;
+  --cpd-rail-panel: rgb(255 255 255 / 0.06);
+  --cpd-rail-text: #f4f5f7;
+  --cpd-rail-muted: #9aa0aa;
+  --cpd-rail-line: rgb(255 255 255 / 0.12);
+}
+
+.dark .cpd-studio {
+  --cpd-bg: #16181d;
+  --cpd-panel-2: #1d2026;
+  --cpd-line: #2b2f37;
+  --cpd-text: #eceef2;
+  --cpd-muted: #969ca7;
+  --cpd-faint: #656b76;
+  --cpd-accent: #ff6a55;
+  --cpd-accent-soft: rgb(255 106 85 / 0.14);
+  --cpd-accent-fg: #2a0b06;
+  --cpd-danger: #f0705f;
+  --cpd-danger-soft: rgb(240 112 95 / 0.12);
+
+  --cpd-rail-bg: #0a0b0e;
+  --cpd-rail-panel: rgb(255 255 255 / 0.05);
+  --cpd-rail-text: #f4f5f7;
+  --cpd-rail-muted: #8b919b;
+  --cpd-rail-line: rgb(255 255 255 / 0.1);
+}
+
+/* ==================================================================== */
+/* Guided — one question at a time                                      */
+/* ==================================================================== */
+
+.cpd-guided {
+  --cpd-font-body: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --cpd-font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+
+  --cpd-bg: #faf7f2;
+  --cpd-panel: #ffffff;
+  --cpd-panel-2: #f2ede4;
+  --cpd-line: #e6dfd3;
+  --cpd-line-strong: #cec4b2;
+  --cpd-text: #221f1a;
+  --cpd-muted: #6b6459;
+  --cpd-faint: #a79e90;
+  --cpd-accent: #1f6f63;
+  --cpd-accent-soft: rgb(31 111 99 / 0.1);
+  --cpd-accent-fg: #ffffff;
+  --cpd-danger: #a8402f;
+  --cpd-danger-soft: rgb(168 64 47 / 0.09);
+}
+
+.dark .cpd-guided {
+  --cpd-bg: #14120f;
+  --cpd-panel: #1c1a15;
+  --cpd-panel-2: #23201a;
+  --cpd-line: #302c24;
+  --cpd-line-strong: #4a4437;
+  --cpd-text: #f0eae0;
+  --cpd-muted: #a39887;
+  --cpd-faint: #736b5e;
+  --cpd-accent: #55c3ac;
+  --cpd-accent-soft: rgb(85 195 172 / 0.13);
+  --cpd-accent-fg: #08201c;
+  --cpd-danger: #e5806c;
+  --cpd-danger-soft: rgb(229 128 108 / 0.12);
+}
+
+/* ==================================================================== */
+/* Ledger — dense record sheet                                          */
+/* ==================================================================== */
+
+.cpd-ledger {
+  --cpd-font-body: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --cpd-font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --cpd-bg: #ffffff;
+  --cpd-panel: #ffffff;
+  --cpd-panel-2: #f5f6f9;
+  --cpd-line: #e2e4e9;
+  --cpd-line-strong: #cbcfd6;
+  --cpd-text: #0f1115;
+  --cpd-muted: #646a73;
+  --cpd-faint: #9aa0a9;
+  --cpd-accent: #0f62fe;
+  --cpd-accent-soft: rgb(15 98 254 / 0.1);
+  --cpd-accent-fg: #ffffff;
+  --cpd-danger: #c2261a;
+  --cpd-danger-soft: rgb(194 38 26 / 0.08);
+}
+
+.dark .cpd-ledger {
+  --cpd-bg: #0e1013;
+  --cpd-panel: #141619;
+  --cpd-panel-2: #1a1d22;
+  --cpd-line: #262a31;
+  --cpd-line-strong: #3a4049;
+  --cpd-text: #e7eaee;
+  --cpd-muted: #8c939e;
+  --cpd-faint: #626973;
+  --cpd-accent: #4589ff;
+  --cpd-accent-soft: rgb(69 137 255 / 0.14);
+  --cpd-accent-fg: #04142e;
+  --cpd-danger: #ff8389;
+  --cpd-danger-soft: rgb(255 131 137 / 0.12);
+}
+
+/* ==================================================================== */
+/* Canvas — editorial with a vertical action rail                       */
+/* ==================================================================== */
+
+.cpd-canvas {
+  --cpd-font-body: 'Karla', ui-sans-serif, system-ui, sans-serif;
+  --cpd-font-display: 'Bodoni Moda', 'Didot', Georgia, serif;
+
+  --cpd-bg: #efece6;
+  --cpd-panel-2: #e5e1d8;
+  --cpd-line: rgb(18 16 14 / 0.18);
+  --cpd-line-strong: #12100e;
+  --cpd-text: #12100e;
+  --cpd-muted: #5c564e;
+  --cpd-faint: #9b9488;
+  /* The rail inverts against the page in both themes. */
+  --cpd-accent: #12100e;
+  --cpd-accent-soft: rgb(18 16 14 / 0.07);
+  --cpd-accent-fg: #efece6;
+  --cpd-signal: #c6362a;
+  --cpd-danger: #a8291f;
+  --cpd-danger-soft: rgb(168 41 31 / 0.09);
+  --cpd-grain: rgb(18 16 14 / 0.03);
+}
+
+.dark .cpd-canvas {
+  --cpd-bg: #100f0d;
+  --cpd-panel-2: #191713;
+  --cpd-line: rgb(242 239 233 / 0.2);
+  --cpd-line-strong: #f2efe9;
+  --cpd-text: #f2efe9;
+  --cpd-muted: #9b948a;
+  --cpd-faint: #6a645b;
+  --cpd-accent: #f2efe9;
+  --cpd-accent-soft: rgb(242 239 233 / 0.09);
+  --cpd-accent-fg: #100f0d;
+  --cpd-signal: #ea7a6a;
+  --cpd-danger: #ea7a6a;
+  --cpd-danger-soft: rgb(234 122 106 / 0.12);
+  --cpd-grain: rgb(242 239 233 / 0.035);
+}
+
+/* ==================================================================== */
+/* Shared textures and motion                                           */
+/* ==================================================================== */
+
+/* Laid-paper tooth for Canvas; picks up the theme via --cpd-grain. */
+.cp-grain {
   background-image:
     repeating-linear-gradient(
       0deg,
-      rgb(31 26 21 / 0.022) 0px,
-      rgb(31 26 21 / 0.022) 1px,
+      var(--cpd-grain) 0px,
+      var(--cpd-grain) 1px,
       transparent 1px,
       transparent 3px
     ),
     repeating-linear-gradient(
       90deg,
-      rgb(31 26 21 / 0.016) 0px,
-      rgb(31 26 21 / 0.016) 1px,
+      var(--cpd-grain) 0px,
+      var(--cpd-grain) 1px,
       transparent 1px,
       transparent 4px
     );
 }
 
-/* --- Blueprint ------------------------------------------------------ */
-
-/* Drafting paper: 8px minor grid over a 64px major grid. */
-.cp-drafting-grid {
-  background-image:
-    linear-gradient(rgb(92 200 255 / 0.16) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(92 200 255 / 0.16) 1px, transparent 1px),
-    linear-gradient(rgb(92 200 255 / 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(92 200 255 / 0.05) 1px, transparent 1px);
-  background-size:
-    64px 64px,
-    64px 64px,
-    8px 8px,
-    8px 8px;
-}
-
-/* --- Nocturne ------------------------------------------------------- */
-
-@keyframes cp-aurora-drift {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(-3%, 2%, 0) scale(1.12);
-  }
-}
-
-.cp-aurora {
-  animation: cp-aurora-drift 26s ease-in-out infinite;
-}
-
-/* Film grain over the glass so large dark areas never band. */
-.cp-noise {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
-}
-
-/* --- Manifesto ------------------------------------------------------ */
-
-@keyframes cp-ticker {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.cp-ticker {
-  animation: cp-ticker 22s linear infinite;
-}
-
-.cp-diagonal-hatch {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    #111 0px,
-    #111 2px,
-    transparent 2px,
-    transparent 9px
+/* Dotted rule under Console inputs — reads as a fill-in line, not a box. */
+.cp-dotted-rule {
+  background-image: linear-gradient(
+    90deg,
+    var(--cpd-line-strong) 0 2px,
+    transparent 2px 5px
   );
+  background-repeat: repeat-x;
+  background-position: bottom;
+  background-size: 5px 1px;
 }
-
-/* --- Precision ------------------------------------------------------ */
 
 @keyframes cp-caret {
   0%,
@@ -105,8 +269,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cp-aurora,
-  .cp-ticker,
   .cp-caret {
     animation: none;
   }
