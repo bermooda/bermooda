@@ -25,7 +25,7 @@
   --cpd-line-strong: #c8c8bf;
   --cpd-text: #1a1b18;
   --cpd-muted: #62655c;
-  --cpd-faint: #9b9d93;
+  --cpd-faint: #6f7268;
   --cpd-accent: #1c7a4b;
   --cpd-accent-soft: rgb(28 122 75 / 0.1);
   --cpd-accent-fg: #ffffff;
@@ -41,7 +41,7 @@
   --cpd-line-strong: #3a423d;
   --cpd-text: #dbe4de;
   --cpd-muted: #8a968e;
-  --cpd-faint: #5a645d;
+  --cpd-faint: #8e9a92;
   --cpd-accent: #4ade80;
   --cpd-accent-soft: rgb(74 222 128 / 0.13);
   --cpd-accent-fg: #06210f;
@@ -63,15 +63,18 @@
   --cpd-line: #e4e6eb;
   --cpd-text: #14161a;
   --cpd-muted: #666c76;
-  --cpd-faint: #a3a8b1;
-  --cpd-accent: #dc4634;
-  --cpd-accent-soft: rgb(220 70 52 / 0.11);
+  --cpd-faint: #6b7078;
+  --cpd-accent: #c93a28;
+  --cpd-accent-soft: rgb(201 58 40 / 0.11);
   --cpd-accent-fg: #ffffff;
   --cpd-danger: #c0392b;
   --cpd-danger-soft: rgb(192 57 43 / 0.09);
 
   /* The rail stays dark in both themes — it is the anchor of the split. */
   --cpd-rail-bg: #17191e;
+  /* Accent text on the rail needs the light tint even in the light theme,
+     since the surface under it is dark either way. */
+  --cpd-rail-accent: #ff6a55;
   --cpd-rail-panel: rgb(255 255 255 / 0.06);
   --cpd-rail-text: #f4f5f7;
   --cpd-rail-muted: #9aa0aa;
@@ -84,7 +87,7 @@
   --cpd-line: #2b2f37;
   --cpd-text: #eceef2;
   --cpd-muted: #969ca7;
-  --cpd-faint: #656b76;
+  --cpd-faint: #878d99;
   --cpd-accent: #ff6a55;
   --cpd-accent-soft: rgb(255 106 85 / 0.14);
   --cpd-accent-fg: #2a0b06;
@@ -92,6 +95,7 @@
   --cpd-danger-soft: rgb(240 112 95 / 0.12);
 
   --cpd-rail-bg: #0a0b0e;
+  --cpd-rail-accent: #ff6a55;
   --cpd-rail-panel: rgb(255 255 255 / 0.05);
   --cpd-rail-text: #f4f5f7;
   --cpd-rail-muted: #8b919b;
@@ -113,7 +117,7 @@
   --cpd-line-strong: #cec4b2;
   --cpd-text: #221f1a;
   --cpd-muted: #6b6459;
-  --cpd-faint: #a79e90;
+  --cpd-faint: #766e60;
   --cpd-accent: #1f6f63;
   --cpd-accent-soft: rgb(31 111 99 / 0.1);
   --cpd-accent-fg: #ffffff;
@@ -129,7 +133,7 @@
   --cpd-line-strong: #4a4437;
   --cpd-text: #f0eae0;
   --cpd-muted: #a39887;
-  --cpd-faint: #736b5e;
+  --cpd-faint: #918878;
   --cpd-accent: #55c3ac;
   --cpd-accent-soft: rgb(85 195 172 / 0.13);
   --cpd-accent-fg: #08201c;
@@ -152,7 +156,7 @@
   --cpd-line-strong: #cbcfd6;
   --cpd-text: #0f1115;
   --cpd-muted: #646a73;
-  --cpd-faint: #9aa0a9;
+  --cpd-faint: #6a7079;
   --cpd-accent: #0f62fe;
   --cpd-accent-soft: rgb(15 98 254 / 0.1);
   --cpd-accent-fg: #ffffff;
@@ -168,7 +172,7 @@
   --cpd-line-strong: #3a4049;
   --cpd-text: #e7eaee;
   --cpd-muted: #8c939e;
-  --cpd-faint: #626973;
+  --cpd-faint: #878e99;
   --cpd-accent: #4589ff;
   --cpd-accent-soft: rgb(69 137 255 / 0.14);
   --cpd-accent-fg: #04142e;
@@ -190,7 +194,7 @@
   --cpd-line-strong: #12100e;
   --cpd-text: #12100e;
   --cpd-muted: #5c564e;
-  --cpd-faint: #9b9488;
+  --cpd-faint: #6a6456;
   /* The rail inverts against the page in both themes. */
   --cpd-accent: #12100e;
   --cpd-accent-soft: rgb(18 16 14 / 0.07);
@@ -208,7 +212,7 @@
   --cpd-line-strong: #f2efe9;
   --cpd-text: #f2efe9;
   --cpd-muted: #9b948a;
-  --cpd-faint: #6a645b;
+  --cpd-faint: #8d8579;
   --cpd-accent: #f2efe9;
   --cpd-accent-soft: rgb(242 239 233 / 0.09);
   --cpd-accent-fg: #100f0d;
@@ -251,6 +255,33 @@
   background-repeat: repeat-x;
   background-position: bottom;
   background-size: 5px 1px;
+}
+
+/*
+ * Staggered entrance. Driven entirely by CSS so the content is never hidden
+ * behind a client effect — if JS fails or is disabled the animation simply
+ * does not play and everything is visible at its final position.
+ */
+@keyframes cp-reveal {
+  from {
+    opacity: 0;
+    transform: var(--cp-reveal-from, translateY(12px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.cp-reveal {
+  animation: cp-reveal 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--cp-reveal-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-reveal {
+    animation: none;
+  }
 }
 
 @keyframes cp-caret {

@@ -53,7 +53,7 @@ export default function DesignSwitcher({
   onStep,
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, setTheme } = useTheme();
   const active = designs.find((design) => design.id === designId);
 
   /**
@@ -113,15 +113,31 @@ export default function DesignSwitcher({
         >
           Design review
         </span>
-        <div className="-mr-1.5 flex items-center gap-1">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="rounded-md px-2 py-1 text-[11px] text-white/45 transition hover:bg-white/8 hover:text-white/85"
-            title="Toggle the admin theme"
-          >
-            {isDark ? 'Dark' : 'Light'}
-          </button>
+        <div className="-mr-1.5 flex items-center gap-1.5">
+          {/* Segmented rather than a toggle, so the active theme is legible
+              instead of ambiguous between state and action. */}
+          <div className="flex items-center rounded-md bg-white/8 p-0.5">
+            {[
+              { id: 'light', label: 'Light', on: !isDark },
+              { id: 'dark', label: 'Dark', on: isDark },
+            ].map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() =>
+                  setTheme(/** @type {'light'|'dark'} */ (option.id))
+                }
+                aria-pressed={option.on}
+                className={`rounded px-2 py-0.5 text-[11px] transition ${
+                  option.on
+                    ? 'bg-white/85 font-medium text-[#0C0D10]'
+                    : 'text-white/50 hover:text-white/85'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             onClick={() => setCollapsed(true)}

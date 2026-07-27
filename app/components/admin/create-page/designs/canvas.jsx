@@ -104,7 +104,7 @@ export default function CanvasCreatePage({ spec, isSaving }) {
     >
       <Form method="post" className="flex">
         <div className="min-w-0 flex-1 px-5 py-10 sm:px-10 sm:py-14">
-          <Reveal delay={0} from="translate-y-2">
+          <Reveal delay={0} from="translateY(10px)">
             <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3">
               <nav aria-label="Breadcrumb">
                 <ol className="flex flex-wrap items-center gap-2 text-[11px] font-bold tracking-[0.2em] text-[var(--cpd-muted)] uppercase">
@@ -175,7 +175,7 @@ export default function CanvasCreatePage({ spec, isSaving }) {
               <Reveal
                 key={section.id}
                 delay={120 + index * 100}
-                from="translate-y-3"
+                from="translateY(14px)"
                 className="flex gap-6 sm:gap-10"
               >
                 {/* Section title, set down the margin. */}

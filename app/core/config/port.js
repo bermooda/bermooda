@@ -3,6 +3,10 @@
 // Keep this module free of bermooda.config / createConfig side effects so
 // vite.config.js can import it during production builds.
 
+// Relative, extension-bearing import on purpose: vite.config.js loads this
+// module directly, before the `#/*` alias it defines exists.
+import { readEnv } from './env.js';
+
 /** Default local dev server port (shared with Vite `server.port`). */
 export const DEFAULT_DEV_PORT = 3000;
 
@@ -15,7 +19,7 @@ export const DEFAULT_DEV_PORT = 3000;
  * @returns {number}
  */
 export function resolveDevPort(options = {}) {
-  const raw = options.port ?? process.env.PORT;
+  const raw = options.port ?? readEnv('PORT');
   const n =
     typeof raw === 'number'
       ? raw

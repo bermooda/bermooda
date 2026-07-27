@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   createConfig,
@@ -8,6 +8,7 @@ import {
   resolveBaseUrl,
   resolveDevPort,
 } from '#/core/config';
+import { readEnv } from '#/core/config/env';
 
 describe('resolveDevPort', () => {
   it('defaults to 3000 when PORT is unset', () => {
@@ -102,6 +103,54 @@ describe('createConfig', () => {
   it('uses options.port for the auto-dev baseUrl', () => {
     const config = createConfig({}, { nodeEnv: 'development', port: 4173 });
     expect(config.baseUrl).toBe('http://localhost:4173');
+  });
+});
+
+describe('without a `process` global', () => {
+  const realProcess = globalThis.process;
+
+  afterEach(() => {
+    globalThis.process = realProcess;
+  });
+
+  /**
+   * This module is bundled into the browser. Touching `process` there throws
+   * at module-eval time, which takes down hydration for the entire app.
+   */
+  function withoutProcess(/** @type {() => void} */ run) {
+    // @ts-expect-error -- deleting a global is the whole point of the test
+    delete globalThis.process;
+    run();
+  }
+
+  it('reads env vars as undefined instead of throwing', () => {
+    withoutProcess(() => {
+      expect(readEnv('NODE_ENV')).toBeUndefined();
+    });
+  });
+
+  it('still resolves a dev port', () => {
+    withoutProcess(() => {
+      expect(resolveDevPort()).toBe(DEFAULT_DEV_PORT);
+      expect(resolveDevPort({ port: 4173 })).toBe(4173);
+    });
+  });
+
+  it('still resolves a base url', () => {
+    withoutProcess(() => {
+      expect(resolveBaseUrl({ baseUrl: 'https://shop.example' })).toBe(
+        'https://shop.example'
+      );
+      expect(resolveBaseUrl({})).toBe('http://localhost:3000');
+    });
+  });
+
+  it('still builds a config', () => {
+    withoutProcess(() => {
+      expect(createConfig({ baseUrl: 'https://shop.example' }).auth).toEqual(
+        DEFAULT_AUTH
+      );
+    });
   });
 });
 

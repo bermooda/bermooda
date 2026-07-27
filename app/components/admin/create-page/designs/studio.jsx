@@ -114,7 +114,7 @@ function RailPreview({ spec, values }) {
       <div className="mt-3 flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--cpd-accent)] text-[15px] font-bold text-[var(--cpd-accent-fg)]"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--cpd-rail-accent)] text-[15px] font-bold text-[#2a0b06]"
         >
           {(name.trim()[0] ?? '?').toUpperCase()}
         </span>
@@ -168,7 +168,7 @@ export default function StudioCreatePage({ spec, isSaving }) {
       <Form method="post" className="grid lg:grid-cols-[21rem_minmax(0,1fr)]">
         {/* Context rail — title, preview, and both actions. */}
         <aside className="flex flex-col justify-between gap-10 bg-[var(--cpd-rail-bg)] p-7 text-[var(--cpd-rail-text)] lg:min-h-[38rem] lg:p-8">
-          <Reveal delay={0} from="-translate-x-2">
+          <Reveal delay={0} from="translateX(-10px)">
             <nav aria-label="Breadcrumb">
               <ol className="flex flex-wrap items-center gap-1.5 text-[12px] text-[var(--cpd-rail-muted)]">
                 {spec.breadcrumbs.map((crumb, index) => (
@@ -192,10 +192,10 @@ export default function StudioCreatePage({ spec, isSaving }) {
             </nav>
 
             {spec.eyebrow && (
-              <p className="mt-7 flex items-center gap-2 text-[10px] font-semibold tracking-[0.28em] text-[var(--cpd-accent)] uppercase">
+              <p className="mt-7 flex items-center gap-2 text-[10px] font-semibold tracking-[0.28em] text-[var(--cpd-rail-accent)] uppercase">
                 <span
                   aria-hidden="true"
-                  className="h-2 w-2 rounded-full bg-[var(--cpd-accent)]"
+                  className="h-2 w-2 rounded-full bg-[var(--cpd-rail-accent)]"
                 />
                 {spec.eyebrow}
               </p>
@@ -218,7 +218,7 @@ export default function StudioCreatePage({ spec, isSaving }) {
             </div>
           </Reveal>
 
-          <Reveal delay={220} from="-translate-x-2" className="space-y-2.5">
+          <Reveal delay={220} from="translateX(-10px)" className="space-y-2.5">
             <button
               type="submit"
               disabled={isSaving}
@@ -254,7 +254,7 @@ export default function StudioCreatePage({ spec, isSaving }) {
             <Reveal
               key={section.id}
               delay={110 + index * 90}
-              from="translate-y-2"
+              from="translateY(10px)"
               className={index > 0 ? 'mt-10' : ''}
             >
               <div className="flex items-baseline gap-3 border-b border-[var(--cpd-line)] pb-3">

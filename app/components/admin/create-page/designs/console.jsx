@@ -163,7 +163,7 @@ export default function ConsoleCreatePage({ spec, isSaving }) {
       <Form method="post">
         {/* Narrow measure hugging the left edge — a sheet, not a centred page. */}
         <div className="max-w-3xl px-4 py-9 sm:px-8 sm:py-11">
-          <Reveal delay={0} from="translate-y-2">
+          <Reveal delay={0} from="translateY(10px)">
             <Line number="">
               <h1 className="text-[22px] leading-tight font-semibold tracking-[-0.01em]">
                 <span
@@ -203,7 +203,7 @@ export default function ConsoleCreatePage({ spec, isSaving }) {
               <Reveal
                 key={section.id}
                 delay={90 + index * 80}
-                from="translate-y-2"
+                from="translateY(10px)"
                 className="space-y-4"
               >
                 <Line number="">

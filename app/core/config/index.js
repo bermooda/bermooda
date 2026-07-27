@@ -4,6 +4,7 @@
 
 import rootConfig from '#bermooda.config';
 
+import { readEnv } from '#/core/config/env';
 import { resolveDevPort } from '#/core/config/port';
 
 export { DEFAULT_DEV_PORT, resolveDevPort } from '#/core/config/port';
@@ -74,7 +75,7 @@ export const DEFAULT_AUTH = {
  * @returns {string}
  */
 export function resolveBaseUrl(root, options = {}) {
-  const nodeEnv = options.nodeEnv ?? process.env.NODE_ENV;
+  const nodeEnv = options.nodeEnv ?? readEnv('NODE_ENV');
   const raw = root?.baseUrl;
   const configured =
     typeof raw === 'string' && raw.trim() !== '' ? raw.trim() : null;

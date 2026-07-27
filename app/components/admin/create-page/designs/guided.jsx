@@ -89,6 +89,10 @@ export default function GuidedCreatePage({ spec, isSaving }) {
         onKeyDown={handleKeyDown}
         className="mx-auto flex min-h-[34rem] w-full max-w-2xl flex-col px-6 py-9 sm:px-8 sm:py-12"
       >
+        {/* The visible heading is the current question, which must stay a
+            label — so the page's own heading is announced but not drawn. */}
+        <h1 className="sr-only">{spec.title}</h1>
+
         {/* Progress rail */}
         <div className="flex items-center gap-3">
           <div className="flex flex-1 gap-1.5">
@@ -195,12 +199,12 @@ export default function GuidedCreatePage({ spec, isSaving }) {
               <p className="text-[11px] font-semibold tracking-[0.24em] text-[var(--cpd-accent)] uppercase">
                 Almost there
               </p>
-              <h2
+              <p
                 className="mt-4 text-[clamp(1.9rem,4.5vw,2.75rem)] leading-[1.08] tracking-[-0.02em]"
                 style={{ fontFamily: 'var(--cpd-font-display)' }}
               >
                 {spec.title}
-              </h2>
+              </p>
               {spec.subtitle && (
                 <p className="mt-3 text-[15px] leading-relaxed text-[var(--cpd-muted)]">
                   {spec.subtitle}

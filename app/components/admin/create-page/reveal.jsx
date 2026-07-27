@@ -1,17 +1,18 @@
 import clsx from 'clsx';
 
-import useMounted from '#/hooks/use-mounted';
-
 /**
  * Reveal
- * Staggered entrance wrapper. Renders its children in their final position
- * during SSR-to-hydration, then transitions them in on the next frame so a
- * page load reads as one orchestrated motion instead of scattered effects.
+ * Staggered entrance wrapper for create-page sections.
+ *
+ * The animation is pure CSS (see `cp-reveal` in `admin-create-page.css`) and
+ * deliberately not gated on a mount effect: the final state is what the
+ * browser paints when the animation does not run, so a hydration failure or
+ * disabled JS costs the motion, not the content.
  *
  * @param {Object} props
  * @param {React.ReactNode} props.children
  * @param {number} [props.delay=0] Milliseconds before this element animates
- * @param {string} [props.from='translate-y-3'] Offset class applied while hidden
+ * @param {string} [props.from='translateY(12px)'] Starting transform
  * @param {string} [props.className]
  * @param {React.ElementType} [props.as='div'] Element to render
  * @returns {React.ReactElement}
@@ -19,20 +20,17 @@ import useMounted from '#/hooks/use-mounted';
 export default function Reveal({
   children,
   delay = 0,
-  from = 'translate-y-3',
+  from = 'translateY(12px)',
   className = '',
   as: Tag = 'div',
 }) {
-  const mounted = useMounted();
-
   return (
     <Tag
-      className={clsx(
-        'transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none',
-        mounted ? 'translate-y-0 opacity-100' : `${from} opacity-0`,
-        className
-      )}
-      style={{ transitionDelay: `${delay}ms` }}
+      className={clsx('cp-reveal', className)}
+      style={{
+        '--cp-reveal-delay': `${delay}ms`,
+        '--cp-reveal-from': from,
+      }}
     >
       {children}
     </Tag>

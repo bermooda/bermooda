@@ -210,7 +210,7 @@ export default function LedgerCreatePage({ spec, isSaving }) {
         <div className="grid lg:grid-cols-[15rem_minmax(0,1fr)]">
           {/* Metadata column */}
           <aside className="border-b border-[var(--cpd-line)] bg-[var(--cpd-panel-2)] p-4 lg:border-r lg:border-b-0">
-            <Reveal delay={0} from="translate-y-1">
+            <Reveal delay={0} from="translateY(6px)">
               <h2 className="text-[10.5px] font-semibold tracking-[0.16em] text-[var(--cpd-muted)] uppercase">
                 Destination
               </h2>
@@ -279,7 +279,7 @@ export default function LedgerCreatePage({ spec, isSaving }) {
               <Reveal
                 key={section.id}
                 delay={70 + index * 60}
-                from="translate-y-1"
+                from="translateY(6px)"
               >
                 <div className="flex items-baseline gap-2.5 border-b border-[var(--cpd-line)] bg-[var(--cpd-panel-2)] px-3 py-2">
                   <span
