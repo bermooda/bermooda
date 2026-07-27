@@ -6,6 +6,7 @@ import {
   redirect,
   useActionData,
   useLoaderData,
+  useNavigate,
   useSearchParams,
 } from 'react-router';
 
@@ -87,6 +88,7 @@ export async function action({ request }) {
 // ---------------------------------------------------------------------------
 
 function LoginForm({ onboarded }) {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const rawReturnTo = searchParams.get('returnTo') || '';
   const returnTo = rawReturnTo.startsWith('/admin')
@@ -112,9 +114,11 @@ function LoginForm({ onboarded }) {
 
     if (error) {
       setErrorMessage(error?.message || 'Invalid email or password');
+      setIsLoading(false);
+      return;
     }
 
-    setIsLoading(false);
+    navigate(returnTo);
   };
 
   return (
@@ -124,7 +128,7 @@ function LoginForm({ onboarded }) {
       )}
       <ErrorAlert message={errorMessage} />
 
-      <form onSubmit={onEmailSignIn} className="space-y-6">
+      <form method="post" onSubmit={onEmailSignIn} className="space-y-6">
         <div>
           <label
             htmlFor="email"
