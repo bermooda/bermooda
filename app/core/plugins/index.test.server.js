@@ -44,6 +44,8 @@ const {
   unregisterSearchProvider,
   setDefaultSearchProvider,
   getDefaultSearchProviderId,
+  registerEmailProvider,
+  unregisterEmailProvider,
 } = vi.hoisted(() => ({
   registerPaymentProvider: vi.fn(),
   unregisterPaymentProvider: vi.fn(),
@@ -55,6 +57,8 @@ const {
   unregisterSearchProvider: vi.fn(),
   setDefaultSearchProvider: vi.fn(),
   getDefaultSearchProviderId: vi.fn(),
+  registerEmailProvider: vi.fn(),
+  unregisterEmailProvider: vi.fn(),
 }));
 
 const { settingsGet, settingsSet } = vi.hoisted(() => ({
@@ -87,6 +91,11 @@ vi.mock('#/core/search/index.server', () => ({
   unregisterProvider: unregisterSearchProvider,
   setDefaultProvider: setDefaultSearchProvider,
   getDefaultProviderId: getDefaultSearchProviderId,
+}));
+
+vi.mock('#/libs/email/index.server', () => ({
+  registerProvider: registerEmailProvider,
+  unregisterProvider: unregisterEmailProvider,
 }));
 
 // Mock prisma — no real database.
@@ -236,6 +245,16 @@ describe('defineProvider', () => {
     expect(result.type).toBe('search');
     expect(result.provider).toBe(provider);
     expect(result.isDefault).toBe(true);
+  });
+
+  it('returns a provider spec with the type attached for "email"', () => {
+    const result = defineProvider('email', {
+      name: 'Postmark',
+      send: vi.fn(),
+    });
+    expect(result.type).toBe('email');
+    expect(result.name).toBe('Postmark');
+    expect(typeof result.send).toBe('function');
   });
 
   it('throws for an invalid provider type', () => {
@@ -684,6 +703,32 @@ describe('enable', () => {
     );
   });
 
+  it('registers email providers into the email registry', async () => {
+    register(
+      validPlugin({
+        id: 'plugin-email',
+        title: 'Plugin Email',
+        providers: {
+          postmark: defineProvider('email', {
+            name: 'Postmark',
+            send: vi.fn(),
+          }),
+        },
+      })
+    );
+
+    await _enable('plugin-email');
+
+    expect(registerEmailProvider).toHaveBeenCalledOnce();
+    const [providerId, provider] = registerEmailProvider.mock.calls[0];
+    expect(providerId).toBe('postmark');
+    expect(provider).toEqual({
+      name: 'Postmark',
+      send: expect.any(Function),
+    });
+    expect(provider).not.toHaveProperty('type');
+  });
+
   it('is idempotent — second call does nothing when already enabled', async () => {
     const handler = vi.fn();
     const manifest = validPlugin({
@@ -807,6 +852,26 @@ describe('disable', () => {
     expect(onDisable).toHaveBeenCalledOnce();
     const ctx = onDisable.mock.calls[0][0];
     expect(ctx).toHaveProperty('plugin');
+  });
+
+  it('unregisters email providers on disable', async () => {
+    register(
+      validPlugin({
+        id: 'plugin-email-disable',
+        title: 'Plugin Email Disable',
+        providers: {
+          postmark: defineProvider('email', {
+            name: 'Postmark',
+            send: vi.fn(),
+          }),
+        },
+      })
+    );
+
+    await _enable('plugin-email-disable');
+    await _disable('plugin-email-disable');
+
+    expect(unregisterEmailProvider).toHaveBeenCalledWith('postmark');
   });
 
   it('unregisters manifest providers and restores the previous search default', async () => {

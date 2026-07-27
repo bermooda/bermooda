@@ -1,11 +1,39 @@
 # Email Templates
 
-This directory contains react based email templates for the application.
+This directory contains React Email templates and send helpers for the application.
+
+Transport (Resend, SendGrid, Amazon SES, or a custom plugin provider) is handled by `#/libs/email`. Templates here render to HTML via `@react-email/render`, then call the active provider.
+
+## Choosing a provider
+
+1. Set credentials in the environment (`RESEND_API_KEY`, `SENDGRID_API_KEY`, or SES keys — see `.env.example`).
+2. Pick the active provider in **Admin → Settings → Email**, or set `EMAIL_PROVIDER` / the `email.provider` setting (`resend` by default).
+
+## Custom providers via plugins
+
+Plugins can register an `email` provider. Once enabled, it appears in the admin provider list:
+
+```js
+import { definePlugin, defineProvider } from '#/core/plugins/index.server';
+
+export const pluginManifest = definePlugin({
+  providers: {
+    postmark: defineProvider('email', {
+      name: 'Postmark',
+      async send({ from, to, subject, html, text }) {
+        // Call your ESP with the pre-rendered HTML body.
+        return { success: true };
+      },
+    }),
+  },
+});
+```
 
 ## Available Templates
 
 - **Welcome**: Sent to users after they sign up via google
 - **Welcome / Verify Email**: Sent to users after they use the default signup
+- Shop templates under `shop/` (order confirmation, shipping, refunds, etc.)
 
 ## How to Use
 

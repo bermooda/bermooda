@@ -2,6 +2,10 @@
 // Full plugin loader implementation for bermooda.
 
 import logger from '#/utils/logger.server';
+import {
+  registerProvider as registerEmailProvider,
+  unregisterProvider as unregisterEmailProvider,
+} from '#/libs/email/index.server';
 import prisma from '#/libs/prisma.server';
 import queue from '#/libs/queue.server';
 import {
@@ -132,18 +136,23 @@ export function defineHooks(hookMap) {
 /**
  * Returns a typed provider spec object.
  *
- * @param {'payment' | 'shipping' | 'tax' | 'search' | 'address_validation'} type
+ * @param {'payment' | 'shipping' | 'tax' | 'search' | 'address_validation' | 'email'} type
  * @param {Object} spec
  * @returns {{ type: string } & Object}
  */
 export function defineProvider(type, spec) {
   if (
-    !['payment', 'shipping', 'tax', 'search', 'address_validation'].includes(
-      type
-    )
+    ![
+      'payment',
+      'shipping',
+      'tax',
+      'search',
+      'address_validation',
+      'email',
+    ].includes(type)
   ) {
     throw new Error(
-      `Invalid provider type "${type}". Must be one of: payment, shipping, tax, search, address_validation`
+      `Invalid provider type "${type}". Must be one of: payment, shipping, tax, search, address_validation, email`
     );
   }
 
@@ -175,12 +184,17 @@ export function defineProviders(providerMap) {
       throw new Error(`Provider "${providerId}" must be an object`);
     }
     if (
-      !['payment', 'shipping', 'tax', 'search', 'address_validation'].includes(
-        spec.type
-      )
+      ![
+        'payment',
+        'shipping',
+        'tax',
+        'search',
+        'address_validation',
+        'email',
+      ].includes(spec.type)
     ) {
       throw new Error(
-        `Provider "${providerId}" has invalid type "${spec.type}". Must be one of: payment, shipping, tax, search, address_validation`
+        `Provider "${providerId}" has invalid type "${spec.type}". Must be one of: payment, shipping, tax, search, address_validation, email`
       );
     }
   }
@@ -573,6 +587,10 @@ function registerProvidersForPlugin(entry) {
         registerAddressValidationProvider(providerId, providerSpec);
         entry.providers.push({ type, id: providerId });
         break;
+      case 'email':
+        registerEmailProvider(providerId, providerSpec);
+        entry.providers.push({ type, id: providerId });
+        break;
       default:
         throw new Error(`Unsupported provider type "${type}"`);
     }
@@ -602,6 +620,9 @@ function unregisterProvidersForPlugin(entry) {
         break;
       case 'address_validation':
         unregisterAddressValidationProvider(provider.id);
+        break;
+      case 'email':
+        unregisterEmailProvider(provider.id);
         break;
       default:
         break;

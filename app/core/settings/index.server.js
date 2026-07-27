@@ -2,6 +2,10 @@
 // Settings service: read-through TTL-cached get/set with seed defaults.
 
 import cache, { getCachedResult } from '#/utils/cache/index.server';
+import {
+  DEFAULT_EMAIL_PROVIDER,
+  resolveEmailProvider,
+} from '#/libs/email/index.server';
 import prisma from '#/libs/prisma.server';
 import {
   parseAddressValidationSettingsInput,
@@ -174,6 +178,7 @@ export async function getAdminSettingsSnapshot() {
     SETTING_KEYS.SEO_BING_SITE_VERIFICATION,
     SETTING_KEYS.SEO_TWITTER_HANDLE,
     SETTING_KEYS.ADDRESS_VALIDATION_PROVIDER,
+    SETTING_KEYS.EMAIL_PROVIDER,
   ]);
 
   return {
@@ -195,6 +200,8 @@ export async function getAdminSettingsSnapshot() {
       : [],
     addressValidationProvider:
       values[SETTING_KEYS.ADDRESS_VALIDATION_PROVIDER] ?? 'noop',
+    emailProvider:
+      values[SETTING_KEYS.EMAIL_PROVIDER] ?? DEFAULT_EMAIL_PROVIDER,
     ...serializeSeoSettings(values),
   };
 }
@@ -314,6 +321,13 @@ export function parseAdminSettingsPatch(body = {}) {
     };
   }
 
+  if (body.email) {
+    return {
+      section: 'email',
+      values: parseEmailSettingsInput(body.email),
+    };
+  }
+
   return null;
 }
 
@@ -374,6 +388,30 @@ export async function saveAddressValidationSettings(values) {
 }
 
 /**
+ * Parse admin/API email provider settings payload.
+ *
+ * @param {object} input
+ * @returns {{ provider: string }}
+ */
+export function parseEmailSettingsInput(input = {}) {
+  const provider = String(input.provider ?? input.emailProvider ?? '').trim();
+  return {
+    provider: provider || DEFAULT_EMAIL_PROVIDER,
+  };
+}
+
+/**
+ * Persist the active email transport provider.
+ *
+ * @param {object} values
+ */
+export async function saveEmailSettings(values) {
+  const parsed = parseEmailSettingsInput(values);
+  const provider = resolveEmailProvider(parsed.provider);
+  await set(SETTING_KEYS.EMAIL_PROVIDER, provider);
+}
+
+/**
  * Apply a parsed admin/API settings patch.
  *
  * @param {{ section: string, values: object }} patch
@@ -400,6 +438,9 @@ export async function applyAdminSettingsPatch({ section, values }) {
       return;
     case 'addressValidation':
       await saveAddressValidationSettings(values);
+      return;
+    case 'email':
+      await saveEmailSettings(values);
       return;
     default:
       throw new Error(`Unknown settings section: ${section}`);
