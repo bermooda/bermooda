@@ -6,6 +6,7 @@
   "bermooda": {
     "title": "Amazon SES",
     "slug": "ses",
+    "engine": ">=1.0.0",
     "settings": [
       {
         "key": "region",

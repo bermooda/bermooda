@@ -5,6 +5,7 @@
   "private": true,
   "bermooda": {
     "title": "Meilisearch",
-    "slug": "meilisearch"
+    "slug": "meilisearch",
+    "engine": ">=1.0.0"
   }
 }

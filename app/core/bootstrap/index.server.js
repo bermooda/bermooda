@@ -17,6 +17,7 @@ import { registerAuditSubscribers } from '#/core/audit/index.server';
 import { registerBackInStockSubscribers } from '#/core/back-in-stock/index.server';
 import { seedDefaultChannel } from '#/core/channels/index.server';
 import { on } from '#/core/events/index.server';
+import { checkExtensionEngine, getAppVersion } from '#/core/extensions/engine';
 import { mergeExtensionPackage } from '#/core/extensions/package-meta';
 import { registerLoyaltySubscribers } from '#/core/loyalty/index.server';
 import {
@@ -103,7 +104,20 @@ export function registerBuiltins() {
   registerSearch('db', dbSearchProvider);
 
   // Default storefront theme — runtime resolution via preloadStorefrontTheme()
-  registerTheme(mergeExtensionPackage(defaultPkg, defaultRuntime));
+  const defaultThemeEngineCheck = checkExtensionEngine({
+    shopVersion: getAppVersion(),
+    engine: defaultPkg?.bermooda?.engine,
+    kind: 'theme',
+    id: defaultPkg?.bermooda?.slug ?? 'default',
+  });
+  if (defaultThemeEngineCheck.ok) {
+    registerTheme(mergeExtensionPackage(defaultPkg, defaultRuntime));
+  } else {
+    logger.error(
+      { reason: defaultThemeEngineCheck.reason },
+      'Skipping incompatible default theme'
+    );
+  }
 
   // Domain-event subscribers
   // W0-4: payment events → order status transitions

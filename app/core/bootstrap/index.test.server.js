@@ -78,7 +78,7 @@ vi.mock('#/themes/default/package.json', () => ({
   default: {
     name: '@bermooda/theme-default',
     version: '1.0.0',
-    bermooda: { title: 'Default', slug: 'default' },
+    bermooda: { title: 'Default', slug: 'default', engine: '>=1.0.0' },
   },
 }));
 vi.mock('#/utils/logger.server', () => ({
