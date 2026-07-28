@@ -54,7 +54,7 @@ Every plugin has a `package.json` for identity and display metadata:
   "bermooda": {
     "title": "My Plugin",
     "slug": "my-plugin",
-    "settings": [{ "key": "apiKey", "label": "API Key", "type": "text" }]
+    "settings": [{ "key": "apiKey", "label": "API Key", "type": "password" }]
   }
 }
 ```
@@ -376,6 +376,8 @@ Read helpers for the persisted `enabledPlugins` setting array. The setting store
 ### `loadPluginSettings(manifest)` / `savePluginSettings(pluginId, manifest, formData)`
 
 Load and persist package-driven plugin settings stored under `plugin.<pluginId>.<key>`, where `pluginId` is the full package id.
+
+Setting field types: `text`, `select`, `toggle`, and `password`. Password values are encrypted at rest with AES-256-GCM (key derived from `BETTER_AUTH_SECRET`) and redacted when loaded for admin/API display. Leaving a password field blank on save keeps the existing value. Providers should read secrets with `getPluginSettingSecret(pluginId, key)` from `#/core/plugins/settings.server`.
 
 ---
 

@@ -5,6 +5,13 @@
   "private": true,
   "bermooda": {
     "title": "SendGrid",
-    "slug": "sendgrid"
+    "slug": "sendgrid",
+    "settings": [
+      {
+        "key": "apiKey",
+        "label": "API Key",
+        "type": "password"
+      }
+    ]
   }
 }

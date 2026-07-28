@@ -185,6 +185,24 @@ function SettingField({ setting, value }) {
     );
   }
 
+  if (type === 'password') {
+    const configured = value === '••••••••';
+    return (
+      <Field label={label ?? key} htmlFor={id}>
+        <Input
+          id={id}
+          type="password"
+          name={key}
+          defaultValue=""
+          autoComplete="off"
+          placeholder={
+            configured ? '•••••••• (saved — leave blank to keep)' : undefined
+          }
+        />
+      </Field>
+    );
+  }
+
   if (type === 'select') {
     return (
       <Field label={label ?? key} htmlFor={id}>

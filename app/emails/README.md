@@ -6,8 +6,8 @@ Transport is pluggable: enable **one** email provider plugin under **Admin → P
 
 ## Choosing a provider
 
-1. Set credentials in the environment (`RESEND_API_KEY`, `SENDGRID_API_KEY`, or SES keys — see `.env.example`).
-2. Open **Admin → Plugins → Email providers** and click **Activate** on exactly one transport. Activating another deactivates the current one.
+1. Open **Admin → Plugins → Email providers**, enter credentials in the plugin settings form (API keys are encrypted at rest), and save.
+2. Click **Activate** on exactly one transport. Activating another deactivates the current one.
 
 ## Custom providers via plugins
 

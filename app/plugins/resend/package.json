@@ -5,6 +5,13 @@
   "private": true,
   "bermooda": {
     "title": "Resend",
-    "slug": "resend"
+    "slug": "resend",
+    "settings": [
+      {
+        "key": "apiKey",
+        "label": "API Key",
+        "type": "password"
+      }
+    ]
   }
 }
