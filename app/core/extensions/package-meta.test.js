@@ -20,17 +20,19 @@ const validPkg = {
   bermooda: {
     title: 'Sample Analytics',
     slug: 'sample-analytics',
+    engine: '>=1.0.0',
   },
 };
 
 describe('parseExtensionPackage', () => {
-  it('maps name/version/description/title/slug', () => {
+  it('maps name/version/description/title/slug/engine', () => {
     expect(parseExtensionPackage(validPkg)).toEqual({
       id: '@bermooda/sample-analytics',
       version: '1.0.0',
       description: 'Captures events',
       title: 'Sample Analytics',
       slug: 'sample-analytics',
+      engine: '>=1.0.0',
     });
   });
 
@@ -60,9 +62,18 @@ describe('parseExtensionPackage', () => {
     expect(() =>
       parseExtensionPackage({
         ...validPkg,
-        bermooda: { title: 'X', slug: 'Sample_Analytics' },
+        bermooda: { title: 'X', slug: 'Sample_Analytics', engine: '>=1.0.0' },
       })
     ).toThrow(/slug/);
+  });
+
+  it('throws when bermooda.engine is missing', () => {
+    expect(() =>
+      parseExtensionPackage({
+        ...validPkg,
+        bermooda: { title: 'Sample Analytics', slug: 'sample-analytics' },
+      })
+    ).toThrow(/engine/);
   });
 });
 

@@ -5,6 +5,7 @@
   "private": true,
   "bermooda": {
     "title": "Default",
-    "slug": "default"
+    "slug": "default",
+    "engine": ">=1.0.0"
   }
 }
