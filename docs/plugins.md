@@ -54,6 +54,7 @@ Every plugin has a `package.json` for identity and display metadata:
   "bermooda": {
     "title": "My Plugin",
     "slug": "my-plugin",
+    "engine": ">=1.0.0",
     "settings": [{ "key": "apiKey", "label": "API Key", "type": "password" }]
   }
 }
@@ -68,6 +69,7 @@ Every plugin has a `package.json` for identity and display metadata:
 | `description` | `description`       | no       | Short description shown in admin.                                            |
 | `title`       | `bermooda.title`    | yes      | Human-readable display title shown in admin.                                 |
 | `slug`        | `bermooda.slug`     | yes      | Lowercase hyphenated URL and folder key.                                     |
+| `engine`      | `bermooda.engine`   | yes      | Semver range of compatible bermooda app versions (e.g. `>=1.0.0`).           |
 | `settings`    | `bermooda.settings` | no       | Package-driven admin settings schema.                                        |
 
 Rules:
@@ -77,6 +79,7 @@ Rules:
 - URLs use slug, not id: `/admin/plugins/<slug>/*` and `/apps/<slug>/*`.
 - Bundled folders use `app/plugins/<slug>/`; the folder name must equal `bermooda.slug`.
 - `enabledPlugins` and plugin data namespaces store full package ids.
+- `bermooda.engine` is checked against the shop root `package.json` `version`. The bermooda CLI rejects install/update when incompatible; at runtime, discovery logs and soft-skips incompatible plugins instead of failing startup.
 - `adminRoutes` and `storefrontRoutes` do not belong in package metadata. Route presence is discovered from `admin/routes` and `storefront/routes` files.
 
 Runtime behavior is declared in `index.server.js`:
@@ -860,7 +863,8 @@ The `sample-analytics` plugin is the canonical reference implementation. It capt
   "private": true,
   "bermooda": {
     "title": "Sample Analytics",
-    "slug": "sample-analytics"
+    "slug": "sample-analytics",
+    "engine": ">=1.0.0"
   }
 }
 ```
