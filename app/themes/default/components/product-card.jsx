@@ -11,7 +11,7 @@ import {
 import {
   STOREFRONT_CREAM as CREAM,
   STOREFRONT_SAND as SAND,
-} from '#/themes/default/components/storefront-chrome';
+} from './storefront-chrome';
 
 export default function ProductCard({ product, locale, currency }) {
   const imageUrl = resolveCatalogMediaUrl(product, 640);

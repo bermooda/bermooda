@@ -23,7 +23,7 @@ vi.mock('#/utils/logger.server', () => ({
   },
 }));
 
-import { meilisearchProvider } from '#/plugins/meilisearch/provider/index.server';
+import { meilisearchProvider } from './index.server';
 
 describe('meilisearch provider', () => {
   const originalEnv = { ...process.env };

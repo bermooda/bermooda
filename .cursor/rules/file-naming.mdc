@@ -25,5 +25,6 @@ alwaysApply: false
 
 ## Imports
 
-- Inside `app/`, import with `#/*` alias.
-- Do not include file extensions in imports.
+- Inside `app/`, import with the `#/*` alias.
+- Inside `app/themes/<slug>/` and `app/plugins/<slug>/`, use relative imports for sibling theme/plugin modules; keep `#/…` for core app modules.
+- Do not include file extensions in imports (except `.json` when required).

@@ -10,7 +10,7 @@ import {
 } from '#/core';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
-} from '#/themes/default/components/storefront-chrome';
+} from './storefront-chrome';
 
 export default function CheckoutThankYouPage({ order, locale, currency }) {
   const t = useT();

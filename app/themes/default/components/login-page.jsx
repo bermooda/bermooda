@@ -6,7 +6,7 @@ import { useT } from '#/core/i18n';
 
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
-} from '#/themes/default/components/storefront-chrome';
+} from './storefront-chrome';
 
 export default function LoginPage({ returnTo, error: propError }) {
   const t = useT();

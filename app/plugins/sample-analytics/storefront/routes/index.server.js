@@ -1,5 +1,5 @@
-import { loadRecentEvents } from '#/plugins/sample-analytics/data/index.server';
-import { AnalyticsPage } from '#/plugins/sample-analytics/storefront/analytics-page';
+import { loadRecentEvents } from '../../data/index.server';
+import { AnalyticsPage } from '../analytics-page';
 
 export const routes = [
   {

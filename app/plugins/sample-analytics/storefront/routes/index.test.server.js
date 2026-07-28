@@ -13,7 +13,7 @@ vi.mock('#/libs/prisma.server', () => ({
   },
 }));
 
-import { routes as storefrontRoutes } from '#/plugins/sample-analytics/storefront/routes/index.server';
+import { routes as storefrontRoutes } from './index.server';
 
 describe('sample-analytics storefront route loader', () => {
   beforeEach(() => {

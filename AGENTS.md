@@ -59,6 +59,7 @@ A `.env` file must exist in the repo root (see `.env.example`). Placeholder valu
 - `prisma/generated/` is committed but must match the schema; always run `npx prisma generate` after pulling schema changes.
 - Lint exit code 1 from pre-existing oxfmt formatting warnings is expected and not a sign of breakage.
 - The `#/*` import alias maps to `./app/` (configured in `vite.config.js`).
+- Inside `app/themes/<slug>/` and `app/plugins/<slug>/`, use relative imports for sibling modules; keep `#/…` for core app modules. Oxlint enforces this via `no-restricted-imports` overrides.
 - **Alerting:** use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting/index.server` for production errors and ops notifications; route handlers use `handleError` from `#/libs/error/index.server`. Default provider is Telegram (`ERROR_ALERT_PROVIDER=telegram`). Do not call `sendTelegramError` / `sendTelegramMessage` in new code. See [.cursor/rules/alerting.mdc](.cursor/rules/alerting.mdc).
 - **Emails:** shop transactional templates in `app/emails/shop/`; auth templates in `app/emails/templates/`. Email transports are plugins (`resend` / `sendgrid` / `ses`) activated under Admin → Plugins — see [.cursor/rules/email-providers.mdc](.cursor/rules/email-providers.mdc).
 - **Locale:** storefront locale is cookie-driven, not in URL paths.

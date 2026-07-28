@@ -15,7 +15,7 @@ import {
 } from '#/core';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
-} from '#/themes/default/components/storefront-chrome';
+} from './storefront-chrome';
 
 export default function CartPage({ cart, locale, currency, slotBlocks = {} }) {
   const t = useT();

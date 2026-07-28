@@ -36,11 +36,13 @@ Do not put ecommerce domain workflows in `app/services`, `app/utils`, or `app/co
 
 - Each theme lives under `app/themes/<slug>/` with `package.json`, `index.js` (`defineTheme({ components })`), `components/`, and optional `i18n/<locale>.json`.
 - Storefront page components belong in the active theme, not in `app/components/`.
+- Inside a theme, import sibling modules with relative paths; use `#/…` only for core app modules. Core/routes load themes via `#/themes/<slug>/…`.
 - Theme engine: `#/core/themes/index.server`. See [docs/themes.md](mdc:docs/themes.md).
 
 ## Plugins
 
 - Each plugin lives under `app/plugins/<slug>/` with `package.json`, `index.server.js` (runtime via `definePlugin`), optional `admin/routes`, `storefront/routes`, and `blocks/`.
+- Inside a plugin, import sibling modules with relative paths; use `#/…` only for core app modules. Core/routes load plugins via `#/plugins/<slug>/…`.
 - Plugin engine: `#/core/plugins/index.server`. See [docs/plugins.md](mdc:docs/plugins.md).
 
 ## Dual auth

@@ -2,7 +2,7 @@ import logger from '#/utils/logger.server';
 import { readPluginData } from '#/core/plugins/data/index.server';
 import { defineHooks, definePlugin, deny } from '#/core/plugins/index.server';
 
-import pkg from '#/plugins/fraud-guard/package.json';
+import pkg from './package.json';
 
 const PLUGIN_ID = pkg.name;
 const HOLD_KEY = 'holds';

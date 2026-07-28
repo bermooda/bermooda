@@ -107,6 +107,16 @@ export default pluginManifest;
 
 Discovery merges `package.json` identity with this runtime export before registration. `definePlugin()` validates runtime only; it does not accept or validate identity fields.
 
+### Imports
+
+Inside a plugin package (`app/plugins/<slug>/`):
+
+- Import **sibling plugin modules** with **relative** paths (for example `./provider/index.server`, `../data/index.server`, `./package.json`).
+- Import **core app modules** with the `#/…` alias (for example `#/core/plugins/index.server`, `#/utils/logger.server`, `#/libs/prisma.server`).
+- Outside plugins, the core app and routes continue to load plugins via `#/plugins/<slug>/…`.
+
+Oxlint enforces the sibling-import rule with `no-restricted-imports` on `app/plugins/**`.
+
 ---
 
 ## API Reference
@@ -219,7 +229,7 @@ For `search`, pass the search implementation as `spec.provider`. Set `isDefault:
 ```js
 import { definePlugin, defineProvider } from '#/core/plugins/index.server';
 
-import { meilisearchProvider } from '#/plugins/meilisearch/provider/index.server';
+import { meilisearchProvider } from './provider/index.server';
 
 export const pluginManifest = definePlugin({
   providers: {
@@ -717,7 +727,7 @@ The storefront dispatcher:
 Example client routes file (`storefront/routes.client.js`):
 
 ```js
-import { AnalyticsPage } from '#/plugins/sample-analytics/storefront/analytics-page';
+import { AnalyticsPage } from './analytics-page';
 
 export const routes = [{ path: '', Component: AnalyticsPage }];
 ```
@@ -798,7 +808,7 @@ app/plugins/my-plugin/blocks/dashboard/widgets.jsx
 Register the component in your plugin's `index.server.js`:
 
 ```js
-import DashboardWidgetsBlock from '#/plugins/my-plugin/blocks/dashboard/widgets';
+import DashboardWidgetsBlock from './blocks/dashboard/widgets';
 
 export const pluginManifest = definePlugin({
   blocks: {
@@ -861,9 +871,9 @@ The `sample-analytics` plugin is the canonical reference implementation. It capt
 import logger from '#/utils/logger.server';
 
 import { defineHooks, definePlugin } from '#/core/plugins/index.server';
-import DashboardWidgetsBlock from '#/plugins/sample-analytics/blocks/dashboard/widgets';
-import ProductAfterDescriptionBlock from '#/plugins/sample-analytics/blocks/product/after-description';
-import { appendRecentEvent } from '#/plugins/sample-analytics/data/index.server';
+import DashboardWidgetsBlock from './blocks/dashboard/widgets';
+import ProductAfterDescriptionBlock from './blocks/product/after-description';
+import { appendRecentEvent } from './data/index.server';
 
 // Hook handlers import helpers directly — they do not receive ctx.
 async function handleOrderCreated(payload) {
@@ -897,7 +907,7 @@ Key points:
 The data helper imports the package id from `package.json` so persistence uses the full id:
 
 ```js
-import pkg from '#/plugins/sample-analytics/package.json';
+import pkg from '../package.json';
 
 export const PLUGIN_ID = pkg.name;
 ```
@@ -936,7 +946,7 @@ The `loader` fetches data server-side; `RecentEventsPage` renders it client-side
 ```js
 import prisma from '#/libs/prisma.server';
 
-import { AnalyticsPage } from '#/plugins/sample-analytics/storefront/analytics-page';
+import { AnalyticsPage } from '../analytics-page';
 
 const PLUGIN_ID = '@bermooda/sample-analytics';
 const EVENTS_KEY = 'recentEvents';

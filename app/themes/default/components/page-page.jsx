@@ -1,4 +1,4 @@
-import StorefrontShell from '#/themes/default/components/storefront-chrome';
+import StorefrontShell from './storefront-chrome';
 
 export default function PagePage({ page }) {
   return (

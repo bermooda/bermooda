@@ -1,1 +1,1 @@
-export { default } from '#/themes/default/components/storefront-chrome';
+export { default } from './storefront-chrome';
