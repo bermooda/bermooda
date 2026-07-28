@@ -152,9 +152,8 @@ Notable variables:
 | Variable                                    | Purpose                                                         |
 | ------------------------------------------- | --------------------------------------------------------------- |
 | `DATABASE_URL`                              | SQLite (`file:./prisma/dev.db`) or PostgreSQL connection string |
-| `BETTER_AUTH_SECRET`                        | Auth secret (use a strong value in production)                  |
+| `BETTER_AUTH_SECRET`                        | Auth secret; also encrypts plugin password settings at rest     |
 | `STRIPE_*`                                  | Payments                                                        |
-| `RESEND_API_KEY`                            | Transactional email                                             |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional Google OAuth                                           |
 | `STORAGE_*`                                 | S3-compatible object storage (AWS S3, MinIO, R2, etc.)          |
 

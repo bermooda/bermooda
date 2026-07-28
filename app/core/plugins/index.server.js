@@ -53,6 +53,20 @@ import {
   unregisterProvider as unregisterTaxProvider,
 } from '#/core/tax/index.server';
 
+export {
+  getPluginSettingSecret,
+  getPluginSettingValue,
+  loadAllPluginSettings,
+  loadPluginSettings,
+  parsePluginSettingJsonValue,
+  parsePluginSettingValue,
+  pluginSettingStorageKey,
+  redactPluginSettingValue,
+  resolvePluginSettingForPersist,
+  savePluginSettings,
+  savePluginSettingsValues,
+} from '#/core/plugins/settings.server';
+
 // ---------------------------------------------------------------------------
 // Registry — in-memory store of loaded plugins and their handlers
 // ---------------------------------------------------------------------------
@@ -292,125 +306,6 @@ export function buildFullPluginOrder(storedOrder, pluginIds) {
   const trackedIds = order.filter((id) => pluginIds.includes(id));
   const untrackedIds = pluginIds.filter((id) => !trackedIds.includes(id));
   return [...trackedIds, ...untrackedIds];
-}
-
-/**
- * Loads persisted values for a plugin's manifest-driven settings.
- *
- * @param {PluginManifest|null|undefined} manifest
- * @returns {Promise<Record<string, unknown>>}
- */
-export async function loadPluginSettings(manifest) {
-  if (!manifest?.settings?.length) return {};
-
-  const entries = await Promise.all(
-    manifest.settings.map(async (setting) => {
-      const value = await settingsGet(`plugin.${manifest.id}.${setting.key}`);
-      return [setting.key, value ?? setting.default ?? ''];
-    })
-  );
-
-  return Object.fromEntries(entries);
-}
-
-/**
- * Loads persisted settings for all plugins that declare settings fields.
- *
- * @param {PluginManifest[]} plugins
- * @returns {Promise<Record<string, Record<string, unknown>>>}
- */
-export async function loadAllPluginSettings(plugins) {
-  const entries = await Promise.all(
-    plugins.map(async (manifest) => [
-      manifest.id,
-      await loadPluginSettings(manifest),
-    ])
-  );
-
-  return Object.fromEntries(entries);
-}
-
-/**
- * Normalizes a single plugin setting value from form data.
- *
- * @param {object} setting
- * @param {FormDataEntryValue|null} raw
- * @returns {unknown}
- */
-export function parsePluginSettingValue(setting, raw) {
-  if (setting.type === 'toggle') {
-    return raw === 'on';
-  }
-
-  return raw ?? '';
-}
-
-/**
- * Persists plugin settings from an admin form submission.
- *
- * @param {string} pluginId
- * @param {PluginManifest} manifest
- * @param {FormData} formData
- * @returns {Promise<void>}
- */
-export async function savePluginSettings(pluginId, manifest, formData) {
-  if (!manifest?.settings?.length) {
-    throw new Error('No settings for plugin');
-  }
-
-  await Promise.all(
-    manifest.settings.map(async (setting) => {
-      const value = parsePluginSettingValue(setting, formData.get(setting.key));
-      await settingsSet(`plugin.${pluginId}.${setting.key}`, value);
-    })
-  );
-}
-
-/**
- * Normalize a plugin setting value from a JSON object payload.
- *
- * @param {object} setting
- * @param {unknown} raw
- * @returns {unknown}
- */
-export function parsePluginSettingJsonValue(setting, raw) {
-  if (setting.type === 'toggle') {
-    return Boolean(raw);
-  }
-  if (raw === undefined || raw === null) {
-    return setting.default ?? '';
-  }
-  return raw;
-}
-
-/**
- * Persists plugin settings from a JSON object (Admin API).
- *
- * @param {string} pluginId
- * @param {PluginManifest} manifest
- * @param {Record<string, unknown>} values
- * @returns {Promise<void>}
- */
-export async function savePluginSettingsValues(
-  pluginId,
-  manifest,
-  values = {}
-) {
-  if (!manifest?.settings?.length) {
-    throw Object.assign(new Error('No settings for plugin'), {
-      code: 'PLUGIN_INVALID',
-      status: 400,
-    });
-  }
-
-  await Promise.all(
-    manifest.settings.map(async (setting) => {
-      const value = Object.prototype.hasOwnProperty.call(values, setting.key)
-        ? parsePluginSettingJsonValue(setting, values[setting.key])
-        : (setting.default ?? (setting.type === 'toggle' ? false : ''));
-      await settingsSet(`plugin.${pluginId}.${setting.key}`, value);
-    })
-  );
 }
 
 /**

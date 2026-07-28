@@ -18,11 +18,9 @@ Do **not** import ESP SDKs from app code outside email provider plugins.
 
 From [`.env.example`](mdc:.env.example):
 
-- `RESEND_API_KEY` — Resend plugin
-- `SENDGRID_API_KEY` — SendGrid plugin
-- `SES_REGION` / `SES_ACCESS_KEY_ID` / `SES_SECRET_ACCESS_KEY` — Amazon SES plugin (falls back to `AWS_*`)
+- `BETTER_AUTH_SECRET` — also used to encrypt plugin password settings at rest
 
-Activate one plugin in **Admin → Plugins → Email providers**. Seed enables `@bermooda/plugin-resend` by default.
+Activate one plugin in **Admin → Plugins → Email providers** and enter API keys in that plugin’s settings form (encrypted in the `Setting` table). Seed enables `@bermooda/plugin-resend` by default.
 
 ## Custom providers (plugins)
 

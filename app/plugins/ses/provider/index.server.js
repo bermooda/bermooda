@@ -1,13 +1,17 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 
+import {
+  getPluginSettingSecret,
+  getPluginSettingValue,
+} from '#/core/plugins/settings.server';
+
+const PLUGIN_ID = '@bermooda/plugin-ses';
+
 /**
  * Built-in Amazon SES email provider adapter.
  *
- * Credentials (first match wins):
- * - `SES_ACCESS_KEY_ID` / `SES_SECRET_ACCESS_KEY`
- * - `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`
- *
- * Region: `SES_REGION` or `AWS_REGION` (default `us-east-1`).
+ * Credentials and region are configured under Admin → Plugins → Amazon SES
+ * (encrypted at rest for access keys).
  *
  * @returns {import('#/libs/email-types.server').EmailProvider}
  */
@@ -20,16 +24,20 @@ export function createSesEmailProvider() {
      * @returns {Promise<import('#/libs/email-types.server').EmailSendResult>}
      */
     async send(message) {
+      const [regionRaw, accessKeyId, secretAccessKey] = await Promise.all([
+        getPluginSettingValue(PLUGIN_ID, 'region'),
+        getPluginSettingSecret(PLUGIN_ID, 'accessKeyId'),
+        getPluginSettingSecret(PLUGIN_ID, 'secretAccessKey'),
+      ]);
+
       const region =
-        process.env.SES_REGION || process.env.AWS_REGION || 'us-east-1';
-      const accessKeyId =
-        process.env.SES_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
-      const secretAccessKey =
-        process.env.SES_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+        typeof regionRaw === 'string' && regionRaw.trim()
+          ? regionRaw.trim()
+          : 'us-east-1';
 
       if (!accessKeyId || !secretAccessKey) {
         throw new Error(
-          'Amazon SES is not configured. Set SES_ACCESS_KEY_ID and SES_SECRET_ACCESS_KEY (or AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY).'
+          'Amazon SES is not configured. Set Access Key ID and Secret Access Key under Admin → Plugins → Amazon SES.'
         );
       }
 

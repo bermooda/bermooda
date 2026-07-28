@@ -1,5 +1,9 @@
 import { Resend } from 'resend';
 
+import { getPluginSettingSecret } from '#/core/plugins/settings.server';
+
+const PLUGIN_ID = '@bermooda/plugin-resend';
+
 /**
  * Built-in Resend email provider adapter.
  *
@@ -14,10 +18,10 @@ export function createResendEmailProvider() {
      * @returns {Promise<import('#/libs/email-types.server').EmailSendResult>}
      */
     async send(message) {
-      const apiKey = process.env.RESEND_API_KEY;
+      const apiKey = await getPluginSettingSecret(PLUGIN_ID, 'apiKey');
       if (!apiKey) {
         throw new Error(
-          'Resend is not configured. Set RESEND_API_KEY in the environment.'
+          'Resend is not configured. Set the API Key under Admin → Plugins → Resend.'
         );
       }
 
