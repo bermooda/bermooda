@@ -1,14 +1,10 @@
 import logger from '#/utils/logger.server';
-import { createResendEmailProvider } from '#/libs/email/resend.server';
-import { createSendGridEmailProvider } from '#/libs/email/sendgrid.server';
-import { createSesEmailProvider } from '#/libs/email/ses.server';
 
 /** @type {Map<string, import('#/libs/email-types.server').EmailProvider>} */
 const _registry = new Map();
 
-let _builtinsRegistered = false;
-
-export const DEFAULT_EMAIL_PROVIDER = 'resend';
+/** @type {string | null} */
+let _activeProviderId = null;
 
 /**
  * Register an email transport provider.
@@ -16,10 +12,13 @@ export const DEFAULT_EMAIL_PROVIDER = 'resend';
  * Providers must expose:
  *   send(message) => Promise<{ success, data?, id? }>
  *
+ * The first registered provider becomes active unless another is already set.
+ *
  * @param {string} id
  * @param {import('#/libs/email-types.server').EmailProvider} provider
+ * @param {{ isActive?: boolean }} [options]
  */
-export function registerProvider(id, provider) {
+export function registerProvider(id, provider, { isActive = false } = {}) {
   if (!id || typeof id !== 'string') {
     throw new Error('Email provider id must be a non-empty string');
   }
@@ -33,6 +32,10 @@ export function registerProvider(id, provider) {
   }
 
   _registry.set(id, { ...provider, id });
+
+  if (isActive || _activeProviderId === null) {
+    _activeProviderId = id;
+  }
 }
 
 /**
@@ -41,7 +44,12 @@ export function registerProvider(id, provider) {
  * @param {string} id
  */
 export function unregisterProvider(id) {
+  if (!_registry.has(id)) return;
+
   _registry.delete(id);
+  if (_activeProviderId === id) {
+    _activeProviderId = _registry.keys().next().value ?? null;
+  }
 }
 
 /**
@@ -51,7 +59,6 @@ export function unregisterProvider(id) {
  * @returns {boolean}
  */
 export function hasProvider(id) {
-  ensureBuiltinProviders();
   return _registry.has(id);
 }
 
@@ -62,8 +69,6 @@ export function hasProvider(id) {
  * @returns {import('#/libs/email-types.server').EmailProvider}
  */
 export function getProvider(id) {
-  ensureBuiltinProviders();
-
   const provider = _registry.get(id);
 
   if (!provider) {
@@ -80,8 +85,6 @@ export function getProvider(id) {
  * @returns {string}
  */
 export function resolveEmailProvider(providerId) {
-  ensureBuiltinProviders();
-
   const normalized = String(providerId || '').trim();
   if (!normalized || !_registry.has(normalized)) {
     throw new Error(`Unknown email provider "${providerId}"`);
@@ -90,13 +93,32 @@ export function resolveEmailProvider(providerId) {
 }
 
 /**
+ * Override the active email provider.
+ *
+ * @param {string} id
+ */
+export function setActiveProvider(id) {
+  if (!_registry.has(id)) {
+    throw new Error(`Email provider "${id}" is not registered`);
+  }
+  _activeProviderId = id;
+}
+
+/**
+ * Return the current active provider id, or null when none is set.
+ *
+ * @returns {string | null}
+ */
+export function getActiveProviderId() {
+  return _activeProviderId;
+}
+
+/**
  * List registered email providers for admin or diagnostics.
  *
  * @returns {Array<{ id: string, name: string }>}
  */
 export function listProvidersWithDetails() {
-  ensureBuiltinProviders();
-
   return Array.from(_registry.values()).map((provider) => ({
     id: provider.id,
     name: provider.name || provider.id,
@@ -104,36 +126,28 @@ export function listProvidersWithDetails() {
 }
 
 /**
- * Resolve the configured email provider id from the environment.
- * Settings may override this at the emails facade layer.
- *
- * @returns {string}
- */
-export function getConfiguredProviderId() {
-  const fromEnv = process.env.EMAIL_PROVIDER?.trim();
-  return fromEnv || DEFAULT_EMAIL_PROVIDER;
-}
-
-/**
- * Resolve the active email provider (env / default).
- * Prefer {@link sendEmail} with an explicit `providerId` when settings apply.
+ * Resolve the active email provider (from enabled email plugins).
  *
  * @returns {import('#/libs/email-types.server').EmailProvider}
  */
 export function getActiveProvider() {
-  return getProvider(getConfiguredProviderId());
+  if (!_activeProviderId || !_registry.has(_activeProviderId)) {
+    throw new Error(
+      'No email provider is active. Enable one under Admin → Plugins (Email providers).'
+    );
+  }
+
+  return getProvider(_activeProviderId);
 }
 
 /**
- * Send an email through a registered provider.
+ * Send an email through the active (or explicitly selected) provider.
  *
  * @param {import('#/libs/email-types.server').EmailMessage} message
  * @param {{ providerId?: string }} [options]
  * @returns {Promise<import('#/libs/email-types.server').EmailSendResult>}
  */
 export async function sendEmail(message, options = {}) {
-  ensureBuiltinProviders();
-
   if (!message || typeof message !== 'object') {
     throw new Error('Email message must be an object');
   }
@@ -146,7 +160,7 @@ export async function sendEmail(message, options = {}) {
 
   const providerId = options.providerId
     ? resolveEmailProvider(options.providerId)
-    : getConfiguredProviderId();
+    : getActiveProvider().id;
 
   const provider = getProvider(providerId);
 
@@ -161,19 +175,8 @@ export async function sendEmail(message, options = {}) {
   }
 }
 
-function ensureBuiltinProviders() {
-  if (_builtinsRegistered) {
-    return;
-  }
-
-  _builtinsRegistered = true;
-  registerProvider('resend', createResendEmailProvider());
-  registerProvider('sendgrid', createSendGridEmailProvider());
-  registerProvider('ses', createSesEmailProvider());
-}
-
 /** Reset registry state. Test use only — never call in production. */
 export function __resetEmailRegistry() {
   _registry.clear();
-  _builtinsRegistered = false;
+  _activeProviderId = null;
 }

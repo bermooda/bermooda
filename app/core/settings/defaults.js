@@ -28,5 +28,4 @@ export const SETTING_DEFAULTS = {
   'activeTheme': DEFAULT_ACTIVE_THEME,
   'pluginOrder': DEFAULT_PLUGIN_ORDER,
   'addressValidation.provider': 'noop',
-  'email.provider': 'resend',
 };

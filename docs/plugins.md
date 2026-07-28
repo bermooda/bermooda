@@ -194,7 +194,7 @@ providers: {
 };
 ```
 
-Custom email transports implement `send({ from, to, subject, html, text? })` and appear in **Admin → Settings → Email** once the plugin is enabled:
+Custom email transports implement `send({ from, to, subject, html, text? })`. Bundled first-party transports live as plugins under `app/plugins/{resend,sendgrid,ses}/`. Only one email-provider plugin can be active: enabling another under **Admin → Plugins → Email providers** automatically deactivates the previous one.
 
 ```js
 import { definePlugin, defineProvider } from '#/core/plugins/index.server';
@@ -212,7 +212,7 @@ export const pluginManifest = definePlugin({
 });
 ```
 
-Built-in email providers (`resend`, `sendgrid`, `ses`) live in `#/libs/email`. Merchants pick the active provider in admin settings (or via `EMAIL_PROVIDER` / the `email.provider` setting). Credentials stay in environment variables.
+The email registry lives in `#/libs/email`. Credentials stay in environment variables.
 
 For `search`, pass the search implementation as `spec.provider`. Set `isDefault: true` if the plugin should become the active default search provider while enabled:
 

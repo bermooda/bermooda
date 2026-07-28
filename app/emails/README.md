@@ -2,16 +2,14 @@
 
 This directory contains React Email templates and send helpers for the application.
 
-Transport (Resend, SendGrid, Amazon SES, or a custom plugin provider) is handled by `#/libs/email`. Templates here render to HTML via `@react-email/render`, then call the active provider.
+Transport is pluggable: enable **one** email provider plugin under **Admin → Plugins** (Resend, SendGrid, Amazon SES, or a custom plugin). Templates render to HTML via `@react-email/render`, then call `#/libs/email`.
 
 ## Choosing a provider
 
 1. Set credentials in the environment (`RESEND_API_KEY`, `SENDGRID_API_KEY`, or SES keys — see `.env.example`).
-2. Pick the active provider in **Admin → Settings → Email**, or set `EMAIL_PROVIDER` / the `email.provider` setting (`resend` by default).
+2. Open **Admin → Plugins → Email providers** and click **Activate** on exactly one transport. Activating another deactivates the current one.
 
 ## Custom providers via plugins
-
-Plugins can register an `email` provider. Once enabled, it appears in the admin provider list:
 
 ```js
 import { definePlugin, defineProvider } from '#/core/plugins/index.server';
@@ -21,7 +19,6 @@ export const pluginManifest = definePlugin({
     postmark: defineProvider('email', {
       name: 'Postmark',
       async send({ from, to, subject, html, text }) {
-        // Call your ESP with the pre-rendered HTML body.
         return { success: true };
       },
     }),
@@ -42,11 +39,7 @@ Import the individual functions from the `index` file in `emails`:
 ```js
 import { sendWelcomeEmail } from '#/emails/index.server';
 
-// In your sign-up handler
 async function handleSignUp(userData) {
-  // Sign up logic...
-
-  // Send welcome email
   await sendWelcomeEmail({
     email: userData.email,
     name: userData.name,
@@ -56,13 +49,6 @@ async function handleSignUp(userData) {
 
 ## How to Create a New Email Template
 
-1. Create a new React component in this directory (see `welcome.jsx` for an example)
+1. Create a new React component in this directory
 2. Export your component and add a sending function in `#/emails/index.server`
 3. Use Tailwind CSS classes for styling
-
-## Email Development Tips
-
-- Always test your emails in various email clients
-- Keep the design simple and accessible
-- Use inline styles or Tailwind classes for maximum compatibility
-- Avoid complex layouts that might break in email clients

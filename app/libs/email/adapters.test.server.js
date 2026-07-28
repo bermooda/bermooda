@@ -33,9 +33,9 @@ vi.mock('@aws-sdk/client-ses', () => {
   return { SESClient, SendEmailCommand };
 });
 
-import { createResendEmailProvider } from '#/libs/email/resend.server';
-import { createSendGridEmailProvider } from '#/libs/email/sendgrid.server';
-import { createSesEmailProvider } from '#/libs/email/ses.server';
+import { createResendEmailProvider } from '#/plugins/resend/provider/index.server';
+import { createSendGridEmailProvider } from '#/plugins/sendgrid/provider/index.server';
+import { createSesEmailProvider } from '#/plugins/ses/provider/index.server';
 
 const sampleMessage = {
   from: 'Shop <noreply@example.com>',

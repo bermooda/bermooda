@@ -150,7 +150,6 @@ describe('getAdminSettingsSnapshot', () => {
     expect(snapshot.locales).toEqual(['en']);
     expect(snapshot.taxMode).toBe('exclusive');
     expect(snapshot.addressValidationProvider).toBe('noop');
-    expect(snapshot.emailProvider).toBe('resend');
     expect(snapshot.seoAllowIndexing).toBe(true);
   });
 });
@@ -220,15 +219,6 @@ describe('parseAdminSettingsPatch', () => {
     ).toEqual({
       section: 'addressValidation',
       values: { provider: 'noop' },
-    });
-
-    expect(
-      parseAdminSettingsPatch({
-        email: { provider: 'sendgrid' },
-      })
-    ).toEqual({
-      section: 'email',
-      values: { provider: 'sendgrid' },
     });
   });
 

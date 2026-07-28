@@ -1,29 +1,28 @@
 # Email transport providers
 
-Transactional and marketing email go through a **provider registry** (same pattern as alerting / payments). Built-ins: Resend (default), SendGrid, Amazon SES. Plugins can register additional transports.
+Transactional and marketing email go through a **provider registry**. Built-in transports ship as plugins (`@bermooda/resend`, `@bermooda/sendgrid`, `@bermooda/ses`). Only one email provider plugin can be active at a time — activate it under **Admin → Plugins**.
 
-Relevant modules: [app/libs/email/index.server.js](mdc:app/libs/email/index.server.js), [app/libs/email-types.server.js](mdc:app/libs/email-types.server.js), adapters under [app/libs/email/](mdc:app/libs/email/), templates/send helpers in [app/emails/index.server.jsx](mdc:app/emails/index.server.jsx).
+Relevant modules: [app/libs/email/index.server.js](mdc:app/libs/email/index.server.js), [app/libs/email-types.server.js](mdc:app/libs/email-types.server.js), plugins under [app/plugins/resend](mdc:app/plugins/resend), [app/plugins/sendgrid](mdc:app/plugins/sendgrid), [app/plugins/ses](mdc:app/plugins/ses), templates in [app/emails/index.server.jsx](mdc:app/emails/index.server.jsx).
 
 ## What to call
 
 | Use case | Import | Notes |
 | ----- | --- | ----- |
 | Send a named template | `sendWelcomeEmail`, `sendOrderConfirmationEmail`, … from `#/emails/index.server` | Renders React Email → HTML, then active provider |
-| Raw HTML send | `sendEmail` from `#/libs/email/index.server` | Low-level; pass `{ from, to, subject, html }` |
-| Custom / plugin provider | `registerProvider` from `#/libs/email/index.server` or `defineProvider('email', …)` | Plugin enable wires registration |
+| Raw HTML send | `sendEmail` from `#/libs/email/index.server` | Low-level; requires an active email plugin |
+| Custom / plugin provider | `defineProvider('email', { name, send })` | Enable under Admin → Plugins (exclusive with other email plugins) |
 
-Do **not** import `resend` (or other ESP SDKs) from app code outside `#/libs/email/*`.
+Do **not** import ESP SDKs from app code outside email provider plugins.
 
 ## Configuration
 
 From [`.env.example`](mdc:.env.example):
 
-- `EMAIL_PROVIDER` — fallback provider id when the `email.provider` setting is unset (default: `resend`)
-- `RESEND_API_KEY` — Resend
-- `SENDGRID_API_KEY` — SendGrid
-- `SES_REGION` / `SES_ACCESS_KEY_ID` / `SES_SECRET_ACCESS_KEY` — Amazon SES (falls back to `AWS_REGION` / `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`)
+- `RESEND_API_KEY` — Resend plugin
+- `SENDGRID_API_KEY` — SendGrid plugin
+- `SES_REGION` / `SES_ACCESS_KEY_ID` / `SES_SECRET_ACCESS_KEY` — Amazon SES plugin (falls back to `AWS_*`)
 
-Merchants can also choose the provider in **Admin → Settings → Email** (`SETTING_KEYS.EMAIL_PROVIDER`).
+Activate one plugin in **Admin → Plugins → Email providers**. Seed enables `@bermooda/resend` by default.
 
 ## Custom providers (plugins)
 
@@ -42,4 +41,4 @@ export const pluginManifest = definePlugin({
 });
 ```
 
-Enable the plugin, then select it under Settings → Email.
+Enabling your plugin deactivates any other email provider plugin automatically.

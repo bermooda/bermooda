@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin/index.server';
-import { listProvidersWithDetails as listEmailProviders } from '#/libs/email/index.server';
 import { listProvidersWithDetails as listAddressValidationProviders } from '#/core/address-validation/index.server';
 import { ADMIN_AVAILABLE_LOCALES } from '#/core/i18n';
 import { getRequestLocale } from '#/core/i18n/index.server';
@@ -25,7 +24,6 @@ import {
   saveShippingSettings,
   saveTaxSettings,
   saveAddressValidationSettings,
-  saveEmailSettings,
   set,
 } from '#/core/settings/index.server';
 import { parseUploadFileInput, uploadMedia } from '#/core/storage/index.server';
@@ -50,7 +48,7 @@ const TABS = [
   'Shipping',
   'Address Validation',
   'Admin Users',
-  'Email',
+  'Email Templates',
 ];
 
 /**
@@ -59,13 +57,11 @@ const TABS = [
 export async function loader({ request }) {
   const adminLocale = await getRequestLocale(request);
 
-  const [settings, users, addressValidationProviders, emailProviders] =
-    await Promise.all([
-      getAdminSettingsSnapshot(),
-      listAdminUsers(),
-      Promise.resolve(listAddressValidationProviders()),
-      Promise.resolve(listEmailProviders()),
-    ]);
+  const [settings, users, addressValidationProviders] = await Promise.all([
+    getAdminSettingsSnapshot(),
+    listAdminUsers(),
+    Promise.resolve(listAddressValidationProviders()),
+  ]);
 
   return {
     ...settings,
@@ -73,7 +69,6 @@ export async function loader({ request }) {
     adminAvailableLocales: ADMIN_AVAILABLE_LOCALES,
     users,
     addressValidationProviders,
-    emailProviders,
   };
 }
 
@@ -151,13 +146,6 @@ export async function action({ request }) {
     return { ok: true, intent };
   }
 
-  if (intent === 'save-email-provider') {
-    await saveEmailSettings({
-      provider: formData.get('provider'),
-    });
-    return { ok: true, intent };
-  }
-
   if (intent === 'change-role') {
     const session = await authenticate(request);
     try {
@@ -210,7 +198,7 @@ export default function AdminSettingsRoute() {
       {activeTab === 5 && <ShippingTab data={data} />}
       {activeTab === 6 && <AddressValidationTab data={data} />}
       {activeTab === 7 && <AdminUsersTab data={data} />}
-      {activeTab === 8 && <EmailTemplatesTab data={data} />}
+      {activeTab === 8 && <EmailTemplatesTab />}
     </div>
   );
 }

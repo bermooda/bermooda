@@ -9,44 +9,16 @@ vi.mock('#/utils/logger.server', () => ({
   },
 }));
 
-const resendSend = vi.fn(async () => ({ success: true, id: 're_1' }));
-const sendgridSend = vi.fn(async () => ({ success: true, id: 'sg_1' }));
-const sesSend = vi.fn(async () => ({ success: true, id: 'ses_1' }));
-
-vi.mock('#/libs/email/resend.server', () => ({
-  createResendEmailProvider: vi.fn(() => ({
-    id: 'resend',
-    name: 'Resend',
-    send: resendSend,
-  })),
-}));
-
-vi.mock('#/libs/email/sendgrid.server', () => ({
-  createSendGridEmailProvider: vi.fn(() => ({
-    id: 'sendgrid',
-    name: 'SendGrid',
-    send: sendgridSend,
-  })),
-}));
-
-vi.mock('#/libs/email/ses.server', () => ({
-  createSesEmailProvider: vi.fn(() => ({
-    id: 'ses',
-    name: 'Amazon SES',
-    send: sesSend,
-  })),
-}));
-
 import {
   __resetEmailRegistry,
-  DEFAULT_EMAIL_PROVIDER,
   getActiveProvider,
-  getConfiguredProviderId,
+  getActiveProviderId,
   hasProvider,
   listProvidersWithDetails,
   registerProvider,
   resolveEmailProvider,
   sendEmail,
+  setActiveProvider,
   unregisterProvider,
 } from '#/libs/email/index.server';
 
@@ -60,80 +32,83 @@ const sampleMessage = {
 describe('email registry', () => {
   beforeEach(() => {
     __resetEmailRegistry();
-    resendSend.mockClear();
-    sendgridSend.mockClear();
-    sesSend.mockClear();
-    delete process.env.EMAIL_PROVIDER;
   });
 
-  it('registers built-in providers by default', () => {
-    getActiveProvider();
+  it('requires an enabled provider before send', async () => {
+    expect(() => getActiveProvider()).toThrow(/No email provider is active/);
+    await expect(sendEmail(sampleMessage)).rejects.toThrow(
+      /No email provider is active/
+    );
+  });
 
+  it('activates the first registered provider', async () => {
+    const send = vi.fn(async () => ({ success: true, id: '1' }));
+    registerProvider('resend', { id: 'resend', name: 'Resend', send });
+
+    expect(getActiveProviderId()).toBe('resend');
     expect(listProvidersWithDetails()).toEqual([
       { id: 'resend', name: 'Resend' },
-      { id: 'sendgrid', name: 'SendGrid' },
-      { id: 'ses', name: 'Amazon SES' },
     ]);
-    expect(DEFAULT_EMAIL_PROVIDER).toBe('resend');
-  });
-
-  it('defaults to resend when EMAIL_PROVIDER is unset', async () => {
-    expect(getConfiguredProviderId()).toBe('resend');
-
-    const result = await sendEmail(sampleMessage);
-
-    expect(result.success).toBe(true);
-    expect(resendSend).toHaveBeenCalledWith(sampleMessage);
-    expect(sendgridSend).not.toHaveBeenCalled();
-  });
-
-  it('routes through EMAIL_PROVIDER when set', async () => {
-    process.env.EMAIL_PROVIDER = 'sendgrid';
 
     await sendEmail(sampleMessage);
-
-    expect(sendgridSend).toHaveBeenCalledOnce();
-    expect(resendSend).not.toHaveBeenCalled();
+    expect(send).toHaveBeenCalledWith(sampleMessage);
   });
 
-  it('allows an explicit providerId override', async () => {
-    process.env.EMAIL_PROVIDER = 'resend';
+  it('supports explicit providerId and setActiveProvider', async () => {
+    const resendSend = vi.fn(async () => ({ success: true }));
+    const sendgridSend = vi.fn(async () => ({ success: true }));
 
-    await sendEmail(sampleMessage, { providerId: 'ses' });
-
-    expect(sesSend).toHaveBeenCalledOnce();
-    expect(resendSend).not.toHaveBeenCalled();
-  });
-
-  it('registers and unregisters custom providers', async () => {
-    const customSend = vi.fn(async () => ({ success: true, id: 'custom_1' }));
-
-    registerProvider('postmark', {
-      id: 'postmark',
-      name: 'Postmark',
-      send: customSend,
+    registerProvider('resend', {
+      id: 'resend',
+      name: 'Resend',
+      send: resendSend,
+    });
+    registerProvider('sendgrid', {
+      id: 'sendgrid',
+      name: 'SendGrid',
+      send: sendgridSend,
     });
 
-    expect(hasProvider('postmark')).toBe(true);
-    expect(resolveEmailProvider('postmark')).toBe('postmark');
+    setActiveProvider('sendgrid');
+    await sendEmail(sampleMessage);
+    expect(sendgridSend).toHaveBeenCalledOnce();
+    expect(resendSend).not.toHaveBeenCalled();
 
-    await sendEmail(sampleMessage, { providerId: 'postmark' });
-    expect(customSend).toHaveBeenCalledOnce();
-
-    unregisterProvider('postmark');
-    expect(hasProvider('postmark')).toBe(false);
-    expect(() => resolveEmailProvider('postmark')).toThrow(/postmark/);
+    await sendEmail(sampleMessage, { providerId: 'resend' });
+    expect(resendSend).toHaveBeenCalledOnce();
   });
 
-  it('rejects invalid messages and unknown providers', async () => {
+  it('unregisters providers and falls back to another active id', () => {
+    registerProvider('resend', {
+      id: 'resend',
+      name: 'Resend',
+      send: vi.fn(),
+    });
+    registerProvider(
+      'sendgrid',
+      { id: 'sendgrid', name: 'SendGrid', send: vi.fn() },
+      { isActive: true }
+    );
+
+    expect(getActiveProviderId()).toBe('sendgrid');
+    unregisterProvider('sendgrid');
+    expect(hasProvider('sendgrid')).toBe(false);
+    expect(getActiveProviderId()).toBe('resend');
+    expect(() => resolveEmailProvider('sendgrid')).toThrow(/sendgrid/);
+  });
+
+  it('rejects invalid messages', async () => {
+    registerProvider('resend', {
+      id: 'resend',
+      name: 'Resend',
+      send: vi.fn(async () => ({ success: true })),
+    });
+
     await expect(sendEmail(/** @type {any} */ (null))).rejects.toThrow(
       /message/
     );
     await expect(
       sendEmail(/** @type {any} */ ({ from: 'a', to: 'b', subject: 'c' }))
     ).rejects.toThrow(/html/);
-    await expect(
-      sendEmail(sampleMessage, { providerId: 'missing' })
-    ).rejects.toThrow(/missing/);
   });
 });

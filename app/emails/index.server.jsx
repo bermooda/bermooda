@@ -31,19 +31,6 @@ async function resolveShopBrandName() {
 }
 
 /**
- * Resolve the active email provider id from settings, then EMAIL_PROVIDER env.
- *
- * @returns {Promise<string | undefined>}
- */
-async function resolveActiveProviderId() {
-  const fromSettings = await settingsGet(SETTING_KEYS.EMAIL_PROVIDER);
-  if (typeof fromSettings === 'string' && fromSettings.trim()) {
-    return fromSettings.trim();
-  }
-  return undefined;
-}
-
-/**
  * Render a React Email element (when present) and send via the active provider.
  *
  * @param {Object} options
@@ -70,14 +57,10 @@ async function deliver({ to, subject, react, html, text, logMessage }) {
   };
   if (text) message.text = text;
 
-  const providerId = await resolveActiveProviderId();
-  const data = await sendEmail(
-    message,
-    providerId ? { providerId } : undefined
-  );
+  const data = await sendEmail(message);
 
   if (logMessage) {
-    logger.info({ to, subject, providerId: providerId ?? null }, logMessage);
+    logger.info({ to, subject }, logMessage);
   }
 
   return { success: true, data };
