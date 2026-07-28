@@ -1,3 +1,3 @@
-import { AnalyticsPage } from '#/plugins/sample-analytics/storefront/analytics-page';
+import { AnalyticsPage } from './analytics-page';
 
 export const routes = [{ path: '', Component: AnalyticsPage }];

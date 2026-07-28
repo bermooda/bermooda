@@ -18,7 +18,7 @@ import {
   EVENTS_KEY,
   loadRecentEvents,
   PLUGIN_ID,
-} from '#/plugins/sample-analytics/data/index.server';
+} from './index.server';
 
 describe('sample-analytics data helpers', () => {
   beforeEach(() => {

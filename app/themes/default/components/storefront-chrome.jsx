@@ -8,8 +8,8 @@ import { Form, Link, useRouteLoaderData } from 'react-router';
 import { useT } from '#/core/i18n';
 import SlotBlocks from '#/components/slot-blocks';
 
-import CurrencySwitcher from '#/themes/default/components/currency-switcher';
-import LocaleSwitcher from '#/themes/default/components/locale-switcher';
+import CurrencySwitcher from './currency-switcher';
+import LocaleSwitcher from './locale-switcher';
 
 export const STOREFRONT_GREEN = '#2f4a3a';
 export const STOREFRONT_CREAM = '#f7f1e6';

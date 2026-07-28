@@ -6,7 +6,7 @@ import {
   formatPrice,
   parseShippingAddressSnapshot,
 } from '#/core';
-import AccountStatusBadge from '#/themes/default/components/account-status-badge';
+import AccountStatusBadge from './account-status-badge';
 
 export default function AccountOrderDetailPage({ order, locale, currency }) {
   if (!order) {

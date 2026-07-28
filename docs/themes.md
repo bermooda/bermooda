@@ -67,13 +67,13 @@ Theme components are registered from `index.js` with `defineTheme({ components }
 ```js
 import { defineTheme } from '#/core/themes/define';
 
-import CartPage from '#/themes/default/components/cart-page';
-import CategoryPage from '#/themes/default/components/category-page';
-import CheckoutLayout from '#/themes/default/components/checkout-layout';
-import HomePage from '#/themes/default/components/home-page';
-import Layout from '#/themes/default/components/layout';
-import NotFoundPage from '#/themes/default/components/not-found-page';
-import ProductPage from '#/themes/default/components/product-page';
+import CartPage from './components/cart-page';
+import CategoryPage from './components/category-page';
+import CheckoutLayout from './components/checkout-layout';
+import HomePage from './components/home-page';
+import Layout from './components/layout';
+import NotFoundPage from './components/not-found-page';
+import ProductPage from './components/product-page';
 
 export default defineTheme({
   components: {
@@ -87,6 +87,16 @@ export default defineTheme({
   },
 });
 ```
+
+### Imports
+
+Inside a theme package (`app/themes/<slug>/`):
+
+- Import **sibling theme modules** with **relative** paths (for example `./components/home-page`, `../storefront-chrome`).
+- Import **core app modules** with the `#/…` alias (for example `#/core/themes/define`, `#/core`, `#/components/slot-blocks`).
+- Outside themes, the core app and routes continue to load themes via `#/themes/<slug>/…`.
+
+Oxlint enforces the sibling-import rule with `no-restricted-imports` on `app/themes/**`.
 
 ### Folder layout
 
@@ -338,13 +348,13 @@ Open `app/themes/aurora/index.js`. Keep the component imports you want and expor
 ```js
 import { defineTheme } from '#/core/themes/define';
 
-import CartPage from '#/themes/aurora/components/cart-page';
-import CategoryPage from '#/themes/aurora/components/category-page';
-import CheckoutLayout from '#/themes/aurora/components/checkout-layout';
-import HomePage from '#/themes/aurora/components/home-page';
-import Layout from '#/themes/aurora/components/layout';
-import NotFoundPage from '#/themes/aurora/components/not-found-page';
-import ProductPage from '#/themes/aurora/components/product-page';
+import CartPage from './components/cart-page';
+import CategoryPage from './components/category-page';
+import CheckoutLayout from './components/checkout-layout';
+import HomePage from './components/home-page';
+import Layout from './components/layout';
+import NotFoundPage from './components/not-found-page';
+import ProductPage from './components/product-page';
 
 export default defineTheme({
   components: {
@@ -430,6 +440,7 @@ The TTL cache will expire within 5 minutes, or restart the dev server to pick up
 
 ## Notes and Constraints
 
+- **Relative sibling imports.** Theme files must not import each other via `#/themes/…`; use relative paths. Keep `#/…` for core app modules.
 - **Client-safe runtime entry.** Theme `index.js` imports `defineTheme` from `#/core/themes/define`, not from the server-only registry.
 - **Server-only registry.** `app/core/themes/index.server.js` must never be imported in client code. The `.server.js` suffix enforces this in React Router / Vite builds.
 - **In-memory registry.** The registry is process-local. In a multi-process deployment (e.g. multiple Node workers) every process registers themes independently at startup from the same source files, so the registry is consistent across processes without any shared state.

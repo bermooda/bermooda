@@ -12,5 +12,39 @@
   "plugins": ["react"],
   "rules": {
     "no-unused-vars": "warn"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["app/themes/**/*.js", "app/themes/**/*.jsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["#/themes/**"],
+                "message": "Inside a theme, import sibling theme modules with relative paths. Keep `#/…` only for core app modules (core, components, libs, utils, etc.)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["app/plugins/**/*.js", "app/plugins/**/*.jsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["#/plugins/**"],
+                "message": "Inside a plugin, import sibling plugin modules with relative paths. Keep `#/…` only for core app modules (core, components, libs, utils, etc.)."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

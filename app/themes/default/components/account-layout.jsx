@@ -11,7 +11,7 @@ import { Link, NavLink } from 'react-router';
 
 import { useT } from '#/core/i18n';
 
-import StorefrontShell from '#/themes/default/components/storefront-chrome';
+import StorefrontShell from './storefront-chrome';
 
 const NAV_ITEMS = [
   { href: '/account', label: 'account.dashboard', Icon: UserIcon, end: true },

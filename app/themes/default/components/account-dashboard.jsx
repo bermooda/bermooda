@@ -4,7 +4,7 @@ import { useT } from '#/core/i18n';
 import SlotBlocks from '#/components/slot-blocks';
 
 import { formatPrice } from '#/core';
-import AccountStatusBadge from '#/themes/default/components/account-status-badge';
+import AccountStatusBadge from './account-status-badge';
 
 export default function AccountDashboard({
   recentOrders = [],

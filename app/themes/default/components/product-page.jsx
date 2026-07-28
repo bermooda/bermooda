@@ -17,7 +17,7 @@ import {
 } from '#/core';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
-} from '#/themes/default/components/storefront-chrome';
+} from './storefront-chrome';
 
 function categoryHref(entry) {
   const slug =

@@ -9,12 +9,12 @@ import {
   CatalogMobileFilters,
   CatalogSortSelect,
   catalogHasFacets,
-} from '#/themes/default/components/catalog-filters';
-import CatalogPagination from '#/themes/default/components/catalog-pagination';
-import ProductGrid from '#/themes/default/components/product-grid';
+} from './catalog-filters';
+import CatalogPagination from './catalog-pagination';
+import ProductGrid from './product-grid';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
-} from '#/themes/default/components/storefront-chrome';
+} from './storefront-chrome';
 
 export default function CategoryPage({
   category,

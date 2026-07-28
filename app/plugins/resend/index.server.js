@@ -1,6 +1,6 @@
 import { definePlugin, defineProvider } from '#/core/plugins/index.server';
 
-import { createResendEmailProvider } from '#/plugins/resend/provider/index.server';
+import { createResendEmailProvider } from './provider/index.server';
 
 export const pluginManifest = definePlugin({
   providers: {

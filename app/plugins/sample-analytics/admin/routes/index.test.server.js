@@ -13,7 +13,7 @@ vi.mock('#/libs/prisma.server', () => ({
   },
 }));
 
-import { routes as adminRoutes } from '#/plugins/sample-analytics/admin/routes/index.server';
+import { routes as adminRoutes } from './index.server';
 
 describe('sample-analytics admin route loader', () => {
   beforeEach(() => {

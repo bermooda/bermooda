@@ -14,8 +14,8 @@ import SlotBlocks from '#/components/slot-blocks';
 import { cartLineTotal, formatPrice, summarizeCartLines } from '#/core';
 import StorefrontShell, {
   STOREFRONT_GREEN as GREEN,
-} from '#/themes/default/components/storefront-chrome';
-import StripePaymentElement from '#/themes/default/components/stripe-payment-element';
+} from './storefront-chrome';
+import StripePaymentElement from './stripe-payment-element';
 
 const COUNTRIES = [
   { code: 'US', label: 'United States' },

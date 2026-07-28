@@ -37,12 +37,9 @@ import {
   register,
 } from '#/core/plugins/index.server';
 
-import {
-  EVENTS_KEY,
-  PLUGIN_ID,
-} from '#/plugins/sample-analytics/data/index.server';
-import { pluginManifest } from '#/plugins/sample-analytics/index.server';
-import pkg from '#/plugins/sample-analytics/package.json';
+import { EVENTS_KEY, PLUGIN_ID } from './data/index.server';
+import { pluginManifest } from './index.server';
+import pkg from './package.json';
 
 beforeEach(() => {
   vi.clearAllMocks();
