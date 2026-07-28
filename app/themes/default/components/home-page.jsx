@@ -20,7 +20,7 @@ import StorefrontShell, {
   STOREFRONT_CREAM as CREAM,
   STOREFRONT_GREEN as GREEN,
   STOREFRONT_SAND as SAND,
-} from '#/themes/default/components/storefront-chrome';
+} from './storefront-chrome';
 
 function fmt(price, currency, locale) {
   return price != null

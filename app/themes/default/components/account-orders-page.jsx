@@ -3,8 +3,8 @@ import { Link } from 'react-router';
 import { useT } from '#/core/i18n';
 
 import { formatPrice } from '#/core';
-import AccountStatusBadge from '#/themes/default/components/account-status-badge';
-import CatalogPagination from '#/themes/default/components/catalog-pagination';
+import AccountStatusBadge from './account-status-badge';
+import CatalogPagination from './catalog-pagination';
 
 const ORDERS_PAGE_SIZE = 20;
 

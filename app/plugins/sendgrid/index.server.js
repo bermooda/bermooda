@@ -1,6 +1,6 @@
 import { definePlugin, defineProvider } from '#/core/plugins/index.server';
 
-import { createSendGridEmailProvider } from '#/plugins/sendgrid/provider/index.server';
+import { createSendGridEmailProvider } from './provider/index.server';
 
 export const pluginManifest = definePlugin({
   providers: {

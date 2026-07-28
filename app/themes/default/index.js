@@ -1,28 +1,28 @@
 import { defineTheme } from '#/core/themes/define';
 
-import AccountAddressesPage from '#/themes/default/components/account-addresses-page';
-import AccountDashboard from '#/themes/default/components/account-dashboard';
-import AccountLayout from '#/themes/default/components/account-layout';
-import AccountLoyaltyPage from '#/themes/default/components/account-loyalty-page';
-import AccountOrderDetailPage from '#/themes/default/components/account-order-detail-page';
-import AccountOrdersPage from '#/themes/default/components/account-orders-page';
-import AccountProfilePage from '#/themes/default/components/account-profile-page';
-import AccountWishlistPage from '#/themes/default/components/account-wishlist-page';
-import CartPage from '#/themes/default/components/cart-page';
-import CategoryPage from '#/themes/default/components/category-page';
-import CheckoutLayout from '#/themes/default/components/checkout-layout';
-import CheckoutThankYouPage from '#/themes/default/components/checkout-thank-you-page';
-import CollectionPage from '#/themes/default/components/collection-page';
-import ForgotPasswordPage from '#/themes/default/components/forgot-password-page';
-import HomePage from '#/themes/default/components/home-page';
-import Layout from '#/themes/default/components/layout';
-import LoginPage from '#/themes/default/components/login-page';
-import NotFoundPage from '#/themes/default/components/not-found-page';
-import PagePage from '#/themes/default/components/page-page';
-import ProductPage from '#/themes/default/components/product-page';
-import RegisterPage from '#/themes/default/components/register-page';
-import ResetPasswordPage from '#/themes/default/components/reset-password-page';
-import SearchPage from '#/themes/default/components/search-page';
+import AccountAddressesPage from './components/account-addresses-page';
+import AccountDashboard from './components/account-dashboard';
+import AccountLayout from './components/account-layout';
+import AccountLoyaltyPage from './components/account-loyalty-page';
+import AccountOrderDetailPage from './components/account-order-detail-page';
+import AccountOrdersPage from './components/account-orders-page';
+import AccountProfilePage from './components/account-profile-page';
+import AccountWishlistPage from './components/account-wishlist-page';
+import CartPage from './components/cart-page';
+import CategoryPage from './components/category-page';
+import CheckoutLayout from './components/checkout-layout';
+import CheckoutThankYouPage from './components/checkout-thank-you-page';
+import CollectionPage from './components/collection-page';
+import ForgotPasswordPage from './components/forgot-password-page';
+import HomePage from './components/home-page';
+import Layout from './components/layout';
+import LoginPage from './components/login-page';
+import NotFoundPage from './components/not-found-page';
+import PagePage from './components/page-page';
+import ProductPage from './components/product-page';
+import RegisterPage from './components/register-page';
+import ResetPasswordPage from './components/reset-password-page';
+import SearchPage from './components/search-page';
 
 export default defineTheme({
   components: {

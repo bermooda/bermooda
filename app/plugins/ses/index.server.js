@@ -1,6 +1,6 @@
 import { definePlugin, defineProvider } from '#/core/plugins/index.server';
 
-import { createSesEmailProvider } from '#/plugins/ses/provider/index.server';
+import { createSesEmailProvider } from './provider/index.server';
 
 export const pluginManifest = definePlugin({
   providers: {

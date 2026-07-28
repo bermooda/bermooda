@@ -3,7 +3,7 @@ import {
   writePluginData,
 } from '#/core/plugins/data/index.server';
 
-import pkg from '#/plugins/sample-analytics/package.json';
+import pkg from '../package.json';
 
 export const PLUGIN_ID = pkg.name;
 export const EVENTS_KEY = 'recentEvents';

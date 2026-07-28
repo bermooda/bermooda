@@ -15,7 +15,8 @@ This ruleset intentionally keeps only non-obvious, repository-specific requireme
 ## Imports and logging
 
 - For imports inside `app/`, use the `#/*` alias instead of deep relative paths (`#/*` maps to `./app/`, configured in [vite.config.js](vite.config.js)).
-- Do not include file extensions in imports.
+- **Exception — themes and plugins:** inside `app/themes/<slug>/` and `app/plugins/<slug>/`, import sibling files in the same theme/plugin with **relative** paths. Keep `#/…` only for core app modules (`#/core`, `#/components`, `#/libs`, `#/utils`, etc.). Outside themes/plugins, continue to load them via `#/themes/…` and `#/plugins/…`.
+- Do not include file extensions in imports (except `.json` when required).
 - On the server, use `#/utils/logger.server` for logging; avoid `console.log`.
 
 ## Validation
@@ -153,6 +154,7 @@ Dual auth — admin/staff and customers are separate better-auth instances ([doc
 
 - **Themes** — `app/themes/<name>/` (manifest, components, i18n). See [docs/themes.md](docs/themes.md).
 - **Plugins** — `app/plugins/<id>/` (manifest, hooks, blocks, admin routes). See [docs/plugins.md](docs/plugins.md).
+- Inside themes/plugins, use relative imports for sibling modules; keep `#/…` for core app modules.
 - Storefront locale is cookie-driven, not in URL paths (`app/core/i18n/`).
 
 ## Emails

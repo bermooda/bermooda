@@ -1,9 +1,9 @@
 import logger from '#/utils/logger.server';
 import { defineHooks, definePlugin } from '#/core/plugins/index.server';
 
-import DashboardWidgetsBlock from '#/plugins/sample-analytics/blocks/dashboard/widgets.jsx';
-import ProductAfterDescriptionBlock from '#/plugins/sample-analytics/blocks/product/after-description.jsx';
-import { appendRecentEvent } from '#/plugins/sample-analytics/data/index.server';
+import DashboardWidgetsBlock from './blocks/dashboard/widgets';
+import ProductAfterDescriptionBlock from './blocks/product/after-description';
+import { appendRecentEvent } from './data/index.server';
 
 // Hooks only receive the event payload — access plugin data helpers directly.
 async function handleOrderCreated(payload) {

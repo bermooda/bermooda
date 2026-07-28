@@ -1,4 +1,4 @@
-import ProductCard from '#/themes/default/components/product-card';
+import ProductCard from './product-card';
 
 export default function ProductGrid({ products, locale, currency }) {
   if (!products?.length) {
