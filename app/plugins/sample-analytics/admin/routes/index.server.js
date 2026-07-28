@@ -1,5 +1,5 @@
-import { RecentEventsPage } from '../recent-events-page';
 import { loadRecentEvents } from '../../data/index.server';
+import { RecentEventsPage } from '../recent-events-page';
 
 export const routes = [
   {

@@ -37,10 +37,7 @@ import {
   register,
 } from '#/core/plugins/index.server';
 
-import {
-  EVENTS_KEY,
-  PLUGIN_ID,
-} from './data/index.server';
+import { EVENTS_KEY, PLUGIN_ID } from './data/index.server';
 import { pluginManifest } from './index.server';
 import pkg from './package.json';
 
