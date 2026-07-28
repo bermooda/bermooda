@@ -955,7 +955,7 @@ describe('setPluginEnabledState email exclusivity', () => {
   it('disables sibling email provider plugins when activating another', async () => {
     register(
       validPlugin({
-        id: '@bermooda/resend',
+        id: '@bermooda/plugin-resend',
         title: 'Resend',
         slug: 'resend',
         providers: {
@@ -968,7 +968,7 @@ describe('setPluginEnabledState email exclusivity', () => {
     );
     register(
       validPlugin({
-        id: '@bermooda/sendgrid',
+        id: '@bermooda/plugin-sendgrid',
         title: 'SendGrid',
         slug: 'sendgrid',
         providers: {
@@ -980,14 +980,14 @@ describe('setPluginEnabledState email exclusivity', () => {
       })
     );
 
-    expect(pluginProvidesType('@bermooda/resend', 'email')).toBe(true);
+    expect(pluginProvidesType('@bermooda/plugin-resend', 'email')).toBe(true);
 
-    settingsGet.mockResolvedValue(['@bermooda/resend']);
-    await _enable('@bermooda/resend');
+    settingsGet.mockResolvedValue(['@bermooda/plugin-resend']);
+    await _enable('@bermooda/plugin-resend');
     vi.clearAllMocks();
-    settingsGet.mockResolvedValue(['@bermooda/resend']);
+    settingsGet.mockResolvedValue(['@bermooda/plugin-resend']);
 
-    await setPluginEnabledState('@bermooda/sendgrid', true);
+    await setPluginEnabledState('@bermooda/plugin-sendgrid', true);
 
     expect(unregisterEmailProvider).toHaveBeenCalledWith('resend');
     expect(registerEmailProvider).toHaveBeenCalledWith(
@@ -997,11 +997,11 @@ describe('setPluginEnabledState email exclusivity', () => {
     );
     expect(settingsSet).toHaveBeenCalledWith(
       'enabledPlugins',
-      expect.arrayContaining(['@bermooda/sendgrid'])
+      expect.arrayContaining(['@bermooda/plugin-sendgrid'])
     );
     expect(settingsSet).toHaveBeenCalledWith(
       'enabledPlugins',
-      expect.not.arrayContaining(['@bermooda/resend'])
+      expect.not.arrayContaining(['@bermooda/plugin-resend'])
     );
   });
 });

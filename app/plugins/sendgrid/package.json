@@ -1,5 +1,5 @@
 {
-  "name": "@bermooda/sendgrid",
+  "name": "@bermooda/plugin-sendgrid",
   "version": "1.0.0",
   "description": "Send transactional email through SendGrid. Only one email provider plugin can be active at a time.",
   "private": true,

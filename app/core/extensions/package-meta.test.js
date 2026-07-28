@@ -89,6 +89,19 @@ describe('normalizeLegacyIds', () => {
     ).toEqual(['@bermooda/sample-analytics', '@acme/other']);
   });
 
+  it('rewrites legacy email plugin package ids', () => {
+    expect(
+      normalizeLegacyIds(
+        ['@bermooda/resend', 'sendgrid', '@bermooda/ses'],
+        LEGACY_PLUGIN_ID_MAP
+      )
+    ).toEqual([
+      '@bermooda/plugin-resend',
+      '@bermooda/plugin-sendgrid',
+      '@bermooda/plugin-ses',
+    ]);
+  });
+
   it('rewrites legacy default theme id', () => {
     expect(normalizeLegacyIds(['default'], LEGACY_THEME_ID_MAP)).toEqual([
       '@bermooda/theme-default',
