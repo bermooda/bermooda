@@ -5,6 +5,24 @@
   "private": true,
   "bermooda": {
     "title": "Amazon SES",
-    "slug": "ses"
+    "slug": "ses",
+    "settings": [
+      {
+        "key": "region",
+        "label": "AWS Region",
+        "type": "text",
+        "default": "us-east-1"
+      },
+      {
+        "key": "accessKeyId",
+        "label": "Access Key ID",
+        "type": "password"
+      },
+      {
+        "key": "secretAccessKey",
+        "label": "Secret Access Key",
+        "type": "password"
+      }
+    ]
   }
 }

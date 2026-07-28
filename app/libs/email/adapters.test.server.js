@@ -33,6 +33,16 @@ vi.mock('@aws-sdk/client-ses', () => {
   return { SESClient, SendEmailCommand };
 });
 
+const { getPluginSettingSecret, getPluginSettingValue } = vi.hoisted(() => ({
+  getPluginSettingSecret: vi.fn(),
+  getPluginSettingValue: vi.fn(),
+}));
+
+vi.mock('#/core/plugins/settings.server', () => ({
+  getPluginSettingSecret,
+  getPluginSettingValue,
+}));
+
 import { createResendEmailProvider } from '#/plugins/resend/provider/index.server';
 import { createSendGridEmailProvider } from '#/plugins/sendgrid/provider/index.server';
 import { createSesEmailProvider } from '#/plugins/ses/provider/index.server';
@@ -48,34 +58,33 @@ const sampleMessage = {
 describe('email provider adapters', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.RESEND_API_KEY;
-    delete process.env.SENDGRID_API_KEY;
-    delete process.env.SES_ACCESS_KEY_ID;
-    delete process.env.SES_SECRET_ACCESS_KEY;
-    delete process.env.AWS_ACCESS_KEY_ID;
-    delete process.env.AWS_SECRET_ACCESS_KEY;
-    delete process.env.SES_REGION;
+    getPluginSettingSecret.mockResolvedValue(null);
+    getPluginSettingValue.mockResolvedValue(null);
     vi.unstubAllGlobals();
   });
 
   it('sends via Resend when API key is set', async () => {
-    process.env.RESEND_API_KEY = 're_test';
+    getPluginSettingSecret.mockResolvedValue('re_test');
     const provider = createResendEmailProvider();
     const result = await provider.send(sampleMessage);
 
     expect(result.success).toBe(true);
     expect(result.id).toBe('re_abc');
+    expect(getPluginSettingSecret).toHaveBeenCalledWith(
+      '@bermooda/plugin-resend',
+      'apiKey'
+    );
   });
 
   it('throws when Resend is not configured', async () => {
     const provider = createResendEmailProvider();
     await expect(provider.send(sampleMessage)).rejects.toThrow(
-      /RESEND_API_KEY/
+      /Admin → Plugins → Resend/
     );
   });
 
   it('sends via SendGrid HTTP API', async () => {
-    process.env.SENDGRID_API_KEY = 'sg_test';
+    getPluginSettingSecret.mockResolvedValue('sg_test');
     const fetchMock = vi.fn(async () => ({
       ok: true,
       status: 202,
@@ -103,14 +112,17 @@ describe('email provider adapters', () => {
   it('throws when SendGrid is not configured', async () => {
     const provider = createSendGridEmailProvider();
     await expect(provider.send(sampleMessage)).rejects.toThrow(
-      /SENDGRID_API_KEY/
+      /Admin → Plugins → SendGrid/
     );
   });
 
   it('sends via Amazon SES', async () => {
-    process.env.SES_ACCESS_KEY_ID = 'AKIA';
-    process.env.SES_SECRET_ACCESS_KEY = 'secret';
-    process.env.SES_REGION = 'eu-west-1';
+    getPluginSettingValue.mockResolvedValue('eu-west-1');
+    getPluginSettingSecret.mockImplementation(async (_id, key) => {
+      if (key === 'accessKeyId') return 'AKIA';
+      if (key === 'secretAccessKey') return 'secret';
+      return null;
+    });
 
     const provider = createSesEmailProvider();
     const result = await provider.send(sampleMessage);
@@ -121,6 +133,8 @@ describe('email provider adapters', () => {
 
   it('throws when SES credentials are missing', async () => {
     const provider = createSesEmailProvider();
-    await expect(provider.send(sampleMessage)).rejects.toThrow(/SES/);
+    await expect(provider.send(sampleMessage)).rejects.toThrow(
+      /Admin → Plugins → Amazon SES/
+    );
   });
 });

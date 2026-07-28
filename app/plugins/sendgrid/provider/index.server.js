@@ -1,3 +1,7 @@
+import { getPluginSettingSecret } from '#/core/plugins/settings.server';
+
+const PLUGIN_ID = '@bermooda/plugin-sendgrid';
+
 /**
  * Built-in SendGrid email provider adapter (HTTP API, no SDK).
  *
@@ -12,10 +16,10 @@ export function createSendGridEmailProvider() {
      * @returns {Promise<import('#/libs/email-types.server').EmailSendResult>}
      */
     async send(message) {
-      const apiKey = process.env.SENDGRID_API_KEY;
+      const apiKey = await getPluginSettingSecret(PLUGIN_ID, 'apiKey');
       if (!apiKey) {
         throw new Error(
-          'SendGrid is not configured. Set SENDGRID_API_KEY in the environment.'
+          'SendGrid is not configured. Set the API Key under Admin → Plugins → SendGrid.'
         );
       }
 
