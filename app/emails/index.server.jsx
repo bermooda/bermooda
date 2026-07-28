@@ -1,7 +1,8 @@
-import { Resend } from 'resend';
+import { render } from '@react-email/render';
 
 import config, { PLATFORM_NAME } from '#/core/config';
 import logger from '#/utils/logger.server';
+import { sendEmail } from '#/libs/email/index.server';
 import { get as settingsGet, SETTING_KEYS } from '#/core/settings/index.server';
 import AbandonedCartEmail from '#/emails/shop/abandoned-cart';
 import BackInStockEmail from '#/emails/shop/back-in-stock';
@@ -29,8 +30,41 @@ async function resolveShopBrandName() {
   return PLATFORM_NAME;
 }
 
-// Initialize Resend with your API key
-const resend = new Resend(process.env.RESEND_API_KEY);
+/**
+ * Render a React Email element (when present) and send via the active provider.
+ *
+ * @param {Object} options
+ * @param {string} options.to
+ * @param {string} options.subject
+ * @param {import('react').ReactElement} [options.react]
+ * @param {string} [options.html]
+ * @param {string} [options.text]
+ * @param {string} [options.logMessage]
+ * @returns {Promise<{ success: true, data: import('#/libs/email-types.server').EmailSendResult }>}
+ */
+async function deliver({ to, subject, react, html, text, logMessage }) {
+  const renderedHtml = html ?? (react ? await render(react) : null);
+  if (!renderedHtml) {
+    throw new Error('Email requires either react or html content');
+  }
+
+  /** @type {import('#/libs/email-types.server').EmailMessage} */
+  const message = {
+    from: config.email.fromNoReply,
+    to,
+    subject,
+    html: renderedHtml,
+  };
+  if (text) message.text = text;
+
+  const data = await sendEmail(message);
+
+  if (logMessage) {
+    logger.info({ to, subject }, logMessage);
+  }
+
+  return { success: true, data };
+}
 
 // Email subjects — admin/auth
 const SUBJECT_WELCOME = 'Welcome to bermooda';
@@ -56,13 +90,11 @@ const SUBJECT_BACK_IN_STOCK = 'An item is back in stock';
  * @param {Object} options - Email sending options
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
- * @returns {Promise<Object>} - Resend API response
+ * @returns {Promise<{ success: true, data: unknown }>}
  */
 export async function sendWelcomeEmail({ email, name }) {
   try {
-    // Send the email using Resend
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_WELCOME,
       react: (
@@ -71,10 +103,8 @@ export async function sendWelcomeEmail({ email, name }) {
           getStartedUrl={`${config.baseUrl}${config.auth.customerCallbackUrl}`}
         />
       ),
+      logMessage: 'Welcome email sent successfully',
     });
-
-    logger.info(data, 'Welcome email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send welcome email');
     throw error;
@@ -88,22 +118,18 @@ export async function sendWelcomeEmail({ email, name }) {
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
  * @param {string} options.verificationUrl - The URL for email verification
- * @returns {Promise<Object>} - Resend API response
+ * @returns {Promise<{ success: true, data: unknown }>}
  */
 export async function sendVerificationEmail({ email, name, verificationUrl }) {
   try {
-    // Send the email using Resend
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_VERIFY_EMAIL,
       react: (
         <VerifyEmailTemplate name={name} verificationUrl={verificationUrl} />
       ),
+      logMessage: 'Verification email sent successfully',
     });
-
-    logger.info(data, 'Verification email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send verification email');
     throw error;
@@ -117,20 +143,16 @@ export async function sendVerificationEmail({ email, name, verificationUrl }) {
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
  * @param {string} options.resetUrl - The URL for password reset
- * @returns {Promise<Object>} - Resend API response
+ * @returns {Promise<{ success: true, data: unknown }>}
  */
 export async function sendPasswordResetEmail({ email, name, resetUrl }) {
   try {
-    // Send the email using Resend
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_RESET_PASSWORD,
       react: <ResetPasswordTemplate name={name} resetUrl={resetUrl} />,
+      logMessage: 'Password reset email sent successfully',
     });
-
-    logger.info(data, 'Password reset email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send password reset email');
     throw error;
@@ -144,21 +166,18 @@ export async function sendPasswordResetEmail({ email, name, resetUrl }) {
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
  * @param {string} options.otp - The 6-digit OTP code
- * @returns {Promise<Object>} - Resend API response
+ * @returns {Promise<{ success: true, data: unknown }>}
  */
 export async function sendTwoFactorOtpEmail({ email, name, otp }) {
   try {
     const firstName = name.split(' ')[0];
 
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_TWO_FACTOR_OTP,
       react: <TwoFactorOtpTemplate name={firstName} otp={otp} />,
+      logMessage: 'Two-factor OTP email sent successfully',
     });
-
-    logger.info({ email }, 'Two-factor OTP email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send two-factor OTP email');
     throw error;
@@ -167,6 +186,12 @@ export async function sendTwoFactorOtpEmail({ email, name, otp }) {
 
 // ─── Shop emails ──────────────────────────────────────────────────────────────
 
+/**
+ * @param {Object} options
+ * @param {string} options.email
+ * @param {string} [options.locale]
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
 export async function sendOrderConfirmationEmail({
   email,
   locale = 'en',
@@ -174,8 +199,7 @@ export async function sendOrderConfirmationEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_ORDER_CONFIRMATION,
       react: (
@@ -185,16 +209,20 @@ export async function sendOrderConfirmationEmail({
           {...props}
         />
       ),
+      logMessage: 'Order confirmation email sent successfully',
     });
-
-    logger.info({ email }, 'Order confirmation email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send order confirmation email');
     throw error;
   }
 }
 
+/**
+ * @param {Object} options
+ * @param {string} options.email
+ * @param {string} [options.locale]
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
 export async function sendOrderShippedEmail({
   email,
   locale = 'en',
@@ -202,23 +230,26 @@ export async function sendOrderShippedEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_ORDER_SHIPPED,
       react: (
         <OrderShippedEmail locale={locale} brandName={brandName} {...props} />
       ),
+      logMessage: 'Order shipped email sent successfully',
     });
-
-    logger.info({ email }, 'Order shipped email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send order shipped email');
     throw error;
   }
 }
 
+/**
+ * @param {Object} options
+ * @param {string} options.email
+ * @param {string} [options.locale]
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
 export async function sendOrderDeliveredEmail({
   email,
   locale = 'en',
@@ -226,23 +257,26 @@ export async function sendOrderDeliveredEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_ORDER_DELIVERED,
       react: (
         <OrderDeliveredEmail locale={locale} brandName={brandName} {...props} />
       ),
+      logMessage: 'Order delivered email sent successfully',
     });
-
-    logger.info({ email }, 'Order delivered email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send order delivered email');
     throw error;
   }
 }
 
+/**
+ * @param {Object} options
+ * @param {string} options.email
+ * @param {string} [options.locale]
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
 export async function sendOrderRefundedEmail({
   email,
   locale = 'en',
@@ -250,23 +284,26 @@ export async function sendOrderRefundedEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_ORDER_REFUNDED,
       react: (
         <OrderRefundedEmail locale={locale} brandName={brandName} {...props} />
       ),
+      logMessage: 'Order refunded email sent successfully',
     });
-
-    logger.info({ email }, 'Order refunded email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send order refunded email');
     throw error;
   }
 }
 
+/**
+ * @param {Object} options
+ * @param {string} options.email
+ * @param {string} [options.locale]
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
 export async function sendReturnReceivedEmail({
   email,
   locale = 'en',
@@ -274,23 +311,28 @@ export async function sendReturnReceivedEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_RETURN_RECEIVED,
       react: (
         <ReturnReceivedEmail locale={locale} brandName={brandName} {...props} />
       ),
+      logMessage: 'Return received email sent successfully',
     });
-
-    logger.info({ email }, 'Return received email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send return received email');
     throw error;
   }
 }
 
+/**
+ * @param {Object} options
+ * @param {string} options.email
+ * @param {string} [options.locale]
+ * @param {string} options.name
+ * @param {string} options.resetUrl
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
 export async function sendPasswordResetAdminEmail({
   email,
   locale = 'en',
@@ -298,8 +340,7 @@ export async function sendPasswordResetAdminEmail({
   resetUrl,
 }) {
   try {
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_PASSWORD_RESET_ADMIN,
       react: (
@@ -309,16 +350,22 @@ export async function sendPasswordResetAdminEmail({
           resetUrl={resetUrl}
         />
       ),
+      logMessage: 'Admin password reset email sent successfully',
     });
-
-    logger.info({ email }, 'Admin password reset email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send admin password reset email');
     throw error;
   }
 }
 
+/**
+ * @param {Object} options
+ * @param {string} options.email
+ * @param {string} [options.locale]
+ * @param {string} options.name
+ * @param {string} options.resetUrl
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
 export async function sendPasswordResetCustomerEmail({
   email,
   locale = 'en',
@@ -327,8 +374,7 @@ export async function sendPasswordResetCustomerEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_PASSWORD_RESET_CUSTOMER,
       react: (
@@ -339,16 +385,22 @@ export async function sendPasswordResetCustomerEmail({
           brandName={brandName}
         />
       ),
+      logMessage: 'Customer password reset email sent successfully',
     });
-
-    logger.info({ email }, 'Customer password reset email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send customer password reset email');
     throw error;
   }
 }
 
+/**
+ * @param {Object} options
+ * @param {string} options.email
+ * @param {string} [options.locale]
+ * @param {string} options.name
+ * @param {string} [options.accountUrl]
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
 export async function sendCustomerWelcomeEmail({
   email,
   locale = 'en',
@@ -357,8 +409,7 @@ export async function sendCustomerWelcomeEmail({
 }) {
   try {
     const shopName = await resolveShopBrandName();
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: `${SUBJECT_CUSTOMER_WELCOME_PREFIX} ${shopName}`,
       react: (
@@ -369,16 +420,20 @@ export async function sendCustomerWelcomeEmail({
           shopName={shopName}
         />
       ),
+      logMessage: 'Customer welcome email sent successfully',
     });
-
-    logger.info({ email }, 'Customer welcome email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send customer welcome email');
     throw error;
   }
 }
 
+/**
+ * @param {Object} options
+ * @param {string} options.email
+ * @param {string} [options.locale]
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
 export async function sendAbandonedCartEmail({
   email,
   locale = 'en',
@@ -386,53 +441,58 @@ export async function sendAbandonedCartEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to: email,
       subject: SUBJECT_ABANDONED_CART,
       react: (
         <AbandonedCartEmail locale={locale} brandName={brandName} {...props} />
       ),
+      logMessage: 'Abandoned cart email sent successfully',
     });
-
-    logger.info({ email }, 'Abandoned cart email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send abandoned cart email');
     throw error;
   }
 }
 
+/**
+ * @param {Object} options
+ * @param {string} options.to
+ * @param {object} options.variant
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
 export async function sendBackInStockEmail({ to, variant }) {
   try {
     const brandName = await resolveShopBrandName();
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to,
       subject: SUBJECT_BACK_IN_STOCK,
       react: <BackInStockEmail brandName={brandName} variant={variant} />,
+      logMessage: 'Back-in-stock email sent successfully',
     });
-
-    logger.info({ to }, 'Back-in-stock email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send back-in-stock email');
     throw error;
   }
 }
 
+/**
+ * @param {Object} options
+ * @param {string} options.to
+ * @param {string} options.subject
+ * @param {string} options.bodyHtml
+ * @param {string} [options.name]
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
 export async function sendCampaignEmail({ to, subject, bodyHtml, name }) {
   try {
     const html = bodyHtml.replace(/\{\{name\}\}/g, name ?? 'there');
-    const data = await resend.emails.send({
-      from: config.email.fromNoReply,
+    return await deliver({
       to,
       subject,
       html,
+      logMessage: 'Campaign email sent successfully',
     });
-
-    logger.info({ to, subject }, 'Campaign email sent successfully');
-    return { success: true, data };
   } catch (error) {
     logger.error(error, 'Failed to send campaign email');
     throw error;

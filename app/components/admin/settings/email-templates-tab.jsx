@@ -37,8 +37,12 @@ export function EmailTemplatesTab() {
   return (
     <SectionCard title="Email Templates">
       <p className="text-text-muted mb-4 text-sm">
-        These are the available email templates. Preview links will be active in
-        a future update.
+        Templates are sent through the active email provider plugin. Choose
+        Resend, SendGrid, or Amazon SES under{' '}
+        <a href="/admin/plugins" className="text-accent underline">
+          Admin → Plugins
+        </a>
+        . Preview links will be active in a future update.
       </p>
       <div className="space-y-3">
         {EMAIL_TEMPLATES.map((tpl) => (

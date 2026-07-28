@@ -2,6 +2,12 @@
 // Full plugin loader implementation for bermooda.
 
 import logger from '#/utils/logger.server';
+import {
+  getActiveProviderId as getActiveEmailProviderId,
+  registerProvider as registerEmailProvider,
+  setActiveProvider as setActiveEmailProvider,
+  unregisterProvider as unregisterEmailProvider,
+} from '#/libs/email/index.server';
 import prisma from '#/libs/prisma.server';
 import queue from '#/libs/queue.server';
 import {
@@ -132,18 +138,23 @@ export function defineHooks(hookMap) {
 /**
  * Returns a typed provider spec object.
  *
- * @param {'payment' | 'shipping' | 'tax' | 'search' | 'address_validation'} type
+ * @param {'payment' | 'shipping' | 'tax' | 'search' | 'address_validation' | 'email'} type
  * @param {Object} spec
  * @returns {{ type: string } & Object}
  */
 export function defineProvider(type, spec) {
   if (
-    !['payment', 'shipping', 'tax', 'search', 'address_validation'].includes(
-      type
-    )
+    ![
+      'payment',
+      'shipping',
+      'tax',
+      'search',
+      'address_validation',
+      'email',
+    ].includes(type)
   ) {
     throw new Error(
-      `Invalid provider type "${type}". Must be one of: payment, shipping, tax, search, address_validation`
+      `Invalid provider type "${type}". Must be one of: payment, shipping, tax, search, address_validation, email`
     );
   }
 
@@ -175,12 +186,17 @@ export function defineProviders(providerMap) {
       throw new Error(`Provider "${providerId}" must be an object`);
     }
     if (
-      !['payment', 'shipping', 'tax', 'search', 'address_validation'].includes(
-        spec.type
-      )
+      ![
+        'payment',
+        'shipping',
+        'tax',
+        'search',
+        'address_validation',
+        'email',
+      ].includes(spec.type)
     ) {
       throw new Error(
-        `Provider "${providerId}" has invalid type "${spec.type}". Must be one of: payment, shipping, tax, search, address_validation`
+        `Provider "${providerId}" has invalid type "${spec.type}". Must be one of: payment, shipping, tax, search, address_validation, email`
       );
     }
   }
@@ -398,7 +414,26 @@ export async function savePluginSettingsValues(
 }
 
 /**
+ * Whether a registered plugin declares at least one provider of the given type.
+ *
+ * @param {string} pluginId
+ * @param {string} type
+ * @returns {boolean}
+ */
+export function pluginProvidesType(pluginId, type) {
+  const entry = registry.get(pluginId);
+  const providerMap = entry?.manifest?.providers;
+  if (!providerMap || typeof providerMap !== 'object') return false;
+
+  return Object.values(providerMap).some(
+    (spec) => spec && typeof spec === 'object' && spec.type === type
+  );
+}
+
+/**
  * Persists enabled state and wires or unwires the plugin live.
+ * Enabling an email-provider plugin disables every other email-provider plugin
+ * so only one transport is active.
  *
  * @param {string} pluginId
  * @param {boolean} enabled
@@ -410,9 +445,41 @@ export async function setPluginEnabledState(pluginId, enabled) {
   }
 
   const previousEnabled = await getEnabledPluginIds();
-  const nextEnabled = [...previousEnabled];
+  /** @type {string[]} */
+  let nextEnabled = [...previousEnabled];
 
   if (enabled) {
+    if (pluginProvidesType(pluginId, 'email')) {
+      const siblingEmailPlugins = previousEnabled.filter(
+        (id) => id !== pluginId && pluginProvidesType(id, 'email')
+      );
+
+      for (const siblingId of siblingEmailPlugins) {
+        const idx = nextEnabled.indexOf(siblingId);
+        if (idx !== -1) nextEnabled.splice(idx, 1);
+      }
+
+      await settingsSet('enabledPlugins', nextEnabled);
+
+      try {
+        for (const siblingId of siblingEmailPlugins) {
+          await disable(siblingId);
+        }
+      } catch (err) {
+        await settingsSet('enabledPlugins', previousEnabled);
+        for (const siblingId of siblingEmailPlugins) {
+          if (previousEnabled.includes(siblingId)) {
+            try {
+              await enable(siblingId);
+            } catch {
+              // Best-effort restore.
+            }
+          }
+        }
+        throw err;
+      }
+    }
+
     if (!nextEnabled.includes(pluginId)) nextEnabled.push(pluginId);
   } else {
     const idx = nextEnabled.indexOf(pluginId);
@@ -573,6 +640,16 @@ function registerProvidersForPlugin(entry) {
         registerAddressValidationProvider(providerId, providerSpec);
         entry.providers.push({ type, id: providerId });
         break;
+      case 'email': {
+        const previousActiveId = getActiveEmailProviderId();
+        registerEmailProvider(providerId, providerSpec, { isActive: true });
+        entry.providers.push({
+          type,
+          id: providerId,
+          previousDefaultId: previousActiveId,
+        });
+        break;
+      }
       default:
         throw new Error(`Unsupported provider type "${type}"`);
     }
@@ -602,6 +679,19 @@ function unregisterProvidersForPlugin(entry) {
         break;
       case 'address_validation':
         unregisterAddressValidationProvider(provider.id);
+        break;
+      case 'email':
+        unregisterEmailProvider(provider.id);
+        if (
+          provider.previousDefaultId &&
+          provider.previousDefaultId !== provider.id
+        ) {
+          try {
+            setActiveEmailProvider(provider.previousDefaultId);
+          } catch {
+            // Previous provider may have been unregistered already.
+          }
+        }
         break;
       default:
         break;

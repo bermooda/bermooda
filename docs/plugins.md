@@ -172,7 +172,7 @@ const myPaymentProvider = defineProvider('payment', {
 });
 ```
 
-For `payment`, `shipping`, and `tax`, the `spec` object is the provider implementation that will be registered into the matching core registry.
+For `payment`, `shipping`, `tax`, `address_validation`, and `email`, the `spec` object is the provider implementation that will be registered into the matching registry.
 
 ```js
 providers: {
@@ -194,6 +194,26 @@ providers: {
 };
 ```
 
+Custom email transports implement `send({ from, to, subject, html, text? })`. Bundled first-party transports live as plugins under `app/plugins/{resend,sendgrid,ses}/`. Only one email-provider plugin can be active: enabling another under **Admin → Plugins → Email providers** automatically deactivates the previous one.
+
+```js
+import { definePlugin, defineProvider } from '#/core/plugins/index.server';
+
+export const pluginManifest = definePlugin({
+  providers: {
+    postmark: defineProvider('email', {
+      name: 'Postmark',
+      async send({ from, to, subject, html, text }) {
+        // Call your ESP API with the already-rendered HTML.
+        return { success: true };
+      },
+    }),
+  },
+});
+```
+
+The email registry lives in `#/libs/email`. Credentials stay in environment variables.
+
 For `search`, pass the search implementation as `spec.provider`. Set `isDefault: true` if the plugin should become the active default search provider while enabled:
 
 ```js
@@ -213,7 +233,7 @@ export const pluginManifest = definePlugin({
 
 **Parameters:**
 
-- `type` — must be one of `'payment'`, `'shipping'`, `'tax'`, or `'search'`.
+- `type` — must be one of `'payment'`, `'shipping'`, `'tax'`, `'search'`, `'address_validation'`, or `'email'`.
 - `spec` — object with provider-specific fields.
 
 **Throws:** `Error` if `type` is not one of the valid values, or if `spec` is not an object.

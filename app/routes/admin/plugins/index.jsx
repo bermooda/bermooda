@@ -274,11 +274,34 @@ function PluginSettingsForm({ manifest, values }) {
 }
 
 /**
+ * Whether a plugin manifest declares an email transport provider.
+ *
+ * @param {object} manifest
+ * @returns {boolean}
+ */
+function isEmailProviderPlugin(manifest) {
+  const providers = manifest?.providers;
+  if (!providers || typeof providers !== 'object') return false;
+  return Object.values(providers).some(
+    (spec) => spec && typeof spec === 'object' && spec.type === 'email'
+  );
+}
+
+/**
  * A single plugin card.
  *
- * @param {{ manifest: object, isEnabled: boolean, pluginSettings: object }} props
+ * @param {Object} props
+ * @param {object} props.manifest
+ * @param {boolean} props.isEnabled
+ * @param {object} props.pluginSettings
+ * @param {boolean} [props.isEmailProvider]
  */
-function PluginCard({ manifest, isEnabled, pluginSettings }) {
+function PluginCard({
+  manifest,
+  isEnabled,
+  pluginSettings,
+  isEmailProvider = false,
+}) {
   const navigation = useNavigation();
 
   const isToggling =
@@ -289,6 +312,9 @@ function PluginCard({ manifest, isEnabled, pluginSettings }) {
 
   const toggleIntent = isEnabled ? 'disable' : 'enable';
   const values = pluginSettings[manifest.id] ?? {};
+  const enableLabel = isEmailProvider ? 'Activate' : 'Enable';
+  const disableLabel = isEmailProvider ? 'Deactivate' : 'Disable';
+  const activeBadge = isEmailProvider ? 'Active' : 'Enabled';
 
   return (
     <Card
@@ -297,11 +323,12 @@ function PluginCard({ manifest, isEnabled, pluginSettings }) {
     >
       {/* Header row */}
       <div className="min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-text truncate text-sm font-semibold">
             {manifest.title}
           </h3>
-          {isEnabled && <Badge tone="success">Enabled</Badge>}
+          {isEmailProvider && <Badge tone="neutral">Email</Badge>}
+          {isEnabled && <Badge tone="success">{activeBadge}</Badge>}
         </div>
         <p className="text-text-muted mt-0.5 text-xs">
           v{manifest.version} &middot;{' '}
@@ -339,7 +366,7 @@ function PluginCard({ manifest, isEnabled, pluginSettings }) {
               disabled={isToggling}
               className="h-9 min-w-[5.25rem] justify-center"
             >
-              {isEnabled ? 'Disable' : 'Enable'}
+              {isEnabled ? disableLabel : enableLabel}
             </Button>
           </Form>
         </div>
@@ -435,29 +462,64 @@ function BlockOrderTab({ orderedPlugins, enabledPlugins }) {
  * @param {{ plugins: object[], enabledPlugins: string[], pluginSettings: object }} props
  */
 function PluginsTab({ plugins, enabledPlugins, pluginSettings }) {
-  return (
-    <div>
-      <h2 className="text-text mb-3 text-lg font-semibold">
-        Registered Plugins
-      </h2>
+  const emailPlugins = plugins.filter(isEmailProviderPlugin);
+  const otherPlugins = plugins.filter(
+    (manifest) => !isEmailProviderPlugin(manifest)
+  );
 
-      {plugins.length === 0 ? (
-        <EmptyState
-          title="No plugins registered"
-          description="Plugins are loaded from app/plugins/ at startup."
-        />
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {plugins.map((manifest) => (
-            <PluginCard
-              key={manifest.id}
-              manifest={manifest}
-              isEnabled={enabledPlugins.includes(manifest.id)}
-              pluginSettings={pluginSettings}
-            />
-          ))}
-        </div>
-      )}
+  return (
+    <div className="space-y-10">
+      <section>
+        <h2 className="text-text mb-1 text-lg font-semibold">
+          Email providers
+        </h2>
+        <p className="text-text-muted mb-3 text-sm">
+          Activate exactly one email transport. Activating another provider
+          automatically deactivates the current one. Configure API credentials
+          via environment variables.
+        </p>
+
+        {emailPlugins.length === 0 ? (
+          <EmptyState
+            title="No email provider plugins"
+            description="Bundled Resend, SendGrid, and Amazon SES plugins should appear here."
+          />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {emailPlugins.map((manifest) => (
+              <PluginCard
+                key={manifest.id}
+                manifest={manifest}
+                isEnabled={enabledPlugins.includes(manifest.id)}
+                pluginSettings={pluginSettings}
+                isEmailProvider
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-text mb-3 text-lg font-semibold">Other plugins</h2>
+
+        {otherPlugins.length === 0 ? (
+          <EmptyState
+            title="No other plugins registered"
+            description="Plugins are loaded from app/plugins/ at startup."
+          />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {otherPlugins.map((manifest) => (
+              <PluginCard
+                key={manifest.id}
+                manifest={manifest}
+                isEnabled={enabledPlugins.includes(manifest.id)}
+                pluginSettings={pluginSettings}
+              />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

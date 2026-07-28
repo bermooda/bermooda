@@ -1,0 +1,10 @@
+{
+  "name": "@bermooda/plugin-ses",
+  "version": "1.0.0",
+  "description": "Send transactional email through Amazon SES. Only one email provider plugin can be active at a time.",
+  "private": true,
+  "bermooda": {
+    "title": "Amazon SES",
+    "slug": "ses"
+  }
+}
