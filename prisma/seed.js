@@ -352,7 +352,7 @@ async function main() {
     'enabledPlugins',
     DEFAULT_ENABLED_PLUGINS.length
       ? DEFAULT_ENABLED_PLUGINS
-      : ['@bermooda/sample-analytics']
+      : ['@bermooda/sample-analytics', '@bermooda/plugin-resend']
   );
 
   if (shopName) {

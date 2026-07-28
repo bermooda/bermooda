@@ -7,6 +7,12 @@ export const LEGACY_PLUGIN_ID_MAP = {
   'sample-analytics': '@bermooda/sample-analytics',
   'fraud-guard': '@bermooda/fraud-guard',
   'meilisearch': '@bermooda/meilisearch',
+  'resend': '@bermooda/plugin-resend',
+  'sendgrid': '@bermooda/plugin-sendgrid',
+  'ses': '@bermooda/plugin-ses',
+  '@bermooda/resend': '@bermooda/plugin-resend',
+  '@bermooda/sendgrid': '@bermooda/plugin-sendgrid',
+  '@bermooda/ses': '@bermooda/plugin-ses',
 };
 
 export const LEGACY_THEME_ID_MAP = {
@@ -17,6 +23,9 @@ export const BUNDLED_PLUGIN_SLUGS = {
   '@bermooda/sample-analytics': 'sample-analytics',
   '@bermooda/fraud-guard': 'fraud-guard',
   '@bermooda/meilisearch': 'meilisearch',
+  '@bermooda/plugin-resend': 'resend',
+  '@bermooda/plugin-sendgrid': 'sendgrid',
+  '@bermooda/plugin-ses': 'ses',
 };
 
 export const BUNDLED_THEME_SLUGS = {

@@ -1,0 +1,44 @@
+# Email transport providers
+
+Transactional and marketing email go through a **provider registry**. Built-in transports ship as plugins (`@bermooda/plugin-resend`, `@bermooda/plugin-sendgrid`, `@bermooda/plugin-ses`). Only one email provider plugin can be active at a time — activate it under **Admin → Plugins**.
+
+Relevant modules: [app/libs/email/index.server.js](mdc:app/libs/email/index.server.js), [app/libs/email-types.server.js](mdc:app/libs/email-types.server.js), plugins under [app/plugins/resend](mdc:app/plugins/resend), [app/plugins/sendgrid](mdc:app/plugins/sendgrid), [app/plugins/ses](mdc:app/plugins/ses), templates in [app/emails/index.server.jsx](mdc:app/emails/index.server.jsx).
+
+## What to call
+
+| Use case | Import | Notes |
+| ----- | --- | ----- |
+| Send a named template | `sendWelcomeEmail`, `sendOrderConfirmationEmail`, … from `#/emails/index.server` | Renders React Email → HTML, then active provider |
+| Raw HTML send | `sendEmail` from `#/libs/email/index.server` | Low-level; requires an active email plugin |
+| Custom / plugin provider | `defineProvider('email', { name, send })` | Enable under Admin → Plugins (exclusive with other email plugins) |
+
+Do **not** import ESP SDKs from app code outside email provider plugins.
+
+## Configuration
+
+From [`.env.example`](mdc:.env.example):
+
+- `RESEND_API_KEY` — Resend plugin
+- `SENDGRID_API_KEY` — SendGrid plugin
+- `SES_REGION` / `SES_ACCESS_KEY_ID` / `SES_SECRET_ACCESS_KEY` — Amazon SES plugin (falls back to `AWS_*`)
+
+Activate one plugin in **Admin → Plugins → Email providers**. Seed enables `@bermooda/plugin-resend` by default.
+
+## Custom providers (plugins)
+
+```js
+import { definePlugin, defineProvider } from '#/core/plugins/index.server';
+
+export const pluginManifest = definePlugin({
+  providers: {
+    postmark: defineProvider('email', {
+      name: 'Postmark',
+      async send({ from, to, subject, html, text }) {
+        return { success: true };
+      },
+    }),
+  },
+});
+```
+
+Enabling your plugin deactivates any other email provider plugin automatically.

@@ -44,6 +44,10 @@ const {
   unregisterSearchProvider,
   setDefaultSearchProvider,
   getDefaultSearchProviderId,
+  registerEmailProvider,
+  unregisterEmailProvider,
+  setActiveEmailProvider,
+  getActiveEmailProviderId,
 } = vi.hoisted(() => ({
   registerPaymentProvider: vi.fn(),
   unregisterPaymentProvider: vi.fn(),
@@ -55,6 +59,10 @@ const {
   unregisterSearchProvider: vi.fn(),
   setDefaultSearchProvider: vi.fn(),
   getDefaultSearchProviderId: vi.fn(),
+  registerEmailProvider: vi.fn(),
+  unregisterEmailProvider: vi.fn(),
+  setActiveEmailProvider: vi.fn(),
+  getActiveEmailProviderId: vi.fn(),
 }));
 
 const { settingsGet, settingsSet } = vi.hoisted(() => ({
@@ -87,6 +95,13 @@ vi.mock('#/core/search/index.server', () => ({
   unregisterProvider: unregisterSearchProvider,
   setDefaultProvider: setDefaultSearchProvider,
   getDefaultProviderId: getDefaultSearchProviderId,
+}));
+
+vi.mock('#/libs/email/index.server', () => ({
+  registerProvider: registerEmailProvider,
+  unregisterProvider: unregisterEmailProvider,
+  setActiveProvider: setActiveEmailProvider,
+  getActiveProviderId: getActiveEmailProviderId,
 }));
 
 // Mock prisma — no real database.
@@ -127,6 +142,8 @@ const {
   buildFullPluginOrder,
   enable: _enable,
   disable: _disable,
+  setPluginEnabledState,
+  pluginProvidesType,
   __resetRegistry,
   _registry,
   _buildCtx,
@@ -236,6 +253,16 @@ describe('defineProvider', () => {
     expect(result.type).toBe('search');
     expect(result.provider).toBe(provider);
     expect(result.isDefault).toBe(true);
+  });
+
+  it('returns a provider spec with the type attached for "email"', () => {
+    const result = defineProvider('email', {
+      name: 'Postmark',
+      send: vi.fn(),
+    });
+    expect(result.type).toBe('email');
+    expect(result.name).toBe('Postmark');
+    expect(typeof result.send).toBe('function');
   });
 
   it('throws for an invalid provider type', () => {
@@ -684,6 +711,35 @@ describe('enable', () => {
     );
   });
 
+  it('registers email providers into the email registry', async () => {
+    getActiveEmailProviderId.mockReturnValue(null);
+
+    register(
+      validPlugin({
+        id: 'plugin-email',
+        title: 'Plugin Email',
+        providers: {
+          postmark: defineProvider('email', {
+            name: 'Postmark',
+            send: vi.fn(),
+          }),
+        },
+      })
+    );
+
+    await _enable('plugin-email');
+
+    expect(registerEmailProvider).toHaveBeenCalledOnce();
+    const [providerId, provider, options] = registerEmailProvider.mock.calls[0];
+    expect(providerId).toBe('postmark');
+    expect(provider).toEqual({
+      name: 'Postmark',
+      send: expect.any(Function),
+    });
+    expect(options).toEqual({ isActive: true });
+    expect(provider).not.toHaveProperty('type');
+  });
+
   it('is idempotent — second call does nothing when already enabled', async () => {
     const handler = vi.fn();
     const manifest = validPlugin({
@@ -809,6 +865,26 @@ describe('disable', () => {
     expect(ctx).toHaveProperty('plugin');
   });
 
+  it('unregisters email providers on disable', async () => {
+    register(
+      validPlugin({
+        id: 'plugin-email-disable',
+        title: 'Plugin Email Disable',
+        providers: {
+          postmark: defineProvider('email', {
+            name: 'Postmark',
+            send: vi.fn(),
+          }),
+        },
+      })
+    );
+
+    await _enable('plugin-email-disable');
+    await _disable('plugin-email-disable');
+
+    expect(unregisterEmailProvider).toHaveBeenCalledWith('postmark');
+  });
+
   it('unregisters manifest providers and restores the previous search default', async () => {
     register(
       validPlugin({
@@ -865,5 +941,67 @@ describe('disable', () => {
 
     expect(unregisterSearchProvider).toHaveBeenCalledWith('meilisearch');
     expect(setDefaultSearchProvider).toHaveBeenCalledWith('db');
+  });
+});
+
+describe('setPluginEnabledState email exclusivity', () => {
+  beforeEach(() => {
+    __resetRegistry();
+    vi.clearAllMocks();
+    getActiveEmailProviderId.mockReturnValue(null);
+    settingsGet.mockResolvedValue([]);
+  });
+
+  it('disables sibling email provider plugins when activating another', async () => {
+    register(
+      validPlugin({
+        id: '@bermooda/plugin-resend',
+        title: 'Resend',
+        slug: 'resend',
+        providers: {
+          resend: defineProvider('email', {
+            name: 'Resend',
+            send: vi.fn(),
+          }),
+        },
+      })
+    );
+    register(
+      validPlugin({
+        id: '@bermooda/plugin-sendgrid',
+        title: 'SendGrid',
+        slug: 'sendgrid',
+        providers: {
+          sendgrid: defineProvider('email', {
+            name: 'SendGrid',
+            send: vi.fn(),
+          }),
+        },
+      })
+    );
+
+    expect(pluginProvidesType('@bermooda/plugin-resend', 'email')).toBe(true);
+
+    settingsGet.mockResolvedValue(['@bermooda/plugin-resend']);
+    await _enable('@bermooda/plugin-resend');
+    vi.clearAllMocks();
+    settingsGet.mockResolvedValue(['@bermooda/plugin-resend']);
+
+    await setPluginEnabledState('@bermooda/plugin-sendgrid', true);
+
+    expect(unregisterEmailProvider).toHaveBeenCalledWith('resend');
+    expect(registerEmailProvider).toHaveBeenCalledWith(
+      'sendgrid',
+      expect.objectContaining({ name: 'SendGrid' }),
+      { isActive: true }
+    );
+    expect(settingsSet).toHaveBeenCalledWith(
+      'enabledPlugins',
+      expect.arrayContaining(['@bermooda/plugin-sendgrid'])
+    );
+    expect(settingsSet).toHaveBeenCalledWith(
+      'enabledPlugins',
+      expect.not.arrayContaining(['@bermooda/plugin-resend'])
+    );
   });
 });
