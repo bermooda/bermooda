@@ -18,29 +18,29 @@
 
 ### App (`bermooda`)
 
-| File | Responsibility |
-| ---- | -------------- |
-| `package.json` | Add `"version": "1.0.0"` + `semver` dependency |
-| `app/core/extensions/engine.js` | `getAppVersion()`, `isEngineCompatible()`, `assertEngineRange()` |
-| `app/core/extensions/engine.test.js` | Unit tests for engine helpers |
-| `app/core/extensions/package-meta.js` | Require + validate `bermooda.engine`; include in meta typedef |
-| `app/core/extensions/package-meta.test.js` | Update fixtures + engine tests |
-| `app/core/plugins/index.server.js` | Soft-skip in `discoverPlugins` on engine failure |
-| `app/core/bootstrap/index.server.js` | Soft-skip default theme register if incompatible (log) |
-| `app/plugins/*/package.json` + `app/themes/default/package.json` | Add `"engine": ">=1.0.0"` |
-| `docs/plugins.md`, `docs/themes.md` | Document required field |
+| File                                                             | Responsibility                                                   |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `package.json`                                                   | Add `"version": "1.0.0"` + `semver` dependency                   |
+| `app/core/extensions/engine.js`                                  | `getAppVersion()`, `isEngineCompatible()`, `assertEngineRange()` |
+| `app/core/extensions/engine.test.js`                             | Unit tests for engine helpers                                    |
+| `app/core/extensions/package-meta.js`                            | Require + validate `bermooda.engine`; include in meta typedef    |
+| `app/core/extensions/package-meta.test.js`                       | Update fixtures + engine tests                                   |
+| `app/core/plugins/index.server.js`                               | Soft-skip in `discoverPlugins` on engine failure                 |
+| `app/core/bootstrap/index.server.js`                             | Soft-skip default theme register if incompatible (log)           |
+| `app/plugins/*/package.json` + `app/themes/default/package.json` | Add `"engine": ">=1.0.0"`                                        |
+| `docs/plugins.md`, `docs/themes.md`                              | Document required field                                          |
 
 ### CLI (`bermooda-cli`)
 
-| File | Responsibility |
-| ---- | -------------- |
-| `package.json` | Add `semver` dependency |
-| `src/lib/engine.js` | `assertEngineCompatible({ shopVersion, engine, kind, id })` |
-| `src/lib/extension-source.js` | Call assert before `installFromPath` |
-| `test/engine.test.js` | Unit tests |
-| `test/npm-pack.test.js` or new install test | Install rejects incompatible package |
-| `DESIGN.md` / `README.md` | Document check |
-| `test/helpers.js` | Fixture packages include `bermooda.engine` |
+| File                                        | Responsibility                                              |
+| ------------------------------------------- | ----------------------------------------------------------- |
+| `package.json`                              | Add `semver` dependency                                     |
+| `src/lib/engine.js`                         | `assertEngineCompatible({ shopVersion, engine, kind, id })` |
+| `src/lib/extension-source.js`               | Call assert before `installFromPath`                        |
+| `test/engine.test.js`                       | Unit tests                                                  |
+| `test/npm-pack.test.js` or new install test | Install rejects incompatible package                        |
+| `DESIGN.md` / `README.md`                   | Document check                                              |
+| `test/helpers.js`                           | Fixture packages include `bermooda.engine`                  |
 
 ---
 
@@ -50,6 +50,7 @@
 **Branch:** `feat/bermooda-engine-compatibility` (create from current HEAD if needed)
 
 **Files:**
+
 - Create: `app/core/extensions/engine.js`
 - Create: `app/core/extensions/engine.test.js`
 - Modify: `package.json` (add `"version": "1.0.0"`, add `semver` dep)
@@ -129,11 +130,15 @@ export function getAppVersion() {
  */
 export function assertEngineRange(engine) {
   if (typeof engine !== 'string' || engine.trim() === '') {
-    throw new Error('Extension package missing required field: "bermooda.engine"');
+    throw new Error(
+      'Extension package missing required field: "bermooda.engine"'
+    );
   }
   const range = engine.trim();
   if (!semver.validRange(range)) {
-    throw new Error(`Extension package bermooda.engine is not a valid semver range: "${range}"`);
+    throw new Error(
+      `Extension package bermooda.engine is not a valid semver range: "${range}"`
+    );
   }
   return range;
 }
@@ -199,6 +204,7 @@ EOF
 **Depends on:** Task 1
 
 **Files:**
+
 - Modify: `app/core/extensions/package-meta.js`
 - Modify: `app/core/extensions/package-meta.test.js`
 - Modify: `app/core/plugins/index.server.js` (`discoverPlugins`)
@@ -273,6 +279,7 @@ EOF
 **Branch:** `feat/bermooda-engine-compatibility`
 
 **Files:**
+
 - Create: `src/lib/engine.js`
 - Create: `test/engine.test.js`
 - Modify: `package.json` (add `semver`)
@@ -289,7 +296,9 @@ EOF
  * @param {{ shopVersion: string|null|undefined, engine: unknown, kind: 'plugin'|'theme', id: string }} opts
  * @returns {{ ok: true } | { ok: false, message: string }}
  */
-export function evaluateEngineCompatibility(opts) { /* ... */ }
+export function evaluateEngineCompatibility(opts) {
+  /* ... */
+}
 
 export function assertEngineCompatible(opts) {
   const result = evaluateEngineCompatibility(opts);
@@ -352,10 +361,12 @@ EOF
 ### Task 6: Preflight + PRs
 
 **App**
+
 - [ ] `npm run lint` (fmt if needed), `npm run build`, targeted tests
 - [ ] Push branch, `gh pr create` against `master`/`main`
 
 **CLI**
+
 - [ ] `npm run lint` (fmt if needed), `npm test`
 - [ ] Push branch, `gh pr create`
 
@@ -365,14 +376,14 @@ PR bodies should summarize: required `bermooda.engine`, root version, CLI hard-f
 
 ## Spec coverage checklist
 
-| Spec requirement | Task |
-| ---------------- | ---- |
-| Root `version: 1.0.0` | 1 |
-| `bermooda.engine` required | 2, 4 |
-| semver ranges | 1, 4 |
-| CLI hard-fail before copy | 4 |
-| Runtime soft-skip | 2 |
-| Bundled packages get engine | 2 |
-| Docs | 3, 5 |
+| Spec requirement                   | Task                    |
+| ---------------------------------- | ----------------------- |
+| Root `version: 1.0.0`              | 1                       |
+| `bermooda.engine` required         | 2, 4                    |
+| semver ranges                      | 1, 4                    |
+| CLI hard-fail before copy          | 4                       |
+| Runtime soft-skip                  | 2                       |
+| Bundled packages get engine        | 2                       |
+| Docs                               | 3, 5                    |
 | Registry minBermoodaVersion unused | (no task — intentional) |
-| No --force | (no task — intentional) |
+| No --force                         | (no task — intentional) |

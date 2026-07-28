@@ -10,16 +10,16 @@ Plugins and themes declare which bermooda system versions they support via a req
 
 ## Decisions
 
-| Decision | Choice |
-| -------- | ------ |
-| Field | `bermooda.engine` (string semver range, e.g. `">=1.0.0"`) |
-| Required? | Yes — missing or invalid engine is incompatible |
-| Range library | `semver` (full npm ranges) |
-| Shop version source | Root app `package.json` `"version"` (add `"1.0.0"`) |
-| CLI on mismatch | Hard fail before copying files |
-| Runtime on mismatch | Soft skip — log and do not register; continue |
-| Registry `minBermoodaVersion` | Unused; package.json is sole source of truth |
-| Force override | Not in v1 |
+| Decision                      | Choice                                                    |
+| ----------------------------- | --------------------------------------------------------- |
+| Field                         | `bermooda.engine` (string semver range, e.g. `">=1.0.0"`) |
+| Required?                     | Yes — missing or invalid engine is incompatible           |
+| Range library                 | `semver` (full npm ranges)                                |
+| Shop version source           | Root app `package.json` `"version"` (add `"1.0.0"`)       |
+| CLI on mismatch               | Hard fail before copying files                            |
+| Runtime on mismatch           | Soft skip — log and do not register; continue             |
+| Registry `minBermoodaVersion` | Unused; package.json is sole source of truth              |
+| Force override                | Not in v1                                                 |
 
 ## Schema
 
@@ -49,14 +49,14 @@ This `version` is the bermooda **engine version** used for compatibility checks 
 }
 ```
 
-| Field | Required | Meaning |
-| ----- | -------- | ------- |
-| `bermooda.engine` | yes | Semver range of compatible bermooda app versions |
+| Field             | Required | Meaning                                          |
+| ----------------- | -------- | ------------------------------------------------ |
+| `bermooda.engine` | yes      | Semver range of compatible bermooda app versions |
 
 Compatibility rule:
 
 ```js
-semver.satisfies(shopVersion, engineRange)
+semver.satisfies(shopVersion, engineRange);
 ```
 
 Bundled first-party plugins and themes all set `"engine": ">=1.0.0"`.
