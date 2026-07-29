@@ -1,8 +1,9 @@
 ## Releases and commit messages
 
-Publishing is automated by [semantic-release](https://semantic-release.org/) on
-every push to `master` (see `.github/workflows/publish.yml` and
-`release.config.js`). **Commit subjects and PR titles must use
+Publishing is automated by
+[release-please](https://github.com/googleapis/release-please) on every push to
+`master` (see `.github/workflows/publish.yml`, `release-please-config.json`, and
+`.release-please-manifest.json`). **Commit subjects and PR titles must use
 [Conventional Commits](https://www.conventionalcommits.org/)** so the correct
 semver bump (or no release) is chosen.
 
@@ -13,9 +14,13 @@ semver bump (or no release) is chosen.
 | `feat!` / `fix!` / `BREAKING CHANGE:`                       | major   |
 | `docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci` | none    |
 
+Flow: releasable commits on `master` open/update a Release Please PR (version
+bump + `CHANGELOG.md`). Merging that PR creates the GitHub release/tag and
+publishes to npm via OIDC trusted publishing in the same workflow.
+
 Do **not** bump `package.json` `"version"`, run `npm version`, or push `v*` tags
-by hand — semantic-release owns releases (`chore(release): x.y.z [skip ci]`).
-Squash-merge PR titles must also be Conventional Commits. See
+by hand — release-please owns releases. Squash-merge PR titles must also be
+Conventional Commits. See
 [`.cursor/rules/conventional-commits.mdc`](.cursor/rules/conventional-commits.mdc).
 
 ## Cursor Cloud specific instructions

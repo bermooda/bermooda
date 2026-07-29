@@ -9,23 +9,36 @@ permissions:
   contents: read
 
 jobs:
-  publish:
+  release-please:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # GitHub releases + version bump commit
-      issues: write # Comment on released issues
-      pull-requests: write # Comment on released PRs
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        # Manifest-driven: release-please-config.json + .release-please-manifest.json
+        # Default GITHUB_TOKEN is enough when publish runs in this same workflow
+        # (release_created output), so a PAT is not required for npm publish.
+
+  publish:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
       id-token: write # npm trusted publishing (OIDC)
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0 # semantic-release needs full history + tags
 
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
           # Do not set registry-url — it writes an .npmrc that conflicts with
-          # semantic-release + npm trusted publishing (OIDC).
+          # npm trusted publishing (OIDC).
           # Do not cache deps for release publishes (npm trusted publishing guidance)
 
       - name: Ensure npm supports trusted publishing
@@ -37,8 +50,6 @@ jobs:
         env:
           DATABASE_URL: file:./sqlite.db
 
-      - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # No NPM_TOKEN — OIDC trusted publishing. Provenance is automatic.
-        run: npx semantic-release
+      - name: Publish to npm
+        # No NPM_TOKEN — OIDC trusted publishing. Provenance via publishConfig.
+        run: npm publish
