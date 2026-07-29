@@ -2,11 +2,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  LEGACY_PLUGIN_ID_MAP,
-  LEGACY_THEME_ID_MAP,
   assertSlugMatchesFolder,
   mergeExtensionPackage,
-  normalizeLegacyIds,
   parseExtensionPackage,
   resolveBundledSlug,
   BUNDLED_PLUGIN_SLUGS,
@@ -87,33 +84,6 @@ describe('mergeExtensionPackage', () => {
     expect(merged.id).toBe('@acme/demo-plugin');
     expect(merged.title).toBe('Demo Plugin');
     expect(merged.hooks['order.created']).toBeTypeOf('function');
-  });
-});
-
-describe('normalizeLegacyIds', () => {
-  it('rewrites known short plugin ids', () => {
-    expect(
-      normalizeLegacyIds(['meilisearch', '@acme/other'], LEGACY_PLUGIN_ID_MAP)
-    ).toEqual(['@bermooda/meilisearch', '@acme/other']);
-  });
-
-  it('rewrites legacy email plugin package ids', () => {
-    expect(
-      normalizeLegacyIds(
-        ['@bermooda/resend', 'sendgrid', '@bermooda/ses'],
-        LEGACY_PLUGIN_ID_MAP
-      )
-    ).toEqual([
-      '@bermooda/plugin-resend',
-      '@bermooda/plugin-sendgrid',
-      '@bermooda/plugin-ses',
-    ]);
-  });
-
-  it('rewrites legacy default theme id', () => {
-    expect(normalizeLegacyIds(['default'], LEGACY_THEME_ID_MAP)).toEqual([
-      '@bermooda/theme-default',
-    ]);
   });
 });
 

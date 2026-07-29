@@ -208,23 +208,6 @@ describe('registerTheme + resolveActiveTheme', () => {
     const result = await resolveActiveTheme();
     expect(result).toBeNull();
   });
-
-  it('normalizes legacy default theme id from the database', async () => {
-    const manifest = validManifest({
-      id: '@bermooda/theme-default',
-      title: 'Default',
-      slug: 'default',
-    });
-    registerTheme(manifest);
-
-    prisma.setting.findUnique.mockResolvedValueOnce({
-      key: 'activeTheme',
-      value: 'default',
-    });
-
-    const result = await resolveActiveTheme();
-    expect(result).toBe(manifest);
-  });
 });
 
 describe('preloadStorefrontTheme', () => {

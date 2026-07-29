@@ -7,10 +7,6 @@ import {
   parseJsonBody,
   requireMethod,
 } from '#/libs/api/admin/index.server';
-import {
-  LEGACY_THEME_ID_MAP,
-  normalizeLegacyIds,
-} from '#/core/extensions/package-meta';
 import { get } from '#/core/settings/index.server';
 import { SETTING_KEYS } from '#/core/settings/keys';
 import {
@@ -65,9 +61,8 @@ async function loadThemesPayload() {
     get(SETTING_KEYS.ACTIVE_THEME),
     resolveActiveTheme(),
   ]);
-  const activeThemeId = activeThemeRaw
-    ? (normalizeLegacyIds([activeThemeRaw], LEGACY_THEME_ID_MAP)[0] ?? null)
-    : null;
+  const activeThemeId =
+    typeof activeThemeRaw === 'string' ? activeThemeRaw : null;
   const themeSettings = await loadThemeSettings(activeTheme);
 
   return {
