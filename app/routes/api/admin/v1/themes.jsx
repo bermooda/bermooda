@@ -61,7 +61,8 @@ async function loadThemesPayload() {
     get(SETTING_KEYS.ACTIVE_THEME),
     resolveActiveTheme(),
   ]);
-  const activeThemeId = activeThemeRaw ?? null;
+  const activeThemeId =
+    typeof activeThemeRaw === 'string' ? activeThemeRaw : null;
   const themeSettings = await loadThemeSettings(activeTheme);
 
   return {

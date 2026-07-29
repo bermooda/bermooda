@@ -48,7 +48,8 @@ export async function loader() {
     get('activeTheme'),
     resolveActiveTheme(),
   ]);
-  const activeThemeId = activeThemeRaw ?? null;
+  const activeThemeId =
+    typeof activeThemeRaw === 'string' ? activeThemeRaw : null;
   const themeSettings = await loadThemeSettings(activeTheme);
 
   return { themes, activeThemeId, activeTheme, themeSettings };

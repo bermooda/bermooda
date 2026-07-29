@@ -372,7 +372,7 @@ Returns a registered plugin manifest by id, or `null`.
 
 ### `getEnabledPluginIds()` / `isPluginEnabled(pluginId)`
 
-Read helpers for the persisted `enabledPlugins` setting array. The setting stores full package ids, such as `@bermooda/meilisearch`; legacy short ids are normalized on read.
+Read helpers for the persisted `enabledPlugins` setting array. The setting stores full package ids, such as `@bermooda/meilisearch`.
 
 ---
 

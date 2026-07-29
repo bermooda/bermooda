@@ -48,9 +48,10 @@ export async function loadMessages(locale) {
       settingsGet('pluginOrder'),
     ]);
 
-    const themeSlug = activeThemeId
-      ? (getRegisteredTheme(activeThemeId)?.slug ?? null)
-      : null;
+    const themeSlug =
+      typeof activeThemeId === 'string'
+        ? (getRegisteredTheme(activeThemeId)?.slug ?? null)
+        : null;
 
     const pluginIds = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
     const pluginSlugs = pluginIds

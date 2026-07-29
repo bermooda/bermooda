@@ -467,14 +467,14 @@ describe('register', () => {
 });
 
 describe('getEnabledPluginIds', () => {
-  it('returns persisted enabled plugin ids as-is', async () => {
+  it('returns the persisted enabledPlugins array', async () => {
     settingsGet.mockResolvedValueOnce(['@bermooda/meilisearch']);
     await expect(getEnabledPluginIds()).resolves.toEqual([
       '@bermooda/meilisearch',
     ]);
   });
 
-  it('returns empty array when settings value is not an array', async () => {
+  it('returns an empty array when the setting is missing', async () => {
     settingsGet.mockResolvedValueOnce(null);
     await expect(getEnabledPluginIds()).resolves.toEqual([]);
   });
