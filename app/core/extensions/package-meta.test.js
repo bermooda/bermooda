@@ -14,12 +14,12 @@ import {
 } from '#/core/extensions/package-meta';
 
 const validPkg = {
-  name: '@bermooda/sample-analytics',
+  name: '@acme/demo-plugin',
   version: '1.0.0',
   description: 'Captures events',
   bermooda: {
-    title: 'Sample Analytics',
-    slug: 'sample-analytics',
+    title: 'Demo Plugin',
+    slug: 'demo-plugin',
     engine: '>=1.0.0',
   },
 };
@@ -27,11 +27,11 @@ const validPkg = {
 describe('parseExtensionPackage', () => {
   it('maps name/version/description/title/slug/engine', () => {
     expect(parseExtensionPackage(validPkg)).toEqual({
-      id: '@bermooda/sample-analytics',
+      id: '@acme/demo-plugin',
       version: '1.0.0',
       description: 'Captures events',
-      title: 'Sample Analytics',
-      slug: 'sample-analytics',
+      title: 'Demo Plugin',
+      slug: 'demo-plugin',
       engine: '>=1.0.0',
     });
   });
@@ -71,7 +71,7 @@ describe('parseExtensionPackage', () => {
     expect(() =>
       parseExtensionPackage({
         ...validPkg,
-        bermooda: { title: 'Sample Analytics', slug: 'sample-analytics' },
+        bermooda: { title: 'Demo Plugin', slug: 'demo-plugin' },
       })
     ).toThrow(/engine/);
   });
@@ -84,8 +84,8 @@ describe('mergeExtensionPackage', () => {
       title: 'Wrong',
       hooks: { 'order.created': () => {} },
     });
-    expect(merged.id).toBe('@bermooda/sample-analytics');
-    expect(merged.title).toBe('Sample Analytics');
+    expect(merged.id).toBe('@acme/demo-plugin');
+    expect(merged.title).toBe('Demo Plugin');
     expect(merged.hooks['order.created']).toBeTypeOf('function');
   });
 });
@@ -93,11 +93,8 @@ describe('mergeExtensionPackage', () => {
 describe('normalizeLegacyIds', () => {
   it('rewrites known short plugin ids', () => {
     expect(
-      normalizeLegacyIds(
-        ['sample-analytics', '@acme/other'],
-        LEGACY_PLUGIN_ID_MAP
-      )
-    ).toEqual(['@bermooda/sample-analytics', '@acme/other']);
+      normalizeLegacyIds(['meilisearch', '@acme/other'], LEGACY_PLUGIN_ID_MAP)
+    ).toEqual(['@bermooda/meilisearch', '@acme/other']);
   });
 
   it('rewrites legacy email plugin package ids', () => {
@@ -123,16 +120,16 @@ describe('normalizeLegacyIds', () => {
 describe('assertSlugMatchesFolder', () => {
   it('throws when folder !== slug', () => {
     expect(() =>
-      assertSlugMatchesFolder('sample-analytics', 'other', 'plugin')
-    ).toThrow(/sample-analytics/);
+      assertSlugMatchesFolder('demo-plugin', 'other', 'plugin')
+    ).toThrow(/demo-plugin/);
   });
 });
 
 describe('resolveBundledSlug', () => {
   it('maps packaged id to slug', () => {
     expect(
-      resolveBundledSlug('@bermooda/sample-analytics', BUNDLED_PLUGIN_SLUGS)
-    ).toBe('sample-analytics');
+      resolveBundledSlug('@bermooda/meilisearch', BUNDLED_PLUGIN_SLUGS)
+    ).toBe('meilisearch');
     expect(
       resolveBundledSlug('@bermooda/theme-default', BUNDLED_THEME_SLUGS)
     ).toBe('default');

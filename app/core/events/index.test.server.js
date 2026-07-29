@@ -217,7 +217,7 @@ describe('event bus', () => {
     it('propagates HookAbortError from deny() but still runs later handlers', async () => {
       const afterHandler = vi.fn();
       on('before.shipment.ship', () => {
-        deny('Order is on fraud hold', { code: 'FRAUD_HOLD' });
+        deny('Order is on fraud hold', { code: 'HOLD_CHECK' });
       });
       on('before.shipment.ship', afterHandler);
 
@@ -229,7 +229,7 @@ describe('event bus', () => {
 
     it('prefers the first-registered HookAbortError when multiple handlers fail', async () => {
       on('before.shipment.create', () => {
-        deny('First veto', { code: 'FRAUD_HOLD' });
+        deny('First veto', { code: 'HOLD_CHECK' });
       });
       on('before.shipment.create', () => {
         deny('Second veto', { code: 'COMPLIANCE_HOLD' });
@@ -239,7 +239,7 @@ describe('event bus', () => {
         emitBefore('shipment.create', { orderId: 'order_1' })
       ).rejects.toMatchObject({
         reason: 'First veto',
-        code: 'FRAUD_HOLD',
+        code: 'HOLD_CHECK',
       });
     });
 
@@ -248,14 +248,14 @@ describe('event bus', () => {
         throw new Error('filter crash');
       });
       on('before.shipment.create', () => {
-        deny('Blocked', { code: 'FRAUD_HOLD' });
+        deny('Blocked', { code: 'HOLD_CHECK' });
       });
 
       await expect(
         emitBefore('shipment.create', { orderId: 'order_1' })
       ).rejects.toMatchObject({
         reason: 'Blocked',
-        code: 'FRAUD_HOLD',
+        code: 'HOLD_CHECK',
       });
     });
 
@@ -263,7 +263,7 @@ describe('event bus', () => {
       const { default: logger } = await import('#/utils/logger.server');
 
       on('before.shipment.create', () => {
-        deny('Blocked', { code: 'FRAUD_HOLD', pluginId: 'fraud-guard' });
+        deny('Blocked', { code: 'HOLD_CHECK', pluginId: 'hold-check' });
       });
 
       await expect(
@@ -273,8 +273,8 @@ describe('event bus', () => {
       expect(logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({
           event: 'before.shipment.create',
-          code: 'FRAUD_HOLD',
-          pluginId: 'fraud-guard',
+          code: 'HOLD_CHECK',
+          pluginId: 'hold-check',
           reason: 'Blocked',
         }),
         'action blocked by before-hook'

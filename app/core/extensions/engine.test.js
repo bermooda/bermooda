@@ -47,7 +47,7 @@ describe('checkExtensionEngine', () => {
         shopVersion: '1.0.0',
         engine: '>=1.0.0',
         kind: 'plugin',
-        id: 'fraud-guard',
+        id: 'hold-check',
       })
     ).toEqual({ ok: true, engine: '>=1.0.0' });
   });
@@ -57,10 +57,10 @@ describe('checkExtensionEngine', () => {
       shopVersion: '1.0.0',
       engine: '>=2.0.0',
       kind: 'plugin',
-      id: 'fraud-guard',
+      id: 'hold-check',
     });
     expect(result.ok).toBe(false);
-    expect(result.reason).toMatch(/fraud-guard/);
+    expect(result.reason).toMatch(/hold-check/);
     expect(result.reason).toMatch(/>=2\.0\.0/);
     expect(result.reason).toMatch(/1\.0\.0/);
   });

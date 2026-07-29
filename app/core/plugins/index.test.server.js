@@ -468,9 +468,9 @@ describe('register', () => {
 
 describe('getEnabledPluginIds', () => {
   it('rewrites legacy short ids', async () => {
-    settingsGet.mockResolvedValueOnce(['sample-analytics']);
+    settingsGet.mockResolvedValueOnce(['meilisearch']);
     await expect(getEnabledPluginIds()).resolves.toEqual([
-      '@bermooda/sample-analytics',
+      '@bermooda/meilisearch',
     ]);
   });
 });
@@ -498,11 +498,8 @@ describe('sortPluginsByOrder', () => {
 describe('buildFullPluginOrder', () => {
   it('appends untracked plugin ids after stored order', () => {
     expect(
-      buildFullPluginOrder(
-        ['sample-analytics'],
-        ['meilisearch', 'sample-analytics']
-      )
-    ).toEqual(['sample-analytics', 'meilisearch']);
+      buildFullPluginOrder(['demo-plugin'], ['meilisearch', 'demo-plugin'])
+    ).toEqual(['demo-plugin', 'meilisearch']);
   });
 });
 
@@ -511,40 +508,16 @@ describe('buildFullPluginOrder', () => {
 // ---------------------------------------------------------------------------
 
 describe('resolvePluginAdminRoute', () => {
-  it('resolves the sample analytics admin root route', () => {
-    const descriptor = resolvePluginAdminRoute('sample-analytics', '');
-
-    expect(descriptor).toMatchObject({ path: '' });
-    expect(typeof descriptor?.loader).toBe('function');
-    expect(typeof descriptor?.Component).toBe('function');
-  });
-
-  it('normalizes the admin root path before matching', () => {
-    const rootDescriptor = resolvePluginAdminRoute('sample-analytics', '');
-
-    expect(resolvePluginAdminRoute('sample-analytics', '/?tab=events')).toBe(
-      rootDescriptor
-    );
-  });
-
-  it('returns null when no admin route matches', () => {
-    expect(resolvePluginAdminRoute('sample-analytics', 'missing')).toBeNull();
+  it('returns null when no bundled plugin ships admin routes', () => {
+    expect(resolvePluginAdminRoute('demo-plugin', '')).toBeNull();
+    expect(resolvePluginAdminRoute('demo-plugin', 'missing')).toBeNull();
   });
 });
 
 describe('resolvePluginStorefrontRoute', () => {
-  it('resolves the sample analytics storefront root route', () => {
-    const descriptor = resolvePluginStorefrontRoute('sample-analytics', '');
-
-    expect(descriptor).toMatchObject({ path: '' });
-    expect(typeof descriptor?.loader).toBe('function');
-    expect(typeof descriptor?.Component).toBe('function');
-  });
-
   it('returns null when no storefront route matches', () => {
-    expect(
-      resolvePluginStorefrontRoute('sample-analytics', 'missing')
-    ).toBeNull();
+    expect(resolvePluginStorefrontRoute('demo-plugin', '')).toBeNull();
+    expect(resolvePluginStorefrontRoute('demo-plugin', 'missing')).toBeNull();
     expect(resolvePluginStorefrontRoute('missing-plugin', '')).toBeNull();
   });
 });
@@ -591,7 +564,7 @@ describe('enable', () => {
       title: 'Plugin Before',
       hooks: {
         'before.shipment.create': () => {
-          deny('Blocked', { code: 'FRAUD_HOLD' });
+          deny('Blocked', { code: 'HOLD_CHECK' });
         },
       },
     });
@@ -602,7 +575,7 @@ describe('enable', () => {
     await expect(
       emitBefore('shipment.create', { orderId: 'order_1' })
     ).rejects.toMatchObject({
-      code: 'FRAUD_HOLD',
+      code: 'HOLD_CHECK',
       pluginId: 'plugin-before',
       reason: 'Blocked',
     });
@@ -619,7 +592,7 @@ describe('enable', () => {
       title: 'Plugin Before 2',
       hooks: {
         'before.shipment.ship': () => {
-          deny('Blocked', { code: 'FRAUD_HOLD', pluginId: 'custom-id' });
+          deny('Blocked', { code: 'HOLD_CHECK', pluginId: 'custom-id' });
         },
       },
     });

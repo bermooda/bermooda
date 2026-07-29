@@ -6,8 +6,6 @@ import { assertEngineRange } from '#/core/extensions/engine';
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export const LEGACY_PLUGIN_ID_MAP = {
-  'sample-analytics': '@bermooda/sample-analytics',
-  'fraud-guard': '@bermooda/fraud-guard',
   'meilisearch': '@bermooda/meilisearch',
   'resend': '@bermooda/plugin-resend',
   'sendgrid': '@bermooda/plugin-sendgrid',
@@ -22,8 +20,6 @@ export const LEGACY_THEME_ID_MAP = {
 };
 
 export const BUNDLED_PLUGIN_SLUGS = {
-  '@bermooda/sample-analytics': 'sample-analytics',
-  '@bermooda/fraud-guard': 'fraud-guard',
   '@bermooda/meilisearch': 'meilisearch',
   '@bermooda/plugin-resend': 'resend',
   '@bermooda/plugin-sendgrid': 'sendgrid',

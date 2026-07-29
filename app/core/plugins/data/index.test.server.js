@@ -28,30 +28,30 @@ describe('plugin data helpers', () => {
       mockPluginData.findUnique.mockResolvedValue(null);
 
       await expect(
-        readPluginData('sample-analytics', 'recentEvents', [])
+        readPluginData('demo-plugin', 'recentEvents', [])
       ).resolves.toEqual([]);
     });
 
     it('parses stored JSON values', async () => {
       mockPluginData.findUnique.mockResolvedValue({
-        pluginId: 'sample-analytics',
+        pluginId: 'demo-plugin',
         key: 'recentEvents',
         value: JSON.stringify([{ orderId: 'order_1' }]),
       });
 
       await expect(
-        readPluginData('sample-analytics', 'recentEvents', [])
+        readPluginData('demo-plugin', 'recentEvents', [])
       ).resolves.toEqual([{ orderId: 'order_1' }]);
     });
 
     it('returns the fallback when stored JSON is invalid', async () => {
       mockPluginData.findUnique.mockResolvedValue({
-        pluginId: 'fraud-guard',
+        pluginId: 'hold-check',
         key: 'holds',
         value: 'not-json',
       });
 
-      await expect(readPluginData('fraud-guard', 'holds', [])).resolves.toEqual(
+      await expect(readPluginData('hold-check', 'holds', [])).resolves.toEqual(
         []
       );
     });
@@ -61,16 +61,16 @@ describe('plugin data helpers', () => {
     it('upserts serialized JSON values', async () => {
       mockPluginData.upsert.mockResolvedValue({});
 
-      await writePluginData('sample-analytics', 'recentEvents', [
+      await writePluginData('demo-plugin', 'recentEvents', [
         { orderId: 'order_1' },
       ]);
 
       expect(mockPluginData.upsert).toHaveBeenCalledWith({
         where: {
-          pluginId_key: { pluginId: 'sample-analytics', key: 'recentEvents' },
+          pluginId_key: { pluginId: 'demo-plugin', key: 'recentEvents' },
         },
         create: {
-          pluginId: 'sample-analytics',
+          pluginId: 'demo-plugin',
           key: 'recentEvents',
           value: JSON.stringify([{ orderId: 'order_1' }]),
         },

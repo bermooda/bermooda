@@ -47,9 +47,9 @@ import StorefrontPluginDispatcher, {
 } from '#/routes/storefront/apps/$pluginId';
 
 const sampleManifest = {
-  id: '@bermooda/sample-analytics',
-  title: 'Sample Analytics',
-  slug: 'sample-analytics',
+  id: '@acme/demo-plugin',
+  title: 'Demo Plugin',
+  slug: 'demo-plugin',
 };
 
 describe('storefront plugin dispatcher', () => {
@@ -65,15 +65,15 @@ describe('storefront plugin dispatcher', () => {
       meta({
         loaderData: {
           status: 'ok',
-          manifest: { title: 'Sample Analytics' },
+          manifest: { title: 'Demo Plugin' },
         },
-        params: { pluginId: 'sample-analytics' },
+        params: { pluginId: 'demo-plugin' },
       })
     ).toEqual([
-      { title: 'Sample Analytics — Storefront' },
+      { title: 'Demo Plugin — Storefront' },
       {
         name: 'description',
-        content: 'Storefront page for plugin Sample Analytics',
+        content: 'Storefront page for plugin Demo Plugin',
       },
     ]);
   });
@@ -87,27 +87,23 @@ describe('storefront plugin dispatcher', () => {
     }));
 
     const result = await loader({
-      request: new Request('http://localhost/apps/sample-analytics/wrong-path'),
+      request: new Request('http://localhost/apps/demo-plugin/wrong-path'),
       params: {
-        'pluginId': 'sample-analytics',
+        'pluginId': 'demo-plugin',
         '*': 'reports/daily',
       },
     });
 
     expect(mockPreloadStorefrontTheme).toHaveBeenCalledOnce();
-    expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith(
-      'sample-analytics'
-    );
-    expect(mockIsPluginEnabled).toHaveBeenCalledWith(
-      '@bermooda/sample-analytics'
-    );
+    expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith('demo-plugin');
+    expect(mockIsPluginEnabled).toHaveBeenCalledWith('@acme/demo-plugin');
     expect(mockServerResolve).toHaveBeenCalledWith(
-      'sample-analytics',
+      'demo-plugin',
       'reports/daily'
     );
     expect(result).toMatchObject({
       status: 'ok',
-      pluginId: 'sample-analytics',
+      pluginId: 'demo-plugin',
       manifest: sampleManifest,
       splatPath: 'reports/daily',
       pluginLoaderData,
@@ -119,13 +115,13 @@ describe('storefront plugin dispatcher', () => {
     mockIsPluginEnabled.mockResolvedValue(false);
 
     const result = await loader({
-      request: new Request('http://localhost/apps/sample-analytics'),
-      params: { 'pluginId': 'sample-analytics', '*': '' },
+      request: new Request('http://localhost/apps/demo-plugin'),
+      params: { 'pluginId': 'demo-plugin', '*': '' },
     });
 
     expect(result).toMatchObject({
       status: 'disabled',
-      pluginId: 'sample-analytics',
+      pluginId: 'demo-plugin',
       themeId: 'default',
     });
   });
@@ -137,8 +133,8 @@ describe('storefront plugin dispatcher', () => {
 
     mockUseLoaderData.mockReturnValue({
       status: 'ok',
-      pluginId: 'sample-analytics',
-      manifest: { title: 'Sample Analytics' },
+      pluginId: 'demo-plugin',
+      manifest: { title: 'Demo Plugin' },
       splatPath: '',
       pluginLoaderData: { eventCount: 7 },
       themeId: 'default',

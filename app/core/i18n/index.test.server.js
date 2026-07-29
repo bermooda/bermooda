@@ -210,7 +210,7 @@ describe('loadMessages', () => {
   it('resolves package ids to bundled theme/plugin slug paths', async () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@bermooda/theme-default';
-      if (key === 'pluginOrder') return ['@bermooda/sample-analytics'];
+      if (key === 'pluginOrder') return ['@bermooda/meilisearch'];
       return null;
     });
 
@@ -224,9 +224,9 @@ describe('loadMessages', () => {
 
     const paths = readFileSync.mock.calls.map(([filePath]) => filePath);
     expect(paths.some((p) => p.includes('/themes/default/i18n/'))).toBe(true);
-    expect(
-      paths.some((p) => p.includes('/plugins/sample-analytics/i18n/'))
-    ).toBe(true);
+    expect(paths.some((p) => p.includes('/plugins/meilisearch/i18n/'))).toBe(
+      true
+    );
   });
 });
 
