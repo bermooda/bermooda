@@ -1,10 +1,11 @@
 {
   "name": "@bermooda/theme-default",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "The default bermooda storefront theme.",
   "private": true,
   "bermooda": {
     "title": "Default",
-    "slug": "default"
+    "slug": "default",
+    "engine": ">=0.1.0"
   }
 }

@@ -16,6 +16,7 @@ import {
 } from '#/core/address-validation/index.server';
 import { emit, isHookAbort, off, on } from '#/core/events/index.server';
 import { isBeforeHookEvent } from '#/core/events/names';
+import { checkExtensionEngine, getAppVersion } from '#/core/extensions/engine';
 import {
   LEGACY_PLUGIN_ID_MAP,
   SLUG_PATTERN,
@@ -751,6 +752,7 @@ function pluginFolderFromPath(modulePath) {
  */
 export function discoverPlugins() {
   const seenSlugs = new Set();
+  const shopVersion = getAppVersion();
 
   for (const [modPath, mod] of Object.entries(pluginModules)) {
     const folder = pluginFolderFromPath(modPath);
@@ -761,6 +763,21 @@ export function discoverPlugins() {
       throw new Error(`Missing package.json for plugin folder "${folder}"`);
     }
     const pkg = pkgEntry[1];
+
+    const engineCheck = checkExtensionEngine({
+      shopVersion,
+      engine: pkg?.bermooda?.engine,
+      kind: 'plugin',
+      id: pkg?.bermooda?.slug ?? folder,
+    });
+    if (!engineCheck.ok) {
+      logger.error(
+        { folder, reason: engineCheck.reason },
+        'Skipping incompatible plugin'
+      );
+      continue;
+    }
+
     const runtime = mod.pluginManifest ?? mod.default ?? {};
     const manifest = /** @type {PluginManifest} */ (
       mergeExtensionPackage(pkg, runtime)

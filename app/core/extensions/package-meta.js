@@ -1,5 +1,7 @@
 // app/core/extensions/package-meta.js
-/** @typedef {{ id: string, title: string, version: string, description?: string, slug: string, settings?: unknown }} ExtensionPackageMeta */
+import { assertEngineRange } from '#/core/extensions/engine';
+
+/** @typedef {{ id: string, title: string, version: string, description?: string, slug: string, engine: string, settings?: unknown }} ExtensionPackageMeta */
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -67,7 +69,7 @@ export function parseExtensionPackage(pkg) {
   }
 
   const bermooda =
-    /** @type {{ title?: unknown, slug?: unknown, settings?: unknown }} */ (
+    /** @type {{ title?: unknown, slug?: unknown, engine?: unknown, settings?: unknown }} */ (
       /** @type {Record<string, unknown>} */ (pkg).bermooda
     );
   if (!bermooda || typeof bermooda !== 'object') {
@@ -93,8 +95,10 @@ export function parseExtensionPackage(pkg) {
     );
   }
 
+  const engine = assertEngineRange(bermooda.engine);
+
   /** @type {ExtensionPackageMeta} */
-  const meta = { id, version, title, slug };
+  const meta = { id, version, title, slug, engine };
 
   const description = /** @type {Record<string, unknown>} */ (pkg).description;
   if (typeof description === 'string' && description.trim()) {

@@ -33,6 +33,7 @@ Every theme has a `package.json` for identity and display metadata:
   "bermooda": {
     "title": "Default",
     "slug": "default",
+    "engine": ">=1.0.0",
     "settings": [
       { "key": "accentColor", "label": "Accent Color", "type": "text" }
     ]
@@ -49,6 +50,7 @@ Every theme has a `package.json` for identity and display metadata:
 | `description` | `description`       | no       | Short description shown in admin.                                            |
 | `title`       | `bermooda.title`    | yes      | Human-readable display title shown in admin.                                 |
 | `slug`        | `bermooda.slug`     | yes      | Lowercase hyphenated folder and i18n key.                                    |
+| `engine`      | `bermooda.engine`   | yes      | Semver range of compatible bermooda app versions (e.g. `>=1.0.0`).           |
 | `settings`    | `bermooda.settings` | no       | Package-driven admin settings schema.                                        |
 | `components`  | `index.js` runtime  | yes      | Map of component names to React components.                                  |
 
@@ -58,6 +60,7 @@ Rules:
 - `bermooda.slug` must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
 - Bundled folders use `app/themes/<slug>/`; the folder name must equal `bermooda.slug`.
 - `activeTheme` stores the full package id.
+- `bermooda.engine` is checked against the shop root `package.json` `version`. The bermooda CLI rejects install/update when incompatible; at runtime, discovery logs and soft-skips incompatible themes instead of failing startup.
 - Filesystem and i18n resolution use slug, such as `app/themes/default/i18n/en.json`.
 
 ### Runtime entry
@@ -336,7 +339,8 @@ Open `app/themes/aurora/package.json`. Change `name`, `description`, `bermooda.t
   "private": true,
   "bermooda": {
     "title": "Aurora",
-    "slug": "aurora"
+    "slug": "aurora",
+    "engine": ">=1.0.0"
   }
 }
 ```
