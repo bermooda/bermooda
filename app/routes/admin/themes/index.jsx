@@ -5,10 +5,6 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef } from 'react';
 import { Form, useActionData, useLoaderData } from 'react-router';
 
-import {
-  LEGACY_THEME_ID_MAP,
-  normalizeLegacyIds,
-} from '#/core/extensions/package-meta';
 import { get } from '#/core/settings/index.server';
 import {
   getRegisteredTheme,
@@ -52,9 +48,8 @@ export async function loader() {
     get('activeTheme'),
     resolveActiveTheme(),
   ]);
-  const activeThemeId = activeThemeRaw
-    ? normalizeLegacyIds([activeThemeRaw], LEGACY_THEME_ID_MAP)[0]
-    : null;
+  const activeThemeId =
+    typeof activeThemeRaw === 'string' ? activeThemeRaw : null;
   const themeSettings = await loadThemeSettings(activeTheme);
 
   return { themes, activeThemeId, activeTheme, themeSettings };

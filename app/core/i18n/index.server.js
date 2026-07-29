@@ -11,9 +11,6 @@ import prisma from '#/libs/prisma.server';
 import {
   BUNDLED_PLUGIN_SLUGS,
   BUNDLED_THEME_SLUGS,
-  LEGACY_PLUGIN_ID_MAP,
-  LEGACY_THEME_ID_MAP,
-  normalizeLegacyIds,
   resolveBundledSlug,
 } from '#/core/extensions/package-meta';
 import {
@@ -54,15 +51,11 @@ export async function loadMessages(locale) {
       settingsGet('pluginOrder'),
     ]);
 
-    const activeThemeId = activeThemeRaw
-      ? normalizeLegacyIds([activeThemeRaw], LEGACY_THEME_ID_MAP)[0]
-      : null;
+    const activeThemeId =
+      typeof activeThemeRaw === 'string' ? activeThemeRaw : null;
     const themeSlug = resolveBundledSlug(activeThemeId, BUNDLED_THEME_SLUGS);
 
-    const pluginIds = normalizeLegacyIds(
-      Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [],
-      LEGACY_PLUGIN_ID_MAP
-    );
+    const pluginIds = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
     const pluginSlugs = pluginIds
       .map((id) => resolveBundledSlug(id, BUNDLED_PLUGIN_SLUGS))
       .filter(Boolean);

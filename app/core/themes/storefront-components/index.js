@@ -24,11 +24,8 @@ export function getStorefrontComponent(
   name,
   themeId = defaultThemeManifest.id
 ) {
-  const resolvedId = themeId === 'default' ? defaultThemeManifest.id : themeId;
   const manifest =
-    THEMES[resolvedId] ??
-    THEMES[defaultThemeManifest.id] ??
-    defaultThemeManifest;
+    THEMES[themeId] ?? THEMES[defaultThemeManifest.id] ?? defaultThemeManifest;
   return (
     manifest.components[name] ?? defaultThemeManifest.components[name] ?? null
   );
