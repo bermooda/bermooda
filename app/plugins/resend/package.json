@@ -1,12 +1,12 @@
 {
   "name": "@bermooda/plugin-resend",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Send transactional email through Resend. Only one email provider plugin can be active at a time.",
   "private": true,
   "bermooda": {
     "title": "Resend",
     "slug": "resend",
-    "engine": ">=1.0.0",
+    "engine": ">=0.1.0",
     "settings": [
       {
         "key": "apiKey",
