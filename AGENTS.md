@@ -20,7 +20,7 @@ The install script is idempotent and safe to run repeatedly. To reset the local 
 npm run extensions:install
 ```
 
-This copies `@bermooda/theme-default` (from `../theme-default`), `@bermooda/meilisearch` (from `../meilisearch`), and `@bermooda/plugin-resend` (from `../plugin-resend`) into `app/themes/` and `app/plugins/`, then writes `activeTheme` / `enabledPlugins` settings if `DATABASE_URL` is available. Re-run after pulling new extension code from sibling repos.
+This copies `@bermooda/theme-default` (from `../theme-default`), `@bermooda/plugin-meilisearch` (from `../plugin-meilisearch`), and `@bermooda/plugin-resend` (from `../plugin-resend`) into `app/themes/` and `app/plugins/`, then writes `activeTheme` / `enabledPlugins` settings if `DATABASE_URL` is available. Re-run after pulling new extension code from sibling repos.
 
 **Architecture layers:**
 

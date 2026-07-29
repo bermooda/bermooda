@@ -19,7 +19,7 @@ bermooda install        # interactive — prompts for email provider
 bermooda install -y     # non-interactive — uses Resend as email provider
 ```
 
-The CLI installs `@bermooda/meilisearch` and the chosen email provider here and enables them.
+The CLI installs `@bermooda/plugin-meilisearch` and the chosen email provider here and enables them.
 
 ## Package contract
 

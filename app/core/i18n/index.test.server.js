@@ -234,14 +234,14 @@ describe('loadMessages', () => {
   it('resolves package ids to registered theme/plugin slug paths', async () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@bermooda/theme-default';
-      if (key === 'pluginOrder') return ['@bermooda/meilisearch'];
+      if (key === 'pluginOrder') return ['@bermooda/plugin-meilisearch'];
       return null;
     });
     getRegisteredTheme.mockImplementation((id) =>
       id === '@bermooda/theme-default' ? { slug: 'default' } : null
     );
     getRegisteredPlugin.mockImplementation((id) =>
-      id === '@bermooda/meilisearch' ? { slug: 'meilisearch' } : null
+      id === '@bermooda/plugin-meilisearch' ? { slug: 'meilisearch' } : null
     );
 
     const enoent = new Error('ENOENT: no such file');
@@ -262,7 +262,7 @@ describe('loadMessages', () => {
   it('skips theme/plugin i18n when ids are not registered', async () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@bermooda/theme-default';
-      if (key === 'pluginOrder') return ['@bermooda/meilisearch'];
+      if (key === 'pluginOrder') return ['@bermooda/plugin-meilisearch'];
       return null;
     });
 

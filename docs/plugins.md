@@ -25,7 +25,7 @@ This document describes the bermooda plugin architecture and serves as the refer
 
 Plugins extend the bermooda platform without modifying core code. Each plugin is a self-contained directory under `app/plugins/<slug>/` where the folder name matches `package.json` `bermooda.slug`. Identity lives in `package.json`; runtime behavior lives in `index.server.js`.
 
-The registered plugin `id` is always the full package name from `package.json` `name` (for example `@bermooda/meilisearch`). URLs use `bermooda.slug` (for example `/admin/plugins/meilisearch/*` and `/apps/meilisearch/*`). The slug must be lowercase hyphenated.
+The registered plugin `id` is always the full package name from `package.json` `name` (for example `@bermooda/plugin-meilisearch`). URLs use `bermooda.slug` (for example `/admin/plugins/meilisearch/*` and `/apps/meilisearch/*`). The slug must be lowercase hyphenated.
 
 The plugin lifecycle is:
 
@@ -74,7 +74,7 @@ Every plugin has a `package.json` for identity and display metadata:
 
 Rules:
 
-- `id` is the full `package.json` `name`, such as `@bermooda/meilisearch`.
+- `id` is the full `package.json` `name`, such as `@bermooda/plugin-meilisearch`.
 - `bermooda.slug` must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
 - URLs use slug, not id: `/admin/plugins/<slug>/*` and `/apps/<slug>/*`.
 - Bundled folders use `app/plugins/<slug>/`; the folder name must equal `bermooda.slug`.
@@ -372,7 +372,7 @@ Returns a registered plugin manifest by id, or `null`.
 
 ### `getEnabledPluginIds()` / `isPluginEnabled(pluginId)`
 
-Read helpers for the persisted `enabledPlugins` setting array. The setting stores full package ids, such as `@bermooda/meilisearch`.
+Read helpers for the persisted `enabledPlugins` setting array. The setting stores full package ids, such as `@bermooda/plugin-meilisearch`.
 
 ---
 
