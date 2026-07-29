@@ -8,8 +8,8 @@ import { PrismaClient } from './generated/client.ts';
 
 // Inline seed defaults so `node prisma/seed.js` works without Vite `#/` aliases.
 // Keep in sync with app/core/settings/defaults.js where practical.
-const DEFAULT_ENABLED_PLUGINS = [];
-const DEFAULT_PLUGIN_ORDER = [];
+const DEFAULT_ENABLED_PLUGINS = ['@bermooda/plugin-resend'];
+const DEFAULT_PLUGIN_ORDER = ['@bermooda/plugin-resend'];
 const SETTING_DEFAULTS = {
   defaultCurrency: 'USD',
   currencies: ['USD', 'EUR', 'AUD'],
@@ -342,18 +342,8 @@ async function main() {
   await upsertSetting('defaultLocale', SETTING_DEFAULTS.defaultLocale);
   await upsertSetting('locales', SETTING_DEFAULTS.locales);
   await upsertSetting('activeTheme', SETTING_DEFAULTS.activeTheme);
-  await upsertSetting(
-    'pluginOrder',
-    DEFAULT_PLUGIN_ORDER.length
-      ? DEFAULT_PLUGIN_ORDER
-      : ['@bermooda/sample-analytics']
-  );
-  await upsertSetting(
-    'enabledPlugins',
-    DEFAULT_ENABLED_PLUGINS.length
-      ? DEFAULT_ENABLED_PLUGINS
-      : ['@bermooda/sample-analytics', '@bermooda/plugin-resend']
-  );
+  await upsertSetting('pluginOrder', DEFAULT_PLUGIN_ORDER);
+  await upsertSetting('enabledPlugins', DEFAULT_ENABLED_PLUGINS);
 
   if (shopName) {
     await upsertSetting('shopName', shopName);

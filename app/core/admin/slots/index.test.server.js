@@ -31,14 +31,14 @@ describe('getAdminSlotBlocks', () => {
 
   it('delegates to getPluginBlocksForSlot', async () => {
     getPluginBlocksForSlot.mockResolvedValueOnce([
-      { pluginId: 'sample-analytics', component: () => null },
+      { pluginId: 'demo-plugin', component: () => null },
     ]);
 
     const blocks = await getAdminSlotBlocks('dashboard.widgets');
 
     expect(getPluginBlocksForSlot).toHaveBeenCalledWith('dashboard.widgets');
     expect(blocks).toEqual([
-      { pluginId: 'sample-analytics', component: expect.any(Function) },
+      { pluginId: 'demo-plugin', component: expect.any(Function) },
     ]);
   });
 });
@@ -51,7 +51,7 @@ describe('getAdminSlotBlocksMap', () => {
   it('returns a slot-keyed map for every requested slot', async () => {
     getPluginBlocksForSlot
       .mockResolvedValueOnce([
-        { pluginId: 'sample-analytics', component: () => null },
+        { pluginId: 'demo-plugin', component: () => null },
       ])
       .mockResolvedValueOnce([]);
 
@@ -68,7 +68,7 @@ describe('getAdminSlotBlocksMap', () => {
     expect(getPluginBlocksForSlot).toHaveBeenNthCalledWith(2, 'order.detail');
     expect(slotBlocks).toEqual({
       'dashboard.widgets': [
-        { pluginId: 'sample-analytics', component: expect.any(Function) },
+        { pluginId: 'demo-plugin', component: expect.any(Function) },
       ],
       'order.detail': [],
     });

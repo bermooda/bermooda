@@ -32,9 +32,9 @@ import AdminPluginDispatcher, {
 } from '#/routes/admin/plugins/$pluginId';
 
 const sampleManifest = {
-  id: '@bermooda/sample-analytics',
-  title: 'Sample Analytics',
-  slug: 'sample-analytics',
+  id: '@acme/demo-plugin',
+  title: 'Demo Plugin',
+  slug: 'demo-plugin',
 };
 
 describe('admin plugin dispatcher', () => {
@@ -46,13 +46,13 @@ describe('admin plugin dispatcher', () => {
   it('builds meta tags from the plugin id', () => {
     expect(
       meta({
-        params: { pluginId: 'sample-analytics' },
+        params: { pluginId: 'demo-plugin' },
       })
     ).toEqual([
-      { title: 'Plugin: sample-analytics — Admin' },
+      { title: 'Plugin: demo-plugin — Admin' },
       {
         name: 'description',
-        content: 'Admin UI for plugin sample-analytics',
+        content: 'Admin UI for plugin demo-plugin',
       },
     ]);
   });
@@ -73,21 +73,21 @@ describe('admin plugin dispatcher', () => {
 
   it('returns no-admin-routes when the plugin has no admin pages', async () => {
     mockGetRegisteredPluginBySlug.mockReturnValue({
-      id: '@bermooda/fraud-guard',
-      title: 'Fraud Guard',
-      slug: 'fraud-guard',
+      id: '@acme/hold-check',
+      title: 'Hold Check',
+      slug: 'hold-check',
     });
     mockServerResolve.mockReturnValue(null);
 
     const result = await loader({
-      request: new Request('http://localhost/admin/plugins/fraud-guard'),
-      params: { 'pluginId': 'fraud-guard', '*': '' },
+      request: new Request('http://localhost/admin/plugins/hold-check'),
+      params: { 'pluginId': 'hold-check', '*': '' },
     });
 
     expect(result).toMatchObject({
       status: 'no-admin-routes',
-      pluginId: 'fraud-guard',
-      manifest: { id: '@bermooda/fraud-guard', title: 'Fraud Guard' },
+      pluginId: 'hold-check',
+      manifest: { id: '@acme/hold-check', title: 'Hold Check' },
     });
   });
 
@@ -98,14 +98,14 @@ describe('admin plugin dispatcher', () => {
 
     const result = await loader({
       request: new Request(
-        'http://localhost/admin/plugins/sample-analytics/reports'
+        'http://localhost/admin/plugins/demo-plugin/reports'
       ),
-      params: { 'pluginId': 'sample-analytics', '*': 'reports' },
+      params: { 'pluginId': 'demo-plugin', '*': 'reports' },
     });
 
     expect(result).toMatchObject({
       status: 'no-match',
-      pluginId: 'sample-analytics',
+      pluginId: 'demo-plugin',
       splatPath: 'reports',
     });
   });
@@ -119,17 +119,15 @@ describe('admin plugin dispatcher', () => {
     }));
 
     const result = await loader({
-      request: new Request('http://localhost/admin/plugins/sample-analytics'),
-      params: { 'pluginId': 'sample-analytics', '*': '' },
+      request: new Request('http://localhost/admin/plugins/demo-plugin'),
+      params: { 'pluginId': 'demo-plugin', '*': '' },
     });
 
-    expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith(
-      'sample-analytics'
-    );
-    expect(mockServerResolve).toHaveBeenCalledWith('sample-analytics', '');
+    expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith('demo-plugin');
+    expect(mockServerResolve).toHaveBeenCalledWith('demo-plugin', '');
     expect(result).toMatchObject({
       status: 'ok',
-      pluginId: 'sample-analytics',
+      pluginId: 'demo-plugin',
       manifest: sampleManifest,
       splatPath: '',
       pluginLoaderData,
@@ -143,8 +141,8 @@ describe('admin plugin dispatcher', () => {
 
     mockUseLoaderData.mockReturnValue({
       status: 'ok',
-      pluginId: 'sample-analytics',
-      manifest: { title: 'Sample Analytics' },
+      pluginId: 'demo-plugin',
+      manifest: { title: 'Demo Plugin' },
       splatPath: '',
       pluginLoaderData: { events: [{ orderId: 'order_1' }] },
     });

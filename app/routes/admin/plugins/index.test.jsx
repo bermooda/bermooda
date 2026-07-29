@@ -44,12 +44,12 @@ describe('admin plugins action', () => {
     mockSetPluginEnabledState.mockResolvedValue(undefined);
 
     const result = await action({
-      request: buildRequest('enable', '@bermooda/sample-analytics'),
+      request: buildRequest('enable', '@acme/demo-plugin'),
     });
 
     expect(result).toEqual({ success: true, intent: 'enable' });
     expect(mockSetPluginEnabledState).toHaveBeenCalledWith(
-      '@bermooda/sample-analytics',
+      '@acme/demo-plugin',
       true
     );
   });
@@ -58,12 +58,12 @@ describe('admin plugins action', () => {
     mockSetPluginEnabledState.mockResolvedValue(undefined);
 
     const result = await action({
-      request: buildRequest('disable', '@bermooda/sample-analytics'),
+      request: buildRequest('disable', '@acme/demo-plugin'),
     });
 
     expect(result).toEqual({ success: true, intent: 'disable' });
     expect(mockSetPluginEnabledState).toHaveBeenCalledWith(
-      '@bermooda/sample-analytics',
+      '@acme/demo-plugin',
       false
     );
   });
@@ -74,24 +74,22 @@ describe('admin plugins action', () => {
     );
 
     const result = await action({
-      request: buildRequest('enable', '@bermooda/sample-analytics'),
+      request: buildRequest('enable', '@acme/demo-plugin'),
     });
 
     expect(result).toEqual({ error: 'Live wiring failed' });
   });
 
   it('reorders plugins through the core helper', async () => {
-    mockSetPluginOrder.mockResolvedValue(['@bermooda/sample-analytics']);
+    mockSetPluginOrder.mockResolvedValue(['@acme/demo-plugin']);
 
     const result = await action({
       request: buildRequest('reorder', null, {
-        order: JSON.stringify(['@bermooda/sample-analytics']),
+        order: JSON.stringify(['@acme/demo-plugin']),
       }),
     });
 
     expect(result).toEqual({ success: true, intent: 'reorder' });
-    expect(mockSetPluginOrder).toHaveBeenCalledWith([
-      '@bermooda/sample-analytics',
-    ]);
+    expect(mockSetPluginOrder).toHaveBeenCalledWith(['@acme/demo-plugin']);
   });
 });

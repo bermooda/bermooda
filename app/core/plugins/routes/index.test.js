@@ -15,29 +15,22 @@ describe('normalizePluginRoutePath', () => {
 
 describe('resolvePluginRouteDescriptor', () => {
   const routesByPlugin = new Map([
-    [
-      'sample-analytics',
-      [{ path: '' }, { path: 'events', Component: () => null }],
-    ],
+    ['demo-plugin', [{ path: '' }, { path: 'events', Component: () => null }]],
   ]);
 
   it('matches exact paths and falls back to the root route', () => {
     expect(
-      resolvePluginRouteDescriptor(routesByPlugin, 'sample-analytics', 'events')
+      resolvePluginRouteDescriptor(routesByPlugin, 'demo-plugin', 'events')
     ).toEqual({ path: 'events', Component: expect.any(Function) });
 
     expect(
-      resolvePluginRouteDescriptor(routesByPlugin, 'sample-analytics', '')
+      resolvePluginRouteDescriptor(routesByPlugin, 'demo-plugin', '')
     ).toEqual({ path: '' });
   });
 
   it('returns null when no route matches', () => {
     expect(
-      resolvePluginRouteDescriptor(
-        routesByPlugin,
-        'sample-analytics',
-        'missing'
-      )
+      resolvePluginRouteDescriptor(routesByPlugin, 'demo-plugin', 'missing')
     ).toBeNull();
   });
 });
@@ -46,13 +39,13 @@ describe('buildPluginRouteRegistry', () => {
   it('indexes routes by plugin id extracted from module paths', () => {
     const registry = buildPluginRouteRegistry(
       {
-        '/app/plugins/sample-analytics/admin/routes.client.js': {
+        '/app/plugins/demo-plugin/admin/routes.client.js': {
           routes: [{ path: '' }],
         },
       },
       /\/plugins\/([^/]+)\/admin\/routes\.client\.js$/
     );
 
-    expect(registry.get('sample-analytics')).toEqual([{ path: '' }]);
+    expect(registry.get('demo-plugin')).toEqual([{ path: '' }]);
   });
 });

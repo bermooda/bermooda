@@ -15,7 +15,7 @@ describe('SlotBlocks', () => {
 
     render(
       <SlotBlocks
-        blocks={[{ pluginId: 'sample-analytics', component: WidgetBlock }]}
+        blocks={[{ pluginId: 'demo-plugin', component: WidgetBlock }]}
         slotProps={{
           heading: 'Tracked orders',
           totalOrders: 42,

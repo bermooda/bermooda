@@ -180,11 +180,9 @@ Skip `*.test.*` files in area checks unless you add `paths` for `#/*` (tests imp
 
 ## Plugins (`app/plugins/`)
 
-| Area                | Status | Notes |
-| ------------------- | ------ | ----- |
-| `fraud-guard/`      | ⬜     |       |
-| `meilisearch/`      | ⬜     |       |
-| `sample-analytics/` | ⬜     |       |
+| Area           | Status | Notes |
+| -------------- | ------ | ----- |
+| `meilisearch/` | ⬜     |       |
 
 ---
 

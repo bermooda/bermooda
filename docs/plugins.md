@@ -16,7 +16,7 @@ This document describes the bermooda plugin architecture and serves as the refer
 8. [Storefront Routes](#storefront-routes)
 9. [Plugin Blocks for Storefront Slots](#plugin-blocks-for-storefront-slots)
 10. [Plugin Blocks for Admin Slots](#plugin-blocks-for-admin-slots)
-11. [Sample Plugin Walkthrough](#sample-plugin-walkthrough)
+11. [Building a Plugin (example)](#building-a-plugin-example)
 12. [Plugin Folder Layout](#plugin-folder-layout)
 
 ---
@@ -25,7 +25,7 @@ This document describes the bermooda plugin architecture and serves as the refer
 
 Plugins extend the bermooda platform without modifying core code. Each plugin is a self-contained directory under `app/plugins/<slug>/` where the folder name matches `package.json` `bermooda.slug`. Identity lives in `package.json`; runtime behavior lives in `index.server.js`.
 
-The registered plugin `id` is always the full package name from `package.json` `name` (for example `@bermooda/sample-analytics`). URLs use `bermooda.slug` (for example `/admin/plugins/sample-analytics/*` and `/apps/sample-analytics/*`). The slug must be lowercase hyphenated.
+The registered plugin `id` is always the full package name from `package.json` `name` (for example `@bermooda/meilisearch`). URLs use `bermooda.slug` (for example `/admin/plugins/meilisearch/*` and `/apps/meilisearch/*`). The slug must be lowercase hyphenated.
 
 The plugin lifecycle is:
 
@@ -74,7 +74,7 @@ Every plugin has a `package.json` for identity and display metadata:
 
 Rules:
 
-- `id` is the full `package.json` `name`, such as `@bermooda/sample-analytics`.
+- `id` is the full `package.json` `name`, such as `@bermooda/meilisearch`.
 - `bermooda.slug` must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
 - URLs use slug, not id: `/admin/plugins/<slug>/*` and `/apps/<slug>/*`.
 - Bundled folders use `app/plugins/<slug>/`; the folder name must equal `bermooda.slug`.
@@ -372,7 +372,7 @@ Returns a registered plugin manifest by id, or `null`.
 
 ### `getEnabledPluginIds()` / `isPluginEnabled(pluginId)`
 
-Read helpers for the persisted `enabledPlugins` setting array. The setting stores full package ids, such as `@bermooda/sample-analytics`; legacy short ids are normalized on read.
+Read helpers for the persisted `enabledPlugins` setting array. The setting stores full package ids, such as `@bermooda/meilisearch`; legacy short ids are normalized on read.
 
 ---
 
@@ -621,7 +621,7 @@ When a plugin vetoes an action, core surfaces `HookAbortError.reason` to merchan
 
 Reserved error codes (plugins may define their own): `HOOK_BLOCKED` (default), `FRAUD_HOLD`, `INVENTORY_HOLD`, `REFUND_POLICY`, `ADDRESS_INVALID`, `COMPLIANCE_HOLD`.
 
-See [`docs/before-hooks-plan.md`](./before-hooks-plan.md) for design rationale and the `fraud-guard` sample plugin under `app/plugins/fraud-guard/`.
+See [`docs/before-hooks-plan.md`](./before-hooks-plan.md) for design rationale. Plugins can call `deny()` from a `before.*` hook to block the action (for example holding fulfillment until review).
 
 **Note:** Hook handlers do not receive `ctx`. If a handler needs database access or other services, import them directly at the top of your `index.server.js` file.
 
@@ -740,7 +740,7 @@ export const routes = [{ path: '', Component: AnalyticsPage }];
 Example URL:
 
 ```txt
-/apps/sample-analytics/
+/apps/my-plugin/
 ```
 
 ---
@@ -839,173 +839,53 @@ Blocks only render when the plugin is enabled. Render order follows the `pluginO
 
 ---
 
-## Sample Plugin Walkthrough
+## Building a Plugin (example)
 
-The `sample-analytics` plugin is the canonical reference implementation. It captures `order.created` events and surfaces them in admin and storefront pages.
+Bundled first-party plugins live under `app/plugins/<slug>/` (for example `meilisearch`, `resend`, `sendgrid`, `ses`). Third-party plugins follow the same layout.
 
-**What it does:**
+Minimal plugin:
 
-- Listens to `order.created` and appends a structured event record to `PluginData` under the key `recentEvents`, capped at 100 entries.
-- Exposes an admin page at `/admin/plugins/sample-analytics/` that reads and displays those events.
-- Exposes a storefront page at `/apps/sample-analytics/` that shows a public event summary when the plugin is enabled.
-- Contributes a UI block to the `product.afterDescription` storefront slot.
-- Contributes a dashboard widget to the `dashboard.widgets` admin slot.
+```
+app/plugins/my-plugin/
+  package.json
+  index.server.js
+```
 
-### Step 1 — Package identity
-
-`app/plugins/sample-analytics/package.json` declares identity and display metadata. The package `name` becomes the registered plugin id; `bermooda.slug` is used for the folder and URLs:
+`package.json` identity:
 
 ```json
 {
-  "name": "@bermooda/sample-analytics",
-  "version": "1.0.0",
-  "description": "Captures order.created events and surfaces them in admin and storefront pages.",
+  "name": "@acme/my-plugin",
+  "version": "0.1.0",
+  "description": "Example plugin",
   "private": true,
   "bermooda": {
-    "title": "Sample Analytics",
-    "slug": "sample-analytics",
-    "engine": ">=1.0.0"
+    "title": "My Plugin",
+    "slug": "my-plugin",
+    "engine": ">=0.1.0"
   }
 }
 ```
 
-### Step 2 — The runtime entry point
-
-`app/plugins/sample-analytics/index.server.js` defines hook handlers, blocks, providers, and lifecycle callbacks. It does not pass identity fields to `definePlugin()`:
+`index.server.js` runtime:
 
 ```js
-import logger from '#/utils/logger.server';
-
 import { defineHooks, definePlugin } from '#/core/plugins/index.server';
-import DashboardWidgetsBlock from './blocks/dashboard/widgets';
-import ProductAfterDescriptionBlock from './blocks/product/after-description';
-import { appendRecentEvent } from './data/index.server';
-
-// Hook handlers import helpers directly — they do not receive ctx.
-async function handleOrderCreated(payload) {
-  try {
-    await appendRecentEvent(payload);
-  } catch (err) {
-    logger.error({ err }, 'sample-analytics: failed to capture order.created');
-  }
-}
 
 export const pluginManifest = definePlugin({
   hooks: defineHooks({
-    'order.created': handleOrderCreated,
+    'order.created': async (payload) => {
+      // Handle the event. Import Prisma or helpers directly — no ctx.
+    },
   }),
-  blocks: {
-    'product.afterDescription': ProductAfterDescriptionBlock,
-    'dashboard.widgets': DashboardWidgetsBlock,
-  },
 });
 
 export default pluginManifest;
 ```
 
-Key points:
+Optional folders (`admin/`, `storefront/`, `blocks/`, `i18n/`) follow the layout below. Discovery merges `package.json` identity with the `definePlugin()` runtime export; the folder name must equal `bermooda.slug`.
 
-- `definePlugin` validates runtime fields at module load time, such as `providers`.
-- `defineHooks` validates that all values are functions.
-- Discovery merges `package.json` identity with this runtime export before registration.
-- The hook handler imports data helpers directly because handlers do not receive `ctx`. Errors are caught and logged rather than re-thrown to avoid crashing the event bus.
-
-The data helper imports the package id from `package.json` so persistence uses the full id:
-
-```js
-import pkg from '../package.json';
-
-export const PLUGIN_ID = pkg.name;
-```
-
-### Step 3 — The admin routes
-
-`app/plugins/sample-analytics/admin/routes/index.server.js` exports a server route that reads the stored events, while `admin/routes.client.js` exports the matching client component:
-
-```js
-import prisma from '#/libs/prisma.server';
-
-const PLUGIN_ID = '@bermooda/sample-analytics';
-const EVENTS_KEY = 'recentEvents';
-
-export const routes = [
-  {
-    path: '',
-    async loader() {
-      const row = await prisma.pluginData.findUnique({
-        where: { pluginId_key: { pluginId: PLUGIN_ID, key: EVENTS_KEY } },
-      });
-      const events = row ? JSON.parse(row.value) : [];
-      return { events };
-    },
-    Component: RecentEventsPage,
-  },
-];
-```
-
-The `loader` fetches data server-side; `RecentEventsPage` renders it client-side via `loaderData`.
-
-### Step 4 — The storefront routes
-
-`app/plugins/sample-analytics/storefront/routes/index.server.js` exposes a public summary page at `/apps/sample-analytics/`:
-
-```js
-import prisma from '#/libs/prisma.server';
-
-import { AnalyticsPage } from '../analytics-page';
-
-const PLUGIN_ID = '@bermooda/sample-analytics';
-const EVENTS_KEY = 'recentEvents';
-
-export const routes = [
-  {
-    path: '',
-    async loader() {
-      const row = await prisma.pluginData.findUnique({
-        where: { pluginId_key: { pluginId: PLUGIN_ID, key: EVENTS_KEY } },
-      });
-      const events = row ? JSON.parse(row.value) : [];
-
-      return {
-        eventCount: events.length,
-        latestEvent: events[0] ?? null,
-      };
-    },
-    Component: AnalyticsPage,
-  },
-];
-```
-
-The matching `storefront/routes.client.js` file exports the same route path with `AnalyticsPage` as its component.
-
-### Step 5 — The storefront block
-
-`app/plugins/sample-analytics/blocks/product/after-description.jsx` contributes a small indicator block to every product page:
-
-```jsx
-export default function ProductAfterDescriptionBlock({ product }) {
-  if (!product) return null;
-  return (
-    <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-      <span className="font-medium text-slate-700">Analytics</span> — this
-      product is being tracked by the Sample Analytics plugin.
-    </div>
-  );
-}
-```
-
-### Step 6 — i18n strings
-
-`app/plugins/sample-analytics/i18n/en.json` contributes translation keys merged into the platform's i18n catalog:
-
-```json
-{
-  "sampleAnalytics.admin.title": "Sample Analytics",
-  "sampleAnalytics.admin.noEvents": "No events captured yet. Place an order to see data here."
-}
-```
-
-Keys should be prefixed with a camelCase version of the plugin slug to avoid collisions.
+Translation keys should be prefixed with a camelCase version of the plugin slug to avoid collisions.
 
 ---
 

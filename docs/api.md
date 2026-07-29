@@ -293,9 +293,9 @@ List registered plugins, enabled ids, display order, and per-plugin settings.
 Enable/disable, reorder, and/or save settings.
 
 ```json
-{ "pluginId": "@bermooda/sample-analytics", "enabled": true }
-{ "order": ["@bermooda/sample-analytics"] }
-{ "pluginId": "@bermooda/sample-analytics", "settings": { "apiKey": "..." } }
+{ "pluginId": "@bermooda/meilisearch", "enabled": true }
+{ "order": ["@bermooda/meilisearch"] }
+{ "pluginId": "@bermooda/meilisearch", "settings": { "apiKey": "..." } }
 ```
 
 ### Categories
