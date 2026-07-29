@@ -17,8 +17,6 @@ import { registerAuditSubscribers } from '#/core/audit/index.server';
 import { registerBackInStockSubscribers } from '#/core/back-in-stock/index.server';
 import { seedDefaultChannel } from '#/core/channels/index.server';
 import { on } from '#/core/events/index.server';
-import { checkExtensionEngine, getAppVersion } from '#/core/extensions/engine';
-import { mergeExtensionPackage } from '#/core/extensions/package-meta';
 import { registerLoyaltySubscribers } from '#/core/loyalty/index.server';
 import {
   queueAbandonedCartSequence,
@@ -51,7 +49,7 @@ import {
   automaticTaxProvider,
 } from '#/core/tax/index.server';
 import { taxJarProvider } from '#/core/tax/taxjar.server';
-import { registerTheme } from '#/core/themes/index.server';
+import { discoverThemes } from '#/core/themes/index.server';
 import { registerWebhookSubscribers } from '#/core/webhooks/index.server';
 // W2: load webhook delivery worker (registers enqueuer) + subscriber registration
 import '#/core/webhooks/job.server';
@@ -59,9 +57,6 @@ import '#/core/webhooks/job.server';
 import '#/core/exports/job.server';
 // W9: marketing automation worker
 import '#/core/marketing/job.server';
-
-import defaultRuntime from '#/themes/default/index';
-import defaultPkg from '#/themes/default/package.json';
 
 let _bootstrapped = false;
 
@@ -103,21 +98,8 @@ export function registerBuiltins() {
   // Search providers — W1: built-in DB provider (SQLite LIKE; Postgres ilike via W8)
   registerSearch('db', dbSearchProvider);
 
-  // Default storefront theme — runtime resolution via preloadStorefrontTheme()
-  const defaultThemeEngineCheck = checkExtensionEngine({
-    shopVersion: getAppVersion(),
-    engine: defaultPkg?.bermooda?.engine,
-    kind: 'theme',
-    id: defaultPkg?.bermooda?.slug ?? 'default',
-  });
-  if (defaultThemeEngineCheck.ok) {
-    registerTheme(mergeExtensionPackage(defaultPkg, defaultRuntime));
-  } else {
-    logger.error(
-      { reason: defaultThemeEngineCheck.reason },
-      'Skipping incompatible default theme'
-    );
-  }
+  // Discover installed themes from app/themes/
+  discoverThemes();
 
   // Domain-event subscribers
   // W0-4: payment events → order status transitions
@@ -136,10 +118,10 @@ export function registerBuiltins() {
   // W9: loyalty points + referral rewards on order confirmation
   registerLoyaltySubscribers({ on });
 
-  // W8: discover bundled plugins (async enable + RBAC seed deferred)
+  // Discover installed plugins from app/plugins/
   discoverPlugins();
 
-  logger.info('Bootstrap complete: built-in providers + theme registered');
+  logger.info('Bootstrap complete: built-in providers + extensions discovered');
 }
 
 /** Interval between abandoned-cart sequence job runs (15 minutes). */

@@ -14,6 +14,14 @@ The checked-in [`.cursor/environment.json`](.cursor/environment.json) configures
 
 The install script is idempotent and safe to run repeatedly. To reset the local database, delete `prisma/dev.db` and re-run `npm run setup`.
 
+**Themes and plugins are not bundled in the repo.** After `npm run setup`, install the default extensions from the sibling checkouts (or npm):
+
+```
+npm run extensions:install
+```
+
+This copies `@bermooda/theme-default` (from `../theme-default`), `@bermooda/meilisearch` (from `../meilisearch`), and `@bermooda/plugin-resend` (from `../plugin-resend`) into `app/themes/` and `app/plugins/`, then writes `activeTheme` / `enabledPlugins` settings if `DATABASE_URL` is available. Re-run after pulling new extension code from sibling repos.
+
 **Architecture layers:**
 
 - `app/libs/*` = infrastructure (auth, db clients, queue, SDK wrappers, alerting)
@@ -41,16 +49,18 @@ A `.env` file must exist in the repo root (see `.env.example`). Placeholder valu
 
 ### Key commands
 
-| Task          | Command                                   |
-| ------------- | ----------------------------------------- |
-| Install deps  | `npm install`                             |
-| Prisma setup  | `npm run setup` (generate + migrate)      |
-| Dev server    | `npx react-router dev --host`             |
-| Lint          | `npm run lint` (oxlint + oxfmt --check)   |
-| Format        | `npm run fmt`                             |
-| Build         | `npm run build`                           |
-| Tests         | `npm run test`                            |
-| New migration | `npm run prisma:migrate -- --name <name>` |
+| Task                   | Command                                   |
+| ---------------------- | ----------------------------------------- |
+| Install deps           | `npm install`                             |
+| Prisma setup           | `npm run setup` (generate + migrate)      |
+| Install extensions     | `npm run extensions:install`              |
+| Dev server             | `npx react-router dev --host`             |
+| Lint                   | `npm run lint` (oxlint + oxfmt --check)   |
+| Format                 | `npm run fmt`                             |
+| Build                  | `npm run build`                           |
+| Tests                  | `npm run test`                            |
+| New migration          | `npm run prisma:migrate -- --name <name>` |
+| Set extension settings | `npm run cli:set-extensions`              |
 
 ### Non-obvious notes
 
@@ -61,5 +71,6 @@ A `.env` file must exist in the repo root (see `.env.example`). Placeholder valu
 - The `#/*` import alias maps to `./app/` (configured in `vite.config.js`).
 - Inside `app/themes/<slug>/` and `app/plugins/<slug>/`, use relative imports for sibling modules; keep `#/…` for core app modules. Oxlint enforces this via `no-restricted-imports` overrides.
 - **Alerting:** use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting/index.server` for production errors and ops notifications; route handlers use `handleError` from `#/libs/error/index.server`. Default provider is Telegram (`ERROR_ALERT_PROVIDER=telegram`). Do not call `sendTelegramError` / `sendTelegramMessage` in new code. See [.cursor/rules/alerting.mdc](.cursor/rules/alerting.mdc).
-- **Emails:** shop transactional templates in `app/emails/shop/`; auth templates in `app/emails/templates/`. Email transports are plugins (`resend` / `sendgrid` / `ses`) activated under Admin → Plugins — see [.cursor/rules/email-providers.mdc](.cursor/rules/email-providers.mdc).
+- **Emails:** shop transactional templates in `app/emails/shop/`; auth templates in `app/emails/templates/`. Email transports are external plugins (`@bermooda/plugin-resend`, `@bermooda/plugin-sendgrid`, `@bermooda/plugin-aws-ses`) activated under Admin → Plugins — see [.cursor/rules/email-providers.mdc](.cursor/rules/email-providers.mdc).
+- **Extensions:** `app/themes/` and `app/plugins/` are empty in the repo and gitignored. Run `npm run extensions:install` to populate them from sibling checkouts or npm.
 - **Locale:** storefront locale is cookie-driven, not in URL paths.

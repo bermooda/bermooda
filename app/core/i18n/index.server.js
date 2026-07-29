@@ -9,11 +9,6 @@ import { getCachedResult } from '#/utils/cache/index.server';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import prisma from '#/libs/prisma.server';
 import {
-  BUNDLED_PLUGIN_SLUGS,
-  BUNDLED_THEME_SLUGS,
-  resolveBundledSlug,
-} from '#/core/extensions/package-meta';
-import {
   DEFAULT_LOCALE,
   isValidLocaleTag,
   normalizeLocaleList,
@@ -21,7 +16,9 @@ import {
   parseCookieLocale,
   pickEnabledLocale,
 } from '#/core/i18n/locales';
+import { getRegisteredPlugin } from '#/core/plugins/index.server';
 import { get as settingsGet } from '#/core/settings/index.server';
+import { getRegisteredTheme } from '#/core/themes/index.server';
 
 export { translate as t } from '#/core/i18n';
 
@@ -46,18 +43,19 @@ export async function getAvailableLocales() {
  */
 export async function loadMessages(locale) {
   return getCachedResult(`i18n:${locale}`, async () => {
-    const [activeThemeRaw, pluginOrderRaw] = await Promise.all([
+    const [activeThemeId, pluginOrderRaw] = await Promise.all([
       settingsGet('activeTheme'),
       settingsGet('pluginOrder'),
     ]);
 
-    const activeThemeId =
-      typeof activeThemeRaw === 'string' ? activeThemeRaw : null;
-    const themeSlug = resolveBundledSlug(activeThemeId, BUNDLED_THEME_SLUGS);
+    const themeSlug =
+      typeof activeThemeId === 'string'
+        ? (getRegisteredTheme(activeThemeId)?.slug ?? null)
+        : null;
 
     const pluginIds = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
     const pluginSlugs = pluginIds
-      .map((id) => resolveBundledSlug(id, BUNDLED_PLUGIN_SLUGS))
+      .map((id) => getRegisteredPlugin(id)?.slug)
       .filter(Boolean);
 
     const filePaths = [

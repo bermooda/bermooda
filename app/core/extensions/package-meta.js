@@ -5,30 +5,6 @@ import { assertEngineRange } from '#/core/extensions/engine';
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-export const BUNDLED_PLUGIN_SLUGS = {
-  '@bermooda/meilisearch': 'meilisearch',
-  '@bermooda/plugin-resend': 'resend',
-  '@bermooda/plugin-sendgrid': 'sendgrid',
-  '@bermooda/plugin-ses': 'ses',
-};
-
-export const BUNDLED_THEME_SLUGS = {
-  '@bermooda/theme-default': 'default',
-};
-
-/**
- * @param {string | null | undefined} id
- * @param {Record<string, string>} table
- * @returns {string | null}
- */
-export function resolveBundledSlug(id, table) {
-  if (!id) return null;
-  if (table[id]) return table[id];
-  // already a slug?
-  if (SLUG_PATTERN.test(id)) return id;
-  return null;
-}
-
 /**
  * @param {unknown} value
  * @param {string} label

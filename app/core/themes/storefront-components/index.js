@@ -1,17 +1,40 @@
 // Client-safe storefront theme component registry.
-// Bundles all theme manifests at build time; routes select by themeId from loader data.
+// Discovers themes at build time via import.meta.glob; routes select by themeId from loader data.
 
 import { mergeExtensionPackage } from '#/core/extensions/package-meta';
 
-import defaultRuntime from '#/themes/default/index';
-import defaultPkg from '#/themes/default/package.json';
+const themeModules = import.meta.glob('#/themes/*/index.js', { eager: true });
+const themePackages = import.meta.glob('#/themes/*/package.json', {
+  eager: true,
+  import: 'default',
+});
 
-const defaultThemeManifest = mergeExtensionPackage(defaultPkg, defaultRuntime);
+/** @type {Record<string, object>} theme id → merged manifest */
+const THEMES = {};
 
-/** @type {Record<string, typeof defaultThemeManifest>} */
-const THEMES = {
-  [defaultThemeManifest.id]: defaultThemeManifest,
-};
+for (const [modPath, mod] of Object.entries(themeModules)) {
+  const folderMatch = modPath.match(/\/themes\/([^/]+)\//);
+  if (!folderMatch) continue;
+  const folder = folderMatch[1];
+
+  const pkgEntry = Object.entries(themePackages).find(([pkgPath]) =>
+    pkgPath.includes(`/themes/${folder}/`)
+  );
+  if (!pkgEntry) continue;
+  const pkg = pkgEntry[1];
+
+  try {
+    const runtime = /** @type {{ default?: object }} */ (mod).default ?? {};
+    const manifest = mergeExtensionPackage(pkg, runtime);
+    THEMES[manifest.id] = manifest;
+    // Also index by slug for legacy-friendly lookup.
+    if (manifest.slug) {
+      THEMES[manifest.slug] = manifest;
+    }
+  } catch {
+    // Malformed theme package — skip.
+  }
+}
 
 /**
  * Resolve a storefront page component by name and optional theme id.
@@ -20,22 +43,31 @@ const THEMES = {
  * @param {string} [themeId]
  * @returns {unknown | null}
  */
-export function getStorefrontComponent(
-  name,
-  themeId = defaultThemeManifest.id
-) {
-  const manifest =
-    THEMES[themeId] ?? THEMES[defaultThemeManifest.id] ?? defaultThemeManifest;
-  return (
-    manifest.components[name] ?? defaultThemeManifest.components[name] ?? null
-  );
+export function getStorefrontComponent(name, themeId) {
+  if (themeId) {
+    const manifest = THEMES[themeId];
+    if (manifest) {
+      return manifest.components?.[name] ?? null;
+    }
+  }
+
+  // Fall back to the first registered theme when no themeId is supplied or
+  // the requested id is not present.
+  const firstManifest = Object.values(THEMES)[0];
+  if (!firstManifest) return null;
+  return firstManifest.components?.[name] ?? null;
 }
 
 /**
  * Registers a storefront theme manifest for client-side component lookup.
- * @param {typeof defaultThemeManifest} manifest
+ * Called by the server-side registerTheme to keep client registry in sync.
+ *
+ * @param {object} manifest
  * @returns {void}
  */
 export function registerStorefrontTheme(manifest) {
   THEMES[manifest.id] = manifest;
+  if (manifest.slug) {
+    THEMES[manifest.slug] = manifest;
+  }
 }

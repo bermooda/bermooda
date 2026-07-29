@@ -3,6 +3,14 @@
 /node_modules/
 /.claude/
 
+# Installed extensions (populated by `npm run extensions:install` or the CLI)
+/app/themes/*/
+!/app/themes/README.md
+!/app/themes/.gitkeep
+/app/plugins/*/
+!/app/plugins/README.md
+!/app/plugins/.gitkeep
+
 # React Router
 /.react-router/
 /build/

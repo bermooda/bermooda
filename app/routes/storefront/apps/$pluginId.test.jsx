@@ -35,10 +35,13 @@ vi.mock('#/core/themes/index.server', () => ({
   preloadStorefrontTheme: mockPreloadStorefrontTheme,
 }));
 
-vi.mock('#/themes/default/components/storefront-chrome', () => ({
-  default: function MockStorefrontShell({ children }) {
-    return <div data-testid="storefront-shell">{children}</div>;
-  },
+vi.mock('#/core/themes/storefront-components', () => ({
+  getStorefrontComponent: vi.fn((_name, _themeId) => {
+    function MockLayout({ children }) {
+      return <div data-testid="storefront-shell">{children}</div>;
+    }
+    return MockLayout;
+  }),
 }));
 
 import StorefrontPluginDispatcher, {

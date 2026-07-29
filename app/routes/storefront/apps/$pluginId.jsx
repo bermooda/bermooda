@@ -7,24 +7,25 @@ import {
 } from '#/core/plugins/index.server';
 import { resolvePluginStorefrontRoute as resolveClientRoute } from '#/core/plugins/storefront-routes.client';
 import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
-import StorefrontShell from '#/themes/default/components/storefront-chrome';
-
-function StorefrontMessage({ title, children }) {
-  return (
-    <StorefrontShell>
-      <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-        <div className="rounded-3xl border border-stone-200 bg-white p-8 shadow-sm">
-          <h1 className="font-serif text-3xl tracking-tight text-stone-900">
-            {title}
-          </h1>
-          <div className="mt-3 text-sm leading-6 text-stone-600">
-            {children}
-          </div>
-        </div>
+/**
+ * @param {{ title: string, children: React.ReactNode, themeId?: string }} props
+ */
+function StorefrontMessage({ title, children, themeId }) {
+  const Layout = getStorefrontComponent('Layout', themeId);
+  const inner = (
+    <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+      <div className="rounded-3xl border border-stone-200 bg-white p-8 shadow-sm">
+        <h1 className="font-serif text-3xl tracking-tight text-stone-900">
+          {title}
+        </h1>
+        <div className="mt-3 text-sm leading-6 text-stone-600">{children}</div>
       </div>
-    </StorefrontShell>
+    </div>
   );
+  if (!Layout) return inner;
+  return <Layout>{inner}</Layout>;
 }
 
 /**
@@ -103,10 +104,11 @@ export async function loader({ request, params }) {
  */
 export default function StorefrontPluginDispatcher() {
   const data = useLoaderData();
+  const themeId = data.themeId;
 
   if (data.status === 'not-found') {
     return (
-      <StorefrontMessage title="Plugin not found">
+      <StorefrontMessage title="Plugin not found" themeId={themeId}>
         No plugin with ID <span className="font-mono">{data.pluginId}</span> is
         registered.
       </StorefrontMessage>
@@ -115,7 +117,7 @@ export default function StorefrontPluginDispatcher() {
 
   if (data.status === 'disabled') {
     return (
-      <StorefrontMessage title={data.manifest.title}>
+      <StorefrontMessage title={data.manifest.title} themeId={themeId}>
         This plugin&apos;s storefront pages are unavailable until the plugin is
         enabled in admin.
       </StorefrontMessage>
@@ -124,7 +126,7 @@ export default function StorefrontPluginDispatcher() {
 
   if (data.status === 'no-storefront-routes') {
     return (
-      <StorefrontMessage title={data.manifest.title}>
+      <StorefrontMessage title={data.manifest.title} themeId={themeId}>
         This plugin has no storefront pages.
       </StorefrontMessage>
     );
@@ -132,7 +134,7 @@ export default function StorefrontPluginDispatcher() {
 
   if (data.status === 'no-match') {
     return (
-      <StorefrontMessage title={data.manifest.title}>
+      <StorefrontMessage title={data.manifest.title} themeId={themeId}>
         This plugin has no storefront page for this path.
       </StorefrontMessage>
     );
@@ -143,15 +145,17 @@ export default function StorefrontPluginDispatcher() {
 
   if (!PluginComponent) {
     return (
-      <StorefrontMessage title={data.manifest.title}>
+      <StorefrontMessage title={data.manifest.title} themeId={themeId}>
         This plugin has no storefront page for this path.
       </StorefrontMessage>
     );
   }
 
+  const Layout = getStorefrontComponent('Layout', themeId);
+  if (!Layout) return <PluginComponent loaderData={data.pluginLoaderData} />;
   return (
-    <StorefrontShell>
+    <Layout>
       <PluginComponent loaderData={data.pluginLoaderData} />
-    </StorefrontShell>
+    </Layout>
   );
 }

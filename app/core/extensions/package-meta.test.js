@@ -5,9 +5,6 @@ import {
   assertSlugMatchesFolder,
   mergeExtensionPackage,
   parseExtensionPackage,
-  resolveBundledSlug,
-  BUNDLED_PLUGIN_SLUGS,
-  BUNDLED_THEME_SLUGS,
 } from '#/core/extensions/package-meta';
 
 const validPkg = {
@@ -92,26 +89,5 @@ describe('assertSlugMatchesFolder', () => {
     expect(() =>
       assertSlugMatchesFolder('demo-plugin', 'other', 'plugin')
     ).toThrow(/demo-plugin/);
-  });
-});
-
-describe('resolveBundledSlug', () => {
-  it('maps packaged id to slug', () => {
-    expect(
-      resolveBundledSlug('@bermooda/meilisearch', BUNDLED_PLUGIN_SLUGS)
-    ).toBe('meilisearch');
-    expect(
-      resolveBundledSlug('@bermooda/theme-default', BUNDLED_THEME_SLUGS)
-    ).toBe('default');
-  });
-
-  it('passes through an already-valid slug', () => {
-    expect(resolveBundledSlug('my-theme', BUNDLED_THEME_SLUGS)).toBe(
-      'my-theme'
-    );
-  });
-
-  it('returns null for unknown scoped package ids', () => {
-    expect(resolveBundledSlug('@acme/other', BUNDLED_PLUGIN_SLUGS)).toBeNull();
   });
 });

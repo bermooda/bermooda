@@ -1,8 +1,8 @@
 # Email transport providers
 
-Transactional and marketing email go through a **provider registry**. Built-in transports ship as plugins (`@bermooda/plugin-resend`, `@bermooda/plugin-sendgrid`, `@bermooda/plugin-ses`). Only one email provider plugin can be active at a time — activate it under **Admin → Plugins**.
+Transactional and marketing email go through a **provider registry**. Built-in transports ship as external plugins (`@bermooda/plugin-resend`, `@bermooda/plugin-sendgrid`, `@bermooda/plugin-aws-ses`). Only one email provider plugin can be active at a time — activate it under **Admin → Plugins**.
 
-Relevant modules: [app/libs/email/index.server.js](mdc:app/libs/email/index.server.js), [app/libs/email-types.server.js](mdc:app/libs/email-types.server.js), plugins under [app/plugins/resend](mdc:app/plugins/resend), [app/plugins/sendgrid](mdc:app/plugins/sendgrid), [app/plugins/ses](mdc:app/plugins/ses), templates in [app/emails/index.server.jsx](mdc:app/emails/index.server.jsx).
+Relevant modules: [app/libs/email/index.server.js](mdc:app/libs/email/index.server.js), [app/libs/email-types.server.js](mdc:app/libs/email-types.server.js), plugin sources in sibling repos (`../plugin-resend`, `../plugin-sendgrid`, `../plugin-aws-ses`), templates in [app/emails/index.server.jsx](mdc:app/emails/index.server.jsx).
 
 ## What to call
 
@@ -20,7 +20,7 @@ From [`.env.example`](mdc:.env.example):
 
 - `BETTER_AUTH_SECRET` — also used to encrypt plugin password settings at rest
 
-Activate one plugin in **Admin → Plugins → Email providers** and enter API keys in that plugin’s settings form (encrypted in the `Setting` table). Seed enables `@bermooda/plugin-resend` by default.
+Activate one plugin in **Admin → Plugins → Email providers** and enter API keys in that plugin's settings form (encrypted in the `Setting` table). `bermooda install` enables `@bermooda/plugin-resend` by default. Contributors install plugins via `npm run extensions:install`.
 
 ## Custom providers (plugins)
 

@@ -207,7 +207,7 @@ providers: {
 };
 ```
 
-Custom email transports implement `send({ from, to, subject, html, text? })`. Bundled first-party transports live as plugins under `app/plugins/{resend,sendgrid,ses}/`. Only one email-provider plugin can be active: enabling another under **Admin → Plugins → Email providers** automatically deactivates the previous one.
+Custom email transports implement `send({ from, to, subject, html, text? })`. First-party transports are external plugins (`@bermooda/plugin-resend`, `@bermooda/plugin-sendgrid`, `@bermooda/plugin-aws-ses`) installed under `app/plugins/{resend,sendgrid,aws-ses}/`. Only one email-provider plugin can be active: enabling another under **Admin → Plugins → Email providers** automatically deactivates the previous one.
 
 ```js
 import { definePlugin, defineProvider } from '#/core/plugins/index.server';
@@ -841,7 +841,7 @@ Blocks only render when the plugin is enabled. Render order follows the `pluginO
 
 ## Building a Plugin (example)
 
-Bundled first-party plugins live under `app/plugins/<slug>/` (for example `meilisearch`, `resend`, `sendgrid`, `ses`). Third-party plugins follow the same layout.
+First-party plugins install under `app/plugins/<slug>/` (for example `meilisearch`, `resend`, `sendgrid`, `aws-ses`). Third-party plugins follow the same layout.
 
 Minimal plugin:
 

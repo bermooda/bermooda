@@ -28,6 +28,14 @@ vi.mock('fs', () => ({
   readFileSync: vi.fn(),
 }));
 
+vi.mock('#/core/themes/index.server', () => ({
+  getRegisteredTheme: vi.fn(),
+}));
+
+vi.mock('#/core/plugins/index.server', () => ({
+  getRegisteredPlugin: vi.fn(),
+}));
+
 import { readFileSync } from 'fs';
 
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
@@ -40,7 +48,9 @@ import {
   setLocaleCookie,
   t,
 } from '#/core/i18n/index.server';
+import { getRegisteredPlugin } from '#/core/plugins/index.server';
 import { get as settingsGet } from '#/core/settings/index.server';
+import { getRegisteredTheme } from '#/core/themes/index.server';
 
 function makeRequest({ cookie = '', acceptLanguage = '' } = {}) {
   const headers = new Headers();
@@ -66,6 +76,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   getCustomerSession.mockResolvedValue(null);
   prisma.customer.findUnique.mockResolvedValue(null);
+  getRegisteredTheme.mockReturnValue(null);
+  getRegisteredPlugin.mockReturnValue(null);
   mockLocaleSettings();
 });
 
@@ -156,10 +168,16 @@ describe('getRequestLocale', () => {
 describe('loadMessages', () => {
   it('returns merged messages from core + theme + plugin files', async () => {
     settingsGet.mockImplementation(async (key) => {
-      if (key === 'activeTheme') return 'my-theme';
-      if (key === 'pluginOrder') return ['my-plugin'];
+      if (key === 'activeTheme') return '@acme/my-theme';
+      if (key === 'pluginOrder') return ['@acme/my-plugin'];
       return null;
     });
+    getRegisteredTheme.mockImplementation((id) =>
+      id === '@acme/my-theme' ? { slug: 'my-theme' } : null
+    );
+    getRegisteredPlugin.mockImplementation((id) =>
+      id === '@acme/my-plugin' ? { slug: 'my-plugin' } : null
+    );
 
     readFileSync
       .mockReturnValueOnce(JSON.stringify({ common: { save: 'Save' } }))
@@ -177,10 +195,16 @@ describe('loadMessages', () => {
 
   it('skips files that do not exist (ENOENT) without throwing', async () => {
     settingsGet.mockImplementation(async (key) => {
-      if (key === 'activeTheme') return 'missing-theme';
-      if (key === 'pluginOrder') return ['missing-plugin'];
+      if (key === 'activeTheme') return '@acme/missing-theme';
+      if (key === 'pluginOrder') return ['@acme/missing-plugin'];
       return null;
     });
+    getRegisteredTheme.mockImplementation((id) =>
+      id === '@acme/missing-theme' ? { slug: 'missing-theme' } : null
+    );
+    getRegisteredPlugin.mockImplementation((id) =>
+      id === '@acme/missing-plugin' ? { slug: 'missing-plugin' } : null
+    );
 
     const enoent = new Error('ENOENT: no such file');
     enoent.code = 'ENOENT';
@@ -207,12 +231,18 @@ describe('loadMessages', () => {
     expect(readFileSync).toHaveBeenCalledTimes(1);
   });
 
-  it('resolves package ids to bundled theme/plugin slug paths', async () => {
+  it('resolves package ids to registered theme/plugin slug paths', async () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@bermooda/theme-default';
       if (key === 'pluginOrder') return ['@bermooda/meilisearch'];
       return null;
     });
+    getRegisteredTheme.mockImplementation((id) =>
+      id === '@bermooda/theme-default' ? { slug: 'default' } : null
+    );
+    getRegisteredPlugin.mockImplementation((id) =>
+      id === '@bermooda/meilisearch' ? { slug: 'meilisearch' } : null
+    );
 
     const enoent = new Error('ENOENT: no such file');
     enoent.code = 'ENOENT';
@@ -227,6 +257,22 @@ describe('loadMessages', () => {
     expect(paths.some((p) => p.includes('/plugins/meilisearch/i18n/'))).toBe(
       true
     );
+  });
+
+  it('skips theme/plugin i18n when ids are not registered', async () => {
+    settingsGet.mockImplementation(async (key) => {
+      if (key === 'activeTheme') return '@bermooda/theme-default';
+      if (key === 'pluginOrder') return ['@bermooda/meilisearch'];
+      return null;
+    });
+
+    readFileSync.mockReturnValueOnce(
+      JSON.stringify({ common: { loading: 'Loading...' } })
+    );
+
+    const messages = await loadMessages('en');
+    expect(messages.common.loading).toBe('Loading...');
+    expect(readFileSync).toHaveBeenCalledTimes(1);
   });
 });
 
