@@ -11,10 +11,6 @@ import {
 } from 'react-router';
 
 import {
-  LEGACY_PLUGIN_ID_MAP,
-  normalizeLegacyIds,
-} from '#/core/extensions/package-meta';
-import {
   getRegisteredPlugin,
   listRegisteredPlugins,
   loadAllPluginSettings,
@@ -63,14 +59,8 @@ export async function loader() {
     get('enabledPlugins'),
     get('pluginOrder'),
   ]);
-  const enabledPluginIds = normalizeLegacyIds(
-    Array.isArray(enabledPlugins) ? enabledPlugins : [],
-    LEGACY_PLUGIN_ID_MAP
-  );
-  const pluginOrder = normalizeLegacyIds(
-    Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [],
-    LEGACY_PLUGIN_ID_MAP
-  );
+  const enabledPluginIds = Array.isArray(enabledPlugins) ? enabledPlugins : [];
+  const pluginOrder = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
   const plugins = [...allPlugins].sort((a, b) =>
     a.title.localeCompare(b.title)
   );

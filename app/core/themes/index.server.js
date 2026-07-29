@@ -4,11 +4,7 @@
 import cache, { getCachedResult } from '#/utils/cache/index.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import {
-  LEGACY_THEME_ID_MAP,
-  SLUG_PATTERN,
-  normalizeLegacyIds,
-} from '#/core/extensions/package-meta';
+import { SLUG_PATTERN } from '#/core/extensions/package-meta';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
 import { defineTheme } from '#/core/themes/define';
@@ -143,9 +139,7 @@ export async function resolveActiveTheme() {
         where: { key: 'activeTheme' },
       });
       const rawId = row?.value ?? null;
-      return rawId
-        ? (normalizeLegacyIds([rawId], LEGACY_THEME_ID_MAP)[0] ?? rawId)
-        : null;
+      return rawId;
     },
     5 * 60 * 1000
   );
