@@ -20,7 +20,7 @@ Stop shipping themes and plugins inside the bermooda app repo. First-party exten
 | CLI registration                   | Install onto disk + write `activeTheme` / `enabledPlugins` settings      |
 | Generated registry file            | No                                                                       |
 | Default email (interactive + `-y`) | Resend (`@bermooda/plugin-resend`)                                       |
-| Always-on install extras           | `@bermooda/theme-default`, `@bermooda/meilisearch`                       |
+| Always-on install extras           | `@bermooda/theme-default`, `@bermooda/plugin-meilisearch`                       |
 | Removed (not extracted)            | `sample-analytics`, `fraud-guard`                                        |
 | Legacy id maps                     | Remove entirely (`LEGACY_*`, `normalizeLegacyIds`) — no production users |
 | Bundled slug maps                  | Remove (`BUNDLED_PLUGIN_SLUGS`, `BUNDLED_THEME_SLUGS`)                   |
@@ -31,7 +31,7 @@ Stop shipping themes and plugins inside the bermooda app repo. First-party exten
 | GitHub repo                | npm package                 | `bermooda.slug` | Installs to                | Install behavior             |
 | -------------------------- | --------------------------- | --------------- | -------------------------- | ---------------------------- |
 | `bermooda/theme-default`   | `@bermooda/theme-default`   | `default`       | `app/themes/default/`      | Always install + activate    |
-| `bermooda/meilisearch`     | `@bermooda/meilisearch`     | `meilisearch`   | `app/plugins/meilisearch/` | Always install + enable      |
+| `bermooda/plugin-meilisearch` | `@bermooda/plugin-meilisearch` | `meilisearch` | `app/plugins/meilisearch/` | Always install + enable |
 | `bermooda/plugin-resend`   | `@bermooda/plugin-resend`   | `resend`        | `app/plugins/resend/`      | If chosen (default) + enable |
 | `bermooda/plugin-sendgrid` | `@bermooda/plugin-sendgrid` | `sendgrid`      | `app/plugins/sendgrid/`    | If chosen + enable           |
 | `bermooda/plugin-aws-ses`  | `@bermooda/plugin-aws-ses`  | `aws-ses`       | `app/plugins/aws-ses/`     | If chosen + enable           |
@@ -59,7 +59,7 @@ Rename note: today’s in-app `app/plugins/ses` becomes slug/folder `aws-ses` an
 ### Defaults / seed / tree
 
 - `DEFAULT_ACTIVE_THEME` remains `@bermooda/theme-default`.
-- Seed no longer enables sample-analytics (or any plugin by default in the bare app). After CLI install, `enabledPlugins` is `[@bermooda/meilisearch, @bermooda/plugin-<chosen-email>]`.
+- Seed no longer enables sample-analytics (or any plugin by default in the bare app). After CLI install, `enabledPlugins` is `[@bermooda/plugin-meilisearch, @bermooda/plugin-<chosen-email>]`.
 - App ships empty `app/themes/` and `app/plugins/` with `.gitkeep` (and a short README pointing at CLI / contributor script). Contents are gitignored except those keepers.
 
 ### Tests
@@ -74,7 +74,7 @@ After app download, deps, env, and DB/bootstrap:
 2. Flag: `--email-provider resend|sendgrid|aws-ses` (default `resend` with `-y`).
 3. Install via existing npm-pack → copy path (`theme add` / `plugin add`):
    - always `@bermooda/theme-default` (activate)
-   - always `@bermooda/meilisearch` (enable)
+   - always `@bermooda/plugin-meilisearch` (enable)
    - chosen email package (enable)
 4. Persist settings through a shop-side helper (see below).
 5. Fail clearly if a package is missing/unpublished or fails the engine semver check.
@@ -93,7 +93,7 @@ CLI `--enable` / `--activate` are currently hints only. This work makes them rea
 
 In the app repo, e.g. `npm run extensions:install`:
 
-- Installs `@bermooda/theme-default`, `@bermooda/meilisearch`, `@bermooda/plugin-resend`
+- Installs `@bermooda/theme-default`, `@bermooda/plugin-meilisearch`, `@bermooda/plugin-resend`
 - Activates/enables them
 - Documented in README and AGENTS.md for local/Cloud Agent setups
 

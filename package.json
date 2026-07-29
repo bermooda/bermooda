@@ -1,7 +1,7 @@
 {
   "name": "bermooda",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "imports": {
     "#bermooda.config": "./bermooda.config.js"
@@ -85,5 +85,16 @@
     "supertest": "^7.2.2",
     "vite": "^8.1.4",
     "vitest": "^4.1.10"
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bermooda/bermooda.git"
+  },
+  "homepage": "https://github.com/bermooda/bermooda",
+  "description": "Open-source ecommerce platform — themed storefront, merchant admin, and REST API",
+  "license": "MIT",
+  "bugs": "https://github.com/bermooda/bermooda/issues"
 }

@@ -21,7 +21,7 @@
 | Path                  | npm name                    | slug          |
 | --------------------- | --------------------------- | ------------- |
 | `../theme-default/`   | `@bermooda/theme-default`   | `default`     |
-| `../meilisearch/`     | `@bermooda/meilisearch`     | `meilisearch` |
+| `../plugin-meilisearch/` | `@bermooda/plugin-meilisearch` | `meilisearch` |
 | `../plugin-resend/`   | `@bermooda/plugin-resend`   | `resend`      |
 | `../plugin-sendgrid/` | `@bermooda/plugin-sendgrid` | `sendgrid`    |
 | `../plugin-aws-ses/`  | `@bermooda/plugin-aws-ses`  | `aws-ses`     |
@@ -297,7 +297,7 @@ const emailPkg = {
 }[emailProvider];
 
 // theme add @bermooda/theme-default --activate
-// plugin add @bermooda/meilisearch --enable
+// plugin add @bermooda/plugin-meilisearch --enable
 // plugin add ${emailPkg} --enable
 ```
 

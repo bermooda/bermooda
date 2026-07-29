@@ -468,9 +468,9 @@ describe('register', () => {
 
 describe('getEnabledPluginIds', () => {
   it('returns the persisted enabledPlugins array', async () => {
-    settingsGet.mockResolvedValueOnce(['@bermooda/meilisearch']);
+    settingsGet.mockResolvedValueOnce(['@bermooda/plugin-meilisearch']);
     await expect(getEnabledPluginIds()).resolves.toEqual([
-      '@bermooda/meilisearch',
+      '@bermooda/plugin-meilisearch',
     ]);
   });
 

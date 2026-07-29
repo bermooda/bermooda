@@ -8,7 +8,7 @@
  *
  * Sibling layout (relative to bermooda repo root):
  *   ../theme-default   → app/themes/default/   (slug: default)
- *   ../meilisearch     → app/plugins/meilisearch/
+ *   ../plugin-meilisearch → app/plugins/meilisearch/
  *   ../plugin-resend   → app/plugins/resend/
  *   ../plugin-sendgrid → app/plugins/sendgrid/ (optional)
  *   ../plugin-aws-ses  → app/plugins/aws-ses/ (optional)
@@ -42,9 +42,9 @@ const ALWAYS_INSTALL = [
     packageId: '@bermooda/theme-default',
   },
   {
-    siblingDir: join(REPO_ROOT, '..', 'meilisearch'),
+    siblingDir: join(REPO_ROOT, '..', 'plugin-meilisearch'),
     destDir: join(APP_DIR, 'plugins', 'meilisearch'),
-    packageId: '@bermooda/meilisearch',
+    packageId: '@bermooda/plugin-meilisearch',
   },
   {
     siblingDir: join(REPO_ROOT, '..', 'plugin-resend'),
@@ -156,7 +156,7 @@ async function setExtensionsInDb() {
         ...process.env,
         BERMOODA_ACTIVE_THEME: '@bermooda/theme-default',
         BERMOODA_ENABLED_PLUGINS:
-          '@bermooda/meilisearch,@bermooda/plugin-resend',
+          '@bermooda/plugin-meilisearch,@bermooda/plugin-resend',
       },
     });
   } catch {
