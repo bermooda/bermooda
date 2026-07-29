@@ -1,33 +1,69 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import { getStorefrontComponent } from '#/core/themes/storefront-components';
+import {
+  getStorefrontComponent,
+  registerStorefrontTheme,
+} from '#/core/themes/storefront-components';
 
-import { routeComponents } from '#/themes/default/routes';
+function StubPage() {
+  return null;
+}
 
-describe('default theme storefront components', () => {
-  it('registers SearchPage for /search', () => {
-    expect(routeComponents['/search']).toBe('SearchPage');
-    expect(getStorefrontComponent('SearchPage')).toBeTypeOf('function');
+const TEST_THEME = {
+  id: '@bermooda/theme-test',
+  slug: 'test',
+  title: 'Test',
+  version: '1.0.0',
+  components: {
+    Layout: StubPage,
+    SearchPage: StubPage,
+    CollectionPage: StubPage,
+    AccountWishlistPage: StubPage,
+    AccountLoyaltyPage: StubPage,
+    NotFoundPage: StubPage,
+  },
+};
+
+describe('getStorefrontComponent', () => {
+  beforeEach(() => {
+    registerStorefrontTheme(TEST_THEME);
   });
 
-  it('registers CollectionPage for /collections/:handle', () => {
-    expect(routeComponents['/collections/:handle']).toBe('CollectionPage');
-    expect(getStorefrontComponent('CollectionPage')).toBeTypeOf('function');
+  it('resolves components from a registered theme by package id', () => {
+    expect(getStorefrontComponent('Layout', '@bermooda/theme-test')).toBe(
+      StubPage
+    );
+    expect(getStorefrontComponent('SearchPage', '@bermooda/theme-test')).toBe(
+      StubPage
+    );
+    expect(
+      getStorefrontComponent('CollectionPage', '@bermooda/theme-test')
+    ).toBe(StubPage);
+    expect(
+      getStorefrontComponent('AccountWishlistPage', '@bermooda/theme-test')
+    ).toBe(StubPage);
+    expect(
+      getStorefrontComponent('AccountLoyaltyPage', '@bermooda/theme-test')
+    ).toBe(StubPage);
+    expect(getStorefrontComponent('NotFoundPage', '@bermooda/theme-test')).toBe(
+      StubPage
+    );
   });
 
-  it('registers account wishlist and loyalty pages', () => {
-    expect(routeComponents['/account/wishlist']).toBe('AccountWishlistPage');
-    expect(routeComponents['/account/loyalty']).toBe('AccountLoyaltyPage');
-    expect(getStorefrontComponent('AccountWishlistPage')).toBeTypeOf(
+  it('resolves components by theme slug alias', () => {
+    expect(getStorefrontComponent('Layout', 'test')).toBe(StubPage);
+  });
+
+  it('falls back to a registered theme when themeId is omitted or unknown', () => {
+    expect(getStorefrontComponent('Layout')).toBeTypeOf('function');
+    expect(getStorefrontComponent('Layout', '@missing/theme')).toBeTypeOf(
       'function'
     );
-    expect(getStorefrontComponent('AccountLoyaltyPage')).toBeTypeOf('function');
   });
 
-  it('aliases required Layout to StorefrontShell', () => {
-    const Layout = getStorefrontComponent('Layout');
-    const NotFoundPage = getStorefrontComponent('NotFoundPage');
-    expect(Layout).toBeTypeOf('function');
-    expect(NotFoundPage).toBeTypeOf('function');
+  it('returns null for an unknown component name', () => {
+    expect(
+      getStorefrontComponent('DoesNotExist', '@bermooda/theme-test')
+    ).toBeNull();
   });
 });
