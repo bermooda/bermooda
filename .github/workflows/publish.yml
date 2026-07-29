@@ -1,0 +1,44 @@
+name: Publish
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # GitHub releases + version bump commit
+      issues: write # Comment on released issues
+      pull-requests: write # Comment on released PRs
+      id-token: write # npm trusted publishing (OIDC)
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # semantic-release needs full history + tags
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          # Do not set registry-url — it writes an .npmrc that conflicts with
+          # semantic-release + npm trusted publishing (OIDC).
+          # Do not cache deps for release publishes (npm trusted publishing guidance)
+
+      - name: Ensure npm supports trusted publishing
+        run: npm install -g npm@latest
+
+      - run: npm ci --legacy-peer-deps
+      - run: npm run lint
+      - run: npm run build
+        env:
+          DATABASE_URL: file:./sqlite.db
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No NPM_TOKEN — OIDC trusted publishing. Provenance is automatic.
+        run: npx semantic-release

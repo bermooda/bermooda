@@ -1,3 +1,23 @@
+## Releases and commit messages
+
+Publishing is automated by [semantic-release](https://semantic-release.org/) on
+every push to `master` (see `.github/workflows/publish.yml` and
+`release.config.js`). **Commit subjects and PR titles must use
+[Conventional Commits](https://www.conventionalcommits.org/)** so the correct
+semver bump (or no release) is chosen.
+
+| Type                                                        | Release |
+| ----------------------------------------------------------- | ------- |
+| `feat`                                                      | minor   |
+| `fix`, `perf`, `revert`                                     | patch   |
+| `feat!` / `fix!` / `BREAKING CHANGE:`                       | major   |
+| `docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci` | none    |
+
+Do **not** bump `package.json` `"version"`, run `npm version`, or push `v*` tags
+by hand — semantic-release owns releases (`chore(release): x.y.z [skip ci]`).
+Squash-merge PR titles must also be Conventional Commits. See
+[`.cursor/rules/conventional-commits.mdc`](.cursor/rules/conventional-commits.mdc).
+
 ## Cursor Cloud specific instructions
 
 ### Overview
