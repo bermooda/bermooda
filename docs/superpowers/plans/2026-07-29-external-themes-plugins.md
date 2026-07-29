@@ -18,13 +18,13 @@
 
 ### New package roots (sibling of app)
 
-| Path                  | npm name                    | slug          |
-| --------------------- | --------------------------- | ------------- |
-| `../theme-default/`   | `@bermooda/theme-default`   | `default`     |
+| Path                     | npm name                       | slug          |
+| ------------------------ | ------------------------------ | ------------- |
+| `../theme-default/`      | `@bermooda/theme-default`      | `default`     |
 | `../plugin-meilisearch/` | `@bermooda/plugin-meilisearch` | `meilisearch` |
-| `../plugin-resend/`   | `@bermooda/plugin-resend`   | `resend`      |
-| `../plugin-sendgrid/` | `@bermooda/plugin-sendgrid` | `sendgrid`    |
-| `../plugin-aws-ses/`  | `@bermooda/plugin-aws-ses`  | `aws-ses`     |
+| `../plugin-resend/`      | `@bermooda/plugin-resend`      | `resend`      |
+| `../plugin-sendgrid/`    | `@bermooda/plugin-sendgrid`    | `sendgrid`    |
+| `../plugin-aws-ses/`     | `@bermooda/plugin-aws-ses`     | `aws-ses`     |
 
 ### App (bermooda)
 
