@@ -467,11 +467,16 @@ describe('register', () => {
 });
 
 describe('getEnabledPluginIds', () => {
-  it('rewrites legacy short ids', async () => {
-    settingsGet.mockResolvedValueOnce(['meilisearch']);
+  it('returns persisted enabled plugin ids as-is', async () => {
+    settingsGet.mockResolvedValueOnce(['@bermooda/meilisearch']);
     await expect(getEnabledPluginIds()).resolves.toEqual([
       '@bermooda/meilisearch',
     ]);
+  });
+
+  it('returns empty array when settings value is not an array', async () => {
+    settingsGet.mockResolvedValueOnce(null);
+    await expect(getEnabledPluginIds()).resolves.toEqual([]);
   });
 });
 

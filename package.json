@@ -26,7 +26,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "seed": "node --experimental-strip-types prisma/seed.js",
-    "cli:bootstrap": "node scripts/cli-bootstrap.mjs"
+    "cli:bootstrap": "node scripts/cli-bootstrap.mjs",
+    "cli:set-extensions": "node --experimental-strip-types scripts/cli-set-extensions.mjs",
+    "extensions:install": "node scripts/install-default-extensions.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.1096.0",

@@ -18,41 +18,41 @@
 
 ### New package roots (sibling of app)
 
-| Path | npm name | slug |
-| ---- | -------- | ---- |
-| `../theme-default/` | `@bermooda/theme-default` | `default` |
-| `../meilisearch/` | `@bermooda/meilisearch` | `meilisearch` |
-| `../plugin-resend/` | `@bermooda/plugin-resend` | `resend` |
-| `../plugin-sendgrid/` | `@bermooda/plugin-sendgrid` | `sendgrid` |
-| `../plugin-aws-ses/` | `@bermooda/plugin-aws-ses` | `aws-ses` |
+| Path                  | npm name                    | slug          |
+| --------------------- | --------------------------- | ------------- |
+| `../theme-default/`   | `@bermooda/theme-default`   | `default`     |
+| `../meilisearch/`     | `@bermooda/meilisearch`     | `meilisearch` |
+| `../plugin-resend/`   | `@bermooda/plugin-resend`   | `resend`      |
+| `../plugin-sendgrid/` | `@bermooda/plugin-sendgrid` | `sendgrid`    |
+| `../plugin-aws-ses/`  | `@bermooda/plugin-aws-ses`  | `aws-ses`     |
 
 ### App (bermooda)
 
-| File | Responsibility |
-| ---- | -------------- |
-| `app/core/themes/index.server.js` | Add `discoverThemes()`; drop legacy id normalize |
-| `app/core/themes/storefront-components/index.js` | Glob-discover themes (no hardcoded default import) |
-| `app/core/bootstrap/index.server.js` | Call `discoverThemes()`; remove default theme import |
-| `app/core/extensions/package-meta.js` | Remove `BUNDLED_*`, `LEGACY_*`, helpers |
-| `app/core/i18n/index.server.js` | Resolve slugs from registries / on-disk package.json |
-| `app/core/plugins/index.server.js` | Drop legacy normalize on enabled ids |
-| Admin/API theme & plugin routes | Drop `normalizeLegacyIds` |
-| `app/routes/storefront/apps/$pluginId.jsx` | Use `getStorefrontComponent('StorefrontChrome')` (or Layout) instead of hardcoded import |
-| `scripts/cli-set-extensions.mjs` | Set `activeTheme` + `enabledPlugins` via Prisma |
-| `scripts/install-default-extensions.mjs` | Contributor helper (npm or sibling `--path`) |
-| `app/themes/.gitkeep`, `app/plugins/.gitkeep` | Empty install targets |
-| Tests / email adapters test | Fixtures or relative paths after extraction |
+| File                                             | Responsibility                                                                           |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `app/core/themes/index.server.js`                | Add `discoverThemes()`; drop legacy id normalize                                         |
+| `app/core/themes/storefront-components/index.js` | Glob-discover themes (no hardcoded default import)                                       |
+| `app/core/bootstrap/index.server.js`             | Call `discoverThemes()`; remove default theme import                                     |
+| `app/core/extensions/package-meta.js`            | Remove `BUNDLED_*`, `LEGACY_*`, helpers                                                  |
+| `app/core/i18n/index.server.js`                  | Resolve slugs from registries / on-disk package.json                                     |
+| `app/core/plugins/index.server.js`               | Drop legacy normalize on enabled ids                                                     |
+| Admin/API theme & plugin routes                  | Drop `normalizeLegacyIds`                                                                |
+| `app/routes/storefront/apps/$pluginId.jsx`       | Use `getStorefrontComponent('StorefrontChrome')` (or Layout) instead of hardcoded import |
+| `scripts/cli-set-extensions.mjs`                 | Set `activeTheme` + `enabledPlugins` via Prisma                                          |
+| `scripts/install-default-extensions.mjs`         | Contributor helper (npm or sibling `--path`)                                             |
+| `app/themes/.gitkeep`, `app/plugins/.gitkeep`    | Empty install targets                                                                    |
+| Tests / email adapters test                      | Fixtures or relative paths after extraction                                              |
 
 ### CLI
 
-| File | Responsibility |
-| ---- | -------------- |
-| `src/commands/install.js` | Prompt/flag `--email-provider`; install + activate/enable |
-| `src/lib/fs-install.js` | Prefer `bermooda.slug` for folder id |
-| `src/commands/plugin/index.js` | Real `--enable` via shop script |
-| `src/commands/theme/index.js` | Real `--activate` via shop script |
-| `src/lib/extensions-settings.js` (new) | Invoke shop `cli-set-extensions.mjs` |
-| Tests | Install email-provider mapping + settings helper |
+| File                                   | Responsibility                                            |
+| -------------------------------------- | --------------------------------------------------------- |
+| `src/commands/install.js`              | Prompt/flag `--email-provider`; install + activate/enable |
+| `src/lib/fs-install.js`                | Prefer `bermooda.slug` for folder id                      |
+| `src/commands/plugin/index.js`         | Real `--enable` via shop script                           |
+| `src/commands/theme/index.js`          | Real `--activate` via shop script                         |
+| `src/lib/extensions-settings.js` (new) | Invoke shop `cli-set-extensions.mjs`                      |
+| Tests                                  | Install email-provider mapping + settings helper          |
 
 ---
 
@@ -120,6 +120,7 @@ If auth fails: document in PR checklist; packages remain local for `--path` inst
 ### Task 2: Shop script to set extension settings
 
 **Files:**
+
 - Create: `bermooda/scripts/cli-set-extensions.mjs`
 - Modify: `bermooda/package.json` (script entry)
 
@@ -148,6 +149,7 @@ Uses same Prisma bootstrap as seed (`dotenv`, generated client). Upserts Setting
 ### Task 3: Remove package-meta maps + update call sites
 
 **Files:**
+
 - Modify: `app/core/extensions/package-meta.js`
 - Modify: `app/core/extensions/package-meta.test.js`
 - Modify: `app/core/i18n/index.server.js`, `app/core/i18n/index.test.server.js`
@@ -173,7 +175,9 @@ Prefer registry after discovery; for message load during request, registries are
 - [ ] **Step 3: Replace `normalizeLegacyIds(...)` with identity / Array.isArray guard**
 
 ```js
-const enabledPlugins = Array.isArray(enabledPluginsRaw) ? enabledPluginsRaw : [];
+const enabledPlugins = Array.isArray(enabledPluginsRaw)
+  ? enabledPluginsRaw
+  : [];
 ```
 
 - [ ] **Step 4: Update tests; run**
@@ -189,6 +193,7 @@ npx vitest run app/core/extensions/package-meta.test.js app/core/i18n/index.test
 ### Task 4: Theme discovery + drop hardcoded theme imports
 
 **Files:**
+
 - Modify: `app/core/themes/index.server.js` — `discoverThemes()`
 - Modify: `app/core/themes/storefront-components/index.js` — glob
 - Modify: `app/core/bootstrap/index.server.js` + test
@@ -269,7 +274,10 @@ Also return package `name` separately where settings need full id — installExt
 - [ ] **Step 2: `src/lib/extensions-settings.js`**
 
 ```js
-export async function setShopExtensions(shopRoot, { activeTheme, enabledPlugins }) {
+export async function setShopExtensions(
+  shopRoot,
+  { activeTheme, enabledPlugins }
+) {
   // spawn node scripts/cli-set-extensions.mjs with env
 }
 ```
@@ -329,22 +337,22 @@ npm test
 Push branches and `gh pr create` for:
 
 1. bermooda app branch
-2. cli branch  
+2. cli branch
 3. Each extension repo (or single note if publish blocked)
 
 ---
 
 ## Spec coverage checklist
 
-| Spec item | Task |
-| --------- | ---- |
-| Five packages / repos | 1 |
-| Remove BUNDLED/LEGACY | 3 |
-| discoverThemes + no bootstrap hard import | 4 |
-| Empty app themes/plugins | 4 |
-| CLI install theme+meili+email | 5 |
-| Resend default / aws-ses flag | 5 |
-| Real enable/activate | 2, 5 |
-| Contributor script | 4 |
-| Docs | 6 |
-| Publish | 1 (may block on auth) |
+| Spec item                                 | Task                  |
+| ----------------------------------------- | --------------------- |
+| Five packages / repos                     | 1                     |
+| Remove BUNDLED/LEGACY                     | 3                     |
+| discoverThemes + no bootstrap hard import | 4                     |
+| Empty app themes/plugins                  | 4                     |
+| CLI install theme+meili+email             | 5                     |
+| Resend default / aws-ses flag             | 5                     |
+| Real enable/activate                      | 2, 5                  |
+| Contributor script                        | 4                     |
+| Docs                                      | 6                     |
+| Publish                                   | 1 (may block on auth) |

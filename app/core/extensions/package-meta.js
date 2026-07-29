@@ -5,44 +5,6 @@ import { assertEngineRange } from '#/core/extensions/engine';
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-export const LEGACY_PLUGIN_ID_MAP = {
-  'meilisearch': '@bermooda/meilisearch',
-  'resend': '@bermooda/plugin-resend',
-  'sendgrid': '@bermooda/plugin-sendgrid',
-  'ses': '@bermooda/plugin-ses',
-  '@bermooda/resend': '@bermooda/plugin-resend',
-  '@bermooda/sendgrid': '@bermooda/plugin-sendgrid',
-  '@bermooda/ses': '@bermooda/plugin-ses',
-};
-
-export const LEGACY_THEME_ID_MAP = {
-  default: '@bermooda/theme-default',
-};
-
-export const BUNDLED_PLUGIN_SLUGS = {
-  '@bermooda/meilisearch': 'meilisearch',
-  '@bermooda/plugin-resend': 'resend',
-  '@bermooda/plugin-sendgrid': 'sendgrid',
-  '@bermooda/plugin-ses': 'ses',
-};
-
-export const BUNDLED_THEME_SLUGS = {
-  '@bermooda/theme-default': 'default',
-};
-
-/**
- * @param {string | null | undefined} id
- * @param {Record<string, string>} table
- * @returns {string | null}
- */
-export function resolveBundledSlug(id, table) {
-  if (!id) return null;
-  if (table[id]) return table[id];
-  // already a slug?
-  if (SLUG_PATTERN.test(id)) return id;
-  return null;
-}
-
 /**
  * @param {unknown} value
  * @param {string} label
@@ -119,16 +81,6 @@ export function mergeExtensionPackage(pkg, runtime = {}) {
     ...meta,
     settings: meta.settings ?? runtime.settings,
   };
-}
-
-/**
- * @param {string[]} ids
- * @param {Record<string, string>} map
- * @returns {string[]}
- */
-export function normalizeLegacyIds(ids, map) {
-  if (!Array.isArray(ids)) return [];
-  return ids.map((id) => map[id] ?? id);
 }
 
 /**

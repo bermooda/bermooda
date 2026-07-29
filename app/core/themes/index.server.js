@@ -4,10 +4,11 @@
 import cache, { getCachedResult } from '#/utils/cache/index.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
+import { checkExtensionEngine, getAppVersion } from '#/core/extensions/engine';
 import {
-  LEGACY_THEME_ID_MAP,
   SLUG_PATTERN,
-  normalizeLegacyIds,
+  assertSlugMatchesFolder,
+  mergeExtensionPackage,
 } from '#/core/extensions/package-meta';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
@@ -142,17 +143,19 @@ export async function resolveActiveTheme() {
       const row = await prisma.setting.findUnique({
         where: { key: 'activeTheme' },
       });
-      const rawId = row?.value ?? null;
-      return rawId
-        ? (normalizeLegacyIds([rawId], LEGACY_THEME_ID_MAP)[0] ?? rawId)
-        : null;
+      return row?.value ?? null;
     },
     5 * 60 * 1000
   );
 
   if (!themeId) return null;
 
-  return _registry.get(themeId) ?? null;
+  // Primary lookup by package id; fall back to slug index for legacy stored values.
+  const byId = _registry.get(themeId);
+  if (byId) return byId;
+
+  const resolvedId = _slugIndex.get(themeId);
+  return resolvedId ? (_registry.get(resolvedId) ?? null) : null;
 }
 
 /**
@@ -319,6 +322,73 @@ export async function getSlotBlocksMap(slotNames = []) {
   );
 
   return Object.fromEntries(entries);
+}
+
+// ---------------------------------------------------------------------------
+// Discovery
+// ---------------------------------------------------------------------------
+
+const themeModules = import.meta.glob('#/themes/*/index.js', { eager: true });
+const themePackages = import.meta.glob('#/themes/*/package.json', {
+  eager: true,
+  import: 'default',
+});
+
+/**
+ * Returns the theme folder segment from an import.meta.glob path.
+ *
+ * @param {string} modulePath
+ * @returns {string}
+ */
+function themeFolderFromPath(modulePath) {
+  const match = modulePath.match(/\/themes\/([^/]+)\//);
+  if (!match) {
+    throw new Error(`Cannot parse theme folder from "${modulePath}"`);
+  }
+  return match[1];
+}
+
+/**
+ * Register all installed themes from app/themes/*.
+ */
+export function discoverThemes() {
+  const seenSlugs = new Set();
+  const shopVersion = getAppVersion();
+
+  for (const [modPath, mod] of Object.entries(themeModules)) {
+    const folder = themeFolderFromPath(modPath);
+    const pkgEntry = Object.entries(themePackages).find(([pkgPath]) =>
+      pkgPath.includes(`/themes/${folder}/`)
+    );
+    if (!pkgEntry) {
+      throw new Error(`Missing package.json for theme folder "${folder}"`);
+    }
+    const pkg = pkgEntry[1];
+
+    const engineCheck = checkExtensionEngine({
+      shopVersion,
+      engine: pkg?.bermooda?.engine,
+      kind: 'theme',
+      id: pkg?.bermooda?.slug ?? folder,
+    });
+    if (!engineCheck.ok) {
+      logger.error(
+        { folder, reason: engineCheck.reason },
+        'Skipping incompatible theme'
+      );
+      continue;
+    }
+
+    const runtime = mod.default ?? {};
+    const manifest = mergeExtensionPackage(pkg, runtime);
+    assertSlugMatchesFolder(manifest.slug, folder, 'theme');
+
+    if (seenSlugs.has(manifest.slug)) {
+      throw new Error(`Duplicate theme slug "${manifest.slug}"`);
+    }
+    seenSlugs.add(manifest.slug);
+    registerTheme(manifest);
+  }
 }
 
 // ---------------------------------------------------------------------------

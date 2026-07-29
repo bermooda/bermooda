@@ -18,11 +18,9 @@ import { emit, isHookAbort, off, on } from '#/core/events/index.server';
 import { isBeforeHookEvent } from '#/core/events/names';
 import { checkExtensionEngine, getAppVersion } from '#/core/extensions/engine';
 import {
-  LEGACY_PLUGIN_ID_MAP,
   SLUG_PATTERN,
   assertSlugMatchesFolder,
   mergeExtensionPackage,
-  normalizeLegacyIds,
 } from '#/core/extensions/package-meta';
 import { translate } from '#/core/i18n';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
@@ -260,8 +258,7 @@ export function getRegisteredPluginBySlug(slug) {
  */
 export async function getEnabledPluginIds() {
   const enabledRaw = await settingsGet('enabledPlugins');
-  const enabled = Array.isArray(enabledRaw) ? enabledRaw : [];
-  return normalizeLegacyIds(enabled, LEGACY_PLUGIN_ID_MAP);
+  return Array.isArray(enabledRaw) ? enabledRaw : [];
 }
 
 /**

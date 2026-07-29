@@ -72,15 +72,7 @@ vi.mock('#/core/search/index.server', () => ({
   registerProvider: vi.fn(),
   dbProvider: { name: 'Database' },
 }));
-vi.mock('#/core/themes/index.server', () => ({ registerTheme: vi.fn() }));
-vi.mock('#/themes/default/index', () => ({ default: { components: {} } }));
-vi.mock('#/themes/default/package.json', () => ({
-  default: {
-    name: '@bermooda/theme-default',
-    version: '0.1.0',
-    bermooda: { title: 'Default', slug: 'default', engine: '>=0.1.0' },
-  },
-}));
+vi.mock('#/core/themes/index.server', () => ({ discoverThemes: vi.fn() }));
 vi.mock('#/utils/logger.server', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
@@ -93,7 +85,7 @@ describe('bootstrap.server', () => {
   let registerTax;
   let registerSearch;
   let registerAddressValidation;
-  let registerTheme;
+  let discoverThemes;
   let registerPaymentEventHandlers;
   let registerAuditSubscribers;
   let registerBackInStockSubscribers;
@@ -129,7 +121,7 @@ describe('bootstrap.server', () => {
     registerShipping = shipping.registerProvider;
     registerTax = tax.registerProvider;
     registerSearch = search.registerProvider;
-    registerTheme = themes.registerTheme;
+    discoverThemes = themes.discoverThemes;
     registerPaymentEventHandlers = orders.registerPaymentEventHandlers;
     registerAuditSubscribers = audit.registerAuditSubscribers;
     registerBackInStockSubscribers = backInStock.registerBackInStockSubscribers;
@@ -184,9 +176,7 @@ describe('bootstrap.server', () => {
       'noop',
       expect.any(Object)
     );
-    expect(registerTheme).toHaveBeenCalledWith(
-      expect.objectContaining({ id: '@bermooda/theme-default' })
-    );
+    expect(discoverThemes).toHaveBeenCalledOnce();
     expect(registerPaymentEventHandlers).toHaveBeenCalledOnce();
     expect(registerAuditSubscribers).toHaveBeenCalledOnce();
     expect(registerBackInStockSubscribers).toHaveBeenCalledOnce();

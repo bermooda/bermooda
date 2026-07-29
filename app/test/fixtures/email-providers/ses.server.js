@@ -5,7 +5,7 @@ import {
   getPluginSettingValue,
 } from '#/core/plugins/settings.server';
 
-const PLUGIN_ID = '@bermooda/plugin-ses';
+const PLUGIN_ID = '@bermooda/plugin-aws-ses';
 
 /**
  * Built-in Amazon SES email provider adapter.

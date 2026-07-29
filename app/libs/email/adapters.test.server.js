@@ -43,9 +43,9 @@ vi.mock('#/core/plugins/settings.server', () => ({
   getPluginSettingValue,
 }));
 
-import { createResendEmailProvider } from '#/plugins/resend/provider/index.server';
-import { createSendGridEmailProvider } from '#/plugins/sendgrid/provider/index.server';
-import { createSesEmailProvider } from '#/plugins/ses/provider/index.server';
+import { createResendEmailProvider } from '#/test/fixtures/email-providers/resend.server';
+import { createSendGridEmailProvider } from '#/test/fixtures/email-providers/sendgrid.server';
+import { createSesEmailProvider } from '#/test/fixtures/email-providers/ses.server';
 
 const sampleMessage = {
   from: 'Shop <noreply@example.com>',

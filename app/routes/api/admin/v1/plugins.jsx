@@ -8,10 +8,6 @@ import {
   requireMethod,
 } from '#/libs/api/admin/index.server';
 import {
-  LEGACY_PLUGIN_ID_MAP,
-  normalizeLegacyIds,
-} from '#/core/extensions/package-meta';
-import {
   getRegisteredPlugin,
   listRegisteredPlugins,
   loadAllPluginSettings,
@@ -66,14 +62,10 @@ async function loadPluginsPayload() {
     get(SETTING_KEYS.ENABLED_PLUGINS),
     get(SETTING_KEYS.PLUGIN_ORDER),
   ]);
-  const enabledPlugins = normalizeLegacyIds(
-    Array.isArray(enabledPluginsRaw) ? enabledPluginsRaw : [],
-    LEGACY_PLUGIN_ID_MAP
-  );
-  const pluginOrder = normalizeLegacyIds(
-    Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [],
-    LEGACY_PLUGIN_ID_MAP
-  );
+  const enabledPlugins = Array.isArray(enabledPluginsRaw)
+    ? enabledPluginsRaw
+    : [];
+  const pluginOrder = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
   const plugins = [...allPlugins]
     .sort((a, b) => a.title.localeCompare(b.title))
     .map(serializePluginManifest);
