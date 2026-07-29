@@ -20,7 +20,7 @@ Stop shipping themes and plugins inside the bermooda app repo. First-party exten
 | CLI registration                   | Install onto disk + write `activeTheme` / `enabledPlugins` settings      |
 | Generated registry file            | No                                                                       |
 | Default email (interactive + `-y`) | Resend (`@bermooda/plugin-resend`)                                       |
-| Always-on install extras           | `@bermooda/theme-default`, `@bermooda/plugin-meilisearch`                       |
+| Always-on install extras           | `@bermooda/theme-default`, `@bermooda/plugin-meilisearch`                |
 | Removed (not extracted)            | `sample-analytics`, `fraud-guard`                                        |
 | Legacy id maps                     | Remove entirely (`LEGACY_*`, `normalizeLegacyIds`) — no production users |
 | Bundled slug maps                  | Remove (`BUNDLED_PLUGIN_SLUGS`, `BUNDLED_THEME_SLUGS`)                   |
@@ -28,13 +28,13 @@ Stop shipping themes and plugins inside the bermooda app repo. First-party exten
 
 ## Package inventory
 
-| GitHub repo                | npm package                 | `bermooda.slug` | Installs to                | Install behavior             |
-| -------------------------- | --------------------------- | --------------- | -------------------------- | ---------------------------- |
-| `bermooda/theme-default`   | `@bermooda/theme-default`   | `default`       | `app/themes/default/`      | Always install + activate    |
-| `bermooda/plugin-meilisearch` | `@bermooda/plugin-meilisearch` | `meilisearch` | `app/plugins/meilisearch/` | Always install + enable |
-| `bermooda/plugin-resend`   | `@bermooda/plugin-resend`   | `resend`        | `app/plugins/resend/`      | If chosen (default) + enable |
-| `bermooda/plugin-sendgrid` | `@bermooda/plugin-sendgrid` | `sendgrid`      | `app/plugins/sendgrid/`    | If chosen + enable           |
-| `bermooda/plugin-aws-ses`  | `@bermooda/plugin-aws-ses`  | `aws-ses`       | `app/plugins/aws-ses/`     | If chosen + enable           |
+| GitHub repo                   | npm package                    | `bermooda.slug` | Installs to                | Install behavior             |
+| ----------------------------- | ------------------------------ | --------------- | -------------------------- | ---------------------------- |
+| `bermooda/theme-default`      | `@bermooda/theme-default`      | `default`       | `app/themes/default/`      | Always install + activate    |
+| `bermooda/plugin-meilisearch` | `@bermooda/plugin-meilisearch` | `meilisearch`   | `app/plugins/meilisearch/` | Always install + enable      |
+| `bermooda/plugin-resend`      | `@bermooda/plugin-resend`      | `resend`        | `app/plugins/resend/`      | If chosen (default) + enable |
+| `bermooda/plugin-sendgrid`    | `@bermooda/plugin-sendgrid`    | `sendgrid`      | `app/plugins/sendgrid/`    | If chosen + enable           |
+| `bermooda/plugin-aws-ses`     | `@bermooda/plugin-aws-ses`     | `aws-ses`       | `app/plugins/aws-ses/`     | If chosen + enable           |
 
 Each package keeps the existing extension contract (`package.json` with `bermooda.{title,slug,engine,…}`, theme `index.js` / plugin `index.server.js`). Drop `private: true` so packages can publish. Folder name on disk equals `bermooda.slug`.
 
