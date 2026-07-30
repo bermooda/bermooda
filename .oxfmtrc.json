@@ -74,6 +74,7 @@
     ".github/**",
     ".react-router/**",
     "build/**",
-    "prisma/generated/**"
+    "prisma/generated/**",
+    "CHANGELOG.md"
   ]
 }
