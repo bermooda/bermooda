@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.2.0...bermooda-v0.3.0) (2026-07-31)
+
+
+### Features
+
+* **extensions:** install and bundle theme/plugin npm dependencies ([#159](https://github.com/bermooda/bermooda/issues/159)) ([eb8af6e](https://github.com/bermooda/bermooda/commit/eb8af6eae2cfcc6d737f675b29442547b1f9ff87))
+
 ## [0.2.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.1.0...bermooda-v0.2.0) (2026-07-30)
 
 
