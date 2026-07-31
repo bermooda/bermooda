@@ -5,6 +5,7 @@ import queue, { createThrottledJob, defineQueueJob } from '#/libs/queue.server';
 import { on } from '#/core/events/index.server';
 import {
   sendPasswordResetEmail,
+  sendStaffInviteEmail,
   sendTwoFactorOtpEmail,
   sendVerificationEmail,
   sendOrderConfirmationEmail,
@@ -89,6 +90,37 @@ export function queuePasswordResetEmail(email, name, resetUrl) {
     email,
     name,
     url: resetUrl,
+  });
+}
+
+const staffInviteEmailJob = defineQueueJob(queue, 'staff_invite_email', {
+  process: async (taskData) => {
+    await sendStaffInviteEmail({
+      email: taskData.email,
+      name: taskData.name,
+      inviteUrl: taskData.url,
+    });
+  },
+  onFailed: {
+    message: 'Staff invite email job failed',
+    source: 'emails/job.server staffInviteEmailJob',
+  },
+});
+
+/**
+ * Queues a staff invite email with a link to create a password.
+ *
+ * @param {string} email
+ * @param {string} name
+ * @param {string} inviteUrl
+ */
+export function queueStaffInviteEmail(email, name, inviteUrl) {
+  logger.info(`Queueing staff invite email to: ${email}`);
+
+  staffInviteEmailJob.add({
+    email,
+    name,
+    url: inviteUrl,
   });
 }
 

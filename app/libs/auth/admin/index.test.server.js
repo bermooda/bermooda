@@ -138,3 +138,53 @@ describe('auth isolation', () => {
     expect(customerAuth._cfg?.basePath).toBe('/account/auth');
   });
 });
+
+describe('sendAdminPasswordResetOrInvite', () => {
+  it('queues a staff invite when the user has no credential password', async () => {
+    const prisma = (await import('#/libs/prisma.server')).default;
+    const { queueStaffInviteEmail, queuePasswordResetEmail } =
+      await import('#/emails/job.server');
+    const { sendAdminPasswordResetOrInvite } =
+      await import('#/libs/auth/admin/index.server');
+
+    prisma.account.findFirst.mockResolvedValue(null);
+
+    const result = await sendAdminPasswordResetOrInvite({
+      user: { id: 'u1', email: 'staff@example.com', name: 'Staff' },
+      url: 'http://localhost:3000/admin/auth/reset-password/token',
+    });
+
+    expect(result).toBe('invite');
+    expect(queueStaffInviteEmail).toHaveBeenCalledWith(
+      'staff@example.com',
+      'Staff',
+      'http://localhost:3000/admin/auth/reset-password/token'
+    );
+    expect(queuePasswordResetEmail).not.toHaveBeenCalled();
+  });
+
+  it('queues a password reset when the user already has a password', async () => {
+    const prisma = (await import('#/libs/prisma.server')).default;
+    const { queueStaffInviteEmail, queuePasswordResetEmail } =
+      await import('#/emails/job.server');
+    const { sendAdminPasswordResetOrInvite } =
+      await import('#/libs/auth/admin/index.server');
+
+    prisma.account.findFirst.mockResolvedValue({ password: 'hashed' });
+    queueStaffInviteEmail.mockClear();
+    queuePasswordResetEmail.mockClear();
+
+    const result = await sendAdminPasswordResetOrInvite({
+      user: { id: 'u1', email: 'admin@example.com', name: 'Admin' },
+      url: 'http://localhost:3000/admin/auth/reset-password/token',
+    });
+
+    expect(result).toBe('reset');
+    expect(queuePasswordResetEmail).toHaveBeenCalledWith(
+      'admin@example.com',
+      'Admin',
+      'http://localhost:3000/admin/auth/reset-password/token'
+    );
+    expect(queueStaffInviteEmail).not.toHaveBeenCalled();
+  });
+});

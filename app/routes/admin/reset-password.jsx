@@ -107,8 +107,8 @@ export default function AdminResetPasswordRoute() {
 
   if (actionData?.success) {
     return (
-      <AuthLayout title="Password Reset Successful">
-        <SuccessAlert message="Your password has been successfully reset. You can now log in with your new password." />
+      <AuthLayout title="Password set">
+        <SuccessAlert message="Your password has been saved. You can now log in with your new password." />
         <div className="mt-6 text-center">
           <Link
             to="/admin/login"
@@ -144,8 +144,8 @@ export default function AdminResetPasswordRoute() {
 
   return (
     <AuthLayout
-      title="Set new admin password"
-      subtitle="Enter your new password below."
+      title="Set your admin password"
+      subtitle="Choose a password to access the admin back office."
     >
       <Form method="post" onSubmit={handleSubmit}>
         <input type="hidden" name="token" value={token} />
@@ -155,7 +155,7 @@ export default function AdminResetPasswordRoute() {
               htmlFor="password"
               className="text-text block text-sm leading-6 font-medium"
             >
-              New Password
+              Password
             </label>
             <div className="mt-2">
               <input
@@ -198,7 +198,7 @@ export default function AdminResetPasswordRoute() {
         </div>
 
         <div className="mt-6">
-          <ButtonSubmit className="w-full">Reset Password</ButtonSubmit>
+          <ButtonSubmit className="w-full">Save password</ButtonSubmit>
         </div>
       </Form>
     </AuthLayout>

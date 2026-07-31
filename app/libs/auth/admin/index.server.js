@@ -21,10 +21,33 @@ import { getBetterAuthProvider } from '#/libs/prisma/provider/index.server';
 import { enforceRateLimit } from '#/libs/rate-limit.server';
 import {
   queuePasswordResetEmail,
+  queueStaffInviteEmail,
   queueTwoFactorOtp,
 } from '#/emails/job.server';
 
 const ADMIN_AUTH_BASE_URL = config.baseUrl + config.auth.adminBasePath;
+
+/**
+ * Queue either a staff invite (set-password) or password-reset email.
+ * Invited staff have no credential password yet.
+ *
+ * @param {{ user: { id: string, email: string, name?: string|null }, url: string }} args
+ * @returns {Promise<'invite' | 'reset'>}
+ */
+export async function sendAdminPasswordResetOrInvite({ user, url }) {
+  const account = await prisma.account.findFirst({
+    where: { userId: user.id, providerId: 'credential' },
+    select: { password: true },
+  });
+
+  if (!account?.password) {
+    queueStaffInviteEmail(user.email, user.name, url);
+    return 'invite';
+  }
+
+  queuePasswordResetEmail(user.email, user.name, url);
+  return 'reset';
+}
 
 /**
  * Admin Better Auth instance
@@ -46,9 +69,7 @@ export const adminAuth = betterAuth({
   trustedOrigins: getTrustedOrigins(),
 
   emailAndPassword: createEmailPasswordConfig({
-    sendResetPassword({ user, url }) {
-      queuePasswordResetEmail(user.email, user.name, url);
-    },
+    sendResetPassword: sendAdminPasswordResetOrInvite,
   }),
 
   emailVerification: createEmailVerificationConfig({

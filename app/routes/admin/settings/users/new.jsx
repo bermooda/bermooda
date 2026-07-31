@@ -21,11 +21,11 @@ export async function action({ request }) {
   try {
     await requirePermission(session.user, SETTINGS_MANAGE_PERMISSION);
     const formData = await request.formData();
-    const { temporaryPassword } = await createAdminStaffUser({
+    await createAdminStaffUser({
       email: formData.get('email'),
       name: formData.get('name'),
     });
-    return { ok: true, temporaryPassword };
+    return { ok: true };
   } catch (err) {
     if (err.code === 'FORBIDDEN') {
       return { error: 'Forbidden' };
@@ -58,11 +58,8 @@ export default function AdminNewAdminUserRoute() {
       {created && (
         <div className="bg-success/10 border-success/30 mb-6 rounded-md border p-4">
           <p className="text-success text-sm">
-            User created. Temporary password:{' '}
-            <code className="font-mono font-bold">
-              {actionData.temporaryPassword}
-            </code>{' '}
-            — ask them to change it on first login.
+            Invitation sent. They will receive an email with a link to create
+            their password.
           </p>
         </div>
       )}
@@ -73,7 +70,7 @@ export default function AdminNewAdminUserRoute() {
         <Card>
           <CardHeader
             title="User details"
-            description="A temporary password will be assigned automatically."
+            description="An invite email with a password setup link will be sent automatically."
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Email *" htmlFor="admin-email">
@@ -108,7 +105,7 @@ export default function AdminNewAdminUserRoute() {
             </Link>
             {!created && (
               <ButtonSubmit disabled={isSaving}>
-                {isSaving ? 'Creating…' : 'Create user'}
+                {isSaving ? 'Sending invite…' : 'Send invite'}
               </ButtonSubmit>
             )}
           </div>

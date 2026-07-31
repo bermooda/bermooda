@@ -14,6 +14,7 @@ import OrderShippedEmail from '#/emails/shop/order-shipped';
 import PasswordResetAdminEmail from '#/emails/shop/password-reset-admin';
 import PasswordResetCustomerEmail from '#/emails/shop/password-reset-customer';
 import ReturnReceivedEmail from '#/emails/shop/return-received';
+import StaffInviteEmail from '#/emails/shop/staff-invite';
 import ResetPasswordTemplate from '#/emails/templates/reset-password.server';
 import TwoFactorOtpTemplate from '#/emails/templates/two-factor-otp.server';
 import VerifyEmailTemplate from '#/emails/templates/verify-email.server';
@@ -80,6 +81,7 @@ const SUBJECT_ORDER_REFUNDED = 'Refund processed';
 const SUBJECT_RETURN_RECEIVED = 'Return received';
 const SUBJECT_PASSWORD_RESET_ADMIN = 'Reset your admin password';
 const SUBJECT_PASSWORD_RESET_CUSTOMER = 'Reset your password';
+const SUBJECT_STAFF_INVITE = `You've been invited to ${PLATFORM_NAME} admin`;
 const SUBJECT_CUSTOMER_WELCOME_PREFIX = 'Welcome to';
 const SUBJECT_ABANDONED_CART = 'You left something behind';
 const SUBJECT_BACK_IN_STOCK = 'An item is back in stock';
@@ -354,6 +356,37 @@ export async function sendPasswordResetAdminEmail({
     });
   } catch (error) {
     logger.error(error, 'Failed to send admin password reset email');
+    throw error;
+  }
+}
+
+/**
+ * Sends an invite email so a new staff member can create their password.
+ *
+ * @param {Object} options
+ * @param {string} options.email
+ * @param {string} [options.locale]
+ * @param {string} options.name
+ * @param {string} options.inviteUrl
+ * @returns {Promise<{ success: true, data: unknown }>}
+ */
+export async function sendStaffInviteEmail({
+  email,
+  locale = 'en',
+  name,
+  inviteUrl,
+}) {
+  try {
+    return await deliver({
+      to: email,
+      subject: SUBJECT_STAFF_INVITE,
+      react: (
+        <StaffInviteEmail locale={locale} name={name} inviteUrl={inviteUrl} />
+      ),
+      logMessage: 'Staff invite email sent successfully',
+    });
+  } catch (error) {
+    logger.error(error, 'Failed to send staff invite email');
     throw error;
   }
 }

@@ -1,9 +1,9 @@
 // app/core/rbac/index.server.js
 // Granular role-based access control for admin users and API keys.
 
-import bcrypt from 'bcryptjs';
-
+import config from '#/core/config';
 import { isValidEmail, normalizeEmail } from '#/utils/email';
+import { adminAuth } from '#/libs/auth/admin/index.server';
 import prisma from '#/libs/prisma.server';
 import { DEFAULT_MAX_LIST_RESULTS } from '#/libs/prisma/pagination/index.server';
 import {
@@ -22,7 +22,6 @@ export {
 /** @typedef {'read' | 'write' | 'delete' | 'manage'} PermissionAction */
 
 const CACHE_TTL_MS = 60_000;
-const STAFF_TEMP_PASSWORD = 'ChangeMe123!';
 
 let _permissionCache = null;
 let _cacheLoadedAt = 0;
@@ -224,10 +223,13 @@ export function parseCreateAdminUserInput(input = {}) {
 }
 
 /**
- * Create a new staff admin user with a temporary password.
+ * Create a new staff admin user and email a link to set their password.
+ *
+ * Uses better-auth's password-reset flow so the invitee creates their own
+ * password (no temporary credential is assigned).
  *
  * @param {{ email: string, name?: string|null }} input
- * @returns {Promise<{ user: object, temporaryPassword: string }>}
+ * @returns {Promise<{ user: object, inviteEmailSent: boolean }>}
  */
 export async function createAdminStaffUser(input) {
   const { email, name } = parseCreateAdminUserInput(input);
@@ -239,13 +241,13 @@ export async function createAdminStaffUser(input) {
     });
   }
 
-  const hashedPassword = await bcrypt.hash(STAFF_TEMP_PASSWORD, 10);
   const user = await prisma.user.create({
     data: {
       email,
       name: name || email,
       role: 'staff',
-      emailVerified: false,
+      // Admin-issued invite proves mailbox ownership for sign-in.
+      emailVerified: true,
     },
     select: {
       id: true,
@@ -257,18 +259,16 @@ export async function createAdminStaffUser(input) {
     },
   });
 
-  await prisma.account.create({
-    data: {
-      accountId: user.id,
-      providerId: 'credential',
-      userId: user.id,
-      password: hashedPassword,
+  await adminAuth.api.requestPasswordReset({
+    body: {
+      email,
+      redirectTo: `${config.baseUrl}/admin/reset-password`,
     },
   });
 
   return {
     user: serializeAdminUser(user),
-    temporaryPassword: STAFF_TEMP_PASSWORD,
+    inviteEmailSent: true,
   };
 }
 
