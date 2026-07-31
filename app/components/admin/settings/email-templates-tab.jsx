@@ -12,6 +12,12 @@ const EMAIL_TEMPLATES = [
     description: 'Sent to admin users when they request a password reset.',
   },
   {
+    key: 'staff-invite',
+    name: 'Staff Invite',
+    description:
+      'Sent when an admin invites a new staff member to create their password.',
+  },
+  {
     key: 'password-reset-customer',
     name: 'Password Reset (Customer)',
     description: 'Sent to customers when they request a password reset.',

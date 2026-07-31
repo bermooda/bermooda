@@ -17,10 +17,26 @@ vi.mock('#/libs/prisma.server', () => ({
     },
     account: {
       create: vi.fn(),
+      findFirst: vi.fn(),
     },
   },
 }));
 
+vi.mock('#/libs/auth/admin/index.server', () => ({
+  adminAuth: {
+    api: {
+      requestPasswordReset: vi.fn(),
+    },
+  },
+}));
+
+vi.mock('#/core/config', () => ({
+  default: {
+    baseUrl: 'http://localhost:3000',
+  },
+}));
+
+import { adminAuth } from '#/libs/auth/admin/index.server';
 import prisma from '#/libs/prisma.server';
 import {
   __resetPermissionCache,
@@ -127,15 +143,22 @@ describe('rbac', () => {
       name: 'staff@example.com',
       role: 'staff',
       createdAt: new Date('2026-01-02T00:00:00.000Z'),
-      emailVerified: false,
+      emailVerified: true,
     });
-    prisma.account.create.mockResolvedValue({});
+    adminAuth.api.requestPasswordReset.mockResolvedValue({ status: true });
 
     const result = await createAdminStaffUser({ email: 'staff@example.com' });
 
-    expect(result.temporaryPassword).toBe('ChangeMe123!');
+    expect(result.inviteEmailSent).toBe(true);
     expect(result.user.role).toBe('staff');
-    expect(prisma.account.create).toHaveBeenCalledOnce();
+    expect(result.user.emailVerified).toBe(true);
+    expect(prisma.account.create).not.toHaveBeenCalled();
+    expect(adminAuth.api.requestPasswordReset).toHaveBeenCalledWith({
+      body: {
+        email: 'staff@example.com',
+        redirectTo: 'http://localhost:3000/admin/reset-password',
+      },
+    });
   });
 
   it('updateAdminUserRole returns 404 when user missing', async () => {

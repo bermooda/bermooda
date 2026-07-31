@@ -47,6 +47,7 @@ vi.mock('#/libs/prisma.server', () => ({
   default: {
     user: { findFirst: vi.fn() },
     session: { findFirst: vi.fn() },
+    account: { findFirst: vi.fn() },
   },
 }));
 
@@ -73,6 +74,7 @@ vi.mock('#/utils/logger.server', () => ({
 
 vi.mock('#/emails/job.server', () => ({
   queuePasswordResetEmail: vi.fn(),
+  queueStaffInviteEmail: vi.fn(),
   queueTwoFactorOtp: vi.fn(),
   queueVerifyEmail: vi.fn(),
   queueCustomerWelcomeEmail: vi.fn(),
