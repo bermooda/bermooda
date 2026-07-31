@@ -45,7 +45,7 @@ The install script is idempotent and safe to run repeatedly. To reset the local 
 npm run extensions:install
 ```
 
-This copies `@bermooda/theme-default` (from `../theme-default`), `@bermooda/plugin-meilisearch` (from `../plugin-meilisearch`), and `@bermooda/plugin-resend` (from `../plugin-resend`) into `app/themes/` and `app/plugins/`, then writes `activeTheme` / `enabledPlugins` settings if `DATABASE_URL` is available. Re-run after pulling new extension code from sibling repos.
+This copies `@bermooda/theme-default` (from `../theme-default`), `@bermooda/plugin-meilisearch` (from `../plugin-meilisearch`), and `@bermooda/plugin-resend` (from `../plugin-resend`) into `app/themes/` and `app/plugins/`, installs each package's own npm dependencies into that folder's `node_modules`, then writes `activeTheme` / `enabledPlugins` settings if `DATABASE_URL` is available. Re-run after pulling new extension code from sibling repos. To only (re)install nested deps for extensions already on disk: `npm run extensions:install-deps`.
 
 **Architecture layers:**
 
@@ -79,6 +79,7 @@ A `.env` file must exist in the repo root (see `.env.example`). Placeholder valu
 | Install deps           | `npm install`                             |
 | Prisma setup           | `npm run setup` (generate + migrate)      |
 | Install extensions     | `npm run extensions:install`              |
+| Install extension deps | `npm run extensions:install-deps`         |
 | Dev server             | `npx react-router dev --host`             |
 | Lint                   | `npm run lint` (oxlint + oxfmt --check)   |
 | Format                 | `npm run fmt`                             |
@@ -97,5 +98,5 @@ A `.env` file must exist in the repo root (see `.env.example`). Placeholder valu
 - Inside `app/themes/<slug>/` and `app/plugins/<slug>/`, use relative imports for sibling modules; keep `#/…` for core app modules. Oxlint enforces this via `no-restricted-imports` overrides.
 - **Alerting:** use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting/index.server` for production errors and ops notifications; route handlers use `handleError` from `#/libs/error/index.server`. Default provider is Telegram (`ERROR_ALERT_PROVIDER=telegram`). Do not call `sendTelegramError` / `sendTelegramMessage` in new code. See [.cursor/rules/alerting.mdc](.cursor/rules/alerting.mdc).
 - **Emails:** shop transactional templates in `app/emails/shop/`; auth templates in `app/emails/templates/`. Email transports are external plugins (`@bermooda/plugin-resend`, `@bermooda/plugin-sendgrid`, `@bermooda/plugin-aws-ses`) activated under Admin → Plugins — see [.cursor/rules/email-providers.mdc](.cursor/rules/email-providers.mdc).
-- **Extensions:** `app/themes/` and `app/plugins/` are empty in the repo and gitignored. Run `npm run extensions:install` to populate them from sibling checkouts or npm.
+- **Extensions:** `app/themes/` and `app/plugins/` are empty in the repo and gitignored. Run `npm run extensions:install` to populate them from sibling checkouts or npm (also installs each extension's `package.json` dependencies into that folder). `npm run build` runs `prebuild` → `extensions:install-deps` so nested deps exist for Vite; extension runtime deps are listed in `ssr.noExternal` and bundled into the server build.
 - **Locale:** storefront locale is cookie-driven, not in URL paths.

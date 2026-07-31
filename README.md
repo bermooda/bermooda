@@ -109,15 +109,17 @@ App: [http://localhost:3000](http://localhost:3000)
 
 ### Common scripts
 
-| Task             | Command                                   |
-| ---------------- | ----------------------------------------- |
-| Setup DB         | `npm run setup`                           |
-| Seed demo data   | `npm run seed`                            |
-| Tests            | `npm run test`                            |
-| Lint             | `npm run lint`                            |
-| Format           | `npm run fmt`                             |
-| Production build | `npm run build`                           |
-| New migration    | `npm run prisma:migrate -- --name <name>` |
+| Task                           | Command                                   |
+| ------------------------------ | ----------------------------------------- |
+| Setup DB                       | `npm run setup`                           |
+| Seed demo data                 | `npm run seed`                            |
+| Install default themes/plugins | `npm run extensions:install`              |
+| Install extension deps         | `npm run extensions:install-deps`         |
+| Tests                          | `npm run test`                            |
+| Lint                           | `npm run lint`                            |
+| Format                         | `npm run fmt`                             |
+| Production build               | `npm run build`                           |
+| New migration                  | `npm run prisma:migrate -- --name <name>` |
 
 Reset local SQLite: delete `prisma/dev.db` and re-run `npm run setup`.
 

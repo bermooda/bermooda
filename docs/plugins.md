@@ -915,3 +915,12 @@ app/plugins/
 All files except `package.json` and `index.server.js` are optional. Only create the ones your plugin needs.
 
 The `index.server.js` file is the runtime module imported at startup. It must export `pluginManifest` as a named export and as the default export. The plugin folder name must equal `bermooda.slug`; route modules are discovered from folders, not from `adminRoutes` or `storefrontRoutes` metadata.
+
+## Plugin npm dependencies
+
+Plugins may declare their own packages in `package.json` `dependencies` / `optionalDependencies`. The bermooda CLI installs those into `app/plugins/<slug>/node_modules` on `plugin add`. Contributors get the same via `npm run extensions:install` (or `npm run extensions:install-deps`).
+
+- Prefer `peerDependencies` for shared shop libraries (`react`, `react-dom`, `react-router`, etc.) so they resolve from the shop root.
+- `npm run build` runs `prebuild` → `extensions:install-deps` so nested `node_modules` exist before Vite resolves imports.
+- Vite sets `ssr.noExternal` to the union of extension runtime dependency names so those packages are bundled into `build/server` (production images do not need nested extension `node_modules` at runtime).
+- Native addons that cannot be bundled should be shop-root dependencies (or peers installed at the shop root), not extension-only nested installs.

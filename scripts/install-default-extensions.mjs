@@ -6,6 +6,12 @@
  * into app/themes/ and app/plugins/. Falls back to `npm pack` / npm tarball
  * install when the sibling directory is absent.
  *
+ * Sibling copies exclude `node_modules` (so contributor checkouts stay lean);
+ * after copy, this script runs `install-extension-deps` so each extension's
+ * own package.json dependencies are installed into that folder's
+ * `node_modules` for Vite resolution/bundling. The bermooda CLI performs the
+ * same per-extension `npm install` on `theme add` / `plugin add`.
+ *
  * Sibling layout (relative to bermooda repo root):
  *   ../theme-default   → app/themes/default/   (slug: default)
  *   ../plugin-meilisearch → app/plugins/meilisearch/
@@ -27,6 +33,8 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { cpSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { installAllExtensionDeps } from './install-extension-deps.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
@@ -183,6 +191,8 @@ async function main() {
   console.log(
     'extensions:install  Extensions copied to app/themes and app/plugins.'
   );
+  console.log('extensions:install  Installing per-extension npm dependencies…');
+  installAllExtensionDeps(APP_DIR, { omitDev: false });
   await setExtensionsInDb();
   console.log('extensions:install  Done.');
 }
