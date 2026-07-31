@@ -11,6 +11,7 @@
   },
   "scripts": {
     "build": "react-router build",
+    "prebuild": "node scripts/install-extension-deps.mjs --omit=dev",
     "dev": "op run --env-file=.env -- react-router dev --host",
     "start": "react-router-serve ./build/server/index.js",
     "docker:build": "docker build -t bermooda .",
@@ -28,7 +29,8 @@
     "seed": "node --experimental-strip-types prisma/seed.js",
     "cli:bootstrap": "node scripts/cli-bootstrap.mjs",
     "cli:set-extensions": "node --experimental-strip-types scripts/cli-set-extensions.mjs",
-    "extensions:install": "node scripts/install-default-extensions.mjs"
+    "extensions:install": "node scripts/install-default-extensions.mjs",
+    "extensions:install-deps": "node scripts/install-extension-deps.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.1096.0",

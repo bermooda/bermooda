@@ -11,6 +11,11 @@ WORKDIR /app
 RUN npm ci --omit=dev
 
 # Build environment
+# Themes/plugins under app/themes and app/plugins (when present in the build
+# context) keep their own package.json dependencies. `prebuild` runs
+# `install-extension-deps` so nested node_modules exist for Vite resolution;
+# vite.config.js lists those deps in ssr.noExternal so they are bundled into
+# build/server and do not need nested node_modules at runtime.
 FROM node:24-alpine AS build-env
 COPY . /app/
 COPY --from=development-dependencies-env /app/node_modules /app/node_modules
