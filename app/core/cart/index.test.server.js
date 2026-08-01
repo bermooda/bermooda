@@ -131,6 +131,31 @@ describe('createCart', () => {
       })
     );
   });
+
+  it('persists salesChannelId', async () => {
+    prisma.cart.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 'cart_1', ...data })
+    );
+
+    await createCart({ currency: 'USD', salesChannelId: 'ch_1' });
+
+    expect(prisma.cart.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ salesChannelId: 'ch_1' }),
+    });
+  });
+
+  it('emits salesChannelId on cart.created', async () => {
+    prisma.cart.create.mockImplementation(({ data }) =>
+      Promise.resolve({ id: 'cart_1', ...data })
+    );
+
+    await createCart({ currency: 'USD', salesChannelId: 'ch_1' });
+
+    expect(emit).toHaveBeenCalledWith(
+      'cart.created',
+      expect.objectContaining({ salesChannelId: 'ch_1' })
+    );
+  });
 });
 
 describe('deleteCart', () => {

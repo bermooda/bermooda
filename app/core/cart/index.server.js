@@ -64,12 +64,28 @@ async function mergeLineIntoCart(cartId, guestLine, existingLines) {
 // createCart
 // ---------------------------------------------------------------------------
 
-export async function createCart({ currency = 'USD', customerId } = {}) {
+/**
+ * Create a new cart with a UUID token and ~30-day expiry.
+ *
+ * @param {{ currency?: string, customerId?: string, salesChannelId?: string }} [options]
+ * @returns {Promise<object>} created Cart
+ */
+export async function createCart({
+  currency = 'USD',
+  customerId,
+  salesChannelId,
+} = {}) {
   const token = randomUUID();
   const expiresAt = new Date(Date.now() + CART_EXPIRY_MS);
 
   const cart = await prisma.cart.create({
-    data: { token, currency, customerId, expiresAt },
+    data: {
+      token,
+      currency,
+      customerId,
+      expiresAt,
+      salesChannelId: salesChannelId ?? null,
+    },
   });
 
   await emit('cart.created', {
@@ -77,6 +93,7 @@ export async function createCart({ currency = 'USD', customerId } = {}) {
     token: cart.token,
     currency: cart.currency,
     customerId: cart.customerId,
+    salesChannelId: cart.salesChannelId,
     expiresAt: cart.expiresAt,
   });
 

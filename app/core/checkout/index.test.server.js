@@ -351,6 +351,7 @@ describe('createCheckoutSession', () => {
       id: 'sess_started',
       customerId: 'cust_1',
       email: 'checkout@example.com',
+      salesChannelId: null,
     });
     lockCart.mockResolvedValue({});
     prisma.checkoutSession.create.mockResolvedValue(session);
@@ -365,6 +366,33 @@ describe('createCheckoutSession', () => {
       cartId: 'cart_1',
       customerId: 'cust_1',
       email: 'checkout@example.com',
+      salesChannelId: null,
+    });
+  });
+
+  it('copies salesChannelId from cart when omitted', async () => {
+    lockCart.mockResolvedValue({ id: 'cart_1', salesChannelId: 'ch_1' });
+    prisma.checkoutSession.create.mockResolvedValue(
+      makeSession({ salesChannelId: 'ch_1' })
+    );
+
+    await createCheckoutSession('cart_1');
+
+    expect(prisma.checkoutSession.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ salesChannelId: 'ch_1' }),
+    });
+  });
+
+  it('uses explicit salesChannelId over cart channel', async () => {
+    lockCart.mockResolvedValue({ id: 'cart_1', salesChannelId: 'ch_cart' });
+    prisma.checkoutSession.create.mockResolvedValue(
+      makeSession({ salesChannelId: 'ch_override' })
+    );
+
+    await createCheckoutSession('cart_1', { salesChannelId: 'ch_override' });
+
+    expect(prisma.checkoutSession.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ salesChannelId: 'ch_override' }),
     });
   });
 });

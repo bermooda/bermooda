@@ -46,9 +46,11 @@ export async function loader({ request }) {
   let session = sessionId ? await getCheckoutSession(sessionId) : null;
 
   if (!session) {
+    // Channel is copied from the cart by createCheckoutSession when omitted.
     session = await createCheckoutSession(cart.id, {
       customerId: customerId ?? cart.customerId ?? undefined,
       email: customerAuth?.user?.email ?? undefined,
+      salesChannelId: cart.salesChannelId ?? undefined,
     });
     sessionId = session.id;
   } else if (customerId && !session.customerId) {
