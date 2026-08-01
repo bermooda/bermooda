@@ -2,8 +2,8 @@
 
 import { Outlet } from 'react-router';
 
-import { adminApiAuditMiddleware } from '#/libs/auth/api/audit.server';
-import { adminApiKeyMiddleware } from '#/libs/auth/api/index.server';
+import { adminApiAuditMiddleware } from '#/core/api-keys/audit-middleware.server';
+import { adminApiKeyMiddleware } from '#/core/api-keys/middleware.server';
 import { rateLimitMiddleware } from '#/libs/rate-limit.server';
 
 export const middleware = [

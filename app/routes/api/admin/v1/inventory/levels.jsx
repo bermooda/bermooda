@@ -6,7 +6,7 @@ import {
   parseJsonBody,
   requireMethod,
 } from '#/libs/api/admin/index.server';
-import { requireAdminApiScope } from '#/libs/auth/api/index.server';
+import { requireAdminApiScope } from '#/core/api-keys/middleware.server';
 import { setInventoryLevelQuantity } from '#/core/inventory/index.server';
 
 const mapInventoryError = createDomainErrorMapper({

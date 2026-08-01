@@ -1,5 +1,4 @@
-// app/libs/auth/api/index.server.js
-// API key authentication for REST API route handlers.
+// Admin API key middleware for REST API route handlers.
 
 import { createContext } from 'react-router';
 
