@@ -7,7 +7,7 @@ import {
   PLATFORM_NAME,
   resolveBaseUrl,
   resolveDevPort,
-} from '#/core/config';
+} from '#/libs/config';
 
 describe('resolveDevPort', () => {
   it('defaults to 3000 when PORT is unset', () => {

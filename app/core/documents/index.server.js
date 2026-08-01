@@ -3,7 +3,7 @@
 
 import PDFDocument from 'pdfkit';
 
-import { PLATFORM_NAME } from '#/core/config';
+import { PLATFORM_NAME } from '#/libs/config';
 import prisma from '#/libs/prisma.server';
 import { get as settingsGet, SETTING_KEYS } from '#/core/settings/index.server';
 

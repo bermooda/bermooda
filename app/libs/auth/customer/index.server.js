@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { createContext, redirect } from 'react-router';
 
-import config, { PLATFORM_NAME } from '#/core/config';
+import config, { PLATFORM_NAME } from '#/libs/config';
 import logger from '#/utils/logger.server';
 import {
   buildAuthAdvancedConfig,

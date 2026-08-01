@@ -30,7 +30,7 @@ vi.mock('#/libs/auth/admin/index.server', () => ({
   },
 }));
 
-vi.mock('#/core/config', () => ({
+vi.mock('#/libs/config', () => ({
   default: {
     baseUrl: 'http://localhost:3000',
   },

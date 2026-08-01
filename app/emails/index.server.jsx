@@ -1,6 +1,6 @@
 import { render } from '@react-email/render';
 
-import config, { PLATFORM_NAME } from '#/core/config';
+import config, { PLATFORM_NAME } from '#/libs/config';
 import logger from '#/utils/logger.server';
 import { sendEmail } from '#/libs/email/index.server';
 import { get as settingsGet, SETTING_KEYS } from '#/core/settings/index.server';

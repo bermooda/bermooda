@@ -10,7 +10,7 @@ vi.mock('#/libs/prisma.server', () => ({
   },
 }));
 
-vi.mock('#/core/config', () => ({
+vi.mock('#/libs/config', () => ({
   PLATFORM_NAME: 'bermooda',
   default: {},
 }));

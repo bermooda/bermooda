@@ -1,12 +1,12 @@
-// app/core/config/index.js
+// app/libs/config/index.js
 // Runtime app config derived from root bermooda.config.js at module load.
 // Other packages import this module — not #bermooda.config directly.
 
 import rootConfig from '#bermooda.config';
 
-import { resolveDevPort } from '#/core/config/port';
+import { resolveDevPort } from '#/libs/config/port';
 
-export { DEFAULT_DEV_PORT, resolveDevPort } from '#/core/config/port';
+export { DEFAULT_DEV_PORT, resolveDevPort } from '#/libs/config/port';
 
 /** Hardcoded platform brand for admin chrome and auth product naming. */
 export const PLATFORM_NAME = 'bermooda';

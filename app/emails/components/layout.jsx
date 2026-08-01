@@ -6,7 +6,7 @@ import {
   Tailwind,
 } from '@react-email/components';
 
-import { PLATFORM_NAME } from '#/core/config';
+import { PLATFORM_NAME } from '#/libs/config';
 import EmailFooter from '#/emails/components/footer';
 import EmailHead from '#/emails/components/head';
 import EmailLogo from '#/emails/components/logo';

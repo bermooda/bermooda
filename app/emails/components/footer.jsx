@@ -1,6 +1,6 @@
 import { Text } from '@react-email/components';
 
-import { PLATFORM_NAME } from '#/core/config';
+import { PLATFORM_NAME } from '#/libs/config';
 
 /**
  * Email template for footer

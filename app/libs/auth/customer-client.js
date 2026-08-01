@@ -1,6 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
 
-import config from '#/core/config';
+import config from '#/libs/config';
 import { getAuthClientBaseUrl } from '#/libs/auth/client-base';
 
 export const customerAuthClient = createAuthClient({
