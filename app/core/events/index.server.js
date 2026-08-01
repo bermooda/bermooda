@@ -1,11 +1,14 @@
 // app/core/events/index.server.js
-// In-process domain event bus. No external broker required.
+// Domain event bus: before-hooks run in-process; post-hooks are queued.
 
 import logger from '#/utils/logger.server';
 import { beforeHookKey } from '#/core/events/names';
 
 /** @type {Map<string, Function[]>} */
 const handlers = new Map();
+
+/** @type {null | ((event: string, payload: unknown) => void)} */
+let eventJobEnqueuer = null;
 
 /**
  * Distinguished veto error. Not an operational error — a business decision.
@@ -82,6 +85,16 @@ export function off(event, handler) {
   } else {
     handlers.set(event, updated);
   }
+}
+
+/**
+ * Set the function used to enqueue post-commit domain events.
+ *
+ * @param {typeof eventJobEnqueuer} fn
+ * @returns {void}
+ */
+export function setEventJobEnqueuer(fn) {
+  eventJobEnqueuer = fn;
 }
 
 /**
@@ -167,16 +180,16 @@ export async function emitBefore(event, payload) {
 }
 
 /**
- * Dispatch payload to all registered handlers for an event.
+ * Run post-hook handlers for an event.
  *
  * Fire-and-forget: returns immediately. Handlers run in parallel in the
  * background. Errors are logged per handler; remaining handlers still run.
  *
- * @param {string} event - The event name
- * @param {*} payload - The event payload
+ * @param {string} event
+ * @param {unknown} payload
  * @returns {void}
  */
-export function emit(event, payload) {
+export function dispatchHandlers(event, payload) {
   const eventHandlers = handlers.get(event) ?? [];
 
   for (const handler of eventHandlers) {
@@ -189,6 +202,25 @@ export function emit(event, payload) {
         );
       });
   }
+}
+
+/**
+ * Persist a domain event for async handler dispatch.
+ *
+ * @param {string} event
+ * @param {unknown} payload
+ * @returns {void}
+ */
+export function emit(event, payload) {
+  if (!eventJobEnqueuer) {
+    logger.warn(
+      { event },
+      'emit called before event job enqueuer was set — dropping event'
+    );
+    return;
+  }
+
+  eventJobEnqueuer(event, payload);
 }
 
 // Exported for introspection / testing only.
