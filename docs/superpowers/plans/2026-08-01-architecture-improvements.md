@@ -23,29 +23,29 @@
 
 ## File map
 
-| Path | Responsibility |
-| ---- | -------------- |
-| `app/libs/config/index.js` | Moved runtime config (`createConfig`, `PLATFORM_NAME`, `DEFAULT_AUTH`) |
-| `app/libs/config/port.js` | Moved `resolveDevPort` / `DEFAULT_DEV_PORT` |
-| `app/core/config/*` | Temporary re-exports, then deleted |
-| `app/libs/auth/customer/index.server.js` | `setOnCustomerRegistered` injection; no `#/core/events` import |
-| `app/core/bootstrap/index.server.js` | Wire customer-registered emit + import events job |
-| `app/core/api-keys/middleware.server.js` | Moved admin API-key middleware from `libs/auth/api` |
-| `app/core/api-keys/audit.server.js` | Moved API-key audit helper (or keep calling `#/core/audit` from middleware) |
-| `app/core/storefront/page-context.server.js` | `loadStorefrontPageContext`, `parseReturnTo` (from `libs/api/storefront`) |
-| `app/libs/api/{public,admin,admin-ui,webhooks}` | Pure HTTP helpers only (no core imports) |
-| `.oxlintrc.json` | Restrict `#/core/**` imports from `app/libs/**` |
-| `app/core/events/index.server.js` | `setEventJobEnqueuer`, sync `dispatchHandlers`, queued `emit` |
-| `app/core/events/job.server.js` | LiteQuu `domain_event` job + `queueDomainEvent` |
-| `app/core/cart/index.server.js` | Persist `salesChannelId` on create |
-| `app/core/checkout/pipeline.server.js` | Copy channel from cart onto checkout session |
-| Storefront cart/checkout + public cart API routes | Pass channel from request |
-| `app/core/orders/{place,fulfillment,refunds,admin,payment-handlers,index}.server.js` | Split orders mega-module |
-| `app/core/plugins/{registry,lifecycle,providers,blocks,ctx,index}.server.js` | Split plugins mega-module + provider table |
-| `app/core/plugins/routes/index.js` | Param/splat-aware matching |
-| `app/routes/{storefront/apps,admin/plugins}/$pluginId.jsx` | Export `action`; call plugin `action` |
-| `docs/{plugins,before-hooks-plan,postgres,oss-competitor-roadmap_*}.md` | Doc honesty pass |
-| `.cursor/rules/libs-core.mdc` / `CLAUDE.md` | Document config location + event queue |
+| Path                                                                                 | Responsibility                                                              |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `app/libs/config/index.js`                                                           | Moved runtime config (`createConfig`, `PLATFORM_NAME`, `DEFAULT_AUTH`)      |
+| `app/libs/config/port.js`                                                            | Moved `resolveDevPort` / `DEFAULT_DEV_PORT`                                 |
+| `app/core/config/*`                                                                  | Temporary re-exports, then deleted                                          |
+| `app/libs/auth/customer/index.server.js`                                             | `setOnCustomerRegistered` injection; no `#/core/events` import              |
+| `app/core/bootstrap/index.server.js`                                                 | Wire customer-registered emit + import events job                           |
+| `app/core/api-keys/middleware.server.js`                                             | Moved admin API-key middleware from `libs/auth/api`                         |
+| `app/core/api-keys/audit.server.js`                                                  | Moved API-key audit helper (or keep calling `#/core/audit` from middleware) |
+| `app/core/storefront/page-context.server.js`                                         | `loadStorefrontPageContext`, `parseReturnTo` (from `libs/api/storefront`)   |
+| `app/libs/api/{public,admin,admin-ui,webhooks}`                                      | Pure HTTP helpers only (no core imports)                                    |
+| `.oxlintrc.json`                                                                     | Restrict `#/core/**` imports from `app/libs/**`                             |
+| `app/core/events/index.server.js`                                                    | `setEventJobEnqueuer`, sync `dispatchHandlers`, queued `emit`               |
+| `app/core/events/job.server.js`                                                      | LiteQuu `domain_event` job + `queueDomainEvent`                             |
+| `app/core/cart/index.server.js`                                                      | Persist `salesChannelId` on create                                          |
+| `app/core/checkout/pipeline.server.js`                                               | Copy channel from cart onto checkout session                                |
+| Storefront cart/checkout + public cart API routes                                    | Pass channel from request                                                   |
+| `app/core/orders/{place,fulfillment,refunds,admin,payment-handlers,index}.server.js` | Split orders mega-module                                                    |
+| `app/core/plugins/{registry,lifecycle,providers,blocks,ctx,index}.server.js`         | Split plugins mega-module + provider table                                  |
+| `app/core/plugins/routes/index.js`                                                   | Param/splat-aware matching                                                  |
+| `app/routes/{storefront/apps,admin/plugins}/$pluginId.jsx`                           | Export `action`; call plugin `action`                                       |
+| `docs/{plugins,before-hooks-plan,postgres,oss-competitor-roadmap_*}.md`              | Doc honesty pass                                                            |
+| `.cursor/rules/libs-core.mdc` / `CLAUDE.md`                                          | Document config location + event queue                                      |
 
 ---
 
@@ -54,6 +54,7 @@
 ### Task 1: Move config to `app/libs/config`
 
 **Files:**
+
 - Create: `app/libs/config/port.js` (move from `app/core/config/port.js`)
 - Create: `app/libs/config/index.js` (move from `app/core/config/index.js`)
 - Create: `app/libs/config/index.test.js` (move/adapt from `app/core/config/index.test.js`)
@@ -61,6 +62,7 @@
 - Test: `app/libs/config/index.test.js`
 
 **Interfaces:**
+
 - Produces: `#/libs/config` default export `config`, named `PLATFORM_NAME`, `DEFAULT_AUTH`, `createConfig`, `resolveBaseUrl`, `resolveDevPort`, `DEFAULT_DEV_PORT`
 
 - [ ] **Step 1: Move files and fix internal imports**
@@ -105,6 +107,7 @@ git commit -m "refactor(config): move runtime config from core to libs"
 ### Task 2: Point callers at `#/libs/config` and drop core re-exports
 
 **Files:**
+
 - Modify: every file importing `#/core/config` (~33 under `app/`) → `#/libs/config`
 - Delete: `app/core/config/*` after no remaining imports
 - Modify: `app/core/index.js` if it re-exports config
@@ -138,12 +141,14 @@ git commit -m "refactor(config): switch imports to #/libs/config"
 ### Task 3: Inject `customer.registered` from bootstrap
 
 **Files:**
+
 - Modify: `app/libs/auth/customer/index.server.js`
 - Modify: `app/core/bootstrap/index.server.js`
 - Modify: `app/libs/auth/customer/index.test.server.js`
 - Test: `app/libs/auth/customer/index.test.server.js`
 
 **Interfaces:**
+
 - Produces: `setOnCustomerRegistered(fn | null)` in customer auth
 - Consumes: `emit` only from bootstrap (core), not from libs
 
@@ -233,6 +238,7 @@ git commit -m "refactor(auth): inject customer.registered emit from bootstrap"
 ### Task 4: Move API-key middleware into core
 
 **Files:**
+
 - Create: `app/core/api-keys/middleware.server.js` (content from `app/libs/auth/api/index.server.js`)
 - Move audit helper with it or import `#/core/audit` from the new middleware file
 - Modify: `app/routes/api/admin/v1/_layout.jsx` and any other importers of `#/libs/auth/api`
@@ -240,6 +246,7 @@ git commit -m "refactor(auth): inject customer.registered emit from bootstrap"
 - Test: move/adapt `app/libs/auth/api/index.test.server.js` → `app/core/api-keys/middleware.test.server.js`
 
 **Interfaces:**
+
 - Produces: `adminApiKeyContext`, `adminApiKeyMiddleware`, `requireAdminApiScope`, `requireApiKey` from `#/core/api-keys/middleware.server`
 
 - [ ] **Step 1: Move module + update imports**
@@ -271,6 +278,7 @@ If nothing remains, delete the directory. Do not leave a re-export shim that pul
 - [ ] **Step 3: Tests + commit**
 
 Run: `npm run test -- app/core/api-keys app/routes/api/admin`
+
 ```bash
 git commit -m "refactor(api-keys): move admin API key middleware into core"
 ```
@@ -278,6 +286,7 @@ git commit -m "refactor(api-keys): move admin API key middleware into core"
 ### Task 5: Move storefront page context into core; purify `libs/api`
 
 **Files:**
+
 - Create: `app/core/storefront/page-context.server.js`
 - Modify: storefront routes that import `#/libs/api/storefront`
 - Modify: `app/libs/api/admin/index.server.js` — remove `isHookAbort` import; move hook-abort→JSON mapping next to callers in core or into a small `#/core/events/http.server.js`
@@ -285,6 +294,7 @@ git commit -m "refactor(api-keys): move admin API key middleware into core"
 - Test: move storefront helper tests under `app/core/storefront/`
 
 **Interfaces:**
+
 - Produces: `loadStorefrontPageContext(request)`, `parseReturnTo(formData, fallback?)`
 - Produces (if extracted): `jsonFromHookAbort(err)` in `#/core/events/http.server.js`
 
@@ -332,6 +342,7 @@ Move any function that calls `isHookAbort` to `#/core/events/http.server.js` (or
 - [ ] **Step 4: Tests + commit**
 
 Run: `npm run test -- app/core/storefront app/libs/api`
+
 ```bash
 git commit -m "refactor: move storefront page context into core; purify libs/api"
 ```
@@ -339,6 +350,7 @@ git commit -m "refactor: move storefront page context into core; purify libs/api
 ### Task 6: Enforce boundary with oxlint
 
 **Files:**
+
 - Modify: `.oxlintrc.json`
 - Modify: `.cursor/rules/libs-core.mdc` — note config lives in `#/libs/config`
 - Modify: `CLAUDE.md` / `AGENTS.md` one-liner if they mention config under core
@@ -382,6 +394,7 @@ git commit -m "chore(lint): forbid libs imports of core"
 ### Task 7: Add `domain_event` queue job and enqueue from `emit`
 
 **Files:**
+
 - Create: `app/core/events/job.server.js`
 - Create: `app/core/events/job.test.server.js`
 - Modify: `app/core/events/index.server.js`
@@ -390,6 +403,7 @@ git commit -m "chore(lint): forbid libs imports of core"
 - Test: `app/core/events/index.test.server.js`, `app/core/events/job.test.server.js`
 
 **Interfaces:**
+
 - Produces: `dispatchHandlers(event, payload): void` (runs registered post-hook handlers; errors logged per handler)
 - Produces: `setEventJobEnqueuer(fn | null)` where `fn(event, payload) => void`
 - Produces: `queueDomainEvent(event, payload)` and LiteQuu job name `domain_event`
@@ -397,6 +411,7 @@ git commit -m "chore(lint): forbid libs imports of core"
 - Unchanged: `emitBefore`, `on`, `off`, `deny`, `HookAbortError`, `isHookAbort`
 
 Design notes (match emails/webhooks):
+
 - Payload must be JSON-serializable (already true for domain emits).
 - Worker calls `dispatchHandlers` so email/`on(...)` subscribers still run, then may enqueue further jobs (welcome email, webhook delivery) — acceptable double hop; durability is at the event edge.
 - Tests: default `setEventJobEnqueuer((event, payload) => dispatchHandlers(event, payload))` in event tests (sync), replacing today’s `flushEmit` microtask dance where needed.
@@ -415,7 +430,9 @@ it('emit enqueues via setEventJobEnqueuer without running handlers inline', () =
 
   emit('order.created', { orderId: '1' });
 
-  expect(enqueued).toEqual([{ event: 'order.created', payload: { orderId: '1' } }]);
+  expect(enqueued).toEqual([
+    { event: 'order.created', payload: { orderId: '1' } },
+  ]);
   expect(handler).not.toHaveBeenCalled();
 });
 
@@ -499,7 +516,10 @@ const domainEventJob = defineQueueJob(queue, 'domain_event', {
   process: async (taskData) => {
     const { event, payload } = taskData;
     if (!event || typeof event !== 'string') {
-      logger.warn({ taskData }, 'domain_event job missing event name; skipping');
+      logger.warn(
+        { taskData },
+        'domain_event job missing event name; skipping'
+      );
       return;
     }
     dispatchHandlers(event, payload);
@@ -561,6 +581,7 @@ git commit -m "feat(events): queue domain events via LiteQuu job"
 ### Task 8: Persist `salesChannelId` on cart and checkout session
 
 **Files:**
+
 - Modify: `app/core/cart/index.server.js` — `createCart({ currency, customerId, salesChannelId })`
 - Modify: `app/core/checkout/pipeline.server.js` — `createCheckoutSession` accepts/copies `salesChannelId` (prefer cart’s channel when omitted)
 - Modify: `app/routes/storefront/cart/index.jsx` — resolve channel, pass id
@@ -570,6 +591,7 @@ git commit -m "feat(events): queue domain events via LiteQuu job"
 - Test: `app/core/cart/index.test.server.js`, `app/core/checkout/index.test.server.js`
 
 **Interfaces:**
+
 - `createCart({ currency?, customerId?, salesChannelId? })` writes `salesChannelId` on `Cart`
 - `createCheckoutSession(cartId, { customerId?, email?, salesChannelId? })` writes session channel; default = `cart.salesChannelId`
 - `placeOrder` already copies `session.salesChannelId` — verify with a test that non-null session channel lands on `Order`
@@ -651,6 +673,7 @@ Checkout route: if creating a session from an existing cart, rely on cart copy; 
 - [ ] **Step 5: Tests + commit**
 
 Run: `npm run test -- app/core/cart app/core/checkout app/core/orders app/routes/storefront/cart app/routes/api/v1/cart`
+
 ```bash
 git commit -m "fix(channels): thread salesChannelId through cart and checkout"
 ```
@@ -662,6 +685,7 @@ git commit -m "fix(channels): thread salesChannelId through cart and checkout"
 ### Task 9: Split `app/core/orders/index.server.js`
 
 **Files:**
+
 - Create:
   - `app/core/orders/place.server.js` — `placeOrder`, `attachPaymentIntent`
   - `app/core/orders/fulfillment.server.js` — shipments, `markShipped`, `markDelivered`, fulfillment sync helpers
@@ -693,6 +717,7 @@ git commit -m "refactor(orders): split place, fulfillment, refunds, and admin mo
 ### Task 10: Split plugins mega-module + provider registry table
 
 **Files:**
+
 - Create:
   - `app/core/plugins/ctx.server.js` — `buildCtx` / lifecycle ctx
   - `app/core/plugins/providers.server.js` — provider type table + register/unregister
@@ -711,12 +736,25 @@ git commit -m "refactor(orders): split place, fulfillment, refunds, and admin mo
  *   exclusive?: boolean,
  * }>} */
 export const PROVIDER_TYPE_HANDLERS = {
-  payment: { register: registerPaymentProvider, unregister: unregisterPaymentProvider },
-  shipping: { register: registerShippingProvider, unregister: unregisterShippingProvider },
+  payment: {
+    register: registerPaymentProvider,
+    unregister: unregisterPaymentProvider,
+  },
+  shipping: {
+    register: registerShippingProvider,
+    unregister: unregisterShippingProvider,
+  },
   tax: { register: registerTaxProvider, unregister: unregisterTaxProvider },
-  search: { register: registerSearchProvider, unregister: unregisterSearchProvider },
-  address_validation: { /* ... */ },
-  email: { register: registerEmailProvider, unregister: unregisterEmailProvider, exclusive: true },
+  search: {
+    register: registerSearchProvider,
+    unregister: unregisterSearchProvider,
+  },
+  address_validation: {/* ... */},
+  email: {
+    register: registerEmailProvider,
+    unregister: unregisterEmailProvider,
+    exclusive: true,
+  },
 };
 ```
 
@@ -742,12 +780,14 @@ git commit -m "refactor(plugins): split registry/lifecycle/providers and unify p
 ### Task 11: Add `action` to storefront + admin plugin dispatchers
 
 **Files:**
+
 - Modify: `app/routes/storefront/apps/$pluginId.jsx`
 - Modify: `app/routes/admin/plugins/$pluginId.jsx`
 - Modify/Create tests beside those routes
 - Docs: `docs/plugins.md` — document `loader` + `action` on route descriptors
 
 **Interfaces:**
+
 - Route descriptors may export `action({ request, params })`
 - Dispatcher `action` resolves the same descriptor as loader and invokes `descriptor.action` when present; otherwise 405 JSON/HTML-friendly error
 
@@ -782,11 +822,13 @@ git commit -m "feat(plugins): support actions on storefront and admin dispatcher
 ### Task 12: Richer plugin route path matching
 
 **Files:**
+
 - Modify: `app/core/plugins/routes/index.js`
 - Modify: `app/core/plugins/routes` tests (create if missing)
 - Keep exact-match as highest priority; add `:param` segments and optional trailing `*` splat
 
 **Interfaces:**
+
 - `resolvePluginRouteDescriptor` returns descriptor plus `params` map when matched
 - Dispatchers merge `params` into RR `params` when calling loader/action
 
@@ -800,9 +842,9 @@ Matching algorithm (simple, no full path-to-regexp dependency):
 - [ ] **Step 1: Tests for `:id` and `*`**
 
 ```js
-expect(
-  resolvePluginRouteDescriptor(map, 'demo', 'orders/abc').path
-).toBe('orders/:id');
+expect(resolvePluginRouteDescriptor(map, 'demo', 'orders/abc').path).toBe(
+  'orders/:id'
+);
 ```
 
 - [ ] **Step 2: Implement + thread params through dispatchers**
@@ -820,6 +862,7 @@ git commit -m "feat(plugins): support param and splat paths in plugin route matc
 ### Task 13: Docs + plugin ctx contract
 
 **Files:**
+
 - Modify: `docs/before-hooks-plan.md` — status → **implemented** with delta (wired actions list; payload transform still reserved)
 - Modify: `docs/plugins.md` — fix `ctx.queue` (real LiteQuu wrapper, not stub); document `ctx.db` as escape hatch discouraged in favor of domain APIs; document dispatcher `action` + path patterns
 - Modify: `docs/postgres.md` — already notes queue SQLite; add explicit “not multi-tenant; sales channels ≠ tenants”
@@ -863,14 +906,14 @@ rg "salesChannelId" app/core/cart/index.server.js app/core/checkout/pipeline.ser
 
 ## Suggested PR slicing
 
-| PR | Tasks | Title sketch |
-| -- | ----- | ------------ |
-| 1 | 1–6 | `refactor: restore libs/core boundary and move config to libs` |
-| 2 | 7 | `feat(events): queue domain events via LiteQuu job` |
-| 3 | 8 | `fix(channels): thread salesChannelId through cart and checkout` |
-| 4 | 9–10 | `refactor: split orders and plugins mega-modules` |
-| 5 | 11–12 | `feat(plugins): dispatcher actions and param routes` |
-| 6 | 13–14 | `docs: architecture honesty pass` |
+| PR  | Tasks | Title sketch                                                     |
+| --- | ----- | ---------------------------------------------------------------- |
+| 1   | 1–6   | `refactor: restore libs/core boundary and move config to libs`   |
+| 2   | 7     | `feat(events): queue domain events via LiteQuu job`              |
+| 3   | 8     | `fix(channels): thread salesChannelId through cart and checkout` |
+| 4   | 9–10  | `refactor: split orders and plugins mega-modules`                |
+| 5   | 11–12 | `feat(plugins): dispatcher actions and param routes`             |
+| 6   | 13–14 | `docs: architecture honesty pass`                                |
 
 ---
 
