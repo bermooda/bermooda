@@ -7,33 +7,7 @@ import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';
-
-const labels = {
-  en: {
-    preview: 'You left something behind',
-    heading: 'You left something in your cart',
-    subheading: (name) => `Hey ${name}, still thinking it over?`,
-    body: "Your cart is saved and ready when you are. Don't let these items sell out!",
-    items: 'Items in your cart',
-    cta: 'Complete Your Purchase',
-  },
-  de: {
-    preview: 'Sie haben etwas vergessen',
-    heading: 'Sie haben etwas in Ihrem Warenkorb',
-    subheading: (name) => `Hallo ${name}, denken Sie noch darüber nach?`,
-    body: 'Ihr Warenkorb ist gespeichert und wartet auf Sie. Lassen Sie diese Artikel nicht ausverkaufen!',
-    items: 'Artikel in Ihrem Warenkorb',
-    cta: 'Kauf abschließen',
-  },
-  fr: {
-    preview: 'Vous avez oublié quelque chose',
-    heading: 'Vous avez laissé quelque chose dans votre panier',
-    subheading: (name) => `Hé ${name}, vous hésitez encore?`,
-    body: "Votre panier est sauvegardé et prêt quand vous l'êtes. Ne laissez pas ces articles se vendre!",
-    items: 'Articles dans votre panier',
-    cta: 'Finaliser votre achat',
-  },
-};
+import { emailT } from '#/emails/i18n.server';
 
 function fmt(cents, currency) {
   return new Intl.NumberFormat('en', { style: 'currency', currency }).format(
@@ -58,22 +32,24 @@ export default function AbandonedCartEmail({
   currency = 'USD',
   brandName,
 }) {
-  const t = labels[locale] ?? labels.en;
+  const t = emailT(locale);
   const url = cartUrl ?? `${config.baseUrl}/cart`;
 
   return (
-    <EmailLayout brandName={brandName} preview={t.preview}>
-      <EmailHeading>{t.heading}</EmailHeading>
-      <EmailSubheading>{t.subheading(name)}</EmailSubheading>
+    <EmailLayout brandName={brandName} preview={t('abandonedCart.preview')}>
+      <EmailHeading>{t('abandonedCart.heading')}</EmailHeading>
+      <EmailSubheading>
+        {t('abandonedCart.subheading', { name })}
+      </EmailSubheading>
       <Section className="dark-mode-bg rounded-xl bg-indigo-50 px-6 py-4">
         <Text className="dark-mode-text mb-2 text-base text-slate-700">
-          {t.body}
+          {t('abandonedCart.body')}
         </Text>
 
         {lines.length > 0 && (
           <>
             <Text className="dark-mode-text mb-1 text-sm font-semibold text-slate-600">
-              {t.items}
+              {t('abandonedCart.items')}
             </Text>
             {lines.map((line, i) => (
               <Row key={i} className="border-b border-slate-200 py-1">
@@ -89,7 +65,7 @@ export default function AbandonedCartEmail({
         )}
 
         <Section className="mt-4 text-center">
-          <EmailButton url={url}>{t.cta}</EmailButton>
+          <EmailButton url={url}>{t('abandonedCart.cta')}</EmailButton>
         </Section>
       </Section>
       <EmailFooterLink url={url} />

@@ -5,35 +5,36 @@ import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';
+import { emailT } from '#/emails/i18n.server';
 
-const labels = {
-  en: {
-    heading: 'Return received',
-    subheading: (orderNumber) =>
-      `We have received your return for order ${orderNumber}.`,
-    body: 'Your return is being processed. We will notify you once your refund or store credit is issued.',
-  },
-};
-
+/**
+ * @param {Object} props
+ * @param {string} [props.locale]
+ * @param {string} [props.brandName]
+ * @param {string} props.orderNumber
+ * @param {string} [props.orderUrl]
+ */
 export default function ReturnReceivedEmail({
   locale = 'en',
   orderNumber,
   orderUrl,
   brandName,
 }) {
-  const t = labels[locale] ?? labels.en;
+  const t = emailT(locale);
   const url = orderUrl ?? `${config.baseUrl}/account/orders`;
+  const heading = t('returnReceived.heading');
 
   return (
-    <EmailLayout
-      brandName={brandName}
-      preview={`${t.heading} — ${orderNumber}`}
-    >
-      <EmailHeading>{t.heading}</EmailHeading>
-      <EmailSubheading>{t.subheading(orderNumber)}</EmailSubheading>
+    <EmailLayout brandName={brandName} preview={`${heading} — ${orderNumber}`}>
+      <EmailHeading>{heading}</EmailHeading>
+      <EmailSubheading>
+        {t('returnReceived.subheading', { orderNumber })}
+      </EmailSubheading>
 
       <Section className="dark-mode-bg rounded-xl bg-indigo-50 px-6 py-4">
-        <Text className="dark-mode-text text-sm text-slate-700">{t.body}</Text>
+        <Text className="dark-mode-text text-sm text-slate-700">
+          {t('returnReceived.body')}
+        </Text>
       </Section>
 
       <EmailFooterLink url={url} />

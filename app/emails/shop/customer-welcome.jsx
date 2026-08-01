@@ -6,35 +6,7 @@ import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';
-
-/**
- * @param {string} shopName
- */
-function buildLabels(shopName) {
-  return {
-    en: {
-      preview: (name) => `Welcome to ${shopName}, ${name}!`,
-      heading: `Welcome to ${shopName}`,
-      subheading: (name) => `Thanks for creating an account, ${name}!`,
-      body: 'You can now browse our store, track your orders, and manage your addresses from your account.',
-      cta: 'Go to My Account',
-    },
-    de: {
-      preview: (name) => `Willkommen bei ${shopName}, ${name}!`,
-      heading: `Willkommen bei ${shopName}`,
-      subheading: (name) => `Danke für Ihre Registrierung, ${name}!`,
-      body: 'Sie können jetzt unseren Shop durchsuchen, Ihre Bestellungen verfolgen und Ihre Adressen in Ihrem Konto verwalten.',
-      cta: 'Zu meinem Konto',
-    },
-    fr: {
-      preview: (name) => `Bienvenue sur ${shopName}, ${name}!`,
-      heading: `Bienvenue sur ${shopName}`,
-      subheading: (name) => `Merci de créer un compte, ${name}!`,
-      body: 'Vous pouvez maintenant parcourir notre boutique, suivre vos commandes et gérer vos adresses depuis votre espace client.',
-      cta: 'Accéder à mon compte',
-    },
-  };
-}
+import { emailT } from '#/emails/i18n.server';
 
 /**
  * @param {Object} props
@@ -49,20 +21,24 @@ export default function CustomerWelcomeEmail({
   accountUrl,
   shopName = PLATFORM_NAME,
 }) {
-  const labels = buildLabels(shopName);
-  const t = labels[locale] ?? labels.en;
+  const t = emailT(locale);
   const url = accountUrl ?? `${config.baseUrl}/account`;
 
   return (
-    <EmailLayout preview={t.preview(name)} brandName={shopName}>
-      <EmailHeading>{t.heading}</EmailHeading>
-      <EmailSubheading>{t.subheading(name)}</EmailSubheading>
+    <EmailLayout
+      preview={t('customerWelcome.preview', { shopName, name })}
+      brandName={shopName}
+    >
+      <EmailHeading>{t('customerWelcome.heading', { shopName })}</EmailHeading>
+      <EmailSubheading>
+        {t('customerWelcome.subheading', { name })}
+      </EmailSubheading>
       <Section className="dark-mode-bg rounded-xl bg-indigo-50 px-6 py-4">
         <Text className="dark-mode-text text-base text-slate-700">
-          {t.body}
+          {t('customerWelcome.body')}
         </Text>
         <Section className="my-4 text-center">
-          <EmailButton url={url}>{t.cta}</EmailButton>
+          <EmailButton url={url}>{t('customerWelcome.cta')}</EmailButton>
         </Section>
       </Section>
       <EmailFooterLink url={url} />
