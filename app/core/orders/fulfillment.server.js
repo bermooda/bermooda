@@ -2,7 +2,8 @@
 // Shipment creation and fulfillment status sync.
 
 import prisma from '#/libs/prisma.server';
-import { emit, emitBefore } from '#/core/events/index.server';
+import { emitBefore } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { updateOrderStatus } from '#/core/orders/admin.server';
 
 /**
@@ -50,7 +51,7 @@ export async function syncOrderFulfillmentStatus(orderId, tx) {
         where: { id: orderId },
         data: { status: 'fulfilled' },
       });
-      await emit('order.updated', {
+      await queueEmit('order.updated', {
         orderId,
         previousStatus: order.status,
         status: 'fulfilled',
@@ -59,7 +60,7 @@ export async function syncOrderFulfillmentStatus(orderId, tx) {
       await updateOrderStatus(orderId, 'fulfilled');
     }
 
-    await emit('order.fulfilled', {
+    await queueEmit('order.fulfilled', {
       orderId,
       status: 'fulfilled',
     });
@@ -142,7 +143,7 @@ export async function addShipment(orderId, data = {}) {
     });
   });
 
-  await emit('shipment.created', { shipmentId: shipment.id, orderId });
+  await queueEmit('shipment.created', { shipmentId: shipment.id, orderId });
 
   return shipment;
 }
@@ -224,7 +225,7 @@ export async function markShipped(
     return result;
   });
 
-  await emit('shipment.shipped', {
+  await queueEmit('shipment.shipped', {
     shipmentId,
     orderId: shipment.orderId,
     carrier: updated.carrier,
@@ -263,7 +264,10 @@ export async function markDelivered(shipmentId) {
     },
   });
 
-  await emit('shipment.delivered', { shipmentId, orderId: shipment.orderId });
+  await queueEmit('shipment.delivered', {
+    shipmentId,
+    orderId: shipment.orderId,
+  });
 
   return shipment;
 }

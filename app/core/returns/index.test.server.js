@@ -18,7 +18,7 @@ vi.mock('#/libs/prisma.server', () => ({
   },
 }));
 
-vi.mock('#/core/events/index.server', () => ({ emit: vi.fn() }));
+vi.mock('#/core/events/job.server', () => ({ queueEmit: vi.fn() }));
 vi.mock('#/core/inventory/index.server', () => ({
   incrementInventory: vi.fn(),
 }));
@@ -33,7 +33,7 @@ vi.mock('#/utils/logger.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { incrementInventory } from '#/core/inventory/index.server';
 import { createRefund } from '#/core/orders/refunds.server';
 import {
@@ -203,7 +203,10 @@ describe('returns workflows', () => {
     });
 
     expect(result.id).toBe('ret-1');
-    expect(emit).toHaveBeenCalledWith('return.requested', expect.any(Object));
+    expect(queueEmit).toHaveBeenCalledWith(
+      'return.requested',
+      expect.any(Object)
+    );
   });
 
   it('requestReturn rejects invalid quantity', async () => {
@@ -252,7 +255,10 @@ describe('returns workflows', () => {
 
     const result = await approveReturn('ret-1', { resolution: 'refund' });
     expect(result.status).toBe('approved');
-    expect(emit).toHaveBeenCalledWith('return.approved', expect.any(Object));
+    expect(queueEmit).toHaveBeenCalledWith(
+      'return.approved',
+      expect.any(Object)
+    );
   });
 
   it('receiveReturn restocks inventory', async () => {
@@ -272,8 +278,14 @@ describe('returns workflows', () => {
       [{ variantId: 'var-1', quantity: 1 }],
       prisma
     );
-    expect(emit).toHaveBeenCalledWith('return.received', expect.any(Object));
-    expect(emit).toHaveBeenCalledWith('order.returned', expect.any(Object));
+    expect(queueEmit).toHaveBeenCalledWith(
+      'return.received',
+      expect.any(Object)
+    );
+    expect(queueEmit).toHaveBeenCalledWith(
+      'order.returned',
+      expect.any(Object)
+    );
   });
 
   it('completeReturn issues refund without inventory restore', async () => {

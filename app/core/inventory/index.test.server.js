@@ -8,8 +8,8 @@ vi.mock('#/libs/prisma.server', () => ({
   },
 }));
 
-vi.mock('#/core/events/index.server', () => ({
-  emit: vi.fn(),
+vi.mock('#/core/events/job.server', () => ({
+  queueEmit: vi.fn(),
 }));
 
 vi.mock('#/core/inventory/locations/index.server', () => ({
@@ -23,7 +23,7 @@ vi.mock('#/core/inventory/tracking/index.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import {
   decrementInventory,
   incrementInventory,
@@ -105,7 +105,7 @@ describe('incrementInventory', () => {
       'v-tracked',
       4
     );
-    expect(emit).toHaveBeenCalledWith('inventory.restocked', {
+    expect(queueEmit).toHaveBeenCalledWith('inventory.restocked', {
       variantId: 'v-tracked',
     });
   });

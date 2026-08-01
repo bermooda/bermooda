@@ -9,7 +9,8 @@ import {
   CHECKOUT_STEP,
 } from '#/core/checkout/session.server';
 import { computeTotals } from '#/core/checkout/totals.server';
-import { emit, emitBefore } from '#/core/events/index.server';
+import { emitBefore } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 
 // ---------------------------------------------------------------------------
 // createCheckoutSession
@@ -39,7 +40,7 @@ export async function createCheckoutSession(
     },
   });
 
-  await emit('checkout.started', {
+  await queueEmit('checkout.started', {
     sessionId: session.id,
     cartId: session.cartId,
     customerId: session.customerId,

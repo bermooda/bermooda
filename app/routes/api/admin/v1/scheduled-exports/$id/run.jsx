@@ -5,10 +5,8 @@ import {
   createDomainErrorMapper,
   requireMethod,
 } from '#/libs/api/admin/index.server';
-import {
-  getScheduledExport,
-  queueScheduledExport,
-} from '#/core/exports/index.server';
+import { getScheduledExport } from '#/core/exports/index.server';
+import { queueScheduledExport } from '#/core/exports/job.server';
 
 const mapScheduledExportError = createDomainErrorMapper({
   notFound: ['NOT_FOUND'],

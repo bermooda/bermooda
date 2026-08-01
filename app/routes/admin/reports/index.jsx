@@ -12,8 +12,8 @@ import {
   EXPORT_TYPES,
   listScheduledExports,
   deleteScheduledExport,
-  queueScheduledExport,
 } from '#/core/exports/index.server';
+import { queueScheduledExport } from '#/core/exports/job.server';
 import {
   getDashboardReport,
   parseReportParams,

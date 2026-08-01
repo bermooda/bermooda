@@ -1,12 +1,10 @@
 // app/core/exports/job.server.js
 // LiteQuu worker for scheduled CSV exports.
+// Callers import queueScheduledExport from this module.
 
 import logger from '#/utils/logger.server';
 import queue, { defineQueueJob } from '#/libs/queue.server';
-import {
-  runScheduledExport,
-  setExportJobEnqueuer,
-} from '#/core/exports/index.server';
+import { runScheduledExport } from '#/core/exports/index.server';
 
 const scheduledExportJob = defineQueueJob(queue, 'scheduled_export', {
   process: async (taskData) => {
@@ -25,14 +23,14 @@ const scheduledExportJob = defineQueueJob(queue, 'scheduled_export', {
 
 /**
  * Queue a scheduled export run.
+ *
  * @param {{ scheduledExportId: string }} taskData
+ * @returns {void}
  */
-export function queueScheduledExportJob(taskData) {
+export function queueScheduledExport(taskData) {
   logger.info(
     { scheduledExportId: taskData.scheduledExportId },
     'Queueing scheduled export'
   );
   scheduledExportJob.add(taskData);
 }
-
-setExportJobEnqueuer(queueScheduledExportJob);

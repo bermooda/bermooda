@@ -13,17 +13,7 @@ import {
   DOMAIN_EVENTS,
   isDomainEventOrWildcard,
 } from '#/core/events/names';
-
-// Enqueuer set by job.server.js to avoid a circular import.
-let _enqueuer = null;
-
-/**
- * Register the job enqueuer. Called by job.server.js on module load.
- * @param {Function} fn - receives { deliveryId }
- */
-export function setWebhookJobEnqueuer(fn) {
-  _enqueuer = fn;
-}
+import { queueWebhookDelivery } from '#/core/webhooks/job.server';
 
 // ---------------------------------------------------------------------------
 // Input + matching helpers
@@ -358,14 +348,7 @@ export async function dispatchWebhookEvent(event, payload) {
         },
       });
 
-      if (_enqueuer) {
-        _enqueuer({ deliveryId: delivery.id });
-      } else {
-        logger.warn(
-          { deliveryId: delivery.id },
-          'Webhook job enqueuer not registered; delivery queued but will not be attempted until restart'
-        );
-      }
+      queueWebhookDelivery({ deliveryId: delivery.id });
     })
   );
 }

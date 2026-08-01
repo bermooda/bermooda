@@ -16,9 +16,6 @@ export const EXPORT_SCHEDULES = ['daily', 'weekly', 'monthly'];
 const DEFAULT_LIST_LIMIT = 50;
 const RECENT_RUNS_LIMIT = 3;
 
-// Enqueuer set by job.server.js to avoid circular imports.
-let _enqueuer = null;
-
 // ---------------------------------------------------------------------------
 // CSV helpers
 // ---------------------------------------------------------------------------
@@ -693,18 +690,4 @@ export async function getExportRun(runId, { includeFileContent = false } = {}) {
   }
 
   return serializeExportRun(run, { includeFileContent });
-}
-
-export function setExportJobEnqueuer(fn) {
-  _enqueuer = fn;
-}
-
-/**
- * Queue a scheduled export run.
- * @param {{ scheduledExportId: string }} taskData
- */
-export function queueScheduledExport(taskData) {
-  if (_enqueuer) {
-    _enqueuer(taskData);
-  }
 }

@@ -4,7 +4,7 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { buildPrismaPagination } from '#/libs/prisma/pagination/index.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { hasMarketingConsent } from '#/core/gdpr/index.server';
 import { sendCampaignEmail } from '#/emails/index.server';
 import { queueAbandonedCart } from '#/emails/job.server';
@@ -688,28 +688,6 @@ export async function updateAbandonedCartSequence(id, input) {
   });
 }
 
-/** @type {(() => void) | null} */
-let _abandonedCartSequenceEnqueuer = null;
-
-/**
- * Register the queue enqueuer for abandoned-cart sequence processing.
- * Called from `#/core/marketing/job.server` at bootstrap.
- *
- * @param {() => void} fn
- */
-export function setAbandonedCartSequenceJobEnqueuer(fn) {
-  _abandonedCartSequenceEnqueuer = fn;
-}
-
-/**
- * Queue abandoned-cart sequence processing (no-op until the job module registers).
- */
-export function queueAbandonedCartSequence() {
-  if (_abandonedCartSequenceEnqueuer) {
-    _abandonedCartSequenceEnqueuer();
-  }
-}
-
 /**
  * Process abandoned carts and enqueue sequence emails.
  */
@@ -762,7 +740,7 @@ export async function processAbandonedCarts() {
       });
       if (alreadySent) continue;
 
-      emit('cart.abandoned', {
+      queueEmit('cart.abandoned', {
         cartId: cart.id,
         token: cart.token,
         email,

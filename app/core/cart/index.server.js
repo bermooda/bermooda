@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import {
   getCustomerGroupIds,
   resolveVariantPrice,
@@ -88,7 +88,7 @@ export async function createCart({
     },
   });
 
-  await emit('cart.created', {
+  await queueEmit('cart.created', {
     cartId: cart.id,
     token: cart.token,
     currency: cart.currency,
@@ -195,7 +195,7 @@ export async function addLine(
         },
       });
 
-  await emit('cart.itemAdded', {
+  await queueEmit('cart.itemAdded', {
     cartId,
     variantId,
     quantity,
@@ -212,7 +212,7 @@ export async function addLine(
 export async function removeLine(cartId, lineId) {
   await prisma.cartLine.delete({ where: { id: lineId, cartId } });
 
-  await emit('cart.itemRemoved', {
+  await queueEmit('cart.itemRemoved', {
     cartId,
     lineId,
   });
@@ -261,7 +261,7 @@ export async function updateQuantity(cartId, lineId, quantity) {
     },
   });
 
-  await emit('cart.updated', {
+  await queueEmit('cart.updated', {
     cartId,
     lineId: line.id,
     quantity: line.quantity,

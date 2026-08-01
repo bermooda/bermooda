@@ -57,8 +57,8 @@ vi.mock('#/utils/logger.server', () => ({
   default: { info: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('#/core/events/index.server', () => ({
-  emit: vi.fn(),
+vi.mock('#/core/events/job.server', () => ({
+  queueEmit: vi.fn(),
 }));
 
 vi.mock('#/core/storage/index.server', () => ({
@@ -67,7 +67,7 @@ vi.mock('#/core/storage/index.server', () => ({
 }));
 
 import prisma from '#/libs/prisma.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { deleteMedia, uploadAndCreateMedia } from '#/core/storage/index.server';
 
 // Build a transaction mock that delegates to the same mock fns.
@@ -587,7 +587,7 @@ describe('createProduct', () => {
 
     await createProduct({});
 
-    expect(emit).toHaveBeenCalledWith('product.created', {
+    expect(queueEmit).toHaveBeenCalledWith('product.created', {
       productId: 'prod_new',
     });
   });
@@ -631,7 +631,7 @@ describe('updateProduct', () => {
 
     await updateProduct('prod_1', { position: 2 });
 
-    expect(emit).toHaveBeenCalledWith('product.updated', {
+    expect(queueEmit).toHaveBeenCalledWith('product.updated', {
       productId: 'prod_1',
     });
   });
@@ -657,7 +657,7 @@ describe('deleteProduct', () => {
 
     await deleteProduct('prod_1');
 
-    expect(emit).toHaveBeenCalledWith('product.deleted', {
+    expect(queueEmit).toHaveBeenCalledWith('product.deleted', {
       productId: 'prod_1',
     });
   });

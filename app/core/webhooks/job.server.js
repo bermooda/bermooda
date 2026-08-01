@@ -1,12 +1,12 @@
 // app/core/webhooks/job.server.js
 // LiteQuu delivery worker: signs and POSTs webhook payloads with retry back-off.
+// Callers import queueWebhookDelivery from this module.
 
 import { createHmac } from 'crypto';
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import queue, { defineQueueJob } from '#/libs/queue.server';
-import { setWebhookJobEnqueuer } from '#/core/webhooks/index.server';
 
 const MAX_ATTEMPTS = 5;
 // Exponential back-off: 30 s → 2 min → 10 min → 30 min → 2 h
@@ -127,10 +127,13 @@ const webhookDeliveryJob = defineQueueJob(queue, 'webhook_delivery', {
   },
 });
 
-function queueWebhookDelivery(taskData) {
+/**
+ * Queue a webhook delivery attempt.
+ *
+ * @param {{ deliveryId: string }} taskData
+ * @returns {void}
+ */
+export function queueWebhookDelivery(taskData) {
   logger.info({ deliveryId: taskData.deliveryId }, 'Queueing webhook delivery');
   webhookDeliveryJob.add(taskData);
 }
-
-// Register the enqueuer so the core webhooks module can dispatch deliveries.
-setWebhookJobEnqueuer(queueWebhookDelivery);

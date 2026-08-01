@@ -52,10 +52,13 @@ vi.mock('#/core/events/index.server', async () => {
   const actual = await vi.importActual('#/core/events/index.server');
   return {
     ...actual,
-    emit: vi.fn(),
     emitBefore: vi.fn(),
   };
 });
+
+vi.mock('#/core/events/job.server', () => ({
+  queueEmit: vi.fn(),
+}));
 
 vi.mock('#/core/inventory/index.server', () => ({
   decrementInventory: vi.fn(),
@@ -106,7 +109,8 @@ import prisma from '#/libs/prisma.server';
 import { expandBundleInventoryItems } from '#/core/catalog/types/index.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { persistOrderDiscounts } from '#/core/discounts/index.server';
-import { emit, emitBefore } from '#/core/events/index.server';
+import { emitBefore } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import {
   decrementInventory,
   incrementInventory,
@@ -243,7 +247,7 @@ describe('placeOrder', () => {
     prisma.cart.update.mockResolvedValue({});
     prisma.checkoutSession.update.mockResolvedValue({});
     decrementInventory.mockResolvedValue(undefined);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await placeOrder('sess_1', {
       paymentProvider: 'stripe',
@@ -273,7 +277,7 @@ describe('placeOrder', () => {
     prisma.cart.update.mockResolvedValue({});
     prisma.checkoutSession.update.mockResolvedValue({});
     decrementInventory.mockResolvedValue(undefined);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await placeOrder('sess_1', {});
 
@@ -297,7 +301,7 @@ describe('placeOrder', () => {
     prisma.checkoutSession.update.mockResolvedValue({});
     decrementInventory.mockResolvedValue(undefined);
 
-    // Track call order: $transaction vs emit
+    // Track call order: $transaction vs queueEmit
     prisma.$transaction.mockImplementation(async (fn) => {
       const tx = {
         checkoutSession: prisma.checkoutSession,
@@ -312,13 +316,13 @@ describe('placeOrder', () => {
       return result;
     });
 
-    emit.mockImplementation(async () => {
-      emitCallOrder.push('emit');
+    queueEmit.mockImplementation(async () => {
+      emitCallOrder.push('queueEmit');
     });
 
     await placeOrder('sess_1', {});
 
-    expect(emit).toHaveBeenCalledWith(
+    expect(queueEmit).toHaveBeenCalledWith(
       'order.created',
       expect.objectContaining({
         orderId: order.id,
@@ -326,7 +330,7 @@ describe('placeOrder', () => {
       })
     );
     // both post-order events must fire only after the transaction commits
-    expect(emitCallOrder).toEqual(['transaction', 'emit', 'emit']);
+    expect(emitCallOrder).toEqual(['transaction', 'queueEmit', 'queueEmit']);
   });
 
   it('emits checkout.completed after placing the order', async () => {
@@ -342,11 +346,11 @@ describe('placeOrder', () => {
     prisma.cart.update.mockResolvedValue({});
     prisma.checkoutSession.update.mockResolvedValue({});
     decrementInventory.mockResolvedValue(undefined);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await placeOrder('sess_1', {});
 
-    expect(emit).toHaveBeenNthCalledWith(
+    expect(queueEmit).toHaveBeenNthCalledWith(
       1,
       'order.created',
       expect.objectContaining({
@@ -354,7 +358,7 @@ describe('placeOrder', () => {
         orderNumber: 'ORD-123',
       })
     );
-    expect(emit).toHaveBeenNthCalledWith(
+    expect(queueEmit).toHaveBeenNthCalledWith(
       2,
       'checkout.completed',
       expect.objectContaining({
@@ -375,7 +379,7 @@ describe('placeOrder', () => {
       'CHECKOUT_SESSION_NOT_AT_REVIEW'
     );
     expect(decrementInventory).not.toHaveBeenCalled();
-    expect(emit).not.toHaveBeenCalled();
+    expect(queueEmit).not.toHaveBeenCalled();
   });
 
   it('throws CHECKOUT_SESSION_NOT_FOUND when session does not exist', async () => {
@@ -385,7 +389,7 @@ describe('placeOrder', () => {
     await expect(placeOrder('nonexistent', {})).rejects.toThrow(
       'CHECKOUT_SESSION_NOT_FOUND'
     );
-    expect(emit).not.toHaveBeenCalled();
+    expect(queueEmit).not.toHaveBeenCalled();
   });
 
   it('persists order discounts inside the transaction when promotions apply', async () => {
@@ -418,7 +422,7 @@ describe('placeOrder', () => {
       })
     );
     decrementInventory.mockResolvedValue(undefined);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await placeOrder('sess_1', {});
 
@@ -445,7 +449,7 @@ describe('placeOrder', () => {
     prisma.cart.update.mockResolvedValue({});
     prisma.checkoutSession.update.mockResolvedValue({});
     decrementInventory.mockResolvedValue(undefined);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await placeOrder('sess_1', {});
 
@@ -578,11 +582,11 @@ describe('updateOrderStatus', () => {
   it('emits order.updated when the status changes', async () => {
     prisma.order.findUnique.mockResolvedValue(makeOrder({ status: 'pending' }));
     prisma.order.update.mockResolvedValue(makeOrder({ status: 'confirmed' }));
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await updateOrderStatus('order_1', 'confirmed');
 
-    expect(emit).toHaveBeenCalledWith('order.updated', {
+    expect(queueEmit).toHaveBeenCalledWith('order.updated', {
       orderId: 'order_1',
       previousStatus: 'pending',
       status: 'confirmed',
@@ -594,11 +598,14 @@ describe('updateOrderStatus', () => {
       makeOrder({ status: 'confirmed' })
     );
     prisma.order.update.mockResolvedValue(makeOrder({ status: 'confirmed' }));
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await updateOrderStatus('order_1', 'confirmed');
 
-    expect(emit).not.toHaveBeenCalledWith('order.updated', expect.anything());
+    expect(queueEmit).not.toHaveBeenCalledWith(
+      'order.updated',
+      expect.anything()
+    );
   });
 
   it.each(['pending', 'confirmed', 'cancelled', 'refunded'])(
@@ -673,7 +680,7 @@ describe('addShipment', () => {
       orderId: 'order_1',
       lines: [],
     });
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     const data = { carrier: 'USPS', trackingNumber: 'TRK123' };
     await addShipment('order_1', data);
@@ -700,7 +707,7 @@ describe('addShipment', () => {
       ...shipment,
       lines: [],
     });
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await addShipment('order_1', { carrier: 'USPS', trackingNumber: 'TRK123' });
 
@@ -711,7 +718,7 @@ describe('addShipment', () => {
         trackingNumber: 'TRK123',
       }),
     });
-    expect(emit).toHaveBeenCalledWith('shipment.created', {
+    expect(queueEmit).toHaveBeenCalledWith('shipment.created', {
       shipmentId: 'ship_1',
       orderId: 'order_1',
     });
@@ -735,7 +742,7 @@ describe('addShipment', () => {
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(prisma.shipment.create).not.toHaveBeenCalled();
-    expect(emit).not.toHaveBeenCalled();
+    expect(queueEmit).not.toHaveBeenCalled();
   });
 });
 
@@ -767,7 +774,7 @@ describe('markShipped', () => {
       carrier: 'FedEx',
       trackingNumber: 'TRK456',
     });
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await markShipped('ship_1', { carrier: 'FedEx', trackingNumber: 'TRK456' });
 
@@ -780,7 +787,7 @@ describe('markShipped', () => {
         }),
       })
     );
-    expect(emit).toHaveBeenCalledWith(
+    expect(queueEmit).toHaveBeenCalledWith(
       'shipment.shipped',
       expect.objectContaining({
         shipmentId: 'ship_1',
@@ -811,7 +818,7 @@ describe('markShipped', () => {
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(prisma.shipment.update).not.toHaveBeenCalled();
-    expect(emit).not.toHaveBeenCalled();
+    expect(queueEmit).not.toHaveBeenCalled();
   });
 });
 
@@ -837,7 +844,7 @@ describe('markDelivered', () => {
       status: 'shipped',
     });
     prisma.shipment.update.mockResolvedValue(shipment);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await markDelivered('ship_1');
 
@@ -848,7 +855,7 @@ describe('markDelivered', () => {
         deliveredAt: expect.any(Date),
       }),
     });
-    expect(emit).toHaveBeenCalledWith(
+    expect(queueEmit).toHaveBeenCalledWith(
       'shipment.delivered',
       expect.objectContaining({
         shipmentId: 'ship_1',
@@ -879,7 +886,7 @@ describe('createRefund', () => {
       lines: [],
     });
     prisma.refund.create.mockResolvedValue(refund);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await createRefund('order_1', {
       amountCents: 500,
@@ -893,7 +900,7 @@ describe('createRefund', () => {
         reason: 'Customer request',
       }),
     });
-    expect(emit).toHaveBeenCalledWith('payment.refunded', {
+    expect(queueEmit).toHaveBeenCalledWith('payment.refunded', {
       refundId: 'ref_1',
       orderId: 'order_1',
       amountCents: 500,
@@ -921,7 +928,7 @@ describe('createRefund', () => {
     });
     getProvider.mockReturnValue({ createRefund: createRefundFn });
     prisma.refund.create.mockResolvedValue(refund);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await createRefund('order_1', { amountCents: 500, reason: 'Return' });
 
@@ -965,7 +972,7 @@ describe('placeOrder — tax computation (W0-2)', () => {
     prisma.cart.update.mockResolvedValue({});
     prisma.checkoutSession.update.mockResolvedValue({});
     decrementInventory.mockResolvedValue(undefined);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
     computeTotals.mockResolvedValue(
       defaultTotals({ taxCents: 200, totalCents: 2700 })
     );
@@ -1000,7 +1007,7 @@ describe('placeOrder — tax computation (W0-2)', () => {
     prisma.cart.update.mockResolvedValue({});
     prisma.checkoutSession.update.mockResolvedValue({});
     decrementInventory.mockResolvedValue(undefined);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
     computeTotals.mockResolvedValue(
       defaultTotals({ shippingCents: 0, taxCents: 0 })
     );
@@ -1055,7 +1062,7 @@ describe('createRefund — inventory restore (W0-5)', () => {
 
     prisma.refund.create.mockResolvedValue(refund);
     prisma.order.findUnique.mockResolvedValue(order);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await createRefund('order_1', { amountCents: 500 });
 
@@ -1079,7 +1086,7 @@ describe('createRefund — inventory restore (W0-5)', () => {
 
     prisma.refund.create.mockResolvedValue(refund);
     prisma.order.findUnique.mockResolvedValue(order);
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await createRefund('order_1', { amountCents: 500 });
 
@@ -1104,7 +1111,7 @@ describe('cancelOrder (W0-5)', () => {
 
     prisma.order.findUnique.mockResolvedValue(order);
     prisma.order.update.mockResolvedValue({ ...order, status: 'cancelled' });
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await cancelOrder('order_1');
 
@@ -1115,7 +1122,7 @@ describe('cancelOrder (W0-5)', () => {
       where: { id: 'order_1' },
       data: { status: 'cancelled' },
     });
-    expect(emit).toHaveBeenCalledWith(
+    expect(queueEmit).toHaveBeenCalledWith(
       'order.cancelled',
       expect.objectContaining({
         orderId: 'order_1',
@@ -1149,7 +1156,7 @@ describe('registerPaymentEventHandlers (W0-4)', () => {
 
     // Simulate payment.succeeded event
     prisma.order.update.mockResolvedValue(makeOrder({ status: 'confirmed' }));
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await handlers['payment.succeeded']({ orderId: 'order_1' });
 
@@ -1157,7 +1164,7 @@ describe('registerPaymentEventHandlers (W0-4)', () => {
       where: { id: 'order_1' },
       data: { status: 'confirmed' },
     });
-    expect(emit).toHaveBeenCalledWith(
+    expect(queueEmit).toHaveBeenCalledWith(
       'order.confirmed',
       expect.objectContaining({ orderId: 'order_1' })
     );
@@ -1194,7 +1201,7 @@ describe('registerPaymentEventHandlers (W0-4)', () => {
 
     prisma.order.findUnique.mockResolvedValue(order);
     prisma.order.update.mockResolvedValue({ ...order, status: 'cancelled' });
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await handlers['payment.failed']({ orderId: 'order_1' });
 
@@ -1235,7 +1242,7 @@ describe('syncOrderFulfillmentStatus', () => {
       })
     );
     prisma.order.update.mockResolvedValue(makeOrder({ status: 'fulfilled' }));
-    emit.mockResolvedValue(undefined);
+    queueEmit.mockResolvedValue(undefined);
 
     await syncOrderFulfillmentStatus('order_1');
 
@@ -1243,7 +1250,7 @@ describe('syncOrderFulfillmentStatus', () => {
       where: { id: 'order_1' },
       data: { status: 'fulfilled' },
     });
-    expect(emit).toHaveBeenCalledWith('order.fulfilled', {
+    expect(queueEmit).toHaveBeenCalledWith('order.fulfilled', {
       orderId: 'order_1',
       status: 'fulfilled',
     });

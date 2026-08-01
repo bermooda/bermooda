@@ -1,14 +1,17 @@
 // app/core/events/index.server.js
-// Domain event bus: before-hooks run in-process; post-hooks are queued.
+// Domain event bus: before-hooks run in-process; post-hooks are queued via job.server.
 
 import logger from '#/utils/logger.server';
+import { getHandlers } from '#/core/events/handlers.server';
+import { queueEmit } from '#/core/events/job.server';
 import { beforeHookKey } from '#/core/events/names';
 
-/** @type {Map<string, Function[]>} */
-const handlers = new Map();
-
-/** @type {null | ((event: string, payload: unknown) => void)} */
-let eventJobEnqueuer = null;
+export {
+  dispatchHandlers,
+  off,
+  on,
+  _handlers,
+} from '#/core/events/handlers.server';
 
 /**
  * Distinguished veto error. Not an operational error — a business decision.
@@ -55,49 +58,6 @@ export function isHookAbort(err) {
 }
 
 /**
- * Register a handler for a named event.
- * Handlers are called in registration order for start/scheduling;
- * parallel dispatch does not guarantee completion order.
- *
- * @param {string} event - The event name (e.g. 'order.created')
- * @param {Function} handler - Async or sync handler receiving the payload
- */
-export function on(event, handler) {
-  const existing = handlers.get(event);
-  if (!existing) {
-    handlers.set(event, [handler]);
-    return;
-  }
-  existing.push(handler);
-}
-
-/**
- * Removes a previously registered handler for an event.
- * @param {string} event
- * @param {Function} handler - Must be the same function reference passed to `on`.
- */
-export function off(event, handler) {
-  const existing = handlers.get(event);
-  if (!existing) return;
-  const updated = existing.filter((h) => h !== handler);
-  if (updated.length === 0) {
-    handlers.delete(event);
-  } else {
-    handlers.set(event, updated);
-  }
-}
-
-/**
- * Set the function used to enqueue post-commit domain events.
- *
- * @param {typeof eventJobEnqueuer} fn
- * @returns {void}
- */
-export function setEventJobEnqueuer(fn) {
-  eventJobEnqueuer = fn;
-}
-
-/**
  * Pick which failure to rethrow after parallel before-hooks settle.
  * Prefers the first-registered HookAbortError; otherwise the first-registered error.
  *
@@ -126,7 +86,7 @@ function preferBeforeHookError(failures) {
  */
 export async function emitBefore(event, payload) {
   const key = beforeHookKey(event);
-  const eventHandlers = handlers.get(key) ?? [];
+  const eventHandlers = getHandlers(key);
 
   if (eventHandlers.length === 0) {
     return payload;
@@ -157,7 +117,7 @@ export async function emitBefore(event, payload) {
         'action blocked by before-hook'
       );
 
-      emit('hook.blocked', {
+      queueEmit('hook.blocked', {
         event: key,
         code: err.code,
         pluginId: err.pluginId,
@@ -178,50 +138,3 @@ export async function emitBefore(event, payload) {
 
   return payload;
 }
-
-/**
- * Run post-hook handlers for an event.
- *
- * Fire-and-forget: returns immediately. Handlers run in parallel in the
- * background. Errors are logged per handler; remaining handlers still run.
- *
- * @param {string} event
- * @param {unknown} payload
- * @returns {void}
- */
-export function dispatchHandlers(event, payload) {
-  const eventHandlers = handlers.get(event) ?? [];
-
-  for (const handler of eventHandlers) {
-    Promise.resolve()
-      .then(() => handler(payload))
-      .catch((err) => {
-        logger.error(
-          { err, event },
-          `Event handler error for "${event}" — continuing dispatch`
-        );
-      });
-  }
-}
-
-/**
- * Persist a domain event for async handler dispatch.
- *
- * @param {string} event
- * @param {unknown} payload
- * @returns {void}
- */
-export function emit(event, payload) {
-  if (!eventJobEnqueuer) {
-    logger.warn(
-      { event },
-      'emit called before event job enqueuer was set — dropping event'
-    );
-    return;
-  }
-
-  eventJobEnqueuer(event, payload);
-}
-
-// Exported for introspection / testing only.
-export { handlers as _handlers };

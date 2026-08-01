@@ -2,7 +2,7 @@
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { getProvider } from '#/core/payments/index.server';
 
 /**
@@ -78,7 +78,7 @@ export async function processPaymentProviderWebhook(providerId, request) {
   });
 
   const result = await provider.handleWebhookEvent(event);
-  await emit(result.type, result);
+  await queueEmit(result.type, result);
 
   return { received: true };
 }

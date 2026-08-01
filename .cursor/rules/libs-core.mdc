@@ -30,7 +30,7 @@ alwaysApply: false
 
 ## Domain events durability
 
-- Post-hooks / `emit()` enqueue via LiteQuu `domain_event` job (`#/core/events/job.server`). Handlers run asynchronously after the mutation commits.
+- Post-hooks enqueue via `queueEmit` from `#/core/events/job.server` (LiteQuu `domain_event` job). Callers import the job queue function; the worker imports `dispatchHandlers` and runs handlers asynchronously after the mutation commits.
 - `emitBefore()` stays **request-path blocking and fail-closed** (blocking filters); it does not go through the queue.
 
 ## File pattern

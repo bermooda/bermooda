@@ -1,9 +1,10 @@
+// app/core/events/job.server.js
+// LiteQuu worker for durable domain-event post-hook dispatch.
+// Callers import queueEmit from this module (not from index.server).
+
 import logger from '#/utils/logger.server';
 import queue, { defineQueueJob } from '#/libs/queue.server';
-import {
-  dispatchHandlers,
-  setEventJobEnqueuer,
-} from '#/core/events/index.server';
+import { dispatchHandlers } from '#/core/events/handlers.server';
 
 const domainEventJob = defineQueueJob(queue, 'domain_event', {
   /**
@@ -43,9 +44,7 @@ const domainEventJob = defineQueueJob(queue, 'domain_event', {
  * @param {unknown} payload
  * @returns {void}
  */
-export function queueDomainEvent(event, payload) {
+export function queueEmit(event, payload) {
   logger.info({ event }, 'Queueing domain event');
   domainEventJob.add({ event, payload });
 }
-
-setEventJobEnqueuer(queueDomainEvent);
