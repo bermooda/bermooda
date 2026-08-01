@@ -101,9 +101,7 @@ describe('resolvePluginRouteDescriptor', () => {
   });
 
   it('matches :param with trailing splat', () => {
-    const map = new Map([
-      ['demo', [{ path: 'docs/:section/*' }]],
-    ]);
+    const map = new Map([['demo', [{ path: 'docs/:section/*' }]]]);
 
     expect(
       resolvePluginRouteDescriptor(map, 'demo', 'docs/api/v1/ref')

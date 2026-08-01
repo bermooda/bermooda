@@ -100,9 +100,7 @@ describe('storefront plugin dispatcher', () => {
       loader: pluginLoader,
     }));
 
-    const request = new Request(
-      'http://localhost/apps/demo-plugin/wrong-path'
-    );
+    const request = new Request('http://localhost/apps/demo-plugin/wrong-path');
     const params = {
       'pluginId': 'demo-plugin',
       '*': 'reports/daily',
@@ -171,10 +169,7 @@ describe('storefront plugin dispatcher', () => {
 
     expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith('demo-plugin');
     expect(mockIsPluginEnabled).toHaveBeenCalledWith('@acme/demo-plugin');
-    expect(mockServerResolve).toHaveBeenCalledWith(
-      'demo-plugin',
-      'orders/abc'
-    );
+    expect(mockServerResolve).toHaveBeenCalledWith('demo-plugin', 'orders/abc');
     expect(pluginAction).toHaveBeenCalledWith({
       request,
       params: {
