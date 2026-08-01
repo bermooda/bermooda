@@ -1,4 +1,5 @@
 import '#/libs/auth/test-setup.server';
+import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import logger from '#/utils/logger.server';
@@ -7,13 +8,14 @@ import {
   customerAuthHandlerMiddleware,
   customerAuthMiddleware,
   getCustomerSession,
+  notifyCustomerRegistered,
+  setOnCustomerRegistered,
 } from '#/libs/auth/customer/index.server';
 import {
   catchThrown,
   customerAuthTestState,
 } from '#/libs/auth/test-setup.server';
 import { enforceRateLimit } from '#/libs/rate-limit.server';
-import { emit } from '#/core/events/index.server';
 
 describe('customerAuthMiddleware', () => {
   beforeEach(() => {
@@ -129,20 +131,60 @@ describe('customerAuthHandlerMiddleware', () => {
 });
 
 describe('customerAuth database hooks', () => {
-  it('emits customer.registered after a new customer is created', async () => {
-    const hook = customerAuth._cfg.databaseHooks.user.create.after;
+  beforeEach(() => {
+    setOnCustomerRegistered(null);
+  });
 
+  it('does not import #/core/events', () => {
+    const source = readFileSync(
+      new URL('./index.server.js', import.meta.url),
+      'utf8'
+    );
+    expect(source).not.toMatch(/#\/core\/events/);
+  });
+
+  it('invokes injected onCustomerRegistered after user create hook path', async () => {
+    const fn = vi.fn();
+    setOnCustomerRegistered(fn);
+
+    const hook = customerAuth._cfg.databaseHooks.user.create.after;
     await hook({
       id: 'cust_1',
       email: 'new@example.com',
       name: 'New Customer',
     });
 
-    expect(emit).toHaveBeenCalledWith('customer.registered', {
+    expect(fn).toHaveBeenCalledWith({
       customerId: 'cust_1',
       email: 'new@example.com',
       name: 'New Customer',
     });
+  });
+
+  it('notifyCustomerRegistered maps user fields to the injected callback', async () => {
+    const fn = vi.fn();
+    setOnCustomerRegistered(fn);
+
+    await notifyCustomerRegistered({
+      id: 'cust_2',
+      email: 'other@example.com',
+      name: null,
+    });
+
+    expect(fn).toHaveBeenCalledWith({
+      customerId: 'cust_2',
+      email: 'other@example.com',
+      name: null,
+    });
+  });
+
+  it('skips the callback when none is registered', async () => {
+    await expect(
+      notifyCustomerRegistered({
+        id: 'cust_3',
+        email: 'noop@example.com',
+      })
+    ).resolves.toBeUndefined();
   });
 });
 

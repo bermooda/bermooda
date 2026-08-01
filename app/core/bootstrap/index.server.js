@@ -16,7 +16,8 @@ import { noopProvider } from '#/core/address-validation/index.server';
 import { registerAuditSubscribers } from '#/core/audit/index.server';
 import { registerBackInStockSubscribers } from '#/core/back-in-stock/index.server';
 import { seedDefaultChannel } from '#/core/channels/index.server';
-import { on } from '#/core/events/index.server';
+import { emit, on } from '#/core/events/index.server';
+import { setOnCustomerRegistered } from '#/libs/auth/customer/index.server';
 import { registerLoyaltySubscribers } from '#/core/loyalty/index.server';
 import {
   queueAbandonedCartSequence,
@@ -117,6 +118,10 @@ export function registerBuiltins() {
 
   // W9: loyalty points + referral rewards on order confirmation
   registerLoyaltySubscribers({ on });
+
+  setOnCustomerRegistered((payload) => {
+    emit('customer.registered', payload);
+  });
 
   // Discover installed plugins from app/plugins/
   discoverPlugins();
