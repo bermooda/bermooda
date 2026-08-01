@@ -12,7 +12,7 @@ import {
 import { emit } from '#/core/events/index.server';
 import { incrementInventory } from '#/core/inventory/index.server';
 import { inventoryItemsFromLines } from '#/core/inventory/items';
-import { createRefund } from '#/core/orders/index.server';
+import { createRefund } from '#/core/orders/refunds.server';
 import { issueStoreCredit } from '#/core/store-credit/index.server';
 
 export const RETURN_STATUSES = [
