@@ -13,10 +13,22 @@ import { handleAdminActionError } from '#/libs/api/admin-ui/index.server';
 import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
 import { formatPrice } from '#/core/currency/format';
 import {
+  addShipment,
+  markDelivered,
+  markShipped,
+} from '#/core/orders/fulfillment.server';
+import {
   loadOrderAdminDetailData,
   transitionOrderStatus,
   updateOrderNotes,
 } from '#/core/orders/index.server';
+import { createRefund } from '#/core/orders/refunds.server';
+import {
+  approveReturn,
+  cancelReturn,
+  completeReturn,
+  receiveReturn,
+} from '#/core/returns/index.server';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
 import { controlClasses } from '#/components/admin/form/input';
@@ -26,9 +38,6 @@ import { Td, Th } from '#/components/admin/table';
 import SlotBlocks from '#/components/slot-blocks';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
-
-// Server-only core calls are dynamically imported in `action` to avoid a
-// circular bundle graph (returns → orders) in this route module.
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -57,25 +66,6 @@ export async function action({ request, params }) {
   const { id } = params;
   const formData = await request.formData();
   const intent = formData.get('intent');
-
-  const needsOrdersCore = [
-    'add-shipment',
-    'mark-delivered',
-    'add-refund',
-  ].includes(intent);
-  const needsReturnsCore = [
-    'approve-return',
-    'receive-return',
-    'complete-return',
-    'cancel-return',
-  ].includes(intent);
-
-  const ordersCore = needsOrdersCore
-    ? await import('#/core/orders/index.server')
-    : null;
-  const returnsCore = needsReturnsCore
-    ? await import('#/core/returns/index.server')
-    : null;
 
   if (intent === 'update-status') {
     const newStatus = formData.get('status');
@@ -112,13 +102,13 @@ export async function action({ request, params }) {
     }
 
     try {
-      const shipment = await ordersCore.addShipment(id, {
+      const shipment = await addShipment(id, {
         carrier,
         trackingNumber,
         trackingUrl,
         lines: lines.length > 0 ? lines : undefined,
       });
-      await ordersCore.markShipped(shipment.id, {
+      await markShipped(shipment.id, {
         carrier,
         trackingNumber,
         trackingUrl,
@@ -137,7 +127,7 @@ export async function action({ request, params }) {
     const shipmentId = formData.get('shipmentId')?.toString();
     if (!shipmentId) return { ok: false, error: 'Missing shipmentId' };
     try {
-      await ordersCore.markDelivered(shipmentId);
+      await markDelivered(shipmentId);
       return { ok: true, intent };
     } catch (err) {
       return handleAdminActionError(err, {
@@ -153,7 +143,7 @@ export async function action({ request, params }) {
     const reason = formData.get('reason')?.toString().trim() || null;
 
     try {
-      await ordersCore.createRefund(id, { amountCents, reason });
+      await createRefund(id, { amountCents, reason });
       return { ok: true, intent };
     } catch (err) {
       return handleAdminActionError(err, {
@@ -168,7 +158,7 @@ export async function action({ request, params }) {
     const returnId = formData.get('returnId')?.toString();
     const resolution = formData.get('resolution')?.toString() || 'refund';
     try {
-      await returnsCore.approveReturn(returnId, { resolution });
+      await approveReturn(returnId, { resolution });
       return { ok: true, intent };
     } catch (err) {
       return handleAdminActionError(err, {
@@ -182,7 +172,7 @@ export async function action({ request, params }) {
   if (intent === 'receive-return') {
     const returnId = formData.get('returnId')?.toString();
     try {
-      await returnsCore.receiveReturn(returnId);
+      await receiveReturn(returnId);
       return { ok: true, intent };
     } catch (err) {
       return handleAdminActionError(err, {
@@ -197,7 +187,7 @@ export async function action({ request, params }) {
     const returnId = formData.get('returnId')?.toString();
     const resolution = formData.get('resolution')?.toString() || undefined;
     try {
-      await returnsCore.completeReturn(returnId, { resolution });
+      await completeReturn(returnId, { resolution });
       return { ok: true, intent };
     } catch (err) {
       return handleAdminActionError(err, {
@@ -211,7 +201,7 @@ export async function action({ request, params }) {
   if (intent === 'cancel-return') {
     const returnId = formData.get('returnId')?.toString();
     try {
-      await returnsCore.cancelReturn(returnId);
+      await cancelReturn(returnId);
       return { ok: true, intent };
     } catch (err) {
       return handleAdminActionError(err, {
