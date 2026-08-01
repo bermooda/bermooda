@@ -46,8 +46,11 @@ vi.mock('#/core/gift-cards/index.server', () => ({
 }));
 
 vi.mock('#/core/events/index.server', () => ({
-  emit: vi.fn(),
   emitBefore: vi.fn(),
+}));
+
+vi.mock('#/core/events/job.server', () => ({
+  queueEmit: vi.fn(),
 }));
 
 // ---------------------------------------------------------------------------
@@ -63,7 +66,8 @@ import {
 } from '#/core/checkout/pipeline.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { resolvePromotions } from '#/core/discounts/index.server';
-import { emit, emitBefore } from '#/core/events/index.server';
+import { emitBefore } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import {
   applyPriceListToCartLines,
   resolveCustomerGroupIds,
@@ -361,7 +365,7 @@ describe('createCheckoutSession', () => {
       email: 'checkout@example.com',
     });
 
-    expect(emit).toHaveBeenCalledWith('checkout.started', {
+    expect(queueEmit).toHaveBeenCalledWith('checkout.started', {
       sessionId: 'sess_started',
       cartId: 'cart_1',
       customerId: 'cust_1',

@@ -4,7 +4,7 @@ const sideEffectImports = vi.hoisted(() => ({
   eventsJobLoaded: vi.fn(),
 }));
 
-vi.mock('#/core/events/index.server', () => ({ emit: vi.fn(), on: vi.fn() }));
+vi.mock('#/core/events/index.server', () => ({ on: vi.fn() }));
 vi.mock('#/libs/auth/customer/index.server', () => ({
   setOnCustomerRegistered: vi.fn(),
 }));
@@ -50,7 +50,12 @@ vi.mock('#/core/rbac/index.server', () => ({
 }));
 vi.mock('#/core/webhooks/job.server', () => ({}));
 vi.mock('#/core/exports/job.server', () => ({}));
-vi.mock('#/core/marketing/job.server', () => ({}));
+vi.mock('#/core/marketing/job.server', () => ({
+  queueAbandonedCartSequence: vi.fn(),
+}));
+vi.mock('#/core/marketing/index.server', () => ({
+  seedDefaultAbandonedCartSequences: vi.fn(),
+}));
 vi.mock('#/emails/index.server', () => ({
   sendCampaignEmail: vi.fn(),
 }));
@@ -114,7 +119,7 @@ describe('bootstrap.server', () => {
     sideEffectImports.eventsJobLoaded.mockClear();
     vi.doMock('#/core/events/job.server', () => {
       sideEffectImports.eventsJobLoaded();
-      return {};
+      return { queueEmit: vi.fn() };
     });
 
     const bootstrap = await import('#/core/bootstrap/index.server');

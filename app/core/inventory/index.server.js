@@ -2,7 +2,7 @@
 // Inventory service: atomic decrement/increment and availability.
 
 import prisma from '#/libs/prisma.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import {
   decrementLocationLevels,
   getTotalAvailableQuantity,
@@ -84,7 +84,7 @@ export async function incrementInventory(items, tx) {
   const restocked = tx ? await run(tx) : await prisma.$transaction(run);
 
   for (const variantId of restocked) {
-    await emit('inventory.restocked', { variantId });
+    await queueEmit('inventory.restocked', { variantId });
   }
 }
 

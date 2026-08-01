@@ -9,7 +9,7 @@ import {
   parseListPagination,
   readQueryParam,
 } from '#/libs/prisma/pagination/index.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { incrementInventory } from '#/core/inventory/index.server';
 import { inventoryItemsFromLines } from '#/core/inventory/items';
 import { createRefund } from '#/core/orders/refunds.server';
@@ -335,7 +335,7 @@ export async function requestReturn(orderId, params = {}) {
     });
   });
 
-  await emit('return.requested', {
+  await queueEmit('return.requested', {
     returnId: returnRecord.id,
     orderId,
     customerId: returnRecord.customerId,
@@ -379,7 +379,7 @@ export async function approveReturn(returnId, { resolution } = {}) {
     include: RETURN_DETAIL_INCLUDE,
   });
 
-  await emit('return.approved', {
+  await queueEmit('return.approved', {
     returnId,
     orderId: updated.orderId,
     resolution: updated.resolution,
@@ -441,11 +441,11 @@ export async function receiveReturn(returnId) {
 
   const updated = await requireReturnRecord(returnId);
 
-  await emit('return.received', {
+  await queueEmit('return.received', {
     returnId,
     orderId: updated.orderId,
   });
-  await emit('order.returned', {
+  await queueEmit('order.returned', {
     returnId,
     orderId: updated.orderId,
   });
@@ -536,7 +536,7 @@ export async function completeReturn(returnId, options = {}) {
 
   const updated = await requireReturnRecord(returnId);
 
-  await emit('return.completed', {
+  await queueEmit('return.completed', {
     returnId,
     orderId: updated.orderId,
     resolution: effectiveResolution,
@@ -570,7 +570,7 @@ export async function cancelReturn(returnId) {
     include: RETURN_DETAIL_INCLUDE,
   });
 
-  await emit('return.cancelled', { returnId, orderId: updated.orderId });
+  await queueEmit('return.cancelled', { returnId, orderId: updated.orderId });
 
   return serializeReturn(updated);
 }

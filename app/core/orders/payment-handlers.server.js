@@ -2,7 +2,7 @@
 // Domain-event subscribers for payment lifecycle → order status.
 
 import logger from '#/utils/logger.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { cancelOrder, updateOrderStatus } from '#/core/orders/admin.server';
 
 /**
@@ -20,7 +20,7 @@ export function registerPaymentEventHandlers({ on }) {
     if (!payload.orderId) return;
     try {
       await updateOrderStatus(payload.orderId, 'confirmed');
-      await emit('order.confirmed', {
+      await queueEmit('order.confirmed', {
         orderId: payload.orderId,
         orderNumber: payload.orderNumber,
       });

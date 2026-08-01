@@ -2,7 +2,8 @@
 // Order refund creation and inventory restore.
 
 import prisma from '#/libs/prisma.server';
-import { emit, emitBefore } from '#/core/events/index.server';
+import { emitBefore } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { incrementInventory } from '#/core/inventory/index.server';
 import { inventoryItemsFromLines } from '#/core/inventory/items';
 import { getProvider } from '#/core/payments/index.server';
@@ -78,7 +79,7 @@ export async function createRefund(
     await restoreOrderLineInventory(order.lines);
   }
 
-  await emit('payment.refunded', { refundId: refund.id, orderId, amountCents });
+  await queueEmit('payment.refunded', { refundId: refund.id, orderId, amountCents });
 
   return refund;
 }

@@ -25,13 +25,9 @@ vi.mock('#/core/i18n/index.server', () => ({
   loadMessages: vi.fn().mockResolvedValue({}),
 }));
 
-vi.mock('#/core/events/index.server', async () => {
-  const actual = await vi.importActual('#/core/events/index.server');
-  return {
-    ...actual,
-    emit: vi.fn(),
-  };
-});
+vi.mock('#/core/events/job.server', () => ({
+  queueEmit: vi.fn(),
+}));
 
 const {
   registerPaymentProvider,

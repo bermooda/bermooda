@@ -7,7 +7,8 @@ import {
   buildPaginationMeta,
   buildPrismaPagination,
 } from '#/libs/prisma/pagination/index.server';
-import { emit, emitBefore } from '#/core/events/index.server';
+import { emitBefore } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { incrementInventory } from '#/core/inventory/index.server';
 import { inventoryItemsFromLines } from '#/core/inventory/items';
 
@@ -327,7 +328,7 @@ export async function updateOrderStatus(id, status) {
   });
 
   if (current && current.status !== status) {
-    await emit('order.updated', {
+    await queueEmit('order.updated', {
       orderId: id,
       previousStatus: current.status,
       status,
@@ -403,7 +404,7 @@ export async function cancelOrder(orderId) {
 
   const updated = await updateOrderStatus(orderId, 'cancelled');
 
-  await emit('order.cancelled', { orderId, orderNumber: order.orderNumber });
+  await queueEmit('order.cancelled', { orderId, orderNumber: order.orderNumber });
 
   logger.info({ orderId, orderNumber: order.orderNumber }, 'order cancelled');
 

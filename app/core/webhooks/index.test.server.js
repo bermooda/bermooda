@@ -22,13 +22,17 @@ vi.mock('#/libs/prisma.server', () => {
   return { default: { webhookSubscription, webhookDelivery } };
 });
 
-// Mock logger to suppress output
 vi.mock('#/utils/logger.server', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock('#/core/webhooks/job.server', () => ({
+  queueWebhookDelivery: vi.fn(),
+}));
+
 import prisma from '#/libs/prisma.server';
 import { DOMAIN_EVENT_WILDCARD } from '#/core/events/names';
+import { queueWebhookDelivery } from '#/core/webhooks/job.server';
 
 import {
   buildWebhookDispatchPayload,
@@ -41,7 +45,6 @@ import {
   parseCreateSubscriptionInput,
   parseSubscriptionEvents,
   parseUpdateSubscriptionInput,
-  setWebhookJobEnqueuer,
   subscriptionMatchesEvent,
   updateSubscription,
   validateSubscriptionEvents,
@@ -49,7 +52,6 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  setWebhookJobEnqueuer(null);
 });
 
 // ---------------------------------------------------------------------------
@@ -304,10 +306,7 @@ describe('listDeliveries', () => {
 // ---------------------------------------------------------------------------
 
 describe('dispatchWebhookEvent', () => {
-  it('creates a WebhookDelivery and calls the enqueuer for matching subscriptions', async () => {
-    const enqueuer = vi.fn();
-    setWebhookJobEnqueuer(enqueuer);
-
+  it('creates a WebhookDelivery and queues delivery for matching subscriptions', async () => {
     prisma.webhookSubscription.findMany.mockResolvedValue([
       makeSub({ events: '["order.created","payment.refunded"]' }),
     ]);
@@ -316,33 +315,29 @@ describe('dispatchWebhookEvent', () => {
     await dispatchWebhookEvent('order.created', { orderId: '123' });
 
     expect(prisma.webhookDelivery.create).toHaveBeenCalledOnce();
-    expect(enqueuer).toHaveBeenCalledWith({ deliveryId: 'delivery-1' });
+    expect(queueWebhookDelivery).toHaveBeenCalledWith({
+      deliveryId: 'delivery-1',
+    });
   });
 
   it('skips subscriptions that do not match the event', async () => {
-    const enqueuer = vi.fn();
-    setWebhookJobEnqueuer(enqueuer);
-
     prisma.webhookSubscription.findMany.mockResolvedValue([
       makeSub({ events: '["payment.refunded"]' }),
     ]);
 
     await dispatchWebhookEvent('order.created', {});
     expect(prisma.webhookDelivery.create).not.toHaveBeenCalled();
-    expect(enqueuer).not.toHaveBeenCalled();
+    expect(queueWebhookDelivery).not.toHaveBeenCalled();
   });
 
   it('matches wildcard "*" subscriptions', async () => {
-    const enqueuer = vi.fn();
-    setWebhookJobEnqueuer(enqueuer);
-
     prisma.webhookSubscription.findMany.mockResolvedValue([
       makeSub({ events: '["*"]' }),
     ]);
     prisma.webhookDelivery.create.mockResolvedValue({ id: 'delivery-2' });
 
     await dispatchWebhookEvent('order.cancelled', {});
-    expect(enqueuer).toHaveBeenCalledTimes(1);
+    expect(queueWebhookDelivery).toHaveBeenCalledTimes(1);
   });
 
   it('does nothing when no active subscriptions match', async () => {

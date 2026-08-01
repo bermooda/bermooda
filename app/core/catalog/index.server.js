@@ -19,7 +19,7 @@ import {
   buildChannelPublishedWhere,
   isProductPublishedOnChannel,
 } from '#/core/channels/index.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { deleteMedia, uploadAndCreateMedia } from '#/core/storage/index.server';
 
 export { getTranslations, setTranslation };
@@ -231,7 +231,7 @@ export async function createProduct(data) {
     );
   }
 
-  await emit('product.created', { productId: product.id });
+  await queueEmit('product.created', { productId: product.id });
 
   logger.info({ productId: product.id }, 'product created');
   invalidateCatalogCache();
@@ -253,7 +253,7 @@ export async function updateProduct(id, data) {
     await setTranslation('product', id, locale, 'description', description);
   }
 
-  await emit('product.updated', { productId: product.id });
+  await queueEmit('product.updated', { productId: product.id });
 
   invalidateCatalogCache();
   return product;
@@ -261,7 +261,7 @@ export async function updateProduct(id, data) {
 
 export async function deleteProduct(id) {
   await prisma.product.delete({ where: { id } });
-  await emit('product.deleted', { productId: id });
+  await queueEmit('product.deleted', { productId: id });
   invalidateCatalogCache();
   logger.info({ productId: id }, 'product deleted');
 }

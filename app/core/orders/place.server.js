@@ -12,7 +12,8 @@ import {
 } from '#/core/checkout/session.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { persistOrderDiscounts } from '#/core/discounts/index.server';
-import { emit, emitBefore } from '#/core/events/index.server';
+import { emitBefore } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { redeemGiftCard } from '#/core/gift-cards/index.server';
 import { decrementInventory } from '#/core/inventory/index.server';
 import { inventoryItemsFromLines } from '#/core/inventory/items';
@@ -254,8 +255,8 @@ export async function placeOrder(
 
   // After transaction commits — emit event
   const orderPayload = buildOrderEventPayload(createdOrder, checkoutSessionId);
-  await emit('order.created', orderPayload);
-  await emit('checkout.completed', orderPayload);
+  await queueEmit('order.created', orderPayload);
+  await queueEmit('checkout.completed', orderPayload);
 
   logger.info(
     { orderId: createdOrder.id, orderNumber: createdOrder.orderNumber },

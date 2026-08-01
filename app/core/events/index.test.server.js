@@ -8,19 +8,22 @@ vi.mock('#/utils/logger.server', () => ({
   },
 }));
 
+vi.mock('#/core/events/job.server', () => ({
+  queueEmit: vi.fn(),
+}));
+
 // Import after mock is registered.
 const {
   dispatchHandlers,
-  emit,
   emitBefore,
   deny,
   HookAbortError,
   isHookAbort,
   on,
   off,
-  setEventJobEnqueuer,
   _handlers,
 } = await import('#/core/events/index.server');
+const { queueEmit } = await import('#/core/events/job.server');
 
 /** Flush microtasks so fire-and-forget post-hook handlers can settle. */
 async function flushEmit() {
@@ -32,35 +35,18 @@ describe('event bus', () => {
   beforeEach(() => {
     // Clear all registered handlers between tests.
     _handlers.clear();
-    setEventJobEnqueuer((event, payload) => dispatchHandlers(event, payload));
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('on + emit basic dispatch', () => {
-    it('emit enqueues via setEventJobEnqueuer without running handlers inline', () => {
-      const enqueued = [];
-      setEventJobEnqueuer((event, payload) => {
-        enqueued.push({ event, payload });
-      });
-      const handler = vi.fn();
-      on('order.created', handler);
-
-      emit('order.created', { orderId: '1' });
-
-      expect(enqueued).toEqual([
-        { event: 'order.created', payload: { orderId: '1' } },
-      ]);
-      expect(handler).not.toHaveBeenCalled();
-    });
-
+  describe('on + dispatchHandlers', () => {
     it('calls a registered handler with the payload', async () => {
       const handler = vi.fn();
       on('order.created', handler);
 
-      emit('order.created', { orderId: 1 });
+      dispatchHandlers('order.created', { orderId: 1 });
       await flushEmit();
 
       expect(handler).toHaveBeenCalledOnce();
@@ -71,14 +57,14 @@ describe('event bus', () => {
       const handler = vi.fn();
       on('order.created', handler);
 
-      emit('customer.registered', { customerId: 42 });
+      dispatchHandlers('customer.registered', { customerId: 42 });
       await flushEmit();
 
       expect(handler).not.toHaveBeenCalled();
     });
 
-    it('emitting an event with no handlers does not throw', () => {
-      expect(() => emit('no.handlers', {})).not.toThrow();
+    it('dispatching an event with no handlers does not throw', () => {
+      expect(() => dispatchHandlers('no.handlers', {})).not.toThrow();
     });
 
     it('returns immediately without awaiting handlers', async () => {
@@ -91,7 +77,7 @@ describe('event bus', () => {
       });
 
       const started = Date.now();
-      emit('order.created', {});
+      dispatchHandlers('order.created', {});
       const elapsed = Date.now() - started;
 
       expect(elapsed).toBeLessThan(20);
@@ -116,7 +102,7 @@ describe('event bus', () => {
         calls.push('fast');
       });
 
-      emit('order.created', {});
+      dispatchHandlers('order.created', {});
       await flushEmit();
 
       expect(calls).toEqual(['fast']);
@@ -148,7 +134,9 @@ describe('event bus', () => {
       });
       on('order.created', afterHandler);
 
-      expect(() => emit('order.created', { orderId: 99 })).not.toThrow();
+      expect(() =>
+        dispatchHandlers('order.created', { orderId: 99 })
+      ).not.toThrow();
       await flushEmit();
       expect(afterHandler).toHaveBeenCalledOnce();
     });
@@ -160,7 +148,7 @@ describe('event bus', () => {
         throw new Error('refund error');
       });
 
-      emit('payment.refunded', {});
+      dispatchHandlers('payment.refunded', {});
       await flushEmit();
 
       expect(logger.error).toHaveBeenCalledOnce();
@@ -180,7 +168,7 @@ describe('event bus', () => {
       const handler = () => calls.push(1);
       on('test.off', handler);
       off('test.off', handler);
-      emit('test.off', {});
+      dispatchHandlers('test.off', {});
       await flushEmit();
       expect(calls).toHaveLength(0);
     });
@@ -192,7 +180,7 @@ describe('event bus', () => {
       on('test.off2', h1);
       on('test.off2', h2);
       off('test.off2', h1);
-      emit('test.off2', {});
+      dispatchHandlers('test.off2', {});
       await flushEmit();
       expect(calls).toEqual([2]);
     });
@@ -257,6 +245,24 @@ describe('event bus', () => {
         emitBefore('shipment.ship', { orderId: 'order_1' })
       ).rejects.toBeInstanceOf(HookAbortError);
       expect(afterHandler).toHaveBeenCalledOnce();
+    });
+
+    it('queues hook.blocked via queueEmit when a handler vetoes', async () => {
+      on('before.shipment.create', () => {
+        deny('Blocked', { code: 'HOLD_CHECK', pluginId: 'hold-check' });
+      });
+
+      await expect(
+        emitBefore('shipment.create', { orderId: 'order_1' })
+      ).rejects.toBeInstanceOf(HookAbortError);
+
+      expect(queueEmit).toHaveBeenCalledWith('hook.blocked', {
+        event: 'before.shipment.create',
+        code: 'HOLD_CHECK',
+        pluginId: 'hold-check',
+        reason: 'Blocked',
+        orderId: 'order_1',
+      });
     });
 
     it('prefers the first-registered HookAbortError when multiple handlers fail', async () => {
@@ -358,7 +364,7 @@ describe('event bus', () => {
         throw new Error('checkout failure');
       });
 
-      expect(() => emit('checkout.completed', {})).not.toThrow();
+      expect(() => dispatchHandlers('checkout.completed', {})).not.toThrow();
       await flushEmit();
     });
 
@@ -370,7 +376,7 @@ describe('event bus', () => {
       });
       on('checkout.started', afterHandler);
 
-      expect(() => emit('checkout.started', {})).not.toThrow();
+      expect(() => dispatchHandlers('checkout.started', {})).not.toThrow();
       await flushEmit();
       expect(afterHandler).toHaveBeenCalledOnce();
     });
@@ -379,7 +385,7 @@ describe('event bus', () => {
       const handler = vi.fn();
       on('checkout.completed', handler);
 
-      emit('checkout.completed', { total: 100 });
+      dispatchHandlers('checkout.completed', { total: 100 });
       await flushEmit();
       expect(handler).toHaveBeenCalledWith({ total: 100 });
     });

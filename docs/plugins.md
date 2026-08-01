@@ -480,10 +480,10 @@ Jobs are persisted (SQLite via `QUEUE_DATABASE_PATH` by default) and processed b
 
 ### `ctx.emit`
 
-The event bus emit function. Plugins can emit custom events that other plugins (or core) can listen to.
+Queues a domain event via `queueEmit` (`#/core/events/job.server`). Plugins can emit custom events that other plugins (or core) can listen to.
 
 ```js
-await ctx.emit('my-plugin.something-happened', { data });
+ctx.emit('my-plugin.something-happened', { data });
 ```
 
 Use a namespaced event name (prefixed with your plugin id) to avoid collisions with platform events.
@@ -509,7 +509,7 @@ These are the core platform events that bermooda emits today. Declare handlers i
 
 ### Post-action hooks
 
-These events fire after the underlying domain work has happened. `emit()` **persists** the event via a LiteQuu `domain_event` job (`#/core/events/job.server`), then returns; handlers run asynchronously and fault-tolerantly after enqueue (if a handler throws, the job path logs the error and remaining handlers still run). This is durable enqueue, not only in-process fire-and-forget. Post-hooks do not receive `ctx`; they receive only the payload.
+These events fire after the underlying domain work has happened. Callers enqueue with `queueEmit` from `#/core/events/job.server` (LiteQuu `domain_event` job); the job imports `dispatchHandlers` and runs subscribers asynchronously and fault-tolerantly after enqueue (if a handler throws, the job path logs the error and remaining handlers still run). This is durable enqueue, not only in-process fire-and-forget. Post-hooks do not receive `ctx`; they receive only the payload.
 
 #### Orders and checkout
 
@@ -574,7 +574,7 @@ hooks: defineHooks({
 }),
 ```
 
-Handlers are invoked by the domain-event job worker after `emit()` enqueues. Completion order is not guaranteed. If a post-hook handler throws, the error is contained and does not affect other handlers or the original caller.
+Handlers are invoked by the domain-event job worker after `queueEmit` enqueues. Completion order is not guaranteed. If a post-hook handler throws, the error is contained and does not affect other handlers or the original caller.
 
 ### Before-hooks (blocking filters)
 

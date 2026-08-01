@@ -1,12 +1,10 @@
 // app/core/marketing/job.server.js
 // Scheduled marketing automation worker.
+// Callers import queueAbandonedCartSequence from this module.
 
 import logger from '#/utils/logger.server';
 import queue, { defineQueueJob } from '#/libs/queue.server';
-import {
-  processAbandonedCarts,
-  setAbandonedCartSequenceJobEnqueuer,
-} from '#/core/marketing/index.server';
+import { processAbandonedCarts } from '#/core/marketing/index.server';
 
 const abandonedCartSequenceJob = defineQueueJob(
   queue,
@@ -25,9 +23,9 @@ const abandonedCartSequenceJob = defineQueueJob(
 
 /**
  * Queue abandoned-cart sequence processing.
+ *
+ * @returns {void}
  */
-export function queueAbandonedCartSequenceJob() {
+export function queueAbandonedCartSequence() {
   abandonedCartSequenceJob.add({});
 }
-
-setAbandonedCartSequenceJobEnqueuer(queueAbandonedCartSequenceJob);

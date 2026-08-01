@@ -4,7 +4,6 @@ const jobState = vi.hoisted(() => ({
   add: vi.fn(),
   jobName: null,
   options: null,
-  enqueuer: null,
   dispatchHandlers: vi.fn(),
 }));
 
@@ -25,11 +24,8 @@ vi.mock('#/libs/queue.server', () => ({
   }),
 }));
 
-vi.mock('#/core/events/index.server', () => ({
+vi.mock('#/core/events/handlers.server', () => ({
   dispatchHandlers: jobState.dispatchHandlers,
-  setEventJobEnqueuer: vi.fn((fn) => {
-    jobState.enqueuer = fn;
-  }),
 }));
 
 describe('domain event queue job', () => {
@@ -39,21 +35,19 @@ describe('domain event queue job', () => {
     jobState.dispatchHandlers.mockReset();
     jobState.jobName = null;
     jobState.options = null;
-    jobState.enqueuer = null;
     vi.resetModules();
   });
 
-  it('registers the domain_event job and installs queueDomainEvent as enqueuer', async () => {
-    const { queueDomainEvent } = await import('#/core/events/job.server');
+  it('registers the domain_event job', async () => {
+    await import('#/core/events/job.server');
 
     expect(jobState.jobName).toBe('domain_event');
-    expect(jobState.enqueuer).toBe(queueDomainEvent);
   });
 
-  it('queueDomainEvent adds event and payload to the domain_event job', async () => {
-    const { queueDomainEvent } = await import('#/core/events/job.server');
+  it('queueEmit adds event and payload to the domain_event job', async () => {
+    const { queueEmit } = await import('#/core/events/job.server');
 
-    queueDomainEvent('order.created', { orderId: '1' });
+    queueEmit('order.created', { orderId: '1' });
 
     expect(jobState.add).toHaveBeenCalledWith({
       event: 'order.created',

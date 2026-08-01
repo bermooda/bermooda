@@ -7,9 +7,9 @@ import {
   listAbandonedCartSequences,
   listCampaigns,
   listSegments,
-  queueAbandonedCartSequence,
   sendCampaign,
 } from '#/core/marketing/index.server';
+import { queueAbandonedCartSequence } from '#/core/marketing/job.server';
 import Card from '#/components/admin/card';
 import PageHeader from '#/components/admin/page-header';
 

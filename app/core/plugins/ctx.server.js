@@ -4,7 +4,7 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import queue from '#/libs/queue.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { translate } from '#/core/i18n';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 import {
@@ -77,7 +77,7 @@ export function buildCtx(pluginId, options = {}) {
     plugin,
     logger: pluginLogger,
     queue: pluginQueue,
-    emit,
+    emit: queueEmit,
     t,
   };
 }

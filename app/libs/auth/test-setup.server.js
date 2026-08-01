@@ -80,8 +80,8 @@ vi.mock('#/emails/job.server', () => ({
   queueCustomerWelcomeEmail: vi.fn(),
 }));
 
-vi.mock('#/core/events/index.server', () => ({
-  emit: vi.fn(),
+vi.mock('#/core/events/job.server', () => ({
+  queueEmit: vi.fn(),
 }));
 
 vi.mock('#/libs/config', () => ({

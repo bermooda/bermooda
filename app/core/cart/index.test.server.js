@@ -36,8 +36,8 @@ vi.mock('#/core/pricing/index.server', () => ({
   resolveVariantPrice: vi.fn(),
 }));
 
-vi.mock('#/core/events/index.server', () => ({
-  emit: vi.fn(),
+vi.mock('#/core/events/job.server', () => ({
+  queueEmit: vi.fn(),
 }));
 
 import prisma from '#/libs/prisma.server';
@@ -52,7 +52,7 @@ import {
   unlockCart,
   deleteCart,
 } from '#/core/cart/index.server';
-import { emit } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { resolveVariantPrice } from '#/core/pricing/index.server';
 
 beforeEach(() => {
@@ -120,7 +120,7 @@ describe('createCart', () => {
 
     const cart = await createCart({ currency: 'EUR', customerId: 'cust_1' });
 
-    expect(emit).toHaveBeenCalledWith(
+    expect(queueEmit).toHaveBeenCalledWith(
       'cart.created',
       expect.objectContaining({
         cartId: cart.id,
@@ -151,7 +151,7 @@ describe('createCart', () => {
 
     await createCart({ currency: 'USD', salesChannelId: 'ch_1' });
 
-    expect(emit).toHaveBeenCalledWith(
+    expect(queueEmit).toHaveBeenCalledWith(
       'cart.created',
       expect.objectContaining({ salesChannelId: 'ch_1' })
     );
@@ -249,7 +249,7 @@ describe('addLine — upsert', () => {
       data: { quantity: 5, priceCentsSnapshot: 800 },
     });
     expect(prisma.cartLine.create).not.toHaveBeenCalled();
-    expect(emit).toHaveBeenCalledWith('cart.itemAdded', {
+    expect(queueEmit).toHaveBeenCalledWith('cart.itemAdded', {
       cartId: 'cart_1',
       variantId: 'variant_1',
       quantity: 3,
@@ -275,7 +275,7 @@ describe('addLine — upsert', () => {
         titleSnapshot: 'Blue T-Shirt',
       }),
     });
-    expect(emit).toHaveBeenCalledWith('cart.itemAdded', {
+    expect(queueEmit).toHaveBeenCalledWith('cart.itemAdded', {
       cartId: 'cart_1',
       variantId: 'variant_2',
       quantity: 1,
@@ -311,7 +311,7 @@ describe('removeLine', () => {
     expect(prisma.cartLine.delete).toHaveBeenCalledWith({
       where: { id: 'line_1', cartId: 'cart_1' },
     });
-    expect(emit).toHaveBeenCalledWith('cart.itemRemoved', {
+    expect(queueEmit).toHaveBeenCalledWith('cart.itemRemoved', {
       cartId: 'cart_1',
       lineId: 'line_1',
     });
@@ -368,7 +368,7 @@ describe('updateQuantity', () => {
       where: { id: 'line_1', cartId: 'cart_1' },
       data: { quantity: 4, priceCentsSnapshot: 700 },
     });
-    expect(emit).toHaveBeenCalledWith('cart.updated', {
+    expect(queueEmit).toHaveBeenCalledWith('cart.updated', {
       cartId: 'cart_1',
       lineId: 'line_1',
       quantity: 4,

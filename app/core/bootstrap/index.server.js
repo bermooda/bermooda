@@ -17,12 +17,11 @@ import { noopProvider } from '#/core/address-validation/index.server';
 import { registerAuditSubscribers } from '#/core/audit/index.server';
 import { registerBackInStockSubscribers } from '#/core/back-in-stock/index.server';
 import { seedDefaultChannel } from '#/core/channels/index.server';
-import { emit, on } from '#/core/events/index.server';
+import { on } from '#/core/events/index.server';
+import { queueEmit } from '#/core/events/job.server';
 import { registerLoyaltySubscribers } from '#/core/loyalty/index.server';
-import {
-  queueAbandonedCartSequence,
-  seedDefaultAbandonedCartSequences,
-} from '#/core/marketing/index.server';
+import { seedDefaultAbandonedCartSequences } from '#/core/marketing/index.server';
+import { queueAbandonedCartSequence } from '#/core/marketing/job.server';
 import { registerPaymentEventHandlers } from '#/core/orders/index.server';
 import { registerProvider as registerPayment } from '#/core/payments/index.server';
 import { klarnaProvider } from '#/core/payments/klarna.server';
@@ -52,14 +51,10 @@ import {
 import { taxJarProvider } from '#/core/tax/taxjar.server';
 import { discoverThemes } from '#/core/themes/index.server';
 import { registerWebhookSubscribers } from '#/core/webhooks/index.server';
-// Domain-event worker: registers the enqueuer used by emit().
-import '#/core/events/job.server';
-// W2: load webhook delivery worker (registers enqueuer) + subscriber registration
+// Side-effect imports: register LiteQuu workers that have no named imports above.
 import '#/core/webhooks/job.server';
-// W6: scheduled export worker
 import '#/core/exports/job.server';
-// W9: marketing automation worker
-import '#/core/marketing/job.server';
+import '#/emails/job.server';
 
 let _bootstrapped = false;
 
@@ -122,7 +117,7 @@ export function registerBuiltins() {
   registerLoyaltySubscribers({ on });
 
   setOnCustomerRegistered((payload) => {
-    emit('customer.registered', payload);
+    queueEmit('customer.registered', payload);
   });
 
   // Discover installed plugins from app/plugins/

@@ -2,7 +2,7 @@
 // Queue abandoned-cart sequence processing. Requires admin-scoped API key.
 
 import { requireMethod } from '#/libs/api/admin/index.server';
-import { queueAbandonedCartSequence } from '#/core/marketing/index.server';
+import { queueAbandonedCartSequence } from '#/core/marketing/job.server';
 
 /**
  * @param {{ request: Request }} args
