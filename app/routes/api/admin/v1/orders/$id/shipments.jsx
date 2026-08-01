@@ -1,8 +1,8 @@
 // POST /api/admin/v1/orders/:id/shipments — create a shipment
 // Requires admin-scoped API key.
 
+import { jsonActionError } from '#/core/events/http.server';
 import {
-  jsonActionError,
   jsonDomainError,
   parseJsonBody,
   requireMethod,

@@ -5,7 +5,7 @@ import {
   appendCartTokenCookie,
   getCartTokenFromRequest,
 } from '#/utils/cart-cookie.server';
-import { loadStorefrontPageContext } from '#/libs/api/storefront/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { handleError } from '#/libs/error/index.server';
 import {
