@@ -6,7 +6,7 @@ import { createHmac } from 'crypto';
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import queue, { defineQueueJob } from '#/libs/queue.server';
+import { defineQueueJob } from '#/libs/queue.server';
 
 const MAX_ATTEMPTS = 5;
 // Exponential back-off: 30 s → 2 min → 10 min → 30 min → 2 h
@@ -22,7 +22,7 @@ function sign(secret, payload) {
   return 'sha256=' + createHmac('sha256', secret).update(payload).digest('hex');
 }
 
-const webhookDeliveryJob = defineQueueJob(queue, 'webhook_delivery', {
+const webhookDeliveryJob = defineQueueJob('webhook_delivery', {
   process: async (taskData) => {
     const { deliveryId } = taskData;
 

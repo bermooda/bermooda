@@ -3,10 +3,10 @@
 // Callers import queueScheduledExport from this module.
 
 import logger from '#/utils/logger.server';
-import queue, { defineQueueJob } from '#/libs/queue.server';
+import { defineQueueJob } from '#/libs/queue.server';
 import { runScheduledExport } from '#/core/exports/index.server';
 
-const scheduledExportJob = defineQueueJob(queue, 'scheduled_export', {
+const scheduledExportJob = defineQueueJob('scheduled_export', {
   process: async (taskData) => {
     const { scheduledExportId } = taskData;
     const result = await runScheduledExport(scheduledExportId);

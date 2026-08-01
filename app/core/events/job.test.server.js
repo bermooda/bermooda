@@ -17,7 +17,7 @@ vi.mock('#/utils/logger.server', () => ({
 
 vi.mock('#/libs/queue.server', () => ({
   default: { id: 'queue' },
-  defineQueueJob: vi.fn((queue, name, options) => {
+  defineQueueJob: vi.fn((name, options) => {
     jobState.jobName = name;
     jobState.options = options;
     return { add: jobState.add };
