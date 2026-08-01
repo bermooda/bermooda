@@ -2,21 +2,20 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockGetProvider, mockEmit, mockFindUnique, mockCreate } = vi.hoisted(
-  () => ({
+const { mockGetProvider, mockQueueEmit, mockFindUnique, mockCreate } =
+  vi.hoisted(() => ({
     mockGetProvider: vi.fn(),
-    mockEmit: vi.fn(),
+    mockQueueEmit: vi.fn(),
     mockFindUnique: vi.fn(),
     mockCreate: vi.fn(),
-  })
-);
+  }));
 
 vi.mock('#/core/payments/index.server', () => ({
   getProvider: mockGetProvider,
 }));
 
-vi.mock('#/core/events/index.server', () => ({
-  emit: mockEmit,
+vi.mock('#/core/events/job.server', () => ({
+  queueEmit: mockQueueEmit,
 }));
 
 vi.mock('#/libs/prisma.server', () => ({
@@ -79,7 +78,7 @@ describe('normalizeWebhookEventType', () => {
 describe('processPaymentProviderWebhook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockEmit.mockResolvedValue(undefined);
+    mockQueueEmit.mockResolvedValue(undefined);
   });
 
   it('returns duplicate when the event was already processed', async () => {
@@ -99,7 +98,7 @@ describe('processPaymentProviderWebhook', () => {
 
     expect(result).toEqual({ received: true, duplicate: true });
     expect(mockCreate).not.toHaveBeenCalled();
-    expect(mockEmit).not.toHaveBeenCalled();
+    expect(mockQueueEmit).not.toHaveBeenCalled();
   });
 
   it('persists the event and emits the domain result', async () => {
@@ -128,7 +127,10 @@ describe('processPaymentProviderWebhook', () => {
       type: 'payment_intent.succeeded',
       payload: rawBody,
     });
-    expect(mockEmit).toHaveBeenCalledWith('payment.succeeded', domainResult);
+    expect(mockQueueEmit).toHaveBeenCalledWith(
+      'payment.succeeded',
+      domainResult
+    );
   });
 
   it('throws VERIFICATION_FAILED when signature verification fails', async () => {
