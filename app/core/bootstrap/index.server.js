@@ -54,7 +54,6 @@ import { registerWebhookSubscribers } from '#/core/webhooks/index.server';
 // Side-effect imports: register LiteQuu workers that have no named imports above.
 import '#/core/webhooks/job.server';
 import '#/core/exports/job.server';
-import '#/emails/job.server';
 
 let _bootstrapped = false;
 
