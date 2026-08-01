@@ -269,11 +269,11 @@ These were flagged as broken or missing; they are now wired in the default theme
 **Tasks**
 
 - **W8-1. Postgres-first.** The datasource is hardcoded to `sqlite` in [prisma/schema.prisma](prisma/schema.prisma). Make the provider configurable (env-driven), provide a Postgres migration path + docs, and keep SQLite for local dev. Verify queries that rely on `mode: 'insensitive'` (e.g. discounts) behave on both.
-- **W8-2. Granular RBAC.** Beyond `admin`/`staff` equality: roles/permissions per resource; enforce in admin middleware + admin API. Optional SSO/SAML for admin.
-- **W8-3. Rate limiting + abuse controls** on auth, API, and webhooks.
-- **W8-4. Image optimization.** Generate responsive sizes + populate `Media.width/height` (currently `null`; storage notes no `sharp`); CDN/cache headers for catalog assets. See [app/core/storage/index.server.js](app/core/storage/index.server.js).
+- **W8-2. Granular RBAC.** **Shipped:** roles/permissions via `seedRolePermissions`; enforced in admin middleware + admin API. Optional SSO/SAML for admin remains future work.
+- **W8-3. Rate limiting + abuse controls.** **Shipped:** rate limits on auth, API, and webhooks.
+- **W8-4. Image optimization.** **Shipped:** `sharp` responsive image generation + `Media.width/height` population; CDN/cache headers for catalog assets. See [app/core/storage/index.server.js](app/core/storage/index.server.js).
 - **W8-5. Plugin/theme ecosystem completion.** **Shipped:** `getSlotBlocks()` (delegates to plugin blocks), plugin discovery/enable, admin + storefront dispatchers with `loader`/`action` and `:param`/`*` path matching, and `ctx.queue` as a LiteQuu wrapper. **Remaining:** theme slot rendering beyond PDP, documented distribution/install story for third-party plugins.
-- **W8-6. Caching strategy** for catalog/settings reads under load; cache invalidation on writes.
+- **W8-6. Caching strategy** for catalog/settings reads under load; cache invalidation on writes. **Remaining.**
 
 **Validation gate.** App runs on Postgres in CI; RBAC denies unauthorized actions; rate limits trip under load test; responsive images served; a sample plugin renders a storefront block. Tests + lint + build.
 

@@ -509,7 +509,7 @@ These are the core platform events that bermooda emits today. Declare handlers i
 
 ### Post-action hooks
 
-These events fire after the underlying domain work has happened. Post-hooks are **fire-and-forget**: `emit()` returns immediately and handlers run in parallel in the background. They are fault-tolerant: if a handler throws, the event bus logs the error and the remaining handlers still run. Post-hooks do not receive `ctx`; they receive only the payload.
+These events fire after the underlying domain work has happened. `emit()` **persists** the event via a LiteQuu `domain_event` job (`#/core/events/job.server`), then returns; handlers run asynchronously and fault-tolerantly after enqueue (if a handler throws, the job path logs the error and remaining handlers still run). This is durable enqueue, not only in-process fire-and-forget. Post-hooks do not receive `ctx`; they receive only the payload.
 
 #### Orders and checkout
 
@@ -574,11 +574,11 @@ hooks: defineHooks({
 }),
 ```
 
-Handlers are invoked by the event bus when the corresponding event fires. Completion order is not guaranteed. If a post-hook handler throws, the error is contained by the event bus and does not affect other handlers or the caller.
+Handlers are invoked by the domain-event job worker after `emit()` enqueues. Completion order is not guaranteed. If a post-hook handler throws, the error is contained and does not affect other handlers or the original caller.
 
 ### Before-hooks (blocking filters)
 
-Before-hooks let a plugin **veto** a domain action before any database write occurs. Register them in the runtime `hooks` field using keys that start with `before.`:
+Before-hooks let a plugin **veto** a domain action before any database write occurs. Unlike post-hooks, `emitBefore` is **request-path blocking and fail-closed** — it awaits all handlers on the critical path and does not go through the queue. Register them in the runtime `hooks` field using keys that start with `before.`:
 
 ```js
 import { defineHooks, definePlugin, deny } from '#/core/plugins/index.server';

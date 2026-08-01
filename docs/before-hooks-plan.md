@@ -8,6 +8,11 @@ Status: **implemented**. `emitBefore`, `deny`, and `HookAbortError` live in
 phase — return values are still ignored.
 Audience: an engineer extending or auditing the blocking filter pipeline.
 
+> **Historical design context.** Sections below (§1 onward) preserve the
+> original design narrative and may read in present tense as if the work were
+> still proposed. Treat them as background only. For current behavior, prefer
+> this status banner and [docs/plugins.md](plugins.md) (Before-hooks section).
+
 ---
 
 ## 1. Problem statement — why post-action hooks aren't enough
