@@ -45,6 +45,22 @@
           }
         ]
       }
+    },
+    {
+      "files": ["app/libs/**/*.js", "app/libs/**/*.jsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["#/core", "#/core/**"],
+                "message": "libs must not import core (core → libs only). Move domain helpers into app/core or inject callbacks from bootstrap."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

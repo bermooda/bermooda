@@ -1,11 +1,11 @@
 import { redirect } from 'react-router';
 
-import { parseReturnTo } from '#/core/storefront/page-context.server';
 import { setCurrencyCookie } from '#/core/currency/index.server';
 import {
   getEnabledCurrencies,
   isValidCurrencyCode,
 } from '#/core/settings/index.server';
+import { parseReturnTo } from '#/core/storefront/page-context.server';
 
 export async function action({ request }) {
   const formData = await request.formData();

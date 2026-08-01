@@ -12,7 +12,7 @@ export { DEFAULT_DEV_PORT, resolveDevPort } from '#/libs/config/port';
 export const PLATFORM_NAME = 'bermooda';
 
 /**
- * Dual-auth path/cookie defaults owned by core (not merchant-editable root config).
+ * Dual-auth path/cookie defaults owned by libs/config (not merchant-editable root config).
  *
  * @type {{
  *   adminCookiePrefix: string,

@@ -15,13 +15,13 @@ vi.mock('#/core/api-keys/index.server', () => ({
 }));
 
 import {
-  adminApiKeyContext,
-  adminApiKeyMiddleware,
-} from '#/core/api-keys/middleware.server';
-import {
   apiKeyCanAccessAdminApi,
   validateApiKey,
 } from '#/core/api-keys/index.server';
+import {
+  adminApiKeyContext,
+  adminApiKeyMiddleware,
+} from '#/core/api-keys/middleware.server';
 
 /** Run middleware and return the thrown value (or null if it resolves). */
 async function catchThrown(fn) {

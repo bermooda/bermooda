@@ -11,13 +11,13 @@
 // registerBuiltins() only if they must run before any request.
 
 import logger from '#/utils/logger.server';
+import { setOnCustomerRegistered } from '#/libs/auth/customer/index.server';
 import { registerProvider as registerAddressValidation } from '#/core/address-validation/index.server';
 import { noopProvider } from '#/core/address-validation/index.server';
 import { registerAuditSubscribers } from '#/core/audit/index.server';
 import { registerBackInStockSubscribers } from '#/core/back-in-stock/index.server';
 import { seedDefaultChannel } from '#/core/channels/index.server';
 import { emit, on } from '#/core/events/index.server';
-import { setOnCustomerRegistered } from '#/libs/auth/customer/index.server';
 import { registerLoyaltySubscribers } from '#/core/loyalty/index.server';
 import {
   queueAbandonedCartSequence,
