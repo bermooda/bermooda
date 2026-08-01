@@ -21,12 +21,12 @@
 
 ## Current state
 
-| Surface | Catalog | Pattern | Gaps |
-| --- | --- | --- | --- |
-| Shop emails | [`app/emails/i18n/*.json`](../../app/emails/i18n/en.json) | flat keys + `emailT(locale)` with en overlay | de missing 5 templates; fr missing those + admin reset/invite |
-| Auth emails | none | hardcoded in [`app/emails/templates/`](../../app/emails/templates/) + `SUBJECT_*` constants | welcome, verify, reset, 2FA |
-| Admin UI | [`app/core/i18n/messages/en.json`](../../app/core/i18n/messages/en.json) only | [`I18nContext`](../../app/routes/admin/_layout.jsx) wired; **`useT()` unused** | ~78 admin routes + ~35 components; nav/layout English literals |
-| UI loader | [`loadMessages`](../../app/core/i18n/index.server.js) | deep-merge core/theme/plugin for requested locale only | no en-fallback; nested keys |
+| Surface     | Catalog                                                                       | Pattern                                                                                     | Gaps                                                           |
+| ----------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Shop emails | [`app/emails/i18n/*.json`](../../app/emails/i18n/en.json)                     | flat keys + `emailT(locale)` with en overlay                                                | de missing 5 templates; fr missing those + admin reset/invite  |
+| Auth emails | none                                                                          | hardcoded in [`app/emails/templates/`](../../app/emails/templates/) + `SUBJECT_*` constants | welcome, verify, reset, 2FA                                    |
+| Admin UI    | [`app/core/i18n/messages/en.json`](../../app/core/i18n/messages/en.json) only | [`I18nContext`](../../app/routes/admin/_layout.jsx) wired; **`useT()` unused**              | ~78 admin routes + ~35 components; nav/layout English literals |
+| UI loader   | [`loadMessages`](../../app/core/i18n/index.server.js)                         | deep-merge core/theme/plugin for requested locale only                                      | no en-fallback; nested keys                                    |
 
 ```mermaid
 flowchart LR
