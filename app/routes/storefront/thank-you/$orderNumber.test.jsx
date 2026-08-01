@@ -4,7 +4,7 @@ vi.mock('#/core/orders/index.server', () => ({
   getOrderByOrderNumber: vi.fn(),
 }));
 
-vi.mock('#/libs/api/storefront/index.server', () => ({
+vi.mock('#/core/storefront/page-context.server', () => ({
   loadStorefrontPageContext: vi.fn().mockResolvedValue({
     themeId: 'default',
     locale: 'en',

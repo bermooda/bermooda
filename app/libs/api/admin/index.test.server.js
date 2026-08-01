@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createDomainErrorMapper,
-  jsonHookAbortError,
   jsonListResponse,
   jsonResourceOr404,
   parseAdminListPagination,
@@ -10,7 +9,6 @@ import {
   parseOptionalJsonBody,
   requireOneOfMethods,
 } from '#/libs/api/admin/index.server';
-import { HookAbortError } from '#/core/events/index.server';
 
 describe('requireOneOfMethods', () => {
   it('returns null when the method is allowed', () => {
@@ -146,27 +144,5 @@ describe('createDomainErrorMapper', () => {
       Object.assign(new Error('Duplicate'), { code: 'DUPLICATE' })
     );
     expect(conflict.status).toBe(409);
-  });
-});
-
-describe('jsonHookAbortError', () => {
-  it('returns a hook veto payload', async () => {
-    const err = new HookAbortError('Blocked by plugin', {
-      code: 'HOOK_BLOCKED',
-      pluginId: 'sample-plugin',
-    });
-    const response = jsonHookAbortError(err);
-
-    expect(response?.status).toBe(422);
-    await expect(response?.json()).resolves.toEqual({
-      error: 'Blocked by plugin',
-      code: 'HOOK_BLOCKED',
-      blockedBy: 'sample-plugin',
-    });
-  });
-
-  it('returns null for non-hook errors', () => {
-    const err = new Error('Regular failure');
-    expect(jsonHookAbortError(err)).toBeNull();
   });
 });

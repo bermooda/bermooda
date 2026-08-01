@@ -1,7 +1,7 @@
 // app/core/rbac/index.server.js
 // Granular role-based access control for admin users and API keys.
 
-import config from '#/core/config';
+import config from '#/libs/config';
 import { isValidEmail, normalizeEmail } from '#/utils/email';
 import { adminAuth } from '#/libs/auth/admin/index.server';
 import prisma from '#/libs/prisma.server';

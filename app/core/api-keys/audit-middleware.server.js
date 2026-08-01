@@ -2,7 +2,7 @@
 // Actor is the authenticated API key (`actorType: api_key`).
 
 import logger from '#/utils/logger.server';
-import { adminApiKeyContext } from '#/libs/auth/api/index.server';
+import { adminApiKeyContext } from '#/core/api-keys/middleware.server';
 import { recordApiKeyAudit } from '#/core/audit/index.server';
 
 /**

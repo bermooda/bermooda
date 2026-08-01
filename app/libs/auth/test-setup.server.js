@@ -84,7 +84,7 @@ vi.mock('#/core/events/index.server', () => ({
   emit: vi.fn(),
 }));
 
-vi.mock('#/core/config', () => ({
+vi.mock('#/libs/config', () => ({
   PLATFORM_NAME: 'bermooda',
   resolveDevPort: () => 3000,
   default: {

@@ -1,6 +1,6 @@
 import { Section, Text } from '@react-email/components';
 
-import { PLATFORM_NAME } from '#/core/config';
+import { PLATFORM_NAME } from '#/libs/config';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';

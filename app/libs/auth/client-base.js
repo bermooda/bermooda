@@ -1,4 +1,4 @@
-import config from '#/core/config';
+import config from '#/libs/config';
 
 /**
  * Base URL for better-auth browser clients.

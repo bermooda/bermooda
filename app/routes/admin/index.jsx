@@ -10,7 +10,7 @@ import {
   useSearchParams,
 } from 'react-router';
 
-import config from '#/core/config';
+import config from '#/libs/config';
 import logger from '#/utils/logger.server';
 import { adminAuthClient } from '#/libs/auth/admin-client';
 import { adminAuth } from '#/libs/auth/admin/index.server';

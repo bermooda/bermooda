@@ -2,11 +2,11 @@
 // Requires admin-scoped API key.
 
 import {
-  jsonActionError,
   jsonDomainError,
   parseJsonBody,
   requireMethod,
 } from '#/libs/api/admin/index.server';
+import { jsonActionError } from '#/core/events/http.server';
 import { addShipment } from '#/core/orders/index.server';
 
 export async function action({ request, params }) {

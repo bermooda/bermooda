@@ -5,7 +5,6 @@ import {
   appendCartTokenCookie,
   getCartTokenFromRequest,
 } from '#/utils/cart-cookie.server';
-import { loadStorefrontPageContext } from '#/libs/api/storefront/index.server';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { handleError } from '#/libs/error/index.server';
 import {
@@ -15,6 +14,7 @@ import {
   removeLine,
   updateQuantity,
 } from '#/core/cart/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 

@@ -68,7 +68,7 @@ The `npm run dev` script wraps with `op run` (1Password CLI), which is **not** a
 npx react-router dev --host
 ```
 
-Port comes from `PORT` (default `3000`) via Vite `server.port` / `#/core/config` — set `PORT=4000` to change it. `strictPort` is enabled so a busy port fails instead of silently binding another one.
+Port comes from `PORT` (default `3000`) via Vite `server.port` / `#/libs/config` — set `PORT=4000` to change it. `strictPort` is enabled so a busy port fails instead of silently binding another one.
 
 A `.env` file must exist in the repo root (see `.env.example`). Placeholder values are fine for basic local development — the app starts and serves pages without real API keys for Stripe, Resend, etc.
 

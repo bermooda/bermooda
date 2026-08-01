@@ -1,4 +1,3 @@
-// app/libs/auth/api.test.server.js
 // Tests for admin API key middleware behavior.
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,13 +15,13 @@ vi.mock('#/core/api-keys/index.server', () => ({
 }));
 
 import {
-  adminApiKeyContext,
-  adminApiKeyMiddleware,
-} from '#/libs/auth/api/index.server';
-import {
   apiKeyCanAccessAdminApi,
   validateApiKey,
 } from '#/core/api-keys/index.server';
+import {
+  adminApiKeyContext,
+  adminApiKeyMiddleware,
+} from '#/core/api-keys/middleware.server';
 
 /** Run middleware and return the thrown value (or null if it resolves). */
 async function catchThrown(fn) {

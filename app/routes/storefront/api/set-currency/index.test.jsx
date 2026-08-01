@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('#/libs/api/storefront/index.server', () => ({
+vi.mock('#/core/storefront/page-context.server', () => ({
   parseReturnTo: (formData, fallback = '/') => {
     const returnTo = formData.get('returnTo')?.toString();
     if (!returnTo || !returnTo.startsWith('/') || returnTo.startsWith('//')) {

@@ -37,7 +37,7 @@ flowchart TB
 
 Strong foundation in this repo:
 
-- Admin API + `berm_` keys ([api.md](./api.md), [app/libs/auth/api/index.server.js](../app/libs/auth/api/index.server.js))
+- Admin API + `berm_` keys ([api.md](./api.md), [app/core/api-keys/middleware.server.js](../app/core/api-keys/middleware.server.js))
 - Product CRUD, settings `GET/PATCH`, orders, discounts, imports, webhooks, etc. under [app/routes/api/admin/v1/](../app/routes/api/admin/v1/)
 - Install CLI elsewhere ([cli-design.md](./cli-design.md) → `@bermooda/cli`); in-app hook [scripts/cli-bootstrap.mjs](../scripts/cli-bootstrap.mjs)
 

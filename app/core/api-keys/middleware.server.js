@@ -1,5 +1,4 @@
-// app/libs/auth/api/index.server.js
-// API key authentication for REST API route handlers.
+// Admin API key middleware for REST API route handlers.
 
 import { createContext } from 'react-router';
 
@@ -45,6 +44,7 @@ export async function adminApiKeyMiddleware({ request, context }, next) {
  *
  * @param {import('react-router').RouterContextProvider} context
  * @param {string} requiredScope
+ * @returns {object} ApiKey record from middleware context
  */
 export function requireAdminApiScope(context, requiredScope) {
   const apiKey = context.get(adminApiKeyContext);

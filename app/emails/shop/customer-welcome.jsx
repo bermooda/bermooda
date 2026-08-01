@@ -1,6 +1,6 @@
 import { Section, Text } from '@react-email/components';
 
-import config, { PLATFORM_NAME } from '#/core/config';
+import config, { PLATFORM_NAME } from '#/libs/config';
 import EmailButton from '#/emails/components/button';
 import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';

@@ -3,7 +3,7 @@
 // Requires admin-scoped API key (or media:write).
 
 import { createDomainErrorMapper } from '#/libs/api/admin/index.server';
-import { requireAdminApiScope } from '#/libs/auth/api/index.server';
+import { requireAdminApiScope } from '#/core/api-keys/middleware.server';
 import { uploadAndCreateMedia } from '#/core/storage/index.server';
 
 const mapMediaError = createDomainErrorMapper({

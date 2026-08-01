@@ -2,7 +2,7 @@
 // Requires admin-scoped API key (or media:read).
 
 import { createDomainErrorMapper } from '#/libs/api/admin/index.server';
-import { requireAdminApiScope } from '#/libs/auth/api/index.server';
+import { requireAdminApiScope } from '#/core/api-keys/middleware.server';
 import { getMedia } from '#/core/storage/index.server';
 
 const mapMediaError = createDomainErrorMapper({

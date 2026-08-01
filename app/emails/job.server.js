@@ -1,4 +1,4 @@
-import config from '#/core/config';
+import config from '#/libs/config';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import queue, { createThrottledJob, defineQueueJob } from '#/libs/queue.server';

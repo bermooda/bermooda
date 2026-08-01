@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('#/core/events/index.server', () => ({ on: vi.fn() }));
+vi.mock('#/core/events/index.server', () => ({ emit: vi.fn(), on: vi.fn() }));
+vi.mock('#/libs/auth/customer/index.server', () => ({
+  setOnCustomerRegistered: vi.fn(),
+}));
 vi.mock('#/core/orders/index.server', () => ({
   registerPaymentEventHandlers: vi.fn(),
 }));
@@ -90,6 +93,7 @@ describe('bootstrap.server', () => {
   let registerAuditSubscribers;
   let registerBackInStockSubscribers;
   let registerLoyaltySubscribers;
+  let setOnCustomerRegistered;
   let savedEnv;
 
   beforeEach(async () => {
@@ -126,6 +130,9 @@ describe('bootstrap.server', () => {
     registerAuditSubscribers = audit.registerAuditSubscribers;
     registerBackInStockSubscribers = backInStock.registerBackInStockSubscribers;
     registerLoyaltySubscribers = loyalty.registerLoyaltySubscribers;
+
+    const customerAuth = await import('#/libs/auth/customer/index.server');
+    setOnCustomerRegistered = customerAuth.setOnCustomerRegistered;
 
     const addressValidation =
       await import('#/core/address-validation/index.server');
@@ -181,6 +188,7 @@ describe('bootstrap.server', () => {
     expect(registerAuditSubscribers).toHaveBeenCalledOnce();
     expect(registerBackInStockSubscribers).toHaveBeenCalledOnce();
     expect(registerLoyaltySubscribers).toHaveBeenCalledOnce();
+    expect(setOnCustomerRegistered).toHaveBeenCalledWith(expect.any(Function));
   });
 
   it('registers stub providers when env keys are set', () => {

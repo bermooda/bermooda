@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { createContext, redirect } from 'react-router';
 
-import config, { PLATFORM_NAME } from '#/core/config';
+import config, { PLATFORM_NAME } from '#/libs/config';
 import logger from '#/utils/logger.server';
 import {
   buildAuthAdvancedConfig,
@@ -18,8 +18,32 @@ import {
 import prisma from '#/libs/prisma.server';
 import { getBetterAuthProvider } from '#/libs/prisma/provider/index.server';
 import { enforceRateLimit } from '#/libs/rate-limit.server';
-import { emit } from '#/core/events/index.server';
 import { queuePasswordResetEmail } from '#/emails/job.server';
+
+/** @type {null | ((payload: { customerId: string, email: string, name?: string | null }) => void | Promise<void>)} */
+let onCustomerRegistered = null;
+
+/**
+ * Wire domain side effects after customer registration (bootstrap).
+ * @param {typeof onCustomerRegistered} fn
+ * @returns {void}
+ */
+export function setOnCustomerRegistered(fn) {
+  onCustomerRegistered = fn;
+}
+
+/**
+ * @param {{ id: string, email: string, name?: string | null }} user
+ * @returns {Promise<void>}
+ */
+export async function notifyCustomerRegistered(user) {
+  if (!onCustomerRegistered) return;
+  await onCustomerRegistered({
+    customerId: user.id,
+    email: user.email,
+    name: user.name,
+  });
+}
 
 const CUSTOMER_AUTH_BASE_URL = config.baseUrl + config.auth.customerBasePath;
 
@@ -71,11 +95,7 @@ export const customerAuth = betterAuth({
     user: {
       create: {
         async after(user) {
-          await emit('customer.registered', {
-            customerId: user.id,
-            email: user.email,
-            name: user.name,
-          });
+          await notifyCustomerRegistered(user);
         },
       },
     },

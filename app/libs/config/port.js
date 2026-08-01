@@ -1,4 +1,4 @@
-// app/core/config/port.js
+// app/libs/config/port.js
 // Port helpers shared by Vite config and runtime app config.
 // Keep this module free of bermooda.config / createConfig side effects so
 // vite.config.js can import it during production builds.

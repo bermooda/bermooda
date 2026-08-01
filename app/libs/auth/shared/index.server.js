@@ -3,7 +3,7 @@ import { networkInterfaces } from 'os';
 import bcrypt from 'bcryptjs';
 import { createAuthMiddleware } from 'better-auth/api';
 
-import config, { resolveDevPort } from '#/core/config';
+import config, { resolveDevPort } from '#/libs/config';
 import logger from '#/utils/logger.server';
 import { queueVerifyEmail } from '#/emails/job.server';
 

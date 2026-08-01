@@ -22,7 +22,11 @@ alwaysApply: false
 ## Dependency boundary
 
 - `core -> libs` is allowed.
-- `libs -> core` is not allowed.
+- `libs -> core` is not allowed (enforced by oxlint `no-restricted-imports` on `app/libs/**`).
+
+## Runtime config
+
+- App runtime config lives in `#/libs/config` (derived from root `bermooda.config.js` at module load). Do not import `#/core/config`.
 
 ## File pattern
 

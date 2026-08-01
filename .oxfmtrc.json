@@ -11,7 +11,7 @@
       {
         "groupName": "internal-config",
         "selector": "import",
-        "elementNamePattern": ["#/core/config", "#/core/config/**"]
+        "elementNamePattern": ["#/libs/config", "#/libs/config/**"]
       },
       {
         "groupName": "internal-utils",
