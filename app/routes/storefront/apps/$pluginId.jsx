@@ -100,6 +100,26 @@ export async function loader({ request, params }) {
 }
 
 /**
+ * Dispatches POST/mutations to the matched plugin storefront route `action`.
+ *
+ * @param {{ request: Request, params: Record<string, string | undefined> }} args
+ * @returns {Promise<unknown>}
+ */
+export async function action({ request, params }) {
+  const pluginSlug = params.pluginId ?? '';
+  const splatPath = params['*'] ?? '';
+  const manifest = getRegisteredPluginBySlug(pluginSlug);
+  if (!manifest || !(await isPluginEnabled(manifest.id))) {
+    throw new Response('Not Found', { status: 404 });
+  }
+  const descriptor = resolveServerRoute(pluginSlug, splatPath);
+  if (!descriptor || typeof descriptor.action !== 'function') {
+    throw new Response('Method Not Allowed', { status: 405 });
+  }
+  return descriptor.action({ request, params });
+}
+
+/**
  * @returns {React.ReactElement}
  */
 export default function StorefrontPluginDispatcher() {

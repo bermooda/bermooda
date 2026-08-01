@@ -661,7 +661,7 @@ A plugin that includes `admin/routes/index.server.js` and `admin/routes.client.j
 
 Admin routes are defined as a server/client pair:
 
-- `admin/routes/index.server.js` — exports route descriptors with optional `loader`
+- `admin/routes/index.server.js` — exports route descriptors with optional `loader` and `action`
 - `admin/routes.client.js` — exports route descriptors with the client `Component`
 
 Both files must export the same `routes` array shape. Each route entry follows React Router conventions and must have the shape:
@@ -670,6 +670,7 @@ Both files must export the same `routes` array shape. Each route entry follows R
 {
   path: '',              // string — path relative to /admin/plugins/<slug>/
   loader: async () => { /* return data */ },  // optional
+  action: async ({ request, params }) => { /* mutate */ },  // optional
   Component: MyComponent,                     // required — React component
 }
 ```
@@ -686,6 +687,11 @@ export const routes = [
       const data = await prisma.pluginData.findUnique({/* ... */});
       return { items: data ? JSON.parse(data.value) : [] };
     },
+    async action({ request }) {
+      const formData = await request.formData();
+      // persist mutation…
+      return { ok: true };
+    },
     Component: MyAdminPage,
   },
 ];
@@ -696,7 +702,7 @@ function MyAdminPage({ loaderData }) {
 }
 ```
 
-The `loader` function runs on the server before the component renders, matching standard React Router loader behavior. Components receive loader data via the `loaderData` prop.
+The `loader` function runs on the server before the component renders, matching standard React Router loader behavior. Components receive loader data via the `loaderData` prop. The dispatcher `action` resolves the same route descriptor and invokes `descriptor.action` when present; otherwise it responds with `405 Method Not Allowed`.
 
 The dispatcher resolves admin pages with `resolvePluginAdminRoute(pluginSlug, params['*'])`. Route presence is glob-driven; do not add `adminRoutes` to package metadata.
 
@@ -708,7 +714,7 @@ A plugin that includes `storefront/routes/index.server.js` and `storefront/route
 
 Storefront routes follow the same split-module pattern as admin routes:
 
-- `storefront/routes/index.server.js` — exports route descriptors with optional `loader`
+- `storefront/routes/index.server.js` — exports route descriptors with optional `loader` and `action`
 - `storefront/routes.client.js` — exports route descriptors with the client `Component`
 
 Each route entry has the same shape:
@@ -717,6 +723,7 @@ Each route entry has the same shape:
 {
   path: '',              // string — path relative to /apps/<slug>/
   loader: async () => { /* return data */ },  // optional
+  action: async ({ request, params }) => { /* mutate */ },  // optional
   Component: MyComponent,                     // required
 }
 ```
@@ -724,9 +731,10 @@ Each route entry has the same shape:
 The storefront dispatcher:
 
 - uses `params['*']` as the splat path
-- only exposes storefront routes for enabled plugins
+- only exposes storefront routes for enabled plugins (loader and action)
 - resolves the server descriptor with `resolvePluginStorefrontRoute(pluginSlug, params['*'])`
 - runs the descriptor `loader` on the server when present
+- runs the descriptor `action` on POST/mutations when present; otherwise `405 Method Not Allowed`
 - resolves the client component from `storefront/routes.client.js`
 
 Example client routes file (`storefront/routes.client.js`):
@@ -898,12 +906,12 @@ app/plugins/
     index.server.js          Runtime entry. Calls definePlugin() and exports pluginManifest.
     admin/
       routes/
-        index.server.js      Server route descriptors with optional loaders.
+        index.server.js      Server route descriptors with optional loaders/actions.
         index.test.server.js Colocated server route tests (optional).
       routes.client.js       Client route descriptors with Components.
     storefront/
       routes/
-        index.server.js      Server route descriptors with optional loaders.
+        index.server.js      Server route descriptors with optional loaders/actions.
         index.test.server.js Colocated server route tests (optional).
       routes.client.js       Client route descriptors with Components.
     blocks/
