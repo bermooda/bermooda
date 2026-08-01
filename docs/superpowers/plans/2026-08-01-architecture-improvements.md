@@ -4,7 +4,7 @@
 
 **Goal:** Restore the `libs → core` dependency boundary, finish sales-channel plumbing on the purchase path, split checkout/orders/plugins mega-modules, durable domain events via a LiteQuu job (email-job pattern), complete plugin dispatchers, and align platform docs/contracts with reality.
 
-**Architecture:** Keep the existing three-layer model (`routes → core → libs`) but make it enforceable. Move pure config into `libs`. Relocate domain-aware helpers out of `libs`. Inject domain callbacks into auth at bootstrap. Persist post-commit `emit()` through a `domain_event` queue job while leaving `emitBefore` synchronous. Split oversized core modules along existing concern seams. Thread `salesChannelId` cart → checkout → order. Extend plugin dispatchers with `action` + richer path matching. Document single-shop / dual-DB / plugin `ctx` honestly.
+**Architecture:** Keep the existing three-layer model (`routes → core → libs`) but make it enforceable. Hard-cut move pure config into `libs` (no `#/core/config` compatibility shim — app is pre-production). Relocate domain-aware helpers out of `libs`. Inject domain callbacks into auth at bootstrap. Persist post-commit `emit()` through a `domain_event` queue job while leaving `emitBefore` synchronous. Split oversized core modules along existing concern seams. Thread `salesChannelId` cart → checkout → order. Extend plugin dispatchers with `action` + richer path matching. Document single-shop / dual-DB / plugin `ctx` honestly.
 
 **Tech Stack:** React Router 7, Prisma 7, LiteQuu (`#/libs/queue.server` + `defineQueueJob`), Vitest, oxlint `no-restricted-imports`, JSDoc/`checkJs`.
 
@@ -27,7 +27,7 @@
 | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
 | `app/libs/config/index.js`                                                           | Moved runtime config (`createConfig`, `PLATFORM_NAME`, `DEFAULT_AUTH`)      |
 | `app/libs/config/port.js`                                                            | Moved `resolveDevPort` / `DEFAULT_DEV_PORT`                                 |
-| `app/core/config/*`                                                                  | Temporary re-exports, then deleted                                          |
+| `app/core/config/*`                                                                  | Deleted in the same change (no re-export shim)                              |
 | `app/libs/auth/customer/index.server.js`                                             | `setOnCustomerRegistered` injection; no `#/core/events` import              |
 | `app/core/bootstrap/index.server.js`                                                 | Wire customer-registered emit + import events job                           |
 | `app/core/api-keys/middleware.server.js`                                             | Moved admin API-key middleware from `libs/auth/api`                         |
@@ -51,19 +51,23 @@
 
 ## Phase A — Libs/core boundary (item 1)
 
-### Task 1: Move config to `app/libs/config`
+### Task 1: Move config to `app/libs/config` (hard cut)
 
 **Files:**
 
 - Create: `app/libs/config/port.js` (move from `app/core/config/port.js`)
 - Create: `app/libs/config/index.js` (move from `app/core/config/index.js`)
 - Create: `app/libs/config/index.test.js` (move/adapt from `app/core/config/index.test.js`)
-- Modify: `app/core/config/index.js` + `port.js` → re-export from `#/libs/config` for one soft-migrate commit
-- Test: `app/libs/config/index.test.js`
+- Modify: every file importing `#/core/config` (~33 under `app/`) → `#/libs/config`
+- Modify: `app/core/index.js` if it re-exports config — drop those exports
+- Delete: `app/core/config/` entirely in the same change (no compatibility re-export)
 
 **Interfaces:**
 
 - Produces: `#/libs/config` default export `config`, named `PLATFORM_NAME`, `DEFAULT_AUTH`, `createConfig`, `resolveBaseUrl`, `resolveDevPort`, `DEFAULT_DEV_PORT`
+- Removes: `#/core/config` (callers must use `#/libs/config`)
+
+App is pre-production with no external consumers — do **not** leave a thin `#/core/config` re-export.
 
 - [ ] **Step 1: Move files and fix internal imports**
 
@@ -77,53 +81,14 @@ export { DEFAULT_DEV_PORT, resolveDevPort } from '#/libs/config/port';
 
 Leave behavior identical to today’s `app/core/config/index.js`.
 
-- [ ] **Step 2: Leave temporary re-exports**
-
-```js
-// app/core/config/index.js
-export {
-  default,
-  PLATFORM_NAME,
-  DEFAULT_AUTH,
-  createConfig,
-  resolveBaseUrl,
-  resolveDevPort,
-  DEFAULT_DEV_PORT,
-} from '#/libs/config';
-```
-
-- [ ] **Step 3: Run config tests**
-
-Run: `npm run test -- app/libs/config/index.test.js app/core/config/index.test.js`
-Expected: PASS
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add app/libs/config app/core/config
-git commit -m "refactor(config): move runtime config from core to libs"
-```
-
-### Task 2: Point callers at `#/libs/config` and drop core re-exports
-
-**Files:**
-
-- Modify: every file importing `#/core/config` (~33 under `app/`) → `#/libs/config`
-- Delete: `app/core/config/*` after no remaining imports
-- Modify: `app/core/index.js` if it re-exports config
-
-- [ ] **Step 1: Mass-update imports**
+- [ ] **Step 2: Point all callers at `#/libs/config` and delete `app/core/config/`**
 
 ```bash
 rg -l "from '#/core/config" app --glob '*.{js,jsx}'
 # replace with from '#/libs/config'
 ```
 
-Also update `from "#/core/config/port"` if any.
-
-- [ ] **Step 2: Delete `app/core/config/`**
-
-Confirm zero matches for `#/core/config`, then remove the directory.
+Also update `from "#/core/config/port"` if any. Then delete `app/core/config/`. Confirm zero matches for `#/core/config`.
 
 - [ ] **Step 3: Validate**
 
@@ -135,10 +100,10 @@ Expected: PASS
 
 ```bash
 git add -A
-git commit -m "refactor(config): switch imports to #/libs/config"
+git commit -m "refactor(config): move runtime config from core to libs"
 ```
 
-### Task 3: Inject `customer.registered` from bootstrap
+### Task 2: Inject `customer.registered` from bootstrap
 
 **Files:**
 
@@ -235,7 +200,7 @@ git add app/libs/auth/customer app/core/bootstrap
 git commit -m "refactor(auth): inject customer.registered emit from bootstrap"
 ```
 
-### Task 4: Move API-key middleware into core
+### Task 3: Move API-key middleware into core
 
 **Files:**
 
@@ -283,7 +248,7 @@ Run: `npm run test -- app/core/api-keys app/routes/api/admin`
 git commit -m "refactor(api-keys): move admin API key middleware into core"
 ```
 
-### Task 5: Move storefront page context into core; purify `libs/api`
+### Task 4: Move storefront page context into core; purify `libs/api`
 
 **Files:**
 
@@ -347,7 +312,7 @@ Run: `npm run test -- app/core/storefront app/libs/api`
 git commit -m "refactor: move storefront page context into core; purify libs/api"
 ```
 
-### Task 6: Enforce boundary with oxlint
+### Task 5: Enforce boundary with oxlint
 
 **Files:**
 
@@ -391,7 +356,7 @@ git commit -m "chore(lint): forbid libs imports of core"
 
 ## Phase B — Durable domain events via queue job (item 4)
 
-### Task 7: Add `domain_event` queue job and enqueue from `emit`
+### Task 6: Add `domain_event` queue job and enqueue from `emit`
 
 **Files:**
 
@@ -578,7 +543,7 @@ git commit -m "feat(events): queue domain events via LiteQuu job"
 
 ## Phase C — Sales channel on purchase path (item 2)
 
-### Task 8: Persist `salesChannelId` on cart and checkout session
+### Task 7: Persist `salesChannelId` on cart and checkout session
 
 **Files:**
 
@@ -682,7 +647,7 @@ git commit -m "fix(channels): thread salesChannelId through cart and checkout"
 
 ## Phase D — Split mega-modules / cut cycles (item 3)
 
-### Task 9: Split `app/core/orders/index.server.js`
+### Task 8: Split `app/core/orders/index.server.js`
 
 **Files:**
 
@@ -714,7 +679,7 @@ Expected: PASS
 git commit -m "refactor(orders): split place, fulfillment, refunds, and admin modules"
 ```
 
-### Task 10: Split plugins mega-module + provider registry table
+### Task 9: Split plugins mega-module + provider registry table
 
 **Files:**
 
@@ -777,7 +742,7 @@ git commit -m "refactor(plugins): split registry/lifecycle/providers and unify p
 
 ## Phase E — Plugin dispatcher completeness (item 5)
 
-### Task 11: Add `action` to storefront + admin plugin dispatchers
+### Task 10: Add `action` to storefront + admin plugin dispatchers
 
 **Files:**
 
@@ -819,7 +784,7 @@ Mirror for admin (admin may skip `isPluginEnabled` if today’s loader does — 
 git commit -m "feat(plugins): support actions on storefront and admin dispatchers"
 ```
 
-### Task 12: Richer plugin route path matching
+### Task 11: Richer plugin route path matching
 
 **Files:**
 
@@ -859,7 +824,7 @@ git commit -m "feat(plugins): support param and splat paths in plugin route matc
 
 ## Phase F — Platform honesty (item 6)
 
-### Task 13: Docs + plugin ctx contract
+### Task 12: Docs + plugin ctx contract
 
 **Files:**
 
@@ -880,7 +845,7 @@ No schema multi-tenant work. No forced removal of `ctx.db` in this plan (would b
 git commit -m "docs: align architecture docs with libs boundary, events job, and plugins"
 ```
 
-### Task 14: Final validation gate
+### Task 13: Final validation gate
 
 - [ ] **Step 1: Full preflight**
 
@@ -908,19 +873,19 @@ rg "salesChannelId" app/core/cart/index.server.js app/core/checkout/pipeline.ser
 
 | PR  | Tasks | Title sketch                                                     |
 | --- | ----- | ---------------------------------------------------------------- |
-| 1   | 1–6   | `refactor: restore libs/core boundary and move config to libs`   |
-| 2   | 7     | `feat(events): queue domain events via LiteQuu job`              |
-| 3   | 8     | `fix(channels): thread salesChannelId through cart and checkout` |
-| 4   | 9–10  | `refactor: split orders and plugins mega-modules`                |
-| 5   | 11–12 | `feat(plugins): dispatcher actions and param routes`             |
-| 6   | 13–14 | `docs: architecture honesty pass`                                |
+| 1   | 1–5   | `refactor: restore libs/core boundary and move config to libs`   |
+| 2   | 6     | `feat(events): queue domain events via LiteQuu job`              |
+| 3   | 7     | `fix(channels): thread salesChannelId through cart and checkout` |
+| 4   | 8–9   | `refactor: split orders and plugins mega-modules`                |
+| 5   | 10–11 | `feat(plugins): dispatcher actions and param routes`             |
+| 6   | 12–13 | `docs: architecture honesty pass`                                |
 
 ---
 
 ## Self-review checklist
 
-1. **Spec coverage:** Items 1–6 mapped to Phases A–F; item 1 uses move-config + relocate-helpers + inject-emit + oxlint; item 4 uses LiteQuu `domain_event` job (not transactional outbox).
-2. **Placeholders:** None intentional; test snippets for auth hook may need the exported `notifyCustomerRegistered` helper shown in Task 3.
+1. **Spec coverage:** Items 1–6 mapped to Phases A–F; item 1 uses hard-cut move-config (no `#/core/config` shim) + relocate-helpers + inject-emit + oxlint; item 4 uses LiteQuu `domain_event` job (not transactional outbox).
+2. **Placeholders:** None intentional; test snippets for auth hook may need the exported `notifyCustomerRegistered` helper shown in Task 2.
 3. **Type/name consistency:** `setEventJobEnqueuer` / `queueDomainEvent` / `dispatchHandlers` / `setOnCustomerRegistered` / `loadStorefrontPageContext` / `PROVIDER_TYPE_HANDLERS` used consistently.
 4. **`emitBefore`:** Explicitly unchanged / sync.
 5. **Email job interaction:** Subscribers still use `on()`; they run inside the domain_event worker and may enqueue email jobs — durable event edge preserved.
