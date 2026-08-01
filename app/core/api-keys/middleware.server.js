@@ -44,6 +44,7 @@ export async function adminApiKeyMiddleware({ request, context }, next) {
  *
  * @param {import('react-router').RouterContextProvider} context
  * @param {string} requiredScope
+ * @returns {object} ApiKey record from middleware context
  */
 export function requireAdminApiScope(context, requiredScope) {
   const apiKey = context.get(adminApiKeyContext);

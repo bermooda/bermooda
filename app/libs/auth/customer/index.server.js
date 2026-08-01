@@ -26,6 +26,7 @@ let onCustomerRegistered = null;
 /**
  * Wire domain side effects after customer registration (bootstrap).
  * @param {typeof onCustomerRegistered} fn
+ * @returns {void}
  */
 export function setOnCustomerRegistered(fn) {
   onCustomerRegistered = fn;
@@ -33,6 +34,7 @@ export function setOnCustomerRegistered(fn) {
 
 /**
  * @param {{ id: string, email: string, name?: string | null }} user
+ * @returns {Promise<void>}
  */
 export async function notifyCustomerRegistered(user) {
   if (!onCustomerRegistered) return;

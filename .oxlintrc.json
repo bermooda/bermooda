@@ -54,7 +54,16 @@
           {
             "patterns": [
               {
-                "group": ["#/core", "#/core/**"],
+                "group": [
+                  "#/core",
+                  "#/core/**",
+                  "../core",
+                  "../core/**",
+                  "../../core",
+                  "../../core/**",
+                  "../../../core",
+                  "../../../core/**"
+                ],
                 "message": "libs must not import core (core → libs only). Move domain helpers into app/core or inject callbacks from bootstrap."
               }
             ]
