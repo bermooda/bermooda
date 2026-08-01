@@ -45,6 +45,7 @@ vi.mock('#/core/themes/storefront-components', () => ({
 }));
 
 import StorefrontPluginDispatcher, {
+  action,
   loader,
   meta,
 } from '#/routes/storefront/apps/$pluginId';
@@ -54,6 +55,14 @@ const sampleManifest = {
   title: 'Demo Plugin',
   slug: 'demo-plugin',
 };
+
+/**
+ * @param {unknown} error
+ * @returns {asserts error is Response}
+ */
+function expectResponse(error) {
+  expect(error).toBeInstanceOf(Response);
+}
 
 describe('storefront plugin dispatcher', () => {
   beforeEach(() => {
@@ -83,19 +92,21 @@ describe('storefront plugin dispatcher', () => {
 
   it('uses the splat path and returns loader data for a matched plugin route', async () => {
     const pluginLoaderData = { eventCount: 3 };
+    const pluginLoader = vi.fn().mockResolvedValue(pluginLoaderData);
 
     mockServerResolve.mockImplementation((_pluginSlug, path) => ({
       path,
-      loader: vi.fn().mockResolvedValue(pluginLoaderData),
+      params: path === 'reports/daily' ? { report: 'daily' } : {},
+      loader: pluginLoader,
     }));
 
-    const result = await loader({
-      request: new Request('http://localhost/apps/demo-plugin/wrong-path'),
-      params: {
-        'pluginId': 'demo-plugin',
-        '*': 'reports/daily',
-      },
-    });
+    const request = new Request('http://localhost/apps/demo-plugin/wrong-path');
+    const params = {
+      'pluginId': 'demo-plugin',
+      '*': 'reports/daily',
+    };
+
+    const result = await loader({ request, params });
 
     expect(mockPreloadStorefrontTheme).toHaveBeenCalledOnce();
     expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith('demo-plugin');
@@ -104,6 +115,14 @@ describe('storefront plugin dispatcher', () => {
       'demo-plugin',
       'reports/daily'
     );
+    expect(pluginLoader).toHaveBeenCalledWith({
+      request,
+      params: {
+        'pluginId': 'demo-plugin',
+        '*': 'reports/daily',
+        'report': 'daily',
+      },
+    });
     expect(result).toMatchObject({
       status: 'ok',
       pluginId: 'demo-plugin',
@@ -127,6 +146,112 @@ describe('storefront plugin dispatcher', () => {
       pluginId: 'demo-plugin',
       themeId: 'default',
     });
+  });
+
+  it('invokes the matched descriptor action on POST', async () => {
+    const pluginAction = vi.fn().mockResolvedValue({ ok: true });
+    mockServerResolve.mockReturnValue({
+      path: 'orders/:id',
+      params: { id: 'abc' },
+      action: pluginAction,
+    });
+
+    const request = new Request(
+      'http://localhost/apps/demo-plugin/orders/abc',
+      { method: 'POST' }
+    );
+    const params = {
+      'pluginId': 'demo-plugin',
+      '*': 'orders/abc',
+    };
+
+    const result = await action({ request, params });
+
+    expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith('demo-plugin');
+    expect(mockIsPluginEnabled).toHaveBeenCalledWith('@acme/demo-plugin');
+    expect(mockServerResolve).toHaveBeenCalledWith('demo-plugin', 'orders/abc');
+    expect(pluginAction).toHaveBeenCalledWith({
+      request,
+      params: {
+        'pluginId': 'demo-plugin',
+        '*': 'orders/abc',
+        'id': 'abc',
+      },
+    });
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('throws 404 when the plugin is not registered on action', async () => {
+    mockGetRegisteredPluginBySlug.mockReturnValue(null);
+
+    try {
+      await action({
+        request: new Request('http://localhost/apps/missing', {
+          method: 'POST',
+        }),
+        params: { 'pluginId': 'missing', '*': '' },
+      });
+      expect.unreachable('expected action to throw');
+    } catch (error) {
+      expectResponse(error);
+      expect(error.status).toBe(404);
+    }
+  });
+
+  it('throws 404 when the plugin is disabled on action', async () => {
+    mockIsPluginEnabled.mockResolvedValue(false);
+
+    try {
+      await action({
+        request: new Request('http://localhost/apps/demo-plugin', {
+          method: 'POST',
+        }),
+        params: { 'pluginId': 'demo-plugin', '*': '' },
+      });
+      expect.unreachable('expected action to throw');
+    } catch (error) {
+      expectResponse(error);
+      expect(error.status).toBe(404);
+    }
+
+    expect(mockServerResolve).not.toHaveBeenCalled();
+  });
+
+  it('throws 405 when the matched route has no action', async () => {
+    mockServerResolve.mockReturnValue({
+      path: '',
+      loader: vi.fn(),
+    });
+
+    try {
+      await action({
+        request: new Request('http://localhost/apps/demo-plugin', {
+          method: 'POST',
+        }),
+        params: { 'pluginId': 'demo-plugin', '*': '' },
+      });
+      expect.unreachable('expected action to throw');
+    } catch (error) {
+      expectResponse(error);
+      expect(error.status).toBe(405);
+    }
+  });
+
+  it('throws 405 when no route descriptor matches on action', async () => {
+    mockServerResolve.mockReturnValue(null);
+
+    try {
+      await action({
+        request: new Request('http://localhost/apps/demo-plugin/missing', {
+          method: 'POST',
+        }),
+        params: { 'pluginId': 'demo-plugin', '*': 'missing' },
+      });
+      expect.unreachable('expected action to throw');
+    } catch (error) {
+      expectResponse(error);
+      expect(error.status).toBe(405);
+    }
   });
 
   it('renders the resolved storefront component inside the storefront shell', () => {

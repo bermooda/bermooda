@@ -13,12 +13,69 @@ export function normalizePluginRoutePath(path) {
 }
 
 /**
+ * @typedef {{ path?: string, params: Record<string, string> }} PluginRouteMatch
+ */
+
+/**
+ * Tries to match a registered pattern against a normalized request path.
+ * Supports `:name` segment captures and a trailing `*` splat (captured as `splat`).
+ *
+ * @param {string} pattern
+ * @param {string} path
+ * @returns {Record<string, string>|null}
+ */
+function matchPluginRoutePattern(pattern, path) {
+  const patternParts = pattern === '' ? [] : pattern.split('/');
+  const pathParts = path === '' ? [] : path.split('/');
+
+  /** @type {Record<string, string>} */
+  const params = {};
+  let patternIndex = 0;
+  let pathIndex = 0;
+
+  while (patternIndex < patternParts.length) {
+    const part = patternParts[patternIndex];
+
+    if (part === '*') {
+      // Trailing splat only — must be the last pattern segment.
+      if (patternIndex !== patternParts.length - 1) {
+        return null;
+      }
+      params.splat = pathParts.slice(pathIndex).join('/');
+      return params;
+    }
+
+    if (pathIndex >= pathParts.length) {
+      return null;
+    }
+
+    const value = pathParts[pathIndex];
+    if (part.startsWith(':') && part.length > 1) {
+      params[part.slice(1)] = value;
+    } else if (part !== value) {
+      return null;
+    }
+
+    patternIndex += 1;
+    pathIndex += 1;
+  }
+
+  if (pathIndex !== pathParts.length) {
+    return null;
+  }
+
+  return params;
+}
+
+/**
  * Resolves a route descriptor from a plugin route registry.
+ * Exact path matches win; otherwise the first registered `:param` / trailing `*`
+ * pattern that matches is used (registration order).
  *
  * @param {Map<string, Array<{ path?: string }>>} routesByPlugin
  * @param {string} pluginId
  * @param {string|null|undefined} path
- * @returns {{ path?: string }|null}
+ * @returns {(Record<string, unknown> & PluginRouteMatch)|null}
  */
 export function resolvePluginRouteDescriptor(routesByPlugin, pluginId, path) {
   const routes = routesByPlugin.get(pluginId);
@@ -29,12 +86,20 @@ export function resolvePluginRouteDescriptor(routesByPlugin, pluginId, path) {
   for (const route of routes) {
     const routePath = normalizePluginRoutePath(route.path);
     if (routePath === normalized) {
-      return route;
+      return { ...route, params: {} };
+    }
+  }
+
+  for (const route of routes) {
+    const routePath = normalizePluginRoutePath(route.path);
+    const matchedParams = matchPluginRoutePattern(routePath, normalized);
+    if (matchedParams) {
+      return { ...route, params: matchedParams };
     }
   }
 
   if (!normalized && routes[0]) {
-    return routes[0];
+    return { ...routes[0], params: {} };
   }
 
   return null;

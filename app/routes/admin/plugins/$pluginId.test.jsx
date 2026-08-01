@@ -27,6 +27,7 @@ vi.mock('#/core/plugins/index.server', () => ({
 }));
 
 import AdminPluginDispatcher, {
+  action,
   loader,
   meta,
 } from '#/routes/admin/plugins/$pluginId';
@@ -36,6 +37,14 @@ const sampleManifest = {
   title: 'Demo Plugin',
   slug: 'demo-plugin',
 };
+
+/**
+ * @param {unknown} error
+ * @returns {asserts error is Response}
+ */
+function expectResponse(error) {
+  expect(error).toBeInstanceOf(Response);
+}
 
 describe('admin plugin dispatcher', () => {
   beforeEach(() => {
@@ -112,26 +121,127 @@ describe('admin plugin dispatcher', () => {
 
   it('uses the splat path and returns loader data for a matched plugin route', async () => {
     const pluginLoaderData = { events: [{ orderId: 'order_1' }] };
+    const pluginLoader = vi.fn().mockResolvedValue(pluginLoaderData);
 
     mockServerResolve.mockImplementation(() => ({
-      path: '',
-      loader: vi.fn().mockResolvedValue(pluginLoaderData),
+      path: 'orders/:id',
+      params: { id: 'order_1' },
+      loader: pluginLoader,
     }));
 
-    const result = await loader({
-      request: new Request('http://localhost/admin/plugins/demo-plugin'),
-      params: { 'pluginId': 'demo-plugin', '*': '' },
-    });
+    const request = new Request(
+      'http://localhost/admin/plugins/demo-plugin/orders/order_1'
+    );
+    const params = { 'pluginId': 'demo-plugin', '*': 'orders/order_1' };
+
+    const result = await loader({ request, params });
 
     expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith('demo-plugin');
-    expect(mockServerResolve).toHaveBeenCalledWith('demo-plugin', '');
+    expect(mockServerResolve).toHaveBeenCalledWith(
+      'demo-plugin',
+      'orders/order_1'
+    );
+    expect(pluginLoader).toHaveBeenCalledWith({
+      request,
+      params: {
+        'pluginId': 'demo-plugin',
+        '*': 'orders/order_1',
+        'id': 'order_1',
+      },
+    });
     expect(result).toMatchObject({
       status: 'ok',
       pluginId: 'demo-plugin',
       manifest: sampleManifest,
-      splatPath: '',
+      splatPath: 'orders/order_1',
       pluginLoaderData,
     });
+  });
+
+  it('invokes the matched descriptor action on POST', async () => {
+    const pluginAction = vi.fn().mockResolvedValue({ saved: true });
+    mockServerResolve.mockReturnValue({
+      path: 'files/*',
+      params: { splat: 'a/b' },
+      action: pluginAction,
+    });
+
+    const request = new Request(
+      'http://localhost/admin/plugins/demo-plugin/files/a/b',
+      { method: 'POST' }
+    );
+    const params = { 'pluginId': 'demo-plugin', '*': 'files/a/b' };
+
+    const result = await action({ request, params });
+
+    expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith('demo-plugin');
+    expect(mockServerResolve).toHaveBeenCalledWith('demo-plugin', 'files/a/b');
+    expect(pluginAction).toHaveBeenCalledWith({
+      request,
+      params: {
+        'pluginId': 'demo-plugin',
+        '*': 'files/a/b',
+        'splat': 'a/b',
+      },
+    });
+    expect(result).toEqual({ saved: true });
+  });
+
+  it('throws 404 when the plugin is not registered on action', async () => {
+    mockGetRegisteredPluginBySlug.mockReturnValue(null);
+
+    try {
+      await action({
+        request: new Request('http://localhost/admin/plugins/missing', {
+          method: 'POST',
+        }),
+        params: { 'pluginId': 'missing', '*': '' },
+      });
+      expect.unreachable('expected action to throw');
+    } catch (error) {
+      expectResponse(error);
+      expect(error.status).toBe(404);
+    }
+
+    expect(mockServerResolve).not.toHaveBeenCalled();
+  });
+
+  it('throws 405 when the matched route has no action', async () => {
+    mockServerResolve.mockReturnValue({
+      path: '',
+      loader: vi.fn(),
+    });
+
+    try {
+      await action({
+        request: new Request('http://localhost/admin/plugins/demo-plugin', {
+          method: 'POST',
+        }),
+        params: { 'pluginId': 'demo-plugin', '*': '' },
+      });
+      expect.unreachable('expected action to throw');
+    } catch (error) {
+      expectResponse(error);
+      expect(error.status).toBe(405);
+    }
+  });
+
+  it('throws 405 when no route descriptor matches on action', async () => {
+    mockServerResolve.mockReturnValue(null);
+
+    try {
+      await action({
+        request: new Request(
+          'http://localhost/admin/plugins/demo-plugin/missing',
+          { method: 'POST' }
+        ),
+        params: { 'pluginId': 'demo-plugin', '*': 'missing' },
+      });
+      expect.unreachable('expected action to throw');
+    } catch (error) {
+      expectResponse(error);
+      expect(error.status).toBe(405);
+    }
   });
 
   it('renders the resolved admin component with loader data', () => {

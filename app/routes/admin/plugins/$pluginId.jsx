@@ -46,7 +46,10 @@ export async function loader({ params, request }) {
 
   let pluginLoaderData = null;
   if (typeof descriptor.loader === 'function') {
-    pluginLoaderData = await descriptor.loader({ request, params });
+    pluginLoaderData = await descriptor.loader({
+      request,
+      params: { ...params, ...descriptor.params },
+    });
   }
 
   return {
@@ -56,6 +59,30 @@ export async function loader({ params, request }) {
     splatPath,
     pluginLoaderData,
   };
+}
+
+/**
+ * Dispatches POST/mutations to the matched plugin admin route `action`.
+ * Matches loader policy: requires a registered plugin; does not check enabled.
+ *
+ * @param {{ request: Request, params: Record<string, string | undefined> }} args
+ * @returns {Promise<unknown>}
+ */
+export async function action({ request, params }) {
+  const pluginSlug = params.pluginId ?? '';
+  const splatPath = params['*'] ?? '';
+  const manifest = getRegisteredPluginBySlug(pluginSlug);
+  if (!manifest) {
+    throw new Response('Not Found', { status: 404 });
+  }
+  const descriptor = resolveAdminRoute(pluginSlug, splatPath);
+  if (!descriptor || typeof descriptor.action !== 'function') {
+    throw new Response('Method Not Allowed', { status: 405 });
+  }
+  return descriptor.action({
+    request,
+    params: { ...params, ...descriptor.params },
+  });
 }
 
 /**
