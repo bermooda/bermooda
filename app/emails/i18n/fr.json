@@ -26,11 +26,56 @@
   "customerWelcome.body": "Vous pouvez maintenant parcourir notre boutique, suivre vos commandes et gérer vos adresses depuis votre espace client.",
   "customerWelcome.cta": "Accéder à mon compte",
 
+  "orderShipped.subject": "Votre commande a été expédiée",
+  "orderShipped.heading": "Votre commande a été expédiée",
+  "orderShipped.subheading": "La commande {orderNumber} est en route.",
+  "orderShipped.carrier": "Transporteur",
+  "orderShipped.tracking": "Numéro de suivi",
+  "orderShipped.cta": "Suivre la commande",
+
+  "orderDelivered.subject": "Votre commande a été livrée",
+  "orderDelivered.heading": "Votre commande a été livrée",
+  "orderDelivered.subheading": "La commande {orderNumber} a été livrée.",
+  "orderDelivered.body": "Nous espérons que votre achat vous donnera entière satisfaction !",
+  "orderDelivered.cta": "Voir la commande",
+
+  "orderRefunded.subject": "Remboursement effectué",
+  "orderRefunded.heading": "Remboursement effectué",
+  "orderRefunded.subheading": "Un remboursement a été émis pour la commande {orderNumber}.",
+  "orderRefunded.amount": "Montant du remboursement",
+
+  "returnReceived.subject": "Retour reçu",
+  "returnReceived.heading": "Retour reçu",
+  "returnReceived.subheading": "Nous avons reçu votre retour pour la commande {orderNumber}.",
+  "returnReceived.body": "Votre retour est en cours de traitement. Nous vous informerons dès que votre remboursement ou avoir sera émis.",
+
   "passwordResetCustomer.subject": "Réinitialisez votre mot de passe",
   "passwordResetCustomer.preview": "Réinitialisez votre mot de passe",
   "passwordResetCustomer.heading": "Réinitialisez votre mot de passe",
   "passwordResetCustomer.subheading": "Bonjour {name}, nous avons reçu une demande de réinitialisation de votre mot de passe.",
   "passwordResetCustomer.body": "Cliquez sur le bouton ci-dessous pour réinitialiser votre mot de passe. Ce lien expire dans 1 heure.",
   "passwordResetCustomer.warning": "Si vous n'avez pas fait cette demande, ignorez cet e-mail.",
-  "passwordResetCustomer.cta": "Réinitialiser le mot de passe"
+  "passwordResetCustomer.cta": "Réinitialiser le mot de passe",
+
+  "passwordResetAdmin.subject": "Réinitialisez votre mot de passe administrateur",
+  "passwordResetAdmin.preview": "Réinitialisez votre mot de passe administrateur {platformName}",
+  "passwordResetAdmin.heading": "Réinitialisez votre mot de passe administrateur",
+  "passwordResetAdmin.subheading": "Bonjour {name}, nous avons reçu une demande de réinitialisation de votre mot de passe administrateur.",
+  "passwordResetAdmin.body": "Cliquez sur le bouton ci-dessous pour réinitialiser votre mot de passe. Ce lien expire dans 1 heure.",
+  "passwordResetAdmin.warning": "Si vous n'avez pas fait cette demande, ignorez cet e-mail ou contactez immédiatement le support.",
+  "passwordResetAdmin.cta": "Réinitialiser le mot de passe administrateur",
+
+  "staffInvite.subject": "Vous avez été invité à rejoindre l'administration {platformName}",
+  "staffInvite.preview": "Vous avez été invité à rejoindre l'administration {platformName}",
+  "staffInvite.heading": "Rejoignez l'équipe d'administration {platformName}",
+  "staffInvite.subheading": "Bonjour {name}, vous avez été invité à accéder au back-office d'administration {platformName}.",
+  "staffInvite.body": "Cliquez sur le bouton ci-dessous pour créer votre mot de passe et activer votre compte. Ce lien expire dans 1 heure.",
+  "staffInvite.warning": "Si vous n'attendiez pas cette invitation, vous pouvez ignorer cet e-mail en toute sécurité.",
+  "staffInvite.cta": "Créer le mot de passe administrateur",
+
+  "backInStock.subject": "Un article est de nouveau en stock",
+  "backInStock.preview": "{sku} est de nouveau en stock",
+  "backInStock.heading": "De retour en stock",
+  "backInStock.body": "Bonne nouvelle — {sku} est à nouveau disponible.",
+  "backInStock.cta": "Acheter maintenant"
 }

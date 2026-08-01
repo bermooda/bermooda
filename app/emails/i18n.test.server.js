@@ -18,11 +18,33 @@ describe('email i18n catalogs', () => {
     expect(messages['abandonedCart.cta']).toBe('Complete Your Purchase');
   });
 
-  it('overlays locale strings and falls back to en for missing keys', () => {
+  it('overlays locale strings for translated keys', () => {
     const de = loadEmailMessages('de');
     expect(de['orderConfirmation.heading']).toBe('Bestellung bestätigt');
-    // No DE source for order shipped — falls back to English
-    expect(de['orderShipped.heading']).toBe('Your order has shipped');
+    expect(de['orderShipped.heading']).toBe('Ihre Bestellung wurde versendet');
+  });
+
+  it('overlays locale strings for previously English-fallback keys', () => {
+    const de = loadEmailMessages('de');
+    expect(de['orderShipped.heading']).not.toBe('Your order has shipped');
+    expect(de['orderShipped.heading']).toBeTruthy();
+
+    const fr = loadEmailMessages('fr');
+    expect(fr['orderShipped.heading']).not.toBe('Your order has shipped');
+    expect(fr['passwordResetAdmin.subject']).not.toBe('Reset your admin password');
+    expect(fr['staffInvite.cta']).not.toBe('Create admin password');
+  });
+
+  it('has key parity with English catalog after overlay', () => {
+    const en = loadEmailMessages('en');
+    const de = loadEmailMessages('de');
+    const fr = loadEmailMessages('fr');
+    const enKeys = Object.keys(en);
+
+    for (const key of enKeys) {
+      expect(de).toHaveProperty(key);
+      expect(fr).toHaveProperty(key);
+    }
   });
 
   it('falls back entirely to en when locale file is missing', () => {

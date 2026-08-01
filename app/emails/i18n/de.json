@@ -26,6 +26,29 @@
   "customerWelcome.body": "Sie können jetzt unseren Shop durchsuchen, Ihre Bestellungen verfolgen und Ihre Adressen in Ihrem Konto verwalten.",
   "customerWelcome.cta": "Zu meinem Konto",
 
+  "orderShipped.subject": "Ihre Bestellung wurde versendet",
+  "orderShipped.heading": "Ihre Bestellung wurde versendet",
+  "orderShipped.subheading": "Bestellung {orderNumber} ist unterwegs.",
+  "orderShipped.carrier": "Versanddienstleister",
+  "orderShipped.tracking": "Sendungsnummer",
+  "orderShipped.cta": "Bestellung verfolgen",
+
+  "orderDelivered.subject": "Ihre Bestellung wurde zugestellt",
+  "orderDelivered.heading": "Ihre Bestellung wurde zugestellt",
+  "orderDelivered.subheading": "Bestellung {orderNumber} wurde zugestellt.",
+  "orderDelivered.body": "Wir hoffen, dass Sie mit Ihrem Einkauf zufrieden sind!",
+  "orderDelivered.cta": "Bestellung ansehen",
+
+  "orderRefunded.subject": "Rückerstattung verarbeitet",
+  "orderRefunded.heading": "Rückerstattung verarbeitet",
+  "orderRefunded.subheading": "Für Bestellung {orderNumber} wurde eine Rückerstattung ausgestellt.",
+  "orderRefunded.amount": "Rückerstattungsbetrag",
+
+  "returnReceived.subject": "Retoure eingegangen",
+  "returnReceived.heading": "Retoure eingegangen",
+  "returnReceived.subheading": "Wir haben Ihre Retoure für Bestellung {orderNumber} erhalten.",
+  "returnReceived.body": "Ihre Retoure wird bearbeitet. Wir benachrichtigen Sie, sobald Ihre Rückerstattung oder Ihr Guthaben ausgestellt wurde.",
+
   "passwordResetCustomer.subject": "Ihr Passwort zurücksetzen",
   "passwordResetCustomer.preview": "Ihr Passwort zurücksetzen",
   "passwordResetCustomer.heading": "Passwort zurücksetzen",
@@ -48,5 +71,11 @@
   "staffInvite.subheading": "Hallo {name}, Sie wurden eingeladen, auf das {platformName}-Admin-Backend zuzugreifen.",
   "staffInvite.body": "Klicken Sie auf die Schaltfläche unten, um Ihr Passwort zu erstellen und Ihr Konto zu aktivieren. Dieser Link läuft in 1 Stunde ab.",
   "staffInvite.warning": "Falls Sie diese Einladung nicht erwartet haben, können Sie diese E-Mail ignorieren.",
-  "staffInvite.cta": "Admin-Passwort erstellen"
+  "staffInvite.cta": "Admin-Passwort erstellen",
+
+  "backInStock.subject": "Ein Artikel ist wieder verfügbar",
+  "backInStock.preview": "{sku} ist wieder auf Lager",
+  "backInStock.heading": "Wieder verfügbar",
+  "backInStock.body": "Gute Nachrichten — {sku} ist wieder erhältlich.",
+  "backInStock.cta": "Jetzt shoppen"
 }
