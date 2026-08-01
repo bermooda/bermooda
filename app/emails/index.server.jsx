@@ -4,6 +4,7 @@ import config, { PLATFORM_NAME } from '#/libs/config';
 import logger from '#/utils/logger.server';
 import { sendEmail } from '#/libs/email/index.server';
 import { get as settingsGet, SETTING_KEYS } from '#/core/settings/index.server';
+import { emailT } from '#/emails/i18n.server';
 import AbandonedCartEmail from '#/emails/shop/abandoned-cart';
 import BackInStockEmail from '#/emails/shop/back-in-stock';
 import CustomerWelcomeEmail from '#/emails/shop/customer-welcome';
@@ -67,24 +68,11 @@ async function deliver({ to, subject, react, html, text, logMessage }) {
   return { success: true, data };
 }
 
-// Email subjects — admin/auth
+// Email subjects — admin/auth (templates not yet on JSON catalogs)
 const SUBJECT_WELCOME = 'Welcome to bermooda';
 const SUBJECT_VERIFY_EMAIL = 'Please verify your email address';
 const SUBJECT_RESET_PASSWORD = 'Reset your password';
 const SUBJECT_TWO_FACTOR_OTP = 'Your verification code';
-
-// Email subjects — shop
-const SUBJECT_ORDER_CONFIRMATION = 'Your order confirmation';
-const SUBJECT_ORDER_SHIPPED = 'Your order has shipped';
-const SUBJECT_ORDER_DELIVERED = 'Your order was delivered';
-const SUBJECT_ORDER_REFUNDED = 'Refund processed';
-const SUBJECT_RETURN_RECEIVED = 'Return received';
-const SUBJECT_PASSWORD_RESET_ADMIN = 'Reset your admin password';
-const SUBJECT_PASSWORD_RESET_CUSTOMER = 'Reset your password';
-const SUBJECT_STAFF_INVITE = `You've been invited to ${PLATFORM_NAME} admin`;
-const SUBJECT_CUSTOMER_WELCOME_PREFIX = 'Welcome to';
-const SUBJECT_ABANDONED_CART = 'You left something behind';
-const SUBJECT_BACK_IN_STOCK = 'An item is back in stock';
 
 /**
  * Sends a welcome email to a newly registered user
@@ -201,9 +189,10 @@ export async function sendOrderConfirmationEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
+    const t = emailT(locale);
     return await deliver({
       to: email,
-      subject: SUBJECT_ORDER_CONFIRMATION,
+      subject: t('orderConfirmation.subject'),
       react: (
         <OrderConfirmationEmail
           locale={locale}
@@ -232,9 +221,10 @@ export async function sendOrderShippedEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
+    const t = emailT(locale);
     return await deliver({
       to: email,
-      subject: SUBJECT_ORDER_SHIPPED,
+      subject: t('orderShipped.subject'),
       react: (
         <OrderShippedEmail locale={locale} brandName={brandName} {...props} />
       ),
@@ -259,9 +249,10 @@ export async function sendOrderDeliveredEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
+    const t = emailT(locale);
     return await deliver({
       to: email,
-      subject: SUBJECT_ORDER_DELIVERED,
+      subject: t('orderDelivered.subject'),
       react: (
         <OrderDeliveredEmail locale={locale} brandName={brandName} {...props} />
       ),
@@ -286,9 +277,10 @@ export async function sendOrderRefundedEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
+    const t = emailT(locale);
     return await deliver({
       to: email,
-      subject: SUBJECT_ORDER_REFUNDED,
+      subject: t('orderRefunded.subject'),
       react: (
         <OrderRefundedEmail locale={locale} brandName={brandName} {...props} />
       ),
@@ -313,9 +305,10 @@ export async function sendReturnReceivedEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
+    const t = emailT(locale);
     return await deliver({
       to: email,
-      subject: SUBJECT_RETURN_RECEIVED,
+      subject: t('returnReceived.subject'),
       react: (
         <ReturnReceivedEmail locale={locale} brandName={brandName} {...props} />
       ),
@@ -342,9 +335,10 @@ export async function sendPasswordResetAdminEmail({
   resetUrl,
 }) {
   try {
+    const t = emailT(locale);
     return await deliver({
       to: email,
-      subject: SUBJECT_PASSWORD_RESET_ADMIN,
+      subject: t('passwordResetAdmin.subject'),
       react: (
         <PasswordResetAdminEmail
           locale={locale}
@@ -377,9 +371,10 @@ export async function sendStaffInviteEmail({
   inviteUrl,
 }) {
   try {
+    const t = emailT(locale);
     return await deliver({
       to: email,
-      subject: SUBJECT_STAFF_INVITE,
+      subject: t('staffInvite.subject', { platformName: PLATFORM_NAME }),
       react: (
         <StaffInviteEmail locale={locale} name={name} inviteUrl={inviteUrl} />
       ),
@@ -407,9 +402,10 @@ export async function sendPasswordResetCustomerEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
+    const t = emailT(locale);
     return await deliver({
       to: email,
-      subject: SUBJECT_PASSWORD_RESET_CUSTOMER,
+      subject: t('passwordResetCustomer.subject'),
       react: (
         <PasswordResetCustomerEmail
           locale={locale}
@@ -442,9 +438,10 @@ export async function sendCustomerWelcomeEmail({
 }) {
   try {
     const shopName = await resolveShopBrandName();
+    const t = emailT(locale);
     return await deliver({
       to: email,
-      subject: `${SUBJECT_CUSTOMER_WELCOME_PREFIX} ${shopName}`,
+      subject: t('customerWelcome.subject', { shopName }),
       react: (
         <CustomerWelcomeEmail
           locale={locale}
@@ -474,9 +471,10 @@ export async function sendAbandonedCartEmail({
 }) {
   try {
     const brandName = await resolveShopBrandName();
+    const t = emailT(locale);
     return await deliver({
       to: email,
-      subject: SUBJECT_ABANDONED_CART,
+      subject: t('abandonedCart.subject'),
       react: (
         <AbandonedCartEmail locale={locale} brandName={brandName} {...props} />
       ),
@@ -492,15 +490,23 @@ export async function sendAbandonedCartEmail({
  * @param {Object} options
  * @param {string} options.to
  * @param {object} options.variant
+ * @param {string} [options.locale]
  * @returns {Promise<{ success: true, data: unknown }>}
  */
-export async function sendBackInStockEmail({ to, variant }) {
+export async function sendBackInStockEmail({ to, variant, locale = 'en' }) {
   try {
     const brandName = await resolveShopBrandName();
+    const t = emailT(locale);
     return await deliver({
       to,
-      subject: SUBJECT_BACK_IN_STOCK,
-      react: <BackInStockEmail brandName={brandName} variant={variant} />,
+      subject: t('backInStock.subject'),
+      react: (
+        <BackInStockEmail
+          locale={locale}
+          brandName={brandName}
+          variant={variant}
+        />
+      ),
       logMessage: 'Back-in-stock email sent successfully',
     });
   } catch (error) {

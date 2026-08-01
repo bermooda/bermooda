@@ -1,0 +1,36 @@
+{
+  "orderConfirmation.subject": "Confirmation de votre commande",
+  "orderConfirmation.heading": "Commande confirmée",
+  "orderConfirmation.subheading": "Merci pour votre commande, {name}!",
+  "orderConfirmation.orderNumber": "Numéro de commande",
+  "orderConfirmation.items": "Articles",
+  "orderConfirmation.subtotal": "Sous-total",
+  "orderConfirmation.shipping": "Livraison",
+  "orderConfirmation.tax": "Taxes",
+  "orderConfirmation.discount": "Réduction",
+  "orderConfirmation.total": "Total",
+  "orderConfirmation.cta": "Voir la commande",
+
+  "abandonedCart.subject": "Vous avez oublié quelque chose",
+  "abandonedCart.preview": "Vous avez oublié quelque chose",
+  "abandonedCart.heading": "Vous avez laissé quelque chose dans votre panier",
+  "abandonedCart.subheading": "Hé {name}, vous hésitez encore?",
+  "abandonedCart.body": "Votre panier est sauvegardé et prêt quand vous l'êtes. Ne laissez pas ces articles se vendre!",
+  "abandonedCart.items": "Articles dans votre panier",
+  "abandonedCart.cta": "Finaliser votre achat",
+
+  "customerWelcome.subject": "Bienvenue sur {shopName}",
+  "customerWelcome.preview": "Bienvenue sur {shopName}, {name}!",
+  "customerWelcome.heading": "Bienvenue sur {shopName}",
+  "customerWelcome.subheading": "Merci de créer un compte, {name}!",
+  "customerWelcome.body": "Vous pouvez maintenant parcourir notre boutique, suivre vos commandes et gérer vos adresses depuis votre espace client.",
+  "customerWelcome.cta": "Accéder à mon compte",
+
+  "passwordResetCustomer.subject": "Réinitialisez votre mot de passe",
+  "passwordResetCustomer.preview": "Réinitialisez votre mot de passe",
+  "passwordResetCustomer.heading": "Réinitialisez votre mot de passe",
+  "passwordResetCustomer.subheading": "Bonjour {name}, nous avons reçu une demande de réinitialisation de votre mot de passe.",
+  "passwordResetCustomer.body": "Cliquez sur le bouton ci-dessous pour réinitialiser votre mot de passe. Ce lien expire dans 1 heure.",
+  "passwordResetCustomer.warning": "Si vous n'avez pas fait cette demande, ignorez cet e-mail.",
+  "passwordResetCustomer.cta": "Réinitialiser le mot de passe"
+}

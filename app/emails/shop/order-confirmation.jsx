@@ -6,48 +6,7 @@ import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';
-
-const labels = {
-  en: {
-    subject: 'Your order confirmation',
-    heading: 'Order Confirmed',
-    subheading: (name) => `Thanks for your order, ${name}!`,
-    orderNumber: 'Order number',
-    items: 'Items',
-    subtotal: 'Subtotal',
-    shipping: 'Shipping',
-    tax: 'Tax',
-    discount: 'Discount',
-    total: 'Total',
-    cta: 'View Order',
-  },
-  de: {
-    subject: 'Ihre Bestellbestätigung',
-    heading: 'Bestellung bestätigt',
-    subheading: (name) => `Danke für Ihre Bestellung, ${name}!`,
-    orderNumber: 'Bestellnummer',
-    items: 'Artikel',
-    subtotal: 'Zwischensumme',
-    shipping: 'Versand',
-    tax: 'Steuern',
-    discount: 'Rabatt',
-    total: 'Gesamt',
-    cta: 'Bestellung ansehen',
-  },
-  fr: {
-    subject: 'Confirmation de votre commande',
-    heading: 'Commande confirmée',
-    subheading: (name) => `Merci pour votre commande, ${name}!`,
-    orderNumber: 'Numéro de commande',
-    items: 'Articles',
-    subtotal: 'Sous-total',
-    shipping: 'Livraison',
-    tax: 'Taxes',
-    discount: 'Réduction',
-    total: 'Total',
-    cta: 'Voir la commande',
-  },
-};
+import { emailT } from '#/emails/i18n.server';
 
 function fmt(cents, currency) {
   return new Intl.NumberFormat('en', { style: 'currency', currency }).format(
@@ -84,20 +43,20 @@ export default function OrderConfirmationEmail({
   currency = 'USD',
   brandName,
 }) {
-  const t = labels[locale] ?? labels.en;
+  const t = emailT(locale);
   const url = orderUrl ?? `${config.baseUrl}/account/orders`;
+  const heading = t('orderConfirmation.heading');
 
   return (
-    <EmailLayout
-      brandName={brandName}
-      preview={`${t.heading} — ${orderNumber}`}
-    >
-      <EmailHeading>{t.heading}</EmailHeading>
-      <EmailSubheading>{t.subheading(name)}</EmailSubheading>
+    <EmailLayout brandName={brandName} preview={`${heading} — ${orderNumber}`}>
+      <EmailHeading>{heading}</EmailHeading>
+      <EmailSubheading>
+        {t('orderConfirmation.subheading', { name })}
+      </EmailSubheading>
 
       <Section className="dark-mode-bg rounded-xl bg-indigo-50 px-6 py-4">
         <Text className="dark-mode-text text-sm text-slate-500">
-          {t.orderNumber}:{' '}
+          {t('orderConfirmation.orderNumber')}:{' '}
           <strong className="text-slate-800">{orderNumber}</strong>
         </Text>
 
@@ -114,7 +73,7 @@ export default function OrderConfirmationEmail({
 
         <Row className="pt-2">
           <Column className="dark-mode-text text-sm text-slate-500">
-            {t.subtotal}
+            {t('orderConfirmation.subtotal')}
           </Column>
           <Column className="dark-mode-text text-right text-sm text-slate-700">
             {fmt(subtotalCents, currency)}
@@ -123,7 +82,7 @@ export default function OrderConfirmationEmail({
         {shippingCents > 0 && (
           <Row>
             <Column className="dark-mode-text text-sm text-slate-500">
-              {t.shipping}
+              {t('orderConfirmation.shipping')}
             </Column>
             <Column className="dark-mode-text text-right text-sm text-slate-700">
               {fmt(shippingCents, currency)}
@@ -133,7 +92,7 @@ export default function OrderConfirmationEmail({
         {taxCents > 0 && (
           <Row>
             <Column className="dark-mode-text text-sm text-slate-500">
-              {t.tax}
+              {t('orderConfirmation.tax')}
             </Column>
             <Column className="dark-mode-text text-right text-sm text-slate-700">
               {fmt(taxCents, currency)}
@@ -143,7 +102,7 @@ export default function OrderConfirmationEmail({
         {discountCents > 0 && (
           <Row>
             <Column className="dark-mode-text text-sm text-slate-500">
-              {t.discount}
+              {t('orderConfirmation.discount')}
             </Column>
             <Column className="dark-mode-text text-right text-sm text-green-600">
               -{fmt(discountCents, currency)}
@@ -152,7 +111,7 @@ export default function OrderConfirmationEmail({
         )}
         <Row className="border-t border-slate-200 pt-2">
           <Column className="dark-mode-text font-semibold text-slate-800">
-            {t.total}
+            {t('orderConfirmation.total')}
           </Column>
           <Column className="dark-mode-text text-right font-semibold text-slate-800">
             {fmt(totalCents, currency)}
@@ -161,7 +120,7 @@ export default function OrderConfirmationEmail({
       </Section>
 
       <Section className="my-4 text-center">
-        <EmailButton url={url}>{t.cta}</EmailButton>
+        <EmailButton url={url}>{t('orderConfirmation.cta')}</EmailButton>
       </Section>
       <EmailFooterLink url={url} />
     </EmailLayout>
