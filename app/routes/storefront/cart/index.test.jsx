@@ -8,6 +8,10 @@ vi.mock('#/core/cart/index.server', () => ({
   updateQuantity: vi.fn(),
 }));
 
+vi.mock('#/core/channels/index.server', () => ({
+  resolveChannelFromRequest: vi.fn(),
+}));
+
 vi.mock('#/core/currency/index.server', () => ({
   getRequestCurrency: vi.fn().mockResolvedValue('USD'),
 }));
@@ -22,6 +26,7 @@ vi.mock('#/libs/auth/customer/index.server', () => ({
 
 vi.mock('#/core/themes/index.server', () => ({
   preloadStorefrontTheme: vi.fn().mockResolvedValue('default'),
+  getSlotBlocksMap: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock('#/core/themes/storefront-components', () => ({
@@ -29,12 +34,14 @@ vi.mock('#/core/themes/storefront-components', () => ({
 }));
 
 import { createCart, getCart, addLine } from '#/core/cart/index.server';
+import { resolveChannelFromRequest } from '#/core/channels/index.server';
 
 import { action } from '#/routes/storefront/cart';
 
 describe('storefront cart action', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resolveChannelFromRequest.mockResolvedValue({ id: 'ch_1' });
   });
 
   it('creates cart and adds line on intent=add', async () => {
@@ -54,9 +61,11 @@ describe('storefront cart action', () => {
 
     const response = await action({ request });
     expect(response.status).toBe(302);
+    expect(resolveChannelFromRequest).toHaveBeenCalledWith(request);
     expect(createCart).toHaveBeenCalledWith({
       currency: 'USD',
       customerId: undefined,
+      salesChannelId: 'ch_1',
     });
     expect(addLine).toHaveBeenCalledWith(
       'cart_1',

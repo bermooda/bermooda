@@ -14,6 +14,7 @@ import {
   removeLine,
   updateQuantity,
 } from '#/core/cart/index.server';
+import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
@@ -54,7 +55,12 @@ export async function action({ request }) {
     }
 
     if (!cart) {
-      cart = await createCart({ currency, customerId });
+      const channel = await resolveChannelFromRequest(request);
+      cart = await createCart({
+        currency,
+        customerId,
+        salesChannelId: channel?.id,
+      });
       token = cart.token;
       appendCartTokenCookie(headers, token);
     }

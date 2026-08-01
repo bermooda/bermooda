@@ -260,6 +260,28 @@ describe('placeOrder', () => {
     expect(txArg.checkoutSession).toBe(capturedTx.checkoutSession);
   });
 
+  it('copies salesChannelId from checkout session onto the order', async () => {
+    const session = makeCheckoutSession({ salesChannelId: 'ch_1' });
+    const order = makeOrder({ salesChannelId: 'ch_1' });
+
+    setupTransaction();
+
+    prisma.checkoutSession.findUnique.mockResolvedValue(session);
+    prisma.order.create.mockResolvedValue(order);
+    prisma.orderLine.create.mockResolvedValue({});
+    prisma.cartLine.deleteMany.mockResolvedValue({});
+    prisma.cart.update.mockResolvedValue({});
+    prisma.checkoutSession.update.mockResolvedValue({});
+    decrementInventory.mockResolvedValue(undefined);
+    emit.mockResolvedValue(undefined);
+
+    await placeOrder('sess_1', {});
+
+    expect(prisma.order.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ salesChannelId: 'ch_1' }),
+    });
+  });
+
   it('emits order.created after the transaction commits', async () => {
     const session = makeCheckoutSession();
     const order = makeOrder();

@@ -17,16 +17,17 @@ import { emit, emitBefore } from '#/core/events/index.server';
 
 /**
  * Create a new CheckoutSession for a cart. Locks the cart.
+ * When `salesChannelId` is omitted, copies the channel from the locked cart.
  *
  * @param {string} cartId
- * @param {{ customerId?: string, email?: string }} options
+ * @param {{ customerId?: string, email?: string, salesChannelId?: string }} [options]
  * @returns {Promise<object>} created CheckoutSession
  */
 export async function createCheckoutSession(
   cartId,
-  { customerId, email } = {}
+  { customerId, email, salesChannelId } = {}
 ) {
-  await lockCart(cartId);
+  const cart = await lockCart(cartId);
 
   const session = await prisma.checkoutSession.create({
     data: {
@@ -34,6 +35,7 @@ export async function createCheckoutSession(
       customerId: customerId ?? null,
       email: email ?? null,
       step: CHECKOUT_STEP,
+      salesChannelId: salesChannelId ?? cart.salesChannelId ?? null,
     },
   });
 
@@ -42,6 +44,7 @@ export async function createCheckoutSession(
     cartId: session.cartId,
     customerId: session.customerId,
     email: session.email,
+    salesChannelId: session.salesChannelId,
   });
 
   return session;
@@ -51,12 +54,12 @@ export async function createCheckoutSession(
  * Create a checkout session from a cart token.
  *
  * @param {string} cartToken
- * @param {{ customerId?: string, email?: string }} [options]
+ * @param {{ customerId?: string, email?: string, salesChannelId?: string }} [options]
  * @returns {Promise<object>}
  */
 export async function createCheckoutSessionFromCartToken(
   cartToken,
-  { customerId, email } = {}
+  { customerId, email, salesChannelId } = {}
 ) {
   const cart = await prisma.cart.findUnique({ where: { token: cartToken } });
   if (!cart) {
@@ -66,7 +69,7 @@ export async function createCheckoutSessionFromCartToken(
     });
   }
 
-  return createCheckoutSession(cart.id, { customerId, email });
+  return createCheckoutSession(cart.id, { customerId, email, salesChannelId });
 }
 
 // ---------------------------------------------------------------------------
