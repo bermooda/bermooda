@@ -79,7 +79,11 @@ export async function createRefund(
     await restoreOrderLineInventory(order.lines);
   }
 
-  await queueEmit('payment.refunded', { refundId: refund.id, orderId, amountCents });
+  await queueEmit('payment.refunded', {
+    refundId: refund.id,
+    orderId,
+    amountCents,
+  });
 
   return refund;
 }

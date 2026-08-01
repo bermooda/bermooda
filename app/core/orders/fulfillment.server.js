@@ -264,7 +264,10 @@ export async function markDelivered(shipmentId) {
     },
   });
 
-  await queueEmit('shipment.delivered', { shipmentId, orderId: shipment.orderId });
+  await queueEmit('shipment.delivered', {
+    shipmentId,
+    orderId: shipment.orderId,
+  });
 
   return shipment;
 }

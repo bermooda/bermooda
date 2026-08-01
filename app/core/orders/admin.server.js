@@ -404,7 +404,10 @@ export async function cancelOrder(orderId) {
 
   const updated = await updateOrderStatus(orderId, 'cancelled');
 
-  await queueEmit('order.cancelled', { orderId, orderNumber: order.orderNumber });
+  await queueEmit('order.cancelled', {
+    orderId,
+    orderNumber: order.orderNumber,
+  });
 
   logger.info({ orderId, orderNumber: order.orderNumber }, 'order cancelled');
 

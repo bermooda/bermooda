@@ -602,7 +602,10 @@ describe('updateOrderStatus', () => {
 
     await updateOrderStatus('order_1', 'confirmed');
 
-    expect(queueEmit).not.toHaveBeenCalledWith('order.updated', expect.anything());
+    expect(queueEmit).not.toHaveBeenCalledWith(
+      'order.updated',
+      expect.anything()
+    );
   });
 
   it.each(['pending', 'confirmed', 'cancelled', 'refunded'])(

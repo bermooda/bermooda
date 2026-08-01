@@ -2,8 +2,8 @@
 // Domain event bus: before-hooks run in-process; post-hooks are queued via job.server.
 
 import logger from '#/utils/logger.server';
-import { queueEmit } from '#/core/events/job.server';
 import { getHandlers } from '#/core/events/handlers.server';
+import { queueEmit } from '#/core/events/job.server';
 import { beforeHookKey } from '#/core/events/names';
 
 export {

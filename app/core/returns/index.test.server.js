@@ -203,7 +203,10 @@ describe('returns workflows', () => {
     });
 
     expect(result.id).toBe('ret-1');
-    expect(queueEmit).toHaveBeenCalledWith('return.requested', expect.any(Object));
+    expect(queueEmit).toHaveBeenCalledWith(
+      'return.requested',
+      expect.any(Object)
+    );
   });
 
   it('requestReturn rejects invalid quantity', async () => {
@@ -252,7 +255,10 @@ describe('returns workflows', () => {
 
     const result = await approveReturn('ret-1', { resolution: 'refund' });
     expect(result.status).toBe('approved');
-    expect(queueEmit).toHaveBeenCalledWith('return.approved', expect.any(Object));
+    expect(queueEmit).toHaveBeenCalledWith(
+      'return.approved',
+      expect.any(Object)
+    );
   });
 
   it('receiveReturn restocks inventory', async () => {
@@ -272,8 +278,14 @@ describe('returns workflows', () => {
       [{ variantId: 'var-1', quantity: 1 }],
       prisma
     );
-    expect(queueEmit).toHaveBeenCalledWith('return.received', expect.any(Object));
-    expect(queueEmit).toHaveBeenCalledWith('order.returned', expect.any(Object));
+    expect(queueEmit).toHaveBeenCalledWith(
+      'return.received',
+      expect.any(Object)
+    );
+    expect(queueEmit).toHaveBeenCalledWith(
+      'order.returned',
+      expect.any(Object)
+    );
   });
 
   it('completeReturn issues refund without inventory restore', async () => {
