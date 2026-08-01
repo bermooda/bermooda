@@ -22,7 +22,7 @@ vi.mock('#/core/events/index.server', () => ({ emit: vi.fn() }));
 vi.mock('#/core/inventory/index.server', () => ({
   incrementInventory: vi.fn(),
 }));
-vi.mock('#/core/orders/index.server', () => ({
+vi.mock('#/core/orders/refunds.server', () => ({
   createRefund: vi.fn(),
 }));
 vi.mock('#/core/store-credit/index.server', () => ({
@@ -35,7 +35,7 @@ vi.mock('#/utils/logger.server', () => ({
 import prisma from '#/libs/prisma.server';
 import { emit } from '#/core/events/index.server';
 import { incrementInventory } from '#/core/inventory/index.server';
-import { createRefund } from '#/core/orders/index.server';
+import { createRefund } from '#/core/orders/refunds.server';
 import {
   approveReturn,
   buildReturnWhere,
