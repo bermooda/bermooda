@@ -51,9 +51,6 @@ import {
 import { taxJarProvider } from '#/core/tax/taxjar.server';
 import { discoverThemes } from '#/core/themes/index.server';
 import { registerWebhookSubscribers } from '#/core/webhooks/index.server';
-// Side-effect imports: register LiteQuu workers that have no named imports above.
-import '#/core/webhooks/job.server';
-import '#/core/exports/job.server';
 
 let _bootstrapped = false;
 

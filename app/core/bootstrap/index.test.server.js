@@ -48,8 +48,6 @@ vi.mock('#/core/plugins/index.server', () => ({
 vi.mock('#/core/rbac/index.server', () => ({
   seedRolePermissions: vi.fn(),
 }));
-vi.mock('#/core/webhooks/job.server', () => ({}));
-vi.mock('#/core/exports/job.server', () => ({}));
 vi.mock('#/core/marketing/job.server', () => ({
   queueAbandonedCartSequence: vi.fn(),
 }));
