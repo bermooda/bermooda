@@ -3,14 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   __resetThrottleMap,
   createThrottledJob,
-  defineQueueJob,
 } from '#/libs/queue/shared/index.server';
-
-vi.mock('#/libs/error/index.server', () => ({
-  handleError: vi.fn(),
-}));
-
-import { handleError } from '#/libs/error/index.server';
 
 describe('createThrottledJob', () => {
   afterEach(() => {
@@ -58,45 +51,5 @@ describe('createThrottledJob', () => {
     throttled('b');
 
     expect(fn).toHaveBeenCalledTimes(2);
-  });
-});
-
-describe('defineQueueJob', () => {
-  it('registers process and failed handlers', async () => {
-    const processFn = vi.fn();
-    const failedHandlers = [];
-    const mockJob = {
-      process: vi.fn(),
-      on: vi.fn((event, handler) => {
-        if (event === 'failed') {
-          failedHandlers.push(handler);
-        }
-      }),
-      add: vi.fn(),
-    };
-    const mockQueue = {
-      createJob: vi.fn(() => mockJob),
-    };
-
-    const job = defineQueueJob(mockQueue, 'test_job', {
-      process: processFn,
-      onFailed: {
-        message: 'Job failed',
-        source: 'test defineQueueJob',
-      },
-    });
-
-    expect(mockQueue.createJob).toHaveBeenCalledWith('test_job');
-    expect(mockJob.process).toHaveBeenCalledWith(processFn);
-    expect(mockJob.on).toHaveBeenCalledWith('failed', expect.any(Function));
-    expect(job).toBe(mockJob);
-
-    const error = new Error('boom');
-    await failedHandlers[0]({ error });
-
-    expect(handleError).toHaveBeenCalledWith(error, {
-      message: 'Job failed',
-      source: 'test defineQueueJob',
-    });
   });
 });

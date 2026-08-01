@@ -3,10 +3,10 @@
 // Callers import queueEmit from this module (not from index.server).
 
 import logger from '#/utils/logger.server';
-import queue, { defineQueueJob } from '#/libs/queue.server';
+import { defineQueueJob } from '#/libs/queue.server';
 import { dispatchHandlers } from '#/core/events/handlers.server';
 
-const domainEventJob = defineQueueJob(queue, 'domain_event', {
+const domainEventJob = defineQueueJob('domain_event', {
   /**
    * @param {unknown} taskData
    * @returns {Promise<void>}

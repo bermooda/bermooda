@@ -1,7 +1,7 @@
 import config from '#/libs/config';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import queue, { createThrottledJob, defineQueueJob } from '#/libs/queue.server';
+import { createThrottledJob, defineQueueJob } from '#/libs/queue.server';
 import { on } from '#/core/events/index.server';
 import {
   sendPasswordResetEmail,
@@ -17,7 +17,7 @@ import {
   sendAbandonedCartEmail,
 } from '#/emails/index.server';
 
-const verifyEmailJob = defineQueueJob(queue, 'verify_email', {
+const verifyEmailJob = defineQueueJob('verify_email', {
   process: async (taskData) => {
     await sendVerificationEmail({
       email: taskData.email,
@@ -31,7 +31,7 @@ const verifyEmailJob = defineQueueJob(queue, 'verify_email', {
   },
 });
 
-const passwordResetEmailJob = defineQueueJob(queue, 'password_reset_email', {
+const passwordResetEmailJob = defineQueueJob('password_reset_email', {
   process: async (taskData) => {
     await sendPasswordResetEmail({
       email: taskData.email,
@@ -45,7 +45,7 @@ const passwordResetEmailJob = defineQueueJob(queue, 'password_reset_email', {
   },
 });
 
-const twoFactorOtpJob = defineQueueJob(queue, 'two_factor_otp', {
+const twoFactorOtpJob = defineQueueJob('two_factor_otp', {
   process: async (taskData) => {
     await sendTwoFactorOtpEmail({
       email: taskData.email,
@@ -93,7 +93,7 @@ export function queuePasswordResetEmail(email, name, resetUrl) {
   });
 }
 
-const staffInviteEmailJob = defineQueueJob(queue, 'staff_invite_email', {
+const staffInviteEmailJob = defineQueueJob('staff_invite_email', {
   process: async (taskData) => {
     await sendStaffInviteEmail({
       email: taskData.email,
@@ -140,7 +140,7 @@ export const queueTwoFactorOtp = createThrottledJob(
 
 // ─── Shop email jobs ──────────────────────────────────────────────────────────
 
-const orderConfirmationJob = defineQueueJob(queue, 'order_confirmation_email', {
+const orderConfirmationJob = defineQueueJob('order_confirmation_email', {
   process: async (taskData) => {
     await sendOrderConfirmationEmail(taskData);
   },
@@ -150,7 +150,7 @@ const orderConfirmationJob = defineQueueJob(queue, 'order_confirmation_email', {
   },
 });
 
-const orderShippedJob = defineQueueJob(queue, 'order_shipped_email', {
+const orderShippedJob = defineQueueJob('order_shipped_email', {
   process: async (taskData) => {
     await sendOrderShippedEmail(taskData);
   },
@@ -160,7 +160,7 @@ const orderShippedJob = defineQueueJob(queue, 'order_shipped_email', {
   },
 });
 
-const orderDeliveredJob = defineQueueJob(queue, 'order_delivered_email', {
+const orderDeliveredJob = defineQueueJob('order_delivered_email', {
   process: async (taskData) => {
     await sendOrderDeliveredEmail(taskData);
   },
@@ -170,7 +170,7 @@ const orderDeliveredJob = defineQueueJob(queue, 'order_delivered_email', {
   },
 });
 
-const orderRefundedJob = defineQueueJob(queue, 'order_refunded_email', {
+const orderRefundedJob = defineQueueJob('order_refunded_email', {
   process: async (taskData) => {
     await sendOrderRefundedEmail(taskData);
   },
@@ -180,7 +180,7 @@ const orderRefundedJob = defineQueueJob(queue, 'order_refunded_email', {
   },
 });
 
-const returnReceivedJob = defineQueueJob(queue, 'return_received_email', {
+const returnReceivedJob = defineQueueJob('return_received_email', {
   process: async (taskData) => {
     await sendReturnReceivedEmail(taskData);
   },
@@ -190,7 +190,7 @@ const returnReceivedJob = defineQueueJob(queue, 'return_received_email', {
   },
 });
 
-const customerWelcomeJob = defineQueueJob(queue, 'customer_welcome_email', {
+const customerWelcomeJob = defineQueueJob('customer_welcome_email', {
   process: async (taskData) => {
     await sendCustomerWelcomeEmail(taskData);
   },
@@ -200,7 +200,7 @@ const customerWelcomeJob = defineQueueJob(queue, 'customer_welcome_email', {
   },
 });
 
-const abandonedCartJob = defineQueueJob(queue, 'abandoned_cart_email', {
+const abandonedCartJob = defineQueueJob('abandoned_cart_email', {
   process: async (taskData) => {
     await sendAbandonedCartEmail(taskData);
   },
