@@ -121,24 +121,39 @@ describe('admin plugin dispatcher', () => {
 
   it('uses the splat path and returns loader data for a matched plugin route', async () => {
     const pluginLoaderData = { events: [{ orderId: 'order_1' }] };
+    const pluginLoader = vi.fn().mockResolvedValue(pluginLoaderData);
 
     mockServerResolve.mockImplementation(() => ({
-      path: '',
-      loader: vi.fn().mockResolvedValue(pluginLoaderData),
+      path: 'orders/:id',
+      params: { id: 'order_1' },
+      loader: pluginLoader,
     }));
 
-    const result = await loader({
-      request: new Request('http://localhost/admin/plugins/demo-plugin'),
-      params: { 'pluginId': 'demo-plugin', '*': '' },
-    });
+    const request = new Request(
+      'http://localhost/admin/plugins/demo-plugin/orders/order_1'
+    );
+    const params = { 'pluginId': 'demo-plugin', '*': 'orders/order_1' };
+
+    const result = await loader({ request, params });
 
     expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith('demo-plugin');
-    expect(mockServerResolve).toHaveBeenCalledWith('demo-plugin', '');
+    expect(mockServerResolve).toHaveBeenCalledWith(
+      'demo-plugin',
+      'orders/order_1'
+    );
+    expect(pluginLoader).toHaveBeenCalledWith({
+      request,
+      params: {
+        'pluginId': 'demo-plugin',
+        '*': 'orders/order_1',
+        'id': 'order_1',
+      },
+    });
     expect(result).toMatchObject({
       status: 'ok',
       pluginId: 'demo-plugin',
       manifest: sampleManifest,
-      splatPath: '',
+      splatPath: 'orders/order_1',
       pluginLoaderData,
     });
   });
@@ -146,20 +161,29 @@ describe('admin plugin dispatcher', () => {
   it('invokes the matched descriptor action on POST', async () => {
     const pluginAction = vi.fn().mockResolvedValue({ saved: true });
     mockServerResolve.mockReturnValue({
-      path: '',
+      path: 'files/*',
+      params: { splat: 'a/b' },
       action: pluginAction,
     });
 
-    const request = new Request('http://localhost/admin/plugins/demo-plugin', {
-      method: 'POST',
-    });
-    const params = { 'pluginId': 'demo-plugin', '*': '' };
+    const request = new Request(
+      'http://localhost/admin/plugins/demo-plugin/files/a/b',
+      { method: 'POST' }
+    );
+    const params = { 'pluginId': 'demo-plugin', '*': 'files/a/b' };
 
     const result = await action({ request, params });
 
     expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith('demo-plugin');
-    expect(mockServerResolve).toHaveBeenCalledWith('demo-plugin', '');
-    expect(pluginAction).toHaveBeenCalledWith({ request, params });
+    expect(mockServerResolve).toHaveBeenCalledWith('demo-plugin', 'files/a/b');
+    expect(pluginAction).toHaveBeenCalledWith({
+      request,
+      params: {
+        'pluginId': 'demo-plugin',
+        '*': 'files/a/b',
+        'splat': 'a/b',
+      },
+    });
     expect(result).toEqual({ saved: true });
   });
 

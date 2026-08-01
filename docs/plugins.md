@@ -675,6 +675,8 @@ Both files must export the same `routes` array shape. Each route entry follows R
 }
 ```
 
+Paths may use `:param` segments and a trailing `*` splat (captured as `params.splat`). Exact paths win over patterns; otherwise the first registered matching pattern wins. Matched params are merged into React Router `params` when the dispatcher calls `loader` / `action`.
+
 Example server routes file (`admin/routes/index.server.js`):
 
 ```js
@@ -727,6 +729,8 @@ Each route entry has the same shape:
   Component: MyComponent,                     // required
 }
 ```
+
+Paths may use `:param` segments and a trailing `*` splat (captured as `params.splat`). Exact paths win over patterns; otherwise the first registered matching pattern wins. Matched params are merged into React Router `params` when the dispatcher calls `loader` / `action`.
 
 The storefront dispatcher:
 

@@ -86,7 +86,10 @@ export async function loader({ request, params }) {
 
   let pluginLoaderData = null;
   if (typeof descriptor.loader === 'function') {
-    pluginLoaderData = await descriptor.loader({ request, params });
+    pluginLoaderData = await descriptor.loader({
+      request,
+      params: { ...params, ...descriptor.params },
+    });
   }
 
   return {
@@ -116,7 +119,10 @@ export async function action({ request, params }) {
   if (!descriptor || typeof descriptor.action !== 'function') {
     throw new Response('Method Not Allowed', { status: 405 });
   }
-  return descriptor.action({ request, params });
+  return descriptor.action({
+    request,
+    params: { ...params, ...descriptor.params },
+  });
 }
 
 /**

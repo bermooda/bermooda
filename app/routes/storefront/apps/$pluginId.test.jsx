@@ -92,19 +92,23 @@ describe('storefront plugin dispatcher', () => {
 
   it('uses the splat path and returns loader data for a matched plugin route', async () => {
     const pluginLoaderData = { eventCount: 3 };
+    const pluginLoader = vi.fn().mockResolvedValue(pluginLoaderData);
 
     mockServerResolve.mockImplementation((_pluginSlug, path) => ({
       path,
-      loader: vi.fn().mockResolvedValue(pluginLoaderData),
+      params: path === 'reports/daily' ? { report: 'daily' } : {},
+      loader: pluginLoader,
     }));
 
-    const result = await loader({
-      request: new Request('http://localhost/apps/demo-plugin/wrong-path'),
-      params: {
-        'pluginId': 'demo-plugin',
-        '*': 'reports/daily',
-      },
-    });
+    const request = new Request(
+      'http://localhost/apps/demo-plugin/wrong-path'
+    );
+    const params = {
+      'pluginId': 'demo-plugin',
+      '*': 'reports/daily',
+    };
+
+    const result = await loader({ request, params });
 
     expect(mockPreloadStorefrontTheme).toHaveBeenCalledOnce();
     expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith('demo-plugin');
@@ -113,6 +117,14 @@ describe('storefront plugin dispatcher', () => {
       'demo-plugin',
       'reports/daily'
     );
+    expect(pluginLoader).toHaveBeenCalledWith({
+      request,
+      params: {
+        'pluginId': 'demo-plugin',
+        '*': 'reports/daily',
+        'report': 'daily',
+      },
+    });
     expect(result).toMatchObject({
       status: 'ok',
       pluginId: 'demo-plugin',
@@ -141,17 +153,18 @@ describe('storefront plugin dispatcher', () => {
   it('invokes the matched descriptor action on POST', async () => {
     const pluginAction = vi.fn().mockResolvedValue({ ok: true });
     mockServerResolve.mockReturnValue({
-      path: 'reports/daily',
+      path: 'orders/:id',
+      params: { id: 'abc' },
       action: pluginAction,
     });
 
     const request = new Request(
-      'http://localhost/apps/demo-plugin/reports/daily',
+      'http://localhost/apps/demo-plugin/orders/abc',
       { method: 'POST' }
     );
     const params = {
       'pluginId': 'demo-plugin',
-      '*': 'reports/daily',
+      '*': 'orders/abc',
     };
 
     const result = await action({ request, params });
@@ -160,9 +173,16 @@ describe('storefront plugin dispatcher', () => {
     expect(mockIsPluginEnabled).toHaveBeenCalledWith('@acme/demo-plugin');
     expect(mockServerResolve).toHaveBeenCalledWith(
       'demo-plugin',
-      'reports/daily'
+      'orders/abc'
     );
-    expect(pluginAction).toHaveBeenCalledWith({ request, params });
+    expect(pluginAction).toHaveBeenCalledWith({
+      request,
+      params: {
+        'pluginId': 'demo-plugin',
+        '*': 'orders/abc',
+        'id': 'abc',
+      },
+    });
     expect(result).toEqual({ ok: true });
   });
 
