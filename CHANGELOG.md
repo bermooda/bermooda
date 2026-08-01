@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.3.0...bermooda-v0.4.0) (2026-08-01)
+
+
+### Features
+
+* **auth:** invite staff with set-password email link ([#161](https://github.com/bermooda/bermooda/issues/161)) ([d5f59cb](https://github.com/bermooda/bermooda/commit/d5f59cb85231e3bdcd2dc662fc59d6dc9c67e3e4))
+* **events:** queue domain events via LiteQuu job ([#165](https://github.com/bermooda/bermooda/issues/165)) ([ed92df2](https://github.com/bermooda/bermooda/commit/ed92df2ff9c579daacea50570847dfe8c92bfbfd))
+* **plugins:** dispatcher actions and param routes ([#168](https://github.com/bermooda/bermooda/issues/168)) ([f56876c](https://github.com/bermooda/bermooda/commit/f56876cfa7d7de7d58966ea2bceb2a90579a2bb6))
+
+
+### Bug Fixes
+
+* **channels:** thread salesChannelId through cart and checkout ([#166](https://github.com/bermooda/bermooda/issues/166)) ([15aee9b](https://github.com/bermooda/bermooda/commit/15aee9bf4796a8465078d43198735a4cd9493696))
+
 ## [0.3.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.2.0...bermooda-v0.3.0) (2026-07-31)
 
 
