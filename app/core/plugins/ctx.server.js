@@ -69,6 +69,9 @@ export function buildCtx(pluginId, options = {}) {
   const t = (key, params) => translate(key, params, messages);
 
   return {
+    /**
+     * @deprecated Prefer domain APIs; raw Prisma bypasses invariants.
+     */
     db: prisma,
     settings,
     plugin,

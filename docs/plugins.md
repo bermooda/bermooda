@@ -418,7 +418,9 @@ Resolves a storefront route descriptor for a plugin folder slug using the splat 
 
 ### `ctx.db`
 
-The Prisma client instance. Provides full ORM access to the application database. Use this when you need to query platform models (orders, customers, products, etc.) in lifecycle hooks.
+The Prisma client instance. This is an **escape hatch** — prefer domain APIs in `app/core/*` and namespaced `ctx.plugin` storage. Raw Prisma access bypasses domain invariants (stock, totals, fulfillment status, etc.) and can leave the shop inconsistent.
+
+Use `ctx.db` only when no domain API covers the read/write you need (for example ad-hoc reporting queries). Do not mutate orders, inventory, or payments through Prisma directly.
 
 In v1, plugins cannot define their own Prisma models. All plugin-specific persistence must go through `ctx.plugin` (see [Plugin Data Storage](#plugin-data-storage)).
 
@@ -464,13 +466,15 @@ ctx.logger.error({ err }, 'Something went wrong');
 
 ### `ctx.queue`
 
-Enqueues a background job.
+Enqueues a background job onto the real LiteQuu queue (`#/libs/queue.server`). `buildCtx` wraps `queue.createJob` / `add`; `enqueue` is an alias of `add`.
 
 ```js
-await ctx.queue.enqueue('send-welcome-email', { customerId, email });
+ctx.queue.enqueue('send-welcome-email', { customerId, email });
+// or
+ctx.queue.add('send-welcome-email', { customerId, email });
 ```
 
-The queue implementation is a stub in v1; it logs the job and discards it. Real queue integration arrives in a later phase.
+Jobs are persisted (SQLite via `QUEUE_DATABASE_PATH` by default) and processed by registered LiteQuu workers. Register a processor with `defineQueueJob` from `#/libs/queue.server` (or an existing core job) before enqueueing custom job names.
 
 ---
 
@@ -505,7 +509,7 @@ These are the core platform events that bermooda emits today. Declare handlers i
 
 ### Post-action hooks
 
-These events fire after the underlying domain work has happened. Post-hooks are **fire-and-forget**: `emit()` returns immediately and handlers run in parallel in the background. They are fault-tolerant: if a handler throws, the event bus logs the error and the remaining handlers still run. Post-hooks do not receive `ctx`; they receive only the payload.
+These events fire after the underlying domain work has happened. `emit()` **persists** the event via a LiteQuu `domain_event` job (`#/core/events/job.server`), then returns; handlers run asynchronously and fault-tolerantly after enqueue (if a handler throws, the job path logs the error and remaining handlers still run). This is durable enqueue, not only in-process fire-and-forget. Post-hooks do not receive `ctx`; they receive only the payload.
 
 #### Orders and checkout
 
@@ -570,11 +574,11 @@ hooks: defineHooks({
 }),
 ```
 
-Handlers are invoked by the event bus when the corresponding event fires. Completion order is not guaranteed. If a post-hook handler throws, the error is contained by the event bus and does not affect other handlers or the caller.
+Handlers are invoked by the domain-event job worker after `emit()` enqueues. Completion order is not guaranteed. If a post-hook handler throws, the error is contained and does not affect other handlers or the original caller.
 
 ### Before-hooks (blocking filters)
 
-Before-hooks let a plugin **veto** a domain action before any database write occurs. Register them in the runtime `hooks` field using keys that start with `before.`:
+Before-hooks let a plugin **veto** a domain action before any database write occurs. Unlike post-hooks, `emitBefore` is **request-path blocking and fail-closed** — it awaits all handlers on the critical path and does not go through the queue. Register them in the runtime `hooks` field using keys that start with `before.`:
 
 ```js
 import { defineHooks, definePlugin, deny } from '#/core/plugins/index.server';

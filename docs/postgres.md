@@ -48,3 +48,7 @@ For long-lived Postgres deployments, prefer `prisma migrate deploy` once migrati
 ## Local Postgres (optional)
 
 If you prefer Postgres locally, start a database and point `DATABASE_URL` at it. Keep `QUEUE_DATABASE_PATH` on SQLite unless you migrate the LiteQuu queue separately.
+
+## Single-shop platform (not multi-tenant)
+
+bermooda is a **single-shop** deployment: one database, one merchant back office, one catalog. It is **not** a multi-tenant SaaS schema. **Sales channels** (`salesChannelId` on cart/checkout/catalog) are storefront/channel surfaces for the same shop — they are **not** tenants, separate databases, or isolated merchant accounts.

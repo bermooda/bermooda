@@ -1,7 +1,17 @@
 # Design: Before-hooks / blocking filter pipeline for bermooda
 
-Status: **design only** (no code in this document is wired up yet).
-Audience: an engineer implementing the feature without re-auditing the codebase.
+Status: **implemented**. `emitBefore`, `deny`, and `HookAbortError` live in
+`app/core/events/index.server.js`. Wired call sites: `shipment.create`,
+`shipment.ship`, `shipment.deliver` (fulfillment), `order.cancel` (admin),
+`order.place`, `refund.create`, and `checkout.advance`. Payload transform
+(mutating the shared payload from a before-hook) remains reserved for a later
+phase — return values are still ignored.
+Audience: an engineer extending or auditing the blocking filter pipeline.
+
+> **Historical design context.** Sections below (§1 onward) preserve the
+> original design narrative and may read in present tense as if the work were
+> still proposed. Treat them as background only. For current behavior, prefer
+> this status banner and [docs/plugins.md](plugins.md) (Before-hooks section).
 
 ---
 
