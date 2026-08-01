@@ -3,6 +3,8 @@ import { render } from '@react-email/render';
 import config, { PLATFORM_NAME } from '#/libs/config';
 import logger from '#/utils/logger.server';
 import { sendEmail } from '#/libs/email/index.server';
+import prisma from '#/libs/prisma.server';
+import { DEFAULT_LOCALE, isValidLocaleTag } from '#/core/i18n/locales';
 import { get as settingsGet, SETTING_KEYS } from '#/core/settings/index.server';
 import { emailT } from '#/emails/i18n.server';
 import AbandonedCartEmail from '#/emails/shop/abandoned-cart';
@@ -68,11 +70,51 @@ async function deliver({ to, subject, react, html, text, logMessage }) {
   return { success: true, data };
 }
 
-// Email subjects — admin/auth (templates not yet on JSON catalogs)
-const SUBJECT_WELCOME = 'Welcome to bermooda';
-const SUBJECT_VERIFY_EMAIL = 'Please verify your email address';
-const SUBJECT_RESET_PASSWORD = 'Reset your password';
-const SUBJECT_TWO_FACTOR_OTP = 'Your verification code';
+/**
+ * Resolve locale for auth emails, which do not have request context.
+ * Customer-facing auth emails prefer the customer's saved locale when known.
+ *
+ * @param {Object} [options]
+ * @param {string} [options.email]
+ * @param {string} [options.locale]
+ * @param {boolean} [options.preferCustomerLocale]
+ * @returns {Promise<string>}
+ */
+async function resolveAuthEmailLocale({
+  email,
+  locale,
+  preferCustomerLocale = true,
+} = {}) {
+  if (locale && isValidLocaleTag(locale)) return locale;
+
+  if (preferCustomerLocale && email) {
+    const customer = await prisma.customer.findUnique({
+      where: { email },
+      select: { preferredLocale: true },
+    });
+    if (
+      customer?.preferredLocale &&
+      isValidLocaleTag(customer.preferredLocale)
+    ) {
+      return customer.preferredLocale;
+    }
+  }
+
+  const defaultLocale = await settingsGet(SETTING_KEYS.DEFAULT_LOCALE);
+  return typeof defaultLocale === 'string' && isValidLocaleTag(defaultLocale)
+    ? defaultLocale
+    : DEFAULT_LOCALE;
+}
+
+/**
+ * @param {string} resetUrl
+ * @returns {boolean}
+ */
+function isAdminPasswordResetUrl(resetUrl) {
+  return (
+    typeof resetUrl === 'string' && resetUrl.includes(config.auth.adminBasePath)
+  );
+}
 
 /**
  * Sends a welcome email to a newly registered user
@@ -80,15 +122,20 @@ const SUBJECT_TWO_FACTOR_OTP = 'Your verification code';
  * @param {Object} options - Email sending options
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
+ * @param {string} [options.locale] - Explicit locale override
  * @returns {Promise<{ success: true, data: unknown }>}
  */
-export async function sendWelcomeEmail({ email, name }) {
+export async function sendWelcomeEmail({ email, name, locale }) {
   try {
+    const resolvedLocale = await resolveAuthEmailLocale({ email, locale });
+    const t = emailT(resolvedLocale);
+
     return await deliver({
       to: email,
-      subject: SUBJECT_WELCOME,
+      subject: t('authWelcome.subject', { platformName: PLATFORM_NAME }),
       react: (
         <WelcomeEmail
+          locale={resolvedLocale}
           name={name}
           getStartedUrl={`${config.baseUrl}${config.auth.customerCallbackUrl}`}
         />
@@ -108,15 +155,28 @@ export async function sendWelcomeEmail({ email, name }) {
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
  * @param {string} options.verificationUrl - The URL for email verification
+ * @param {string} [options.locale] - Explicit locale override
  * @returns {Promise<{ success: true, data: unknown }>}
  */
-export async function sendVerificationEmail({ email, name, verificationUrl }) {
+export async function sendVerificationEmail({
+  email,
+  name,
+  verificationUrl,
+  locale,
+}) {
   try {
+    const resolvedLocale = await resolveAuthEmailLocale({ email, locale });
+    const t = emailT(resolvedLocale);
+
     return await deliver({
       to: email,
-      subject: SUBJECT_VERIFY_EMAIL,
+      subject: t('authVerify.subject'),
       react: (
-        <VerifyEmailTemplate name={name} verificationUrl={verificationUrl} />
+        <VerifyEmailTemplate
+          locale={resolvedLocale}
+          name={name}
+          verificationUrl={verificationUrl}
+        />
       ),
       logMessage: 'Verification email sent successfully',
     });
@@ -133,14 +193,33 @@ export async function sendVerificationEmail({ email, name, verificationUrl }) {
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
  * @param {string} options.resetUrl - The URL for password reset
+ * @param {string} [options.locale] - Explicit locale override
  * @returns {Promise<{ success: true, data: unknown }>}
  */
-export async function sendPasswordResetEmail({ email, name, resetUrl }) {
+export async function sendPasswordResetEmail({
+  email,
+  name,
+  resetUrl,
+  locale,
+}) {
   try {
+    const resolvedLocale = await resolveAuthEmailLocale({
+      email,
+      locale,
+      preferCustomerLocale: !isAdminPasswordResetUrl(resetUrl),
+    });
+    const t = emailT(resolvedLocale);
+
     return await deliver({
       to: email,
-      subject: SUBJECT_RESET_PASSWORD,
-      react: <ResetPasswordTemplate name={name} resetUrl={resetUrl} />,
+      subject: t('authResetPassword.subject'),
+      react: (
+        <ResetPasswordTemplate
+          locale={resolvedLocale}
+          name={name}
+          resetUrl={resetUrl}
+        />
+      ),
       logMessage: 'Password reset email sent successfully',
     });
   } catch (error) {
@@ -156,16 +235,28 @@ export async function sendPasswordResetEmail({ email, name, resetUrl }) {
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
  * @param {string} options.otp - The 6-digit OTP code
+ * @param {string} [options.locale] - Explicit locale override
  * @returns {Promise<{ success: true, data: unknown }>}
  */
-export async function sendTwoFactorOtpEmail({ email, name, otp }) {
+export async function sendTwoFactorOtpEmail({ email, name, otp, locale }) {
   try {
+    const resolvedLocale = await resolveAuthEmailLocale({
+      locale,
+      preferCustomerLocale: false,
+    });
+    const t = emailT(resolvedLocale);
     const firstName = name.split(' ')[0];
 
     return await deliver({
       to: email,
-      subject: SUBJECT_TWO_FACTOR_OTP,
-      react: <TwoFactorOtpTemplate name={firstName} otp={otp} />,
+      subject: t('authTwoFactor.subject'),
+      react: (
+        <TwoFactorOtpTemplate
+          locale={resolvedLocale}
+          name={firstName}
+          otp={otp}
+        />
+      ),
       logMessage: 'Two-factor OTP email sent successfully',
     });
   } catch (error) {

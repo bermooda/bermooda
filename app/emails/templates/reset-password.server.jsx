@@ -6,35 +6,43 @@ import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';
+import { emailT } from '#/emails/i18n.server';
 
 /**
  * Email template for resetting password
  *
  * @param {Object} props - Component props
+ * @param {string} [props.locale] - Email locale
  * @param {string} props.name - Recipient's name
  * @param {string} props.resetUrl - URL for password reset
  */
-export default function ResetPasswordTemplate({ name = 'there', resetUrl }) {
+export default function ResetPasswordTemplate({
+  locale = 'en',
+  name = 'there',
+  resetUrl,
+}) {
+  const t = emailT(locale);
+
   return (
-    <EmailLayout preview={`Reset your ${PLATFORM_NAME} password`}>
-      <EmailHeading>Reset Your Password</EmailHeading>
+    <EmailLayout
+      preview={t('authResetPassword.preview', { platformName: PLATFORM_NAME })}
+    >
+      <EmailHeading>{t('authResetPassword.heading')}</EmailHeading>
       <EmailSubheading>
-        Hi {name}, we received a request to reset your password.
+        {t('authResetPassword.subheading', { name })}
       </EmailSubheading>
       <Section className="dark-mode-bg rounded-xl bg-indigo-50 px-6 py-2">
         <Text className="dark-mode-text mb-4 pb-4 text-base text-slate-700">
-          You can reset your password by clicking the button below:
+          {t('authResetPassword.body')}
         </Text>
         <Section className="my-4 text-center">
-          <EmailButton url={resetUrl}>Reset Password</EmailButton>
+          <EmailButton url={resetUrl}>{t('authResetPassword.cta')}</EmailButton>
         </Section>
         <Text className="dark-mode-text mb-4 py-4 text-base text-slate-700">
-          This link will expire in 1 hour. If you don&apos;t use it within that
-          time, you&apos;ll need to request a new password reset link.
+          {t('authResetPassword.expire')}
         </Text>
         <Text className="dark-mode-text text-base text-slate-700">
-          If you didn&apos;t request a password reset, please ignore this email
-          or contact support if you have concerns about your account.
+          {t('authResetPassword.warning')}
         </Text>
       </Section>
       <EmailFooterLink url={resetUrl} />

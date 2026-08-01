@@ -31,7 +31,9 @@ describe('email i18n catalogs', () => {
 
     const fr = loadEmailMessages('fr');
     expect(fr['orderShipped.heading']).not.toBe('Your order has shipped');
-    expect(fr['passwordResetAdmin.subject']).not.toBe('Reset your admin password');
+    expect(fr['passwordResetAdmin.subject']).not.toBe(
+      'Reset your admin password'
+    );
     expect(fr['staffInvite.cta']).not.toBe('Create admin password');
   });
 
@@ -69,6 +71,34 @@ describe('email i18n catalogs', () => {
     expect(t('passwordResetCustomer.subheading', { name: 'Alex' })).toBe(
       'Hallo Alex, wir haben eine Anfrage zum Zurücksetzen Ihres Passworts erhalten.'
     );
+  });
+
+  it('loads auth template keys in supported catalogs', () => {
+    const en = emailT('en');
+    expect(en('authWelcome.subject', { platformName: 'bermooda' })).toBe(
+      'Welcome to bermooda'
+    );
+    expect(en('authVerify.cta')).toBe('Verify Email Address');
+    expect(en('authResetPassword.expire')).toContain('1 hour');
+    expect(
+      en('authTwoFactor.preview', { platformName: 'bermooda', otp: 123456 })
+    ).toBe('Your bermooda verification code: 123456');
+
+    const de = emailT('de');
+    expect(de('authWelcome.cta')).toBe('Loslegen');
+    expect(de('authVerify.subject')).toBe(
+      'Bitte bestätigen Sie Ihre E-Mail-Adresse'
+    );
+    expect(de('authResetPassword.cta')).toBe('Passwort zurücksetzen');
+    expect(de('authTwoFactor.securityTitle')).toContain('Sicherheit');
+
+    const fr = emailT('fr');
+    expect(fr('authWelcome.cta')).toBe('Commencer');
+    expect(fr('authVerify.subject')).toBe(
+      'Veuillez vérifier votre adresse e-mail'
+    );
+    expect(fr('authResetPassword.cta')).toBe('Réinitialiser le mot de passe');
+    expect(fr('authTwoFactor.securityTitle')).toContain('sécurité');
   });
 
   it('returns the key when missing from all catalogs', () => {

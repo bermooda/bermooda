@@ -23,6 +23,7 @@ const verifyEmailJob = defineQueueJob('verify_email', {
       email: taskData.email,
       name: taskData.name,
       verificationUrl: taskData.url,
+      locale: taskData.locale,
     });
   },
   onFailed: {
@@ -37,6 +38,7 @@ const passwordResetEmailJob = defineQueueJob('password_reset_email', {
       email: taskData.email,
       name: taskData.name,
       resetUrl: taskData.url,
+      locale: taskData.locale,
     });
   },
   onFailed: {
@@ -51,6 +53,7 @@ const twoFactorOtpJob = defineQueueJob('two_factor_otp', {
       email: taskData.email,
       name: taskData.name,
       otp: taskData.otp,
+      locale: taskData.locale,
     });
   },
   onFailed: {
