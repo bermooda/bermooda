@@ -10,6 +10,7 @@ vi.mock('#/utils/logger.server', () => ({
 
 // Import after mock is registered.
 const {
+  dispatchHandlers,
   emit,
   emitBefore,
   deny,
@@ -17,6 +18,7 @@ const {
   isHookAbort,
   on,
   off,
+  setEventJobEnqueuer,
   _handlers,
 } = await import('#/core/events/index.server');
 
@@ -30,6 +32,7 @@ describe('event bus', () => {
   beforeEach(() => {
     // Clear all registered handlers between tests.
     _handlers.clear();
+    setEventJobEnqueuer((event, payload) => dispatchHandlers(event, payload));
   });
 
   afterEach(() => {
@@ -37,6 +40,22 @@ describe('event bus', () => {
   });
 
   describe('on + emit basic dispatch', () => {
+    it('emit enqueues via setEventJobEnqueuer without running handlers inline', () => {
+      const enqueued = [];
+      setEventJobEnqueuer((event, payload) => {
+        enqueued.push({ event, payload });
+      });
+      const handler = vi.fn();
+      on('order.created', handler);
+
+      emit('order.created', { orderId: '1' });
+
+      expect(enqueued).toEqual([
+        { event: 'order.created', payload: { orderId: '1' } },
+      ]);
+      expect(handler).not.toHaveBeenCalled();
+    });
+
     it('calls a registered handler with the payload', async () => {
       const handler = vi.fn();
       on('order.created', handler);
@@ -108,6 +127,19 @@ describe('event bus', () => {
   });
 
   describe('error isolation — post-hooks', () => {
+    it('dispatchHandlers runs registered handlers and isolates failures', async () => {
+      const ok = vi.fn();
+      on('order.created', () => {
+        throw new Error('boom');
+      });
+      on('order.created', ok);
+
+      dispatchHandlers('order.created', { orderId: '1' });
+      await flushEmit();
+
+      expect(ok).toHaveBeenCalled();
+    });
+
     it('catches a throwing handler and still calls other handlers', async () => {
       const afterHandler = vi.fn();
 

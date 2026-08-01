@@ -52,6 +52,8 @@ import {
 import { taxJarProvider } from '#/core/tax/taxjar.server';
 import { discoverThemes } from '#/core/themes/index.server';
 import { registerWebhookSubscribers } from '#/core/webhooks/index.server';
+// Domain-event worker: registers the enqueuer used by emit().
+import '#/core/events/job.server';
 // W2: load webhook delivery worker (registers enqueuer) + subscriber registration
 import '#/core/webhooks/job.server';
 // W6: scheduled export worker

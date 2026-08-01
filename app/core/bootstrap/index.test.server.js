@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const sideEffectImports = vi.hoisted(() => ({
+  eventsJobLoaded: vi.fn(),
+}));
+
 vi.mock('#/core/events/index.server', () => ({ emit: vi.fn(), on: vi.fn() }));
 vi.mock('#/libs/auth/customer/index.server', () => ({
   setOnCustomerRegistered: vi.fn(),
@@ -107,6 +111,11 @@ describe('bootstrap.server', () => {
     delete process.env.CARRIER_API_KEY;
 
     vi.resetModules();
+    sideEffectImports.eventsJobLoaded.mockClear();
+    vi.doMock('#/core/events/job.server', () => {
+      sideEffectImports.eventsJobLoaded();
+      return {};
+    });
 
     const bootstrap = await import('#/core/bootstrap/index.server');
     const payments = await import('#/core/payments/index.server');
@@ -189,6 +198,10 @@ describe('bootstrap.server', () => {
     expect(registerBackInStockSubscribers).toHaveBeenCalledOnce();
     expect(registerLoyaltySubscribers).toHaveBeenCalledOnce();
     expect(setOnCustomerRegistered).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it('loads the domain event queue job during bootstrap module import', () => {
+    expect(sideEffectImports.eventsJobLoaded).toHaveBeenCalledOnce();
   });
 
   it('registers stub providers when env keys are set', () => {
