@@ -15,10 +15,7 @@ import { computeTotals } from '#/core/checkout/totals.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import { getCustomerLoyaltySummary } from '#/core/loyalty/index.server';
-import {
-  attachPaymentIntent,
-  placeOrder,
-} from '#/core/orders/place.server';
+import { attachPaymentIntent, placeOrder } from '#/core/orders/place.server';
 import {
   createPaymentIntent,
   createPaymentSession,
