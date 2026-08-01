@@ -59,7 +59,7 @@ Most Phase-2 workstreams are **implemented in `app/core/*` and wired through adm
 | **W5** CMS + reviews + SEO    | **Done**    | CMS pages + menu builder; product reviews + moderation; per-entity meta + JSON-LD + sitemap                                                                                                                                        | Cookie-only locale (no per-locale URLs) — documented SEO tradeoff                                                                                                     |
 | **W6** Reporting + compliance | **Done**    | Dashboard reports; CSV/scheduled exports; audit log subscribers; GDPR export/erasure on customer detail                                                                                                                            | —                                                                                                                                                                     |
 | **W7** Catalog depth + B2B    | **Partial** | Multi-location inventory; customer groups + price lists; gift cards + checkout tender UI; wishlist + back-in-stock on PDP; account nav for wishlist/loyalty; BOPIS pickup shipping method; B2B companies/quotes foundation (admin) | Digital product download delivery post-purchase; admin product-type UI for digital/bundles; full quote→checkout workflow; MSI ship-from allocation                    |
-| **W8** Platform hardening     | **Partial** | Granular RBAC (`seedRolePermissions`); rate limits on auth/API/webhooks; `sharp` responsive images; `getSlotBlocks()` on product page; plugin discovery + enable                                                                   | Postgres still hardcoded to SQLite in schema; plugin storefront dispatcher is a placeholder; theme slots unwired on home/category/cart/checkout; catalog read caching |
+| **W8** Platform hardening     | **Partial** | Granular RBAC (`seedRolePermissions`); rate limits on auth/API/webhooks; `sharp` responsive images; `getSlotBlocks()` + plugin discovery/enable; plugin admin/storefront dispatchers (loader+action, `:param`/`*` routes); real `ctx.queue` (LiteQuu) | Postgres still hardcoded to SQLite in schema; theme slot rendering beyond PDP; catalog read caching |
 | **W9** Differentiators        | **Partial** | Loyalty subscribers + account page; marketing automation worker + abandoned-cart sequences; sales channels + channel-aware catalog/search pricing                                                                                  | Subscriptions + POS are foundation-only (admin/API, not customer storefront); referrals; per-market domains/duties                                                    |
 
 ### Storefront wiring — resolved since initial audit
@@ -77,7 +77,7 @@ These were flagged as broken or missing; they are now wired in the default theme
 
 ### Recommended next work (priority order)
 
-1. **W8** — Postgres-first datasource (env-driven); complete plugin storefront dispatcher + theme slot wiring beyond PDP
+1. **W8** — Postgres-first datasource (env-driven); theme slot wiring beyond PDP; catalog read caching
 2. **W3** — Tax-class admin UI; saved payment methods at checkout
 3. **W7** — Digital download delivery; B2B quote checkout; product-type admin for digital/bundles
 4. **W9** — Customer-facing subscriptions; POS polish; external search plugin enablement docs
@@ -262,7 +262,7 @@ These were flagged as broken or missing; they are now wired in the default theme
 
 ## W8 — Platform hardening & scale
 
-> **Status: in progress (2026-07).** RBAC, rate limiting, and image optimization shipped. Remaining: Postgres-first config, plugin storefront dispatcher, theme slot wiring beyond PDP, catalog caching.
+> **Status: in progress (2026-08).** RBAC, rate limiting, image optimization, plugin discovery/`getSlotBlocks()`, and plugin admin/storefront dispatchers (loader+action, param/splat routes) shipped; `ctx.queue` wraps LiteQuu. Remaining: Postgres-first config, theme slot wiring beyond PDP, catalog caching.
 
 **Goal.** Production-readiness beyond a single small shop.
 
@@ -272,7 +272,7 @@ These were flagged as broken or missing; they are now wired in the default theme
 - **W8-2. Granular RBAC.** Beyond `admin`/`staff` equality: roles/permissions per resource; enforce in admin middleware + admin API. Optional SSO/SAML for admin.
 - **W8-3. Rate limiting + abuse controls** on auth, API, and webhooks.
 - **W8-4. Image optimization.** Generate responsive sizes + populate `Media.width/height` (currently `null`; storage notes no `sharp`); CDN/cache headers for catalog assets. See [app/core/storage/index.server.js](app/core/storage/index.server.js).
-- **W8-5. Plugin/theme ecosystem completion.** Implement `getSlotBlocks()` + plugin block rendering (currently returns `[]`), real plugin discovery, and a documented distribution story; expose the queue to plugin `ctx` (today it's a stub).
+- **W8-5. Plugin/theme ecosystem completion.** **Shipped:** `getSlotBlocks()` (delegates to plugin blocks), plugin discovery/enable, admin + storefront dispatchers with `loader`/`action` and `:param`/`*` path matching, and `ctx.queue` as a LiteQuu wrapper. **Remaining:** theme slot rendering beyond PDP, documented distribution/install story for third-party plugins.
 - **W8-6. Caching strategy** for catalog/settings reads under load; cache invalidation on writes.
 
 **Validation gate.** App runs on Postgres in CI; RBAC denies unauthorized actions; rate limits trip under load test; responsive images served; a sample plugin renders a storefront block. Tests + lint + build.

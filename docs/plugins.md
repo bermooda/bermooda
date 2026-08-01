@@ -418,7 +418,9 @@ Resolves a storefront route descriptor for a plugin folder slug using the splat 
 
 ### `ctx.db`
 
-The Prisma client instance. Provides full ORM access to the application database. Use this when you need to query platform models (orders, customers, products, etc.) in lifecycle hooks.
+The Prisma client instance. This is an **escape hatch** — prefer domain APIs in `app/core/*` and namespaced `ctx.plugin` storage. Raw Prisma access bypasses domain invariants (stock, totals, fulfillment status, etc.) and can leave the shop inconsistent.
+
+Use `ctx.db` only when no domain API covers the read/write you need (for example ad-hoc reporting queries). Do not mutate orders, inventory, or payments through Prisma directly.
 
 In v1, plugins cannot define their own Prisma models. All plugin-specific persistence must go through `ctx.plugin` (see [Plugin Data Storage](#plugin-data-storage)).
 
@@ -464,13 +466,15 @@ ctx.logger.error({ err }, 'Something went wrong');
 
 ### `ctx.queue`
 
-Enqueues a background job.
+Enqueues a background job onto the real LiteQuu queue (`#/libs/queue.server`). `buildCtx` wraps `queue.createJob` / `add`; `enqueue` is an alias of `add`.
 
 ```js
-await ctx.queue.enqueue('send-welcome-email', { customerId, email });
+ctx.queue.enqueue('send-welcome-email', { customerId, email });
+// or
+ctx.queue.add('send-welcome-email', { customerId, email });
 ```
 
-The queue implementation is a stub in v1; it logs the job and discards it. Real queue integration arrives in a later phase.
+Jobs are persisted (SQLite via `QUEUE_DATABASE_PATH` by default) and processed by registered LiteQuu workers. Register a processor with `defineQueueJob` from `#/libs/queue.server` (or an existing core job) before enqueueing custom job names.
 
 ---
 
