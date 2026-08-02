@@ -14,6 +14,7 @@ import {
   loadCategoryAdminEditData,
   saveCategoryAdminForm,
 } from '#/core/catalog/admin/index.server';
+import { useT } from '#/core/i18n';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -54,11 +55,14 @@ export function meta({ loaderData }) {
 }
 
 export default function AdminEditCategoryRoute() {
+  const t = useT();
   const { category, locales } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
   const [activeLocale, setActiveLocale] = useState(locales[0] ?? 'en');
+  const displayTitle =
+    category.enTitle || t('admin.categories.edit.fallbackTitle');
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -66,13 +70,16 @@ export default function AdminEditCategoryRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Categories', href: '/admin/categories' },
-              { label: category.enTitle || 'Edit category' },
+              {
+                label: t('admin.categories.index.title'),
+                href: '/admin/categories',
+              },
+              { label: displayTitle },
             ]}
           />
         }
-        title={category.enTitle || 'Edit category'}
-        subtitle="Update translations, slugs, and SEO fields."
+        title={displayTitle}
+        subtitle={t('admin.categories.edit.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -84,8 +91,8 @@ export default function AdminEditCategoryRoute() {
 
         <Card>
           <CardHeader
-            title="Localized details"
-            description="Edit title, slug, and meta fields per locale."
+            title={t('admin.categories.edit.cardTitle')}
+            description={t('admin.categories.edit.cardDescription')}
           />
 
           <LocaleTabs
@@ -103,27 +110,33 @@ export default function AdminEditCategoryRoute() {
               )}
             >
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label={`Title (${locale})`} htmlFor={`title-${locale}`}>
+                <Field
+                  label={t('admin.categories.edit.titleLocale', { locale })}
+                  htmlFor={`title-${locale}`}
+                >
                   <Input
                     id={`title-${locale}`}
                     type="text"
                     name={`title[${locale}]`}
                     defaultValue={category.translations[locale]?.title ?? ''}
-                    placeholder="Category title"
+                    placeholder={t('admin.categories.edit.titlePlaceholder')}
                   />
                 </Field>
-                <Field label={`Slug (${locale})`} htmlFor={`slug-${locale}`}>
+                <Field
+                  label={t('admin.categories.edit.slugLocale', { locale })}
+                  htmlFor={`slug-${locale}`}
+                >
                   <Input
                     id={`slug-${locale}`}
                     type="text"
                     name={`slug[${locale}]`}
                     defaultValue={category.slugs[locale] ?? ''}
-                    placeholder="url-slug"
+                    placeholder={t('admin.categories.edit.slugPlaceholder')}
                   />
                 </Field>
               </div>
               <Field
-                label={`Meta title (${locale})`}
+                label={t('admin.categories.edit.metaTitle', { locale })}
                 htmlFor={`metaTitle-${locale}`}
               >
                 <Input
@@ -134,7 +147,7 @@ export default function AdminEditCategoryRoute() {
                 />
               </Field>
               <Field
-                label={`Meta description (${locale})`}
+                label={t('admin.categories.edit.metaDescription', { locale })}
                 htmlFor={`metaDescription-${locale}`}
               >
                 <Textarea
@@ -157,10 +170,12 @@ export default function AdminEditCategoryRoute() {
               to="/admin/categories"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Saving…' : 'Save category'}
+              {isSaving
+                ? t('admin.categories.edit.saving')
+                : t('admin.categories.edit.save')}
             </ButtonSubmit>
           </div>
         </ActionBar>

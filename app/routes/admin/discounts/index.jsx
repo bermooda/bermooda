@@ -16,6 +16,7 @@ import {
   listDiscounts,
   toggleDiscountActive,
 } from '#/core/discounts/index.server';
+import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import PageHeader from '#/components/admin/page-header';
@@ -103,7 +104,12 @@ function formatDate(dateVal) {
 // DiscountRow
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {Object} props
+ * @param {Object} props.discount
+ */
 function DiscountRow({ discount }) {
+  const t = useT();
   const deleteFetcher = useFetcher();
   const toggleFetcher = useFetcher();
 
@@ -121,7 +127,11 @@ function DiscountRow({ discount }) {
 
       <span className="w-16 shrink-0">
         <Badge tone={discount.type === 'percent' ? 'accent' : 'neutral'}>
-          {discount.type}
+          {discount.type === 'percent'
+            ? t('admin.discounts.type.percent')
+            : discount.type === 'fixed'
+              ? t('admin.discounts.type.fixed')
+              : discount.type}
         </Badge>
       </span>
 
@@ -157,7 +167,9 @@ function DiscountRow({ discount }) {
 
       <span className="shrink-0">
         <Badge tone={discount.active ? 'success' : 'neutral'}>
-          {discount.active ? 'Active' : 'Inactive'}
+          {discount.active
+            ? t('admin.discounts.status.active')
+            : t('admin.discounts.status.inactive')}
         </Badge>
       </span>
 
@@ -166,7 +178,11 @@ function DiscountRow({ discount }) {
         <input type="hidden" name="id" value={discount.id} />
         <button
           type="submit"
-          title={discount.active ? 'Deactivate' : 'Activate'}
+          title={
+            discount.active
+              ? t('admin.discounts.index.deactivate')
+              : t('admin.discounts.index.activate')
+          }
           disabled={toggleFetcher.state !== 'idle'}
           className={clsx(
             'rounded p-1 text-sm transition-colors disabled:opacity-50',
@@ -181,7 +197,7 @@ function DiscountRow({ discount }) {
 
       <Link
         to={`/admin/discounts/${discount.id}`}
-        title="Edit"
+        title={t('admin.discounts.index.edit')}
         className="text-text-muted hover:text-text rounded p-1 transition-colors"
       >
         <PencilSquareIcon className="h-4 w-4" />
@@ -192,7 +208,9 @@ function DiscountRow({ discount }) {
         onSubmit={(e) => {
           if (
             !window.confirm(
-              `Delete discount "${discount.code}"? This cannot be undone.`
+              t('admin.discounts.index.confirmDelete', {
+                code: discount.code,
+              })
             )
           ) {
             e.preventDefault();
@@ -203,7 +221,7 @@ function DiscountRow({ discount }) {
         <input type="hidden" name="id" value={discount.id} />
         <button
           type="submit"
-          title="Delete"
+          title={t('admin.discounts.index.delete')}
           disabled={deleteFetcher.state !== 'idle'}
           className="text-text-muted hover:text-danger rounded p-1 disabled:opacity-50"
         >
@@ -219,20 +237,27 @@ function DiscountRow({ discount }) {
 // ---------------------------------------------------------------------------
 
 export default function AdminDiscountsRoute() {
+  const t = useT();
   const { discounts } = useLoaderData();
 
   return (
     <div>
       <PageHeader
-        title="Discounts"
-        subtitle={`${discounts.length} discount${discounts.length !== 1 ? 's' : ''}`}
+        title={t('admin.discounts.index.title')}
+        subtitle={
+          discounts.length === 1
+            ? t('admin.discounts.index.subtitleOne', {
+                count: discounts.length,
+              })
+            : t('admin.discounts.index.subtitle', { count: discounts.length })
+        }
         actions={
           <Link
             to="/admin/discounts/new"
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
-            New discount
+            {t('admin.discounts.index.newButton')}
           </Link>
         }
         className="mb-6"
@@ -241,41 +266,41 @@ export default function AdminDiscountsRoute() {
       <Card padded={false} className="overflow-hidden">
         <div className="border-border bg-surface-2/50 flex items-center gap-3 border-b px-4 py-2">
           <span className="text-text-muted w-32 shrink-0 text-xs font-medium tracking-wide uppercase">
-            Code
+            {t('admin.discounts.index.col.code')}
           </span>
           <span className="text-text-muted w-16 shrink-0 text-xs font-medium tracking-wide uppercase">
-            Type
+            {t('admin.discounts.index.col.type')}
           </span>
           <span className="text-text-muted w-24 shrink-0 text-xs font-medium tracking-wide uppercase">
-            Value
+            {t('admin.discounts.index.col.value')}
           </span>
           <span className="text-text-muted hidden w-28 shrink-0 text-xs font-medium tracking-wide uppercase sm:block">
-            Min subtotal
+            {t('admin.discounts.index.col.minSubtotal')}
           </span>
           <span className="text-text-muted hidden w-24 shrink-0 text-xs font-medium tracking-wide uppercase md:block">
-            Uses
+            {t('admin.discounts.index.col.uses')}
           </span>
           <span className="text-text-muted hidden w-16 shrink-0 text-xs font-medium tracking-wide uppercase lg:block">
-            Currency
+            {t('admin.discounts.index.col.currency')}
           </span>
           <span className="text-text-muted hidden w-24 shrink-0 text-xs font-medium tracking-wide uppercase lg:block">
-            Expires
+            {t('admin.discounts.index.col.expires')}
           </span>
           <span className="flex-1" />
           <span className="text-text-muted shrink-0 text-xs font-medium tracking-wide uppercase">
-            Status
+            {t('admin.discounts.index.col.status')}
           </span>
           <span className="w-24 shrink-0" />
         </div>
 
         {discounts.length === 0 ? (
           <div className="text-text-muted px-4 py-10 text-center text-sm">
-            No discounts yet.{' '}
+            {t('admin.discounts.index.empty')}{' '}
             <Link
               to="/admin/discounts/new"
               className="text-accent hover:underline"
             >
-              Create your first discount
+              {t('admin.discounts.index.emptyLink')}
             </Link>
             .
           </div>

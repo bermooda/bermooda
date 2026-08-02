@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import Logo from '#/components/ui/logo';
 
 /**
@@ -14,11 +15,13 @@ import Logo from '#/components/ui/logo';
  * @returns {React.ReactElement} Auth layout component
  */
 export default function AuthLayout({ title, subtitle, children }) {
+  const t = useT();
+
   return (
     <div className="bg-bg flex min-h-full flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Link to="/" prefetch="intent">
-          <Logo alt="Your Company" className="mx-auto h-14 w-auto" />
+          <Logo alt={t('admin.auth.logoAlt')} className="mx-auto h-14 w-auto" />
         </Link>
         <h2 className="text-text mt-8 text-center text-2xl/9 font-bold tracking-tight">
           {title}

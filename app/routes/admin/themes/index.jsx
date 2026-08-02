@@ -5,6 +5,7 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { useEffect, useRef } from 'react';
 import { Form, useActionData, useLoaderData } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import { get } from '#/core/settings/index.server';
 import {
   getRegisteredTheme,
@@ -110,6 +111,8 @@ export async function action({ request }) {
  * @param {{ manifest: object, isActive: boolean }} props
  */
 function ThemeCard({ manifest, isActive }) {
+  const t = useT();
+
   return (
     <Card
       padded={false}
@@ -122,7 +125,11 @@ function ThemeCard({ manifest, isActive }) {
             <h3 className="text-text truncate text-sm font-semibold">
               {manifest.title}
             </h3>
-            {isActive && <Badge tone="success">Active</Badge>}
+            {isActive && (
+              <Badge tone="success">
+                {t('admin.themes.index.activeBadge')}
+              </Badge>
+            )}
           </div>
           <p className="text-text-muted mt-0.5 text-xs">
             v{manifest.version} &middot;{' '}
@@ -141,7 +148,7 @@ function ThemeCard({ manifest, isActive }) {
             <input type="hidden" name="intent" value="activate" />
             <input type="hidden" name="themeId" value={manifest.id} />
             <Button type="submit" variant="secondary">
-              Activate
+              {t('admin.themes.index.activate')}
             </Button>
           </Form>
         )}
@@ -156,6 +163,7 @@ function ThemeCard({ manifest, isActive }) {
  * @param {{ manifest: object, values: object }} props
  */
 function ThemeSettingsForm({ manifest, values }) {
+  const t = useT();
   const actionData = useActionData();
   const formRef = useRef(null);
 
@@ -171,10 +179,13 @@ function ThemeSettingsForm({ manifest, values }) {
   return (
     <Card padded={false}>
       <div className="border-border border-b px-5 py-4">
-        <h2 className="text-text text-base font-semibold">Theme Settings</h2>
+        <h2 className="text-text text-base font-semibold">
+          {t('admin.themes.index.settingsTitle')}
+        </h2>
         <p className="text-text-muted mt-0.5 text-sm">
-          Configure options for{' '}
-          <span className="text-text font-medium">{manifest.title}</span>.
+          {t('admin.themes.index.settingsDescription', {
+            title: manifest.title,
+          })}
         </p>
       </div>
 
@@ -194,14 +205,14 @@ function ThemeSettingsForm({ manifest, values }) {
 
         <div className="flex items-center justify-between gap-3 px-5 py-4">
           {actionData?.savedSettings ? (
-            <SuccessAlert message="Settings saved." />
+            <SuccessAlert message={t('admin.themes.index.settingsSaved')} />
           ) : actionData?.error ? (
             <ErrorAlert message={actionData.error} />
           ) : (
             <span />
           )}
 
-          <ButtonSubmit>Save Settings</ButtonSubmit>
+          <ButtonSubmit>{t('admin.themes.index.saveSettings')}</ButtonSubmit>
         </div>
       </Form>
     </Card>
@@ -275,13 +286,14 @@ function SettingField({ setting, value }) {
  * @returns {React.ReactElement}
  */
 export default function AdminThemesRoute() {
+  const t = useT();
   const { themes, activeThemeId, activeTheme, themeSettings } = useLoaderData();
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Themes"
-        subtitle="Manage your storefront's appearance."
+        title={t('admin.themes.index.title')}
+        subtitle={t('admin.themes.index.subtitle')}
         actions={
           <a
             href="/"
@@ -289,7 +301,7 @@ export default function AdminThemesRoute() {
             rel="noopener noreferrer"
             className="border-border bg-surface text-text hover:bg-surface-2 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition"
           >
-            Preview Storefront
+            {t('admin.themes.index.previewStorefront')}
             <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
           </a>
         }
@@ -298,23 +310,20 @@ export default function AdminThemesRoute() {
       {/* Active theme ID note (always show so admin can see what's configured) */}
       {activeThemeId && !activeTheme && (
         <div className="border-warn/40 bg-warn/10 text-warn rounded-lg border px-4 py-3 text-sm">
-          Active theme ID is set to{' '}
-          <span className="font-mono font-medium">{activeThemeId}</span>, but no
-          matching theme is registered. Register the theme at startup to
-          activate it.
+          {t('admin.themes.index.missingTheme', { id: activeThemeId })}
         </div>
       )}
 
       {/* Theme list */}
       <div>
         <h2 className="text-text mb-3 text-lg font-semibold">
-          Registered Themes
+          {t('admin.themes.index.registeredHeading')}
         </h2>
 
         {themes.length === 0 ? (
           <EmptyState
-            title="No themes registered"
-            description="Themes are loaded from app/themes/ at startup."
+            title={t('admin.themes.index.emptyTitle')}
+            description={t('admin.themes.index.emptyDescription')}
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -2,6 +2,7 @@
 
 import { Form, useActionData, useLoaderData } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   getLoyaltyConfig,
   parseLoyaltySettingsInput,
@@ -39,14 +40,15 @@ export async function action({ request }) {
 }
 
 export default function AdminLoyaltyRoute() {
+  const t = useT();
   const { config } = useLoaderData();
   const actionData = useActionData();
 
   return (
     <div>
       <PageHeader
-        title="Loyalty & referrals"
-        subtitle="Configure points earning, redemption, and referral bonuses."
+        title={t('admin.loyalty.index.title')}
+        subtitle={t('admin.loyalty.index.subtitle')}
         className="mb-6"
       />
 
@@ -59,9 +61,9 @@ export default function AdminLoyaltyRoute() {
               name="enabled"
               defaultChecked={config.enabled}
             />
-            Enable loyalty program
+            {t('admin.loyalty.index.enable')}
           </label>
-          <Field label="Points per dollar spent">
+          <Field label={t('admin.loyalty.index.pointsPerDollar')}>
             <Input
               name="pointsPerDollar"
               type="number"
@@ -69,7 +71,7 @@ export default function AdminLoyaltyRoute() {
               defaultValue={config.pointsPerDollar}
             />
           </Field>
-          <Field label="Redemption rate (cents per 100 points)">
+          <Field label={t('admin.loyalty.index.redemptionRate')}>
             <Input
               name="redemptionRateCents"
               type="number"
@@ -77,7 +79,7 @@ export default function AdminLoyaltyRoute() {
               defaultValue={config.redemptionRateCents}
             />
           </Field>
-          <Field label="Referral bonus points">
+          <Field label={t('admin.loyalty.index.referralBonus')}>
             <Input
               name="referralBonusPoints"
               type="number"
@@ -86,9 +88,11 @@ export default function AdminLoyaltyRoute() {
             />
           </Field>
 
-          {actionData?.ok && <SuccessAlert message="Settings saved." />}
+          {actionData?.ok && (
+            <SuccessAlert message={t('admin.loyalty.index.settingsSaved')} />
+          )}
 
-          <ButtonSubmit>Save settings</ButtonSubmit>
+          <ButtonSubmit>{t('admin.loyalty.index.saveSettings')}</ButtonSubmit>
         </Form>
       </Card>
     </div>

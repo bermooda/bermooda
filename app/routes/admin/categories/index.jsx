@@ -22,6 +22,7 @@ import {
   loadCategoryAdminTreeData,
   setCategorySiblingOrder,
 } from '#/core/catalog/admin/index.server';
+import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import PageHeader from '#/components/admin/page-header';
@@ -136,6 +137,7 @@ function rebuildCategoryTree(tree, parentId, orderedSiblingIds) {
 // ---------------------------------------------------------------------------
 
 export default function AdminCategoriesRoute() {
+  const t = useT();
   const { tree: loaderTree } = useLoaderData();
   const navigation = useNavigation();
   const reorderFetcher = useFetcher();
@@ -161,15 +163,19 @@ export default function AdminCategoriesRoute() {
   return (
     <div>
       <PageHeader
-        title="Categories"
-        subtitle={`${tree.length} categor${tree.length !== 1 ? 'ies' : 'y'}`}
+        title={t('admin.categories.index.title')}
+        subtitle={
+          tree.length === 1
+            ? t('admin.categories.index.subtitleOne', { count: tree.length })
+            : t('admin.categories.index.subtitle', { count: tree.length })
+        }
         actions={
           <Link
             to="/admin/categories/new"
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
-            New category
+            {t('admin.categories.index.newButton')}
           </Link>
         }
         className="mb-6"
@@ -178,12 +184,12 @@ export default function AdminCategoriesRoute() {
       <Card padded={false} className="overflow-hidden">
         {tree.length === 0 ? (
           <div className="text-text-muted px-4 py-10 text-center text-sm">
-            No categories yet.{' '}
+            {t('admin.categories.index.empty')}{' '}
             <Link
               to="/admin/categories/new"
               className="text-accent hover:underline"
             >
-              Create your first category
+              {t('admin.categories.index.emptyLink')}
             </Link>
             .
           </div>
@@ -262,23 +268,33 @@ export default function AdminCategoriesRoute() {
                   className="text-text hover:text-accent flex-1 text-sm font-medium"
                 >
                   {cat.enTitle || (
-                    <span className="text-text-muted italic">(untitled)</span>
+                    <span className="text-text-muted italic">
+                      {t('admin.categories.index.untitled')}
+                    </span>
                   )}
                 </Link>
 
                 <span className="bg-surface-2 text-text-muted shrink-0 rounded px-1.5 py-0.5 font-mono text-xs">
-                  pos {cat.position}
+                  {t('admin.categories.index.position', {
+                    position: cat.position,
+                  })}
                 </span>
 
                 {cat.childCount > 0 && (
                   <Badge tone="accent">
-                    {cat.childCount} child{cat.childCount !== 1 ? 'ren' : ''}
+                    {cat.childCount === 1
+                      ? t('admin.categories.index.childCountOne', {
+                          count: cat.childCount,
+                        })
+                      : t('admin.categories.index.childCount', {
+                          count: cat.childCount,
+                        })}
                   </Badge>
                 )}
 
                 <Link
                   to={`/admin/categories/${cat.id}`}
-                  title="Edit"
+                  title={t('admin.categories.index.edit')}
                   className="text-text-muted hover:text-text rounded p-1"
                 >
                   <PencilSquareIcon className="h-4 w-4" />
@@ -287,13 +303,21 @@ export default function AdminCategoriesRoute() {
                 <Form
                   method="post"
                   onSubmit={(e) => {
-                    if (
-                      !window.confirm(
-                        cat.childCount > 0
-                          ? `Delete "${cat.enTitle || 'this category'}" and its ${cat.childCount} child categor${cat.childCount !== 1 ? 'ies' : 'y'}? This cannot be undone.`
-                          : `Delete "${cat.enTitle || 'this category'}"? This cannot be undone.`
-                      )
-                    ) {
+                    const name =
+                      cat.enTitle || t('admin.categories.index.fallbackName');
+                    const message =
+                      cat.childCount > 0
+                        ? cat.childCount === 1
+                          ? t(
+                              'admin.categories.index.confirmDeleteWithChildrenOne',
+                              { name, count: cat.childCount }
+                            )
+                          : t(
+                              'admin.categories.index.confirmDeleteWithChildren',
+                              { name, count: cat.childCount }
+                            )
+                        : t('admin.categories.index.confirmDelete', { name });
+                    if (!window.confirm(message)) {
                       e.preventDefault();
                     }
                   }}
@@ -302,7 +326,7 @@ export default function AdminCategoriesRoute() {
                   <input type="hidden" name="id" value={cat.id} />
                   <button
                     type="submit"
-                    title="Delete"
+                    title={t('admin.categories.index.delete')}
                     className="text-text-muted hover:text-danger rounded p-1"
                   >
                     <TrashIcon className="h-4 w-4" />

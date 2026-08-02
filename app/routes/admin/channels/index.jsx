@@ -9,6 +9,7 @@ import {
   setChannelPriceOverride,
   updateChannel,
 } from '#/core/channels/index.server';
+import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import Input from '#/components/admin/form/input';
@@ -44,21 +45,22 @@ export async function action({ request }) {
 }
 
 export default function AdminChannelsRoute() {
+  const t = useT();
   const { channels, total, products } = useLoaderData();
   const nonDefaultChannels = channels.filter((c) => !c.isDefault);
 
   return (
     <div>
       <PageHeader
-        title="Sales channels"
-        subtitle="Multi-storefront channels with per-domain routing and catalog overrides."
+        title={t('admin.channels.index.title')}
+        subtitle={t('admin.channels.index.subtitle')}
         actions={
           <Link
             to="/admin/channels/new"
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
-            New channel
+            {t('admin.channels.index.newButton')}
           </Link>
         }
         className="mb-6"
@@ -67,16 +69,16 @@ export default function AdminChannelsRoute() {
       <div className="space-y-6">
         <div>
           <h2 className="text-text mb-3 text-lg font-semibold">
-            Channels ({total})
+            {t('admin.channels.index.heading', { total })}
           </h2>
           <Table>
             <THead>
               <tr>
-                <Th>Name</Th>
-                <Th>Handle</Th>
-                <Th>Domain</Th>
-                <Th>Currency</Th>
-                <Th>Default</Th>
+                <Th>{t('admin.channels.index.col.name')}</Th>
+                <Th>{t('admin.channels.index.col.handle')}</Th>
+                <Th>{t('admin.channels.index.col.domain')}</Th>
+                <Th>{t('admin.channels.index.col.currency')}</Th>
+                <Th>{t('admin.channels.index.col.default')}</Th>
               </tr>
             </THead>
             <TBody>
@@ -95,7 +97,9 @@ export default function AdminChannelsRoute() {
                   <Td>{channel.currency}</Td>
                   <Td>
                     {channel.isDefault ? (
-                      <Badge tone="success">Yes</Badge>
+                      <Badge tone="success">
+                        {t('admin.channels.index.yes')}
+                      </Badge>
                     ) : (
                       <Form method="post">
                         <input
@@ -112,7 +116,7 @@ export default function AdminChannelsRoute() {
                           type="submit"
                           className="text-accent hover:underline"
                         >
-                          Set default
+                          {t('admin.channels.index.setDefault')}
                         </button>
                       </Form>
                     )}
@@ -126,7 +130,7 @@ export default function AdminChannelsRoute() {
         {nonDefaultChannels.length > 0 && products.length > 0 && (
           <Card>
             <h2 className="text-text text-lg font-semibold">
-              Channel price override
+              {t('admin.channels.index.priceOverride')}
             </h2>
             <Form method="post" className="mt-4 flex flex-wrap items-end gap-3">
               <input type="hidden" name="intent" value="set-price" />
@@ -150,12 +154,12 @@ export default function AdminChannelsRoute() {
                 name="priceCents"
                 type="number"
                 min="1"
-                placeholder="Price (cents)"
+                placeholder={t('admin.channels.index.pricePlaceholder')}
                 className="w-32"
               />
               <Input name="currency" defaultValue="USD" className="w-20" />
               <Button type="submit" variant="primary">
-                Set override
+                {t('admin.channels.index.setOverride')}
               </Button>
             </Form>
           </Card>

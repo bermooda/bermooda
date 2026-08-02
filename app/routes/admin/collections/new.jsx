@@ -2,6 +2,7 @@ import { redirect } from 'react-router';
 import { Form } from 'react-router';
 
 import { createCollection } from '#/core/collections/index.server';
+import { useT } from '#/core/i18n';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
@@ -32,39 +33,48 @@ export function meta() {
 }
 
 export default function AdminNewCollectionRoute() {
+  const t = useT();
+
   return (
     <div>
       <PageHeader
-        title="New collection"
-        subtitle="Create a manual or smart collection."
+        title={t('admin.collections.new.title')}
+        subtitle={t('admin.collections.new.subtitle')}
       />
       <Form method="post" className="max-w-lg space-y-4">
-        <Field label="Handle" htmlFor="handle">
+        <Field label={t('admin.collections.new.handle')} htmlFor="handle">
           <Input id="handle" name="handle" required />
         </Field>
-        <Field label="Title" htmlFor="title">
+        <Field label={t('admin.collections.new.titleLabel')} htmlFor="title">
           <Input id="title" name="title" required />
         </Field>
-        <Field label="Collection type" htmlFor="collectionType">
+        <Field
+          label={t('admin.collections.new.collectionType')}
+          htmlFor="collectionType"
+        >
           <Select
             id="collectionType"
             name="collectionType"
             defaultValue="manual"
           >
-            <option value="manual">Manual</option>
-            <option value="smart">Smart (rule-based)</option>
+            <option value="manual">
+              {t('admin.collections.new.typeManual')}
+            </option>
+            <option value="smart">
+              {t('admin.collections.new.typeSmart')}
+            </option>
           </Select>
         </Field>
         <Field
-          label="Product IDs (manual collections only)"
+          label={t('admin.collections.new.productIds')}
           htmlFor="productIds"
         >
           <Input id="productIds" name="productIds" />
         </Field>
         <div className="flex gap-3">
-          <ButtonSubmit>Create collection</ButtonSubmit>
+          <ButtonSubmit>{t('admin.collections.new.create')}</ButtonSubmit>
           <Button as="a" href="/admin/collections" variant="secondary">
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </Form>

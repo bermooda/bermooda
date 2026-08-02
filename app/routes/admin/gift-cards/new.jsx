@@ -10,6 +10,7 @@ import {
   issueGiftCard,
   parseIssueGiftCardInput,
 } from '#/core/gift-cards/index.server';
+import { useT } from '#/core/i18n';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -43,6 +44,7 @@ export async function action({ request }) {
 }
 
 export default function AdminNewGiftCardRoute() {
+  const t = useT();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
@@ -53,13 +55,16 @@ export default function AdminNewGiftCardRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Gift cards', href: '/admin/gift-cards' },
-              { label: 'Issue gift card' },
+              {
+                label: t('admin.giftCards.new.breadcrumb'),
+                href: '/admin/gift-cards',
+              },
+              { label: t('admin.giftCards.new.title') },
             ]}
           />
         }
-        title="Issue gift card"
-        subtitle="Create a gift card redeemable at checkout."
+        title={t('admin.giftCards.new.title')}
+        subtitle={t('admin.giftCards.new.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -67,29 +72,38 @@ export default function AdminNewGiftCardRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Gift card details"
-            description="Leave code blank to auto-generate a unique code."
+            title={t('admin.giftCards.new.cardTitle')}
+            description={t('admin.giftCards.new.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Code (optional)" htmlFor="gift-card-code">
+            <Field
+              label={t('admin.giftCards.new.code')}
+              htmlFor="gift-card-code"
+            >
               <Input
                 id="gift-card-code"
                 name="code"
-                placeholder="Auto-generated if empty"
+                placeholder={t('admin.giftCards.new.codePlaceholder')}
                 className="font-mono"
               />
             </Field>
-            <Field label="Balance (cents) *" htmlFor="gift-card-balance">
+            <Field
+              label={t('admin.giftCards.new.balance')}
+              htmlFor="gift-card-balance"
+            >
               <Input
                 id="gift-card-balance"
                 name="balanceCents"
                 type="number"
                 min="1"
                 required
-                placeholder="5000"
+                placeholder={t('admin.giftCards.new.balancePlaceholder')}
               />
             </Field>
-            <Field label="Currency" htmlFor="gift-card-currency">
+            <Field
+              label={t('admin.giftCards.new.currency')}
+              htmlFor="gift-card-currency"
+            >
               <Input
                 id="gift-card-currency"
                 name="currency"
@@ -108,10 +122,12 @@ export default function AdminNewGiftCardRoute() {
               to="/admin/gift-cards"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Issuing…' : 'Issue gift card'}
+              {isSaving
+                ? t('admin.giftCards.new.issuing')
+                : t('admin.giftCards.new.issue')}
             </ButtonSubmit>
           </div>
         </ActionBar>

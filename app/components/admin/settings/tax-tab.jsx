@@ -2,6 +2,7 @@ import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { useFetcher } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   FieldLabel,
   RADIO_CLASS,
@@ -18,6 +19,7 @@ import {
  * @returns {React.ReactElement}
  */
 export function TaxTab({ data }) {
+  const t = useT();
   const fetcher = useFetcher();
   const [taxMode, setTaxMode] = useState(data.taxMode);
   const [regions, setRegions] = useState(
@@ -47,7 +49,7 @@ export function TaxTab({ data }) {
   }));
 
   return (
-    <SectionCard title="Tax Settings">
+    <SectionCard title={t('admin.settings.tax.title')}>
       <fetcher.Form method="post" className="space-y-6">
         <input type="hidden" name="intent" value="save-tax" />
         <input type="hidden" name="taxMode" value={taxMode} />
@@ -59,7 +61,7 @@ export function TaxTab({ data }) {
 
         {/* Tax mode */}
         <div>
-          <FieldLabel>Tax Mode</FieldLabel>
+          <FieldLabel>{t('admin.settings.tax.mode')}</FieldLabel>
           <div className="mt-1 flex gap-6">
             {['inclusive', 'exclusive'].map((mode) => (
               <label
@@ -74,34 +76,38 @@ export function TaxTab({ data }) {
                   onChange={() => setTaxMode(mode)}
                   className={RADIO_CLASS}
                 />
-                <span className="text-text text-sm capitalize">{mode}</span>
+                <span className="text-text text-sm capitalize">
+                  {mode === 'inclusive'
+                    ? t('admin.settings.tax.modeInclusive')
+                    : t('admin.settings.tax.modeExclusive')}
+                </span>
               </label>
             ))}
           </div>
           <p className="text-text-muted mt-1 text-xs">
             {taxMode === 'inclusive'
-              ? 'Prices already include tax.'
-              : 'Tax is added on top of prices at checkout.'}
+              ? t('admin.settings.tax.helpInclusive')
+              : t('admin.settings.tax.helpExclusive')}
           </p>
         </div>
 
         {/* Tax regions */}
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <FieldLabel>Tax Regions</FieldLabel>
+            <FieldLabel>{t('admin.settings.tax.regions')}</FieldLabel>
             <button
               type="button"
               onClick={addRegion}
               className="text-accent inline-flex items-center gap-1 text-sm hover:underline"
             >
               <PlusIcon className="h-4 w-4" />
-              Add region
+              {t('admin.settings.tax.addRegion')}
             </button>
           </div>
 
           {regions.length === 0 ? (
             <p className="text-text-muted text-sm italic">
-              No tax regions configured.
+              {t('admin.settings.tax.empty')}
             </p>
           ) : (
             <div className="space-y-2">
@@ -113,7 +119,7 @@ export function TaxTab({ data }) {
                     onChange={(e) =>
                       updateRegion(r._key, 'country', e.target.value)
                     }
-                    placeholder="Country code (e.g. US)"
+                    placeholder={t('admin.settings.tax.countryPlaceholder')}
                     maxLength={3}
                     className={inputClass('w-40 uppercase')}
                   />

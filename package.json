@@ -23,6 +23,7 @@
     "lint": "oxlint . && oxfmt --check .",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check .",
+    "check:i18n": "node scripts/check-i18n-key-coverage.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

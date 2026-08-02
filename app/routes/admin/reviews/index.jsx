@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   countPendingReviews,
   deleteReview,
@@ -65,16 +66,20 @@ export async function action({ request }) {
 }
 
 export default function AdminReviewsRoute() {
+  const t = useT();
   const { reviews, total, page, pageSize, status, pendingCount } =
     useLoaderData();
   const [searchParams, setSearchParams] = useSearchParams();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const tabs = [
-    { key: 'pending', label: `Pending (${pendingCount})` },
-    { key: 'approved', label: 'Approved' },
-    { key: 'rejected', label: 'Rejected' },
-    { key: 'all', label: 'All' },
+    {
+      key: 'pending',
+      label: t('admin.reviews.index.tab.pending', { count: pendingCount }),
+    },
+    { key: 'approved', label: t('admin.reviews.index.tab.approved') },
+    { key: 'rejected', label: t('admin.reviews.index.tab.rejected') },
+    { key: 'all', label: t('admin.reviews.index.tab.all') },
   ];
 
   function setTab(next) {
@@ -92,7 +97,7 @@ export default function AdminReviewsRoute() {
 
   return (
     <div>
-      <PageHeader title="Reviews" className="mb-6" />
+      <PageHeader title={t('admin.reviews.index.title')} className="mb-6" />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {tabs.map((tab) => (
@@ -115,18 +120,20 @@ export default function AdminReviewsRoute() {
       <Table>
         <THead>
           <tr>
-            <Th>Product</Th>
-            <Th>Customer</Th>
-            <Th>Rating</Th>
-            <Th>Review</Th>
-            <Th className="text-right">Actions</Th>
+            <Th>{t('admin.reviews.index.col.product')}</Th>
+            <Th>{t('admin.reviews.index.col.customer')}</Th>
+            <Th>{t('admin.reviews.index.col.rating')}</Th>
+            <Th>{t('admin.reviews.index.col.review')}</Th>
+            <Th className="text-right">
+              {t('admin.reviews.index.col.actions')}
+            </Th>
           </tr>
         </THead>
         <TBody>
           {reviews.length === 0 ? (
             <tr>
               <Td colSpan={5} className="py-8 text-center">
-                No reviews in this tab.
+                {t('admin.reviews.index.empty')}
               </Td>
             </tr>
           ) : (
@@ -138,7 +145,7 @@ export default function AdminReviewsRoute() {
                   <span className="text-warn">{'★'.repeat(r.rating)}</span>
                   {r.verifiedPurchase && (
                     <Badge tone="success" className="ml-2">
-                      Verified
+                      {t('admin.reviews.index.verified')}
                     </Badge>
                   )}
                 </Td>
@@ -156,7 +163,7 @@ export default function AdminReviewsRoute() {
                             type="submit"
                             className="text-success text-sm hover:underline"
                           >
-                            Approve
+                            {t('admin.reviews.index.approve')}
                           </button>
                         </Form>
                         <Form method="post" className="inline">
@@ -166,7 +173,7 @@ export default function AdminReviewsRoute() {
                             type="submit"
                             className="text-warn text-sm hover:underline"
                           >
-                            Reject
+                            {t('admin.reviews.index.reject')}
                           </button>
                         </Form>
                       </>
@@ -178,7 +185,7 @@ export default function AdminReviewsRoute() {
                         type="submit"
                         className="text-danger text-sm hover:underline"
                       >
-                        Delete
+                        {t('admin.reviews.index.delete')}
                       </button>
                     </Form>
                   </div>

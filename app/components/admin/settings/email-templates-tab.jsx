@@ -1,36 +1,39 @@
+import { useT } from '#/core/i18n';
 import { SectionCard } from '#/components/admin/settings/shared';
 
-const EMAIL_TEMPLATES = [
+const EMAIL_TEMPLATE_KEYS = [
   {
     key: 'order-confirmation',
-    name: 'Order Confirmation',
-    description: 'Sent to customers after a successful order is placed.',
+    nameKey: 'admin.settings.emailTemplates.orderConfirmation.name',
+    descriptionKey:
+      'admin.settings.emailTemplates.orderConfirmation.description',
   },
   {
     key: 'password-reset-admin',
-    name: 'Password Reset (Admin)',
-    description: 'Sent to admin users when they request a password reset.',
+    nameKey: 'admin.settings.emailTemplates.passwordResetAdmin.name',
+    descriptionKey:
+      'admin.settings.emailTemplates.passwordResetAdmin.description',
   },
   {
     key: 'staff-invite',
-    name: 'Staff Invite',
-    description:
-      'Sent when an admin invites a new staff member to create their password.',
+    nameKey: 'admin.settings.emailTemplates.staffInvite.name',
+    descriptionKey: 'admin.settings.emailTemplates.staffInvite.description',
   },
   {
     key: 'password-reset-customer',
-    name: 'Password Reset (Customer)',
-    description: 'Sent to customers when they request a password reset.',
+    nameKey: 'admin.settings.emailTemplates.passwordResetCustomer.name',
+    descriptionKey:
+      'admin.settings.emailTemplates.passwordResetCustomer.description',
   },
   {
     key: 'customer-welcome',
-    name: 'Customer Welcome',
-    description: 'Sent to new customers after registration.',
+    nameKey: 'admin.settings.emailTemplates.customerWelcome.name',
+    descriptionKey: 'admin.settings.emailTemplates.customerWelcome.description',
   },
   {
     key: 'abandoned-cart',
-    name: 'Abandoned Cart',
-    description: 'Sent to customers who left items in their cart.',
+    nameKey: 'admin.settings.emailTemplates.abandonedCart.name',
+    descriptionKey: 'admin.settings.emailTemplates.abandonedCart.description',
   },
 ];
 
@@ -40,33 +43,34 @@ const EMAIL_TEMPLATES = [
  * @returns {React.ReactElement}
  */
 export function EmailTemplatesTab() {
+  const t = useT();
+
   return (
-    <SectionCard title="Email Templates">
+    <SectionCard title={t('admin.settings.emailTemplates.title')}>
       <p className="text-text-muted mb-4 text-sm">
-        Templates are sent through the active email provider plugin. Choose
-        Resend, SendGrid, or Amazon SES under{' '}
+        {t('admin.settings.emailTemplates.introBefore')}{' '}
         <a href="/admin/plugins" className="text-accent underline">
-          Admin → Plugins
+          {t('admin.settings.emailTemplates.pluginsLink')}
         </a>
-        . Preview links will be active in a future update.
+        {t('admin.settings.emailTemplates.introAfter')}
       </p>
       <div className="space-y-3">
-        {EMAIL_TEMPLATES.map((tpl) => (
+        {EMAIL_TEMPLATE_KEYS.map((tpl) => (
           <div
             key={tpl.key}
             className="border-border flex items-start justify-between rounded-lg border px-4 py-3"
           >
             <div>
-              <p className="text-text text-sm font-medium">{tpl.name}</p>
+              <p className="text-text text-sm font-medium">{t(tpl.nameKey)}</p>
               <p className="text-text-muted mt-0.5 text-xs">
-                {tpl.description}
+                {t(tpl.descriptionKey)}
               </p>
             </div>
             <span
               className="text-text-muted ml-4 shrink-0 text-xs italic"
-              title="Preview not yet available"
+              title={t('admin.settings.emailTemplates.previewTitle')}
             >
-              Preview coming soon
+              {t('admin.settings.emailTemplates.previewSoon')}
             </span>
           </div>
         ))}

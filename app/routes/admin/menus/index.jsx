@@ -7,6 +7,7 @@ import {
   parseMenuFormInput,
   upsertMenu,
 } from '#/core/content/index.server';
+import { useT } from '#/core/i18n';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
@@ -30,6 +31,7 @@ export async function action({ request }) {
 }
 
 export default function AdminMenusRoute() {
+  const t = useT();
   const { handle, menus, menu, menuHandles, pages, categories } =
     useLoaderData();
   const actionData = useActionData();
@@ -76,8 +78,8 @@ export default function AdminMenusRoute() {
   return (
     <div className="mx-auto max-w-4xl">
       <PageHeader
-        title="Menus"
-        subtitle="Edit navigation menus used in the storefront theme."
+        title={t('admin.menus.index.title')}
+        subtitle={t('admin.menus.index.subtitle')}
         className="mb-6"
       />
 
@@ -103,7 +105,7 @@ export default function AdminMenusRoute() {
           <input type="hidden" name="handle" value={handle} />
           <input type="hidden" name="itemCount" value={items.length} />
 
-          <Field label="Menu title" className="max-w-md">
+          <Field label={t('admin.menus.index.menuTitle')} className="max-w-md">
             <Input
               name="title"
               type="text"
@@ -125,7 +127,7 @@ export default function AdminMenusRoute() {
                     className="mr-2 shrink-0"
                   />
                   <span className="text-text-muted text-xs font-medium">
-                    Item {index + 1}
+                    {t('admin.menus.index.itemLabel', { index: index + 1 })}
                   </span>
                 </div>
                 <input
@@ -133,22 +135,22 @@ export default function AdminMenusRoute() {
                   name={`items[${index}][position]`}
                   value={index}
                 />
-                <Field label="Label">
+                <Field label={t('admin.menus.index.label')}>
                   <Input
                     name={`items[${index}][label]`}
                     value={item.label}
                     onChange={(e) => updateItem(index, 'label', e.target.value)}
                   />
                 </Field>
-                <Field label="Custom URL">
+                <Field label={t('admin.menus.index.customUrl')}>
                   <Input
                     name={`items[${index}][url]`}
                     value={item.url ?? ''}
                     onChange={(e) => updateItem(index, 'url', e.target.value)}
-                    placeholder="/about"
+                    placeholder={t('admin.menus.index.urlPlaceholder')}
                   />
                 </Field>
-                <Field label="Link to page">
+                <Field label={t('admin.menus.index.linkToPage')}>
                   <Select
                     name={`items[${index}][pageId]`}
                     value={item.pageId ?? ''}
@@ -164,7 +166,7 @@ export default function AdminMenusRoute() {
                     ))}
                   </Select>
                 </Field>
-                <Field label="Link to category">
+                <Field label={t('admin.menus.index.linkToCategory')}>
                   <Select
                     name={`items[${index}][categoryId]`}
                     value={item.categoryId ?? ''}
@@ -187,14 +189,14 @@ export default function AdminMenusRoute() {
                       name={`items[${index}][openInNew]`}
                       defaultChecked={item.openInNew}
                     />
-                    Open in new tab
+                    {t('admin.menus.index.openInNewTab')}
                   </label>
                   <button
                     type="button"
                     onClick={() => removeItem(index)}
                     className="text-danger text-sm hover:underline"
                   >
-                    Remove
+                    {t('admin.menus.index.remove')}
                   </button>
                 </div>
               </div>
@@ -206,21 +208,24 @@ export default function AdminMenusRoute() {
             onClick={addItem}
             className="text-accent text-sm font-medium hover:underline"
           >
-            + Add item
+            {t('admin.menus.index.addItem')}
           </button>
 
-          {actionData?.ok && <SuccessAlert message="Menu saved." />}
+          {actionData?.ok && (
+            <SuccessAlert message={t('admin.menus.index.saved')} />
+          )}
 
           <div>
-            <ButtonSubmit>Save Menu</ButtonSubmit>
+            <ButtonSubmit>{t('admin.menus.index.save')}</ButtonSubmit>
           </div>
         </Form>
       </Card>
 
       {menus.length > 0 && (
         <p className="text-text-muted mt-4 text-xs">
-          Existing menus:{' '}
-          {menus.map((m) => `${m.handle} (${m.itemCount})`).join(', ')}
+          {t('admin.menus.index.existingMenus', {
+            list: menus.map((m) => `${m.handle} (${m.itemCount})`).join(', '),
+          })}
         </p>
       )}
     </div>

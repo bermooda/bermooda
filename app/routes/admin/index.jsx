@@ -20,6 +20,7 @@ import {
   parseOnboardingFormData,
   resolveAdminEntryMode,
 } from '#/core/admin-onboarding/index.server';
+import { useT } from '#/core/i18n';
 import AuthLayout from '#/components/auth/auth-layout';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
@@ -87,7 +88,13 @@ export async function action({ request }) {
 // Login form (client-side Better Auth SDK)
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {Object} props
+ * @param {boolean} props.onboarded
+ * @returns {React.ReactElement}
+ */
 function LoginForm({ onboarded }) {
+  const t = useT();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const rawReturnTo = searchParams.get('returnTo') || '';
@@ -113,7 +120,9 @@ function LoginForm({ onboarded }) {
     });
 
     if (error) {
-      setErrorMessage(error?.message || 'Invalid email or password');
+      setErrorMessage(
+        error?.message || t('admin.auth.login.invalidCredentials')
+      );
       setIsLoading(false);
       return;
     }
@@ -122,9 +131,9 @@ function LoginForm({ onboarded }) {
   };
 
   return (
-    <AuthLayout title="Admin sign in">
+    <AuthLayout title={t('admin.auth.login.title')}>
       {onboarded && (
-        <SuccessAlert message="Admin account created. Sign in to continue." />
+        <SuccessAlert message={t('admin.auth.login.onboardedSuccess')} />
       )}
       <ErrorAlert message={errorMessage} />
 
@@ -134,7 +143,7 @@ function LoginForm({ onboarded }) {
             htmlFor="email"
             className="text-text block text-sm/6 font-medium"
           >
-            Email address
+            {t('admin.auth.login.email')}
           </label>
           <div className="mt-2">
             <input
@@ -157,7 +166,7 @@ function LoginForm({ onboarded }) {
               htmlFor="password"
               className="text-text block text-sm/6 font-medium"
             >
-              Password
+              {t('admin.auth.login.password')}
             </label>
             <div className="text-sm">
               <Link
@@ -165,7 +174,7 @@ function LoginForm({ onboarded }) {
                 prefetch="intent"
                 className="text-accent font-semibold hover:opacity-80"
               >
-                Forgot password?
+                {t('admin.auth.login.forgotPassword')}
               </Link>
             </div>
           </div>
@@ -186,7 +195,9 @@ function LoginForm({ onboarded }) {
 
         <div>
           <ButtonSubmit className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Sign in'}
+            {isLoading
+              ? t('admin.auth.login.submitting')
+              : t('admin.auth.login.submit')}
           </ButtonSubmit>
         </div>
       </form>
@@ -198,15 +209,19 @@ function LoginForm({ onboarded }) {
 // Onboarding form (server action)
 // ---------------------------------------------------------------------------
 
+/**
+ * @returns {React.ReactElement}
+ */
 function OnboardingForm() {
+  const t = useT();
   const actionData = useActionData();
   const fieldErrors = actionData?.fieldErrors ?? {};
   const fields = actionData?.fields ?? {};
 
   return (
     <AuthLayout
-      title="Set up your admin account"
-      subtitle="Create the first administrator to get started."
+      title={t('admin.auth.onboarding.title')}
+      subtitle={t('admin.auth.onboarding.subtitle')}
     >
       <ErrorAlert message={actionData?.error} />
 
@@ -218,7 +233,7 @@ function OnboardingForm() {
             htmlFor="name"
             className="text-text block text-sm/6 font-medium"
           >
-            Full name
+            {t('admin.auth.onboarding.fullName')}
           </label>
           <div className="mt-2">
             <input
@@ -241,7 +256,7 @@ function OnboardingForm() {
             htmlFor="ob-email"
             className="text-text block text-sm/6 font-medium"
           >
-            Email address
+            {t('admin.auth.onboarding.email')}
           </label>
           <div className="mt-2">
             <input
@@ -264,7 +279,7 @@ function OnboardingForm() {
             htmlFor="ob-password"
             className="text-text block text-sm/6 font-medium"
           >
-            Password
+            {t('admin.auth.onboarding.password')}
           </label>
           <div className="mt-2">
             <input
@@ -286,7 +301,7 @@ function OnboardingForm() {
             htmlFor="ob-confirm-password"
             className="text-text block text-sm/6 font-medium"
           >
-            Confirm password
+            {t('admin.auth.onboarding.confirmPassword')}
           </label>
           <div className="mt-2">
             <input
@@ -306,7 +321,9 @@ function OnboardingForm() {
         </div>
 
         <div>
-          <ButtonSubmit className="w-full">Create admin account</ButtonSubmit>
+          <ButtonSubmit className="w-full">
+            {t('admin.auth.onboarding.submit')}
+          </ButtonSubmit>
         </div>
       </Form>
     </AuthLayout>

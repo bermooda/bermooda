@@ -10,6 +10,7 @@ import {
   createChannel,
   parseCreateChannelInput,
 } from '#/core/channels/index.server';
+import { useT } from '#/core/i18n';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -38,6 +39,7 @@ export async function action({ request }) {
 }
 
 export default function AdminNewChannelRoute() {
+  const t = useT();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
@@ -48,13 +50,16 @@ export default function AdminNewChannelRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Channels', href: '/admin/channels' },
-              { label: 'New channel' },
+              {
+                label: t('admin.channels.new.breadcrumb'),
+                href: '/admin/channels',
+              },
+              { label: t('admin.channels.new.title') },
             ]}
           />
         }
-        title="New sales channel"
-        subtitle="Add a multi-storefront channel with domain routing."
+        title={t('admin.channels.new.title')}
+        subtitle={t('admin.channels.new.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -62,34 +67,43 @@ export default function AdminNewChannelRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Channel details"
-            description="Configure name, handle, and optional custom domain."
+            title={t('admin.channels.new.cardTitle')}
+            description={t('admin.channels.new.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name *" htmlFor="channel-name">
+            <Field label={t('admin.channels.new.name')} htmlFor="channel-name">
               <Input
                 id="channel-name"
                 name="name"
                 required
-                placeholder="EU Store"
+                placeholder={t('admin.channels.new.namePlaceholder')}
               />
             </Field>
-            <Field label="Handle *" htmlFor="channel-handle">
+            <Field
+              label={t('admin.channels.new.handle')}
+              htmlFor="channel-handle"
+            >
               <Input
                 id="channel-handle"
                 name="handle"
                 required
-                placeholder="eu-store"
+                placeholder={t('admin.channels.new.handlePlaceholder')}
               />
             </Field>
-            <Field label="Domain (optional)" htmlFor="channel-domain">
+            <Field
+              label={t('admin.channels.new.domain')}
+              htmlFor="channel-domain"
+            >
               <Input
                 id="channel-domain"
                 name="domain"
-                placeholder="shop.example.eu"
+                placeholder={t('admin.channels.new.domainPlaceholder')}
               />
             </Field>
-            <Field label="Currency" htmlFor="channel-currency">
+            <Field
+              label={t('admin.channels.new.currency')}
+              htmlFor="channel-currency"
+            >
               <Input
                 id="channel-currency"
                 name="currency"
@@ -98,7 +112,10 @@ export default function AdminNewChannelRoute() {
                 className="uppercase"
               />
             </Field>
-            <Field label="Locale" htmlFor="channel-locale">
+            <Field
+              label={t('admin.channels.new.locale')}
+              htmlFor="channel-locale"
+            >
               <Input id="channel-locale" name="locale" defaultValue="en" />
             </Field>
           </div>
@@ -111,10 +128,12 @@ export default function AdminNewChannelRoute() {
               to="/admin/channels"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Create channel'}
+              {isSaving
+                ? t('admin.channels.new.creating')
+                : t('admin.channels.new.createButton')}
             </ButtonSubmit>
           </div>
         </ActionBar>

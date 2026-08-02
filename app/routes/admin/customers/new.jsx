@@ -7,6 +7,7 @@ import {
 } from 'react-router';
 
 import { createCustomer } from '#/core/customers/index.server';
+import { useT } from '#/core/i18n';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -38,6 +39,7 @@ export async function action({ request }) {
 }
 
 export default function AdminNewCustomerRoute() {
+  const t = useT();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
@@ -48,13 +50,16 @@ export default function AdminNewCustomerRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Customers', href: '/admin/customers' },
-              { label: 'New customer' },
+              {
+                label: t('admin.customers.new.breadcrumb'),
+                href: '/admin/customers',
+              },
+              { label: t('admin.customers.new.title') },
             ]}
           />
         }
-        title="New customer"
-        subtitle="Create a customer profile with contact details."
+        title={t('admin.customers.new.title')}
+        subtitle={t('admin.customers.new.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -62,33 +67,42 @@ export default function AdminNewCustomerRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Customer details"
-            description="Email is required. Name and phone are optional."
+            title={t('admin.customers.new.cardTitle')}
+            description={t('admin.customers.new.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Email *" htmlFor="customer-email">
+            <Field
+              label={t('admin.customers.new.email')}
+              htmlFor="customer-email"
+            >
               <Input
                 id="customer-email"
                 type="email"
                 name="email"
                 required
-                placeholder="customer@example.com"
+                placeholder={t('admin.customers.new.emailPlaceholder')}
               />
             </Field>
-            <Field label="Name" htmlFor="customer-name">
+            <Field
+              label={t('admin.customers.new.name')}
+              htmlFor="customer-name"
+            >
               <Input
                 id="customer-name"
                 type="text"
                 name="name"
-                placeholder="Jane Doe"
+                placeholder={t('admin.customers.new.namePlaceholder')}
               />
             </Field>
-            <Field label="Phone" htmlFor="customer-phone">
+            <Field
+              label={t('admin.customers.new.phone')}
+              htmlFor="customer-phone"
+            >
               <Input
                 id="customer-phone"
                 type="tel"
                 name="phone"
-                placeholder="+1 555 000 0000"
+                placeholder={t('admin.customers.new.phonePlaceholder')}
               />
             </Field>
           </div>
@@ -101,10 +115,12 @@ export default function AdminNewCustomerRoute() {
               to="/admin/customers"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Create customer'}
+              {isSaving
+                ? t('admin.customers.new.creating')
+                : t('admin.customers.new.createButton')}
             </ButtonSubmit>
           </div>
         </ActionBar>

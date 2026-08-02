@@ -180,16 +180,19 @@ describe('loadMessages', () => {
     );
 
     readFileSync
-      .mockReturnValueOnce(JSON.stringify({ common: { save: 'Save' } }))
+      .mockReturnValueOnce(JSON.stringify({ 'common.save': 'Save' }))
       .mockReturnValueOnce(
-        JSON.stringify({ common: { save: 'Speichern', cancel: 'Abbrechen' } })
+        JSON.stringify({
+          'common.save': 'Speichern',
+          'common.cancel': 'Abbrechen',
+        })
       )
       .mockReturnValueOnce(JSON.stringify({ plugin: { hello: 'Hello' } }));
 
     const messages = await loadMessages('en');
 
-    expect(messages.common.save).toBe('Speichern');
-    expect(messages.common.cancel).toBe('Abbrechen');
+    expect(messages['common.save']).toBe('Speichern');
+    expect(messages['common.cancel']).toBe('Abbrechen');
     expect(messages.plugin.hello).toBe('Hello');
   });
 
@@ -223,11 +226,11 @@ describe('loadMessages', () => {
     });
 
     readFileSync.mockReturnValueOnce(
-      JSON.stringify({ common: { loading: 'Loading...' } })
+      JSON.stringify({ 'common.loading': 'Loading...' })
     );
 
     const messages = await loadMessages('en');
-    expect(messages.common.loading).toBe('Loading...');
+    expect(messages['common.loading']).toBe('Loading...');
     expect(readFileSync).toHaveBeenCalledTimes(1);
   });
 
@@ -267,11 +270,11 @@ describe('loadMessages', () => {
     });
 
     readFileSync.mockReturnValueOnce(
-      JSON.stringify({ common: { loading: 'Loading...' } })
+      JSON.stringify({ 'common.loading': 'Loading...' })
     );
 
     const messages = await loadMessages('en');
-    expect(messages.common.loading).toBe('Loading...');
+    expect(messages['common.loading']).toBe('Loading...');
     expect(readFileSync).toHaveBeenCalledTimes(1);
   });
 
@@ -285,12 +288,13 @@ describe('loadMessages', () => {
     readFileSync.mockImplementation((filePath) => {
       if (filePath.endsWith('/en.json')) {
         return JSON.stringify({
-          common: { save: 'Save', cancel: 'Cancel' },
+          'common.save': 'Save',
+          'common.cancel': 'Cancel',
         });
       }
       if (filePath.endsWith('/de.json')) {
         return JSON.stringify({
-          common: { save: 'Speichern' },
+          'common.save': 'Speichern',
         });
       }
       const enoent = new Error('ENOENT: no such file');
@@ -299,8 +303,8 @@ describe('loadMessages', () => {
     });
 
     const messages = await loadMessages('de');
-    expect(messages.common.save).toBe('Speichern');
-    expect(messages.common.cancel).toBe('Cancel');
+    expect(messages['common.save']).toBe('Speichern');
+    expect(messages['common.cancel']).toBe('Cancel');
   });
 
   it('lets the requested locale override shared English keys', async () => {
@@ -312,10 +316,10 @@ describe('loadMessages', () => {
 
     readFileSync.mockImplementation((filePath) => {
       if (filePath.endsWith('/en.json')) {
-        return JSON.stringify({ common: { save: 'Save' } });
+        return JSON.stringify({ 'common.save': 'Save' });
       }
       if (filePath.endsWith('/fr.json')) {
-        return JSON.stringify({ common: { save: 'Enregistrer' } });
+        return JSON.stringify({ 'common.save': 'Enregistrer' });
       }
       const enoent = new Error('ENOENT: no such file');
       enoent.code = 'ENOENT';
@@ -323,7 +327,7 @@ describe('loadMessages', () => {
     });
 
     const messages = await loadMessages('fr');
-    expect(messages.common.save).toBe('Enregistrer');
+    expect(messages['common.save']).toBe('Enregistrer');
   });
 
   it('returns the English catalog when the locale file is missing entirely', async () => {
@@ -335,7 +339,7 @@ describe('loadMessages', () => {
 
     readFileSync.mockImplementation((filePath) => {
       if (filePath.endsWith('/en.json')) {
-        return JSON.stringify({ common: { loading: 'Loading...' } });
+        return JSON.stringify({ 'common.loading': 'Loading...' });
       }
       const enoent = new Error('ENOENT: no such file');
       enoent.code = 'ENOENT';
@@ -343,7 +347,7 @@ describe('loadMessages', () => {
     });
 
     const messages = await loadMessages('de');
-    expect(messages.common.loading).toBe('Loading...');
+    expect(messages['common.loading']).toBe('Loading...');
   });
 
   it('reads English files only once when locale is en', async () => {
@@ -354,11 +358,11 @@ describe('loadMessages', () => {
     });
 
     readFileSync.mockReturnValueOnce(
-      JSON.stringify({ common: { loading: 'Loading...' } })
+      JSON.stringify({ 'common.loading': 'Loading...' })
     );
 
     const messages = await loadMessages('en');
-    expect(messages.common.loading).toBe('Loading...');
+    expect(messages['common.loading']).toBe('Loading...');
     expect(readFileSync).toHaveBeenCalledTimes(1);
     expect(readFileSync.mock.calls[0][0]).toMatch(/\/en\.json$/);
   });
@@ -378,7 +382,10 @@ describe('loadMessages', () => {
 
     readFileSync.mockImplementation((filePath) => {
       if (filePath.includes('/core/i18n/messages/en.json')) {
-        return JSON.stringify({ common: { save: 'Save', cancel: 'Cancel' } });
+        return JSON.stringify({
+          'common.save': 'Save',
+          'common.cancel': 'Cancel',
+        });
       }
       if (filePath.includes('/themes/my-theme/i18n/en.json')) {
         return JSON.stringify({ theme: { title: 'Theme EN' } });
@@ -387,7 +394,7 @@ describe('loadMessages', () => {
         return JSON.stringify({ plugin: { hello: 'Hello' } });
       }
       if (filePath.includes('/core/i18n/messages/de.json')) {
-        return JSON.stringify({ common: { save: 'Speichern' } });
+        return JSON.stringify({ 'common.save': 'Speichern' });
       }
       if (filePath.includes('/themes/my-theme/i18n/de.json')) {
         return JSON.stringify({ theme: { title: 'Theme DE' } });
@@ -398,8 +405,8 @@ describe('loadMessages', () => {
     });
 
     const messages = await loadMessages('de');
-    expect(messages.common.save).toBe('Speichern');
-    expect(messages.common.cancel).toBe('Cancel');
+    expect(messages['common.save']).toBe('Speichern');
+    expect(messages['common.cancel']).toBe('Cancel');
     expect(messages.theme.title).toBe('Theme DE');
     expect(messages.plugin.hello).toBe('Hello');
 

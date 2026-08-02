@@ -12,6 +12,7 @@ import {
 
 import { parseAdminSearchParams } from '#/libs/api/admin-ui/index.server';
 import { loadProductsAdminIndexData } from '#/core/catalog/admin/index.server';
+import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
@@ -40,18 +41,33 @@ export async function loader({ request }) {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {Object} props
+ * @param {boolean} props.published
+ */
 function StatusBadge({ published }) {
+  const t = useT();
   return (
     <Badge tone={published ? 'success' : 'neutral'}>
-      {published ? 'Published' : 'Draft'}
+      {published
+        ? t('admin.products.status.published')
+        : t('admin.products.status.draft')}
     </Badge>
   );
 }
 
+/**
+ * @param {Object} props
+ * @param {string} props.title
+ */
 function CategoryBadge({ title }) {
   return <Badge tone="accent">{title}</Badge>;
 }
 
+/**
+ * @param {string} iso
+ * @returns {string}
+ */
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
@@ -65,6 +81,7 @@ function formatDate(iso) {
 // ---------------------------------------------------------------------------
 
 export default function AdminProductsRoute() {
+  const t = useT();
   const { rows, total, publishedCount, draftCount, page, totalPages, q } =
     useLoaderData();
   const [, setSearchParams] = useSearchParams();
@@ -78,38 +95,54 @@ export default function AdminProductsRoute() {
     });
   }
 
+  const columns = [
+    t('admin.products.index.col.product'),
+    t('admin.products.index.col.status'),
+    t('admin.products.index.col.variants'),
+    t('admin.products.index.col.categories'),
+    t('admin.products.index.col.created'),
+  ];
+
   return (
     <div>
       <PageHeader
-        title="Products"
-        subtitle="Manage your catalog, variants, and pricing."
+        title={t('admin.products.index.title')}
+        subtitle={t('admin.products.index.subtitle')}
         actions={
           <Link
             to="/admin/products/new"
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
-            New product
+            {t('admin.products.index.newButton')}
           </Link>
         }
       />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <Stat label="Total products" value={total} />
-        <Stat label="Published" value={publishedCount} />
-        <Stat label="Drafts" value={draftCount} />
+        <Stat label={t('admin.products.index.stat.total')} value={total} />
+        <Stat
+          label={t('admin.products.index.stat.published')}
+          value={publishedCount}
+        />
+        <Stat
+          label={t('admin.products.index.stat.drafts')}
+          value={draftCount}
+        />
       </div>
 
       <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
         <Toolbar>
           <SearchField
             defaultValue={q}
-            placeholder="Search by slug…"
+            placeholder={t('admin.products.index.searchPlaceholder')}
             formClassName="w-full sm:max-w-sm"
           />
           <ToolbarGroup>
             <span className="text-text-muted text-sm">
-              {total} result{total !== 1 ? 's' : ''}
+              {total === 1
+                ? t('admin.products.index.resultsOne', { count: total })
+                : t('admin.products.index.results', { count: total })}
             </span>
           </ToolbarGroup>
         </Toolbar>
@@ -118,11 +151,9 @@ export default function AdminProductsRoute() {
         <Table className="hidden rounded-none border-0 shadow-none md:block">
           <THead>
             <tr>
-              {['Product', 'Status', 'Variants', 'Categories', 'Created'].map(
-                (col) => (
-                  <Th key={col}>{col}</Th>
-                )
-              )}
+              {columns.map((col) => (
+                <Th key={col}>{col}</Th>
+              ))}
             </tr>
           </THead>
           <TBody>
@@ -131,11 +162,11 @@ export default function AdminProductsRoute() {
                 <Td colSpan={5} className="p-0">
                   <EmptyState
                     icon={CubeIcon}
-                    title="No products found"
+                    title={t('admin.products.index.emptyTitle')}
                     description={
                       q
-                        ? 'Try a different search term or clear the filter.'
-                        : 'Create your first product to start selling.'
+                        ? t('admin.products.index.emptyDescriptionSearch')
+                        : t('admin.products.index.emptyDescription')
                     }
                     action={
                       !q && (
@@ -144,7 +175,7 @@ export default function AdminProductsRoute() {
                           className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
                         >
                           <PlusIcon className="h-4 w-4" />
-                          New product
+                          {t('admin.products.index.newButton')}
                         </Link>
                       )
                     }
@@ -203,11 +234,11 @@ export default function AdminProductsRoute() {
           {rows.length === 0 ? (
             <EmptyState
               icon={CubeIcon}
-              title="No products found"
+              title={t('admin.products.index.emptyTitle')}
               description={
                 q
-                  ? 'Try a different search term.'
-                  : 'Create your first product to start selling.'
+                  ? t('admin.products.index.emptyDescriptionSearchShort')
+                  : t('admin.products.index.emptyDescription')
               }
               className="border-0 shadow-none"
             />
@@ -238,8 +269,13 @@ export default function AdminProductsRoute() {
                 )}
                 <div className="text-text-muted mt-3 flex items-center justify-between text-xs">
                   <span>
-                    {row.variantCount} variant
-                    {row.variantCount !== 1 ? 's' : ''}
+                    {row.variantCount === 1
+                      ? t('admin.products.index.variantsCountOne', {
+                          count: row.variantCount,
+                        })
+                      : t('admin.products.index.variantsCount', {
+                          count: row.variantCount,
+                        })}
                   </span>
                   <span>{formatDate(row.createdAt)}</span>
                 </div>

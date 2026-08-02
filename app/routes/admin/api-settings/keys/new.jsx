@@ -8,6 +8,7 @@ import {
   parseCreateApiKeyFormData,
 } from '#/core/api-keys/index.server';
 import { API_KEY_SCOPES } from '#/core/api-keys/scopes';
+import { useT } from '#/core/i18n';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -20,7 +21,11 @@ import { ButtonSubmit } from '#/components/ui/button';
 const CHECKBOX_CLASS =
   'border-border text-accent focus:ring-accent bg-surface h-4 w-4 rounded';
 
+/**
+ * @param {{ value: string }} props
+ */
 function CopyButton({ value }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -34,7 +39,7 @@ function CopyButton({ value }) {
       type="button"
       onClick={handleCopy}
       className="text-success hover:text-success/80 ml-2 shrink-0 rounded p-1"
-      title="Copy to clipboard"
+      title={t('admin.apiSettings.keysNew.copyTitle')}
     >
       {copied ? (
         <CheckIcon className="h-4 w-4" />
@@ -58,7 +63,11 @@ export async function action({ request }) {
   }
 }
 
+/**
+ * @returns {React.ReactElement}
+ */
 export default function AdminNewApiKeyRoute() {
+  const t = useT();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
@@ -71,18 +80,21 @@ export default function AdminNewApiKeyRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'API', href: '/admin/api-settings' },
-              { label: 'New API key' },
+              {
+                label: t('admin.apiSettings.keysNew.breadcrumbApi'),
+                href: '/admin/api-settings',
+              },
+              { label: t('admin.apiSettings.keysNew.breadcrumb') },
             ]}
           />
         }
-        title="New API key"
-        subtitle="API keys authenticate requests to /api/admin/v1/* endpoints."
+        title={t('admin.apiSettings.keysNew.title')}
+        subtitle={t('admin.apiSettings.keysNew.subtitle')}
       />
 
       {createdKey && (
         <div className="bg-success/10 mb-6 rounded-lg p-4">
-          <SuccessAlert message="Key created — copy it now, it won't be shown again." />
+          <SuccessAlert message={t('admin.apiSettings.keysNew.createdAlert')} />
           <div className="text-success mt-2 flex items-center font-mono text-sm">
             <code className="break-all">{createdKey}</code>
             <CopyButton value={createdKey} />
@@ -95,19 +107,22 @@ export default function AdminNewApiKeyRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Key details"
-            description="Store keys securely. They are shown only once after creation."
+            title={t('admin.apiSettings.keysNew.cardTitle')}
+            description={t('admin.apiSettings.keysNew.cardDescription')}
           />
           <div className="space-y-4">
-            <Field label="Label *" htmlFor="api-key-label">
+            <Field
+              label={t('admin.apiSettings.keysNew.label')}
+              htmlFor="api-key-label"
+            >
               <Input
                 id="api-key-label"
                 name="label"
                 required
-                placeholder="My integration"
+                placeholder={t('admin.apiSettings.keysNew.labelPlaceholder')}
               />
             </Field>
-            <Field label="Scopes">
+            <Field label={t('admin.apiSettings.keysNew.scopes')}>
               <div className="flex gap-4">
                 {API_KEY_SCOPES.map((scope) => (
                   <label
@@ -144,11 +159,15 @@ export default function AdminNewApiKeyRoute() {
               to="/admin/api-settings"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              {createdKey ? 'Back to API settings' : 'Cancel'}
+              {createdKey
+                ? t('admin.apiSettings.keysNew.back')
+                : t('common.cancel')}
             </Link>
             {!createdKey && (
               <ButtonSubmit disabled={isSaving}>
-                {isSaving ? 'Creating…' : 'Create API key'}
+                {isSaving
+                  ? t('admin.apiSettings.keysNew.creating')
+                  : t('admin.apiSettings.keysNew.createButton')}
               </ButtonSubmit>
             )}
           </div>

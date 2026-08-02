@@ -10,6 +10,7 @@ import {
   updateCollection,
   deleteCollection,
 } from '#/core/collections/index.server';
+import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
@@ -18,19 +19,21 @@ import Textarea from '#/components/admin/form/textarea';
 import PageHeader from '#/components/admin/page-header';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 
-const RULE_TYPES = [
-  { value: 'tag', label: 'Product tag' },
-  { value: 'category', label: 'Category' },
-  { value: 'price_min', label: 'Minimum price (cents)' },
-  { value: 'price_max', label: 'Maximum price (cents)' },
-  { value: 'in_stock', label: 'In stock' },
-];
-
+/**
+ * @returns {{ type: string, value: string }}
+ */
 function emptyCondition() {
   return { type: 'tag', value: '' };
 }
 
+/**
+ * @param {Object} props
+ * @param {{ match?: string, conditions?: Array<{ type: string, value?: string }> } | null | undefined} props.initialRules
+ * @param {Array<{ id: string, title: string }>} props.categories
+ * @param {Array<{ id: string, name: string }>} props.tags
+ */
 function RulesBuilder({ initialRules, categories, tags }) {
+  const t = useT();
   const [match, setMatch] = useState(
     initialRules?.match === 'any' ? 'any' : 'all'
   );
@@ -40,26 +43,45 @@ function RulesBuilder({ initialRules, categories, tags }) {
       : [emptyCondition()]
   );
 
+  const ruleTypes = [
+    { value: 'tag', label: t('admin.collections.edit.ruleTag') },
+    { value: 'category', label: t('admin.collections.edit.ruleCategory') },
+    { value: 'price_min', label: t('admin.collections.edit.rulePriceMin') },
+    { value: 'price_max', label: t('admin.collections.edit.rulePriceMax') },
+    { value: 'in_stock', label: t('admin.collections.edit.ruleInStock') },
+  ];
+
+  /**
+   * @param {number} index
+   * @param {string} field
+   * @param {string} value
+   */
   function updateCondition(index, field, value) {
     setConditions((prev) =>
       prev.map((row, i) => (i === index ? { ...row, [field]: value } : row))
     );
   }
 
+  /**
+   * @param {number} index
+   */
   function removeCondition(index) {
     setConditions((prev) => prev.filter((_, i) => i !== index));
   }
 
   return (
     <div className="space-y-4 rounded-lg border p-4">
-      <Field label="Match mode" htmlFor="rules-match">
+      <Field
+        label={t('admin.collections.edit.matchMode')}
+        htmlFor="rules-match"
+      >
         <Select
           id="rules-match"
           value={match}
           onChange={(e) => setMatch(e.target.value)}
         >
-          <option value="all">All conditions</option>
-          <option value="any">Any condition</option>
+          <option value="all">{t('admin.collections.edit.matchAll')}</option>
+          <option value="any">{t('admin.collections.edit.matchAny')}</option>
         </Select>
       </Field>
 
@@ -67,12 +89,15 @@ function RulesBuilder({ initialRules, categories, tags }) {
 
       {conditions.map((condition, index) => (
         <div key={index} className="flex flex-wrap items-end gap-3">
-          <Field label="Rule type" className="min-w-40 flex-1">
+          <Field
+            label={t('admin.collections.edit.ruleType')}
+            className="min-w-40 flex-1"
+          >
             <Select
               value={condition.type}
               onChange={(e) => updateCondition(index, 'type', e.target.value)}
             >
-              {RULE_TYPES.map((type) => (
+              {ruleTypes.map((type) => (
                 <option key={type.value} value={type.value}>
                   {type.label}
                 </option>
@@ -80,7 +105,10 @@ function RulesBuilder({ initialRules, categories, tags }) {
             </Select>
           </Field>
 
-          <Field label="Value" className="min-w-48 flex-1">
+          <Field
+            label={t('admin.collections.edit.value')}
+            className="min-w-48 flex-1"
+          >
             {condition.type === 'category' ? (
               <Select
                 value={String(condition.value ?? '')}
@@ -88,7 +116,9 @@ function RulesBuilder({ initialRules, categories, tags }) {
                   updateCondition(index, 'value', e.target.value)
                 }
               >
-                <option value="">Select category</option>
+                <option value="">
+                  {t('admin.collections.edit.selectCategory')}
+                </option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.title}
@@ -102,8 +132,12 @@ function RulesBuilder({ initialRules, categories, tags }) {
                   updateCondition(index, 'value', e.target.value)
                 }
               >
-                <option value="true">In stock</option>
-                <option value="false">Out of stock</option>
+                <option value="true">
+                  {t('admin.collections.edit.inStock')}
+                </option>
+                <option value="false">
+                  {t('admin.collections.edit.outOfStock')}
+                </option>
               </Select>
             ) : condition.type === 'tag' ? (
               <Select
@@ -112,7 +146,9 @@ function RulesBuilder({ initialRules, categories, tags }) {
                   updateCondition(index, 'value', e.target.value)
                 }
               >
-                <option value="">Select tag</option>
+                <option value="">
+                  {t('admin.collections.edit.selectTag')}
+                </option>
                 {tags.map((tag) => (
                   <option key={tag.id} value={tag.name}>
                     {tag.name}
@@ -127,7 +163,7 @@ function RulesBuilder({ initialRules, categories, tags }) {
                 onChange={(e) =>
                   updateCondition(index, 'value', e.target.value)
                 }
-                placeholder="Amount in cents"
+                placeholder={t('admin.collections.edit.amountPlaceholder')}
               />
             )}
           </Field>
@@ -148,7 +184,7 @@ function RulesBuilder({ initialRules, categories, tags }) {
             variant="secondary"
             onClick={() => removeCondition(index)}
           >
-            Remove
+            {t('admin.collections.edit.remove')}
           </Button>
         </div>
       ))}
@@ -158,7 +194,7 @@ function RulesBuilder({ initialRules, categories, tags }) {
         variant="secondary"
         onClick={() => setConditions((prev) => [...prev, emptyCondition()])}
       >
-        Add condition
+        {t('admin.collections.edit.addCondition')}
       </Button>
     </div>
   );
@@ -228,6 +264,7 @@ export function meta({ loaderData }) {
 }
 
 export default function AdminEditCollectionRoute() {
+  const t = useT();
   const { collection, products, categories, tags } = useLoaderData();
   const [collectionType, setCollectionType] = useState(
     collection.collectionType ?? 'manual'
@@ -237,21 +274,23 @@ export default function AdminEditCollectionRoute() {
     <div>
       <PageHeader
         title={collection.title || collection.handle}
-        subtitle="Edit collection details, products, or smart rules."
+        subtitle={t('admin.collections.edit.subtitle')}
         actions={
           <div className="flex items-center gap-2">
             <Badge tone={collection.publishedAt ? 'success' : 'neutral'}>
-              {collection.publishedAt ? 'Published' : 'Draft'}
+              {collection.publishedAt
+                ? t('admin.products.status.published')
+                : t('admin.products.status.draft')}
             </Badge>
             <Button as={Link} to="/admin/collections" variant="secondary">
-              Back
+              {t('admin.collections.edit.back')}
             </Button>
           </div>
         }
       />
 
       <Form method="post" className="max-w-3xl space-y-6">
-        <Field label="Handle" htmlFor="handle">
+        <Field label={t('admin.collections.edit.handle')} htmlFor="handle">
           <Input
             id="handle"
             name="handle"
@@ -260,7 +299,7 @@ export default function AdminEditCollectionRoute() {
           />
         </Field>
 
-        <Field label="Title" htmlFor="title">
+        <Field label={t('admin.collections.edit.titleLabel')} htmlFor="title">
           <Input
             id="title"
             name="title"
@@ -269,7 +308,10 @@ export default function AdminEditCollectionRoute() {
           />
         </Field>
 
-        <Field label="Description" htmlFor="description">
+        <Field
+          label={t('admin.collections.edit.description')}
+          htmlFor="description"
+        >
           <Textarea
             id="description"
             name="description"
@@ -278,15 +320,22 @@ export default function AdminEditCollectionRoute() {
           />
         </Field>
 
-        <Field label="Collection type" htmlFor="collectionType">
+        <Field
+          label={t('admin.collections.edit.collectionType')}
+          htmlFor="collectionType"
+        >
           <Select
             id="collectionType"
             name="collectionType"
             value={collectionType}
             onChange={(e) => setCollectionType(e.target.value)}
           >
-            <option value="manual">Manual</option>
-            <option value="smart">Smart (rule-based)</option>
+            <option value="manual">
+              {t('admin.collections.edit.typeManual')}
+            </option>
+            <option value="smart">
+              {t('admin.collections.edit.typeSmart')}
+            </option>
           </Select>
         </Field>
 
@@ -296,7 +345,7 @@ export default function AdminEditCollectionRoute() {
             name="published"
             defaultChecked={Boolean(collection.publishedAt)}
           />
-          Published on storefront
+          {t('admin.collections.edit.published')}
         </label>
 
         {collectionType === 'smart' ? (
@@ -306,7 +355,7 @@ export default function AdminEditCollectionRoute() {
             tags={tags}
           />
         ) : (
-          <Field label="Products">
+          <Field label={t('admin.collections.edit.products')}>
             <div className="max-h-80 space-y-2 overflow-y-auto rounded-lg border p-3">
               {products.map((product) => (
                 <label
@@ -328,16 +377,18 @@ export default function AdminEditCollectionRoute() {
                 </label>
               ))}
               {!products.length && (
-                <p className="text-sm text-stone-500">No products available.</p>
+                <p className="text-sm text-stone-500">
+                  {t('admin.collections.edit.noProducts')}
+                </p>
               )}
             </div>
           </Field>
         )}
 
         <div className="flex flex-wrap gap-3">
-          <ButtonSubmit>Save collection</ButtonSubmit>
+          <ButtonSubmit>{t('admin.collections.edit.save')}</ButtonSubmit>
           <Button as={Link} to="/admin/collections" variant="secondary">
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </Form>
@@ -348,14 +399,12 @@ export default function AdminEditCollectionRoute() {
           type="submit"
           variant="secondary"
           onClick={(e) => {
-            if (
-              !window.confirm('Delete this collection? This cannot be undone.')
-            ) {
+            if (!window.confirm(t('admin.collections.edit.confirmDelete'))) {
               e.preventDefault();
             }
           }}
         >
-          Delete collection
+          {t('admin.collections.edit.delete')}
         </Button>
       </Form>
     </div>

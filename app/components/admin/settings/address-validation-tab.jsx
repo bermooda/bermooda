@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { useFetcher } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import { controlClasses } from '#/components/admin/form/input';
 import {
   FieldLabel,
@@ -17,22 +18,24 @@ import {
  * @returns {React.ReactElement}
  */
 export function AddressValidationTab({ data }) {
+  const t = useT();
   const fetcher = useFetcher();
   const [provider, setProvider] = useState(data.addressValidationProvider);
 
   return (
-    <SectionCard title="Address Validation">
+    <SectionCard title={t('admin.settings.addressValidation.title')}>
       <fetcher.Form method="post" className="space-y-6">
         <input type="hidden" name="intent" value="save-address-validation" />
         <input type="hidden" name="provider" value={provider} />
 
         <p className="text-text-muted text-sm">
-          Choose the provider used to validate shipping addresses during
-          checkout. The built-in no-op provider accepts all addresses.
+          {t('admin.settings.addressValidation.help')}
         </p>
 
         <div>
-          <FieldLabel>Provider</FieldLabel>
+          <FieldLabel>
+            {t('admin.settings.addressValidation.provider')}
+          </FieldLabel>
           <select
             value={provider}
             onChange={(event) => setProvider(event.target.value)}

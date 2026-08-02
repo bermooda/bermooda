@@ -9,6 +9,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { Form, Link, useFetcher, useRevalidator } from 'react-router';
 
 import { slugify } from '#/utils/slugify';
+import { useT } from '#/core/i18n';
 import ActionBar from '#/components/admin/action-bar';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
@@ -28,6 +29,14 @@ import Button, { ButtonSubmit } from '#/components/ui/button';
 /**
  * Per-locale translation fields. Auto-generates slug from title on the primary
  * locale until the slug field is edited manually.
+ *
+ * @param {Object} props
+ * @param {string} props.locale
+ * @param {Record<string, Record<string, string>>} props.translations
+ * @param {Record<string, string>} props.slugMap
+ * @param {string} props.primaryLocale
+ * @param {boolean} props.isActive
+ * @returns {React.ReactElement}
  */
 function LocaleEditor({
   locale,
@@ -36,9 +45,10 @@ function LocaleEditor({
   primaryLocale,
   isActive,
 }) {
-  const t = translations[locale] ?? {};
+  const t = useT();
+  const localeFields = translations[locale] ?? {};
   const initialSlug = slugMap[locale] ?? '';
-  const initialTitle = t.title ?? '';
+  const initialTitle = localeFields.title ?? '';
 
   const [title, setTitle] = useState(initialTitle);
   const [slug, setSlug] = useState(initialSlug);
@@ -68,7 +78,10 @@ function LocaleEditor({
     <div className="space-y-5 pt-5">
       <input type="hidden" name="locales[]" value={locale} />
 
-      <Field label="Title" htmlFor={`title-${locale}`}>
+      <Field
+        label={t('admin.products.editor.titleLabel')}
+        htmlFor={`title-${locale}`}
+      >
         <Input
           id={`title-${locale}`}
           name={`translation[${locale}][title]`}
@@ -81,22 +94,25 @@ function LocaleEditor({
       <SlugField
         id={`slug-${locale}`}
         name={`slug[${locale}]`}
-        label={`URL slug (${locale})`}
+        label={t('admin.products.editor.slugLabel', { locale })}
         hint={
           locale === primaryLocale
-            ? 'Generated from the title as you type. You can edit it anytime.'
+            ? t('admin.products.editor.slugHint')
             : undefined
         }
         value={slug}
         onChange={handleSlugChange}
-        placeholder="url-slug"
+        placeholder={t('admin.products.editor.slugPlaceholder')}
       />
 
-      <Field label="Description" htmlFor={`description-${locale}`}>
+      <Field
+        label={t('admin.products.editor.descriptionLabel')}
+        htmlFor={`description-${locale}`}
+      >
         <Textarea
           id={`description-${locale}`}
           name={`translation[${locale}][description]`}
-          defaultValue={t.description ?? ''}
+          defaultValue={localeFields.description ?? ''}
           rows={4}
         />
       </Field>
@@ -106,15 +122,22 @@ function LocaleEditor({
         descriptionFieldName={`translation[${locale}][seoDescription]`}
         titleId={`seo-title-${locale}`}
         descriptionId={`seo-desc-${locale}`}
-        defaultTitle={t.seoTitle ?? ''}
-        defaultDescription={t.seoDescription ?? ''}
+        defaultTitle={localeFields.seoTitle ?? ''}
+        defaultDescription={localeFields.seoDescription ?? ''}
       />
     </div>
   );
 }
 
-/** Options editor: add/remove options and their values */
+/**
+ * Options editor: add/remove options and their values.
+ *
+ * @param {Object} props
+ * @param {Array<{ id: string, name: string, position: number, values: Array<{ id: string, value: string }> }>} props.initialOptions
+ * @returns {React.ReactElement}
+ */
 function OptionsEditor({ initialOptions }) {
+  const t = useT();
   const [options, setOptions] = useState(initialOptions);
 
   function addOption() {
@@ -190,14 +213,14 @@ function OptionsEditor({ initialOptions }) {
               name={`option[${opt.id}][name]`}
               value={opt.name}
               onChange={(e) => updateOptionName(opt.id, e.target.value)}
-              placeholder="Option name (e.g. Size)"
+              placeholder={t('admin.products.editor.optionNamePlaceholder')}
               className="flex-1"
             />
             <button
               type="button"
               onClick={() => removeOption(opt.id)}
               className="text-text-muted hover:bg-danger/10 hover:text-danger rounded-md p-2 transition-colors"
-              aria-label="Remove option"
+              aria-label={t('admin.products.editor.removeOption')}
             >
               <TrashIcon className="h-4 w-4" />
             </button>
@@ -215,14 +238,14 @@ function OptionsEditor({ initialOptions }) {
                   name={`optionValue[${opt.id}][${vi}]`}
                   value={val.value}
                   onChange={(e) => updateValue(opt.id, val.id, e.target.value)}
-                  placeholder="Value"
+                  placeholder={t('admin.products.editor.valuePlaceholder')}
                   className="flex-1"
                 />
                 <button
                   type="button"
                   onClick={() => removeValue(opt.id, val.id)}
                   className="text-text-muted hover:bg-danger/10 hover:text-danger rounded-md p-2 transition-colors"
-                  aria-label="Remove value"
+                  aria-label={t('admin.products.editor.removeValue')}
                 >
                   <XMarkIcon className="h-4 w-4" />
                 </button>
@@ -234,7 +257,7 @@ function OptionsEditor({ initialOptions }) {
               className="text-accent hover:text-accent-hover inline-flex items-center gap-1 text-xs font-medium transition-colors"
             >
               <PlusIcon className="h-3.5 w-3.5" />
-              Add value
+              {t('admin.products.editor.addValue')}
             </button>
           </div>
         </div>
@@ -246,14 +269,23 @@ function OptionsEditor({ initialOptions }) {
         className="text-accent hover:text-accent-hover border-border hover:border-accent/40 inline-flex items-center gap-1.5 rounded-lg border border-dashed px-3 py-2 text-sm font-medium transition-colors"
       >
         <PlusIcon className="h-4 w-4" />
-        Add option
+        {t('admin.products.editor.addOption')}
       </button>
     </div>
   );
 }
 
-/** Per-currency price grid for all variants */
+/**
+ * Per-currency price grid for all variants.
+ *
+ * @param {Object} props
+ * @param {Array<{ id: string, sku: string, inventoryCount: number, prices: Record<string, { priceCents?: number, comparePriceCents?: number }> }>} props.variants
+ * @param {string[]} props.currencies
+ * @returns {React.ReactElement}
+ */
 function VariantPriceGrid({ variants, currencies }) {
+  const t = useT();
+
   function centsToDisplay(cents) {
     if (cents === '' || cents === null || cents === undefined) return '';
     return (Number(cents) / 100).toFixed(2);
@@ -265,12 +297,20 @@ function VariantPriceGrid({ variants, currencies }) {
         <table className="divide-border w-max divide-y text-sm">
           <thead className="bg-surface-2/60">
             <tr>
-              <Th className="px-3 py-2 whitespace-nowrap">SKU</Th>
-              <Th className="px-3 py-2 whitespace-nowrap">Inventory</Th>
+              <Th className="px-3 py-2 whitespace-nowrap">
+                {t('admin.products.editor.colSku')}
+              </Th>
+              <Th className="px-3 py-2 whitespace-nowrap">
+                {t('admin.products.editor.colInventory')}
+              </Th>
               {currencies.map((cur) => (
                 <Fragment key={cur}>
-                  <Th className="px-3 py-2 whitespace-nowrap">{cur} price</Th>
-                  <Th className="px-3 py-2 whitespace-nowrap">{cur} compare</Th>
+                  <Th className="px-3 py-2 whitespace-nowrap">
+                    {t('admin.products.editor.colPrice', { currency: cur })}
+                  </Th>
+                  <Th className="px-3 py-2 whitespace-nowrap">
+                    {t('admin.products.editor.colCompare', { currency: cur })}
+                  </Th>
                 </Fragment>
               ))}
             </tr>
@@ -282,7 +322,7 @@ function VariantPriceGrid({ variants, currencies }) {
                   <Input
                     name={`variant[${variant.id}][sku]`}
                     defaultValue={variant.sku}
-                    placeholder="SKU"
+                    placeholder={t('admin.products.editor.skuPlaceholder')}
                     className="w-24"
                   />
                 </td>
@@ -339,15 +379,24 @@ function VariantPriceGrid({ variants, currencies }) {
       </div>
       {variants.length === 0 && (
         <p className="text-text-muted py-8 text-center text-sm">
-          No variants yet.
+          {t('admin.products.editor.noVariants')}
         </p>
       )}
     </div>
   );
 }
 
-/** Media uploader + grid */
+/**
+ * Media uploader + grid.
+ *
+ * @param {Object} props
+ * @param {Array<{ mediaId: string, url: string, altText?: string }>} props.initialMedia
+ * @param {boolean} [props.disabled]
+ * @param {string} [props.disabledMessage]
+ * @returns {React.ReactElement}
+ */
 function MediaUploader({ initialMedia, disabled = false, disabledMessage }) {
+  const t = useT();
   const fetcher = useFetcher();
   const { revalidate } = useRevalidator();
   const fileRef = useRef(null);
@@ -413,7 +462,7 @@ function MediaUploader({ initialMedia, disabled = false, disabledMessage }) {
               type="button"
               onClick={() => handleDelete(item.mediaId)}
               className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition-opacity group-hover:opacity-100"
-              aria-label="Delete image"
+              aria-label={t('admin.products.editor.deleteImage')}
             >
               <TrashIcon className="h-5 w-5 text-white" />
             </button>
@@ -427,11 +476,15 @@ function MediaUploader({ initialMedia, disabled = false, disabledMessage }) {
           )}
         >
           {isUploading ? (
-            <span className="text-xs">Uploading…</span>
+            <span className="text-xs">
+              {t('admin.products.editor.uploading')}
+            </span>
           ) : (
             <>
               <PhotoIcon className="h-6 w-6" />
-              <span className="mt-2 text-xs font-medium">Add image</span>
+              <span className="mt-2 text-xs font-medium">
+                {t('admin.products.editor.addImage')}
+              </span>
             </>
           )}
           <input
@@ -448,8 +501,16 @@ function MediaUploader({ initialMedia, disabled = false, disabledMessage }) {
   );
 }
 
-/** Category picker — multi-select checkboxes */
+/**
+ * Category picker — multi-select checkboxes.
+ *
+ * @param {Object} props
+ * @param {{ id: string, title: string }[]} props.allCategories
+ * @param {string[]} props.selectedIds
+ * @returns {React.ReactElement}
+ */
 function CategoryPicker({ allCategories, selectedIds }) {
+  const t = useT();
   const [selected, setSelected] = useState(new Set(selectedIds));
 
   function toggle(id) {
@@ -467,7 +528,9 @@ function CategoryPicker({ allCategories, selectedIds }) {
   return (
     <div className="border-border max-h-56 space-y-1 overflow-y-auto rounded-lg border p-2">
       {allCategories.length === 0 && (
-        <p className="text-text-muted px-2 py-3 text-sm">No categories yet.</p>
+        <p className="text-text-muted px-2 py-3 text-sm">
+          {t('admin.products.editor.noCategories')}
+        </p>
       )}
       {allCategories.map((cat) => {
         const checked = selected.has(cat.id);
@@ -523,16 +586,19 @@ export default function ProductEditor({
   isSaving,
   slotBlocks = {},
 }) {
+  const t = useT();
   const primaryLocale = locales[0] ?? 'en';
   const [activeLocale, setActiveLocale] = useState(primaryLocale);
   const isCreate = mode === 'create';
   const isPublished = product.publishedAt !== null;
 
   const displayTitle = isCreate
-    ? 'New product'
+    ? t('admin.products.index.newButton')
     : translationMap[primaryLocale]?.title ||
       slugMap[primaryLocale] ||
-      `Product ${product.id.slice(0, 8)}`;
+      t('admin.products.editor.fallbackTitle', {
+        id: product.id.slice(0, 8),
+      });
 
   const createdDate = new Date(product.createdAt).toLocaleDateString('en-US', {
     month: 'long',
@@ -541,13 +607,15 @@ export default function ProductEditor({
   });
 
   const subtitle = isCreate ? (
-    'Add product details, pricing, and categories. Images can be uploaded after saving.'
+    t('admin.products.editor.createSubtitle')
   ) : (
     <span className="inline-flex flex-wrap items-center gap-2">
       <Badge tone={isPublished ? 'success' : 'neutral'}>
-        {isPublished ? 'Published' : 'Draft'}
+        {isPublished
+          ? t('admin.products.status.published')
+          : t('admin.products.status.draft')}
       </Badge>
-      <span>Created {createdDate}</span>
+      <span>{t('admin.products.editor.created', { date: createdDate })}</span>
     </span>
   );
 
@@ -557,7 +625,10 @@ export default function ProductEditor({
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Products', href: '/admin/products' },
+              {
+                label: t('admin.products.index.title'),
+                href: '/admin/products',
+              },
               { label: displayTitle },
             ]}
           />
@@ -580,7 +651,9 @@ export default function ProductEditor({
                 type="submit"
                 variant={isPublished ? 'secondary' : 'primary'}
               >
-                {isPublished ? 'Unpublish' : 'Publish'}
+                {isPublished
+                  ? t('admin.products.editor.unpublish')
+                  : t('admin.products.editor.publish')}
               </Button>
             </Form>
           )
@@ -593,7 +666,7 @@ export default function ProductEditor({
       />
 
       {actionData?.ok && actionData?.intent === 'save' && (
-        <SuccessAlert message="Product saved." />
+        <SuccessAlert message={t('admin.products.editor.saved')} />
       )}
       {actionData?.error && <ErrorAlert message={actionData.error} />}
 
@@ -608,8 +681,8 @@ export default function ProductEditor({
           <div className="min-w-0 space-y-6">
             <Card>
               <CardHeader
-                title="Content"
-                description="Localized titles, descriptions, and SEO metadata."
+                title={t('admin.products.editor.contentTitle')}
+                description={t('admin.products.editor.contentDescription')}
               />
               <LocaleTabs
                 locales={locales}
@@ -634,16 +707,16 @@ export default function ProductEditor({
 
             <Card>
               <CardHeader
-                title="Options"
-                description="Define option groups like size or color for variant generation."
+                title={t('admin.products.editor.optionsTitle')}
+                description={t('admin.products.editor.optionsDescription')}
               />
               <OptionsEditor initialOptions={product.options} />
             </Card>
 
             <Card>
               <CardHeader
-                title="Variants & pricing"
-                description="SKU, inventory, and per-currency prices for each variant."
+                title={t('admin.products.editor.variantsTitle')}
+                description={t('admin.products.editor.variantsDescription')}
               />
               {currencies.map((c) => (
                 <input key={c} type="hidden" name="currencies[]" value={c} />
@@ -658,8 +731,8 @@ export default function ProductEditor({
           <aside className="space-y-6">
             <Card>
               <CardHeader
-                title="Categories"
-                description="Assign this product to one or more categories."
+                title={t('admin.products.editor.categoriesTitle')}
+                description={t('admin.products.editor.categoriesDescription')}
               />
               <CategoryPicker
                 allCategories={allCategories}
@@ -669,13 +742,13 @@ export default function ProductEditor({
 
             <Card>
               <CardHeader
-                title="Media"
-                description="Product images shown on the storefront."
+                title={t('admin.products.editor.mediaTitle')}
+                description={t('admin.products.editor.mediaDescription')}
               />
               <MediaUploader
                 initialMedia={product.media}
                 disabled={isCreate}
-                disabledMessage="Save the product first to upload images."
+                disabledMessage={t('admin.products.editor.mediaDisabled')}
               />
             </Card>
           </aside>
@@ -689,16 +762,14 @@ export default function ProductEditor({
                 type="submit"
                 onClick={(e) => {
                   if (
-                    !window.confirm(
-                      'Delete this product? This cannot be undone.'
-                    )
+                    !window.confirm(t('admin.products.editor.confirmDelete'))
                   ) {
                     e.preventDefault();
                   }
                 }}
                 className="text-danger hover:text-danger/80 text-sm font-medium transition-colors"
               >
-                Delete product
+                {t('admin.products.editor.delete')}
               </button>
             </Form>
           ) : (
@@ -709,16 +780,16 @@ export default function ProductEditor({
               to="/admin/products"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
               {isSaving
                 ? isCreate
-                  ? 'Creating…'
-                  : 'Saving…'
+                  ? t('admin.products.editor.creating')
+                  : t('admin.products.editor.saving')
                 : isCreate
-                  ? 'Create product'
-                  : 'Save product'}
+                  ? t('admin.products.editor.create')
+                  : t('admin.products.editor.save')}
             </ButtonSubmit>
           </div>
         </ActionBar>

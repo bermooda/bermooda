@@ -15,6 +15,7 @@ import {
   createScheduledExport,
   parseCreateScheduledExportInput,
 } from '#/core/exports/index.server';
+import { useT } from '#/core/i18n';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -70,7 +71,11 @@ export async function action({ request }) {
   }
 }
 
+/**
+ * @returns {React.ReactElement}
+ */
 export default function AdminNewScheduledExportRoute() {
+  const t = useT();
   const { exportTypes, exportSchedules } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -82,13 +87,16 @@ export default function AdminNewScheduledExportRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Reports', href: '/admin/reports' },
-              { label: 'New scheduled export' },
+              {
+                label: t('admin.reports.index.title'),
+                href: '/admin/reports',
+              },
+              { label: t('admin.reports.schedulesNew.breadcrumb') },
             ]}
           />
         }
-        title="New scheduled export"
-        subtitle="Schedule recurring CSV exports delivered by email."
+        title={t('admin.reports.schedulesNew.title')}
+        subtitle={t('admin.reports.schedulesNew.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -96,19 +104,25 @@ export default function AdminNewScheduledExportRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Export schedule"
-            description="Exports run automatically on the selected schedule."
+            title={t('admin.reports.schedulesNew.cardTitle')}
+            description={t('admin.reports.schedulesNew.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Label *" htmlFor="export-label">
+            <Field
+              label={t('admin.reports.schedulesNew.label')}
+              htmlFor="export-label"
+            >
               <Input
                 id="export-label"
                 name="label"
                 required
-                placeholder="Weekly orders export"
+                placeholder={t('admin.reports.schedulesNew.labelPlaceholder')}
               />
             </Field>
-            <Field label="Export type *" htmlFor="export-type">
+            <Field
+              label={t('admin.reports.schedulesNew.exportType')}
+              htmlFor="export-type"
+            >
               <Select
                 id="export-type"
                 name="exportType"
@@ -116,16 +130,19 @@ export default function AdminNewScheduledExportRoute() {
                 defaultValue=""
               >
                 <option value="" disabled>
-                  Select type
+                  {t('admin.reports.schedulesNew.selectType')}
                 </option>
-                {exportTypes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                {exportTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
                   </option>
                 ))}
               </Select>
             </Field>
-            <Field label="Schedule *" htmlFor="export-schedule">
+            <Field
+              label={t('admin.reports.schedulesNew.schedule')}
+              htmlFor="export-schedule"
+            >
               <Select
                 id="export-schedule"
                 name="schedule"
@@ -133,21 +150,26 @@ export default function AdminNewScheduledExportRoute() {
                 defaultValue=""
               >
                 <option value="" disabled>
-                  Select schedule
+                  {t('admin.reports.schedulesNew.selectSchedule')}
                 </option>
-                {exportSchedules.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
+                {exportSchedules.map((scheduleOption) => (
+                  <option key={scheduleOption} value={scheduleOption}>
+                    {scheduleOption}
                   </option>
                 ))}
               </Select>
             </Field>
-            <Field label="Recipient email (optional)" htmlFor="export-email">
+            <Field
+              label={t('admin.reports.schedulesNew.recipientEmail')}
+              htmlFor="export-email"
+            >
               <Input
                 id="export-email"
                 name="recipientEmail"
                 type="email"
-                placeholder="ops@example.com"
+                placeholder={t(
+                  'admin.reports.schedulesNew.recipientPlaceholder'
+                )}
               />
             </Field>
           </div>
@@ -160,10 +182,12 @@ export default function AdminNewScheduledExportRoute() {
               to="/admin/reports"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Create schedule'}
+              {isSaving
+                ? t('admin.reports.schedulesNew.creating')
+                : t('admin.reports.schedulesNew.create')}
             </ButtonSubmit>
           </div>
         </ActionBar>

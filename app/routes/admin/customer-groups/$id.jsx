@@ -7,6 +7,7 @@ import {
 } from 'react-router';
 
 import { listCustomers } from '#/core/customers/index.server';
+import { useT } from '#/core/i18n';
 import {
   addCustomerToGroup,
   getCustomerGroup,
@@ -46,12 +47,12 @@ export async function action({ request, params }) {
   try {
     if (intent === 'add-member') {
       await addCustomerToGroup(params.id, customerId);
-      return { ok: true, message: 'Member added.' };
+      return { ok: true, intent };
     }
 
     if (intent === 'remove-member') {
       await removeCustomerFromGroup(params.id, customerId);
-      return { ok: true, message: 'Member removed.' };
+      return { ok: true, intent };
     }
 
     return { error: 'Unknown action.' };
@@ -66,6 +67,7 @@ export function meta({ loaderData }) {
 }
 
 export default function AdminCustomerGroupDetailRoute() {
+  const t = useT();
   const { group, customers } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -79,32 +81,49 @@ export default function AdminCustomerGroupDetailRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Customer groups', href: '/admin/customer-groups' },
+              {
+                label: t('admin.customerGroups.detail.breadcrumb'),
+                href: '/admin/customer-groups',
+              },
               { label: group.name },
             ]}
           />
         }
         title={group.name}
-        subtitle={`Handle: ${group.handle} · ${group._count.members} members · ${group._count.priceLists} price lists`}
+        subtitle={t('admin.customerGroups.detail.subtitle', {
+          handle: group.handle,
+          members: group._count.members,
+          priceLists: group._count.priceLists,
+        })}
         actions={
           <Button as={Link} to="/admin/customer-groups" variant="secondary">
-            Back
+            {t('admin.customerGroups.detail.back')}
           </Button>
         }
       />
 
       <ErrorAlert message={actionData?.error} />
-      {actionData?.ok && <SuccessAlert message={actionData.message} />}
+      {actionData?.ok && (
+        <SuccessAlert
+          message={t(
+            actionData.intent === 'remove-member'
+              ? 'admin.customerGroups.detail.memberRemoved'
+              : 'admin.customerGroups.detail.memberAdded'
+          )}
+        />
+      )}
 
       <div className="mt-6 space-y-6">
         <Card>
           <CardHeader
-            title="Members"
-            description="Add or remove customers in this group."
+            title={t('admin.customerGroups.detail.membersTitle')}
+            description={t('admin.customerGroups.detail.membersDescription')}
           />
 
           {group.members.length === 0 ? (
-            <p className="text-text-muted mb-4 text-sm">No members yet.</p>
+            <p className="text-text-muted mb-4 text-sm">
+              {t('admin.customerGroups.detail.noMembers')}
+            </p>
           ) : (
             <ul className="divide-border mb-4 divide-y text-sm">
               {group.members.map((row) => (
@@ -121,7 +140,7 @@ export default function AdminCustomerGroupDetailRoute() {
                       value={row.customerId}
                     />
                     <Button type="submit" variant="secondary">
-                      Remove
+                      {t('admin.customerGroups.detail.remove')}
                     </Button>
                   </Form>
                 </li>
@@ -131,7 +150,11 @@ export default function AdminCustomerGroupDetailRoute() {
 
           <Form method="post" className="flex flex-wrap items-end gap-3">
             <input type="hidden" name="intent" value="add-member" />
-            <Field label="Customer" htmlFor="group-customer" className="flex-1">
+            <Field
+              label={t('admin.customerGroups.detail.customer')}
+              htmlFor="group-customer"
+              className="flex-1"
+            >
               <Select
                 id="group-customer"
                 name="customerId"
@@ -140,8 +163,8 @@ export default function AdminCustomerGroupDetailRoute() {
               >
                 <option value="">
                   {availableCustomers.length === 0
-                    ? 'No customers available'
-                    : 'Select customer…'}
+                    ? t('admin.customerGroups.detail.noCustomersAvailable')
+                    : t('admin.customerGroups.detail.selectCustomer')}
                 </option>
                 {availableCustomers.map((customer) => (
                   <option key={customer.id} value={customer.id}>
@@ -153,7 +176,9 @@ export default function AdminCustomerGroupDetailRoute() {
             <ButtonSubmit
               disabled={isSaving || availableCustomers.length === 0}
             >
-              {isSaving ? 'Adding…' : 'Add member'}
+              {isSaving
+                ? t('admin.customerGroups.detail.adding')
+                : t('admin.customerGroups.detail.addMember')}
             </ButtonSubmit>
           </Form>
         </Card>
@@ -164,7 +189,7 @@ export default function AdminCustomerGroupDetailRoute() {
             to="/admin/customer-groups"
             className="text-text-muted hover:text-text text-sm transition-colors"
           >
-            Back to groups
+            {t('admin.customerGroups.detail.backToGroups')}
           </Link>
         </ActionBar>
       </div>

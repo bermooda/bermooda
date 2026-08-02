@@ -11,6 +11,7 @@ import {
   countCustomersWithOrders,
   listCustomers,
 } from '#/core/customers/index.server';
+import { useT } from '#/core/i18n';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
@@ -62,6 +63,7 @@ function formatDate(iso) {
 }
 
 export default function AdminCustomersRoute() {
+  const t = useT();
   const { rows, total, withOrdersCount, page, totalPages, q } = useLoaderData();
   const [, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -74,37 +76,49 @@ export default function AdminCustomersRoute() {
     });
   }
 
+  const columns = [
+    t('admin.customers.index.col.customer'),
+    t('admin.customers.index.col.phone'),
+    t('admin.customers.index.col.orders'),
+    t('admin.customers.index.col.joined'),
+  ];
+
   return (
     <div>
       <PageHeader
-        title="Customers"
-        subtitle="Manage customer profiles, addresses, and order history."
+        title={t('admin.customers.index.title')}
+        subtitle={t('admin.customers.index.subtitle')}
         actions={
           <Link
             to="/admin/customers/new"
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
-            New customer
+            {t('admin.customers.index.newButton')}
           </Link>
         }
       />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2">
-        <Stat label="Total customers" value={total} />
-        <Stat label="With orders" value={withOrdersCount} />
+        <Stat label={t('admin.customers.index.stat.total')} value={total} />
+        <Stat
+          label={t('admin.customers.index.stat.withOrders')}
+          value={withOrdersCount}
+        />
       </div>
 
       <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
         <Toolbar>
           <SearchField
             defaultValue={q}
-            placeholder="Search by email or name…"
+            placeholder={t('admin.customers.index.searchPlaceholder')}
             formClassName="w-full sm:max-w-sm"
           />
           <ToolbarGroup>
             <span className="text-text-muted text-sm">
-              {total} result{total !== 1 ? 's' : ''}
+              {total === 1
+                ? t('admin.customers.index.resultsOne', { count: total })
+                : t('admin.customers.index.results', { count: total })}
             </span>
           </ToolbarGroup>
         </Toolbar>
@@ -112,7 +126,7 @@ export default function AdminCustomersRoute() {
         <Table className="hidden rounded-none border-0 shadow-none md:block">
           <THead>
             <tr>
-              {['Customer', 'Phone', 'Orders', 'Joined'].map((col) => (
+              {columns.map((col) => (
                 <Th key={col}>{col}</Th>
               ))}
             </tr>
@@ -123,11 +137,11 @@ export default function AdminCustomersRoute() {
                 <Td colSpan={4} className="p-0">
                   <EmptyState
                     icon={UserGroupIcon}
-                    title="No customers found"
+                    title={t('admin.customers.index.emptyTitle')}
                     description={
                       q
-                        ? 'Try a different search term or clear the filter.'
-                        : 'Customers will appear here after they register or place an order.'
+                        ? t('admin.customers.index.emptyDescriptionSearch')
+                        : t('admin.customers.index.emptyDescription')
                     }
                     action={
                       !q && (
@@ -136,7 +150,7 @@ export default function AdminCustomersRoute() {
                           className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
                         >
                           <PlusIcon className="h-4 w-4" />
-                          New customer
+                          {t('admin.customers.index.newButton')}
                         </Link>
                       )
                     }
@@ -183,11 +197,11 @@ export default function AdminCustomersRoute() {
           {rows.length === 0 ? (
             <EmptyState
               icon={UserGroupIcon}
-              title="No customers found"
+              title={t('admin.customers.index.emptyTitle')}
               description={
                 q
-                  ? 'Try a different search term.'
-                  : 'Customers will appear here after they register or place an order.'
+                  ? t('admin.customers.index.emptyDescriptionSearchShort')
+                  : t('admin.customers.index.emptyDescription')
               }
               className="border-0 shadow-none"
             />
@@ -208,7 +222,13 @@ export default function AdminCustomersRoute() {
                 )}
                 <div className="text-text-muted mt-3 flex items-center justify-between text-xs">
                   <span>
-                    {row.orderCount} order{row.orderCount !== 1 ? 's' : ''}
+                    {row.orderCount === 1
+                      ? t('admin.customers.index.ordersCountOne', {
+                          count: row.orderCount,
+                        })
+                      : t('admin.customers.index.ordersCount', {
+                          count: row.orderCount,
+                        })}
                   </span>
                   <span>{formatDate(row.createdAt)}</span>
                 </div>

@@ -1,6 +1,7 @@
 import { Link, useLoaderData } from 'react-router';
 
 import { listCollections } from '#/core/collections/index.server';
+import { useT } from '#/core/i18n';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
 import Button from '#/components/ui/button';
@@ -25,17 +26,18 @@ export function meta() {
 }
 
 export default function AdminCollectionsRoute() {
+  const t = useT();
   const { collections, total, page } = useLoaderData();
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
       <PageHeader
-        title="Collections"
-        subtitle="Manual and smart product groupings."
+        title={t('admin.collections.index.title')}
+        subtitle={t('admin.collections.index.subtitle')}
         actions={
           <Button as={Link} to="/admin/collections/new">
-            New collection
+            {t('admin.collections.index.newButton')}
           </Button>
         }
       />
@@ -53,7 +55,11 @@ export default function AdminCollectionsRoute() {
                 {c.title}
               </Link>
               <p className="text-sm text-stone-500">
-                /{c.handle} · {c.collectionType} · {c._count.products} products
+                {t('admin.collections.index.meta', {
+                  handle: c.handle,
+                  type: c.collectionType,
+                  count: c._count.products,
+                })}
               </p>
             </div>
             <Button
@@ -61,13 +67,13 @@ export default function AdminCollectionsRoute() {
               to={`/admin/collections/${c.id}`}
               variant="secondary"
             >
-              Edit
+              {t('admin.collections.index.edit')}
             </Button>
           </li>
         ))}
         {!collections.length && (
           <li className="px-4 py-8 text-center text-sm text-stone-500">
-            No collections yet.
+            {t('admin.collections.index.empty')}
           </li>
         )}
       </ul>

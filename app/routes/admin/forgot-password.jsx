@@ -3,6 +3,7 @@ import { Form, Link, useActionData } from 'react-router';
 
 import config from '#/libs/config';
 import { adminAuth } from '#/libs/auth/admin/index.server';
+import { useT } from '#/core/i18n';
 import AuthLayout from '#/components/auth/auth-layout';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
@@ -22,6 +23,9 @@ export function meta() {
 
 /**
  * Action — sends a password reset email via the admin auth instance.
+ *
+ * @param {{ request: Request }} args
+ * @returns {Promise<{ error?: string, success?: boolean }>}
  */
 export async function action({ request }) {
   const formData = await request.formData();
@@ -51,20 +55,21 @@ export async function action({ request }) {
  * @returns {React.ReactElement}
  */
 export default function AdminForgotPasswordRoute() {
+  const t = useT();
   const actionData = useActionData();
   const [email, setEmail] = useState('');
 
   if (actionData?.success) {
     return (
-      <AuthLayout title="Check your email">
-        <SuccessAlert message="If an admin account exists with that email address, we've sent password reset instructions to it." />
+      <AuthLayout title={t('admin.auth.forgot.successTitle')}>
+        <SuccessAlert message={t('admin.auth.forgot.successMessage')} />
         <div className="mt-6 text-center">
           <Link
             to="/admin/login"
             prefetch="intent"
             className="text-accent text-sm font-medium hover:opacity-80"
           >
-            Return to login
+            {t('admin.auth.forgot.returnToLogin')}
           </Link>
         </div>
       </AuthLayout>
@@ -73,8 +78,8 @@ export default function AdminForgotPasswordRoute() {
 
   return (
     <AuthLayout
-      title="Reset admin password"
-      subtitle="Enter your email address and we'll send you a link to reset your password."
+      title={t('admin.auth.forgot.title')}
+      subtitle={t('admin.auth.forgot.subtitle')}
     >
       <ErrorAlert message={actionData?.error} />
 
@@ -84,7 +89,7 @@ export default function AdminForgotPasswordRoute() {
             htmlFor="email"
             className="text-text block text-sm/6 font-medium"
           >
-            Email address
+            {t('admin.auth.forgot.email')}
           </label>
           <div className="mt-2">
             <input
@@ -100,18 +105,20 @@ export default function AdminForgotPasswordRoute() {
           </div>
         </div>
         <div>
-          <ButtonSubmit className="w-full">Send reset link</ButtonSubmit>
+          <ButtonSubmit className="w-full">
+            {t('admin.auth.forgot.submit')}
+          </ButtonSubmit>
         </div>
       </Form>
 
       <p className="text-text-muted mt-10 text-center text-sm/6">
-        Remember your password?{' '}
+        {t('admin.auth.forgot.rememberPassword')}{' '}
         <Link
           to="/admin/login"
           prefetch="intent"
           className="text-accent font-semibold hover:opacity-80"
         >
-          Login
+          {t('admin.auth.forgot.loginLink')}
         </Link>
       </p>
     </AuthLayout>

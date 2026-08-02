@@ -6,6 +6,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import { createCustomerGroup } from '#/core/pricing/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
@@ -30,6 +31,7 @@ export async function action({ request }) {
 }
 
 export default function AdminNewCustomerGroupRoute() {
+  const t = useT();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
@@ -40,13 +42,16 @@ export default function AdminNewCustomerGroupRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Customer groups', href: '/admin/customer-groups' },
-              { label: 'New group' },
+              {
+                label: t('admin.customerGroups.new.breadcrumb'),
+                href: '/admin/customer-groups',
+              },
+              { label: t('admin.customerGroups.new.title') },
             ]}
           />
         }
-        title="New customer group"
-        subtitle="Create a B2B group for price list targeting."
+        title={t('admin.customerGroups.new.title')}
+        subtitle={t('admin.customerGroups.new.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -54,24 +59,30 @@ export default function AdminNewCustomerGroupRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Group details"
-            description="Handle is a unique lowercase identifier."
+            title={t('admin.customerGroups.new.cardTitle')}
+            description={t('admin.customerGroups.new.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name *" htmlFor="group-name">
+            <Field
+              label={t('admin.customerGroups.new.name')}
+              htmlFor="group-name"
+            >
               <Input
                 id="group-name"
                 name="name"
                 required
-                placeholder="Wholesale customers"
+                placeholder={t('admin.customerGroups.new.namePlaceholder')}
               />
             </Field>
-            <Field label="Handle *" htmlFor="group-handle">
+            <Field
+              label={t('admin.customerGroups.new.handle')}
+              htmlFor="group-handle"
+            >
               <Input
                 id="group-handle"
                 name="handle"
                 required
-                placeholder="wholesale"
+                placeholder={t('admin.customerGroups.new.handlePlaceholder')}
               />
             </Field>
           </div>
@@ -84,10 +95,12 @@ export default function AdminNewCustomerGroupRoute() {
               to="/admin/customer-groups"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Create group'}
+              {isSaving
+                ? t('admin.customerGroups.new.creating')
+                : t('admin.customerGroups.new.createButton')}
             </ButtonSubmit>
           </div>
         </ActionBar>

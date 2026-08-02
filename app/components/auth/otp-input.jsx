@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 
+import { useT } from '#/core/i18n';
+
 /**
  * OTP Input Component
  * 6-digit OTP input grid with auto-focus, paste handling, and keyboard navigation
@@ -12,13 +14,10 @@ import { useEffect, useRef } from 'react';
  * @param {string} [props.label] Optional label for the input group
  * @returns {React.ReactElement} OTP input component
  */
-export default function OtpInput({
-  value,
-  onChange,
-  disabled = false,
-  label = 'Enter verification code',
-}) {
+export default function OtpInput({ value, onChange, disabled = false, label }) {
+  const t = useT();
   const inputRefs = useRef([]);
+  const resolvedLabel = label ?? t('admin.auth.verify2fa.otpLabel');
 
   // Auto-focus first input on mount
   useEffect(() => {
@@ -68,7 +67,7 @@ export default function OtpInput({
 
   /**
    * Handle paste event for OTP inputs
-   * @param {React.ClipboardEvent} event Clipboard event
+   * @param {React.ClipboardEvent} event Paste event
    */
   const handlePaste = (event) => {
     event.preventDefault();
@@ -86,7 +85,7 @@ export default function OtpInput({
   return (
     <div>
       <label htmlFor="otp-0" className="text-text block text-sm/6 font-medium">
-        {label}
+        {resolvedLabel}
       </label>
       <div className="mt-2 flex justify-between gap-2">
         {value.map((digit, index) => (
@@ -105,12 +104,16 @@ export default function OtpInput({
             onPaste={index === 0 ? handlePaste : undefined}
             disabled={disabled}
             className="bg-surface text-text border-border focus:border-accent focus:ring-accent/40 block w-full rounded-md border px-3 py-3 text-center text-2xl font-semibold outline-none focus:ring-2"
-            aria-label={`Digit ${index + 1}`}
+            aria-label={t('admin.auth.verify2fa.otpDigitAria', {
+              n: index + 1,
+            })}
             autoComplete={index === 0 ? 'one-time-code' : 'off'}
           />
         ))}
       </div>
-      <p className="text-text-muted mt-2 text-xs">Code expires in 5 minutes</p>
+      <p className="text-text-muted mt-2 text-xs">
+        {t('admin.auth.verify2fa.otpExpires')}
+      </p>
     </div>
   );
 }

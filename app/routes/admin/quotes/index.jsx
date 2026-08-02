@@ -5,6 +5,7 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
 import { loadQuoteAdminIndexData, sendQuote } from '#/core/b2b/index.server';
+import { useT } from '#/core/i18n';
 import Card from '#/components/admin/card';
 import PageHeader from '#/components/admin/page-header';
 import Button from '#/components/ui/button';
@@ -31,28 +32,39 @@ export async function action({ request }) {
   }
 }
 
+/**
+ * @param {string} status
+ * @param {(key: string) => string} t
+ */
+function quoteStatusLabel(status, t) {
+  const key = `admin.quotes.status.${status}`;
+  const label = t(key);
+  return label === key ? status : label;
+}
+
 export default function AdminQuotesRoute() {
+  const t = useT();
   const { quotes } = useLoaderData();
 
   return (
     <div>
       <PageHeader
-        title="B2B quotes"
-        subtitle="Draft and send price quotes to company buyers."
+        title={t('admin.quotes.index.title')}
+        subtitle={t('admin.quotes.index.subtitle')}
         actions={
           <div className="flex items-center gap-3">
             <Link
               to="/admin/companies"
               className="text-text-muted hover:text-text text-sm font-medium"
             >
-              Companies →
+              {t('admin.quotes.index.companiesLink')}
             </Link>
             <Link
               to="/admin/quotes/new"
               className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
             >
               <PlusIcon className="h-4 w-4" />
-              New quote
+              {t('admin.quotes.index.newButton')}
             </Link>
           </div>
         }
@@ -60,15 +72,17 @@ export default function AdminQuotesRoute() {
       />
 
       <Card>
-        <h2 className="text-text mb-4 text-sm font-semibold">Quotes</h2>
+        <h2 className="text-text mb-4 text-sm font-semibold">
+          {t('admin.quotes.index.quotesHeading')}
+        </h2>
         {quotes.length === 0 ? (
           <p className="text-text-muted text-sm">
-            No quotes yet.{' '}
+            {t('admin.quotes.index.empty')}{' '}
             <Link
               to="/admin/quotes/new"
               className="text-accent hover:underline"
             >
-              Create your first quote
+              {t('admin.quotes.index.emptyLink')}
             </Link>
             .
           </p>
@@ -85,12 +99,15 @@ export default function AdminQuotesRoute() {
                       {quote.quoteNumber}
                     </p>
                     <p className="text-text-muted text-xs">
-                      {quote.company?.name} · {quote.lineCount ?? 0} line(s) ·{' '}
-                      {quote.formattedTotal}
+                      {t('admin.quotes.index.linesMeta', {
+                        company: quote.company?.name ?? '',
+                        count: quote.lineCount ?? 0,
+                        total: quote.formattedTotal,
+                      })}
                     </p>
                   </Link>
                   <span className="text-text-muted text-xs uppercase">
-                    {quote.status}
+                    {quoteStatusLabel(quote.status, t)}
                   </span>
                 </div>
                 {quote.status === 'draft' && (
@@ -98,7 +115,7 @@ export default function AdminQuotesRoute() {
                     <input type="hidden" name="intent" value="send-quote" />
                     <input type="hidden" name="quoteId" value={quote.id} />
                     <Button type="submit" variant="secondary">
-                      Mark sent
+                      {t('admin.quotes.index.markSent')}
                     </Button>
                   </Form>
                 )}

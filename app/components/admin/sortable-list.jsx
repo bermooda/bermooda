@@ -5,19 +5,25 @@ import { Bars3Icon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 
+import { useT } from '#/core/i18n';
+
 /**
  * Drag handle for sortable list rows.
  *
  * @param {{ handleRef: (element: Element | null) => void, disabled?: boolean, className?: string }} props
+ * @returns {React.ReactElement}
  */
 export function SortableGrip({ handleRef, disabled = false, className }) {
+  const t = useT();
+  const dragLabel = t('admin.sortable.dragToReorder');
+
   return (
     <button
       ref={handleRef}
       type="button"
       disabled={disabled}
-      title="Drag to reorder"
-      aria-label="Drag to reorder"
+      title={dragLabel}
+      aria-label={dragLabel}
       className={clsx(
         'text-text-muted hover:text-text cursor-grab touch-none rounded p-1 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30',
         className

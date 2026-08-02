@@ -6,7 +6,7 @@ import { useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin/index.server';
 import { listProvidersWithDetails as listAddressValidationProviders } from '#/core/address-validation/index.server';
-import { ADMIN_AVAILABLE_LOCALES } from '#/core/i18n';
+import { ADMIN_AVAILABLE_LOCALES, useT } from '#/core/i18n';
 import { getRequestLocale } from '#/core/i18n/index.server';
 import {
   listAdminUsers,
@@ -38,18 +38,6 @@ import { SeoTab } from '#/components/admin/settings/seo-tab';
 import { ShippingTab } from '#/components/admin/settings/shipping-tab';
 import { TaxTab } from '#/components/admin/settings/tax-tab';
 import Tabs from '#/components/admin/tabs';
-
-const TABS = [
-  'General',
-  'SEO',
-  'Currencies',
-  'Locales',
-  'Tax',
-  'Shipping',
-  'Address Validation',
-  'Admin Users',
-  'Email Templates',
-];
 
 /**
  * @param {{ request: Request }} args
@@ -172,19 +160,31 @@ export async function action({ request }) {
  * @returns {React.ReactElement}
  */
 export default function AdminSettingsRoute() {
+  const t = useT();
   const data = useLoaderData();
   const [activeTab, setActiveTab] = useState(0);
+  const tabs = [
+    t('admin.settings.index.tab.general'),
+    t('admin.settings.index.tab.seo'),
+    t('admin.settings.index.tab.currencies'),
+    t('admin.settings.index.tab.locales'),
+    t('admin.settings.index.tab.tax'),
+    t('admin.settings.index.tab.shipping'),
+    t('admin.settings.index.tab.addressValidation'),
+    t('admin.settings.index.tab.adminUsers'),
+    t('admin.settings.index.tab.emailTemplates'),
+  ];
 
   return (
     <div>
       <PageHeader
-        title="Settings"
-        subtitle="Manage your shop configuration."
+        title={t('admin.settings.index.title')}
+        subtitle={t('admin.settings.index.subtitle')}
         className="mb-6"
       />
 
       <Tabs
-        tabs={TABS}
+        tabs={tabs}
         active={activeTab}
         onChange={setActiveTab}
         className="mb-6"

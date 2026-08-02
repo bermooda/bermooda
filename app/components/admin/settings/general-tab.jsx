@@ -1,6 +1,6 @@
 import { useFetcher, useLocation } from 'react-router';
 
-import { LOCALE_LABELS, LOCALE_OPTIONS } from '#/core/i18n';
+import { LOCALE_LABELS, LOCALE_OPTIONS, useT } from '#/core/i18n';
 import { AVAILABLE_CURRENCIES } from '#/core/settings/defaults';
 import {
   FieldLabel,
@@ -19,6 +19,7 @@ import {
  * @returns {React.ReactElement|null}
  */
 export function AdminLocaleField({ adminLocale, availableLocales }) {
+  const t = useT();
   const fetcher = useFetcher();
   const location = useLocation();
   const returnTo = location.pathname + location.search;
@@ -28,7 +29,7 @@ export function AdminLocaleField({ adminLocale, availableLocales }) {
   return (
     <fetcher.Form method="post" action="/api/set-locale">
       <input type="hidden" name="returnTo" value={returnTo} />
-      <FieldLabel>Admin Interface Language</FieldLabel>
+      <FieldLabel>{t('admin.settings.general.adminLocale')}</FieldLabel>
       <select
         name="locale"
         defaultValue={adminLocale}
@@ -42,7 +43,7 @@ export function AdminLocaleField({ adminLocale, availableLocales }) {
         ))}
       </select>
       <p className="text-text-muted mt-1 text-xs">
-        Language used in the admin back office.
+        {t('admin.settings.general.adminLocaleHelp')}
       </p>
     </fetcher.Form>
   );
@@ -56,35 +57,36 @@ export function AdminLocaleField({ adminLocale, availableLocales }) {
  * @returns {React.ReactElement}
  */
 export function GeneralTab({ data }) {
+  const t = useT();
   const fetcher = useFetcher();
 
   return (
-    <SectionCard title="General Settings">
+    <SectionCard title={t('admin.settings.general.title')}>
       <div className="max-w-lg space-y-6">
         <fetcher.Form method="post" className="space-y-4">
           <input type="hidden" name="intent" value="save-general" />
           <div>
-            <FieldLabel>Shop Name</FieldLabel>
+            <FieldLabel>{t('admin.settings.general.shopName')}</FieldLabel>
             <input
               type="text"
               name="shopName"
               defaultValue={data.shopName}
-              placeholder="My Awesome Store"
+              placeholder={t('admin.settings.general.shopNamePlaceholder')}
               className={inputClass()}
             />
           </div>
           <div>
-            <FieldLabel>Contact Email</FieldLabel>
+            <FieldLabel>{t('admin.settings.general.contactEmail')}</FieldLabel>
             <input
               type="email"
               name="contactEmail"
               defaultValue={data.contactEmail}
-              placeholder="hello@example.com"
+              placeholder={t('admin.settings.general.contactEmailPlaceholder')}
               className={inputClass()}
             />
           </div>
           <div>
-            <FieldLabel>Default Locale</FieldLabel>
+            <FieldLabel>{t('admin.settings.general.defaultLocale')}</FieldLabel>
             <select
               name="defaultLocale"
               defaultValue={data.defaultLocale}
@@ -100,7 +102,9 @@ export function GeneralTab({ data }) {
             </select>
           </div>
           <div>
-            <FieldLabel>Default Currency</FieldLabel>
+            <FieldLabel>
+              {t('admin.settings.general.defaultCurrency')}
+            </FieldLabel>
             <select
               name="defaultCurrency"
               defaultValue={data.defaultCurrency}

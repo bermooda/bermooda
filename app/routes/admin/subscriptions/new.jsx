@@ -7,6 +7,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import { listRecentVariantsForInventory } from '#/core/inventory/index.server';
 import {
   createSubscriptionPlan,
@@ -45,6 +46,7 @@ export function meta() {
 }
 
 export default function AdminNewSubscriptionPlanRoute() {
+  const t = useT();
   const { variants } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -56,13 +58,16 @@ export default function AdminNewSubscriptionPlanRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Subscriptions', href: '/admin/subscriptions' },
-              { label: 'New plan' },
+              {
+                label: t('admin.subscriptions.new.breadcrumb'),
+                href: '/admin/subscriptions',
+              },
+              { label: t('admin.subscriptions.index.newButton') },
             ]}
           />
         }
-        title="New subscription plan"
-        subtitle="Create a recurring billing plan."
+        title={t('admin.subscriptions.new.title')}
+        subtitle={t('admin.subscriptions.new.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -70,38 +75,61 @@ export default function AdminNewSubscriptionPlanRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Plan details"
-            description="Name and billing interval. Variant is optional."
+            title={t('admin.subscriptions.new.cardTitle')}
+            description={t('admin.subscriptions.new.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name *" htmlFor="plan-name">
+            <Field
+              label={t('admin.subscriptions.new.name')}
+              htmlFor="plan-name"
+            >
               <Input
                 id="plan-name"
                 name="name"
                 required
-                placeholder="Monthly coffee box"
+                placeholder={t('admin.subscriptions.new.namePlaceholder')}
               />
             </Field>
-            <Field label="Product variant" htmlFor="plan-variant">
+            <Field
+              label={t('admin.subscriptions.new.variant')}
+              htmlFor="plan-variant"
+            >
               <Select id="plan-variant" name="variantId">
-                <option value="">None</option>
+                <option value="">
+                  {t('admin.subscriptions.new.variantNone')}
+                </option>
                 {variants.map((variant) => (
                   <option key={variant.id} value={variant.id}>
                     {variant.sku ?? variant.id} —{' '}
-                    {variant.product?.title ?? 'Product'}
+                    {variant.product?.title ??
+                      t('admin.subscriptions.new.productFallback')}
                   </option>
                 ))}
               </Select>
             </Field>
-            <Field label="Interval" htmlFor="plan-interval">
+            <Field
+              label={t('admin.subscriptions.new.interval')}
+              htmlFor="plan-interval"
+            >
               <Select id="plan-interval" name="interval" defaultValue="month">
-                <option value="day">Day</option>
-                <option value="week">Week</option>
-                <option value="month">Month</option>
-                <option value="year">Year</option>
+                <option value="day">
+                  {t('admin.subscriptions.new.intervalDay')}
+                </option>
+                <option value="week">
+                  {t('admin.subscriptions.new.intervalWeek')}
+                </option>
+                <option value="month">
+                  {t('admin.subscriptions.new.intervalMonth')}
+                </option>
+                <option value="year">
+                  {t('admin.subscriptions.new.intervalYear')}
+                </option>
               </Select>
             </Field>
-            <Field label="Every" htmlFor="plan-interval-count">
+            <Field
+              label={t('admin.subscriptions.new.every')}
+              htmlFor="plan-interval-count"
+            >
               <Input
                 id="plan-interval-count"
                 name="intervalCount"
@@ -120,10 +148,12 @@ export default function AdminNewSubscriptionPlanRoute() {
               to="/admin/subscriptions"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Create plan'}
+              {isSaving
+                ? t('admin.subscriptions.new.creating')
+                : t('admin.subscriptions.new.create')}
             </ButtonSubmit>
           </div>
         </ActionBar>

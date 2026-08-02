@@ -12,6 +12,7 @@ import {
   listProductRelations,
   setProductRelations,
 } from '#/core/catalog/relations.server';
+import { useT } from '#/core/i18n';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
@@ -65,17 +66,22 @@ export function meta({ loaderData }) {
 }
 
 export default function AdminProductMerchandisingRoute() {
+  const t = useT();
   const { product, attributes, related } = useLoaderData();
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title={`Merchandising: ${product.title}`}
-        subtitle="Attributes, related products, and variant option mapping."
+        title={t('admin.products.merchandising.title', {
+          title: product.title,
+        })}
+        subtitle={t('admin.products.merchandising.subtitle')}
       />
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Filterable attributes</h2>
+        <h2 className="mb-3 text-lg font-semibold">
+          {t('admin.products.merchandising.attributesHeading')}
+        </h2>
         <ul className="mb-4 divide-y rounded border">
           {attributes.map((attr) => (
             <li
@@ -89,7 +95,7 @@ export default function AdminProductMerchandisingRoute() {
                 <input type="hidden" name="intent" value="deleteAttribute" />
                 <input type="hidden" name="attributeId" value={attr.id} />
                 <button type="submit" className="text-sm text-red-600">
-                  Delete
+                  {t('admin.products.merchandising.delete')}
                 </button>
               </Form>
             </li>
@@ -97,28 +103,44 @@ export default function AdminProductMerchandisingRoute() {
         </ul>
         <Form method="post" className="grid max-w-lg gap-3">
           <input type="hidden" name="intent" value="addAttribute" />
-          <Field label="Name" htmlFor="name">
+          <Field label={t('admin.products.merchandising.name')} htmlFor="name">
             <Input id="name" name="name" required />
           </Field>
-          <Field label="Values (comma-separated)" htmlFor="values">
-            <Input id="values" name="values" placeholder="Red, Blue, Green" />
+          <Field
+            label={t('admin.products.merchandising.values')}
+            htmlFor="values"
+          >
+            <Input
+              id="values"
+              name="values"
+              placeholder={t('admin.products.merchandising.valuesPlaceholder')}
+            />
           </Field>
-          <ButtonSubmit>Add attribute</ButtonSubmit>
+          <ButtonSubmit>
+            {t('admin.products.merchandising.addAttribute')}
+          </ButtonSubmit>
         </Form>
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Related products</h2>
+        <h2 className="mb-3 text-lg font-semibold">
+          {t('admin.products.merchandising.relatedHeading')}
+        </h2>
         <Form method="post" className="max-w-lg space-y-3">
           <input type="hidden" name="intent" value="setRelated" />
-          <Field label="Related product IDs" htmlFor="relatedIds">
+          <Field
+            label={t('admin.products.merchandising.relatedIds')}
+            htmlFor="relatedIds"
+          >
             <Input
               id="relatedIds"
               name="relatedIds"
               defaultValue={related.map((r) => r.relatedId).join(', ')}
             />
           </Field>
-          <ButtonSubmit>Save related products</ButtonSubmit>
+          <ButtonSubmit>
+            {t('admin.products.merchandising.saveRelated')}
+          </ButtonSubmit>
         </Form>
       </section>
     </div>

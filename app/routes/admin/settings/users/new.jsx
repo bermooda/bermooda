@@ -1,6 +1,7 @@
 import { Form, Link, useActionData, useNavigation } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin/index.server';
+import { useT } from '#/core/i18n';
 import {
   createAdminStaffUser,
   requirePermission,
@@ -34,7 +35,11 @@ export async function action({ request }) {
   }
 }
 
+/**
+ * @returns {React.ReactElement}
+ */
 export default function AdminNewAdminUserRoute() {
+  const t = useT();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
@@ -46,20 +51,22 @@ export default function AdminNewAdminUserRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Settings', href: '/admin/settings' },
-              { label: 'Invite admin' },
+              {
+                label: t('admin.settings.usersNew.breadcrumbSettings'),
+                href: '/admin/settings',
+              },
+              { label: t('admin.settings.usersNew.breadcrumb') },
             ]}
           />
         }
-        title="Invite admin user"
-        subtitle="Create a new staff account for the admin back office."
+        title={t('admin.settings.usersNew.title')}
+        subtitle={t('admin.settings.usersNew.subtitle')}
       />
 
       {created && (
         <div className="bg-success/10 border-success/30 mb-6 rounded-md border p-4">
           <p className="text-success text-sm">
-            Invitation sent. They will receive an email with a link to create
-            their password.
+            {t('admin.settings.usersNew.success')}
           </p>
         </div>
       )}
@@ -69,25 +76,31 @@ export default function AdminNewAdminUserRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="User details"
-            description="An invite email with a password setup link will be sent automatically."
+            title={t('admin.settings.usersNew.cardTitle')}
+            description={t('admin.settings.usersNew.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Email *" htmlFor="admin-email">
+            <Field
+              label={t('admin.settings.usersNew.email')}
+              htmlFor="admin-email"
+            >
               <Input
                 id="admin-email"
                 name="email"
                 type="email"
                 required
-                placeholder="admin@example.com"
+                placeholder={t('admin.settings.usersNew.emailPlaceholder')}
                 disabled={created}
               />
             </Field>
-            <Field label="Name (optional)" htmlFor="admin-name">
+            <Field
+              label={t('admin.settings.usersNew.name')}
+              htmlFor="admin-name"
+            >
               <Input
                 id="admin-name"
                 name="name"
-                placeholder="Jane Smith"
+                placeholder={t('admin.settings.usersNew.namePlaceholder')}
                 disabled={created}
               />
             </Field>
@@ -101,11 +114,13 @@ export default function AdminNewAdminUserRoute() {
               to="/admin/settings"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              {created ? 'Back to settings' : 'Cancel'}
+              {created ? t('admin.settings.usersNew.back') : t('common.cancel')}
             </Link>
             {!created && (
               <ButtonSubmit disabled={isSaving}>
-                {isSaving ? 'Sending invite…' : 'Send invite'}
+                {isSaving
+                  ? t('admin.settings.usersNew.sending')
+                  : t('admin.settings.usersNew.sendButton')}
               </ButtonSubmit>
             )}
           </div>

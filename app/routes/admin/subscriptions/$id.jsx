@@ -7,6 +7,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   getSubscriptionPlan,
   parseUpdatePlanInput,
@@ -58,6 +59,7 @@ export function meta({ loaderData }) {
 }
 
 export default function AdminEditSubscriptionPlanRoute() {
+  const t = useT();
   const { plan } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -69,16 +71,21 @@ export default function AdminEditSubscriptionPlanRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Subscriptions', href: '/admin/subscriptions' },
+              {
+                label: t('admin.subscriptions.edit.breadcrumb'),
+                href: '/admin/subscriptions',
+              },
               { label: plan.name },
             ]}
           />
         }
         title={plan.name}
-        subtitle="Update plan name, interval, and active status."
+        subtitle={t('admin.subscriptions.edit.subtitle')}
         actions={
           <Badge tone={plan.active ? 'success' : 'neutral'}>
-            {plan.active ? 'Active' : 'Inactive'}
+            {plan.active
+              ? t('admin.subscriptions.status.active')
+              : t('admin.subscriptions.status.inactive')}
           </Badge>
         }
       />
@@ -87,9 +94,12 @@ export default function AdminEditSubscriptionPlanRoute() {
 
       <Form method="post" className="space-y-6">
         <Card>
-          <CardHeader title="Plan details" />
+          <CardHeader title={t('admin.subscriptions.edit.cardTitle')} />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name *" htmlFor="plan-name">
+            <Field
+              label={t('admin.subscriptions.edit.name')}
+              htmlFor="plan-name"
+            >
               <Input
                 id="plan-name"
                 name="name"
@@ -97,19 +107,33 @@ export default function AdminEditSubscriptionPlanRoute() {
                 defaultValue={plan.name}
               />
             </Field>
-            <Field label="Interval" htmlFor="plan-interval">
+            <Field
+              label={t('admin.subscriptions.edit.interval')}
+              htmlFor="plan-interval"
+            >
               <Select
                 id="plan-interval"
                 name="interval"
                 defaultValue={plan.interval}
               >
-                <option value="day">Day</option>
-                <option value="week">Week</option>
-                <option value="month">Month</option>
-                <option value="year">Year</option>
+                <option value="day">
+                  {t('admin.subscriptions.new.intervalDay')}
+                </option>
+                <option value="week">
+                  {t('admin.subscriptions.new.intervalWeek')}
+                </option>
+                <option value="month">
+                  {t('admin.subscriptions.new.intervalMonth')}
+                </option>
+                <option value="year">
+                  {t('admin.subscriptions.new.intervalYear')}
+                </option>
               </Select>
             </Field>
-            <Field label="Every" htmlFor="plan-interval-count">
+            <Field
+              label={t('admin.subscriptions.edit.every')}
+              htmlFor="plan-interval-count"
+            >
               <Input
                 id="plan-interval-count"
                 name="intervalCount"
@@ -124,12 +148,14 @@ export default function AdminEditSubscriptionPlanRoute() {
                 name="active"
                 defaultChecked={Boolean(plan.active)}
               />
-              Active
+              {t('admin.subscriptions.edit.active')}
             </label>
           </div>
           {plan.variant?.sku && (
             <p className="text-text-muted mt-4 text-sm">
-              Linked variant: {plan.variant.sku}
+              {t('admin.subscriptions.edit.linkedVariant', {
+                sku: plan.variant.sku,
+              })}
             </p>
           )}
         </Card>
@@ -141,10 +167,12 @@ export default function AdminEditSubscriptionPlanRoute() {
               to="/admin/subscriptions"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Saving…' : 'Save plan'}
+              {isSaving
+                ? t('admin.subscriptions.edit.saving')
+                : t('admin.subscriptions.edit.save')}
             </ButtonSubmit>
           </div>
         </ActionBar>

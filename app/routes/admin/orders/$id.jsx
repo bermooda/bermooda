@@ -12,6 +12,7 @@ import {
 import { handleAdminActionError } from '#/libs/api/admin-ui/index.server';
 import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
 import { formatPrice } from '#/core/currency/format';
+import { useT } from '#/core/i18n';
 import {
   addShipment,
   markDelivered,
@@ -34,10 +35,37 @@ import Card, { CardHeader } from '#/components/admin/card';
 import { controlClasses } from '#/components/admin/form/input';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
+import { ReturnStatusBadge } from '#/components/admin/return-status-badge';
 import { Td, Th } from '#/components/admin/table';
 import SlotBlocks from '#/components/slot-blocks';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
+
+/**
+ * Localized shipment status label with OrderStatusBadge-style fallback.
+ *
+ * @param {(key: string, vars?: Record<string, string|number>) => string} t
+ * @param {string} status
+ * @returns {string}
+ */
+function shipmentStatusLabel(t, status) {
+  const key = `admin.shipments.status.${status}`;
+  const label = t(key);
+  return label === key ? status : label;
+}
+
+/**
+ * Localized return resolution label with fallback to the raw enum value.
+ *
+ * @param {(key: string, vars?: Record<string, string|number>) => string} t
+ * @param {string} resolution
+ * @returns {string}
+ */
+function returnResolutionLabel(t, resolution) {
+  const key = `admin.returns.resolution.${resolution}`;
+  const label = t(key);
+  return label === key ? resolution : label;
+}
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -233,6 +261,12 @@ export async function action({ request, params }) {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {Object} props
+ * @param {string} props.title
+ * @param {string} [props.description]
+ * @param {React.ReactNode} props.children
+ */
 function SectionCard({ title, description, children }) {
   return (
     <Card>
@@ -242,13 +276,23 @@ function SectionCard({ title, description, children }) {
   );
 }
 
-function AddressDisplay({ json, label }) {
+/**
+ * @param {Object} props
+ * @param {string|null|undefined} props.json
+ * @param {string} [props.label]
+ * @param {(key: string, vars?: Record<string, string|number>) => string} props.t
+ */
+function AddressDisplay({ json, label, t }) {
   if (!json) return null;
   let addr;
   try {
     addr = JSON.parse(json);
   } catch {
-    return <p className="text-text-muted text-sm">{label}: (invalid JSON)</p>;
+    return (
+      <p className="text-text-muted text-sm">
+        {t('admin.orders.detail.invalidJson', { label: label ?? '' })}
+      </p>
+    );
   }
 
   const lines = [
@@ -279,20 +323,34 @@ function AddressDisplay({ json, label }) {
   );
 }
 
-// Determines which status transition buttons to show
+/** @typedef {{ labelKey: string, status: string, danger?: boolean }} StatusTransition */
+
+/** @type {Record<string, StatusTransition[]>} */
 const STATUS_TRANSITIONS = {
-  pending: [{ label: 'Mark as Paid', status: 'paid' }],
+  pending: [{ labelKey: 'admin.orders.detail.markAsPaid', status: 'paid' }],
   pending_payment: [
-    { label: 'Confirm Payment', status: 'paid' },
-    { label: 'Cancel Order', status: 'cancelled', danger: true },
+    { labelKey: 'admin.orders.detail.confirmPayment', status: 'paid' },
+    {
+      labelKey: 'admin.orders.detail.cancelOrder',
+      status: 'cancelled',
+      danger: true,
+    },
   ],
   paid: [
-    { label: 'Mark as Fulfilled', status: 'fulfilled' },
-    { label: 'Cancel Order', status: 'cancelled', danger: true },
+    { labelKey: 'admin.orders.detail.markAsFulfilled', status: 'fulfilled' },
+    {
+      labelKey: 'admin.orders.detail.cancelOrder',
+      status: 'cancelled',
+      danger: true,
+    },
   ],
   fulfilled: [
-    { label: 'Cancel Order', status: 'cancelled', danger: true },
-    { label: 'Refunded', status: 'refunded' },
+    {
+      labelKey: 'admin.orders.detail.cancelOrder',
+      status: 'cancelled',
+      danger: true,
+    },
+    { labelKey: 'admin.orders.detail.markRefunded', status: 'refunded' },
   ],
   cancelled: [],
   refunded: [],
@@ -303,6 +361,7 @@ const STATUS_TRANSITIONS = {
 // ---------------------------------------------------------------------------
 
 export default function AdminOrderRoute() {
+  const t = useT();
   const { order, slotBlocks } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -322,16 +381,21 @@ export default function AdminOrderRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Orders', href: '/admin/orders' },
+              {
+                label: t('admin.orders.detail.breadcrumb'),
+                href: '/admin/orders',
+              },
               { label: order.orderNumber },
             ]}
           />
         }
-        title={`Order ${order.orderNumber}`}
+        title={t('admin.orders.detail.title', { number: order.orderNumber })}
         subtitle={
           <span className="inline-flex flex-wrap items-center gap-2">
             <OrderStatusBadge status={order.status} />
-            <span>Placed {createdDate}</span>
+            <span>
+              {t('admin.orders.detail.placed', { date: createdDate })}
+            </span>
           </span>
         }
         actions={
@@ -339,7 +403,7 @@ export default function AdminOrderRoute() {
             href={`/admin/orders/${order.id}/documents`}
             className="border-border bg-surface-2 text-text hover:bg-surface inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-xs transition"
           >
-            Download invoice
+            {t('admin.orders.detail.downloadInvoice')}
           </a>
         }
       />
@@ -350,21 +414,23 @@ export default function AdminOrderRoute() {
       />
 
       {/* Action feedback */}
-      {actionData?.ok && <SuccessAlert message="Saved successfully." />}
+      {actionData?.ok && (
+        <SuccessAlert message={t('admin.orders.detail.saved')} />
+      )}
       {actionData?.error && <ErrorAlert message={actionData.error} />}
 
       {/* Status transitions */}
       {transitions.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {transitions.map((t) => (
-            <Form method="post" key={t.status}>
+          {transitions.map((transition) => (
+            <Form method="post" key={transition.status}>
               <input type="hidden" name="intent" value="update-status" />
-              <input type="hidden" name="status" value={t.status} />
+              <input type="hidden" name="status" value={transition.status} />
               <ButtonSubmit
-                variant={t.danger ? 'danger' : 'primary'}
+                variant={transition.danger ? 'danger' : 'primary'}
                 disabled={isSubmitting}
               >
-                {t.label}
+                {t(transition.labelKey)}
               </ButtonSubmit>
             </Form>
           ))}
@@ -373,20 +439,30 @@ export default function AdminOrderRoute() {
 
       {/* Line items */}
       <SectionCard
-        title="Line items"
-        description="Products included in this order."
+        title={t('admin.orders.detail.lineItems')}
+        description={t('admin.orders.detail.lineItemsDesc')}
       >
         <div className="overflow-x-auto">
           <table className="divide-border min-w-full divide-y">
             <thead className="bg-surface-2/50">
               <tr>
-                <Th>Item</Th>
-                <Th>SKU</Th>
-                <Th className="text-center">Qty</Th>
-                <Th className="text-center">Fulfilled</Th>
-                <Th className="text-center">Returned</Th>
-                <Th className="text-right">Unit Price</Th>
-                <Th className="text-right">Total</Th>
+                <Th>{t('admin.orders.detail.col.item')}</Th>
+                <Th>{t('admin.orders.detail.col.sku')}</Th>
+                <Th className="text-center">
+                  {t('admin.orders.detail.col.qty')}
+                </Th>
+                <Th className="text-center">
+                  {t('admin.orders.detail.col.fulfilled')}
+                </Th>
+                <Th className="text-center">
+                  {t('admin.orders.detail.col.returned')}
+                </Th>
+                <Th className="text-right">
+                  {t('admin.orders.detail.col.unitPrice')}
+                </Th>
+                <Th className="text-right">
+                  {t('admin.orders.detail.col.total')}
+                </Th>
               </tr>
             </thead>
             <tbody className="divide-border divide-y">
@@ -413,7 +489,7 @@ export default function AdminOrderRoute() {
             <tfoot className="border-border border-t">
               <tr>
                 <Td colSpan={6} className="text-right">
-                  Subtotal
+                  {t('admin.orders.detail.subtotal')}
                 </Td>
                 <Td className="text-text text-right">
                   {formatPrice(order.subtotalCents, order.currency)}
@@ -422,7 +498,7 @@ export default function AdminOrderRoute() {
               {order.shippingCents > 0 && (
                 <tr>
                   <Td colSpan={6} className="text-right">
-                    Shipping
+                    {t('admin.orders.detail.shipping')}
                   </Td>
                   <Td className="text-text text-right">
                     {formatPrice(order.shippingCents, order.currency)}
@@ -432,7 +508,7 @@ export default function AdminOrderRoute() {
               {order.taxCents > 0 && (
                 <tr>
                   <Td colSpan={6} className="text-right">
-                    Tax
+                    {t('admin.orders.detail.tax')}
                   </Td>
                   <Td className="text-text text-right">
                     {formatPrice(order.taxCents, order.currency)}
@@ -442,7 +518,7 @@ export default function AdminOrderRoute() {
               {order.discountCents > 0 && (
                 <tr>
                   <Td colSpan={6} className="text-right">
-                    Discount
+                    {t('admin.orders.detail.discount')}
                   </Td>
                   <Td className="text-success text-right">
                     -{formatPrice(order.discountCents, order.currency)}
@@ -451,7 +527,7 @@ export default function AdminOrderRoute() {
               )}
               <tr className="border-border border-t">
                 <Td colSpan={6} className="text-text text-right font-semibold">
-                  Total
+                  {t('admin.orders.detail.total')}
                 </Td>
                 <Td className="text-text text-right font-semibold">
                   {formatPrice(order.totalCents, order.currency)}
@@ -466,36 +542,46 @@ export default function AdminOrderRoute() {
       <div className="grid gap-6 md:grid-cols-2">
         {/* Payment info */}
         <SectionCard
-          title="Payment"
-          description="Payment provider and customer details."
+          title={t('admin.orders.detail.payment')}
+          description={t('admin.orders.detail.paymentDesc')}
         >
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-text-muted">Provider</dt>
+              <dt className="text-text-muted">
+                {t('admin.orders.detail.provider')}
+              </dt>
               <dd className="text-text font-medium">
                 {order.paymentProvider ?? '—'}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-text-muted">Intent ID</dt>
+              <dt className="text-text-muted">
+                {t('admin.orders.detail.intentId')}
+              </dt>
               <dd className="text-text max-w-[180px] truncate font-mono text-xs">
                 {order.paymentIntentId ?? '—'}
               </dd>
             </div>
             {order.couponCode && (
               <div className="flex justify-between">
-                <dt className="text-text-muted">Coupon</dt>
+                <dt className="text-text-muted">
+                  {t('admin.orders.detail.coupon')}
+                </dt>
                 <dd className="text-text font-mono text-xs">
                   {order.couponCode}
                 </dd>
               </div>
             )}
             <div className="flex justify-between">
-              <dt className="text-text-muted">Currency</dt>
+              <dt className="text-text-muted">
+                {t('admin.orders.detail.currency')}
+              </dt>
               <dd className="text-text font-medium">{order.currency}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-text-muted">Customer</dt>
+              <dt className="text-text-muted">
+                {t('admin.orders.detail.customer')}
+              </dt>
               <dd className="text-text">
                 {order.customer?.name
                   ? `${order.customer.name} (${order.email})`
@@ -507,13 +593,17 @@ export default function AdminOrderRoute() {
 
         {/* Shipping address */}
         <SectionCard
-          title="Shipping address"
-          description="Delivery and billing addresses."
+          title={t('admin.orders.detail.shippingAddress')}
+          description={t('admin.orders.detail.shippingAddressDesc')}
         >
-          <AddressDisplay json={order.shippingAddressJson} />
+          <AddressDisplay json={order.shippingAddressJson} t={t} />
           {order.billingAddressJson && (
             <div className="mt-4">
-              <AddressDisplay json={order.billingAddressJson} label="Billing" />
+              <AddressDisplay
+                json={order.billingAddressJson}
+                label={t('admin.orders.detail.billing')}
+                t={t}
+              />
             </div>
           )}
         </SectionCard>
@@ -521,25 +611,27 @@ export default function AdminOrderRoute() {
 
       {/* Shipments */}
       <SectionCard
-        title="Shipments"
-        description="Track fulfillment and add new shipments."
+        title={t('admin.orders.detail.shipments')}
+        description={t('admin.orders.detail.shipmentsDesc')}
       >
         {order.shipments.length > 0 && (
           <div className="mb-4 overflow-x-auto">
             <table className="divide-border min-w-full divide-y text-sm">
               <thead className="bg-surface-2/50">
                 <tr>
-                  <Th>Status</Th>
-                  <Th>Carrier</Th>
-                  <Th>Tracking</Th>
-                  <Th>Shipped At</Th>
-                  <Th>Documents</Th>
+                  <Th>{t('admin.orders.detail.col.status')}</Th>
+                  <Th>{t('admin.orders.detail.col.carrier')}</Th>
+                  <Th>{t('admin.orders.detail.col.tracking')}</Th>
+                  <Th>{t('admin.orders.detail.col.shippedAt')}</Th>
+                  <Th>{t('admin.orders.detail.col.documents')}</Th>
                 </tr>
               </thead>
               <tbody className="divide-border divide-y">
                 {order.shipments.map((s) => (
                   <tr key={s.id}>
-                    <Td className="text-text capitalize">{s.status}</Td>
+                    <Td className="text-text">
+                      {shipmentStatusLabel(t, s.status)}
+                    </Td>
                     <Td className="text-text">{s.carrier ?? '—'}</Td>
                     <Td>
                       {s.trackingUrl ? (
@@ -571,7 +663,7 @@ export default function AdminOrderRoute() {
                         href={`/admin/shipments/${s.id}/documents`}
                         className="text-accent text-xs font-medium hover:underline"
                       >
-                        Packing slip
+                        {t('admin.orders.detail.packingSlip')}
                       </a>
                     </Td>
                   </tr>
@@ -587,7 +679,7 @@ export default function AdminOrderRoute() {
         ) && (
           <div className="mb-4 space-y-2">
             <p className="text-text-muted text-xs font-medium">
-              Ship quantities (partial fulfillment)
+              {t('admin.orders.detail.shipQuantities')}
             </p>
             {order.lines
               .filter(
@@ -620,50 +712,54 @@ export default function AdminOrderRoute() {
         {/* Mark Shipped form */}
         <Form method="post" className="space-y-3">
           <input type="hidden" name="intent" value="add-shipment" />
-          <p className="text-text text-sm font-medium">Add Shipment</p>
+          <p className="text-text text-sm font-medium">
+            {t('admin.orders.detail.addShipment')}
+          </p>
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
               <label className="text-text-muted mb-1 block text-xs">
-                Carrier
+                {t('admin.orders.detail.carrier')}
               </label>
               <input
                 type="text"
                 name="carrier"
-                placeholder="UPS, FedEx…"
+                placeholder={t('admin.orders.detail.carrierPlaceholder')}
                 className={controlClasses}
               />
             </div>
             <div>
               <label className="text-text-muted mb-1 block text-xs">
-                Tracking Number
+                {t('admin.orders.detail.trackingNumber')}
               </label>
               <input
                 type="text"
                 name="trackingNumber"
-                placeholder="1Z999…"
+                placeholder={t('admin.orders.detail.trackingNumberPlaceholder')}
                 className={controlClasses}
               />
             </div>
             <div>
               <label className="text-text-muted mb-1 block text-xs">
-                Tracking URL
+                {t('admin.orders.detail.trackingUrl')}
               </label>
               <input
                 type="url"
                 name="trackingUrl"
-                placeholder="https://…"
+                placeholder={t('admin.orders.detail.trackingUrlPlaceholder')}
                 className={controlClasses}
               />
             </div>
           </div>
-          <ButtonSubmit disabled={isSubmitting}>Mark Shipped</ButtonSubmit>
+          <ButtonSubmit disabled={isSubmitting}>
+            {t('admin.orders.detail.markShipped')}
+          </ButtonSubmit>
         </Form>
       </SectionCard>
 
       {/* Returns */}
       <SectionCard
-        title="Returns"
-        description="Manage return requests and resolutions."
+        title={t('admin.orders.detail.returns')}
+        description={t('admin.orders.detail.returnsDesc')}
       >
         {order.returns.length > 0 && (
           <div className="mb-4 space-y-4">
@@ -673,9 +769,13 @@ export default function AdminOrderRoute() {
                   <span className="text-text-muted font-mono text-xs">
                     {ret.id.slice(-8)}
                   </span>
-                  <span className="text-text text-sm capitalize">
-                    {ret.status}
-                    {ret.resolution ? ` (${ret.resolution})` : ''}
+                  <span className="flex items-center gap-2 text-sm">
+                    <ReturnStatusBadge status={ret.status} />
+                    {ret.resolution ? (
+                      <span className="text-text-muted">
+                        ({returnResolutionLabel(t, ret.resolution)})
+                      </span>
+                    ) : null}
                   </span>
                 </div>
                 {ret.reason && (
@@ -685,7 +785,9 @@ export default function AdminOrderRoute() {
                   {ret.lines.map((l) => (
                     <li key={l.id}>
                       {l.title} × {l.quantity}
-                      {l.restocked ? ' (restocked)' : ''}
+                      {l.restocked
+                        ? ` ${t('admin.orders.detail.restocked')}`
+                        : ''}
                     </li>
                   ))}
                 </ul>
@@ -700,7 +802,7 @@ export default function AdminOrderRoute() {
                       <input type="hidden" name="returnId" value={ret.id} />
                       <input type="hidden" name="resolution" value="refund" />
                       <Button type="submit" variant="primary">
-                        Approve (Refund)
+                        {t('admin.orders.detail.approveRefund')}
                       </Button>
                     </Form>
                   )}
@@ -714,7 +816,7 @@ export default function AdminOrderRoute() {
                       />
                       <input type="hidden" name="returnId" value={ret.id} />
                       <Button type="submit" variant="secondary">
-                        Cancel
+                        {t('common.cancel')}
                       </Button>
                     </Form>
                   )}
@@ -727,7 +829,7 @@ export default function AdminOrderRoute() {
                       />
                       <input type="hidden" name="returnId" value={ret.id} />
                       <Button type="submit" variant="primary">
-                        Mark Received
+                        {t('admin.orders.detail.markReceived')}
                       </Button>
                     </Form>
                   )}
@@ -742,7 +844,7 @@ export default function AdminOrderRoute() {
                         <input type="hidden" name="returnId" value={ret.id} />
                         <input type="hidden" name="resolution" value="refund" />
                         <Button type="submit" variant="danger">
-                          Issue Refund
+                          {t('admin.orders.detail.issueRefund')}
                         </Button>
                       </Form>
                       <Form method="post" className="inline">
@@ -758,7 +860,7 @@ export default function AdminOrderRoute() {
                           value="store_credit"
                         />
                         <Button type="submit" variant="primary">
-                          Issue Store Credit
+                          {t('admin.orders.detail.issueStoreCredit')}
                         </Button>
                       </Form>
                     </>
@@ -769,24 +871,26 @@ export default function AdminOrderRoute() {
           </div>
         )}
         {order.returns.length === 0 && (
-          <p className="text-text-muted text-sm">No returns for this order.</p>
+          <p className="text-text-muted text-sm">
+            {t('admin.orders.detail.noReturns')}
+          </p>
         )}
       </SectionCard>
 
       {/* Refunds */}
       <SectionCard
-        title="Refunds"
-        description="Issue and review refunds for this order."
+        title={t('admin.orders.detail.refunds')}
+        description={t('admin.orders.detail.refundsDesc')}
       >
         {order.refunds.length > 0 && (
           <div className="mb-4 overflow-x-auto">
             <table className="divide-border min-w-full divide-y text-sm">
               <thead className="bg-surface-2/50">
                 <tr>
-                  <Th>Amount</Th>
-                  <Th>Reason</Th>
-                  <Th>Status</Th>
-                  <Th>Date</Th>
+                  <Th>{t('admin.orders.detail.col.amount')}</Th>
+                  <Th>{t('admin.orders.detail.col.reason')}</Th>
+                  <Th>{t('admin.orders.detail.col.status')}</Th>
+                  <Th>{t('admin.orders.detail.col.date')}</Th>
                 </tr>
               </thead>
               <tbody className="divide-border divide-y">
@@ -814,42 +918,44 @@ export default function AdminOrderRoute() {
         {/* Refund form */}
         <Form method="post" className="space-y-3">
           <input type="hidden" name="intent" value="add-refund" />
-          <p className="text-text text-sm font-medium">Issue Refund</p>
+          <p className="text-text text-sm font-medium">
+            {t('admin.orders.detail.issueRefundHeading')}
+          </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="text-text-muted mb-1 block text-xs">
-                Amount (cents)
+                {t('admin.orders.detail.amountCents')}
               </label>
               <input
                 type="number"
                 name="amountCents"
                 min={1}
-                placeholder="e.g. 1000 = $10.00"
+                placeholder={t('admin.orders.detail.amountCentsPlaceholder')}
                 className={controlClasses}
               />
             </div>
             <div>
               <label className="text-text-muted mb-1 block text-xs">
-                Reason
+                {t('admin.orders.detail.reason')}
               </label>
               <input
                 type="text"
                 name="reason"
-                placeholder="Customer request, damaged item…"
+                placeholder={t('admin.orders.detail.reasonPlaceholder')}
                 className={controlClasses}
               />
             </div>
           </div>
           <ButtonSubmit variant="danger" disabled={isSubmitting}>
-            Create Refund
+            {t('admin.orders.detail.createRefund')}
           </ButtonSubmit>
         </Form>
       </SectionCard>
 
       {/* Notes */}
       <SectionCard
-        title="Notes"
-        description="Internal notes visible only to staff."
+        title={t('admin.orders.detail.notes')}
+        description={t('admin.orders.detail.notesDesc')}
       >
         {order.notes && (
           <p className="text-text mb-4 text-sm whitespace-pre-wrap">
@@ -862,10 +968,12 @@ export default function AdminOrderRoute() {
             name="notes"
             defaultValue={order.notes}
             rows={4}
-            placeholder="Internal notes about this order…"
+            placeholder={t('admin.orders.detail.notesPlaceholder')}
             className={controlClasses}
           />
-          <ButtonSubmit disabled={isSubmitting}>Save Notes</ButtonSubmit>
+          <ButtonSubmit disabled={isSubmitting}>
+            {t('admin.orders.detail.saveNotes')}
+          </ButtonSubmit>
         </Form>
       </SectionCard>
     </div>

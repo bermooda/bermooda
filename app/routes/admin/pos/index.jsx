@@ -4,6 +4,7 @@
 import { Form, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin/index.server';
+import { useT } from '#/core/i18n';
 import {
   closePosSession,
   createPosDraftOrder,
@@ -61,26 +62,40 @@ export async function action({ request }) {
   return { ok: false, error: 'Unknown action.' };
 }
 
+/**
+ * @param {string} status
+ * @param {(key: string) => string} t
+ */
+function posSessionStatusLabel(status, t) {
+  const key = `admin.pos.status.${status}`;
+  const label = t(key);
+  return label === key ? status : label;
+}
+
 export default function AdminPosRoute() {
+  const t = useT();
   const { locations, sessions, openSession, staffId } = useLoaderData();
 
   return (
     <div>
       <PageHeader
-        title="Point of sale"
-        subtitle="In-store sessions and draft orders. Complete drafts via manual payment in Orders."
+        title={t('admin.pos.index.title')}
+        subtitle={t('admin.pos.index.subtitle')}
         className="mb-6"
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h2 className="text-text mb-4 text-sm font-semibold">Session</h2>
+          <h2 className="text-text mb-4 text-sm font-semibold">
+            {t('admin.pos.index.sessionHeading')}
+          </h2>
           {openSession ? (
             <div className="space-y-4">
               <p className="text-text text-sm">
-                Open session at{' '}
+                {t('admin.pos.index.openSessionAt')}{' '}
                 <span className="font-medium">
-                  {openSession.location?.name ?? 'No location'}
+                  {openSession.location?.name ??
+                    t('admin.pos.index.noLocation')}
                 </span>
               </p>
               <Form method="post" className="space-y-3">
@@ -88,13 +103,15 @@ export default function AdminPosRoute() {
                 <input type="hidden" name="sessionId" value={openSession.id} />
                 <input type="hidden" name="currency" value="USD" />
                 <Button type="submit" variant="secondary">
-                  Create draft order ($0)
+                  {t('admin.pos.index.createDraft')}
                 </Button>
               </Form>
               <Form method="post">
                 <input type="hidden" name="intent" value="close-session" />
                 <input type="hidden" name="sessionId" value={openSession.id} />
-                <Button type="submit">Close session</Button>
+                <Button type="submit">
+                  {t('admin.pos.index.closeSession')}
+                </Button>
               </Form>
             </div>
           ) : (
@@ -103,10 +120,12 @@ export default function AdminPosRoute() {
               <input type="hidden" name="staffId" value={staffId} />
               <div>
                 <label className="text-text-muted mb-1 block text-xs font-medium">
-                  Location
+                  {t('admin.pos.index.location')}
                 </label>
                 <Select name="locationId">
-                  <option value="">Default</option>
+                  <option value="">
+                    {t('admin.pos.index.locationDefault')}
+                  </option>
                   {locations.map((loc) => (
                     <option key={loc.id} value={loc.id}>
                       {loc.name}
@@ -114,24 +133,27 @@ export default function AdminPosRoute() {
                   ))}
                 </Select>
               </div>
-              <Button type="submit">Open POS session</Button>
+              <Button type="submit">{t('admin.pos.index.openSession')}</Button>
             </Form>
           )}
         </Card>
 
         <Card>
           <h2 className="text-text mb-4 text-sm font-semibold">
-            Recent sessions
+            {t('admin.pos.index.recentHeading')}
           </h2>
           {sessions.length === 0 ? (
-            <p className="text-text-muted text-sm">No POS sessions yet.</p>
+            <p className="text-text-muted text-sm">
+              {t('admin.pos.index.empty')}
+            </p>
           ) : (
             <ul className="divide-border divide-y text-sm">
               {sessions.map((session) => (
                 <li key={session.id} className="py-3">
                   <div className="flex items-center justify-between">
                     <span className="text-text font-medium">
-                      {session.location?.name ?? 'No location'}
+                      {session.location?.name ??
+                        t('admin.pos.index.noLocation')}
                     </span>
                     <span
                       className={
@@ -140,12 +162,14 @@ export default function AdminPosRoute() {
                           : 'text-text-muted text-xs'
                       }
                     >
-                      {session.status}
+                      {posSessionStatusLabel(session.status, t)}
                     </span>
                   </div>
                   <p className="text-text-muted text-xs">
-                    {session.orderCount} draft(s) ·{' '}
-                    {session.staff?.name ?? session.staff?.email}
+                    {t('admin.pos.index.draftsMeta', {
+                      count: session.orderCount,
+                    })}{' '}
+                    · {session.staff?.name ?? session.staff?.email}
                   </p>
                 </li>
               ))}
