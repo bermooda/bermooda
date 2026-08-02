@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   filterCommandItems,
   getAllCommandItems,
@@ -19,6 +20,7 @@ import {
  * @returns {React.ReactElement}
  */
 export default function CommandPalette({ open, onOpenChange }) {
+  const t = useT();
   const navigate = useNavigate();
   const listboxId = useId();
   const inputRef = useRef(/** @type {HTMLInputElement | null} */ (null));
@@ -26,9 +28,19 @@ export default function CommandPalette({ open, onOpenChange }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const allItems = useMemo(() => getAllCommandItems(), []);
+  /** Translated labels for display and locale-aware search; href/Icon stay from config. */
+  const translatedItems = useMemo(
+    () =>
+      allItems.map((item) => ({
+        ...item,
+        name: t(item.name),
+        group: t(item.group),
+      })),
+    [allItems, t]
+  );
   const filteredItems = useMemo(
-    () => filterCommandItems(allItems, query),
-    [allItems, query]
+    () => filterCommandItems(translatedItems, query),
+    [translatedItems, query]
   );
   const groupedItems = useMemo(
     () => groupCommandItems(filteredItems),
@@ -139,7 +151,7 @@ export default function CommandPalette({ open, onOpenChange }) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={handleInputKeyDown}
-              placeholder="Search admin pages and actions..."
+              placeholder={t('admin.command.searchPlaceholder')}
               className="text-text placeholder:text-text-muted/70 w-full bg-transparent py-4 text-sm outline-none"
               role="combobox"
               aria-expanded="true"
@@ -158,12 +170,12 @@ export default function CommandPalette({ open, onOpenChange }) {
           <div
             id={listboxId}
             role="listbox"
-            aria-label="Admin navigation"
+            aria-label={t('admin.command.ariaLabel')}
             className="max-h-[min(24rem,calc(100vh-12rem))] overflow-y-auto p-2"
           >
             {filteredItems.length === 0 ? (
               <p className="text-text-muted px-3 py-8 text-center text-sm">
-                No results for &ldquo;{query}&rdquo;
+                {t('admin.command.noResults', { query })}
               </p>
             ) : (
               groupedItems.map((group) => (
@@ -214,7 +226,7 @@ export default function CommandPalette({ open, onOpenChange }) {
                                     : 'text-text-muted'
                                 )}
                               >
-                                External
+                                {t('admin.command.external')}
                               </span>
                             )}
                           </button>
@@ -228,9 +240,9 @@ export default function CommandPalette({ open, onOpenChange }) {
           </div>
 
           <div className="border-border text-text-muted flex items-center justify-between gap-4 border-t px-4 py-2.5 text-xs">
-            <span>Navigate with ↑↓</span>
-            <span>Select with ↵</span>
-            <span>Close with Esc</span>
+            <span>{t('admin.command.navigateHint')}</span>
+            <span>{t('admin.command.selectHint')}</span>
+            <span>{t('admin.command.closeHint')}</span>
           </div>
         </DialogPanel>
       </div>
