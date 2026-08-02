@@ -1,4 +1,11 @@
 {
+  "common.loading": "Chargement...",
+  "common.error": "Une erreur s'est produite",
+  "common.save": "Enregistrer",
+  "common.cancel": "Annuler",
+
+  "admin.topbar.switchLocale": "Changer de langue",
+
   "admin.chrome.viewStorefront": "Voir la boutique",
   "admin.chrome.logout": "Déconnexion",
   "admin.chrome.openSidebar": "Ouvrir la barre latérale",

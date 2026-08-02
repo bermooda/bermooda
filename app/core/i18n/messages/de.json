@@ -1,4 +1,11 @@
 {
+  "common.loading": "Laden...",
+  "common.error": "Etwas ist schiefgelaufen",
+  "common.save": "Speichern",
+  "common.cancel": "Abbrechen",
+
+  "admin.topbar.switchLocale": "Sprache wechseln",
+
   "admin.chrome.viewStorefront": "Shop ansehen",
   "admin.chrome.logout": "Abmelden",
   "admin.chrome.openSidebar": "Seitenleiste öffnen",

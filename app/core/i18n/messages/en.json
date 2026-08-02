@@ -1,15 +1,10 @@
 {
-  "common": {
-    "loading": "Loading...",
-    "error": "Something went wrong",
-    "save": "Save",
-    "cancel": "Cancel"
-  },
-  "admin": {
-    "topbar": {
-      "switchLocale": "Switch locale"
-    }
-  },
+  "common.loading": "Loading...",
+  "common.error": "Something went wrong",
+  "common.save": "Save",
+  "common.cancel": "Cancel",
+
+  "admin.topbar.switchLocale": "Switch locale",
 
   "admin.chrome.viewStorefront": "View storefront",
   "admin.chrome.logout": "Logout",
