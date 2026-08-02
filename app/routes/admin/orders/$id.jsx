@@ -35,10 +35,37 @@ import Card, { CardHeader } from '#/components/admin/card';
 import { controlClasses } from '#/components/admin/form/input';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
+import { ReturnStatusBadge } from '#/components/admin/return-status-badge';
 import { Td, Th } from '#/components/admin/table';
 import SlotBlocks from '#/components/slot-blocks';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
+
+/**
+ * Localized shipment status label with OrderStatusBadge-style fallback.
+ *
+ * @param {(key: string, vars?: Record<string, string|number>) => string} t
+ * @param {string} status
+ * @returns {string}
+ */
+function shipmentStatusLabel(t, status) {
+  const key = `admin.shipments.status.${status}`;
+  const label = t(key);
+  return label === key ? status : label;
+}
+
+/**
+ * Localized return resolution label with fallback to the raw enum value.
+ *
+ * @param {(key: string, vars?: Record<string, string|number>) => string} t
+ * @param {string} resolution
+ * @returns {string}
+ */
+function returnResolutionLabel(t, resolution) {
+  const key = `admin.returns.resolution.${resolution}`;
+  const label = t(key);
+  return label === key ? resolution : label;
+}
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -602,7 +629,9 @@ export default function AdminOrderRoute() {
               <tbody className="divide-border divide-y">
                 {order.shipments.map((s) => (
                   <tr key={s.id}>
-                    <Td className="text-text capitalize">{s.status}</Td>
+                    <Td className="text-text">
+                      {shipmentStatusLabel(t, s.status)}
+                    </Td>
                     <Td className="text-text">{s.carrier ?? '—'}</Td>
                     <Td>
                       {s.trackingUrl ? (
@@ -740,9 +769,13 @@ export default function AdminOrderRoute() {
                   <span className="text-text-muted font-mono text-xs">
                     {ret.id.slice(-8)}
                   </span>
-                  <span className="text-text text-sm capitalize">
-                    {ret.status}
-                    {ret.resolution ? ` (${ret.resolution})` : ''}
+                  <span className="flex items-center gap-2 text-sm">
+                    <ReturnStatusBadge status={ret.status} />
+                    {ret.resolution ? (
+                      <span className="text-text-muted">
+                        ({returnResolutionLabel(t, ret.resolution)})
+                      </span>
+                    ) : null}
                   </span>
                 </div>
                 {ret.reason && (
