@@ -23,7 +23,7 @@ import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 
 import { PLATFORM_NAME } from '#/libs/config';
 import { authenticate } from '#/libs/auth/admin/index.server';
-import { ADMIN_AVAILABLE_LOCALES, translate } from '#/core/i18n';
+import { ADMIN_AVAILABLE_LOCALES, translate, useT } from '#/core/i18n';
 import { I18nContext } from '#/core/i18n/context';
 import { getRequestLocale, loadMessages } from '#/core/i18n/index.server';
 import useCommandPalette, {
@@ -36,6 +36,14 @@ import Logo from '#/components/ui/logo';
 
 /**
  * Loader — verifies admin session; redirects to /admin/login on failure.
+ *
+ * @param {{ request: Request }} args
+ * @returns {Promise<{
+ *   user: object,
+ *   locale: string,
+ *   availableLocales: string[],
+ *   messages: Record<string, string>,
+ * }>}
  */
 export async function loader({ request }) {
   const session = await authenticate(request);
@@ -78,8 +86,16 @@ function isGroupActive(pathname, group) {
 
 /**
  * Collapsible admin nav group.
+ *
+ * @param {Object} props
+ * @param {{ label: string, Icon: React.ComponentType<{ className?: string, 'aria-hidden'?: boolean | 'true' | 'false' }>, items: Array<{ name: string, href: string }> }} props.group
+ * @param {() => void} props.onClose
+ * @param {boolean} props.isExpanded
+ * @param {() => void} props.onToggle
+ * @returns {React.ReactElement}
  */
 function NavGroup({ group, onClose, isExpanded, onToggle }) {
+  const t = useT();
   const panelId = `nav-group-${group.label.toLowerCase().replace(/\s+/g, '-')}`;
 
   return (
@@ -97,7 +113,7 @@ function NavGroup({ group, onClose, isExpanded, onToggle }) {
             className="text-text-muted/80 group-hover:text-text h-5 w-5 shrink-0"
             aria-hidden="true"
           />
-          <span>{group.label}</span>
+          <span>{t(group.label)}</span>
         </span>
         {isExpanded ? (
           <ChevronUpIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -118,8 +134,14 @@ function NavGroup({ group, onClose, isExpanded, onToggle }) {
 
 /**
  * Admin nav link
+ *
+ * @param {Object} props
+ * @param {{ name: string, href: string }} props.item
+ * @param {() => void} [props.onClick]
+ * @returns {React.ReactElement}
  */
 function NavLink({ item, onClick }) {
+  const t = useT();
   const location = useLocation();
   const active = isActive(location.pathname, item.href);
 
@@ -134,15 +156,18 @@ function NavLink({ item, onClick }) {
           : 'text-text-muted hover:bg-surface-2/60 hover:text-text'
       }`}
     >
-      {item.name}
+      {t(item.name)}
     </Link>
   );
 }
 
 /**
  * Admin user menu (avatar + dropdown)
+ *
+ * @returns {React.ReactElement}
  */
 function AdminUserMenu() {
+  const t = useT();
   const { user } = useLoaderData();
   const { isDark, toggleTheme } = useTheme();
 
@@ -185,7 +210,7 @@ function AdminUserMenu() {
             ) : (
               <MoonIcon className="text-text-muted group-data-focus:text-accent-fg mr-2 h-4 w-4" />
             )}
-            {isDark ? 'Light Mode' : 'Dark Mode'}
+            {isDark ? t('admin.chrome.lightMode') : t('admin.chrome.darkMode')}
           </button>
         </MenuItem>
 
@@ -200,7 +225,7 @@ function AdminUserMenu() {
             className="text-text data-focus:bg-accent data-focus:text-accent-fg group col-span-full grid w-full cursor-default grid-cols-[auto_1fr] items-center rounded-lg px-3 py-1.5 text-left text-sm focus:outline-hidden"
           >
             <ComputerDesktopIcon className="text-text-muted group-data-focus:text-accent-fg mr-2 h-4 w-4" />
-            View storefront
+            {t('admin.chrome.viewStorefront')}
           </a>
         </MenuItem>
 
@@ -213,7 +238,7 @@ function AdminUserMenu() {
             className="text-text data-focus:bg-accent data-focus:text-accent-fg group col-span-full grid w-full cursor-default grid-cols-[auto_1fr] items-center rounded-lg px-3 py-1.5 text-left text-sm focus:outline-hidden"
           >
             <ArrowRightStartOnRectangleIcon className="text-text-muted group-data-focus:text-accent-fg mr-2 h-4 w-4" />
-            Logout
+            {t('admin.chrome.logout')}
           </Link>
         </MenuItem>
       </MenuItems>
@@ -223,8 +248,14 @@ function AdminUserMenu() {
 
 /**
  * Sidebar content
+ *
+ * @param {Object} props
+ * @param {() => void} props.onClose
+ * @param {() => void} props.onOpenCommandPalette
+ * @returns {React.ReactElement}
  */
 function SidebarContent({ onClose, onOpenCommandPalette }) {
+  const t = useT();
   const location = useLocation();
   const shortcutLabel = getCommandPaletteShortcutLabel();
   const [headerScrolled, setHeaderScrolled] = useState(false);
@@ -264,7 +295,9 @@ function SidebarContent({ onClose, onOpenCommandPalette }) {
             type="button"
             onClick={onOpenCommandPalette}
             className="text-text-muted hover:bg-surface-2 hover:text-text rounded-md p-2"
-            aria-label={`Open command palette (${shortcutLabel})`}
+            aria-label={t('admin.chrome.openCommandPalette', {
+              shortcut: shortcutLabel,
+            })}
           >
             <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -274,7 +307,7 @@ function SidebarContent({ onClose, onOpenCommandPalette }) {
             className="text-text-muted hover:text-text md:hidden"
             onClick={onClose}
           >
-            <span className="sr-only">Close sidebar</span>
+            <span className="sr-only">{t('admin.chrome.closeSidebar')}</span>
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
@@ -405,7 +438,7 @@ export default function AdminLayout() {
               type="button"
               className="text-text-muted hover:bg-surface-2 hover:text-text mb-2 -ml-1 rounded-md p-2 md:hidden"
               onClick={() => setMobileOpen(true)}
-              aria-label="Open sidebar"
+              aria-label={t('admin.chrome.openSidebar')}
             >
               <Bars3Icon className="h-6 w-6" />
             </button>
