@@ -1,7 +1,8 @@
+import clsx from 'clsx';
 import { useState } from 'react';
 import { useFetcher } from 'react-router';
 
-import { LOCALE_OPTIONS } from '#/core/i18n';
+import { LOCALE_OPTIONS, useT } from '#/core/i18n';
 import {
   CHECKBOX_CLASS,
   RADIO_CLASS,
@@ -18,6 +19,7 @@ import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
  * @returns {React.ReactElement}
  */
 export function LocalesTab({ data }) {
+  const t = useT();
   const fetcher = useFetcher();
   const [enabled, setEnabled] = useState(data.locales);
   const [defaultLocale, setDefaultLocale] = useState(data.defaultLocale);
@@ -29,7 +31,7 @@ export function LocalesTab({ data }) {
   }
 
   return (
-    <SectionCard title="Locales">
+    <SectionCard title={t('admin.settings.locales.title')}>
       <fetcher.Form method="post" className="space-y-4">
         <input type="hidden" name="intent" value="save-locales" />
         {enabled.map((l) => (
@@ -38,16 +40,19 @@ export function LocalesTab({ data }) {
         <input type="hidden" name="defaultLocale" value={defaultLocale} />
 
         <p className="text-text-muted text-sm">
-          Enable locales for your storefront. The default locale is used when no
-          locale is detected.
+          {t('admin.settings.locales.help')}
         </p>
 
         <Table>
           <THead>
             <tr>
-              <Th>Locale</Th>
-              <Th className="text-center">Enabled</Th>
-              <Th className="text-center">Default</Th>
+              <Th>{t('admin.settings.locales.col.locale')}</Th>
+              <Th className="text-center">
+                {t('admin.settings.locales.col.enabled')}
+              </Th>
+              <Th className="text-center">
+                {t('admin.settings.locales.col.default')}
+              </Th>
             </tr>
           </THead>
           <TBody>

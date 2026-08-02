@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { useFetcher, useRevalidator } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   CHECKBOX_CLASS,
   FieldLabel,
@@ -19,6 +20,7 @@ import {
  * @returns {React.ReactElement}
  */
 export function SeoImageUploader({ imageUrl }) {
+  const t = useT();
   const fetcher = useFetcher();
   const { revalidate } = useRevalidator();
   const fileRef = useRef(null);
@@ -68,17 +70,16 @@ export function SeoImageUploader({ imageUrl }) {
 
   return (
     <div>
-      <FieldLabel>Social / hero image</FieldLabel>
+      <FieldLabel>{t('admin.settings.seo.imageLabel')}</FieldLabel>
       <p className="text-text-muted mb-3 text-xs">
-        Used for Open Graph and Twitter cards when pages do not have their own
-        image. Recommended size: 1200×630 px.
+        {t('admin.settings.seo.imageHelp')}
       </p>
 
       {previewUrl ? (
         <div className="border-border bg-surface-2 relative max-w-md overflow-hidden rounded-lg border">
           <img
             src={previewUrl}
-            alt="SEO hero preview"
+            alt={t('admin.settings.seo.imageAlt')}
             className="aspect-[1200/630] w-full object-cover"
           />
           <button
@@ -86,7 +87,7 @@ export function SeoImageUploader({ imageUrl }) {
             onClick={handleRemove}
             disabled={isRemoving}
             className="bg-surface/90 text-text hover:text-danger absolute top-2 right-2 rounded-md p-1.5 shadow-sm transition disabled:opacity-50"
-            aria-label="Remove image"
+            aria-label={t('admin.settings.seo.removeImage')}
           >
             <TrashIcon className="h-4 w-4" />
           </button>
@@ -99,11 +100,13 @@ export function SeoImageUploader({ imageUrl }) {
           )}
         >
           {isUploading ? (
-            <span className="text-sm">Uploading…</span>
+            <span className="text-sm">{t('admin.settings.seo.uploading')}</span>
           ) : (
             <>
               <PhotoIcon className="h-8 w-8" />
-              <span className="mt-2 text-sm font-medium">Upload image</span>
+              <span className="mt-2 text-sm font-medium">
+                {t('admin.settings.seo.uploadImage')}
+              </span>
             </>
           )}
           <input
@@ -125,7 +128,9 @@ export function SeoImageUploader({ imageUrl }) {
               isUploading && 'cursor-wait opacity-60'
             )}
           >
-            {isUploading ? 'Uploading…' : 'Replace image'}
+            {isUploading
+              ? t('admin.settings.seo.uploading')
+              : t('admin.settings.seo.replaceImage')}
             <input
               type="file"
               accept="image/*"
@@ -148,63 +153,59 @@ export function SeoImageUploader({ imageUrl }) {
  * @returns {React.ReactElement}
  */
 export function SeoTab({ data }) {
+  const t = useT();
   const fetcher = useFetcher();
 
   return (
-    <SectionCard title="SEO">
+    <SectionCard title={t('admin.settings.seo.title')}>
       <fetcher.Form method="post" className="max-w-lg space-y-6">
         <input type="hidden" name="intent" value="save-seo" />
 
         <p className="text-text-muted text-sm">
-          Default title and description for your storefront homepage and social
-          previews. Product and content pages can override these with their own
-          SEO fields.
+          {t('admin.settings.seo.help')}
         </p>
 
         <div>
-          <FieldLabel>Meta title</FieldLabel>
+          <FieldLabel>{t('admin.settings.seo.metaTitle')}</FieldLabel>
           <input
             type="text"
             name="metaTitle"
             defaultValue={data.seoMetaTitle}
-            placeholder={data.shopName || 'My Awesome Store'}
+            placeholder={
+              data.shopName || t('admin.settings.seo.metaTitlePlaceholder')
+            }
             className={inputClass()}
           />
           <p className="text-text-muted mt-1 text-xs">
-            Shown in browser tabs and search results. Falls back to shop name
-            when empty.
+            {t('admin.settings.seo.metaTitleHelp')}
           </p>
         </div>
 
         <div>
-          <FieldLabel>Meta description</FieldLabel>
+          <FieldLabel>{t('admin.settings.seo.metaDescription')}</FieldLabel>
           <textarea
             name="metaDescription"
             defaultValue={data.seoMetaDescription}
             rows={3}
-            placeholder="Discover our curated collection…"
+            placeholder={t('admin.settings.seo.metaDescriptionPlaceholder')}
             className={inputClass('resize-y')}
           />
           <p className="text-text-muted mt-1 text-xs">
-            Short summary for search engines and link previews (aim for ~160
-            characters).
+            {t('admin.settings.seo.metaDescriptionHelp')}
           </p>
         </div>
 
         <div>
-          <FieldLabel>Title template</FieldLabel>
+          <FieldLabel>{t('admin.settings.seo.titleTemplate')}</FieldLabel>
           <input
             type="text"
             name="titleTemplate"
             defaultValue={data.seoTitleTemplate}
-            placeholder="{pageTitle} | {shopName}"
+            placeholder={t('admin.settings.seo.titleTemplatePlaceholder')}
             className={inputClass()}
           />
           <p className="text-text-muted mt-1 text-xs">
-            Applied to product, category, and content pages. Use{' '}
-            <code className="text-text">{`{pageTitle}`}</code> and{' '}
-            <code className="text-text">{`{shopName}`}</code>. The homepage uses
-            the meta title above instead.
+            {t('admin.settings.seo.titleTemplateHelp')}
           </p>
         </div>
 
@@ -217,41 +218,39 @@ export function SeoTab({ data }) {
           />
           <span>
             <span className="text-text block text-sm font-medium">
-              Allow search engines to index this store
+              {t('admin.settings.seo.allowIndexing')}
             </span>
             <span className="text-text-muted mt-0.5 block text-xs">
-              Turn off for staging or pre-launch sites. Adds{' '}
-              <code className="text-text">noindex</code> site-wide and blocks
-              crawlers in robots.txt.
+              {t('admin.settings.seo.allowIndexingHelp')}
             </span>
           </span>
         </label>
 
         <div className="border-border border-t pt-6">
           <h3 className="text-text mb-4 text-sm font-semibold">
-            Search engine verification
+            {t('admin.settings.seo.verificationHeading')}
           </h3>
           <div className="space-y-4">
             <div>
-              <FieldLabel>Google Search Console</FieldLabel>
+              <FieldLabel>{t('admin.settings.seo.google')}</FieldLabel>
               <input
                 type="text"
                 name="googleSiteVerification"
                 defaultValue={data.seoGoogleSiteVerification}
-                placeholder="verification token"
+                placeholder={t('admin.settings.seo.verificationPlaceholder')}
                 className={inputClass()}
               />
               <p className="text-text-muted mt-1 text-xs">
-                Content value from the HTML meta tag Google provides.
+                {t('admin.settings.seo.googleHelp')}
               </p>
             </div>
             <div>
-              <FieldLabel>Bing Webmaster Tools</FieldLabel>
+              <FieldLabel>{t('admin.settings.seo.bing')}</FieldLabel>
               <input
                 type="text"
                 name="bingSiteVerification"
                 defaultValue={data.seoBingSiteVerification}
-                placeholder="verification token"
+                placeholder={t('admin.settings.seo.verificationPlaceholder')}
                 className={inputClass()}
               />
             </div>
@@ -259,17 +258,16 @@ export function SeoTab({ data }) {
         </div>
 
         <div>
-          <FieldLabel>Twitter / X handle</FieldLabel>
+          <FieldLabel>{t('admin.settings.seo.twitter')}</FieldLabel>
           <input
             type="text"
             name="twitterHandle"
             defaultValue={data.seoTwitterHandle}
-            placeholder="myshop"
+            placeholder={t('admin.settings.seo.twitterPlaceholder')}
             className={inputClass()}
           />
           <p className="text-text-muted mt-1 text-xs">
-            Optional. Used for <code className="text-text">twitter:site</code>{' '}
-            on shared links (with or without @).
+            {t('admin.settings.seo.twitterHelp')}
           </p>
         </div>
 

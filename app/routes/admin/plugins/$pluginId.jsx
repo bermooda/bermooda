@@ -3,6 +3,7 @@
 
 import { useLoaderData } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import { resolvePluginAdminRoute } from '#/core/plugins/admin-routes.client';
 import {
   getRegisteredPluginBySlug,
@@ -89,15 +90,19 @@ export async function action({ request, params }) {
  * @returns {React.ReactElement}
  */
 export default function AdminPluginDispatcher() {
+  const t = useT();
   const data = useLoaderData();
 
   if (data.status === 'not-found') {
     return (
       <div className="space-y-2">
-        <h1 className="text-text text-2xl font-bold">Plugin not found</h1>
+        <h1 className="text-text text-2xl font-bold">
+          {t('admin.plugins.detail.notFoundTitle')}
+        </h1>
         <p className="text-text-muted text-sm">
-          No plugin with ID <span className="font-mono">{data.pluginId}</span>{' '}
-          is registered.
+          {t('admin.plugins.detail.notFoundDescription', {
+            id: data.pluginId,
+          })}
         </p>
       </div>
     );
@@ -108,7 +113,7 @@ export default function AdminPluginDispatcher() {
       <div className="space-y-2">
         <h1 className="text-text text-2xl font-bold">{data.manifest.title}</h1>
         <p className="text-text-muted text-sm">
-          This plugin has no admin pages.
+          {t('admin.plugins.detail.noAdminPages')}
         </p>
       </div>
     );
@@ -119,7 +124,7 @@ export default function AdminPluginDispatcher() {
       <div className="space-y-2">
         <h1 className="text-text text-2xl font-bold">{data.manifest.title}</h1>
         <p className="text-text-muted text-sm">
-          This plugin has no admin pages for this path.
+          {t('admin.plugins.detail.noAdminPagesForPath')}
         </p>
       </div>
     );
@@ -133,7 +138,7 @@ export default function AdminPluginDispatcher() {
       <div className="space-y-2">
         <h1 className="text-text text-2xl font-bold">{data.manifest.title}</h1>
         <p className="text-text-muted text-sm">
-          This plugin has no admin pages for this path.
+          {t('admin.plugins.detail.noAdminPagesForPath')}
         </p>
       </div>
     );

@@ -10,6 +10,7 @@ import {
 
 import { authenticate } from '#/libs/auth/admin/index.server';
 import { DOMAIN_EVENTS } from '#/core/events/names';
+import { useT } from '#/core/i18n';
 import { createSubscription } from '#/core/webhooks/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
@@ -44,7 +45,11 @@ export async function action({ request }) {
   }
 }
 
+/**
+ * @returns {React.ReactElement}
+ */
 export default function AdminNewWebhookRoute() {
+  const t = useT();
   const { supportedEvents } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -63,13 +68,16 @@ export default function AdminNewWebhookRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'API', href: '/admin/api-settings' },
-              { label: 'New webhook' },
+              {
+                label: t('admin.apiSettings.webhooksNew.breadcrumbApi'),
+                href: '/admin/api-settings',
+              },
+              { label: t('admin.apiSettings.webhooksNew.breadcrumb') },
             ]}
           />
         }
-        title="New webhook endpoint"
-        subtitle="Receive real-time domain events as signed HTTP POSTs."
+        title={t('admin.apiSettings.webhooksNew.title')}
+        subtitle={t('admin.apiSettings.webhooksNew.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -81,39 +89,51 @@ export default function AdminNewWebhookRoute() {
 
         <Card>
           <CardHeader
-            title="Endpoint details"
-            description="Deliveries are retried on failure with exponential back-off."
+            title={t('admin.apiSettings.webhooksNew.cardTitle')}
+            description={t('admin.apiSettings.webhooksNew.cardDescription')}
           />
           <div className="space-y-4">
-            <Field label="URL *" htmlFor="webhook-url">
+            <Field
+              label={t('admin.apiSettings.webhooksNew.url')}
+              htmlFor="webhook-url"
+            >
               <Input
                 id="webhook-url"
                 name="url"
                 type="url"
                 required
-                placeholder="https://example.com/webhook"
+                placeholder={t('admin.apiSettings.webhooksNew.urlPlaceholder')}
               />
             </Field>
-            <Field label="Signing secret *" htmlFor="webhook-secret">
+            <Field
+              label={t('admin.apiSettings.webhooksNew.secret')}
+              htmlFor="webhook-secret"
+            >
               <Input
                 id="webhook-secret"
                 name="secret"
                 required
-                placeholder="whsec_..."
+                placeholder={t(
+                  'admin.apiSettings.webhooksNew.secretPlaceholder'
+                )}
               />
               <p className="text-text-muted mt-1 text-xs">
-                Used to compute HMAC-SHA256 signatures in the{' '}
-                <code>X-Bermooda-Signature</code> header.
+                {t('admin.apiSettings.webhooksNew.secretHelp')}
               </p>
             </Field>
-            <Field label="Label (optional)" htmlFor="webhook-label">
+            <Field
+              label={t('admin.apiSettings.webhooksNew.label')}
+              htmlFor="webhook-label"
+            >
               <Input
                 id="webhook-label"
                 name="label"
-                placeholder="Production webhook"
+                placeholder={t(
+                  'admin.apiSettings.webhooksNew.labelPlaceholder'
+                )}
               />
             </Field>
-            <Field label="Events *">
+            <Field label={t('admin.apiSettings.webhooksNew.events')}>
               <div className="grid gap-2 sm:grid-cols-2">
                 {supportedEvents.map((event) => (
                   <label
@@ -141,10 +161,12 @@ export default function AdminNewWebhookRoute() {
               to="/admin/api-settings"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Create webhook'}
+              {isSaving
+                ? t('admin.apiSettings.webhooksNew.creating')
+                : t('admin.apiSettings.webhooksNew.createButton')}
             </ButtonSubmit>
           </div>
         </ActionBar>

@@ -9,6 +9,7 @@ import { authenticate } from '#/libs/auth/admin/index.server';
 import { revokeApiKey, listApiKeys } from '#/core/api-keys/index.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
 import { DOMAIN_EVENTS } from '#/core/events/names';
+import { useT } from '#/core/i18n';
 import {
   deleteSubscription,
   listSubscriptions,
@@ -113,6 +114,12 @@ export function meta() {
 // Shared sub-components
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {Object} props
+ * @param {string} props.title
+ * @param {string} [props.description]
+ * @param {React.ReactNode} props.children
+ */
 function SectionCard({ title, description, children }) {
   return (
     <Card padded={false}>
@@ -131,13 +138,17 @@ function SectionCard({ title, description, children }) {
 // API Keys section
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {{ data: { apiKeys: object[] } }} props
+ */
 function ApiKeysSection({ data }) {
+  const t = useT();
   const revokeFetcher = useFetcher();
 
   return (
     <SectionCard
-      title="API Keys"
-      description="API keys authenticate requests to /api/admin/v1/* endpoints. Store keys securely — they are shown only once."
+      title={t('admin.apiSettings.index.keysTitle')}
+      description={t('admin.apiSettings.index.keysDescription')}
     >
       <div className="mb-4 flex justify-end">
         <Link
@@ -145,23 +156,25 @@ function ApiKeysSection({ data }) {
           className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
         >
           <PlusIcon className="h-4 w-4" />
-          Create key
+          {t('admin.apiSettings.index.createKey')}
         </Link>
       </div>
 
       <Table>
         <THead>
           <tr>
-            {['Label', 'Scopes', 'Last used', 'Created', ''].map((h, i) => (
-              <Th key={h || `col-${i}`}>{h}</Th>
-            ))}
+            <Th>{t('admin.apiSettings.index.col.label')}</Th>
+            <Th>{t('admin.apiSettings.index.col.scopes')}</Th>
+            <Th>{t('admin.apiSettings.index.col.lastUsed')}</Th>
+            <Th>{t('admin.apiSettings.index.col.created')}</Th>
+            <Th />
           </tr>
         </THead>
         <TBody>
           {data.apiKeys.length === 0 && (
             <tr>
               <Td colSpan={5} className="py-8 text-center">
-                No API keys yet.
+                {t('admin.apiSettings.index.noKeys')}
               </Td>
             </tr>
           )}
@@ -180,7 +193,7 @@ function ApiKeysSection({ data }) {
               <Td>
                 {key.lastUsedAt
                   ? new Date(key.lastUsedAt).toLocaleDateString()
-                  : 'Never'}
+                  : t('admin.apiSettings.index.never')}
               </Td>
               <Td>{new Date(key.createdAt).toLocaleDateString()}</Td>
               <Td>
@@ -193,14 +206,16 @@ function ApiKeysSection({ data }) {
                     onClick={(e) => {
                       if (
                         !confirm(
-                          `Revoke "${key.label}"? This cannot be undone.`
+                          t('admin.apiSettings.index.revokeConfirm', {
+                            label: key.label,
+                          })
                         )
                       ) {
                         e.preventDefault();
                       }
                     }}
                     className="text-text-muted hover:text-danger rounded p-1 disabled:opacity-50"
-                    title="Revoke key"
+                    title={t('admin.apiSettings.index.revokeTitle')}
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -218,14 +233,18 @@ function ApiKeysSection({ data }) {
 // Webhook subscriptions section
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {{ data: { subscriptions: object[] } }} props
+ */
 function WebhooksSection({ data }) {
+  const t = useT();
   const deleteFetcher = useFetcher();
   const toggleFetcher = useFetcher();
 
   return (
     <SectionCard
-      title="Outbound Webhooks"
-      description="Receive real-time domain events as signed HTTP POSTs. Deliveries are retried on failure with exponential back-off."
+      title={t('admin.apiSettings.index.webhooksTitle')}
+      description={t('admin.apiSettings.index.webhooksDescription')}
     >
       <div className="mb-4 flex justify-end">
         <Link
@@ -233,23 +252,25 @@ function WebhooksSection({ data }) {
           className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
         >
           <PlusIcon className="h-4 w-4" />
-          Add endpoint
+          {t('admin.apiSettings.index.addEndpoint')}
         </Link>
       </div>
 
       <Table>
         <THead>
           <tr>
-            {['URL', 'Events', 'Status', 'Created', ''].map((h, i) => (
-              <Th key={h || `col-${i}`}>{h}</Th>
-            ))}
+            <Th>{t('admin.apiSettings.index.col.url')}</Th>
+            <Th>{t('admin.apiSettings.index.col.events')}</Th>
+            <Th>{t('admin.apiSettings.index.col.status')}</Th>
+            <Th>{t('admin.apiSettings.index.col.created')}</Th>
+            <Th />
           </tr>
         </THead>
         <TBody>
           {data.subscriptions.length === 0 && (
             <tr>
               <Td colSpan={5} className="py-8 text-center">
-                No webhook endpoints configured.
+                {t('admin.apiSettings.index.noWebhooks')}
               </Td>
             </tr>
           )}
@@ -285,10 +306,16 @@ function WebhooksSection({ data }) {
                     type="submit"
                     disabled={toggleFetcher.state !== 'idle'}
                     className="disabled:opacity-50"
-                    title={sub.active ? 'Pause webhook' : 'Activate webhook'}
+                    title={
+                      sub.active
+                        ? t('admin.apiSettings.index.pauseWebhook')
+                        : t('admin.apiSettings.index.activateWebhook')
+                    }
                   >
                     <Badge tone={sub.active ? 'success' : 'neutral'}>
-                      {sub.active ? 'Active' : 'Paused'}
+                      {sub.active
+                        ? t('admin.apiSettings.index.statusActive')
+                        : t('admin.apiSettings.index.statusPaused')}
                     </Badge>
                   </button>
                 </toggleFetcher.Form>
@@ -302,11 +329,17 @@ function WebhooksSection({ data }) {
                     type="submit"
                     disabled={deleteFetcher.state !== 'idle'}
                     onClick={(e) => {
-                      if (!confirm(`Delete webhook for "${sub.url}"?`))
+                      if (
+                        !confirm(
+                          t('admin.apiSettings.index.deleteConfirm', {
+                            url: sub.url,
+                          })
+                        )
+                      )
                         e.preventDefault();
                     }}
                     className="text-text-muted hover:text-danger rounded p-1 disabled:opacity-50"
-                    title="Delete"
+                    title={t('admin.apiSettings.index.deleteTitle')}
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -320,15 +353,9 @@ function WebhooksSection({ data }) {
       <div className="border-border bg-surface-2 mt-4 rounded-lg border px-4 py-3">
         <p className="text-text-muted text-xs">
           <strong className="text-text font-semibold">
-            Signature verification:
+            {t('admin.apiSettings.index.signatureVerification')}
           </strong>{' '}
-          Each POST carries an{' '}
-          <code className="font-mono">
-            X-Bermooda-Signature: sha256=&lt;hex&gt;
-          </code>{' '}
-          header. Compute HMAC-SHA256 of the raw body using your signing secret
-          and compare to verify. Retries follow exponential back-off (30 s → 2
-          min → 10 min → 30 min → 2 h).
+          {t('admin.apiSettings.index.signatureHelp')}
         </p>
       </div>
     </SectionCard>
@@ -339,19 +366,25 @@ function WebhooksSection({ data }) {
 // Main component
 // ---------------------------------------------------------------------------
 
-const TABS = ['API Keys', 'Webhooks'];
-
+/**
+ * @returns {React.ReactElement}
+ */
 export default function AdminApiSettingsRoute() {
+  const t = useT();
   const data = useLoaderData();
   const [activeTab, setActiveTab] = useState(0);
+  const tabs = [
+    t('admin.apiSettings.index.tab.keys'),
+    t('admin.apiSettings.index.tab.webhooks'),
+  ];
 
   return (
     <div>
       <PageHeader
-        title="API Settings"
+        title={t('admin.apiSettings.index.title')}
         subtitle={
           <>
-            Manage API keys and outbound webhook endpoints. Base URL:{' '}
+            {t('admin.apiSettings.index.subtitle')}{' '}
             <code className="font-mono text-xs">/api/admin/v1</code>
           </>
         }
@@ -359,7 +392,7 @@ export default function AdminApiSettingsRoute() {
       />
 
       <Tabs
-        tabs={TABS}
+        tabs={tabs}
         active={activeTab}
         onChange={setActiveTab}
         className="mb-6"

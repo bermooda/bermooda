@@ -3,6 +3,7 @@
 import { CheckIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
+import { useT } from '#/core/i18n';
 import Card from '#/components/admin/card';
 import { controlClasses } from '#/components/admin/form/input';
 import Button from '#/components/ui/button';
@@ -31,24 +32,26 @@ export function selectClass() {
  * @param {Object} props
  * @param {{ state: string, data?: { ok?: boolean, intent?: string, error?: string } }} props.fetcher
  * @param {string} props.intent
- * @param {string} [props.label='Save']
+ * @param {string} [props.label]
  * @returns {React.ReactElement}
  */
-export function SaveButton({ fetcher, intent, label = 'Save' }) {
+export function SaveButton({ fetcher, intent, label }) {
+  const t = useT();
   const busy = fetcher.state !== 'idle';
   const saved =
     fetcher.state === 'idle' &&
     fetcher.data?.ok &&
     fetcher.data?.intent === intent;
+  const buttonLabel = label ?? t('common.save');
   return (
     <div className="flex items-center gap-3">
       <Button type="submit" disabled={busy}>
-        {busy ? 'Saving…' : label}
+        {busy ? t('admin.settings.shared.saving') : buttonLabel}
       </Button>
       {saved && (
         <span className="text-success flex items-center gap-1 text-sm">
           <CheckIcon className="h-4 w-4" />
-          Saved
+          {t('admin.settings.shared.saved')}
         </span>
       )}
       {fetcher.state === 'idle' &&
@@ -56,7 +59,7 @@ export function SaveButton({ fetcher, intent, label = 'Save' }) {
         !fetcher.data.ok &&
         fetcher.data?.intent === intent && (
           <span className="text-danger text-sm">
-            {fetcher.data.error ?? 'Error saving.'}
+            {fetcher.data.error ?? t('admin.settings.shared.errorSaving')}
           </span>
         )}
     </div>

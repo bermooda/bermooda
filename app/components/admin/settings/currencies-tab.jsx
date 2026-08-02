@@ -1,6 +1,8 @@
+import clsx from 'clsx';
 import { useState } from 'react';
 import { useFetcher } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import { AVAILABLE_CURRENCIES } from '#/core/settings/defaults';
 import {
   CHECKBOX_CLASS,
@@ -18,6 +20,7 @@ import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
  * @returns {React.ReactElement}
  */
 export function CurrenciesTab({ data }) {
+  const t = useT();
   const fetcher = useFetcher();
   const [enabled, setEnabled] = useState(data.currencies);
   const [defaultCurrency, setDefaultCurrency] = useState(data.defaultCurrency);
@@ -29,7 +32,7 @@ export function CurrenciesTab({ data }) {
   }
 
   return (
-    <SectionCard title="Currencies">
+    <SectionCard title={t('admin.settings.currencies.title')}>
       <fetcher.Form method="post" className="space-y-4">
         <input type="hidden" name="intent" value="save-currencies" />
         {enabled.map((c) => (
@@ -38,16 +41,19 @@ export function CurrenciesTab({ data }) {
         <input type="hidden" name="defaultCurrency" value={defaultCurrency} />
 
         <p className="text-text-muted text-sm">
-          Enable or disable currencies. The default is used as the primary
-          storefront currency.
+          {t('admin.settings.currencies.help')}
         </p>
 
         <Table>
           <THead>
             <tr>
-              <Th>Currency</Th>
-              <Th className="text-center">Enabled</Th>
-              <Th className="text-center">Default</Th>
+              <Th>{t('admin.settings.currencies.col.currency')}</Th>
+              <Th className="text-center">
+                {t('admin.settings.currencies.col.enabled')}
+              </Th>
+              <Th className="text-center">
+                {t('admin.settings.currencies.col.default')}
+              </Th>
             </tr>
           </THead>
           <TBody>

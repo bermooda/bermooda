@@ -10,6 +10,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   getRegisteredPlugin,
   listRegisteredPlugins,
@@ -31,8 +32,6 @@ import SortableList, { SortableGrip } from '#/components/admin/sortable-list';
 import Tabs from '#/components/admin/tabs';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
-
-const TABS = ['Plugins', 'Block order'];
 
 // ---------------------------------------------------------------------------
 // Meta
@@ -164,6 +163,7 @@ export async function action({ request }) {
  * @param {{ setting: object, value: any }} props
  */
 function SettingField({ setting, value }) {
+  const t = useT();
   const { key, label, type, options } = setting;
   const id = `setting-${key}`;
 
@@ -186,7 +186,9 @@ function SettingField({ setting, value }) {
           defaultValue=""
           autoComplete="off"
           placeholder={
-            configured ? '•••••••• (saved — leave blank to keep)' : undefined
+            configured
+              ? t('admin.plugins.index.passwordKeepPlaceholder')
+              : undefined
           }
         />
       </Field>
@@ -239,6 +241,7 @@ function SettingField({ setting, value }) {
  * @param {{ manifest: object, values: object }} props
  */
 function PluginSettingsForm({ manifest, values }) {
+  const t = useT();
   const actionData = useActionData();
   const formRef = useRef(null);
 
@@ -249,7 +252,9 @@ function PluginSettingsForm({ manifest, values }) {
   return (
     <div className="border-border bg-surface-2 mt-4 rounded-lg border">
       <div className="border-border border-b px-4 py-3">
-        <h4 className="text-text text-sm font-semibold">Plugin Settings</h4>
+        <h4 className="text-text text-sm font-semibold">
+          {t('admin.plugins.index.settingsTitle')}
+        </h4>
       </div>
 
       <Form ref={formRef} method="post" className="px-4 py-4">
@@ -268,13 +273,13 @@ function PluginSettingsForm({ manifest, values }) {
 
         <div className="mt-4 flex items-center justify-between gap-3">
           {savedThisPlugin ? (
-            <SuccessAlert message="Settings saved." />
+            <SuccessAlert message={t('admin.plugins.index.settingsSaved')} />
           ) : actionData?.error ? (
             <ErrorAlert message={actionData.error} />
           ) : (
             <span />
           )}
-          <ButtonSubmit>Save Settings</ButtonSubmit>
+          <ButtonSubmit>{t('admin.plugins.index.saveSettings')}</ButtonSubmit>
         </div>
       </Form>
     </div>
@@ -310,6 +315,7 @@ function PluginCard({
   pluginSettings,
   isEmailProvider = false,
 }) {
+  const t = useT();
   const navigation = useNavigation();
 
   const isToggling =
@@ -320,9 +326,15 @@ function PluginCard({
 
   const toggleIntent = isEnabled ? 'disable' : 'enable';
   const values = pluginSettings[manifest.id] ?? {};
-  const enableLabel = isEmailProvider ? 'Activate' : 'Enable';
-  const disableLabel = isEmailProvider ? 'Deactivate' : 'Disable';
-  const activeBadge = isEmailProvider ? 'Active' : 'Enabled';
+  const enableLabel = isEmailProvider
+    ? t('admin.plugins.index.activate')
+    : t('admin.plugins.index.enable');
+  const disableLabel = isEmailProvider
+    ? t('admin.plugins.index.deactivate')
+    : t('admin.plugins.index.disable');
+  const activeBadge = isEmailProvider
+    ? t('admin.plugins.index.badge.active')
+    : t('admin.plugins.index.badge.enabled');
 
   return (
     <Card
@@ -335,7 +347,9 @@ function PluginCard({
           <h3 className="text-text truncate text-sm font-semibold">
             {manifest.title}
           </h3>
-          {isEmailProvider && <Badge tone="neutral">Email</Badge>}
+          {isEmailProvider && (
+            <Badge tone="neutral">{t('admin.plugins.index.badge.email')}</Badge>
+          )}
           {isEnabled && <Badge tone="success">{activeBadge}</Badge>}
         </div>
         <p className="text-text-muted mt-0.5 text-xs">
@@ -362,7 +376,7 @@ function PluginCard({
               href={`/admin/plugins/${manifest.slug}`}
               className="border-border text-text hover:bg-surface-2 rounded-md border px-3 py-1.5 text-xs font-medium transition"
             >
-              Plugin Admin &rarr;
+              {t('admin.plugins.index.pluginAdmin')}
             </a>
           </div>
           <Form method="post">
@@ -389,6 +403,7 @@ function PluginCard({
  * @param {{ orderedPlugins: object[], enabledPlugins: string[] }} props
  */
 function BlockOrderTab({ orderedPlugins, enabledPlugins }) {
+  const t = useT();
   const reorderFetcher = useFetcher();
   const [plugins, setPlugins] = useState(orderedPlugins);
 
@@ -411,16 +426,13 @@ function BlockOrderTab({ orderedPlugins, enabledPlugins }) {
   return (
     <div className="space-y-4">
       <p className="text-text-muted text-sm">
-        This order controls how plugin blocks are rendered in storefront slots
-        (for example on product pages, cart, and checkout). Plugins higher in
-        the list appear first when multiple plugins contribute to the same slot.
-        It does not change how plugins are listed on the Plugins tab.
+        {t('admin.plugins.index.blockOrderHelp')}
       </p>
 
       {plugins.length === 0 ? (
         <EmptyState
-          title="No plugins registered"
-          description="Plugins are loaded from app/plugins/ at startup."
+          title={t('admin.plugins.index.emptyTitle')}
+          description={t('admin.plugins.index.emptyDescription')}
         />
       ) : (
         <SortableList
@@ -449,7 +461,9 @@ function BlockOrderTab({ orderedPlugins, enabledPlugins }) {
                     {manifest.title}
                   </span>
                   {enabledPlugins.includes(manifest.id) && (
-                    <Badge tone="success">Enabled</Badge>
+                    <Badge tone="success">
+                      {t('admin.plugins.index.badge.enabled')}
+                    </Badge>
                   )}
                 </div>
                 <p className="text-text-muted truncate font-mono text-xs">
@@ -470,6 +484,7 @@ function BlockOrderTab({ orderedPlugins, enabledPlugins }) {
  * @param {{ plugins: object[], enabledPlugins: string[], pluginSettings: object }} props
  */
 function PluginsTab({ plugins, enabledPlugins, pluginSettings }) {
+  const t = useT();
   const emailPlugins = plugins.filter(isEmailProviderPlugin);
   const otherPlugins = plugins.filter(
     (manifest) => !isEmailProviderPlugin(manifest)
@@ -479,18 +494,16 @@ function PluginsTab({ plugins, enabledPlugins, pluginSettings }) {
     <div className="space-y-10">
       <section>
         <h2 className="text-text mb-1 text-lg font-semibold">
-          Email providers
+          {t('admin.plugins.index.emailProvidersHeading')}
         </h2>
         <p className="text-text-muted mb-3 text-sm">
-          Activate exactly one email transport. Activating another provider
-          automatically deactivates the current one. Configure API credentials
-          via environment variables.
+          {t('admin.plugins.index.emailProvidersHelp')}
         </p>
 
         {emailPlugins.length === 0 ? (
           <EmptyState
-            title="No email provider plugins"
-            description="Bundled Resend, SendGrid, and Amazon SES plugins should appear here."
+            title={t('admin.plugins.index.noEmailProvidersTitle')}
+            description={t('admin.plugins.index.noEmailProvidersDescription')}
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -508,12 +521,14 @@ function PluginsTab({ plugins, enabledPlugins, pluginSettings }) {
       </section>
 
       <section>
-        <h2 className="text-text mb-3 text-lg font-semibold">Other plugins</h2>
+        <h2 className="text-text mb-3 text-lg font-semibold">
+          {t('admin.plugins.index.otherPluginsHeading')}
+        </h2>
 
         {otherPlugins.length === 0 ? (
           <EmptyState
-            title="No other plugins registered"
-            description="Plugins are loaded from app/plugins/ at startup."
+            title={t('admin.plugins.index.noOtherPluginsTitle')}
+            description={t('admin.plugins.index.noOtherPluginsDescription')}
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -542,19 +557,24 @@ function PluginsTab({ plugins, enabledPlugins, pluginSettings }) {
  * @returns {React.ReactElement}
  */
 export default function AdminPluginsRoute() {
+  const t = useT();
   const { plugins, orderedPlugins, enabledPlugins, pluginSettings } =
     useLoaderData();
   const [activeTab, setActiveTab] = useState(0);
+  const tabs = [
+    t('admin.plugins.index.tab.plugins'),
+    t('admin.plugins.index.tab.blockOrder'),
+  ];
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Plugins"
-        subtitle="Manage installed plugins. Enable or disable plugins and configure their settings."
+        title={t('admin.plugins.index.title')}
+        subtitle={t('admin.plugins.index.subtitle')}
       />
 
       <Tabs
-        tabs={TABS}
+        tabs={tabs}
         active={activeTab}
         onChange={setActiveTab}
         className="mb-6"

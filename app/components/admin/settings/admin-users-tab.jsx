@@ -1,6 +1,7 @@
 import { UserPlusIcon } from '@heroicons/react/24/outline';
 import { Link, useFetcher } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import { SectionCard } from '#/components/admin/settings/shared';
 import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
@@ -13,21 +14,28 @@ import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
  * @returns {React.ReactElement}
  */
 export function AdminUsersTab({ data }) {
+  const t = useT();
   const roleFetcher = useFetcher();
 
   return (
     <div className="space-y-6">
-      <SectionCard title="Admin Users">
+      <SectionCard title={t('admin.settings.adminUsers.title')}>
         <div className="mb-4 flex items-center justify-between">
           <p className="text-text-muted text-sm">
-            {data.users.length} user{data.users.length !== 1 ? 's' : ''}
+            {data.users.length === 1
+              ? t('admin.settings.adminUsers.usersCountOne', {
+                  count: data.users.length,
+                })
+              : t('admin.settings.adminUsers.usersCount', {
+                  count: data.users.length,
+                })}
           </p>
           <Link
             to="/admin/settings/users/new"
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <UserPlusIcon className="h-4 w-4" />
-            Invite admin
+            {t('admin.settings.adminUsers.invite')}
           </Link>
         </div>
 
@@ -35,19 +43,19 @@ export function AdminUsersTab({ data }) {
         <Table>
           <THead>
             <tr>
-              <Th>Name</Th>
-              <Th>Email</Th>
-              <Th>Role</Th>
-              <Th>Verified</Th>
-              <Th>Joined</Th>
-              <Th>Actions</Th>
+              <Th>{t('admin.settings.adminUsers.col.name')}</Th>
+              <Th>{t('admin.settings.adminUsers.col.email')}</Th>
+              <Th>{t('admin.settings.adminUsers.col.role')}</Th>
+              <Th>{t('admin.settings.adminUsers.col.verified')}</Th>
+              <Th>{t('admin.settings.adminUsers.col.joined')}</Th>
+              <Th>{t('admin.settings.adminUsers.col.actions')}</Th>
             </tr>
           </THead>
           <TBody>
             {data.users.length === 0 && (
               <tr>
                 <Td colSpan={6} className="py-8 text-center">
-                  No admin users found.
+                  {t('admin.settings.adminUsers.empty')}
                 </Td>
               </tr>
             )}
@@ -62,7 +70,9 @@ export function AdminUsersTab({ data }) {
                 </Td>
                 <Td>
                   <Badge tone={user.emailVerified ? 'success' : 'warn'}>
-                    {user.emailVerified ? 'Verified' : 'Pending'}
+                    {user.emailVerified
+                      ? t('admin.settings.adminUsers.verified')
+                      : t('admin.settings.adminUsers.pending')}
                   </Badge>
                 </Td>
                 <Td>
@@ -85,9 +95,15 @@ export function AdminUsersTab({ data }) {
                       type="submit"
                       disabled={roleFetcher.state !== 'idle'}
                       className="text-accent text-xs hover:underline disabled:opacity-50"
-                      title={`Switch to ${user.role === 'admin' ? 'staff' : 'admin'}`}
+                      title={
+                        user.role === 'admin'
+                          ? t('admin.settings.adminUsers.switchToStaff')
+                          : t('admin.settings.adminUsers.switchToAdmin')
+                      }
                     >
-                      {user.role === 'admin' ? 'Make staff' : 'Make admin'}
+                      {user.role === 'admin'
+                        ? t('admin.settings.adminUsers.makeStaff')
+                        : t('admin.settings.adminUsers.makeAdmin')}
                     </button>
                   </roleFetcher.Form>
                 </Td>

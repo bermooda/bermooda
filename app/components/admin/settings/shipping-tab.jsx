@@ -2,6 +2,7 @@ import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { useFetcher } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   SaveButton,
   SectionCard,
@@ -16,6 +17,7 @@ import {
  * @returns {React.ReactElement}
  */
 export function ShippingTab({ data }) {
+  const t = useT();
   const fetcher = useFetcher();
   const [zones, setZones] = useState(
     data.shippingZones.map((z, i) => ({
@@ -78,7 +80,7 @@ export function ShippingTab({ data }) {
   );
 
   return (
-    <SectionCard title="Shipping Zones">
+    <SectionCard title={t('admin.settings.shipping.title')}>
       <fetcher.Form method="post" className="space-y-6">
         <input type="hidden" name="intent" value="save-shipping" />
         <input
@@ -88,13 +90,18 @@ export function ShippingTab({ data }) {
         />
 
         <p className="text-text-muted text-sm">
-          Configure shipping zones with flat rates and optional free-shipping
-          thresholds.
+          {t('admin.settings.shipping.help')}
         </p>
 
         <div className="flex items-center justify-between">
           <span className="text-text text-sm font-medium">
-            {zones.length} zone{zones.length !== 1 ? 's' : ''}
+            {zones.length === 1
+              ? t('admin.settings.shipping.zonesCountOne', {
+                  count: zones.length,
+                })
+              : t('admin.settings.shipping.zonesCount', {
+                  count: zones.length,
+                })}
           </span>
           <button
             type="button"
@@ -102,13 +109,13 @@ export function ShippingTab({ data }) {
             className="text-accent inline-flex items-center gap-1 text-sm hover:underline"
           >
             <PlusIcon className="h-4 w-4" />
-            Add zone
+            {t('admin.settings.shipping.addZone')}
           </button>
         </div>
 
         {zones.length === 0 ? (
           <p className="text-text-muted text-sm italic">
-            No shipping zones configured.
+            {t('admin.settings.shipping.empty')}
           </p>
         ) : (
           <div className="space-y-3">
@@ -125,7 +132,9 @@ export function ShippingTab({ data }) {
                   className="border-border space-y-3 rounded-lg border p-4"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-text text-sm font-medium">Zone</span>
+                    <span className="text-text text-sm font-medium">
+                      {t('admin.settings.shipping.zoneLabel')}
+                    </span>
                     <button
                       type="button"
                       onClick={() => removeZone(z._key)}
@@ -137,7 +146,7 @@ export function ShippingTab({ data }) {
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
                       <label className="text-text-muted mb-1 block text-xs font-medium">
-                        Zone name
+                        {t('admin.settings.shipping.zoneName')}
                       </label>
                       <input
                         type="text"
@@ -145,13 +154,15 @@ export function ShippingTab({ data }) {
                         onChange={(e) =>
                           updateZone(z._key, 'name', e.target.value)
                         }
-                        placeholder="US Domestic"
+                        placeholder={t(
+                          'admin.settings.shipping.zoneNamePlaceholder'
+                        )}
                         className={inputClass()}
                       />
                     </div>
                     <div>
                       <label className="text-text-muted mb-1 block text-xs font-medium">
-                        Countries (comma-separated codes)
+                        {t('admin.settings.shipping.countries')}
                       </label>
                       <input
                         type="text"
@@ -159,13 +170,15 @@ export function ShippingTab({ data }) {
                         onChange={(e) =>
                           updateZone(z._key, 'countries', e.target.value)
                         }
-                        placeholder="US, CA"
+                        placeholder={t(
+                          'admin.settings.shipping.countriesPlaceholder'
+                        )}
                         className={inputClass('uppercase')}
                       />
                     </div>
                     <div>
                       <label className="text-text-muted mb-1 block text-xs font-medium">
-                        Rate (cents)
+                        {t('admin.settings.shipping.rate')}
                       </label>
                       <input
                         type="number"
@@ -173,14 +186,16 @@ export function ShippingTab({ data }) {
                         onChange={(e) =>
                           updateZone(z._key, 'rateCents', e.target.value)
                         }
-                        placeholder="999"
+                        placeholder={t(
+                          'admin.settings.shipping.ratePlaceholder'
+                        )}
                         min="0"
                         className={inputClass()}
                       />
                     </div>
                     <div>
                       <label className="text-text-muted mb-1 block text-xs font-medium">
-                        Free over (cents, optional)
+                        {t('admin.settings.shipping.freeOver')}
                       </label>
                       <input
                         type="number"
@@ -188,7 +203,9 @@ export function ShippingTab({ data }) {
                         onChange={(e) =>
                           updateZone(z._key, 'freeOverCents', e.target.value)
                         }
-                        placeholder="5000"
+                        placeholder={t(
+                          'admin.settings.shipping.freeOverPlaceholder'
+                        )}
                         min="0"
                         className={inputClass()}
                       />
