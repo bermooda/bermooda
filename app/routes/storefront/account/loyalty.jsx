@@ -48,7 +48,7 @@ export function meta() {
 export default function AccountLoyaltyRoute() {
   const data = useLoaderData();
   const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
-  const themeId = layoutData?.themeId ?? data.themeId ?? 'default';
+  const themeId = layoutData?.themeId ?? data.themeId;
   const AccountLoyaltyPage = getStorefrontComponent(
     'AccountLoyaltyPage',
     themeId

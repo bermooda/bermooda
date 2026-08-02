@@ -54,11 +54,9 @@ describe('getStorefrontComponent', () => {
     expect(getStorefrontComponent('Layout', 'test')).toBe(StubPage);
   });
 
-  it('falls back to a registered theme when themeId is omitted or unknown', () => {
-    expect(getStorefrontComponent('Layout')).toBeTypeOf('function');
-    expect(getStorefrontComponent('Layout', '@missing/theme')).toBeTypeOf(
-      'function'
-    );
+  it('returns null when themeId is omitted or unknown', () => {
+    expect(getStorefrontComponent('Layout')).toBeNull();
+    expect(getStorefrontComponent('Layout', '@missing/theme')).toBeNull();
   });
 
   it('returns null for an unknown component name', () => {

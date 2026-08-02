@@ -81,16 +81,18 @@ function mergeCatalogFiles(filePaths, base = {}) {
  * Loads and merges message catalogs for the given locale from core, theme,
  * and enabled plugin sources. Non-English locales deep-merge on top of an
  * English base so missing keys fall back to en. Missing files are skipped.
- * Result is TTL-cached under `i18n:${locale}`.
+ * Result is TTL-cached under `i18n:${locale}` (bust with `invalidateCachePrefix('i18n:')`
+ * when the active theme or enabled plugins change).
  *
  * @param {string} locale
  * @returns {Promise<Record<string, any>>}
  */
 export async function loadMessages(locale) {
   return getCachedResult(`i18n:${locale}`, async () => {
-    const [activeThemeId, pluginOrderRaw] = await Promise.all([
+    const [activeThemeId, pluginOrderRaw, enabledRaw] = await Promise.all([
       settingsGet('activeTheme'),
       settingsGet('pluginOrder'),
+      settingsGet('enabledPlugins'),
     ]);
 
     const themeSlug =
@@ -98,7 +100,10 @@ export async function loadMessages(locale) {
         ? (getRegisteredTheme(activeThemeId)?.slug ?? null)
         : null;
 
-    const pluginIds = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
+    const enabledSet = new Set(Array.isArray(enabledRaw) ? enabledRaw : []);
+    const pluginIds = (Array.isArray(pluginOrderRaw) ? pluginOrderRaw : []).filter(
+      (id) => enabledSet.has(id)
+    );
     const pluginSlugs = pluginIds
       .map((id) => getRegisteredPlugin(id)?.slug)
       .filter(Boolean);

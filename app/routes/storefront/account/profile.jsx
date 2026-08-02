@@ -48,7 +48,7 @@ export function meta() {
 export default function AccountProfileRoute() {
   const data = useLoaderData();
   const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
-  const themeId = layoutData?.themeId ?? 'default';
+  const themeId = layoutData?.themeId;
   const AccountProfilePage = getStorefrontComponent(
     'AccountProfilePage',
     themeId

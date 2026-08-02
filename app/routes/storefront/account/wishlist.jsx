@@ -67,7 +67,7 @@ export default function AccountWishlistRoute() {
   const data = useLoaderData();
   const actionData = useActionData();
   const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
-  const themeId = layoutData?.themeId ?? 'default';
+  const themeId = layoutData?.themeId;
   const AccountWishlistPage = getStorefrontComponent(
     'AccountWishlistPage',
     themeId

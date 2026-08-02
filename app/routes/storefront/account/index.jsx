@@ -33,7 +33,7 @@ export function meta() {
 export default function AccountIndexRoute() {
   const data = useLoaderData();
   const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
-  const themeId = layoutData?.themeId ?? 'default';
+  const themeId = layoutData?.themeId;
   const AccountDashboard = getStorefrontComponent('AccountDashboard', themeId);
   if (!AccountDashboard) {
     throw new Error('AccountDashboard theme component not found');

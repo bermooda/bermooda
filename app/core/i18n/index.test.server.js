@@ -68,6 +68,7 @@ function mockLocaleSettings({
     if (key === 'locales') return locales;
     if (key === 'activeTheme') return null;
     if (key === 'pluginOrder') return [];
+    if (key === 'enabledPlugins') return [];
     return null;
   });
 }
@@ -170,6 +171,7 @@ describe('loadMessages', () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@acme/my-theme';
       if (key === 'pluginOrder') return ['@acme/my-plugin'];
+      if (key === 'enabledPlugins') return ['@acme/my-plugin'];
       return null;
     });
     getRegisteredTheme.mockImplementation((id) =>
@@ -196,10 +198,36 @@ describe('loadMessages', () => {
     expect(messages.plugin.hello).toBe('Hello');
   });
 
+  it('skips disabled plugins even when present in pluginOrder', async () => {
+    settingsGet.mockImplementation(async (key) => {
+      if (key === 'activeTheme') return null;
+      if (key === 'pluginOrder') return ['@acme/disabled-plugin'];
+      if (key === 'enabledPlugins') return [];
+      return null;
+    });
+    getRegisteredPlugin.mockImplementation((id) =>
+      id === '@acme/disabled-plugin' ? { slug: 'disabled-plugin' } : null
+    );
+
+    readFileSync.mockReturnValueOnce(
+      JSON.stringify({ 'common.loading': 'Loading...' })
+    );
+
+    const messages = await loadMessages('en');
+    expect(messages['common.loading']).toBe('Loading...');
+    expect(readFileSync).toHaveBeenCalledTimes(1);
+    expect(
+      readFileSync.mock.calls.some(([p]) =>
+        String(p).includes('/plugins/disabled-plugin/')
+      )
+    ).toBe(false);
+  });
+
   it('skips files that do not exist (ENOENT) without throwing', async () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@acme/missing-theme';
       if (key === 'pluginOrder') return ['@acme/missing-plugin'];
+      if (key === 'enabledPlugins') return ['@acme/missing-plugin'];
       return null;
     });
     getRegisteredTheme.mockImplementation((id) =>
@@ -222,6 +250,7 @@ describe('loadMessages', () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return null;
       if (key === 'pluginOrder') return [];
+      if (key === 'enabledPlugins') return [];
       return null;
     });
 
@@ -238,6 +267,7 @@ describe('loadMessages', () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@bermooda/theme-default';
       if (key === 'pluginOrder') return ['@bermooda/plugin-meilisearch'];
+      if (key === 'enabledPlugins') return ['@bermooda/plugin-meilisearch'];
       return null;
     });
     getRegisteredTheme.mockImplementation((id) =>
@@ -266,6 +296,7 @@ describe('loadMessages', () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@bermooda/theme-default';
       if (key === 'pluginOrder') return ['@bermooda/plugin-meilisearch'];
+      if (key === 'enabledPlugins') return ['@bermooda/plugin-meilisearch'];
       return null;
     });
 
@@ -282,6 +313,7 @@ describe('loadMessages', () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return null;
       if (key === 'pluginOrder') return [];
+      if (key === 'enabledPlugins') return [];
       return null;
     });
 
@@ -311,6 +343,7 @@ describe('loadMessages', () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return null;
       if (key === 'pluginOrder') return [];
+      if (key === 'enabledPlugins') return [];
       return null;
     });
 
@@ -334,6 +367,7 @@ describe('loadMessages', () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return null;
       if (key === 'pluginOrder') return [];
+      if (key === 'enabledPlugins') return [];
       return null;
     });
 
@@ -354,6 +388,7 @@ describe('loadMessages', () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return null;
       if (key === 'pluginOrder') return [];
+      if (key === 'enabledPlugins') return [];
       return null;
     });
 
@@ -371,6 +406,7 @@ describe('loadMessages', () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@acme/my-theme';
       if (key === 'pluginOrder') return ['@acme/my-plugin'];
+      if (key === 'enabledPlugins') return ['@acme/my-plugin'];
       return null;
     });
     getRegisteredTheme.mockImplementation((id) =>
