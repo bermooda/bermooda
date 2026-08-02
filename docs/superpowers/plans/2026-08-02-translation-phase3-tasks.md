@@ -42,6 +42,7 @@ Key naming: `admin.<area>.<page>.<element>` (e.g. `admin.products.index.newButto
 ## Task 1: Flatten nested core message keys
 
 **Files:**
+
 - `app/core/i18n/messages/en.json` — replace nested `common` / `admin.topbar` objects with flat keys:
   - `common.loading`, `common.error`, `common.save`, `common.cancel`
   - `admin.topbar.switchLocale`
@@ -58,12 +59,14 @@ Key naming: `admin.<area>.<page>.<element>` (e.g. `admin.products.index.newButto
 ## Task 2: CI key-coverage for email + core message catalogs
 
 **Goal:** Script comparing `en` vs `de`/`fr` keys for:
+
 1. `app/emails/i18n/*.json`
 2. `app/core/i18n/messages/*.json`
 
 Fail (non-zero exit) when any locale is missing keys present in `en`. For core messages, compare **flat leaf keys** after normalizing nested objects to dotted paths (so pre-flatten leftovers or accidental nesting still compare fairly). Email catalogs are already flat.
 
 **Implementation:**
+
 - Add `scripts/check-i18n-key-coverage.mjs` (Node ESM, no new deps).
 - Add npm script `"check:i18n": "node scripts/check-i18n-key-coverage.mjs"`.
 - Wire into `.github/workflows/ci.yml` as a step on the lint job (or a small dedicated job) — run after `npm ci`.
@@ -76,6 +79,7 @@ Fail (non-zero exit) when any locale is missing keys present in `en`. For core m
 ## Task 3: Admin extraction — Overview group
 
 Extract English literals via `useT` + catalogs for:
+
 - `app/routes/admin/dashboard.jsx`
 - `app/routes/admin/audit-log.jsx`
 - `app/routes/admin/reports/index.jsx`
@@ -91,6 +95,7 @@ Add en + de + fr keys. Commit `feat(admin): translate overview routes via useT`.
 ## Task 4: Admin extraction — Catalog group
 
 Extract for all non-test route modules under:
+
 - `products/`, `categories/`, `price-lists/`, `collections/`, `inventory/`, `back-in-stock/`, `wishlists/`, `import/`
 
 Also extract static copy in shared catalog UI used only by these pages if it lives in the route file. Leave `product-editor.jsx` for Task 9.
@@ -102,6 +107,7 @@ Add en + de + fr. Commit `feat(admin): translate catalog routes via useT`.
 ## Task 5: Admin extraction — Content group
 
 Extract for:
+
 - `pages/` (index, new, $id) — leave `page-editor.jsx` for Task 9
 - `menus/index.jsx`
 - `reviews/index.jsx`
@@ -113,6 +119,7 @@ Add en + de + fr. Commit `feat(admin): translate content routes via useT`.
 ## Task 6: Admin extraction — Sales group
 
 Extract for non-test modules under:
+
 - `orders/`, `returns/`, `discounts/`, `gift-cards/`, `subscriptions/`, `pos/`, `quotes/`, `shipments/`
 
 Also translate `order-status-badge.jsx` and `return-status-badge.jsx` (fixed status labels).
@@ -124,6 +131,7 @@ Add en + de + fr. Commit `feat(admin): translate sales routes via useT`.
 ## Task 7: Admin extraction — Customers + Growth
 
 Extract for:
+
 - `customers/`, `customer-groups/`, `companies/`, `loyalty/`
 - `marketing/`, `channels/`
 
@@ -134,6 +142,7 @@ Add en + de + fr. Commit `feat(admin): translate customers and growth routes via
 ## Task 8: Admin extraction — Configuration + Settings tabs
 
 Extract for:
+
 - `themes/index.jsx`, `plugins/index.jsx`, `plugins/$pluginId.jsx`
 - `api-settings.jsx`, `api-settings/keys/new.jsx`, `api-settings/webhooks/new.jsx`
 - `settings/index.jsx`, `settings/users/new.jsx`
@@ -146,6 +155,7 @@ Add en + de + fr. Commit `feat(admin): translate configuration and settings via 
 ## Task 9: Admin extraction — Shared editors + remaining components
 
 Extract static copy in:
+
 - `app/components/admin/product-editor.jsx`
 - `app/components/admin/page-editor.jsx`
 - `app/components/admin/seo-fields.jsx`
