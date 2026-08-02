@@ -8,6 +8,7 @@ import {
 } from 'react-router';
 
 import { adminAuth } from '#/libs/auth/admin/index.server';
+import { useT } from '#/core/i18n';
 import AuthLayout from '#/components/auth/auth-layout';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
@@ -27,6 +28,9 @@ export function meta() {
 
 /**
  * Loader — validates the reset token is present.
+ *
+ * @param {{ request: Request }} args
+ * @returns {Promise<{ error: string } | null>}
  */
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -41,6 +45,9 @@ export async function loader({ request }) {
 
 /**
  * Action — resets the admin user password via Better Auth.
+ *
+ * @param {{ request: Request }} args
+ * @returns {Promise<{ error?: string, success?: boolean }>}
  */
 export async function action({ request }) {
   const formData = await request.formData();
@@ -81,6 +88,7 @@ export async function action({ request }) {
  * @returns {React.ReactElement}
  */
 export default function AdminResetPasswordRoute() {
+  const t = useT();
   const loaderData = useLoaderData();
   const actionData = useActionData();
   const [searchParams] = useSearchParams();
@@ -94,12 +102,12 @@ export default function AdminResetPasswordRoute() {
   const handleSubmit = (e) => {
     if (password !== confirmPassword) {
       e.preventDefault();
-      setPasswordError('Passwords do not match');
+      setPasswordError(t('admin.auth.reset.passwordsDoNotMatch'));
       return;
     }
     if (password.length < 8) {
       e.preventDefault();
-      setPasswordError('Password must be at least 8 characters long');
+      setPasswordError(t('admin.auth.reset.passwordTooShort'));
       return;
     }
     setPasswordError('');
@@ -107,15 +115,15 @@ export default function AdminResetPasswordRoute() {
 
   if (actionData?.success) {
     return (
-      <AuthLayout title="Password set">
-        <SuccessAlert message="Your password has been saved. You can now log in with your new password." />
+      <AuthLayout title={t('admin.auth.reset.successTitle')}>
+        <SuccessAlert message={t('admin.auth.reset.successMessage')} />
         <div className="mt-6 text-center">
           <Link
             to="/admin/login"
             prefetch="intent"
             className="text-accent text-sm font-medium hover:opacity-80"
           >
-            Go to login
+            {t('admin.auth.reset.goToLogin')}
           </Link>
         </div>
       </AuthLayout>
@@ -125,17 +133,15 @@ export default function AdminResetPasswordRoute() {
   const error = loaderData?.error || actionData?.error;
   if (error) {
     return (
-      <AuthLayout title="Password Reset Failed">
-        <ErrorAlert
-          message={`${error}. Please try requesting a new password reset link.`}
-        />
+      <AuthLayout title={t('admin.auth.reset.failedTitle')}>
+        <ErrorAlert message={t('admin.auth.reset.failedMessage', { error })} />
         <div className="mt-6 text-center">
           <Link
             to="/admin/forgot-password"
             prefetch="intent"
             className="text-accent text-sm font-medium hover:opacity-80"
           >
-            Request a new link
+            {t('admin.auth.reset.requestNewLink')}
           </Link>
         </div>
       </AuthLayout>
@@ -144,8 +150,8 @@ export default function AdminResetPasswordRoute() {
 
   return (
     <AuthLayout
-      title="Set your admin password"
-      subtitle="Choose a password to access the admin back office."
+      title={t('admin.auth.reset.title')}
+      subtitle={t('admin.auth.reset.subtitle')}
     >
       <Form method="post" onSubmit={handleSubmit}>
         <input type="hidden" name="token" value={token} />
@@ -155,7 +161,7 @@ export default function AdminResetPasswordRoute() {
               htmlFor="password"
               className="text-text block text-sm leading-6 font-medium"
             >
-              Password
+              {t('admin.auth.reset.password')}
             </label>
             <div className="mt-2">
               <input
@@ -176,7 +182,7 @@ export default function AdminResetPasswordRoute() {
               htmlFor="confirmPassword"
               className="text-text block text-sm leading-6 font-medium"
             >
-              Confirm Password
+              {t('admin.auth.reset.confirmPassword')}
             </label>
             <div className="mt-2">
               <input
@@ -198,7 +204,9 @@ export default function AdminResetPasswordRoute() {
         </div>
 
         <div className="mt-6">
-          <ButtonSubmit className="w-full">Save password</ButtonSubmit>
+          <ButtonSubmit className="w-full">
+            {t('admin.auth.reset.submit')}
+          </ButtonSubmit>
         </div>
       </Form>
     </AuthLayout>

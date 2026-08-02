@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import { adminAuthClient } from '#/libs/auth/admin-client';
+import { useT } from '#/core/i18n';
 import AuthLayout from '#/components/auth/auth-layout';
 import OtpInput from '#/components/auth/otp-input';
 import { ErrorAlert } from '#/components/ui/alert';
@@ -25,6 +26,7 @@ export function meta() {
  * @returns {React.ReactElement}
  */
 export default function AdminVerify2FARoute() {
+  const t = useT();
   const navigate = useNavigate();
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -33,6 +35,7 @@ export default function AdminVerify2FARoute() {
   const [errorMessage, setErrorMessage] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [initialOtpSent, setInitialOtpSent] = useState(false);
+  const sessionExpiredMessage = t('admin.auth.verify2fa.sessionExpired');
 
   // Send initial OTP on page load
   useEffect(() => {
@@ -43,22 +46,18 @@ export default function AdminVerify2FARoute() {
         const { error } = await adminAuthClient.twoFactor.sendOtp();
 
         if (error) {
-          setErrorMessage(
-            'Session expired. Please log in again to receive a new code.'
-          );
+          setErrorMessage(sessionExpiredMessage);
           return;
         }
 
         setInitialOtpSent(true);
       } catch {
-        setErrorMessage(
-          'Session expired. Please log in again to receive a new code.'
-        );
+        setErrorMessage(sessionExpiredMessage);
       }
     };
 
     sendInitialOtp();
-  }, [initialOtpSent]);
+  }, [initialOtpSent, sessionExpiredMessage]);
 
   // Cooldown timer
   useEffect(() => {
@@ -76,7 +75,7 @@ export default function AdminVerify2FARoute() {
 
     const otpCode = otp.join('');
     if (otpCode.length !== 6) {
-      setErrorMessage('Please enter a complete 6-digit code');
+      setErrorMessage(t('admin.auth.verify2fa.incompleteCode'));
       return;
     }
 
@@ -90,7 +89,9 @@ export default function AdminVerify2FARoute() {
       });
 
       if (error) {
-        setErrorMessage(error?.message || 'Invalid verification code');
+        setErrorMessage(
+          error?.message || t('admin.auth.verify2fa.invalidCode')
+        );
         setIsLoading(false);
         setOtp(['', '', '', '', '', '']);
         return;
@@ -98,7 +99,7 @@ export default function AdminVerify2FARoute() {
 
       navigate('/admin/dashboard', { replace: true });
     } catch {
-      setErrorMessage('Something went wrong. Please try again.');
+      setErrorMessage(t('admin.auth.verify2fa.genericError'));
       setIsLoading(false);
       setOtp(['', '', '', '', '', '']);
     }
@@ -114,19 +115,19 @@ export default function AdminVerify2FARoute() {
       const { error } = await adminAuthClient.twoFactor.sendOtp();
 
       if (error) {
-        setErrorMessage('Failed to resend code. Please try logging in again.');
+        setErrorMessage(t('admin.auth.verify2fa.resendFailed'));
         setResendCooldown(0);
       }
     } catch {
-      setErrorMessage('Failed to resend code. Please try logging in again.');
+      setErrorMessage(t('admin.auth.verify2fa.resendFailed'));
       setResendCooldown(0);
     }
   };
 
   return (
     <AuthLayout
-      title="Verify your identity"
-      subtitle="We've sent a 6-digit verification code to your email address"
+      title={t('admin.auth.verify2fa.title')}
+      subtitle={t('admin.auth.verify2fa.subtitle')}
     >
       <ErrorAlert message={errorMessage} />
 
@@ -147,13 +148,15 @@ export default function AdminVerify2FARoute() {
             htmlFor="trust-device"
             className="text-text ml-2 block text-sm"
           >
-            Trust this device for 30 days
+            {t('admin.auth.verify2fa.trustDevice')}
           </label>
         </div>
 
         <div>
           <ButtonSubmit className="w-full" disabled={isLoading}>
-            {isLoading ? 'Verifying...' : 'Verify'}
+            {isLoading
+              ? t('admin.auth.verify2fa.submitting')
+              : t('admin.auth.verify2fa.submit')}
           </ButtonSubmit>
         </div>
       </form>
@@ -166,8 +169,10 @@ export default function AdminVerify2FARoute() {
           className="text-accent text-sm font-medium hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {resendCooldown > 0
-            ? `Resend code in ${resendCooldown}s`
-            : 'Resend verification code'}
+            ? t('admin.auth.verify2fa.resendCooldown', {
+                seconds: resendCooldown,
+              })
+            : t('admin.auth.verify2fa.resend')}
         </button>
       </div>
 
@@ -177,7 +182,7 @@ export default function AdminVerify2FARoute() {
           prefetch="intent"
           className="text-text-muted hover:text-text text-sm font-medium"
         >
-          Back to login
+          {t('admin.auth.verify2fa.backToLogin')}
         </Link>
       </div>
     </AuthLayout>
