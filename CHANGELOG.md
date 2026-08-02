@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.4.0...bermooda-v0.5.0) (2026-08-02)
+
+
+### Features
+
+* **admin:** complete translation phase 3 follow-ups ([#177](https://github.com/bermooda/bermooda/issues/177)) ([4a995fc](https://github.com/bermooda/bermooda/commit/4a995fc539bbd6f55b388b815e9168dbd40748ca))
+* **admin:** translate shell via useT with message en-fallback ([#176](https://github.com/bermooda/bermooda/issues/176)) ([80231ab](https://github.com/bermooda/bermooda/commit/80231ab7e92cf47720bacdb9f8f57375af27dd27))
+* **emails:** complete locale catalogs and migrate auth templates ([#174](https://github.com/bermooda/bermooda/issues/174)) ([c575cff](https://github.com/bermooda/bermooda/commit/c575cffac9c0a9d09a7f2066d379b57c0fa92e7a))
+
 ## [0.4.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.3.0...bermooda-v0.4.0) (2026-08-01)
 
 
