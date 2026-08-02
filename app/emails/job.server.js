@@ -16,13 +16,21 @@ import {
   sendCustomerWelcomeEmail,
   sendAbandonedCartEmail,
 } from '#/emails/index.server';
+import { resolveAuthEmailLocale } from '#/emails/locale.server';
 
 const verifyEmailJob = defineQueueJob('verify_email', {
   process: async (taskData) => {
+    const locale =
+      taskData.locale ??
+      (await resolveAuthEmailLocale({
+        email: taskData.email,
+        preferCustomerLocale: true,
+      }));
     await sendVerificationEmail({
       email: taskData.email,
       name: taskData.name,
       verificationUrl: taskData.url,
+      locale,
     });
   },
   onFailed: {
@@ -33,10 +41,17 @@ const verifyEmailJob = defineQueueJob('verify_email', {
 
 const passwordResetEmailJob = defineQueueJob('password_reset_email', {
   process: async (taskData) => {
+    const locale =
+      taskData.locale ??
+      (await resolveAuthEmailLocale({
+        email: taskData.email,
+        preferCustomerLocale: true,
+      }));
     await sendPasswordResetEmail({
       email: taskData.email,
       name: taskData.name,
       resetUrl: taskData.url,
+      locale,
     });
   },
   onFailed: {
@@ -47,10 +62,17 @@ const passwordResetEmailJob = defineQueueJob('password_reset_email', {
 
 const twoFactorOtpJob = defineQueueJob('two_factor_otp', {
   process: async (taskData) => {
+    const locale =
+      taskData.locale ??
+      (await resolveAuthEmailLocale({
+        email: taskData.email,
+        preferCustomerLocale: false,
+      }));
     await sendTwoFactorOtpEmail({
       email: taskData.email,
       name: taskData.name,
       otp: taskData.otp,
+      locale,
     });
   },
   onFailed: {

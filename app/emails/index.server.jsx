@@ -5,6 +5,7 @@ import logger from '#/utils/logger.server';
 import { sendEmail } from '#/libs/email/index.server';
 import { get as settingsGet, SETTING_KEYS } from '#/core/settings/index.server';
 import { emailT } from '#/emails/i18n.server';
+import { resolveAuthEmailLocale } from '#/emails/locale.server';
 import AbandonedCartEmail from '#/emails/shop/abandoned-cart';
 import BackInStockEmail from '#/emails/shop/back-in-stock';
 import CustomerWelcomeEmail from '#/emails/shop/customer-welcome';
@@ -68,27 +69,30 @@ async function deliver({ to, subject, react, html, text, logMessage }) {
   return { success: true, data };
 }
 
-// Email subjects — admin/auth (templates not yet on JSON catalogs)
-const SUBJECT_WELCOME = 'Welcome to bermooda';
-const SUBJECT_VERIFY_EMAIL = 'Please verify your email address';
-const SUBJECT_RESET_PASSWORD = 'Reset your password';
-const SUBJECT_TWO_FACTOR_OTP = 'Your verification code';
-
 /**
  * Sends a welcome email to a newly registered user
  *
  * @param {Object} options - Email sending options
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
+ * @param {string} [options.locale]
  * @returns {Promise<{ success: true, data: unknown }>}
  */
-export async function sendWelcomeEmail({ email, name }) {
+export async function sendWelcomeEmail({ email, name, locale }) {
   try {
+    const resolvedLocale =
+      locale ??
+      (await resolveAuthEmailLocale({
+        email,
+        preferCustomerLocale: true,
+      }));
+    const t = emailT(resolvedLocale);
     return await deliver({
       to: email,
-      subject: SUBJECT_WELCOME,
+      subject: t('authWelcome.subject', { platformName: PLATFORM_NAME }),
       react: (
         <WelcomeEmail
+          locale={resolvedLocale}
           name={name}
           getStartedUrl={`${config.baseUrl}${config.auth.customerCallbackUrl}`}
         />
@@ -108,15 +112,32 @@ export async function sendWelcomeEmail({ email, name }) {
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
  * @param {string} options.verificationUrl - The URL for email verification
+ * @param {string} [options.locale]
  * @returns {Promise<{ success: true, data: unknown }>}
  */
-export async function sendVerificationEmail({ email, name, verificationUrl }) {
+export async function sendVerificationEmail({
+  email,
+  name,
+  verificationUrl,
+  locale,
+}) {
   try {
+    const resolvedLocale =
+      locale ??
+      (await resolveAuthEmailLocale({
+        email,
+        preferCustomerLocale: true,
+      }));
+    const t = emailT(resolvedLocale);
     return await deliver({
       to: email,
-      subject: SUBJECT_VERIFY_EMAIL,
+      subject: t('authVerify.subject'),
       react: (
-        <VerifyEmailTemplate name={name} verificationUrl={verificationUrl} />
+        <VerifyEmailTemplate
+          locale={resolvedLocale}
+          name={name}
+          verificationUrl={verificationUrl}
+        />
       ),
       logMessage: 'Verification email sent successfully',
     });
@@ -133,14 +154,33 @@ export async function sendVerificationEmail({ email, name, verificationUrl }) {
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
  * @param {string} options.resetUrl - The URL for password reset
+ * @param {string} [options.locale]
  * @returns {Promise<{ success: true, data: unknown }>}
  */
-export async function sendPasswordResetEmail({ email, name, resetUrl }) {
+export async function sendPasswordResetEmail({
+  email,
+  name,
+  resetUrl,
+  locale,
+}) {
   try {
+    const resolvedLocale =
+      locale ??
+      (await resolveAuthEmailLocale({
+        email,
+        preferCustomerLocale: true,
+      }));
+    const t = emailT(resolvedLocale);
     return await deliver({
       to: email,
-      subject: SUBJECT_RESET_PASSWORD,
-      react: <ResetPasswordTemplate name={name} resetUrl={resetUrl} />,
+      subject: t('authResetPassword.subject'),
+      react: (
+        <ResetPasswordTemplate
+          locale={resolvedLocale}
+          name={name}
+          resetUrl={resetUrl}
+        />
+      ),
       logMessage: 'Password reset email sent successfully',
     });
   } catch (error) {
@@ -156,16 +196,30 @@ export async function sendPasswordResetEmail({ email, name, resetUrl }) {
  * @param {string} options.email - Recipient email address
  * @param {string} options.name - Recipient's name
  * @param {string} options.otp - The 6-digit OTP code
+ * @param {string} [options.locale]
  * @returns {Promise<{ success: true, data: unknown }>}
  */
-export async function sendTwoFactorOtpEmail({ email, name, otp }) {
+export async function sendTwoFactorOtpEmail({ email, name, otp, locale }) {
   try {
     const firstName = name.split(' ')[0];
+    const resolvedLocale =
+      locale ??
+      (await resolveAuthEmailLocale({
+        email,
+        preferCustomerLocale: false,
+      }));
+    const t = emailT(resolvedLocale);
 
     return await deliver({
       to: email,
-      subject: SUBJECT_TWO_FACTOR_OTP,
-      react: <TwoFactorOtpTemplate name={firstName} otp={otp} />,
+      subject: t('authTwoFactor.subject'),
+      react: (
+        <TwoFactorOtpTemplate
+          locale={resolvedLocale}
+          name={firstName}
+          otp={otp}
+        />
+      ),
       logMessage: 'Two-factor OTP email sent successfully',
     });
   } catch (error) {

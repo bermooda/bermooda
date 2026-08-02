@@ -24,9 +24,7 @@ describe('email i18n catalogs', () => {
   it('overlays German strings for previously English-fallback keys', () => {
     const de = loadEmailMessages('de');
     expect(de['orderConfirmation.heading']).toBe('Bestellung bestätigt');
-    expect(de['orderShipped.heading']).toBe(
-      'Ihre Bestellung wurde versendet'
-    );
+    expect(de['orderShipped.heading']).toBe('Ihre Bestellung wurde versendet');
     expect(de['orderDelivered.subject']).toBe(
       'Ihre Bestellung wurde zugestellt'
     );
@@ -38,9 +36,7 @@ describe('email i18n catalogs', () => {
   it('overlays French strings including admin reset and invite', () => {
     const fr = loadEmailMessages('fr');
     expect(fr['orderConfirmation.heading']).toBe('Commande confirmée');
-    expect(fr['orderShipped.heading']).toBe(
-      'Votre commande a été expédiée'
-    );
+    expect(fr['orderShipped.heading']).toBe('Votre commande a été expédiée');
     expect(fr['orderDelivered.cta']).toBe('Voir la commande');
     expect(fr['orderRefunded.heading']).toBe('Remboursement traité');
     expect(fr['returnReceived.subject']).toBe('Retour reçu');
@@ -55,9 +51,87 @@ describe('email i18n catalogs', () => {
 
   it('covers every English key in de and fr overlay files', () => {
     const enKeys = Object.keys(enCatalog).sort();
-    expect(enKeys).toHaveLength(69);
+    expect(enKeys).toHaveLength(105);
     expect(Object.keys(deCatalog).sort()).toEqual(enKeys);
     expect(Object.keys(frCatalog).sort()).toEqual(enKeys);
+  });
+
+  const AUTH_KEYS = [
+    'authWelcome.subject',
+    'authWelcome.preview',
+    'authWelcome.heading',
+    'authWelcome.subheading',
+    'authWelcome.body',
+    'authWelcome.list.profile',
+    'authWelcome.list.dashboard',
+    'authWelcome.list.build',
+    'authWelcome.cta',
+    'authVerify.subject',
+    'authVerify.preview',
+    'authVerify.heading',
+    'authVerify.subheading',
+    'authVerify.body',
+    'authVerify.cta',
+    'authVerify.expiry',
+    'authVerify.after',
+    'authVerify.list.profile',
+    'authVerify.list.dashboard',
+    'authVerify.list.build',
+    'authResetPassword.subject',
+    'authResetPassword.preview',
+    'authResetPassword.heading',
+    'authResetPassword.subheading',
+    'authResetPassword.body',
+    'authResetPassword.cta',
+    'authResetPassword.expiry',
+    'authResetPassword.ignore',
+    'authTwoFactor.subject',
+    'authTwoFactor.preview',
+    'authTwoFactor.heading',
+    'authTwoFactor.subheading',
+    'authTwoFactor.body',
+    'authTwoFactor.expiry',
+    'authTwoFactor.securityTitle',
+    'authTwoFactor.securityBody',
+  ];
+
+  it('includes auth template keys in en/de/fr catalogs', () => {
+    for (const key of AUTH_KEYS) {
+      expect(enCatalog[key], `en missing ${key}`).toEqual(expect.any(String));
+      expect(deCatalog[key], `de missing ${key}`).toEqual(expect.any(String));
+      expect(frCatalog[key], `fr missing ${key}`).toEqual(expect.any(String));
+      expect(enCatalog[key].length).toBeGreaterThan(0);
+      expect(deCatalog[key]).not.toBe(enCatalog[key]);
+      expect(frCatalog[key]).not.toBe(enCatalog[key]);
+    }
+  });
+
+  it('returns German auth subjects via emailT', () => {
+    const t = emailT('de');
+    expect(t('authWelcome.subject', { platformName: 'bermooda' })).toMatch(
+      /Willkommen/
+    );
+    expect(t('authVerify.subject')).not.toBe(enCatalog['authVerify.subject']);
+    expect(t('authResetPassword.subject')).not.toBe(
+      enCatalog['authResetPassword.subject']
+    );
+    expect(t('authTwoFactor.subject')).not.toBe(
+      enCatalog['authTwoFactor.subject']
+    );
+  });
+
+  it('returns French auth subjects via emailT', () => {
+    const t = emailT('fr');
+    expect(t('authWelcome.subject', { platformName: 'bermooda' })).toMatch(
+      /Bienvenue/
+    );
+    expect(t('authVerify.cta')).not.toBe(enCatalog['authVerify.cta']);
+    expect(t('authResetPassword.cta')).not.toBe(
+      enCatalog['authResetPassword.cta']
+    );
+    expect(t('authTwoFactor.heading')).not.toBe(
+      enCatalog['authTwoFactor.heading']
+    );
   });
 
   it('falls back entirely to en when locale file is missing', () => {
