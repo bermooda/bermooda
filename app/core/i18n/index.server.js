@@ -101,9 +101,9 @@ export async function loadMessages(locale) {
         : null;
 
     const enabledSet = new Set(Array.isArray(enabledRaw) ? enabledRaw : []);
-    const pluginIds = (Array.isArray(pluginOrderRaw) ? pluginOrderRaw : []).filter(
-      (id) => enabledSet.has(id)
-    );
+    const pluginIds = (
+      Array.isArray(pluginOrderRaw) ? pluginOrderRaw : []
+    ).filter((id) => enabledSet.has(id));
     const pluginSlugs = pluginIds
       .map((id) => getRegisteredPlugin(id)?.slug)
       .filter(Boolean);

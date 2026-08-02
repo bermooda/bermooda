@@ -1,10 +1,10 @@
 import { useLoaderData } from 'react-router';
 
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
-  const themeId = await preloadStorefrontTheme();
+  const { themeId } = await loadStorefrontPageContext(request);
   const url = new URL(request.url);
   const token = url.searchParams.get('token') ?? '';
   const error = url.searchParams.get('error') ?? null;

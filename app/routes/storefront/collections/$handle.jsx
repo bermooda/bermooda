@@ -3,22 +3,19 @@ import { useLoaderData } from 'react-router';
 import { parseCatalogSearchParams } from '#/core/catalog/filter-params';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { getCollectionByHandle } from '#/core/collections/index.server';
-import { getRequestCurrency } from '#/core/currency/index.server';
-import { getRequestLocale } from '#/core/i18n/index.server';
 import { attachReviewSummaries } from '#/core/reviews/index.server';
 import { search } from '#/core/search/index.server';
 import {
   buildBreadcrumbJsonLd,
   buildCollectionMeta,
 } from '#/core/seo/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import { JsonLd } from '#/components/seo/json-ld';
 
 export async function loader({ request, params }) {
-  const themeId = await preloadStorefrontTheme();
-  const locale = await getRequestLocale(request);
-  const currency = await getRequestCurrency(request);
+  const { themeId, locale, currency } =
+    await loadStorefrontPageContext(request);
   const channel = await resolveChannelFromRequest(request);
   const collection = await getCollectionByHandle(params.handle, {
     locale,

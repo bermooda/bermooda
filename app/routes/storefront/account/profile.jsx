@@ -3,13 +3,11 @@ import { useLoaderData, useRouteLoaderData } from 'react-router';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { handleError } from '#/libs/error/index.server';
 import { updateCustomer } from '#/core/customers/index.server';
-import { getRequestLocale } from '#/core/i18n/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
-  const themeId = await preloadStorefrontTheme();
-  const locale = await getRequestLocale(request);
+  const { themeId, locale } = await loadStorefrontPageContext(request);
   return {
     themeId,
     locale,

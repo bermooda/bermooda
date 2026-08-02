@@ -1,8 +1,8 @@
 // app/core/plugins/lifecycle.server.js
 // Enable/disable, persisted enabled state, and plugin ordering.
 
-import logger from '#/utils/logger.server';
 import { invalidateCachePrefix } from '#/utils/cache/index.server';
+import logger from '#/utils/logger.server';
 import { isHookAbort, off, on } from '#/core/events/index.server';
 import { isBeforeHookEvent } from '#/core/events/names';
 import { buildLifecycleCtx } from '#/core/plugins/ctx.server';

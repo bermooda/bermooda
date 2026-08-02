@@ -28,11 +28,11 @@ import {
 } from '#/core/checkout/storefront.server';
 import { computeTotals } from '#/core/checkout/totals.server';
 import { getAllQuotes } from '#/core/shipping/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
-  const themeId = await preloadStorefrontTheme();
+  const { themeId } = await loadStorefrontPageContext(request);
   const cartToken = getCartTokenFromRequest(request);
   const customerAuth = await getCustomerSession(request);
   const customerId = customerAuth?.user?.id ?? undefined;
@@ -72,7 +72,7 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
-  const themeId = await preloadStorefrontTheme();
+  const { themeId } = await loadStorefrontPageContext(request);
   const formData = await request.formData();
   const sessionId = getCheckoutSessionIdFromRequest(request);
   const intent = formData.get('intent')?.toString() ?? 'place-order';

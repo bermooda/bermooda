@@ -147,8 +147,11 @@ export function startAbandonedCartSequenceScheduler() {
 }
 
 /**
- * Async bootstrap tasks that require DB access. Safe to fire-and-forget at
- * process start — failures are logged but do not block request handling.
+ * Async bootstrap tasks that require DB access (seed defaults, enable
+ * persisted plugins, schedulers). Await `whenReady()` / the returned promise
+ * before serving traffic so enabled plugins are wired for the first request.
+ *
+ * @returns {Promise<void>}
  */
 export async function initializeAsync() {
   try {
@@ -164,12 +167,29 @@ export async function initializeAsync() {
   }
 }
 
+/** @type {Promise<void> | null} */
+let _readyPromise = null;
+
+/**
+ * Returns a shared promise that resolves when `initializeAsync` finishes.
+ * Call from the server entry before handling the first request.
+ *
+ * @returns {Promise<void>}
+ */
+export function whenReady() {
+  if (!_readyPromise) {
+    _readyPromise = initializeAsync();
+  }
+  return _readyPromise;
+}
+
 // Exported for testing only.
 export { _bootstrapped as _isBootstrapped };
 
 /** Reset bootstrap state. Test use only — never call in production. */
 export function __resetBootstrap() {
   _bootstrapped = false;
+  _readyPromise = null;
   if (_abandonedCartSequenceTimer) {
     clearInterval(_abandonedCartSequenceTimer);
     _abandonedCartSequenceTimer = null;

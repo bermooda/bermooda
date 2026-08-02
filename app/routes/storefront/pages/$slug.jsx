@@ -1,19 +1,17 @@
 import { useLoaderData } from 'react-router';
 
 import { getPageBySlug } from '#/core/content/index.server';
-import { getRequestLocale } from '#/core/i18n/index.server';
 import {
   buildBreadcrumbJsonLd,
   buildPageMeta,
   buildWebPageJsonLd,
 } from '#/core/seo/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import { JsonLd } from '#/components/seo/json-ld';
 
 export async function loader({ request, params }) {
-  const themeId = await preloadStorefrontTheme();
-  const locale = await getRequestLocale(request);
+  const { themeId, locale } = await loadStorefrontPageContext(request);
   const page = await getPageBySlug(params.slug, {
     locale,
     requirePublished: true,

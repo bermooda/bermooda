@@ -3,19 +3,16 @@ import { useLoaderData } from 'react-router';
 import { parseStorefrontSearchParams } from '#/core/catalog/filter-params';
 import { listCategories } from '#/core/catalog/index.server';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
-import { getRequestCurrency } from '#/core/currency/index.server';
-import { getRequestLocale } from '#/core/i18n/index.server';
 import { search } from '#/core/search/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
-  const themeId = await preloadStorefrontTheme();
+  const { themeId, locale, currency } =
+    await loadStorefrontPageContext(request);
   const url = new URL(request.url);
   const { query, sort, page, filters } = parseStorefrontSearchParams(url);
 
-  const locale = await getRequestLocale(request);
-  const currency = await getRequestCurrency(request);
   const channel = await resolveChannelFromRequest(request);
 
   const [{ products, total, facets }, categories] = await Promise.all([

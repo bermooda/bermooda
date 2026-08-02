@@ -1,23 +1,20 @@
 import { useLoaderData } from 'react-router';
 
 import { listProducts, listCategories } from '#/core/catalog/index.server';
-import { getRequestCurrency } from '#/core/currency/index.server';
-import { getRequestLocale } from '#/core/i18n/index.server';
 import { attachReviewSummaries } from '#/core/reviews/index.server';
 import {
   buildOrganizationJsonLd,
   buildSiteMeta,
   buildWebSiteJsonLd,
 } from '#/core/seo/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import { JsonLd } from '#/components/seo/json-ld';
 
 export async function loader({ request }) {
-  const themeId = await preloadStorefrontTheme();
-  const locale = await getRequestLocale(request);
-  const currency = await getRequestCurrency(request);
+  const { themeId, locale, currency } =
+    await loadStorefrontPageContext(request);
 
   const [{ products: rawProducts }, categories, slotBlocks] = await Promise.all(
     [

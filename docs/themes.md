@@ -120,41 +120,64 @@ app/themes/
       en.json           Translation key/value pairs for this theme slug.
 ```
 
-### Required components
+### Engine-required components
 
-Every theme must supply all seven of the following components in its `components` map. `defineTheme` throws if any are absent.
+Every theme must supply these components in its `components` map. `defineTheme` throws if any are absent (`REQUIRED_COMPONENTS` in `app/core/themes/manifest.js`).
 
 | Component name   | Where it renders                                              |
 | ---------------- | ------------------------------------------------------------- |
-| `Layout`         | Root shell wrapping every storefront page (nav, footer, etc.) |
+| `Layout`         | Theme chrome (nav, footer, etc.) — see Layout ownership below |
 | `HomePage`       | `/` — the storefront home page                                |
 | `ProductPage`    | `/products/:slug` — single product detail page                |
 | `CategoryPage`   | `/categories/:slug` — product listing for a category          |
 | `CartPage`       | `/cart` — shopping cart                                       |
-| `CheckoutLayout` | `/checkout/:step` — multi-step checkout shell                 |
-| `NotFoundPage`   | Rendered when no route matches (404)                          |
+| `CheckoutLayout` | `/checkout` — multi-step checkout shell (used as the page)    |
+| `NotFoundPage`   | Catch-all 404 (`routes/404.jsx`)                              |
 
-### Optional components
+### Route-required components
 
-The default theme ships additional components that themes may implement. These are resolved on demand via `getStorefrontComponent`; returning `null` from that function is safe if your theme omits them.
+Storefront routes resolve these via `getStorefrontComponent` and **throw** if missing. Ship them in a complete theme even though `defineTheme` does not enforce them.
 
 | Component name           | Where it renders / purpose                             |
 | ------------------------ | ------------------------------------------------------ |
+| `PagePage`               | `/pages/:slug` (and CMS page paths)                    |
+| `CollectionPage`         | `/collections/:handle`                                 |
+| `SearchPage`             | `/search`                                              |
 | `CheckoutThankYouPage`   | `/thank-you/:orderNumber` — post-purchase confirmation |
-| `ProductCard`            | Reusable card used inside product grids                |
-| `ProductGrid`            | Grid layout for lists of `ProductCard` items           |
-| `AccountLayout`          | Shell wrapper for all `/account/*` routes              |
+| `AccountLayout`          | Shell for authenticated `/account/*` (account layout)  |
 | `AccountDashboard`       | `/account` — customer overview                         |
 | `AccountOrdersPage`      | `/account/orders` — order history                      |
 | `AccountOrderDetailPage` | `/account/orders/:id` — single order detail            |
 | `AccountAddressesPage`   | `/account/addresses` — saved address management        |
 | `AccountProfilePage`     | `/account/profile` — profile editing                   |
+| `AccountWishlistPage`    | `/account/wishlist`                                    |
+| `AccountLoyaltyPage`     | `/account/loyalty`                                     |
 | `LoginPage`              | `/account/login`                                       |
 | `RegisterPage`           | `/account/register`                                    |
 | `ForgotPasswordPage`     | `/account/forgot-password`                             |
 | `ResetPasswordPage`      | `/account/reset-password`                              |
-| `LocaleSwitcher`         | UI control for changing the active locale              |
-| `CurrencySwitcher`       | UI control for changing the active currency            |
+
+### Optional components
+
+Theme-internal helpers used by other theme components. Routes do not throw if these are absent.
+
+| Component name     | Purpose                                      |
+| ------------------ | -------------------------------------------- |
+| `ProductCard`      | Reusable card used inside product grids      |
+| `ProductGrid`      | Grid layout for lists of `ProductCard` items |
+| `LocaleSwitcher`   | UI control for changing the active locale    |
+| `CurrencySwitcher` | UI control for changing the active currency  |
+
+### Layout ownership
+
+Storefront `_layout.jsx` does **not** render the theme `Layout`. It provides i18n context, menus, locale/currency, and layout slot blocks to child routes via the loader.
+
+Most theme page components **self-wrap** with `Layout` (nav/footer chrome). Exceptions that wrap `Layout` in the route module:
+
+- `routes/404.jsx` — sits outside the storefront layout route; wraps `NotFoundPage` in `Layout`
+- `storefront/apps/$pluginId.jsx` — wraps plugin pages (and status messages) in `Layout`
+
+Account routes use optional-but-route-required `AccountLayout` from `account/_layout.jsx`. Checkout uses `CheckoutLayout` as the page component (not a nested layout wrapper around other theme pages).
 
 ### Theme settings
 
@@ -168,26 +191,54 @@ The optional `bermooda.settings` array lets themes declare admin-configurable op
 | `options` | `string[] \| {value,label}[]`    | Choices for `select` type                                                                           |
 | `default` | `any`                            | Fallback value when nothing is saved                                                                |
 
+Admin loads and saves values with `loadThemeSettings` / `saveThemeSettings` (and the Admin API equivalent). **Storefront loaders do not currently pass theme settings into theme components** — settings are admin-managed only until they are wired into the storefront render context.
+
+---
+
+## Page context
+
+Prefer `loadStorefrontPageContext(request)` from `#/core/storefront/page-context.server`. It returns `{ themeId, locale, currency }` by resolving the active theme (`preloadStorefrontTheme`), request locale, and request currency in parallel.
+
+Pass `themeId` into `getStorefrontComponent(name, themeId)`. Do not resolve the active theme again in the route component.
+
+```js
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
+
+export async function loader({ request }) {
+  const { themeId, locale, currency } =
+    await loadStorefrontPageContext(request);
+  return { themeId, locale, currency /* … */ };
+}
+
+export default function SomeRoute() {
+  const { themeId } = useLoaderData();
+  const HomePage = getStorefrontComponent('HomePage', themeId);
+  if (!HomePage) throw new Error('HomePage theme component not found');
+  return <HomePage />;
+}
+```
+
 ---
 
 ## Slot Names
 
 Slots are named injection points in the storefront layout where plugins can contribute UI blocks. The full list of well-known slot names is exported as `SLOT_NAMES` from `app/core/themes/index.server.js`.
 
-| Slot name                  | Location in the storefront                                |
-| -------------------------- | --------------------------------------------------------- |
-| `home.hero`                | Hero area at the top of the home page, above main content |
-| `home.featured`            | Featured section on the home page, below the hero         |
-| `product.afterDescription` | Below the product description on the product detail page  |
-| `product.sidebar`          | Sidebar column on the product detail page                 |
-| `category.top`             | Above the product grid on category listing pages          |
-| `cart.summary`             | Inside the cart summary panel                             |
-| `checkout.afterPayment`    | Below the payment fields in the checkout flow             |
-| `account.dashboard`        | Inside the customer account dashboard                     |
-| `layout.header`            | Inside the global site header (rendered by `Layout`)      |
-| `layout.footer`            | Inside the global site footer (rendered by `Layout`)      |
+| Slot name                  | Location in the storefront                                 |
+| -------------------------- | ---------------------------------------------------------- |
+| `home.hero`                | Hero area at the top of the home page, above main content  |
+| `home.featured`            | Featured section on the home page, below the hero          |
+| `product.afterDescription` | Below the product description on the product detail page   |
+| `product.sidebar`          | Sidebar column on the product detail page                  |
+| `category.top`             | Above the product grid on category listing pages           |
+| `cart.summary`             | Inside the cart summary panel                              |
+| `checkout.afterPayment`    | Below the payment fields in the checkout flow              |
+| `account.dashboard`        | Inside the customer account dashboard                      |
+| `layout.header`            | Inside the global site header (rendered by theme `Layout`) |
+| `layout.footer`            | Inside the global site footer (rendered by theme `Layout`) |
 
-The default theme renders all 10 of these slots. Route loaders fetch blocks server-side and pass a `slotBlocks` map into the theme component or shell that owns the slot.
+The default theme renders all 10 of these slots. Route loaders fetch blocks server-side and pass a `slotBlocks` map into the theme component or shell that owns the slot. Storefront `_layout.jsx` loads `layout.header` / `layout.footer` for theme chrome; page-owned slots are loaded in the corresponding page loaders.
 
 Themes render slots by calling `getSlotBlocks(slotName)` or `getSlotBlocksMap(slotNames)` and mounting each returned `{ pluginId, component }` entry. The shared `SlotBlocks` component in `app/components/slot-blocks/index.jsx` accepts optional `slotProps`, which are spread into every plugin block so blocks can receive page-specific data like `product`, `cart`, `category`, or checkout state.
 
@@ -206,7 +257,7 @@ import SlotBlocks from '#/components/slot-blocks';
 
 ## API Reference
 
-Server functions are exported from `app/core/themes/index.server.js`. The client-safe `defineTheme` helper is exported from `app/core/themes/define.js`.
+Server functions are exported from `app/core/themes/index.server.js`. Client-safe helpers: `defineTheme` from `#/core/themes/define`, and `getStorefrontComponent` from `#/core/themes/storefront-components`.
 
 ---
 
@@ -264,18 +315,28 @@ if (!theme) {
 }
 ```
 
-**Cache invalidation:** the admin themes action (`/admin/themes`) calls `cache.delete('theme:active')` after writing a new active theme ID, so the change takes effect on the next request rather than waiting for the 5-minute TTL to expire.
+**Cache invalidation:** `setActiveTheme(themeId)` writes `Setting.activeTheme`, deletes `theme:active`, clears the in-process preload cache, and busts the `i18n:` cache prefix (message catalogs embed the active theme slug). The admin themes UI uses this path so the current process picks up the change on the next request.
 
 ---
 
-### `getStorefrontComponent(name)`
+### `preloadStorefrontTheme()`
 
-Async. Resolves a single component by name from the active theme. Calls `resolveActiveTheme` internally. Returns the component value, or `null` if the active theme is unset or the component name is not in `manifest.components`.
+Async. Resolves the active theme id (via `resolveActiveTheme`) and caches it in-process for 60 seconds. Returns the theme package id, or `@bermooda/theme-default` when unset. Used by `loadStorefrontPageContext`.
+
+---
+
+### `getStorefrontComponent(name, themeId)`
+
+**Sync.** Client-safe. Resolves a single component by name from a registered theme. Import from `#/core/themes/storefront-components` (not from the server registry).
+
+- Callers **must** pass `themeId` from loader data (`loadStorefrontPageContext` or `preloadStorefrontTheme`).
+- Returns `null` if `themeId` is missing/unknown or the component is not in `manifest.components`.
+- There is **no** silent fallback to “first registered theme”.
 
 ```js
-import { getStorefrontComponent } from '#/core/themes/index.server';
+import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
-const Layout = await getStorefrontComponent('Layout');
+const Layout = getStorefrontComponent('Layout', themeId);
 ```
 
 ---
@@ -375,9 +436,9 @@ export default defineTheme({
 
 ### Step 4 — Implement required components
 
-At minimum you must implement all seven required components. The copied files from the default theme are already valid implementations — start by editing them rather than writing from scratch.
+At minimum you must implement all seven engine-required components. A complete storefront also needs the route-required pages listed above (CMS pages, search, collections, account, thank-you). The copied files from the default theme are already valid implementations — start by editing them rather than writing from scratch.
 
-The required components are located at:
+The engine-required components are located at:
 
 ```
 app/themes/aurora/components/layout.jsx
@@ -389,7 +450,7 @@ app/themes/aurora/components/checkout-layout.jsx
 app/themes/aurora/components/not-found-page.jsx
 ```
 
-Optional components you do not intend to customize can be left as copied from the default, or removed from the `components` map if they are not needed.
+Optional theme-internal helpers you do not intend to customize can be left as copied from the default, or removed from the `components` map if they are not needed.
 
 ### Step 5 — Update i18n translations (optional)
 
@@ -420,7 +481,7 @@ See the next section for how to activate your theme via the admin UI or the data
 
 ### Via the admin UI
 
-Navigate to `/admin/themes`. Every registered theme is displayed as a card. Click **Activate** on the theme you want to make active. The action writes the full package theme `id` to `Setting.activeTheme` and immediately invalidates the in-memory cache (`theme:active`), so the storefront picks up the new theme on the next request.
+Navigate to `/admin/themes`. Every registered theme is displayed as a card. Click **Activate** on the theme you want to make active. The action calls `setActiveTheme`, which writes the full package theme `id` to `Setting.activeTheme`, invalidates the in-memory theme caches, and busts the `i18n:` cache prefix so the storefront picks up the new theme (and catalogs) on the next request in that process.
 
 If the admin UI shows a warning that "the active theme ID is set to X but no matching theme is registered", the theme has not been registered at startup. Register it (Step 6 above) and restart the server.
 
@@ -438,17 +499,18 @@ Then re-run the seed:
 npx prisma db seed
 ```
 
-The TTL cache will expire within 5 minutes, or restart the dev server to pick up the change immediately.
+The TTL / preload caches will expire within their windows, or restart the dev server to pick up the change immediately.
 
 ---
 
 ## Notes and Constraints
 
 - **Relative sibling imports.** Theme files must not import each other via `#/themes/…`; use relative paths. Keep `#/…` for core app modules.
-- **Client-safe runtime entry.** Theme `index.js` imports `defineTheme` from `#/core/themes/define`, not from the server-only registry.
+- **Client-safe runtime entry.** Theme `index.js` imports `defineTheme` from `#/core/themes/define`, not from the server-only registry. Component lookup uses `#/core/themes/storefront-components`.
 - **Server-only registry.** `app/core/themes/index.server.js` must never be imported in client code. The `.server.js` suffix enforces this in React Router / Vite builds.
 - **Own npm dependencies.** Themes may list packages in `package.json` `dependencies`. Install them into the theme folder (`npm install` in that directory — the CLI and `npm run extensions:install` / `extensions:install-deps` do this). Prefer `peerDependencies` for shared shop libraries (`react`, `react-dom`, `react-router`). Vite resolves nested `app/themes/<slug>/node_modules` from theme source during build and forces those runtime deps into the SSR bundle via `ssr.noExternal`.
 - **In-memory registry.** The registry is process-local. In a multi-process deployment (e.g. multiple Node workers) every process registers themes independently at startup from the same source files, so the registry is consistent across processes without any shared state.
+- **Single-process activeTheme caches.** `resolveActiveTheme` / `preloadStorefrontTheme` use in-process TTL caches. Multi-instance deploys may lag until each process’s TTL expires (or restart), even though the activating process busts its own cache immediately.
+- **i18n catalogs.** `loadMessages` merges core + active theme slug + plugins in `pluginOrder ∩ enabledPlugins`. `setActiveTheme` and plugin enable/order changes bust the `i18n:` cache prefix.
 - **No npm-package themes in v1.** Themes must live under `app/themes/<slug>/` as local folders with package-style metadata. External theme packages installed via npm are not supported in the current version.
-- **TTL cache window.** After an admin activates a theme, storefronts that have already cached the previous active theme ID will continue to serve the old theme for up to 5 minutes. The admin action busts the cache for the current process immediately; other processes will observe the change when their cache TTL expires.
 - **Testing.** The `__resetRegistry()` export is provided exclusively for test teardown. Do not call it in production code.

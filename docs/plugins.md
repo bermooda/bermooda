@@ -18,6 +18,9 @@ This document describes the bermooda plugin architecture and serves as the refer
 10. [Plugin Blocks for Admin Slots](#plugin-blocks-for-admin-slots)
 11. [Building a Plugin (example)](#building-a-plugin-example)
 12. [Plugin Folder Layout](#plugin-folder-layout)
+13. [i18n](#i18n)
+14. [Single-process enable state](#single-process-enable-state)
+15. [Plugin npm dependencies](#plugin-npm-dependencies)
 
 ---
 
@@ -32,10 +35,12 @@ The plugin lifecycle is:
 1. **Define runtime** — the plugin calls `definePlugin({ hooks, providers, blocks, ... })` at module load time to validate runtime behavior only.
 2. **Discover** — the plugin engine globs `app/plugins/*/index.server.js` and sibling `package.json` files, verifies `app/plugins/<slug>/` matches `bermooda.slug`, and merges package identity with the runtime export.
 3. **Register** — `register(manifest)` adds the merged plugin manifest to the in-memory registry by full package id and indexes it by slug for URL dispatch.
-4. **Enable** — `enable(pluginId)` wires hook handlers onto the event bus, registers providers from `manifest.providers`, and calls `onEnable(ctx)`. Admin toggles persist the `enabledPlugins` array using full package ids via `setPluginEnabledState()` and call `enable()` immediately.
+4. **Enable** — `enable(pluginId)` wires hook handlers onto the event bus, registers providers from `manifest.providers`, and calls `onEnable(ctx)`. If `onEnable` throws, hooks/providers are unwound and `isEnabled` stays `false`. Admin toggles persist the `enabledPlugins` array using full package ids via `setPluginEnabledState()` and call `enable()` immediately; if live wiring fails, the Setting is rolled back.
 5. **Disable** — `disable(pluginId)` calls `onDisable(ctx)`, unregisters providers, and removes hook handlers. Admin toggles use `setPluginEnabledState()` to update `enabledPlugins` and call `disable()` immediately.
 
 In the admin plugins screen, toggling a plugin updates the persisted `enabledPlugins` array for startup and also calls `enable()` or `disable()` immediately so hooks, providers, and lifecycle callbacks are wired live without waiting for a restart.
+
+**Bootstrap contract:** persisted plugins are enabled during async bootstrap (`enablePersistedPlugins` via `whenReady()` / `initializeAsync`). The server entry awaits readiness before handling requests so plugins are enabled before traffic. Enable state is in-memory per process — multi-instance deploys need a restart-on-toggle (or shared invalidation) so every instance matches `enabledPlugins`.
 
 All plugin infrastructure lives in `app/core/plugins/index.server.js`.
 
@@ -304,6 +309,9 @@ Enables a registered plugin in-process. This is an async function that:
 1. Registers all hook handlers from `manifest.hooks` onto the event bus via `on(event, handler)`.
 2. Registers all providers from `manifest.providers` into the matching core provider registries.
 3. Calls `manifest.onEnable(ctx)` if defined.
+4. Sets `isEnabled` to `true` only after `onEnable` succeeds.
+
+If `onEnable` (or any earlier step) throws, hooks and providers are **unwound**, `isEnabled` stays `false`, and the error is rethrown.
 
 ```js
 import { enable } from '#/core/plugins/index.server';
@@ -311,7 +319,7 @@ import { enable } from '#/core/plugins/index.server';
 await enable('@bermooda/my-plugin');
 ```
 
-**Throws:** `Error` if the plugin is not in the registry.
+**Throws:** `Error` if the plugin is not in the registry, or if `onEnable` / wiring fails.
 
 If the plugin is already enabled, `enable()` returns immediately without re-registering hooks/providers or calling `onEnable` again.
 
@@ -341,7 +349,7 @@ Admin UI toggles should call `setPluginEnabledState(pluginId, false)` with the f
 
 ### `setPluginEnabledState(pluginId, enabled)`
 
-Persists the plugin in the `enabledPlugins` setting array and wires or unwires the plugin live by calling `enable()` or `disable()`. Rolls back the setting if live wiring fails.
+Persists the plugin in the `enabledPlugins` setting array and wires or unwires the plugin live by calling `enable()` or `disable()`. If live wiring fails, the Setting is rolled back to the previous `enabledPlugins` value (and a partial enable is unwound so persistence and in-memory state stay aligned). Also busts the `i18n:` cache prefix.
 
 ```js
 import { setPluginEnabledState } from '#/core/plugins/index.server';
@@ -406,9 +414,9 @@ Resolves a storefront route descriptor for a plugin folder slug using the splat 
 
 ```js
 {
-  db,          // Prisma client — direct access to the full database
-  settings,    // platform settings service
-  plugin,      // namespaced plugin data store
+  db,          // Prisma client — deprecated escape hatch; prefer domain APIs
+  settings,    // get/set (global) + getPluginSetting/setPluginSetting (namespaced)
+  plugin,      // namespaced PluginData store — prefer this for KV state
   logger,      // Pino logger scoped to this plugin
   queue,       // background job queue
   emit,        // event bus emit function
@@ -416,9 +424,16 @@ Resolves a storefront route descriptor for a plugin folder slug using the splat 
 }
 ```
 
+**Isolation guidance**
+
+- Prefer `ctx.plugin` (`PluginData`) for plugin-owned state.
+- Prefer `ctx.settings.getPluginSetting` / `setPluginSetting` or package-driven helpers in `#/core/plugins/settings.server` (`loadPluginSettings`, `getPluginSettingValue`, `getPluginSettingSecret`) over unnamespaced `ctx.settings.get/set`.
+- Prefer domain APIs in `app/core/*` over raw Prisma.
+- Avoid `ctx.db` except as a last resort (see below). Oxlint also blocks direct `#/libs/prisma*` imports inside `app/plugins/**`.
+
 ### `ctx.db`
 
-The Prisma client instance. This is an **escape hatch** — prefer domain APIs in `app/core/*` and namespaced `ctx.plugin` storage. Raw Prisma access bypasses domain invariants (stock, totals, fulfillment status, etc.) and can leave the shop inconsistent.
+The Prisma client instance. This is a **deprecated escape hatch** — prefer domain APIs in `app/core/*` and namespaced `ctx.plugin` storage. Raw Prisma access bypasses domain invariants (stock, totals, fulfillment status, etc.) and can leave the shop inconsistent.
 
 Use `ctx.db` only when no domain API covers the read/write you need (for example ad-hoc reporting queries). Do not mutate orders, inventory, or payments through Prisma directly.
 
@@ -428,14 +443,21 @@ In v1, plugins cannot define their own Prisma models. All plugin-specific persis
 
 ### `ctx.settings`
 
-Access to the platform `Setting` table (TTL-cached reads).
+Access to the platform `Setting` table (TTL-cached reads). Prefer the
+namespaced helpers so keys stay under `plugin.<pluginId>.*`:
 
 ```js
-const value = await ctx.settings.get('my-setting-key'); // returns string | null
+const apiKey = await ctx.settings.getPluginSetting('apiKey');
+await ctx.settings.setPluginSetting('apiKey', '…');
+
+// Global (unnamespaced) — avoid for plugin-owned config
+const value = await ctx.settings.get('my-setting-key');
 await ctx.settings.set('my-setting-key', 'some-value');
 ```
 
-Settings are global and unnamespaced. Plugins should prefix their keys to avoid collisions, for example `my-plugin.apiKey`.
+Declared admin settings also use `#/core/plugins/settings.server`
+(`loadPluginSettings`, `getPluginSettingValue`, `getPluginSettingSecret`).
+Do not collide with core keys such as `enabledPlugins` or `activeTheme`.
 
 ---
 
@@ -663,6 +685,8 @@ In v1, `PluginData` is the only storage mechanism plugins have. Plugins cannot d
 
 A plugin that includes `admin/routes/index.server.js` and `admin/routes.client.js` gets a dedicated admin page mounted at `/admin/plugins/<slug>/*`. The `<slug>` segment is `bermooda.slug`, not the full package id.
 
+**Enable policy:** the admin dispatcher does **not** check whether the plugin is enabled. Admin UI stays reachable for configuration even when the plugin is disabled.
+
 Admin routes are defined as a server/client pair:
 
 - `admin/routes/index.server.js` — exports route descriptors with optional `loader` and `action`
@@ -718,6 +742,8 @@ The dispatcher resolves admin pages with `resolvePluginAdminRoute(pluginSlug, pa
 
 A plugin that includes `storefront/routes/index.server.js` and `storefront/routes.client.js` gets a dedicated storefront page mounted at `/apps/<slug>/*`. The `<slug>` segment is `bermooda.slug`.
 
+**Enable policy:** `/apps/:pluginId/*` requires the plugin to be **enabled** (loader and action). Disabled or unknown plugins return 404. This differs from the admin dispatcher, which stays reachable for config while disabled.
+
 Storefront routes follow the same split-module pattern as admin routes:
 
 - `storefront/routes/index.server.js` — exports route descriptors with optional `loader` and `action`
@@ -739,11 +765,12 @@ Paths may use `:param` segments and a trailing `*` splat (captured as `params.sp
 The storefront dispatcher:
 
 - uses `params['*']` as the splat path
-- only exposes storefront routes for enabled plugins (loader and action)
+- requires the plugin to be registered **and enabled** (loader and action)
 - resolves the server descriptor with `resolvePluginStorefrontRoute(pluginSlug, params['*'])`
 - runs the descriptor `loader` on the server when present
 - runs the descriptor `action` on POST/mutations when present; otherwise `405 Method Not Allowed`
 - resolves the client component from `storefront/routes.client.js`
+- wraps the rendered page in the active theme `Layout` when available
 
 Example client routes file (`storefront/routes.client.js`):
 
@@ -782,10 +809,24 @@ Plugins can inject UI components into named slots in the storefront theme. Each 
 
 ### Contributing a Block
 
+**Source of truth:** runtime only reads `manifest.blocks` (components imported and listed in `index.server.js`). Files under `blocks/` are **not** auto-discovered — omitting a block from the manifest means it never renders, even if the file exists.
+
 Create a `.jsx` file under your plugin's `blocks/` directory using lowercase, hyphenated paths. Mirror each dotted segment of the slot name as its own directory segment, then use a hyphenated leaf file (for example slot `product.afterDescription` → `blocks/product/after-description.jsx`):
 
 ```
 app/plugins/my-plugin/blocks/product/after-description.jsx
+```
+
+Register it explicitly in `index.server.js`:
+
+```js
+import ProductAfterDescriptionBlock from './blocks/product/after-description';
+
+export const pluginManifest = definePlugin({
+  blocks: {
+    'product.afterDescription': ProductAfterDescriptionBlock,
+  },
+});
 ```
 
 The file must have a default export that is a React component. The component receives slot-specific props (for example `product` on product page slots):
@@ -797,7 +838,7 @@ export default function ProductAfterDescriptionBlock({ product }) {
 }
 ```
 
-The theme renders slot blocks via `getSlotBlocks(slotName)` from `app/core/themes/index.server.js`.
+The theme renders slot blocks via `getSlotBlocks(slotName)` from `app/core/themes/index.server.js`. Blocks only render when the plugin is enabled; order follows `pluginOrder ∩ enabledPlugins`.
 
 ---
 
@@ -820,13 +861,11 @@ The canonical list lives in `ADMIN_SLOT_NAMES` in `app/core/admin/slots/index.se
 
 ### Contributing a Block
 
-Use the same `blocks/` file naming convention as storefront slots. For example, slot `dashboard.widgets` → `blocks/dashboard/widgets.jsx`:
+Same as storefront: put the component under `blocks/`, then register it in `manifest.blocks` from `index.server.js`. Files are not auto-discovered. For example, slot `dashboard.widgets` → `blocks/dashboard/widgets.jsx`:
 
 ```
 app/plugins/my-plugin/blocks/dashboard/widgets.jsx
 ```
-
-Register the component in your plugin's `index.server.js`:
 
 ```js
 import DashboardWidgetsBlock from './blocks/dashboard/widgets';
@@ -851,7 +890,7 @@ Each admin page passes context to plugin blocks via `slotProps`:
 | Customer detail | `{ customer }`                                                                        |
 | Product editor  | `{ product, mode }` (`mode` is `'create'` or `'edit'`)                                |
 
-Blocks only render when the plugin is enabled. Render order follows the `pluginOrder` setting (same as storefront slots).
+Blocks only render when the plugin is enabled. Render order follows `pluginOrder ∩ enabledPlugins` (same as storefront slots and i18n catalog merge).
 
 ---
 
@@ -911,7 +950,7 @@ Translation keys should be prefixed with a camelCase version of the plugin slug 
 app/plugins/
   <slug>/
     package.json             Identity — name/id, version, description, bermooda.title, bermooda.slug, settings.
-    index.server.js          Runtime entry. Calls definePlugin() and exports pluginManifest.
+    index.server.js          Runtime entry. Calls definePlugin() and exports pluginManifest (including blocks).
     admin/
       routes/
         index.server.js      Server route descriptors with optional loaders/actions.
@@ -923,14 +962,24 @@ app/plugins/
         index.test.server.js Colocated server route tests (optional).
       routes.client.js       Client route descriptors with Components.
     blocks/
-      <slot-name>.jsx        One file per slot. Filename must match the slot name exactly.
+      <area>/
+        <leaf>.jsx           Convention only — import into index.server.js and list in manifest.blocks.
+                             Example: blocks/product/after-description.jsx → 'product.afterDescription'
     i18n/
-      en.json                Translation key/value pairs. Merged into the platform i18n catalog.
+      en.json                Translation key/value pairs. Merged into the platform i18n catalog when enabled.
 ```
 
 All files except `package.json` and `index.server.js` are optional. Only create the ones your plugin needs.
 
-The `index.server.js` file is the runtime module imported at startup. It must export `pluginManifest` as a named export and as the default export. The plugin folder name must equal `bermooda.slug`; route modules are discovered from folders, not from `adminRoutes` or `storefrontRoutes` metadata.
+The `index.server.js` file is the runtime module imported at startup. It must export `pluginManifest` as a named export and as the default export. The plugin folder name must equal `bermooda.slug`; route modules are discovered from folders, not from `adminRoutes` or `storefrontRoutes` metadata. Slot blocks are **not** discovered from `blocks/` — only entries in `manifest.blocks` are used at runtime.
+
+## i18n
+
+Plugin catalogs under `i18n/<locale>.json` merge into storefront/admin message catalogs only for plugins in `pluginOrder ∩ enabledPlugins` (ordered intersection). Enabling/disabling a plugin or changing plugin order busts the `i18n:` cache prefix.
+
+## Single-process enable state
+
+`isEnabled`, wired hooks, and providers live in the current Node process. Multi-instance deploys can diverge after a toggle until each process reloads plugins (restart) or you add shared invalidation. Persisted `enabledPlugins` is the source of truth across restarts; in-memory wiring is not shared.
 
 ## Plugin npm dependencies
 

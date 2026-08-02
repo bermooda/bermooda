@@ -2,11 +2,11 @@ import { redirect } from 'react-router';
 import { useLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
-  const themeId = await preloadStorefrontTheme();
+  const { themeId } = await loadStorefrontPageContext(request);
   const session = await getCustomerSession(request);
   if (session?.user) return redirect('/account');
 

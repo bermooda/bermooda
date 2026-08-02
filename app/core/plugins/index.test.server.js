@@ -626,6 +626,8 @@ describe('enable', () => {
     const ctx = onEnable.mock.calls[0][0];
     expect(ctx).toHaveProperty('plugin');
     expect(ctx).toHaveProperty('settings');
+    expect(ctx.settings).toHaveProperty('getPluginSetting');
+    expect(ctx.settings).toHaveProperty('setPluginSetting');
     expect(ctx).toHaveProperty('emit');
     expect(ctx).toHaveProperty('logger');
   });

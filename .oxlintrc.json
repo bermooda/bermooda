@@ -40,6 +40,15 @@
               {
                 "group": ["#/plugins/**"],
                 "message": "Inside a plugin, import sibling plugin modules with relative paths. Keep `#/…` only for core app modules (core, components, libs, utils, etc.)."
+              },
+              {
+                "group": [
+                  "#/libs/prisma",
+                  "#/libs/prisma.server",
+                  "#/libs/prisma/**",
+                  "#prisma/**"
+                ],
+                "message": "Plugins should not import Prisma directly. Prefer domain APIs from `#/core/*`, `ctx.plugin` for PluginData, or namespaced settings helpers — not raw `ctx.db`."
               }
             ]
           }
