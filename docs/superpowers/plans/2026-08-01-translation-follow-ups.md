@@ -129,8 +129,8 @@ Context is already provided in [`AdminLayout`](../../app/routes/admin/_layout.js
 
 **Wave 2+ — route batches by nav group**
 
-- [ ] Catalog → Sales → Content → Settings → … Pattern per page: extract literals → `en` (+ de/fr when practical) → `const t = useT()`.
-- [ ] Do not block Phase 2 on translating all 78 routes; ship shell + en-fallback + documented extraction pattern first.
+- [x] Catalog → Sales → Content → Settings → … Pattern per page: extract literals → `en` (+ de/fr when practical) → `const t = useT()`.
+- [x] Do not block Phase 2 on translating all 78 routes; ship shell + en-fallback + documented extraction pattern first. (Completed in Phase 3.)
 
 ---
 
@@ -138,9 +138,9 @@ Context is already provided in [`AdminLayout`](../../app/routes/admin/_layout.js
 
 Separate, lower priority:
 
-- [ ] **Normalize core nested keys to flat** — migrate remaining nested entries in `messages/en.json`; keep `resolveMessageKey` dual lookup until callers are audited, then simplify if desired.
-- [ ] **Optional CI key-coverage** — script comparing `en` vs `de`/`fr` for `app/emails/i18n` and `app/core/i18n/messages` (fail on missing keys); wire into CI when catalogs are mature.
-- [ ] Continue admin route extraction waves until coverage is complete.
+- [x] **Normalize core nested keys to flat** — migrate remaining nested entries in `messages/en.json`; keep `resolveMessageKey` dual lookup until callers are audited, then simplify if desired.
+- [x] **Optional CI key-coverage** — script comparing `en` vs `de`/`fr` for `app/emails/i18n` and `app/core/i18n/messages` (fail on missing keys); wire into CI when catalogs are mature.
+- [x] Continue admin route extraction waves until coverage is complete.
 
 ---
 
