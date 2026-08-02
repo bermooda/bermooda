@@ -14,6 +14,7 @@ import {
 } from 'react-router';
 
 import { formatPrice } from '#/core/currency/format';
+import { useT } from '#/core/i18n';
 import { loadOrdersAdminIndexData } from '#/core/orders/index.server';
 import EmptyState from '#/components/admin/empty-state';
 import { controlClasses } from '#/components/admin/form/input';
@@ -39,16 +40,8 @@ function formatDate(iso) {
   });
 }
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'All statuses' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'paid', label: 'Paid' },
-  { value: 'fulfilled', label: 'Fulfilled' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'refunded', label: 'Refunded' },
-];
-
 export default function AdminOrdersRoute() {
+  const t = useT();
   const {
     rows,
     total,
@@ -71,18 +64,41 @@ export default function AdminOrdersRoute() {
     });
   }
 
+  const statusOptions = [
+    { value: '', label: t('admin.orders.index.statusAll') },
+    { value: 'pending', label: t('admin.orders.status.pending') },
+    { value: 'paid', label: t('admin.orders.status.paid') },
+    { value: 'fulfilled', label: t('admin.orders.status.fulfilled') },
+    { value: 'cancelled', label: t('admin.orders.status.cancelled') },
+    { value: 'refunded', label: t('admin.orders.status.refunded') },
+  ];
+
+  const columns = [
+    { key: 'order', label: t('admin.orders.index.col.order') },
+    { key: 'customer', label: t('admin.orders.index.col.customer') },
+    { key: 'status', label: t('admin.orders.index.col.status') },
+    { key: 'total', label: t('admin.orders.index.col.total'), right: true },
+    { key: 'created', label: t('admin.orders.index.col.created') },
+  ];
+
   return (
     <div>
       <PageHeader
-        title="Orders"
-        subtitle="View and manage customer orders, shipments, and refunds."
+        title={t('admin.orders.index.title')}
+        subtitle={t('admin.orders.index.subtitle')}
       />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-4">
-        <Stat label="Total orders" value={total} />
-        <Stat label="Pending" value={pendingCount} />
-        <Stat label="Paid" value={paidCount} />
-        <Stat label="Fulfilled" value={fulfilledCount} />
+        <Stat label={t('admin.orders.index.stat.total')} value={total} />
+        <Stat
+          label={t('admin.orders.index.stat.pending')}
+          value={pendingCount}
+        />
+        <Stat label={t('admin.orders.index.stat.paid')} value={paidCount} />
+        <Stat
+          label={t('admin.orders.index.stat.fulfilled')}
+          value={fulfilledCount}
+        />
       </div>
 
       <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
@@ -97,7 +113,7 @@ export default function AdminOrdersRoute() {
                 type="search"
                 name="q"
                 defaultValue={q}
-                placeholder="Order # or email…"
+                placeholder={t('admin.orders.index.searchPlaceholder')}
                 className={`${controlClasses} pl-9`}
               />
             </div>
@@ -106,7 +122,7 @@ export default function AdminOrdersRoute() {
               defaultValue={status === 'all' ? '' : status}
               className="sm:w-44"
             >
-              {STATUS_OPTIONS.map((opt) => (
+              {statusOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -115,7 +131,9 @@ export default function AdminOrdersRoute() {
           </Form>
           <ToolbarGroup>
             <span className="text-text-muted text-sm">
-              {total} result{total !== 1 ? 's' : ''}
+              {total === 1
+                ? t('admin.orders.index.resultsOne', { count: total })
+                : t('admin.orders.index.results', { count: total })}
             </span>
           </ToolbarGroup>
         </Toolbar>
@@ -123,16 +141,14 @@ export default function AdminOrdersRoute() {
         <Table className="hidden rounded-none border-0 shadow-none md:block">
           <THead>
             <tr>
-              {['Order', 'Customer', 'Status', 'Total', 'Created'].map(
-                (col) => (
-                  <Th
-                    key={col}
-                    className={col === 'Total' ? 'text-right' : undefined}
-                  >
-                    {col}
-                  </Th>
-                )
-              )}
+              {columns.map((col) => (
+                <Th
+                  key={col.key}
+                  className={col.right ? 'text-right' : undefined}
+                >
+                  {col.label}
+                </Th>
+              ))}
             </tr>
           </THead>
           <TBody>
@@ -141,11 +157,11 @@ export default function AdminOrdersRoute() {
                 <Td colSpan={5} className="p-0">
                   <EmptyState
                     icon={ShoppingBagIcon}
-                    title="No orders found"
+                    title={t('admin.orders.index.emptyTitle')}
                     description={
                       q || status !== 'all'
-                        ? 'Try a different search term or clear the filter.'
-                        : 'Orders will appear here once customers check out.'
+                        ? t('admin.orders.index.emptyDescriptionSearch')
+                        : t('admin.orders.index.emptyDescription')
                     }
                     className="border-0 shadow-none"
                   />
@@ -190,11 +206,11 @@ export default function AdminOrdersRoute() {
           {rows.length === 0 ? (
             <EmptyState
               icon={ShoppingBagIcon}
-              title="No orders found"
+              title={t('admin.orders.index.emptyTitle')}
               description={
                 q || status !== 'all'
-                  ? 'Try a different search term.'
-                  : 'Orders will appear here once customers check out.'
+                  ? t('admin.orders.index.emptyDescriptionSearchShort')
+                  : t('admin.orders.index.emptyDescription')
               }
               className="border-0 shadow-none"
             />

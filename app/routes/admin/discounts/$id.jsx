@@ -15,6 +15,7 @@ import {
   parseDiscountFormData,
   updateDiscount,
 } from '#/core/discounts/index.server';
+import { useT } from '#/core/i18n';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -73,6 +74,7 @@ export function meta({ loaderData }) {
 }
 
 export default function AdminEditDiscountRoute() {
+  const t = useT();
   const { discount } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -85,13 +87,16 @@ export default function AdminEditDiscountRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Discounts', href: '/admin/discounts' },
+              {
+                label: t('admin.discounts.edit.breadcrumb'),
+                href: '/admin/discounts',
+              },
               { label: discount.code },
             ]}
           />
         }
         title={discount.code}
-        subtitle="Update promo code details and usage limits."
+        subtitle={t('admin.discounts.edit.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -101,22 +106,28 @@ export default function AdminEditDiscountRoute() {
 
         <Card>
           <CardHeader
-            title="Discount details"
-            description="Configure code, type, value, and optional usage limits."
+            title={t('admin.discounts.edit.cardTitle')}
+            description={t('admin.discounts.edit.cardDescription')}
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Code *" htmlFor="discount-code">
+            <Field
+              label={t('admin.discounts.new.code')}
+              htmlFor="discount-code"
+            >
               <Input
                 id="discount-code"
                 type="text"
                 name="code"
                 required
                 defaultValue={discount.code}
-                placeholder="SUMMER20"
+                placeholder={t('admin.discounts.new.codePlaceholder')}
                 className="uppercase"
               />
             </Field>
-            <Field label="Type *" htmlFor="discount-type">
+            <Field
+              label={t('admin.discounts.new.type')}
+              htmlFor="discount-type"
+            >
               <Select
                 id="discount-type"
                 name="type"
@@ -124,12 +135,20 @@ export default function AdminEditDiscountRoute() {
                 value={type}
                 onChange={(e) => setType(e.target.value)}
               >
-                <option value="percent">Percent (%)</option>
-                <option value="fixed">Fixed amount</option>
+                <option value="percent">
+                  {t('admin.discounts.new.typePercent')}
+                </option>
+                <option value="fixed">
+                  {t('admin.discounts.new.typeFixed')}
+                </option>
               </Select>
             </Field>
             <Field
-              label={`Value *${type === 'percent' ? ' (%)' : ' (cents)'}`}
+              label={
+                type === 'percent'
+                  ? t('admin.discounts.new.valuePercent')
+                  : t('admin.discounts.new.valueCents')
+              }
               htmlFor="discount-value"
             >
               <Input
@@ -143,7 +162,7 @@ export default function AdminEditDiscountRoute() {
               />
             </Field>
             <Field
-              label="Currency"
+              label={t('admin.discounts.new.currency')}
               htmlFor="discount-currency"
               className={clsx(type !== 'fixed' && 'invisible')}
             >
@@ -152,13 +171,13 @@ export default function AdminEditDiscountRoute() {
                 type="text"
                 name="currency"
                 defaultValue={discount.currency ?? ''}
-                placeholder="USD"
+                placeholder={t('admin.discounts.new.currencyPlaceholder')}
                 maxLength={3}
                 className="uppercase"
               />
             </Field>
             <Field
-              label="Min subtotal (cents, optional)"
+              label={t('admin.discounts.new.minSubtotal')}
               htmlFor="discount-min-subtotal"
             >
               <Input
@@ -167,20 +186,26 @@ export default function AdminEditDiscountRoute() {
                 name="minSubtotalCents"
                 min="0"
                 defaultValue={discount.minSubtotalCents ?? ''}
-                placeholder="e.g. 5000"
+                placeholder={t('admin.discounts.new.minSubtotalPlaceholder')}
               />
             </Field>
-            <Field label="Max uses (optional)" htmlFor="discount-max-uses">
+            <Field
+              label={t('admin.discounts.new.maxUses')}
+              htmlFor="discount-max-uses"
+            >
               <Input
                 id="discount-max-uses"
                 type="number"
                 name="maxUsesCount"
                 min="1"
                 defaultValue={discount.maxUsesCount ?? ''}
-                placeholder="e.g. 100"
+                placeholder={t('admin.discounts.new.maxUsesPlaceholder')}
               />
             </Field>
-            <Field label="Expires at (optional)" htmlFor="discount-expires">
+            <Field
+              label={t('admin.discounts.new.expiresAt')}
+              htmlFor="discount-expires"
+            >
               <Input
                 id="discount-expires"
                 type="date"
@@ -198,10 +223,12 @@ export default function AdminEditDiscountRoute() {
               to="/admin/discounts"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Saving…' : 'Save discount'}
+              {isSaving
+                ? t('admin.discounts.edit.saving')
+                : t('admin.discounts.edit.save')}
             </ButtonSubmit>
           </div>
         </ActionBar>

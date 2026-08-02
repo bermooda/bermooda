@@ -1,3 +1,4 @@
+import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 
 /** @typedef {'neutral'|'success'|'warn'|'danger'|'accent'} AdminBadgeTone */
@@ -24,7 +25,12 @@ export const RETURN_STATUS_TONES = {
  * @returns {React.ReactElement}
  */
 export function ReturnStatusBadge({ status }) {
+  const t = useT();
+  const labelKey = `admin.returns.status.${status}`;
+  const label = t(labelKey);
   return (
-    <Badge tone={RETURN_STATUS_TONES[status] ?? 'neutral'}>{status}</Badge>
+    <Badge tone={RETURN_STATUS_TONES[status] ?? 'neutral'}>
+      {label === labelKey ? status : label}
+    </Badge>
   );
 }

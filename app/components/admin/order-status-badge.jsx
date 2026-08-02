@@ -1,3 +1,4 @@
+import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 
 /** @typedef {'neutral'|'success'|'warn'|'danger'|'accent'} AdminBadgeTone */
@@ -24,5 +25,12 @@ export const ORDER_STATUS_TONES = {
  * @returns {React.ReactElement}
  */
 export function OrderStatusBadge({ status }) {
-  return <Badge tone={ORDER_STATUS_TONES[status] ?? 'neutral'}>{status}</Badge>;
+  const t = useT();
+  const labelKey = `admin.orders.status.${status}`;
+  const label = t(labelKey);
+  return (
+    <Badge tone={ORDER_STATUS_TONES[status] ?? 'neutral'}>
+      {label === labelKey ? status : label}
+    </Badge>
+  );
 }

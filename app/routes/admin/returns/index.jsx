@@ -3,6 +3,7 @@
 import clsx from 'clsx';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   listReturns,
   parseReturnListParams,
@@ -37,6 +38,7 @@ function formatDate(iso) {
 }
 
 export default function AdminReturnsRoute() {
+  const t = useT();
   const { returns, total, page, status, returnStatuses } = useLoaderData();
   const [searchParams] = useSearchParams();
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -44,8 +46,8 @@ export default function AdminReturnsRoute() {
   return (
     <div>
       <PageHeader
-        title="Returns"
-        subtitle="Review and manage return requests across orders."
+        title={t('admin.returns.index.title')}
+        subtitle={t('admin.returns.index.subtitle')}
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -58,31 +60,41 @@ export default function AdminReturnsRoute() {
               : 'bg-surface-2 text-text-muted hover:text-text'
           )}
         >
-          All
+          {t('admin.returns.index.tabAll')}
         </Link>
-        {returnStatuses.map((value) => (
-          <Link
-            key={value}
-            to={`/admin/returns?status=${value}`}
-            className={clsx(
-              'rounded-full px-3 py-1 text-sm font-medium capitalize transition',
-              status === value
-                ? 'bg-accent text-accent-fg'
-                : 'bg-surface-2 text-text-muted hover:text-text'
-            )}
-          >
-            {value}
-          </Link>
-        ))}
+        {returnStatuses.map((value) => {
+          const labelKey = `admin.returns.status.${value}`;
+          const label = t(labelKey);
+          return (
+            <Link
+              key={value}
+              to={`/admin/returns?status=${value}`}
+              className={clsx(
+                'rounded-full px-3 py-1 text-sm font-medium transition',
+                status === value
+                  ? 'bg-accent text-accent-fg'
+                  : 'bg-surface-2 text-text-muted hover:text-text'
+              )}
+            >
+              {label === labelKey ? value : label}
+            </Link>
+          );
+        })}
       </div>
 
       {returns.length === 0 ? (
         <EmptyState
-          title="No returns"
+          title={t('admin.returns.index.emptyTitle')}
           description={
             status
-              ? `No returns with status "${status}".`
-              : 'Return requests from customers will appear here.'
+              ? t('admin.returns.index.emptyDescriptionStatus', {
+                  status: (() => {
+                    const key = `admin.returns.status.${status}`;
+                    const label = t(key);
+                    return label === key ? status : label;
+                  })(),
+                })
+              : t('admin.returns.index.emptyDescription')
           }
         />
       ) : (
@@ -90,12 +102,12 @@ export default function AdminReturnsRoute() {
           <Table>
             <THead>
               <tr>
-                <Th>Order</Th>
-                <Th>Customer</Th>
-                <Th>Status</Th>
-                <Th>Resolution</Th>
-                <Th>Items</Th>
-                <Th>Date</Th>
+                <Th>{t('admin.returns.index.col.order')}</Th>
+                <Th>{t('admin.returns.index.col.customer')}</Th>
+                <Th>{t('admin.returns.index.col.status')}</Th>
+                <Th>{t('admin.returns.index.col.resolution')}</Th>
+                <Th>{t('admin.returns.index.col.items')}</Th>
+                <Th>{t('admin.returns.index.col.date')}</Th>
               </tr>
             </THead>
             <TBody>
@@ -115,7 +127,12 @@ export default function AdminReturnsRoute() {
                   </Td>
                   <Td className="capitalize">{ret.resolution ?? '—'}</Td>
                   <Td className="text-text-muted">
-                    {ret.lines.map((line) => line.title ?? 'Item').join(', ')}
+                    {ret.lines
+                      .map(
+                        (line) =>
+                          line.title ?? t('admin.returns.index.itemFallback')
+                      )
+                      .join(', ')}
                   </Td>
                   <Td className="text-text-muted">
                     {formatDate(ret.createdAt)}

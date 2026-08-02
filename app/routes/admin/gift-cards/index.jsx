@@ -5,6 +5,7 @@ import { Link, useLoaderData, useSearchParams } from 'react-router';
 
 import { parseAdminSearchParams } from '#/libs/api/admin-ui/index.server';
 import { listGiftCards } from '#/core/gift-cards/index.server';
+import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
@@ -46,7 +47,18 @@ function statusTone(status) {
   return 'neutral';
 }
 
+/**
+ * @param {string} status
+ * @param {(key: string) => string} t
+ */
+function giftCardStatusLabel(status, t) {
+  const key = `admin.giftCards.status.${status}`;
+  const label = t(key);
+  return label === key ? status : label;
+}
+
 export default function AdminGiftCardsRoute() {
+  const t = useT();
   const { giftCards, total, page, q } = useLoaderData();
   const [searchParams] = useSearchParams();
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -54,15 +66,15 @@ export default function AdminGiftCardsRoute() {
   return (
     <div>
       <PageHeader
-        title="Gift cards"
-        subtitle="Issue gift cards redeemable at checkout."
+        title={t('admin.giftCards.index.title')}
+        subtitle={t('admin.giftCards.index.subtitle')}
         actions={
           <Link
             to="/admin/gift-cards/new"
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
-            Issue gift card
+            {t('admin.giftCards.index.issueButton')}
           </Link>
         }
         className="mb-6"
@@ -72,24 +84,26 @@ export default function AdminGiftCardsRoute() {
         <ToolbarGroup>
           <SearchField
             defaultValue={q}
-            placeholder="Search by code…"
+            placeholder={t('admin.giftCards.index.searchPlaceholder')}
             className="w-64"
           />
         </ToolbarGroup>
       </Toolbar>
 
       <h2 className="text-text mb-3 text-lg font-semibold">
-        Issued cards ({total})
+        {t('admin.giftCards.index.issuedHeading', { total })}
       </h2>
       {giftCards.length === 0 ? (
         <EmptyState
           title={
-            q ? 'No gift cards match your search' : 'No gift cards issued yet'
+            q
+              ? t('admin.giftCards.index.emptyTitleSearch')
+              : t('admin.giftCards.index.emptyTitle')
           }
           description={
             q
-              ? 'Try a different code or clear the search.'
-              : 'Issue a gift card for customers to redeem at checkout.'
+              ? t('admin.giftCards.index.emptyDescriptionSearch')
+              : t('admin.giftCards.index.emptyDescription')
           }
           action={
             q ? (
@@ -97,7 +111,7 @@ export default function AdminGiftCardsRoute() {
                 to="/admin/gift-cards"
                 className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
               >
-                Clear search
+                {t('admin.giftCards.index.clearSearch')}
               </Link>
             ) : (
               <Link
@@ -105,7 +119,7 @@ export default function AdminGiftCardsRoute() {
                 className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
               >
                 <PlusIcon className="h-4 w-4" />
-                Issue gift card
+                {t('admin.giftCards.index.issueButton')}
               </Link>
             )
           }
@@ -115,10 +129,10 @@ export default function AdminGiftCardsRoute() {
           <Table>
             <THead>
               <tr>
-                <Th>Code</Th>
-                <Th>Balance</Th>
-                <Th>Status</Th>
-                <Th>Customer</Th>
+                <Th>{t('admin.giftCards.index.col.code')}</Th>
+                <Th>{t('admin.giftCards.index.col.balance')}</Th>
+                <Th>{t('admin.giftCards.index.col.status')}</Th>
+                <Th>{t('admin.giftCards.index.col.customer')}</Th>
               </tr>
             </THead>
             <TBody>
@@ -129,7 +143,9 @@ export default function AdminGiftCardsRoute() {
                     {formatMoney(card.balanceCents, card.currency)}
                   </Td>
                   <Td>
-                    <Badge tone={statusTone(card.status)}>{card.status}</Badge>
+                    <Badge tone={statusTone(card.status)}>
+                      {giftCardStatusLabel(card.status, t)}
+                    </Badge>
                   </Td>
                   <Td>{card.customer?.email ?? '—'}</Td>
                 </tr>
