@@ -45,7 +45,9 @@ export async function sendAdminPasswordResetOrInvite({ user, url }) {
     return 'invite';
   }
 
-  queuePasswordResetEmail(user.email, user.name, url);
+  queuePasswordResetEmail(user.email, user.name, url, {
+    preferCustomerLocale: false,
+  });
   return 'reset';
 }
 
@@ -73,6 +75,7 @@ export const adminAuth = betterAuth({
   }),
 
   emailVerification: createEmailVerificationConfig({
+    preferCustomerLocale: false,
     buildVerificationUrl({ url }) {
       return `${url}admin/dashboard?welcome-message=true`;
     },

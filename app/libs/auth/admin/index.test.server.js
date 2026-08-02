@@ -183,7 +183,8 @@ describe('sendAdminPasswordResetOrInvite', () => {
     expect(queuePasswordResetEmail).toHaveBeenCalledWith(
       'admin@example.com',
       'Admin',
-      'http://localhost:3000/admin/auth/reset-password/token'
+      'http://localhost:3000/admin/auth/reset-password/token',
+      { preferCustomerLocale: false }
     );
     expect(queueStaffInviteEmail).not.toHaveBeenCalled();
   });

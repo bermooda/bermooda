@@ -60,32 +60,32 @@ Ship as **three implementation PRs** (emails first, then admin + minimal hardeni
 
 #### A. Fill incomplete shop locales
 
-- [ ] Add missing keys to [`app/emails/i18n/de.json`](../../app/emails/i18n/de.json) and [`app/emails/i18n/fr.json`](../../app/emails/i18n/fr.json) so both match all 69 `en` keys:
+- [x] Add missing keys to [`app/emails/i18n/de.json`](../../app/emails/i18n/de.json) and [`app/emails/i18n/fr.json`](../../app/emails/i18n/fr.json) so both match all 69 `en` keys:
   - **de + fr:** `orderShipped.*`, `orderDelivered.*`, `orderRefunded.*`, `returnReceived.*`, `backInStock.*`
   - **fr only:** `passwordResetAdmin.*`, `staffInvite.*`
-- [ ] Update [`app/emails/i18n.test.server.js`](../../app/emails/i18n.test.server.js): assert de/fr overlays for previously English-fallback keys (replace the “No DE source for order shipped” expectation).
+- [x] Update [`app/emails/i18n.test.server.js`](../../app/emails/i18n.test.server.js): assert de/fr overlays for previously English-fallback keys (replace the “No DE source for order shipped” expectation).
 
 #### B. Auth templates → same JSON catalogs
 
 Reuse `emailT` / flat keys — do not invent a second catalog system.
 
-- [ ] Add flat keys to `en.json` (and de/fr in the same PR), e.g.:
+- [x] Add flat keys to `en.json` (and de/fr in the same PR), e.g.:
   - `authWelcome.*` (preview, heading, subheading, body, list items, cta, subject)
   - `authVerify.*`
   - `authResetPassword.*`
   - `authTwoFactor.*`
-- [ ] Refactor templates to accept `locale` and call `emailT(locale)`:
+- [x] Refactor templates to accept `locale` and call `emailT(locale)`:
   - [`welcome.server.jsx`](../../app/emails/templates/welcome.server.jsx)
   - [`verify-email.server.jsx`](../../app/emails/templates/verify-email.server.jsx)
   - [`reset-password.server.jsx`](../../app/emails/templates/reset-password.server.jsx)
   - [`two-factor-otp.server.jsx`](../../app/emails/templates/two-factor-otp.server.jsx)
-- [ ] In [`app/emails/index.server.jsx`](../../app/emails/index.server.jsx): drop `SUBJECT_*` constants; resolve subjects via `emailT(locale)('auth….subject', …)`; pass `locale` into templates.
-- [ ] **Locale resolution** (auth callbacks have no request locale):
+- [x] In [`app/emails/index.server.jsx`](../../app/emails/index.server.jsx): drop `SUBJECT_*` constants; resolve subjects via `emailT(locale)('auth….subject', …)`; pass `locale` into templates.
+- [x] **Locale resolution** (auth callbacks have no request locale):
   - Inside each `send*` (or a small helper): `settingsGet('defaultLocale')` → validate → else `'en'`.
   - For customer-facing verify/welcome/reset when a customer id/email is known, prefer `customer.preferredLocale` when set (same idea as order emails in [`job.server.js`](../../app/emails/job.server.js)).
   - Thread `locale` through queue payloads in [`job.server.js`](../../app/emails/job.server.js) so workers stay locale-aware.
-- [ ] Keep better-auth call sites thin ([`createEmailVerificationConfig`](../../app/libs/auth/shared/index.server.js), admin/customer reset hooks) — locale resolved in email send layer.
-- [ ] Validation: `npm run test -- app/emails/i18n.test.server.js` (+ any auth email send tests); lint + build.
+- [x] Keep better-auth call sites thin ([`createEmailVerificationConfig`](../../app/libs/auth/shared/index.server.js), admin/customer reset hooks) — locale resolved in email send layer.
+- [x] Validation: `npm run test -- app/emails/i18n.test.server.js` (+ any auth email send tests); lint + build.
 
 ---
 
