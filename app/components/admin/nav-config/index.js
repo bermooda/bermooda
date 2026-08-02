@@ -36,146 +36,208 @@ import {
 
 /**
  * Admin sidebar navigation groups.
+ * `label` and item `name` are i18n message keys (e.g. `admin.nav.products`).
  *
  * @type {Array<{ label: string, Icon: import('@heroicons/react/24/outline').ForwardRefExoticComponent, items: Array<{ name: string, href: string, Icon: import('@heroicons/react/24/outline').ForwardRefExoticComponent }> }>}
  */
 export const NAV_GROUPS = [
   {
-    label: 'Overview',
+    label: 'admin.nav.overview',
     Icon: ChartBarIcon,
     items: [
-      { name: 'Dashboard', href: '/admin/dashboard', Icon: ChartBarIcon },
-      { name: 'Reports', href: '/admin/reports', Icon: DocumentChartBarIcon },
       {
-        name: 'Audit Log',
+        name: 'admin.nav.dashboard',
+        href: '/admin/dashboard',
+        Icon: ChartBarIcon,
+      },
+      {
+        name: 'admin.nav.reports',
+        href: '/admin/reports',
+        Icon: DocumentChartBarIcon,
+      },
+      {
+        name: 'admin.nav.auditLog',
         href: '/admin/audit-log',
         Icon: ClipboardDocumentListIcon,
       },
     ],
   },
   {
-    label: 'Catalog',
+    label: 'admin.nav.catalog',
     Icon: CubeIcon,
     items: [
-      { name: 'Products', href: '/admin/products', Icon: CubeIcon },
+      { name: 'admin.nav.products', href: '/admin/products', Icon: CubeIcon },
       {
-        name: 'Categories',
+        name: 'admin.nav.categories',
         href: '/admin/categories',
         Icon: RectangleStackIcon,
       },
-      { name: 'Price Lists', href: '/admin/price-lists', Icon: ListBulletIcon },
       {
-        name: 'Collections',
+        name: 'admin.nav.priceLists',
+        href: '/admin/price-lists',
+        Icon: ListBulletIcon,
+      },
+      {
+        name: 'admin.nav.collections',
         href: '/admin/collections',
         Icon: Square3Stack3DIcon,
       },
       {
-        name: 'Inventory',
+        name: 'admin.nav.inventory',
         href: '/admin/inventory',
         Icon: BuildingStorefrontIcon,
       },
       {
-        name: 'Back in stock',
+        name: 'admin.nav.backInStock',
         href: '/admin/back-in-stock',
         Icon: BellAlertIcon,
       },
       {
-        name: 'Wishlists',
+        name: 'admin.nav.wishlists',
         href: '/admin/wishlists',
         Icon: HeartIcon,
       },
-      { name: 'Import', href: '/admin/import', Icon: ArrowDownOnSquareIcon },
+      {
+        name: 'admin.nav.import',
+        href: '/admin/import',
+        Icon: ArrowDownOnSquareIcon,
+      },
     ],
   },
   {
-    label: 'Content',
+    label: 'admin.nav.content',
     Icon: DocumentTextIcon,
     items: [
-      { name: 'Pages', href: '/admin/pages', Icon: DocumentTextIcon },
-      { name: 'Menus', href: '/admin/menus', Icon: Bars3Icon },
-      { name: 'Reviews', href: '/admin/reviews', Icon: StarIcon },
+      {
+        name: 'admin.nav.pages',
+        href: '/admin/pages',
+        Icon: DocumentTextIcon,
+      },
+      { name: 'admin.nav.menus', href: '/admin/menus', Icon: Bars3Icon },
+      { name: 'admin.nav.reviews', href: '/admin/reviews', Icon: StarIcon },
     ],
   },
   {
-    label: 'Sales',
+    label: 'admin.nav.sales',
     Icon: ShoppingBagIcon,
     items: [
-      { name: 'Orders', href: '/admin/orders', Icon: ShoppingBagIcon },
-      { name: 'Returns', href: '/admin/returns', Icon: ArrowUturnLeftIcon },
-      { name: 'Discounts', href: '/admin/discounts', Icon: ReceiptPercentIcon },
       {
-        name: 'Gift Cards',
+        name: 'admin.nav.orders',
+        href: '/admin/orders',
+        Icon: ShoppingBagIcon,
+      },
+      {
+        name: 'admin.nav.returns',
+        href: '/admin/returns',
+        Icon: ArrowUturnLeftIcon,
+      },
+      {
+        name: 'admin.nav.discounts',
+        href: '/admin/discounts',
+        Icon: ReceiptPercentIcon,
+      },
+      {
+        name: 'admin.nav.giftCards',
         href: '/admin/gift-cards',
         Icon: GiftIcon,
       },
       {
-        name: 'Subscriptions',
+        name: 'admin.nav.subscriptions',
         href: '/admin/subscriptions',
         Icon: ArrowPathIcon,
       },
-      { name: 'POS', href: '/admin/pos', Icon: DeviceTabletIcon },
-      { name: 'Quotes', href: '/admin/quotes', Icon: DocumentDuplicateIcon },
+      { name: 'admin.nav.pos', href: '/admin/pos', Icon: DeviceTabletIcon },
+      {
+        name: 'admin.nav.quotes',
+        href: '/admin/quotes',
+        Icon: DocumentDuplicateIcon,
+      },
     ],
   },
   {
-    label: 'Customers',
+    label: 'admin.nav.customers',
     Icon: UserGroupIcon,
     items: [
-      { name: 'Customers', href: '/admin/customers', Icon: UserIcon },
       {
-        name: 'Customer Groups',
+        name: 'admin.nav.customers',
+        href: '/admin/customers',
+        Icon: UserIcon,
+      },
+      {
+        name: 'admin.nav.customerGroups',
         href: '/admin/customer-groups',
         Icon: UserGroupIcon,
       },
       {
-        name: 'Companies',
+        name: 'admin.nav.companies',
         href: '/admin/companies',
         Icon: BuildingOffice2Icon,
       },
-      { name: 'Loyalty', href: '/admin/loyalty', Icon: StarIcon },
+      { name: 'admin.nav.loyalty', href: '/admin/loyalty', Icon: StarIcon },
     ],
   },
   {
-    label: 'Growth',
+    label: 'admin.nav.growth',
     Icon: ArrowTrendingUpIcon,
     items: [
       {
-        name: 'Marketing',
+        name: 'admin.nav.marketing',
         href: '/admin/marketing',
         Icon: ArrowTrendingUpIcon,
       },
-      { name: 'Channels', href: '/admin/channels', Icon: GlobeAltIcon },
+      {
+        name: 'admin.nav.channels',
+        href: '/admin/channels',
+        Icon: GlobeAltIcon,
+      },
     ],
   },
   {
-    label: 'Configuration',
+    label: 'admin.nav.configuration',
     Icon: Cog6ToothIcon,
     items: [
-      { name: 'Themes', href: '/admin/themes', Icon: PaintBrushIcon },
-      { name: 'Plugins', href: '/admin/plugins', Icon: PuzzlePieceIcon },
-      { name: 'API', href: '/admin/api-settings', Icon: CodeBracketIcon },
-      { name: 'Settings', href: '/admin/settings', Icon: Cog6ToothIcon },
+      {
+        name: 'admin.nav.themes',
+        href: '/admin/themes',
+        Icon: PaintBrushIcon,
+      },
+      {
+        name: 'admin.nav.plugins',
+        href: '/admin/plugins',
+        Icon: PuzzlePieceIcon,
+      },
+      {
+        name: 'admin.nav.api',
+        href: '/admin/api-settings',
+        Icon: CodeBracketIcon,
+      },
+      {
+        name: 'admin.nav.settings',
+        href: '/admin/settings',
+        Icon: Cog6ToothIcon,
+      },
     ],
   },
 ];
 
 /**
  * Quick actions surfaced at the top of the command palette.
+ * `name` and `group` are i18n message keys (e.g. `admin.command.newProduct`).
  *
  * @type {Array<{ name: string, href: string, Icon: import('@heroicons/react/24/outline').ForwardRefExoticComponent, group: string, external?: boolean }>}
  */
 export const QUICK_ACTIONS = [
   {
-    name: 'New product',
+    name: 'admin.command.newProduct',
     href: '/admin/products/new',
     Icon: PlusIcon,
-    group: 'Quick actions',
+    group: 'admin.command.quickActions',
   },
   {
-    name: 'New page',
+    name: 'admin.command.newPage',
     href: '/admin/pages/new',
     Icon: DocumentPlusIcon,
-    group: 'Quick actions',
+    group: 'admin.command.quickActions',
   },
   // {
   //   name: 'New customer',
@@ -196,16 +258,17 @@ export const QUICK_ACTIONS = [
   //   group: 'Quick actions',
   // },
   {
-    name: 'View storefront',
+    name: 'admin.command.viewStorefront',
     href: '/',
     Icon: ComputerDesktopIcon,
-    group: 'Quick actions',
+    group: 'admin.command.quickActions',
     external: true,
   },
 ];
 
 /**
  * Flat list of all command palette destinations.
+ * Item `name` and `group` are i18n message keys until callers translate for display.
  *
  * @returns {Array<{ name: string, href: string, Icon: import('@heroicons/react/24/outline').ForwardRefExoticComponent, group: string, external?: boolean }>}
  */
@@ -222,6 +285,8 @@ export function getAllCommandItems() {
 
 /**
  * Filter command palette items by search query.
+ * Matches against message key segments (e.g. `catalog` → `admin.nav.catalog`).
+ * Callers that translate for display should filter pre-translated items instead.
  *
  * @param {ReturnType<typeof getAllCommandItems>} items
  * @param {string} query
@@ -239,7 +304,7 @@ export function filterCommandItems(items, query) {
 }
 
 /**
- * Group filtered items by their section label, preserving order.
+ * Group filtered items by their section message key, preserving order.
  *
  * @param {ReturnType<typeof getAllCommandItems>} items
  * @returns {Array<{ label: string, items: ReturnType<typeof getAllCommandItems> }>}
