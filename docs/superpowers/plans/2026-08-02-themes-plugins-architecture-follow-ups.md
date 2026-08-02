@@ -24,30 +24,30 @@
 
 ## Background (what #178 already landed)
 
-| Area | Done in #178 |
-| ---- | ------------ |
-| Plugin enable rollback | `onEnable` throw unwinds hooks/providers; Setting rolled back |
-| Theme resolution | No silent theme fallback; require real `themeId` |
-| i18n | `pluginOrder ∩ enabledPlugins`; bust `i18n:` on theme/plugin change |
-| Page context | Most storefront loaders use `loadStorefrontPageContext` |
-| Settings hub | Leaf parsers (`tax/input`, `shipping/zones-input`, `address-validation/input`) |
-| Plugin isolation | `whenReady()` before traffic; `getPluginSetting`/`setPluginSetting`; oxlint Prisma ban in plugins |
-| Docs | `docs/themes.md` / `docs/plugins.md` aligned with live contracts |
+| Area                   | Done in #178                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| Plugin enable rollback | `onEnable` throw unwinds hooks/providers; Setting rolled back                                     |
+| Theme resolution       | No silent theme fallback; require real `themeId`                                                  |
+| i18n                   | `pluginOrder ∩ enabledPlugins`; bust `i18n:` on theme/plugin change                               |
+| Page context           | Most storefront loaders use `loadStorefrontPageContext`                                           |
+| Settings hub           | Leaf parsers (`tax/input`, `shipping/zones-input`, `address-validation/input`)                    |
+| Plugin isolation       | `whenReady()` before traffic; `getPluginSetting`/`setPluginSetting`; oxlint Prisma ban in plugins |
+| Docs                   | `docs/themes.md` / `docs/plugins.md` aligned with live contracts                                  |
 
 ## File map
 
-| Path | Responsibility |
-| ---- | -------------- |
-| `app/core/storefront/page-context.server.js` | Extend with theme settings for storefront render |
-| `app/core/themes/index.server.js` | `loadThemeSettings`, discovery; stop dual-glob if client stops discovering |
-| `app/core/themes/storefront-components/index.js` | Client registry: register-only (no eager glob) or shared discover helper |
-| `app/routes/404.jsx` | Stop wrapping `Layout` once NotFoundPage self-wraps |
-| `app/routes/storefront/apps/$pluginId.jsx` | Stop wrapping `Layout` once plugin pages receive chrome via theme Layout helper or page contract |
-| Theme package `components/*` (external `@bermooda/theme-default`) | Self-wrap Layout; consume `themeSettings` props |
-| `scripts/install-default-extensions.mjs` | npm pack + extract fallback (not `npm install --prefix`) |
-| `app/hooks/use-theme.jsx` → `use-color-mode.jsx` (or similar) | Rename light/dark UI mode away from “theme” |
-| `docs/themes.md`, `docs/plugins.md` | Contract updates for this follow-up |
-| `docs/superpowers/plans/2026-08-01-architecture-improvements.md` | Mark landed phases done / note superseded |
+| Path                                                              | Responsibility                                                                                   |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `app/core/storefront/page-context.server.js`                      | Extend with theme settings for storefront render                                                 |
+| `app/core/themes/index.server.js`                                 | `loadThemeSettings`, discovery; stop dual-glob if client stops discovering                       |
+| `app/core/themes/storefront-components/index.js`                  | Client registry: register-only (no eager glob) or shared discover helper                         |
+| `app/routes/404.jsx`                                              | Stop wrapping `Layout` once NotFoundPage self-wraps                                              |
+| `app/routes/storefront/apps/$pluginId.jsx`                        | Stop wrapping `Layout` once plugin pages receive chrome via theme Layout helper or page contract |
+| Theme package `components/*` (external `@bermooda/theme-default`) | Self-wrap Layout; consume `themeSettings` props                                                  |
+| `scripts/install-default-extensions.mjs`                          | npm pack + extract fallback (not `npm install --prefix`)                                         |
+| `app/hooks/use-theme.jsx` → `use-color-mode.jsx` (or similar)     | Rename light/dark UI mode away from “theme”                                                      |
+| `docs/themes.md`, `docs/plugins.md`                               | Contract updates for this follow-up                                                              |
+| `docs/superpowers/plans/2026-08-01-architecture-improvements.md`  | Mark landed phases done / note superseded                                                        |
 
 ```mermaid
 flowchart LR
@@ -321,10 +321,14 @@ function installFromNpm(spec) {
   );
   const tmp = mkdtempSync(join(tmpdir(), 'bermooda-ext-'));
   try {
-    const packed = execFileSync('npm', ['pack', spec.packageId, '--pack-destination', tmp], {
-      encoding: 'utf8',
-      cwd: REPO_ROOT,
-    })
+    const packed = execFileSync(
+      'npm',
+      ['pack', spec.packageId, '--pack-destination', tmp],
+      {
+        encoding: 'utf8',
+        cwd: REPO_ROOT,
+      }
+    )
       .trim()
       .split('\n')
       .pop();
@@ -333,7 +337,10 @@ function installFromNpm(spec) {
     execFileSync('tar', ['-xzf', tarball, '-C', tmp], { stdio: 'inherit' });
     // npm pack extracts to package/
     const extracted = join(tmp, 'package');
-    if (!existsSync(join(extracted, 'index.js')) && !existsSync(join(extracted, 'package.json'))) {
+    if (
+      !existsSync(join(extracted, 'index.js')) &&
+      !existsSync(join(extracted, 'package.json'))
+    ) {
       throw new Error(`Unexpected pack layout for ${spec.packageId}`);
     }
     copyExtension(extracted, spec.destDir);
@@ -376,12 +383,12 @@ git commit -m "fix(extensions): install npm fallback via pack and extract"
 
 These were documented in #178. Only implement if a concrete multi-instance deploy need appears.
 
-| Assumption | Current contract | Possible future work |
-| ---------- | ---------------- | -------------------- |
-| Single-process plugin enable | In-memory registry; admin toggle updates one process | Pub/sub or restart-on-toggle runbook |
-| Single-process `activeTheme` cache | TTL + local bust | Include theme id in cache key cluster-wide or short TTL |
-| Admin plugin routes ignore enabled | Intentional for config | Gate mutations only if abuse appears |
-| `ctx.queue` any job name | Documented constraint | Namespaced job registration API |
+| Assumption                         | Current contract                                     | Possible future work                                    |
+| ---------------------------------- | ---------------------------------------------------- | ------------------------------------------------------- |
+| Single-process plugin enable       | In-memory registry; admin toggle updates one process | Pub/sub or restart-on-toggle runbook                    |
+| Single-process `activeTheme` cache | TTL + local bust                                     | Include theme id in cache key cluster-wide or short TTL |
+| Admin plugin routes ignore enabled | Intentional for config                               | Gate mutations only if abuse appears                    |
+| `ctx.queue` any job name           | Documented constraint                                | Namespaced job registration API                         |
 
 - [ ] **Step 1: Optional runbook blurb**
 
@@ -454,13 +461,13 @@ git commit -m "docs: mark architecture improvements plan phases complete"
 
 Mirror the `orders/` and `plugins/` split pattern. **Do not mix into the same PR as Phase A/B.**
 
-| Module | Approx. lines | Suggested seams |
-| ------ | ------------- | --------------- |
-| `app/core/reporting/index.server.js` | ~869 | kpis, sales, inventory, exports helpers |
-| `app/core/content/index.server.js` | ~846 | pages, menus, blogs |
-| `app/core/b2b/index.server.js` | ~839 | companies, catalogs, quotes |
-| `app/core/marketing/index.server.js` | ~789 | campaigns, abandoned-cart, sequences |
-| `app/core/exports/index.server.js` | ~693 | jobs vs query builders |
+| Module                               | Approx. lines | Suggested seams                         |
+| ------------------------------------ | ------------- | --------------------------------------- |
+| `app/core/reporting/index.server.js` | ~869          | kpis, sales, inventory, exports helpers |
+| `app/core/content/index.server.js`   | ~846          | pages, menus, blogs                     |
+| `app/core/b2b/index.server.js`       | ~839          | companies, catalogs, quotes             |
+| `app/core/marketing/index.server.js` | ~789          | campaigns, abandoned-cart, sequences    |
+| `app/core/exports/index.server.js`   | ~693          | jobs vs query builders                  |
 
 For each domain chosen:
 
