@@ -35,8 +35,53 @@ export async function getAvailableLocales() {
 }
 
 /**
+ * Builds catalog file paths for a locale from core, theme, and plugin sources.
+ *
+ * @param {string} locale
+ * @param {string | null} themeSlug
+ * @param {string[]} pluginSlugs
+ * @returns {string[]}
+ */
+function catalogPathsForLocale(locale, themeSlug, pluginSlugs) {
+  return [
+    join(APP_DIR, 'core', 'i18n', 'messages', `${locale}.json`),
+    ...(themeSlug
+      ? [join(APP_DIR, 'themes', themeSlug, 'i18n', `${locale}.json`)]
+      : []),
+    ...pluginSlugs.map((slug) =>
+      join(APP_DIR, 'plugins', slug, 'i18n', `${locale}.json`)
+    ),
+  ];
+}
+
+/**
+ * Deep-merges JSON catalogs from the given paths. Missing files (ENOENT) are skipped.
+ *
+ * @param {string[]} filePaths
+ * @param {Record<string, any>} [base]
+ * @returns {Record<string, any>}
+ */
+function mergeCatalogFiles(filePaths, base = {}) {
+  let merged = base;
+  for (const filePath of filePaths) {
+    try {
+      const raw = readFileSync(filePath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      merged = deepMerge(merged, parsed);
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        throw err;
+      }
+    }
+  }
+  return merged;
+}
+
+/**
  * Loads and merges message catalogs for the given locale from core, theme,
- * and enabled plugin sources. Missing files are skipped. Result is TTL-cached.
+ * and enabled plugin sources. Non-English locales deep-merge on top of an
+ * English base so missing keys fall back to en. Missing files are skipped.
+ * Result is TTL-cached under `i18n:${locale}`.
  *
  * @param {string} locale
  * @returns {Promise<Record<string, any>>}
@@ -58,30 +103,19 @@ export async function loadMessages(locale) {
       .map((id) => getRegisteredPlugin(id)?.slug)
       .filter(Boolean);
 
-    const filePaths = [
-      join(APP_DIR, 'core', 'i18n', 'messages', `${locale}.json`),
-      ...(themeSlug
-        ? [join(APP_DIR, 'themes', themeSlug, 'i18n', `${locale}.json`)]
-        : []),
-      ...pluginSlugs.map((slug) =>
-        join(APP_DIR, 'plugins', slug, 'i18n', `${locale}.json`)
-      ),
-    ];
-
-    let merged = {};
-    for (const filePath of filePaths) {
-      try {
-        const raw = readFileSync(filePath, 'utf-8');
-        const parsed = JSON.parse(raw);
-        merged = deepMerge(merged, parsed);
-      } catch (err) {
-        if (err.code !== 'ENOENT') {
-          throw err;
-        }
-      }
+    if (locale === 'en') {
+      return mergeCatalogFiles(
+        catalogPathsForLocale('en', themeSlug, pluginSlugs)
+      );
     }
 
-    return merged;
+    const enBase = mergeCatalogFiles(
+      catalogPathsForLocale('en', themeSlug, pluginSlugs)
+    );
+    return mergeCatalogFiles(
+      catalogPathsForLocale(locale, themeSlug, pluginSlugs),
+      enBase
+    );
   });
 }
 
