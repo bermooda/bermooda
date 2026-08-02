@@ -5,12 +5,12 @@ vi.mock('#/core/catalog/index.server', () => ({
   listCategories: vi.fn(),
 }));
 
-vi.mock('#/core/currency/index.server', () => ({
-  getRequestCurrency: vi.fn().mockResolvedValue('USD'),
-}));
-
-vi.mock('#/core/i18n/index.server', () => ({
-  getRequestLocale: vi.fn().mockResolvedValue('en'),
+vi.mock('#/core/storefront/page-context.server', () => ({
+  loadStorefrontPageContext: vi.fn().mockResolvedValue({
+    themeId: 'default',
+    locale: 'en',
+    currency: 'USD',
+  }),
 }));
 
 vi.mock('#/core/reviews/index.server', () => ({
@@ -27,7 +27,6 @@ vi.mock('#/core/seo/index.server', () => ({
 
 vi.mock('#/core/themes/index.server', () => ({
   getSlotBlocksMap: vi.fn(),
-  preloadStorefrontTheme: vi.fn().mockResolvedValue('default'),
 }));
 
 vi.mock('#/core/themes/storefront-components', () => ({

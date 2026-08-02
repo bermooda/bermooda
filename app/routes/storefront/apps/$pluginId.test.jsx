@@ -5,14 +5,14 @@ const {
   mockClientResolve,
   mockGetRegisteredPluginBySlug,
   mockIsPluginEnabled,
-  mockPreloadStorefrontTheme,
+  mockLoadStorefrontPageContext,
   mockServerResolve,
   mockUseLoaderData,
 } = vi.hoisted(() => ({
   mockClientResolve: vi.fn(),
   mockGetRegisteredPluginBySlug: vi.fn(),
   mockIsPluginEnabled: vi.fn(),
-  mockPreloadStorefrontTheme: vi.fn(),
+  mockLoadStorefrontPageContext: vi.fn(),
   mockServerResolve: vi.fn(),
   mockUseLoaderData: vi.fn(),
 }));
@@ -31,8 +31,8 @@ vi.mock('#/core/plugins/index.server', () => ({
   resolvePluginStorefrontRoute: mockServerResolve,
 }));
 
-vi.mock('#/core/themes/index.server', () => ({
-  preloadStorefrontTheme: mockPreloadStorefrontTheme,
+vi.mock('#/core/storefront/page-context.server', () => ({
+  loadStorefrontPageContext: mockLoadStorefrontPageContext,
 }));
 
 vi.mock('#/core/themes/storefront-components', () => ({
@@ -67,7 +67,11 @@ function expectResponse(error) {
 describe('storefront plugin dispatcher', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPreloadStorefrontTheme.mockResolvedValue('default');
+    mockLoadStorefrontPageContext.mockResolvedValue({
+      themeId: 'default',
+      locale: 'en',
+      currency: 'USD',
+    });
     mockGetRegisteredPluginBySlug.mockReturnValue(sampleManifest);
     mockIsPluginEnabled.mockResolvedValue(true);
   });
@@ -108,7 +112,7 @@ describe('storefront plugin dispatcher', () => {
 
     const result = await loader({ request, params });
 
-    expect(mockPreloadStorefrontTheme).toHaveBeenCalledOnce();
+    expect(mockLoadStorefrontPageContext).toHaveBeenCalledOnce();
     expect(mockGetRegisteredPluginBySlug).toHaveBeenCalledWith('demo-plugin');
     expect(mockIsPluginEnabled).toHaveBeenCalledWith('@acme/demo-plugin');
     expect(mockServerResolve).toHaveBeenCalledWith(

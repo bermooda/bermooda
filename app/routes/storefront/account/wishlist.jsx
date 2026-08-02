@@ -3,8 +3,7 @@
 import { useLoaderData, useActionData, useRouteLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
-import { getRequestLocale } from '#/core/i18n/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import {
   addToWishlist,
@@ -15,8 +14,7 @@ import {
 } from '#/core/wishlists/index.server';
 
 export async function loader({ request }) {
-  const themeId = await preloadStorefrontTheme();
-  const locale = await getRequestLocale(request);
+  const { themeId, locale } = await loadStorefrontPageContext(request);
   const session = await getCustomerSession(request);
   const customer = session?.user ?? null;
 
@@ -67,7 +65,7 @@ export default function AccountWishlistRoute() {
   const data = useLoaderData();
   const actionData = useActionData();
   const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
-  const themeId = layoutData?.themeId ?? 'default';
+  const themeId = layoutData?.themeId;
   const AccountWishlistPage = getStorefrontComponent(
     'AccountWishlistPage',
     themeId

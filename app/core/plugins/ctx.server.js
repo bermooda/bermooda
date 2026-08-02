@@ -7,6 +7,7 @@ import queue from '#/libs/queue.server';
 import { queueEmit } from '#/core/events/job.server';
 import { translate } from '#/core/i18n';
 import { DEFAULT_LOCALE } from '#/core/i18n/locales';
+import { pluginSettingStorageKey } from '#/core/plugins/settings.server';
 import {
   get as settingsGet,
   set as settingsSet,
@@ -14,6 +15,10 @@ import {
 
 /**
  * Builds the plugin ctx object for a given pluginId.
+ *
+ * Prefer `ctx.plugin` (PluginData) and `ctx.settings.getPluginSetting` /
+ * `setPluginSetting` (namespaced `plugin.<id>.<key>` Setting rows) over
+ * unnamespaced `ctx.settings.get/set` and the deprecated `ctx.db` escape hatch.
  *
  * @param {string} pluginId
  * @param {{ messages?: Record<string, unknown> }} [options]
@@ -24,8 +29,37 @@ export function buildCtx(pluginId, options = {}) {
   const pluginLogger = logger.child({ plugin: pluginId });
 
   const settings = {
+    /**
+     * Global Setting table access. Prefer `getPluginSetting` /
+     * `setPluginSetting` so keys stay under `plugin.<id>.*`.
+     *
+     * @param {string} key
+     * @returns {Promise<unknown>}
+     */
     get: (key) => settingsGet(key),
+    /**
+     * @param {string} key
+     * @param {unknown} value
+     * @returns {Promise<void>}
+     */
     set: (key, value) => settingsSet(key, value),
+    /**
+     * Read a package-scoped setting (`plugin.<pluginId>.<key>`).
+     *
+     * @param {string} key
+     * @returns {Promise<unknown>}
+     */
+    getPluginSetting: (key) =>
+      settingsGet(pluginSettingStorageKey(pluginId, key)),
+    /**
+     * Write a package-scoped setting (`plugin.<pluginId>.<key>`).
+     *
+     * @param {string} key
+     * @param {unknown} value
+     * @returns {Promise<void>}
+     */
+    setPluginSetting: (key, value) =>
+      settingsSet(pluginSettingStorageKey(pluginId, key), value),
   };
 
   const plugin = {
@@ -56,11 +90,24 @@ export function buildCtx(pluginId, options = {}) {
   };
 
   const pluginQueue = {
+    /**
+     * Enqueue a LiteQuu job. Prefer job names already registered by core or
+     * this plugin — arbitrary names will not run.
+     *
+     * @param {string} jobName
+     * @param {unknown} data
+     * @returns {void}
+     */
     add: (jobName, data) => {
       const job = queue.createJob(jobName);
       job.add(data);
       pluginLogger.info({ jobName }, 'Plugin queued job');
     },
+    /**
+     * @param {string} jobName
+     * @param {unknown} data
+     * @returns {void}
+     */
     enqueue: (jobName, data) => {
       pluginQueue.add(jobName, data);
     },
@@ -70,7 +117,7 @@ export function buildCtx(pluginId, options = {}) {
 
   return {
     /**
-     * @deprecated Prefer domain APIs; raw Prisma bypasses invariants.
+     * @deprecated Prefer domain APIs from `#/core/*`; raw Prisma bypasses invariants.
      */
     db: prisma,
     settings,

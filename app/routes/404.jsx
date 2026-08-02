@@ -1,6 +1,6 @@
 import { useLoaderData } from 'react-router';
 
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export function meta() {
@@ -13,8 +13,11 @@ export function meta() {
   ];
 }
 
-export async function loader() {
-  const themeId = await preloadStorefrontTheme();
+/**
+ * @param {{ request: Request }} args
+ */
+export async function loader({ request }) {
+  const { themeId } = await loadStorefrontPageContext(request);
   return { themeId };
 }
 
@@ -27,6 +30,7 @@ export default function NotFoundRoute() {
     throw new Error('404 theme components not found');
   }
 
+  // 404 wraps Layout itself — it sits outside the storefront layout route.
   return (
     <Layout>
       <NotFoundPage />

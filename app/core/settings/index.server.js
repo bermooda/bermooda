@@ -3,10 +3,8 @@
 
 import cache, { getCachedResult } from '#/utils/cache/index.server';
 import prisma from '#/libs/prisma.server';
-import {
-  parseAddressValidationSettingsInput,
-  resolveAddressValidationProvider,
-} from '#/core/address-validation/index.server';
+import { parseAddressValidationSettingsInput } from '#/core/address-validation/input';
+import { resolveAddressValidationProvider } from '#/core/address-validation/registry.server';
 import { normalizeLocaleList } from '#/core/i18n/locales';
 import {
   parseSeoSettingsInput,
@@ -20,8 +18,8 @@ import {
   SETTING_DEFAULTS,
 } from '#/core/settings/defaults';
 import { SETTING_KEYS } from '#/core/settings/keys';
-import { parseAdminShippingZonesInput } from '#/core/shipping/index.server';
-import { parseTaxSettingsInput } from '#/core/tax/index.server';
+import { parseAdminShippingZonesInput } from '#/core/shipping/zones-input';
+import { parseTaxSettingsInput } from '#/core/tax/input';
 
 export { SETTING_KEYS } from '#/core/settings/keys';
 export {

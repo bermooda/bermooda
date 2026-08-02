@@ -6,13 +6,14 @@ import {
   resolvePluginStorefrontRoute as resolveServerRoute,
 } from '#/core/plugins/index.server';
 import { resolvePluginStorefrontRoute as resolveClientRoute } from '#/core/plugins/storefront-routes.client';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 /**
  * @param {{ title: string, children: React.ReactNode, themeId?: string }} props
  */
 function StorefrontMessage({ title, children, themeId }) {
+  // Plugin error/status pages wrap Layout themselves (outside storefront chrome).
   const Layout = getStorefrontComponent('Layout', themeId);
   const inner = (
     <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
@@ -48,7 +49,7 @@ export function meta({ loaderData, params }) {
  * @param {{ request: Request, params: Record<string, string | undefined> }} args
  */
 export async function loader({ request, params }) {
-  const themeId = await preloadStorefrontTheme();
+  const { themeId } = await loadStorefrontPageContext(request);
   const pluginSlug = params.pluginId ?? '';
   const splatPath = params['*'] ?? '';
 
@@ -179,6 +180,7 @@ export default function StorefrontPluginDispatcher() {
 
   const Layout = getStorefrontComponent('Layout', themeId);
   if (!Layout) return <PluginComponent loaderData={data.pluginLoaderData} />;
+  // Matched plugin pages wrap Layout themselves (same pattern as status states).
   return (
     <Layout>
       <PluginComponent loaderData={data.pluginLoaderData} />

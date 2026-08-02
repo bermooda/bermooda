@@ -37,25 +37,19 @@ for (const [modPath, mod] of Object.entries(themeModules)) {
 }
 
 /**
- * Resolve a storefront page component by name and optional theme id.
+ * Resolve a storefront page component by name and theme id.
+ * Returns null when the theme is unknown or the component is missing —
+ * callers must pass a real themeId from loader data (no silent fallback).
  *
  * @param {string} name
  * @param {string} [themeId]
  * @returns {unknown | null}
  */
 export function getStorefrontComponent(name, themeId) {
-  if (themeId) {
-    const manifest = THEMES[themeId];
-    if (manifest) {
-      return manifest.components?.[name] ?? null;
-    }
-  }
-
-  // Fall back to the first registered theme when no themeId is supplied or
-  // the requested id is not present.
-  const firstManifest = Object.values(THEMES)[0];
-  if (!firstManifest) return null;
-  return firstManifest.components?.[name] ?? null;
+  if (!themeId) return null;
+  const manifest = THEMES[themeId];
+  if (!manifest) return null;
+  return manifest.components?.[name] ?? null;
 }
 
 /**

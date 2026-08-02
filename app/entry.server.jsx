@@ -13,23 +13,29 @@ import { isbot } from 'isbot';
 import { renderToPipeableStream } from 'react-dom/server';
 import { ServerRouter } from 'react-router';
 
-import {
-  registerBuiltins,
-  initializeAsync,
-} from '#/core/bootstrap/index.server';
+import { registerBuiltins, whenReady } from '#/core/bootstrap/index.server';
 
-// Register providers + event subscribers once at process start.
+// Register providers + event subscribers once at process start, then await
+// async bootstrap (including enablePersistedPlugins) before the first request.
 registerBuiltins();
-void initializeAsync();
+const bootstrapReady = whenReady();
 
 const ABORT_DELAY = 5000;
 
-export default function handleRequest(
+/**
+ * @param {Request} request
+ * @param {number} responseStatusCode
+ * @param {Headers} responseHeaders
+ * @param {unknown} routerContext
+ * @returns {Promise<Response>}
+ */
+export default async function handleRequest(
   request,
   responseStatusCode,
   responseHeaders,
   routerContext
 ) {
+  await bootstrapReady;
   return isbot(request.headers.get('user-agent') ?? '')
     ? handleBotRequest(
         request,

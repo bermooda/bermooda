@@ -1,7 +1,10 @@
 // app/core/themes/index.server.js
 // Theme loader: define, register, and resolve storefront themes.
 
-import cache, { getCachedResult } from '#/utils/cache/index.server';
+import cache, {
+  getCachedResult,
+  invalidateCachePrefix,
+} from '#/utils/cache/index.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { checkExtensionEngine, getAppVersion } from '#/core/extensions/engine';
@@ -294,6 +297,9 @@ export async function setActiveTheme(themeId) {
   await set('activeTheme', themeId);
   cache.delete('theme:active');
   invalidateThemeCache();
+  // Message catalogs embed the active theme — bust so the next request
+  // merges catalogs for the newly selected theme.
+  invalidateCachePrefix('i18n:');
 }
 
 // ---------------------------------------------------------------------------

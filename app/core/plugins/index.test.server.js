@@ -626,6 +626,8 @@ describe('enable', () => {
     const ctx = onEnable.mock.calls[0][0];
     expect(ctx).toHaveProperty('plugin');
     expect(ctx).toHaveProperty('settings');
+    expect(ctx.settings).toHaveProperty('getPluginSetting');
+    expect(ctx.settings).toHaveProperty('setPluginSetting');
     expect(ctx).toHaveProperty('emit');
     expect(ctx).toHaveProperty('logger');
   });
@@ -727,7 +729,48 @@ describe('enable', () => {
     await _enable('plugin-c');
 
     const entry = _registry.get('plugin-c');
+    expect(entry.isEnabled).toBe(true);
     expect(entry.handlers.size).toBe(1);
+  });
+
+  it('unwinds hooks and providers when onEnable throws', async () => {
+    const { _handlers } = await import('#/core/events/index.server');
+    const handler = vi.fn();
+    const onEnable = vi.fn().mockRejectedValue(new Error('bootstrap failed'));
+
+    register(
+      validPlugin({
+        id: 'plugin-fail-enable',
+        title: 'Plugin Fail Enable',
+        hooks: { 'order.created': handler },
+        providers: {
+          acme_pay: defineProvider('payment', {
+            name: 'Acme Pay',
+            createCheckoutSession: vi.fn(),
+          }),
+        },
+        onEnable,
+      })
+    );
+
+    await expect(_enable('plugin-fail-enable')).rejects.toThrow(
+      'bootstrap failed'
+    );
+
+    const entry = _registry.get('plugin-fail-enable');
+    expect(entry.isEnabled).toBe(false);
+    expect(entry.handlers.size).toBe(0);
+    expect(unregisterPaymentProvider).toHaveBeenCalledWith('acme_pay');
+    expect(_handlers.get('order.created')?.includes(handler) ?? false).toBe(
+      false
+    );
+
+    // Can retry enable after failure
+    onEnable.mockResolvedValueOnce(undefined);
+    vi.clearAllMocks();
+    await _enable('plugin-fail-enable');
+    expect(entry.isEnabled).toBe(true);
+    expect(entry.handlers.get('order.created')).toBe(handler);
   });
 
   it('is idempotent for plugins that only register providers', async () => {
@@ -977,5 +1020,38 @@ describe('setPluginEnabledState email exclusivity', () => {
       'enabledPlugins',
       expect.not.arrayContaining(['@bermooda/plugin-resend'])
     );
+  });
+
+  it('rolls back settings and leaves plugin disabled when onEnable throws', async () => {
+    const onEnable = vi.fn().mockRejectedValue(new Error('bootstrap failed'));
+    const handler = vi.fn();
+
+    register(
+      validPlugin({
+        id: '@bermooda/plugin-flaky',
+        title: 'Flaky',
+        slug: 'flaky',
+        hooks: { 'order.created': handler },
+        onEnable,
+      })
+    );
+
+    settingsGet.mockResolvedValue([]);
+
+    await expect(
+      setPluginEnabledState('@bermooda/plugin-flaky', true)
+    ).rejects.toThrow('bootstrap failed');
+
+    const entry = _registry.get('@bermooda/plugin-flaky');
+    expect(entry.isEnabled).toBe(false);
+    expect(entry.handlers.size).toBe(0);
+    expect(settingsSet).toHaveBeenCalledWith('enabledPlugins', [
+      '@bermooda/plugin-flaky',
+    ]);
+    expect(settingsSet).toHaveBeenLastCalledWith('enabledPlugins', []);
+
+    onEnable.mockResolvedValueOnce(undefined);
+    await setPluginEnabledState('@bermooda/plugin-flaky', true);
+    expect(entry.isEnabled).toBe(true);
   });
 });

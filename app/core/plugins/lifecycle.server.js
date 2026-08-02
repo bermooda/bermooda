@@ -1,6 +1,7 @@
 // app/core/plugins/lifecycle.server.js
 // Enable/disable, persisted enabled state, and plugin ordering.
 
+import { invalidateCachePrefix } from '#/utils/cache/index.server';
 import logger from '#/utils/logger.server';
 import { isHookAbort, off, on } from '#/core/events/index.server';
 import { isBeforeHookEvent } from '#/core/events/names';
@@ -156,8 +157,22 @@ export async function setPluginEnabledState(pluginId, enabled) {
     }
   } catch (err) {
     await settingsSet('enabledPlugins', previousEnabled);
+    // If enable left the process wired (or isEnabled still true), unwind so
+    // persistence and in-memory state stay aligned.
+    if (enabled) {
+      const entry = registry.get(pluginId);
+      if (entry?.isEnabled) {
+        try {
+          await disable(pluginId);
+        } catch {
+          // Best-effort unwind after settings rollback.
+        }
+      }
+    }
     throw err;
   }
+
+  invalidateCachePrefix('i18n:');
 }
 
 /**
@@ -179,11 +194,30 @@ export async function setPluginOrder(orderedIds) {
 
   const fullOrder = buildFullPluginOrder(orderedIds, pluginIds);
   await settingsSet('pluginOrder', fullOrder);
+  invalidateCachePrefix('i18n:');
   return fullOrder;
 }
 
 /**
+ * Unregisters hooks and providers for a partially-enabled plugin without
+ * calling onDisable (used when enable fails before success).
+ *
+ * @param {{ handlers: Map<string, Function>, providers: unknown[], isEnabled: boolean, manifest: object }} entry
+ * @returns {void}
+ */
+function unwindPartialEnable(entry) {
+  unregisterProvidersForPlugin(entry);
+
+  for (const [event, handler] of entry.handlers) {
+    off(event, handler);
+  }
+  entry.handlers.clear();
+  entry.isEnabled = false;
+}
+
+/**
  * Enables a plugin by registering hooks/providers and calling onEnable.
+ * Hooks/providers are unwound and isEnabled stays false if onEnable throws.
  *
  * @param {string} pluginId
  * @returns {Promise<void>}
@@ -194,39 +228,44 @@ export async function enable(pluginId) {
   if (entry.isEnabled) return;
 
   const { manifest } = entry;
-  entry.isEnabled = true;
 
-  if (manifest.hooks) {
-    for (const [event, handler] of Object.entries(manifest.hooks)) {
-      if (typeof handler !== 'function') continue;
+  try {
+    if (manifest.hooks) {
+      for (const [event, handler] of Object.entries(manifest.hooks)) {
+        if (typeof handler !== 'function') continue;
 
-      const wrapped = isBeforeHookEvent(event)
-        ? async (payload) => {
-            try {
-              return await handler(payload);
-            } catch (err) {
-              if (isHookAbort(err) && !err.pluginId) {
-                err.pluginId = pluginId;
+        const wrapped = isBeforeHookEvent(event)
+          ? async (payload) => {
+              try {
+                return await handler(payload);
+              } catch (err) {
+                if (isHookAbort(err) && !err.pluginId) {
+                  err.pluginId = pluginId;
+                }
+                throw err;
               }
-              throw err;
             }
-          }
-        : handler;
+          : handler;
 
-      on(event, wrapped);
-      entry.handlers.set(event, wrapped);
+        on(event, wrapped);
+        entry.handlers.set(event, wrapped);
+      }
     }
+
+    registerProvidersForPlugin(entry);
+
+    const ctx = await buildLifecycleCtx(pluginId);
+
+    if (typeof manifest.onEnable === 'function') {
+      await manifest.onEnable(ctx);
+    }
+
+    entry.isEnabled = true;
+    logger.info({ pluginId }, 'Plugin enabled');
+  } catch (err) {
+    unwindPartialEnable(entry);
+    throw err;
   }
-
-  registerProvidersForPlugin(entry);
-
-  const ctx = await buildLifecycleCtx(pluginId);
-
-  if (typeof manifest.onEnable === 'function') {
-    await manifest.onEnable(ctx);
-  }
-
-  logger.info({ pluginId }, 'Plugin enabled');
 }
 
 /**

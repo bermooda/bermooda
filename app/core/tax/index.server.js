@@ -2,59 +2,15 @@
 // Tax provider registry + built-in simple-percent adapter.
 
 import { get as settingsGet } from '#/core/settings/index.server';
+import { loadTaxConfig } from '#/core/tax/input';
 
-// ---------------------------------------------------------------------------
-// Default tax config (used when admin tax settings are absent)
-// ---------------------------------------------------------------------------
-
-export const DEFAULT_TAX_MODE = 'exclusive';
-
-export const DEFAULT_TAX_REGIONS = [{ country: 'AU', percent: 10 }];
-
-/**
- * Normalize a tax region from admin settings or legacy shapes.
- *
- * @param {object} region
- * @param {number} [index]
- */
-export function normalizeTaxRegion(region, index = 0) {
-  const country = String(region?.country ?? '').toUpperCase();
-  const stateOrRegion = region?.state ?? region?.region ?? null;
-  const state =
-    stateOrRegion && stateOrRegion !== '*' ? String(stateOrRegion) : null;
-
-  let percent;
-  if (region?.percent != null && region.percent !== '') {
-    percent = Number(region.percent);
-  } else if (region?.rate != null) {
-    percent = Number(region.rate) * 100;
-  } else {
-    percent = 0;
-  }
-
-  return {
-    country: country || `REGION_${index + 1}`,
-    state,
-    percent: Number.isFinite(percent) ? percent : 0,
-  };
-}
-
-/**
- * @param {string|null|undefined} rawMode
- * @param {object[]|null|undefined} rawRegions
- */
-export function loadTaxConfig(rawMode, rawRegions) {
-  const mode = rawMode === 'inclusive' ? 'inclusive' : 'exclusive';
-  const source =
-    Array.isArray(rawRegions) && rawRegions.length > 0
-      ? rawRegions
-      : DEFAULT_TAX_REGIONS;
-
-  return {
-    mode,
-    regions: source.map((region, index) => normalizeTaxRegion(region, index)),
-  };
-}
+export {
+  DEFAULT_TAX_MODE,
+  DEFAULT_TAX_REGIONS,
+  loadTaxConfig,
+  normalizeTaxRegion,
+  parseTaxSettingsInput,
+} from '#/core/tax/input';
 
 /**
  * Load tax mode and regions from admin settings (`tax.mode`, `tax.regions`).
@@ -65,30 +21,6 @@ export async function getTaxConfig() {
     settingsGet('tax.regions'),
   ]);
   return loadTaxConfig(mode, regions);
-}
-
-/**
- * Parse admin/API tax settings payload.
- *
- * @param {object} input
- * @returns {{ mode: string, regions: object[] }}
- */
-export function parseTaxSettingsInput(input = {}) {
-  const rawRegions = input.taxRegions ?? input.regions;
-  let regions = [];
-
-  if (Array.isArray(rawRegions)) {
-    regions = rawRegions;
-  } else if (typeof rawRegions === 'string') {
-    try {
-      const parsed = JSON.parse(rawRegions);
-      if (Array.isArray(parsed)) regions = parsed;
-    } catch {
-      regions = [];
-    }
-  }
-
-  return loadTaxConfig(input.taxMode ?? input.mode, regions);
 }
 
 /**

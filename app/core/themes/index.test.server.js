@@ -33,6 +33,7 @@ vi.mock('#/libs/prisma.server', () => ({
 vi.mock('#/utils/cache/index.server', () => ({
   default: { delete: vi.fn() },
   getCachedResult: vi.fn(async (_key, callback) => callback()),
+  invalidateCachePrefix: vi.fn(),
 }));
 
 vi.mock('#/core/settings/index.server', () => ({
@@ -70,7 +71,7 @@ const {
   __resetRegistry,
 } = await import('#/core/themes/index.server');
 
-import cache from '#/utils/cache/index.server';
+import cache, { invalidateCachePrefix } from '#/utils/cache/index.server';
 import prisma from '#/libs/prisma.server';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
@@ -338,6 +339,7 @@ describe('saveThemeSettings + setActiveTheme', () => {
 
     expect(set).toHaveBeenCalledWith('activeTheme', 'aurora');
     expect(cache.delete).toHaveBeenCalledWith('theme:active');
+    expect(invalidateCachePrefix).toHaveBeenCalledWith('i18n:');
   });
 });
 

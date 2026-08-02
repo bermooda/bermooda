@@ -43,16 +43,22 @@ vi.mock('#/core/loyalty/index.server', () => ({
 }));
 vi.mock('#/core/plugins/index.server', () => ({
   discoverPlugins: vi.fn(),
-  enablePersistedPlugins: vi.fn(),
+  enablePersistedPlugins: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('#/core/rbac/index.server', () => ({
-  seedRolePermissions: vi.fn(),
+  seedRolePermissions: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('#/core/settings/index.server', () => ({
+  seedDefaults: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('#/core/channels/index.server', () => ({
+  seedDefaultChannel: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('#/core/marketing/job.server', () => ({
   queueAbandonedCartSequence: vi.fn(),
 }));
 vi.mock('#/core/marketing/index.server', () => ({
-  seedDefaultAbandonedCartSequences: vi.fn(),
+  seedDefaultAbandonedCartSequences: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('#/emails/index.server', () => ({
   sendCampaignEmail: vi.fn(),
@@ -237,5 +243,16 @@ describe('bootstrap.server', () => {
 
     expect(registerPayment).toHaveBeenCalledTimes(8);
     expect(registerPaymentEventHandlers).toHaveBeenCalledTimes(2);
+  });
+
+  it('whenReady runs initializeAsync once and shares the promise', async () => {
+    const bootstrap = await import('#/core/bootstrap/index.server');
+    const plugins = await import('#/core/plugins/index.server');
+
+    const first = bootstrap.whenReady();
+    const second = bootstrap.whenReady();
+    expect(first).toBe(second);
+    await first;
+    expect(plugins.enablePersistedPlugins).toHaveBeenCalledOnce();
   });
 });

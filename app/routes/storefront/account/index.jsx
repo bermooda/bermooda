@@ -2,14 +2,12 @@ import { useLoaderData, useRouteLoaderData } from 'react-router';
 
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { listOrders } from '#/core/customers/index.server';
-import { getRequestLocale } from '#/core/i18n/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
-import { preloadStorefrontTheme } from '#/core/themes/index.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
-  const themeId = await preloadStorefrontTheme();
-  const locale = await getRequestLocale(request);
+  const { themeId, locale } = await loadStorefrontPageContext(request);
   const session = await getCustomerSession(request);
   const customer = session?.user ?? null;
 
@@ -33,7 +31,7 @@ export function meta() {
 export default function AccountIndexRoute() {
   const data = useLoaderData();
   const layoutData = useRouteLoaderData('routes/storefront/account/_layout');
-  const themeId = layoutData?.themeId ?? 'default';
+  const themeId = layoutData?.themeId;
   const AccountDashboard = getStorefrontComponent('AccountDashboard', themeId);
   if (!AccountDashboard) {
     throw new Error('AccountDashboard theme component not found');
