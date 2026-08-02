@@ -12,6 +12,7 @@ import {
   listCustomersForCompanyForm,
   parseAddCompanyMemberForm,
 } from '#/core/b2b/index.server';
+import { useT } from '#/core/i18n';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import Card, { CardHeader } from '#/components/admin/card';
@@ -57,6 +58,7 @@ export function meta({ loaderData }) {
 }
 
 export default function AdminCompanyDetailRoute() {
+  const t = useT();
   const { company, customers } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -74,46 +76,67 @@ export default function AdminCompanyDetailRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Companies', href: '/admin/companies' },
+              {
+                label: t('admin.companies.detail.breadcrumb'),
+                href: '/admin/companies',
+              },
               { label: company.name },
             ]}
           />
         }
         title={company.name}
-        subtitle={`Net ${company.netTermsDays} days · ${company.memberCount ?? 0} member(s) · ${company.quoteCount ?? 0} quote(s)`}
+        subtitle={t('admin.companies.detail.subtitle', {
+          days: company.netTermsDays,
+          members: company.memberCount ?? 0,
+          quotes: company.quoteCount ?? 0,
+        })}
         actions={
           <Button as={Link} to="/admin/companies" variant="secondary">
-            Back
+            {t('admin.companies.detail.back')}
           </Button>
         }
       />
 
       <ErrorAlert message={actionData?.error} />
-      {actionData?.ok && <SuccessAlert message="Member added." />}
+      {actionData?.ok && (
+        <SuccessAlert message={t('admin.companies.detail.memberAdded')} />
+      )}
 
       <div className="mt-6 space-y-6">
         <Card>
           <CardHeader
-            title="Details"
+            title={t('admin.companies.detail.detailsTitle')}
             description={
-              company.taxId ? `Tax ID: ${company.taxId}` : 'No tax ID set.'
+              company.taxId
+                ? t('admin.companies.detail.taxIdSet', { taxId: company.taxId })
+                : t('admin.companies.detail.noTaxId')
             }
           />
           <dl className="grid gap-3 text-sm sm:grid-cols-3">
             <div>
-              <dt className="text-text-muted">Status</dt>
+              <dt className="text-text-muted">
+                {t('admin.companies.detail.status')}
+              </dt>
               <dd className="text-text font-medium">
-                {company.active ? 'Active' : 'Inactive'}
+                {company.active
+                  ? t('admin.companies.detail.active')
+                  : t('admin.companies.detail.inactive')}
               </dd>
             </div>
             <div>
-              <dt className="text-text-muted">Net terms</dt>
+              <dt className="text-text-muted">
+                {t('admin.companies.detail.netTerms')}
+              </dt>
               <dd className="text-text font-medium">
-                {company.netTermsDays} days
+                {t('admin.companies.detail.netTermsValue', {
+                  days: company.netTermsDays,
+                })}
               </dd>
             </div>
             <div>
-              <dt className="text-text-muted">Tax ID</dt>
+              <dt className="text-text-muted">
+                {t('admin.companies.detail.taxId')}
+              </dt>
               <dd className="text-text font-medium">{company.taxId || '—'}</dd>
             </div>
           </dl>
@@ -121,11 +144,13 @@ export default function AdminCompanyDetailRoute() {
 
         <Card>
           <CardHeader
-            title="Members"
-            description="Add customers who can purchase under this company."
+            title={t('admin.companies.detail.membersTitle')}
+            description={t('admin.companies.detail.membersDescription')}
           />
           {(company.members ?? []).length === 0 ? (
-            <p className="text-text-muted text-sm">No members yet.</p>
+            <p className="text-text-muted text-sm">
+              {t('admin.companies.detail.noMembers')}
+            </p>
           ) : (
             <ul className="divide-border mb-4 divide-y text-sm">
               {(company.members ?? []).map((member) => (
@@ -145,7 +170,7 @@ export default function AdminCompanyDetailRoute() {
             <input type="hidden" name="intent" value="add-member" />
             <input type="hidden" name="companyId" value={company.id} />
             <Field
-              label="Customer"
+              label={t('admin.companies.detail.customer')}
               htmlFor="member-customer"
               className="flex-1"
             >
@@ -157,8 +182,8 @@ export default function AdminCompanyDetailRoute() {
               >
                 <option value="">
                   {availableCustomers.length === 0
-                    ? 'No customers available'
-                    : 'Select customer…'}
+                    ? t('admin.companies.detail.noCustomersAvailable')
+                    : t('admin.companies.detail.selectCustomer')}
                 </option>
                 {availableCustomers.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -170,7 +195,9 @@ export default function AdminCompanyDetailRoute() {
             <ButtonSubmit
               disabled={isSaving || availableCustomers.length === 0}
             >
-              {isSaving ? 'Adding…' : 'Add member'}
+              {isSaving
+                ? t('admin.companies.detail.adding')
+                : t('admin.companies.detail.addMember')}
             </ButtonSubmit>
           </Form>
         </Card>
@@ -181,7 +208,7 @@ export default function AdminCompanyDetailRoute() {
             to="/admin/companies"
             className="text-text-muted hover:text-text text-sm transition-colors"
           >
-            Back to companies
+            {t('admin.companies.detail.backToCompanies')}
           </Link>
         </ActionBar>
       </div>

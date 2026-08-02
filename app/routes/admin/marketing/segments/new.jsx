@@ -7,6 +7,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   createSegment,
   parseCreateSegmentInput,
@@ -47,6 +48,7 @@ export async function action({ request }) {
 }
 
 export default function AdminNewMarketingSegmentRoute() {
+  const t = useT();
   const { groups } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -58,13 +60,16 @@ export default function AdminNewMarketingSegmentRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Marketing', href: '/admin/marketing' },
-              { label: 'New segment' },
+              {
+                label: t('admin.marketing.segmentsNew.breadcrumb'),
+                href: '/admin/marketing',
+              },
+              { label: t('admin.marketing.segmentsNew.title') },
             ]}
           />
         }
-        title="New segment"
-        subtitle="Define a customer segment for targeted campaigns."
+        title={t('admin.marketing.segmentsNew.title')}
+        subtitle={t('admin.marketing.segmentsNew.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -72,39 +77,57 @@ export default function AdminNewMarketingSegmentRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Segment rules"
-            description="All filters are optional. Customers must match all specified rules."
+            title={t('admin.marketing.segmentsNew.cardTitle')}
+            description={t('admin.marketing.segmentsNew.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name *" htmlFor="segment-name">
+            <Field
+              label={t('admin.marketing.segmentsNew.name')}
+              htmlFor="segment-name"
+            >
               <Input
                 id="segment-name"
                 name="name"
                 required
-                placeholder="VIP customers"
+                placeholder={t('admin.marketing.segmentsNew.namePlaceholder')}
               />
             </Field>
-            <Field label="Min orders" htmlFor="segment-min-orders">
+            <Field
+              label={t('admin.marketing.segmentsNew.minOrders')}
+              htmlFor="segment-min-orders"
+            >
               <Input
                 id="segment-min-orders"
                 name="minOrders"
                 type="number"
                 min="0"
-                placeholder="3"
+                placeholder={t(
+                  'admin.marketing.segmentsNew.minOrdersPlaceholder'
+                )}
               />
             </Field>
-            <Field label="Min spent (cents)" htmlFor="segment-min-spent">
+            <Field
+              label={t('admin.marketing.segmentsNew.minSpent')}
+              htmlFor="segment-min-spent"
+            >
               <Input
                 id="segment-min-spent"
                 name="minSpentCents"
                 type="number"
                 min="0"
-                placeholder="10000"
+                placeholder={t(
+                  'admin.marketing.segmentsNew.minSpentPlaceholder'
+                )}
               />
             </Field>
-            <Field label="Customer group" htmlFor="segment-group">
+            <Field
+              label={t('admin.marketing.segmentsNew.customerGroup')}
+              htmlFor="segment-group"
+            >
               <Select id="segment-group" name="customerGroupId" defaultValue="">
-                <option value="">Any group</option>
+                <option value="">
+                  {t('admin.marketing.segmentsNew.anyGroup')}
+                </option>
                 {groups.map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.name}
@@ -122,10 +145,12 @@ export default function AdminNewMarketingSegmentRoute() {
               to="/admin/marketing"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Create segment'}
+              {isSaving
+                ? t('admin.marketing.segmentsNew.creating')
+                : t('admin.marketing.segmentsNew.createButton')}
             </ButtonSubmit>
           </div>
         </ActionBar>

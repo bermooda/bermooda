@@ -22,6 +22,7 @@ import {
   parseUpdateConsentFormData,
   updateCustomerConsent,
 } from '#/core/gdpr/index.server';
+import { useT } from '#/core/i18n';
 import {
   getCustomerStoreCreditSummary,
   issueStoreCredit,
@@ -277,6 +278,12 @@ export async function action({ request, params }) {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {Object} props
+ * @param {string} props.title
+ * @param {string} [props.description]
+ * @param {import('react').ReactNode} props.children
+ */
 function SectionCard({ title, description, children }) {
   return (
     <Card>
@@ -291,6 +298,7 @@ function SectionCard({ title, description, children }) {
 // ---------------------------------------------------------------------------
 
 export default function AdminCustomerRoute() {
+  const t = useT();
   const { customer, slotBlocks, storeCredit } = useLoaderData();
   const actionData = useActionData();
 
@@ -306,7 +314,10 @@ export default function AdminCustomerRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Customers', href: '/admin/customers' },
+              {
+                label: t('admin.customers.detail.breadcrumb'),
+                href: '/admin/customers',
+              },
               { label: customer.name || customer.email },
             ]}
           />
@@ -315,7 +326,9 @@ export default function AdminCustomerRoute() {
         subtitle={
           <span className="inline-flex flex-wrap items-center gap-2">
             {customer.name && <span>{customer.email}</span>}
-            <span>Joined {joinedDate}</span>
+            <span>
+              {t('admin.customers.detail.joined', { date: joinedDate })}
+            </span>
           </span>
         }
       />
@@ -326,46 +339,53 @@ export default function AdminCustomerRoute() {
       />
 
       {/* Action feedback */}
-      {actionData?.ok && <SuccessAlert message="Saved successfully." />}
+      {actionData?.ok && (
+        <SuccessAlert message={t('admin.customers.detail.saved')} />
+      )}
       <ErrorAlert message={actionData?.error} />
 
       {/* Edit Customer */}
       <SectionCard
-        title="Customer details"
-        description="Update profile information for this customer."
+        title={t('admin.customers.detail.detailsTitle')}
+        description={t('admin.customers.detail.detailsDescription')}
       >
         <Form method="post" className="space-y-6">
           <input type="hidden" name="intent" value="update-customer" />
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Name">
+            <Field label={t('admin.customers.detail.name')}>
               <Input
                 type="text"
                 name="name"
                 defaultValue={customer.name ?? ''}
-                placeholder="Jane Doe"
+                placeholder={t('admin.customers.detail.namePlaceholder')}
               />
             </Field>
 
-            <Field label="Phone">
+            <Field label={t('admin.customers.detail.phone')}>
               <Input
                 type="tel"
                 name="phone"
                 defaultValue={customer.phone ?? ''}
-                placeholder="+1 555 000 0000"
+                placeholder={t('admin.customers.detail.phonePlaceholder')}
               />
             </Field>
 
-            <Field label="Preferred locale">
+            <Field label={t('admin.customers.detail.preferredLocale')}>
               <Input
                 type="text"
                 name="preferredLocale"
                 defaultValue={customer.preferredLocale ?? ''}
-                placeholder="en, de, fr…"
+                placeholder={t(
+                  'admin.customers.detail.preferredLocalePlaceholder'
+                )}
               />
             </Field>
 
-            <Field label="Email (read-only)" className="sm:col-span-2">
+            <Field
+              label={t('admin.customers.detail.emailReadonly')}
+              className="sm:col-span-2"
+            >
               <p className="bg-surface-2 border-border text-text-muted rounded-md border px-3 py-1.5 text-sm">
                 {customer.email}
               </p>
@@ -374,18 +394,24 @@ export default function AdminCustomerRoute() {
 
           <ActionBar className="-mx-4 mt-6 rounded-none border-x-0 border-b-0 sm:-mx-6">
             <span />
-            <ButtonSubmit>Save changes</ButtonSubmit>
+            <ButtonSubmit>
+              {t('admin.customers.detail.saveChanges')}
+            </ButtonSubmit>
           </ActionBar>
         </Form>
       </SectionCard>
 
       {/* Addresses */}
       <SectionCard
-        title={`Addresses (${customer.addresses.length})`}
-        description="Saved shipping and billing addresses."
+        title={t('admin.customers.detail.addressesTitle', {
+          count: customer.addresses.length,
+        })}
+        description={t('admin.customers.detail.addressesDescription')}
       >
         {customer.addresses.length === 0 ? (
-          <p className="text-text-muted text-sm">No addresses saved.</p>
+          <p className="text-text-muted text-sm">
+            {t('admin.customers.detail.noAddresses')}
+          </p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {customer.addresses.map((addr) => (
@@ -400,7 +426,7 @@ export default function AdminCustomerRoute() {
               >
                 {addr.isDefault && (
                   <Badge tone="accent" className="absolute top-3 right-3">
-                    Default
+                    {t('admin.customers.detail.defaultBadge')}
                   </Badge>
                 )}
 
@@ -434,7 +460,7 @@ export default function AdminCustomerRoute() {
                       />
                       <input type="hidden" name="addressId" value={addr.id} />
                       <Button type="submit" variant="secondary">
-                        Set Default
+                        {t('admin.customers.detail.setDefault')}
                       </Button>
                     </Form>
                   )}
@@ -445,11 +471,15 @@ export default function AdminCustomerRoute() {
                       type="submit"
                       variant="danger"
                       onClick={(e) => {
-                        if (!confirm('Delete this address?'))
+                        if (
+                          !confirm(
+                            t('admin.customers.detail.confirmDeleteAddress')
+                          )
+                        )
                           e.preventDefault();
                       }}
                     >
-                      Delete
+                      {t('admin.customers.detail.delete')}
                     </Button>
                   </Form>
                 </div>
@@ -461,11 +491,13 @@ export default function AdminCustomerRoute() {
 
       {/* Store credit */}
       <SectionCard
-        title="Store credit"
-        description="Issue credit redeemable at checkout. Returns and refunds may also add credit automatically."
+        title={t('admin.customers.detail.storeCreditTitle')}
+        description={t('admin.customers.detail.storeCreditDescription')}
       >
         <div className="border-border bg-surface-2 mb-6 rounded-lg border p-4">
-          <p className="text-text-muted text-sm">Current balance</p>
+          <p className="text-text-muted text-sm">
+            {t('admin.customers.detail.currentBalance')}
+          </p>
           <p className="text-text text-2xl font-semibold">
             {formatPrice(storeCredit.balanceCents)}
           </p>
@@ -477,39 +509,47 @@ export default function AdminCustomerRoute() {
             className="mb-6 grid gap-4 sm:grid-cols-[1fr_2fr_auto]"
           >
             <input type="hidden" name="intent" value="issue-store-credit" />
-            <Field label="Amount (USD cents)">
+            <Field label={t('admin.customers.detail.amountCents')}>
               <Input
                 type="number"
                 name="amountCents"
                 min="1"
                 step="1"
-                placeholder="2500"
+                placeholder={t('admin.customers.detail.amountPlaceholder')}
                 required
               />
             </Field>
-            <Field label="Reason">
+            <Field label={t('admin.customers.detail.reason')}>
               <Input
                 type="text"
                 name="reason"
-                placeholder="Goodwill credit, return adjustment…"
+                placeholder={t('admin.customers.detail.reasonPlaceholder')}
               />
             </Field>
             <div className="flex items-end">
-              <ButtonSubmit>Issue credit</ButtonSubmit>
+              <ButtonSubmit>
+                {t('admin.customers.detail.issueCredit')}
+              </ButtonSubmit>
             </div>
           </Form>
         )}
 
         {storeCredit.entries.length === 0 ? (
-          <p className="text-text-muted text-sm">No ledger activity yet.</p>
+          <p className="text-text-muted text-sm">
+            {t('admin.customers.detail.noLedger')}
+          </p>
         ) : (
           <Table>
             <THead>
               <tr>
-                <Th>Date</Th>
-                <Th>Reason</Th>
-                <Th className="text-right">Amount</Th>
-                <Th className="text-right">Balance</Th>
+                <Th>{t('admin.customers.detail.col.date')}</Th>
+                <Th>{t('admin.customers.detail.col.reason')}</Th>
+                <Th className="text-right">
+                  {t('admin.customers.detail.col.amount')}
+                </Th>
+                <Th className="text-right">
+                  {t('admin.customers.detail.col.balance')}
+                </Th>
               </tr>
             </THead>
             <TBody>
@@ -522,7 +562,11 @@ export default function AdminCustomerRoute() {
                       year: 'numeric',
                     })}
                   </Td>
-                  <Td>{entry.reason ?? entry.referenceType ?? 'Adjustment'}</Td>
+                  <Td>
+                    {entry.reason ??
+                      entry.referenceType ??
+                      t('admin.customers.detail.adjustment')}
+                  </Td>
                   <Td
                     className={clsx(
                       'text-right font-medium',
@@ -544,14 +588,14 @@ export default function AdminCustomerRoute() {
 
       {/* GDPR & Privacy */}
       <SectionCard
-        title="GDPR & privacy"
-        description="Manage consent preferences and data requests."
+        title={t('admin.customers.detail.gdprTitle')}
+        description={t('admin.customers.detail.gdprDescription')}
       >
         {customer.erasedAt ? (
           <p className="text-warn text-sm">
-            This customer was erased on{' '}
-            {new Date(customer.erasedAt).toLocaleString('en')}. Personal data
-            has been anonymized; order history is preserved.
+            {t('admin.customers.detail.erased', {
+              date: new Date(customer.erasedAt).toLocaleString('en'),
+            })}
           </p>
         ) : (
           <div className="space-y-4">
@@ -563,7 +607,7 @@ export default function AdminCustomerRoute() {
                   name="analytics"
                   defaultChecked={customer.consent.analytics}
                 />
-                Analytics consent
+                {t('admin.customers.detail.analyticsConsent')}
               </label>
               <label className="text-text flex items-center gap-2 text-sm">
                 <input
@@ -571,10 +615,10 @@ export default function AdminCustomerRoute() {
                   name="marketing"
                   defaultChecked={customer.consent.marketing}
                 />
-                Marketing consent
+                {t('admin.customers.detail.marketingConsent')}
               </label>
               <Button type="submit" variant="primary">
-                Save consent
+                {t('admin.customers.detail.saveConsent')}
               </Button>
             </Form>
 
@@ -582,7 +626,7 @@ export default function AdminCustomerRoute() {
               <Form method="post">
                 <input type="hidden" name="intent" value="export-data" />
                 <Button type="submit" variant="secondary">
-                  Export customer data (JSON)
+                  {t('admin.customers.detail.exportData')}
                 </Button>
               </Form>
               <Form method="post">
@@ -591,16 +635,12 @@ export default function AdminCustomerRoute() {
                   type="submit"
                   variant="danger"
                   onClick={(e) => {
-                    if (
-                      !confirm(
-                        "Permanently erase this customer's personal data? Orders will be anonymized but preserved."
-                      )
-                    ) {
+                    if (!confirm(t('admin.customers.detail.confirmErase'))) {
                       e.preventDefault();
                     }
                   }}
                 >
-                  Erase personal data
+                  {t('admin.customers.detail.eraseData')}
                 </Button>
               </Form>
             </div>
@@ -610,19 +650,23 @@ export default function AdminCustomerRoute() {
 
       {/* Order History */}
       <SectionCard
-        title="Order history"
-        description="Recent orders placed by this customer."
+        title={t('admin.customers.detail.orderHistoryTitle')}
+        description={t('admin.customers.detail.orderHistoryDescription')}
       >
         {customer.orders.length === 0 ? (
-          <p className="text-text-muted text-sm">No orders yet.</p>
+          <p className="text-text-muted text-sm">
+            {t('admin.customers.detail.noOrders')}
+          </p>
         ) : (
           <Table>
             <THead>
               <tr>
-                <Th>Order #</Th>
-                <Th>Status</Th>
-                <Th className="text-right">Total</Th>
-                <Th>Date</Th>
+                <Th>{t('admin.customers.detail.col.order')}</Th>
+                <Th>{t('admin.customers.detail.col.status')}</Th>
+                <Th className="text-right">
+                  {t('admin.customers.detail.col.total')}
+                </Th>
+                <Th>{t('admin.customers.detail.col.date')}</Th>
               </tr>
             </THead>
             <TBody>

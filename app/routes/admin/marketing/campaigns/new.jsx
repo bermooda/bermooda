@@ -7,6 +7,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   createCampaign,
   listSegments,
@@ -53,6 +54,7 @@ export async function action({ request }) {
 }
 
 export default function AdminNewMarketingCampaignRoute() {
+  const t = useT();
   const { segments } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -64,13 +66,16 @@ export default function AdminNewMarketingCampaignRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Marketing', href: '/admin/marketing' },
-              { label: 'New campaign' },
+              {
+                label: t('admin.marketing.campaignsNew.breadcrumb'),
+                href: '/admin/marketing',
+              },
+              { label: t('admin.marketing.campaignsNew.title') },
             ]}
           />
         }
-        title="New campaign"
-        subtitle="Create an email campaign for a customer segment."
+        title={t('admin.marketing.campaignsNew.title')}
+        subtitle={t('admin.marketing.campaignsNew.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -78,11 +83,14 @@ export default function AdminNewMarketingCampaignRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Campaign details"
-            description="Use {{name}} in the body for personalization."
+            title={t('admin.marketing.campaignsNew.cardTitle')}
+            description={t('admin.marketing.campaignsNew.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Segment *" htmlFor="campaign-segment">
+            <Field
+              label={t('admin.marketing.campaignsNew.segment')}
+              htmlFor="campaign-segment"
+            >
               <Select
                 id="campaign-segment"
                 name="segmentId"
@@ -90,7 +98,7 @@ export default function AdminNewMarketingCampaignRoute() {
                 defaultValue=""
               >
                 <option value="" disabled>
-                  Select segment
+                  {t('admin.marketing.campaignsNew.selectSegment')}
                 </option>
                 {segments.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -99,16 +107,19 @@ export default function AdminNewMarketingCampaignRoute() {
                 ))}
               </Select>
             </Field>
-            <Field label="Campaign name *" htmlFor="campaign-name">
+            <Field
+              label={t('admin.marketing.campaignsNew.name')}
+              htmlFor="campaign-name"
+            >
               <Input
                 id="campaign-name"
                 name="name"
                 required
-                placeholder="Summer sale"
+                placeholder={t('admin.marketing.campaignsNew.namePlaceholder')}
               />
             </Field>
             <Field
-              label="Email subject *"
+              label={t('admin.marketing.campaignsNew.subject')}
               htmlFor="campaign-subject"
               className="sm:col-span-2"
             >
@@ -116,11 +127,13 @@ export default function AdminNewMarketingCampaignRoute() {
                 id="campaign-subject"
                 name="subject"
                 required
-                placeholder="Don't miss our summer sale"
+                placeholder={t(
+                  'admin.marketing.campaignsNew.subjectPlaceholder'
+                )}
               />
             </Field>
             <Field
-              label="HTML body *"
+              label={t('admin.marketing.campaignsNew.body')}
               htmlFor="campaign-body"
               className="sm:col-span-2"
             >
@@ -129,7 +142,7 @@ export default function AdminNewMarketingCampaignRoute() {
                 name="bodyHtml"
                 required
                 rows={8}
-                placeholder="<p>Hi {{name}}, ...</p>"
+                placeholder={t('admin.marketing.campaignsNew.bodyPlaceholder')}
               />
             </Field>
           </div>
@@ -142,10 +155,12 @@ export default function AdminNewMarketingCampaignRoute() {
               to="/admin/marketing"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Create campaign'}
+              {isSaving
+                ? t('admin.marketing.campaignsNew.creating')
+                : t('admin.marketing.campaignsNew.createButton')}
             </ButtonSubmit>
           </div>
         </ActionBar>

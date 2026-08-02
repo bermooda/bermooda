@@ -12,6 +12,7 @@ import {
   parseUpdateChannelInput,
   updateChannel,
 } from '#/core/channels/index.server';
+import { useT } from '#/core/i18n';
 import ActionBar from '#/components/admin/action-bar';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
@@ -59,6 +60,7 @@ export function meta({ loaderData }) {
 }
 
 export default function AdminEditChannelRoute() {
+  const t = useT();
   const { channel } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -70,18 +72,25 @@ export default function AdminEditChannelRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Channels', href: '/admin/channels' },
+              {
+                label: t('admin.channels.edit.breadcrumb'),
+                href: '/admin/channels',
+              },
               { label: channel.name },
             ]}
           />
         }
         title={channel.name}
-        subtitle="Update channel routing and locale settings."
+        subtitle={t('admin.channels.edit.subtitle')}
         actions={
           <div className="flex items-center gap-2">
-            {channel.isDefault && <Badge tone="success">Default</Badge>}
+            {channel.isDefault && (
+              <Badge tone="success">
+                {t('admin.channels.edit.defaultBadge')}
+              </Badge>
+            )}
             <Button as={Link} to="/admin/channels" variant="secondary">
-              Back
+              {t('admin.channels.edit.back')}
             </Button>
           </div>
         }
@@ -92,11 +101,11 @@ export default function AdminEditChannelRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Channel details"
-            description="Configure name, handle, and optional custom domain."
+            title={t('admin.channels.edit.cardTitle')}
+            description={t('admin.channels.edit.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name *" htmlFor="channel-name">
+            <Field label={t('admin.channels.edit.name')} htmlFor="channel-name">
               <Input
                 id="channel-name"
                 name="name"
@@ -104,7 +113,10 @@ export default function AdminEditChannelRoute() {
                 defaultValue={channel.name}
               />
             </Field>
-            <Field label="Handle *" htmlFor="channel-handle">
+            <Field
+              label={t('admin.channels.edit.handle')}
+              htmlFor="channel-handle"
+            >
               <Input
                 id="channel-handle"
                 name="handle"
@@ -112,15 +124,21 @@ export default function AdminEditChannelRoute() {
                 defaultValue={channel.handle}
               />
             </Field>
-            <Field label="Domain (optional)" htmlFor="channel-domain">
+            <Field
+              label={t('admin.channels.edit.domain')}
+              htmlFor="channel-domain"
+            >
               <Input
                 id="channel-domain"
                 name="domain"
                 defaultValue={channel.domain ?? ''}
-                placeholder="shop.example.eu"
+                placeholder={t('admin.channels.edit.domainPlaceholder')}
               />
             </Field>
-            <Field label="Currency" htmlFor="channel-currency">
+            <Field
+              label={t('admin.channels.edit.currency')}
+              htmlFor="channel-currency"
+            >
               <Input
                 id="channel-currency"
                 name="currency"
@@ -129,7 +147,10 @@ export default function AdminEditChannelRoute() {
                 className="uppercase"
               />
             </Field>
-            <Field label="Locale" htmlFor="channel-locale">
+            <Field
+              label={t('admin.channels.edit.locale')}
+              htmlFor="channel-locale"
+            >
               <Input
                 id="channel-locale"
                 name="locale"
@@ -142,7 +163,7 @@ export default function AdminEditChannelRoute() {
                 name="active"
                 defaultChecked={Boolean(channel.active)}
               />
-              Active
+              {t('admin.channels.edit.active')}
             </label>
           </div>
         </Card>
@@ -154,10 +175,12 @@ export default function AdminEditChannelRoute() {
               to="/admin/channels"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Saving…' : 'Save channel'}
+              {isSaving
+                ? t('admin.channels.edit.saving')
+                : t('admin.channels.edit.saveButton')}
             </ButtonSubmit>
           </div>
         </ActionBar>

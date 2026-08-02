@@ -6,6 +6,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   createAbandonedCartSequence,
   parseCreateAbandonedCartSequenceInput,
@@ -41,6 +42,7 @@ export async function action({ request }) {
 }
 
 export default function AdminNewMarketingSequenceRoute() {
+  const t = useT();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
@@ -51,13 +53,16 @@ export default function AdminNewMarketingSequenceRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Marketing', href: '/admin/marketing' },
-              { label: 'New sequence step' },
+              {
+                label: t('admin.marketing.sequencesNew.breadcrumb'),
+                href: '/admin/marketing',
+              },
+              { label: t('admin.marketing.sequencesNew.title') },
             ]}
           />
         }
-        title="New abandoned cart step"
-        subtitle="Add a step to the abandoned cart email sequence."
+        title={t('admin.marketing.sequencesNew.title')}
+        subtitle={t('admin.marketing.sequencesNew.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -65,19 +70,25 @@ export default function AdminNewMarketingSequenceRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Sequence step"
-            description="Configure when and what email is sent after cart abandonment."
+            title={t('admin.marketing.sequencesNew.cardTitle')}
+            description={t('admin.marketing.sequencesNew.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Step name *" htmlFor="sequence-name">
+            <Field
+              label={t('admin.marketing.sequencesNew.name')}
+              htmlFor="sequence-name"
+            >
               <Input
                 id="sequence-name"
                 name="name"
                 required
-                placeholder="Reminder 1"
+                placeholder={t('admin.marketing.sequencesNew.namePlaceholder')}
               />
             </Field>
-            <Field label="Step number" htmlFor="sequence-step">
+            <Field
+              label={t('admin.marketing.sequencesNew.stepNumber')}
+              htmlFor="sequence-step"
+            >
               <Input
                 id="sequence-step"
                 name="stepNumber"
@@ -86,7 +97,10 @@ export default function AdminNewMarketingSequenceRoute() {
                 defaultValue="1"
               />
             </Field>
-            <Field label="Delay (minutes)" htmlFor="sequence-delay">
+            <Field
+              label={t('admin.marketing.sequencesNew.delay')}
+              htmlFor="sequence-delay"
+            >
               <Input
                 id="sequence-delay"
                 name="delayMinutes"
@@ -95,12 +109,17 @@ export default function AdminNewMarketingSequenceRoute() {
                 defaultValue="60"
               />
             </Field>
-            <Field label="Email subject *" htmlFor="sequence-subject">
+            <Field
+              label={t('admin.marketing.sequencesNew.subject')}
+              htmlFor="sequence-subject"
+            >
               <Input
                 id="sequence-subject"
                 name="subject"
                 required
-                placeholder="You left something behind"
+                placeholder={t(
+                  'admin.marketing.sequencesNew.subjectPlaceholder'
+                )}
               />
             </Field>
           </div>
@@ -113,10 +132,12 @@ export default function AdminNewMarketingSequenceRoute() {
               to="/admin/marketing"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Add sequence step'}
+              {isSaving
+                ? t('admin.marketing.sequencesNew.creating')
+                : t('admin.marketing.sequencesNew.createButton')}
             </ButtonSubmit>
           </div>
         </ActionBar>
