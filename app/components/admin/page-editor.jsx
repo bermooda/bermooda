@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Form, Link } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import ActionBar from '#/components/admin/action-bar';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
@@ -16,6 +17,19 @@ import SlugField from '#/components/admin/slug-field';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
+/**
+ * Shared admin CMS page editor for create and edit routes.
+ *
+ * @param {Object} props
+ * @param {'create'|'edit'} [props.mode]
+ * @param {{ status: string, id?: string, updatedAt?: string }} props.page
+ * @param {string[]} props.locales
+ * @param {Record<string, Record<string, string>>} props.translationMap
+ * @param {Record<string, string>} props.slugMap
+ * @param {Object} [props.actionData]
+ * @param {boolean} props.isSaving
+ * @returns {React.ReactElement}
+ */
 export default function PageEditor({
   mode = 'edit',
   page,
@@ -25,16 +39,17 @@ export default function PageEditor({
   actionData,
   isSaving,
 }) {
+  const t = useT();
   const primaryLocale = locales[0] ?? 'en';
   const [activeLocale, setActiveLocale] = useState(primaryLocale);
   const isCreate = mode === 'create';
   const isPublished = page.status === 'published';
 
   const displayTitle = isCreate
-    ? 'New page'
+    ? t('admin.pages.index.newButton')
     : translationMap[primaryLocale]?.title ||
       slugMap[primaryLocale] ||
-      `Page ${page.id.slice(0, 8)}`;
+      t('admin.pages.editor.fallbackTitle', { id: page.id.slice(0, 8) });
 
   const updatedDate = page.updatedAt
     ? new Date(page.updatedAt).toLocaleDateString('en-US', {
@@ -45,17 +60,21 @@ export default function PageEditor({
     : null;
 
   const subtitle = isCreate ? (
-    'Create a CMS page with localized content and SEO metadata.'
+    t('admin.pages.editor.createSubtitle')
   ) : (
     <span className="inline-flex flex-wrap items-center gap-2">
       <Badge tone={isPublished ? 'success' : 'warn'}>
-        {isPublished ? 'Published' : 'Draft'}
+        {isPublished
+          ? t('admin.pages.status.published')
+          : t('admin.pages.status.draft')}
       </Badge>
-      {updatedDate && <span>Updated {updatedDate}</span>}
+      {updatedDate && (
+        <span>{t('admin.pages.editor.updated', { date: updatedDate })}</span>
+      )}
     </span>
   );
 
-  const t = translationMap[activeLocale] ?? {};
+  const localeFields = translationMap[activeLocale] ?? {};
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -63,7 +82,7 @@ export default function PageEditor({
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Pages', href: '/admin/pages' },
+              { label: t('admin.pages.index.title'), href: '/admin/pages' },
               { label: displayTitle },
             ]}
           />
@@ -72,7 +91,9 @@ export default function PageEditor({
         subtitle={subtitle}
       />
 
-      {actionData?.ok && <SuccessAlert message="Page saved." />}
+      {actionData?.ok && (
+        <SuccessAlert message={t('admin.pages.editor.saved')} />
+      )}
       {actionData?.error && <ErrorAlert message={actionData.error} />}
 
       <Form method="post" className="space-y-6">
@@ -82,21 +103,26 @@ export default function PageEditor({
 
         <Card>
           <CardHeader
-            title="Content"
-            description="Localized title, body, URL slug, and SEO metadata."
+            title={t('admin.pages.editor.contentTitle')}
+            description={t('admin.pages.editor.contentDescription')}
           />
 
           {!isCreate && (
             <div className="mb-5">
-              <Field label="Status" htmlFor="page-status">
+              <Field
+                label={t('admin.pages.editor.statusLabel')}
+                htmlFor="page-status"
+              >
                 <Select
                   id="page-status"
                   name="status"
                   defaultValue={page.status}
                   className="max-w-xs"
                 >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
+                  <option value="draft">{t('admin.pages.status.draft')}</option>
+                  <option value="published">
+                    {t('admin.pages.status.published')}
+                  </option>
                 </Select>
               </Field>
             </div>
@@ -104,10 +130,18 @@ export default function PageEditor({
 
           {isCreate ? (
             <div className="space-y-5">
-              <Field label="Title" htmlFor="page-title">
+              <Field
+                label={t('admin.pages.editor.titleLabel')}
+                htmlFor="page-title"
+              >
                 <Input id="page-title" name="title" type="text" required />
               </Field>
-              <SlugField id="page-slug" name="slug" label="URL slug" required />
+              <SlugField
+                id="page-slug"
+                name="slug"
+                label={t('admin.pages.editor.slugLabel')}
+                required
+              />
             </div>
           ) : (
             <>
@@ -117,26 +151,34 @@ export default function PageEditor({
                 onSelect={setActiveLocale}
               />
               <div className="space-y-5 pt-5">
-                <Field label="Title" htmlFor={`title-${activeLocale}`}>
+                <Field
+                  label={t('admin.pages.editor.titleLabel')}
+                  htmlFor={`title-${activeLocale}`}
+                >
                   <Input
                     id={`title-${activeLocale}`}
                     name="title"
                     type="text"
-                    defaultValue={t.title ?? ''}
+                    defaultValue={localeFields.title ?? ''}
                   />
                 </Field>
                 <SlugField
                   id={`slug-${activeLocale}`}
                   name="slug"
-                  label={`URL slug (${activeLocale})`}
+                  label={t('admin.pages.editor.slugLabelLocale', {
+                    locale: activeLocale,
+                  })}
                   defaultValue={slugMap[activeLocale] ?? ''}
                 />
-                <Field label="Body" htmlFor={`body-${activeLocale}`}>
+                <Field
+                  label={t('admin.pages.editor.bodyLabel')}
+                  htmlFor={`body-${activeLocale}`}
+                >
                   <Textarea
                     id={`body-${activeLocale}`}
                     name="body"
                     rows={10}
-                    defaultValue={t.body ?? ''}
+                    defaultValue={localeFields.body ?? ''}
                   />
                 </Field>
                 <SeoFields
@@ -144,10 +186,10 @@ export default function PageEditor({
                   descriptionFieldName="metaDescription"
                   titleId={`meta-title-${activeLocale}`}
                   descriptionId={`meta-desc-${activeLocale}`}
-                  titleLabel="Meta title"
-                  descriptionLabel="Meta description"
-                  defaultTitle={t.metaTitle ?? ''}
-                  defaultDescription={t.metaDescription ?? ''}
+                  titleLabel={t('admin.pages.editor.metaTitle')}
+                  descriptionLabel={t('admin.pages.editor.metaDescription')}
+                  defaultTitle={localeFields.metaTitle ?? ''}
+                  defaultDescription={localeFields.metaDescription ?? ''}
                 />
               </div>
             </>
@@ -161,13 +203,13 @@ export default function PageEditor({
               <button
                 type="submit"
                 onClick={(e) => {
-                  if (!window.confirm('Delete this page?')) {
+                  if (!window.confirm(t('admin.pages.editor.confirmDelete'))) {
                     e.preventDefault();
                   }
                 }}
                 className="text-danger hover:text-danger/80 text-sm font-medium transition-colors"
               >
-                Delete page
+                {t('admin.pages.editor.delete')}
               </button>
             </Form>
           ) : (
@@ -178,16 +220,16 @@ export default function PageEditor({
               to="/admin/pages"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
               {isSaving
                 ? isCreate
-                  ? 'Creating…'
-                  : 'Saving…'
+                  ? t('admin.pages.editor.creating')
+                  : t('admin.pages.editor.saving')
                 : isCreate
-                  ? 'Create page'
-                  : 'Save page'}
+                  ? t('admin.pages.editor.create')
+                  : t('admin.pages.editor.save')}
             </ButtonSubmit>
           </div>
         </ActionBar>
