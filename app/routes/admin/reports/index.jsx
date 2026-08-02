@@ -14,6 +14,7 @@ import {
   deleteScheduledExport,
 } from '#/core/exports/index.server';
 import { queueScheduledExport } from '#/core/exports/job.server';
+import { useT } from '#/core/i18n';
 import {
   getDashboardReport,
   parseReportParams,
@@ -98,6 +99,9 @@ export async function action({ request }) {
   return { ok: false, error: 'Unknown intent.' };
 }
 
+/**
+ * @param {{ label: string, value: string|number, sub?: string }} props
+ */
 function MetricCard({ label, value, sub }) {
   return (
     <Card>
@@ -110,7 +114,11 @@ function MetricCard({ label, value, sub }) {
   );
 }
 
+/**
+ * @returns {React.ReactElement}
+ */
 export default function AdminReportsRoute() {
+  const t = useT();
   const { report, scheduledExports, filters, exportTypes, defaultCurrency } =
     useLoaderData();
   const { overview, salesOverTime, salesByProduct, salesByCategory } = report;
@@ -119,11 +127,19 @@ export default function AdminReportsRoute() {
   if (filters.startDate) exportQuery.set('startDate', filters.startDate);
   if (filters.endDate) exportQuery.set('endDate', filters.endDate);
 
+  const scheduleColumns = [
+    t('admin.reports.index.col.label'),
+    t('admin.reports.index.col.type'),
+    t('admin.reports.index.col.schedule'),
+    t('admin.reports.index.col.lastRun'),
+    t('admin.reports.index.col.actions'),
+  ];
+
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Reports"
-        subtitle="Sales analytics, tax, discounts, and data exports."
+        title={t('admin.reports.index.title')}
+        subtitle={t('admin.reports.index.subtitle')}
       />
 
       <Card padded={false}>
@@ -131,7 +147,11 @@ export default function AdminReportsRoute() {
           method="get"
           className="flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-end"
         >
-          <Field label="Start date" htmlFor="startDate" className="space-y-1">
+          <Field
+            label={t('admin.reports.index.startDate')}
+            htmlFor="startDate"
+            className="space-y-1"
+          >
             <Input
               id="startDate"
               type="date"
@@ -139,7 +159,11 @@ export default function AdminReportsRoute() {
               defaultValue={filters.startDate}
             />
           </Field>
-          <Field label="End date" htmlFor="endDate" className="space-y-1">
+          <Field
+            label={t('admin.reports.index.endDate')}
+            htmlFor="endDate"
+            className="space-y-1"
+          >
             <Input
               id="endDate"
               type="date"
@@ -147,48 +171,61 @@ export default function AdminReportsRoute() {
               defaultValue={filters.endDate}
             />
           </Field>
-          <ButtonSubmit>Apply</ButtonSubmit>
+          <ButtonSubmit>{t('admin.reports.index.apply')}</ButtonSubmit>
         </Form>
       </Card>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          label="Revenue"
+          label={t('admin.reports.index.metric.revenue')}
           value={formatPrice(overview.revenueCents, defaultCurrency)}
-          sub={`${overview.paidOrders} paid orders`}
+          sub={t('admin.reports.index.metric.paidOrdersSub', {
+            count: overview.paidOrders,
+          })}
         />
         <MetricCard
-          label="Average order value"
+          label={t('admin.reports.index.metric.aov')}
           value={formatPrice(overview.aovCents, defaultCurrency)}
         />
         <MetricCard
-          label="Tax collected"
+          label={t('admin.reports.index.metric.tax')}
           value={formatPrice(overview.taxCents, defaultCurrency)}
         />
         <MetricCard
-          label="Discounts applied"
+          label={t('admin.reports.index.metric.discounts')}
           value={formatPrice(overview.discountCents, defaultCurrency)}
         />
         <MetricCard
-          label="Refunds"
+          label={t('admin.reports.index.metric.refunds')}
           value={formatPrice(overview.refundCents, defaultCurrency)}
-          sub={`${overview.refundCount} refunds`}
+          sub={t('admin.reports.index.metric.refundsSub', {
+            count: overview.refundCount,
+          })}
         />
         <MetricCard
-          label="Total orders"
+          label={t('admin.reports.index.metric.totalOrders')}
           value={overview.orderCount.toLocaleString('en')}
         />
         <MetricCard
-          label="Checkout conversion"
+          label={t('admin.reports.index.metric.conversion')}
           value={`${overview.conversionRate}%`}
-          sub={`${overview.completedCheckouts} / ${overview.startedCheckouts} sessions`}
+          sub={t('admin.reports.index.metric.conversionSub', {
+            completed: overview.completedCheckouts,
+            started: overview.startedCheckouts,
+          })}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ReportTable
-          title="Sales over time"
-          headers={['Date', 'Orders', 'Revenue', 'Tax', 'Discounts']}
+          title={t('admin.reports.index.salesOverTime')}
+          headers={[
+            t('admin.reports.index.col.date'),
+            t('admin.reports.index.col.orders'),
+            t('admin.reports.index.col.revenue'),
+            t('admin.reports.index.col.tax'),
+            t('admin.reports.index.col.discounts'),
+          ]}
           rows={salesOverTime.map((row) => [
             row.date,
             row.orders,
@@ -196,33 +233,42 @@ export default function AdminReportsRoute() {
             formatPrice(row.taxCents, defaultCurrency),
             formatPrice(row.discountCents, defaultCurrency),
           ])}
-          empty="No sales in this period."
+          empty={t('admin.reports.index.emptySales')}
         />
         <ReportTable
-          title="Top products"
-          headers={['Product', 'Qty', 'Revenue']}
+          title={t('admin.reports.index.topProducts')}
+          headers={[
+            t('admin.reports.index.col.product'),
+            t('admin.reports.index.col.qty'),
+            t('admin.reports.index.col.revenue'),
+          ]}
           rows={salesByProduct.map((row) => [
             row.title,
             row.quantity,
             formatPrice(row.revenueCents, defaultCurrency),
           ])}
-          empty="No product sales in this period."
+          empty={t('admin.reports.index.emptyProducts')}
         />
         <ReportTable
-          title="Sales by category"
-          headers={['Category', 'Revenue']}
+          title={t('admin.reports.index.salesByCategory')}
+          headers={[
+            t('admin.reports.index.col.category'),
+            t('admin.reports.index.col.revenue'),
+          ]}
           rows={salesByCategory.map((row) => [
             row.title,
             formatPrice(row.revenueCents, defaultCurrency),
           ])}
-          empty="No category sales in this period."
+          empty={t('admin.reports.index.emptyCategories')}
         />
       </div>
 
       <Card>
-        <h2 className="text-text text-lg font-semibold">CSV exports</h2>
+        <h2 className="text-text text-lg font-semibold">
+          {t('admin.reports.index.csvExports')}
+        </h2>
         <p className="text-text-muted mt-1 text-sm">
-          Download data immediately or schedule recurring exports.
+          {t('admin.reports.index.csvExportsDescription')}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           {exportTypes.map((type) => {
@@ -234,7 +280,7 @@ export default function AdminReportsRoute() {
                 href={`/admin/reports/export?${params.toString()}`}
                 className="border-border bg-surface text-text hover:bg-surface-2 rounded-md border px-3 py-2 text-sm font-medium shadow-xs"
               >
-                Export {type}
+                {t('admin.reports.index.exportType', { type })}
               </a>
             );
           })}
@@ -246,7 +292,7 @@ export default function AdminReportsRoute() {
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
-            Schedule export
+            {t('admin.reports.index.scheduleExport')}
           </Link>
         </div>
 
@@ -254,11 +300,9 @@ export default function AdminReportsRoute() {
           <Table className="mt-6">
             <THead>
               <tr>
-                {['Label', 'Type', 'Schedule', 'Last run', 'Actions'].map(
-                  (col) => (
-                    <Th key={col}>{col}</Th>
-                  )
-                )}
+                {scheduleColumns.map((col) => (
+                  <Th key={col}>{col}</Th>
+                ))}
               </tr>
             </THead>
             <TBody>
@@ -270,7 +314,7 @@ export default function AdminReportsRoute() {
                   <Td>
                     {exp.lastRunAt
                       ? new Date(exp.lastRunAt).toLocaleString('en')
-                      : 'Never'}
+                      : t('admin.reports.index.never')}
                   </Td>
                   <Td>
                     <div className="flex gap-3">
@@ -285,7 +329,7 @@ export default function AdminReportsRoute() {
                           type="submit"
                           className="text-accent text-xs font-medium hover:underline"
                         >
-                          Run now
+                          {t('admin.reports.index.runNow')}
                         </button>
                       </Form>
                       {exp.runs[0]?.status === 'completed' && (
@@ -293,7 +337,7 @@ export default function AdminReportsRoute() {
                           to={`/admin/reports/export?runId=${exp.runs[0].id}`}
                           className="text-text-muted hover:text-text text-xs font-medium hover:underline"
                         >
-                          Download
+                          {t('admin.reports.index.download')}
                         </Link>
                       )}
                       <Form method="post" className="inline">
@@ -307,7 +351,7 @@ export default function AdminReportsRoute() {
                           type="submit"
                           className="text-danger text-xs font-medium hover:underline"
                         >
-                          Delete
+                          {t('admin.reports.index.delete')}
                         </button>
                       </Form>
                     </div>
@@ -322,6 +366,9 @@ export default function AdminReportsRoute() {
   );
 }
 
+/**
+ * @param {{ title: string, headers: string[], rows: Array<Array<string|number>>, empty: string }} props
+ */
 function ReportTable({ title, headers, rows, empty }) {
   return (
     <Card padded={false}>

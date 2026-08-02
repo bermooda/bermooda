@@ -5,6 +5,7 @@ import { Form, useLoaderData, useSearchParams } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin/index.server';
 import { listAuditLogs, parseAuditListParams } from '#/core/audit/index.server';
+import { useT } from '#/core/i18n';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
@@ -32,7 +33,11 @@ export async function loader({ request }) {
   return result;
 }
 
+/**
+ * @returns {React.ReactElement}
+ */
 export default function AdminAuditLogRoute() {
+  const t = useT();
   const { auditLogs, total, page, totalPages } = useLoaderData();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -42,33 +47,43 @@ export default function AdminAuditLogRoute() {
     setSearchParams(params);
   }
 
+  const columns = [
+    t('admin.auditLog.col.when'),
+    t('admin.auditLog.col.actor'),
+    t('admin.auditLog.col.action'),
+    t('admin.auditLog.col.entity'),
+    t('admin.auditLog.col.details'),
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Audit Log"
-        subtitle={`${total.toLocaleString('en')} entries — admin mutations and domain events.`}
+        title={t('admin.auditLog.title')}
+        subtitle={t('admin.auditLog.subtitle', {
+          total: total.toLocaleString('en'),
+        })}
       />
 
       <Card>
         <Form method="get" className="flex flex-wrap items-end gap-4">
-          <Field label="Action">
+          <Field label={t('admin.auditLog.filter.action')}>
             <Input
               type="text"
               name="action"
               defaultValue={searchParams.get('action') ?? ''}
-              placeholder="e.g. order.created"
+              placeholder={t('admin.auditLog.filter.actionPlaceholder')}
             />
           </Field>
-          <Field label="Entity type">
+          <Field label={t('admin.auditLog.filter.entityType')}>
             <Input
               type="text"
               name="entityType"
               defaultValue={searchParams.get('entityType') ?? ''}
-              placeholder="e.g. order"
+              placeholder={t('admin.auditLog.filter.entityTypePlaceholder')}
             />
           </Field>
           <Button type="submit" variant="primary">
-            Filter
+            {t('admin.auditLog.filter.submit')}
           </Button>
         </Form>
       </Card>
@@ -76,7 +91,7 @@ export default function AdminAuditLogRoute() {
       <Table>
         <THead>
           <tr>
-            {['When', 'Actor', 'Action', 'Entity', 'Details'].map((col) => (
+            {columns.map((col) => (
               <Th key={col}>{col}</Th>
             ))}
           </tr>
@@ -85,7 +100,7 @@ export default function AdminAuditLogRoute() {
           {auditLogs.length === 0 ? (
             <tr>
               <Td colSpan={5} className="py-8 text-center">
-                No audit entries yet.
+                {t('admin.auditLog.empty')}
               </Td>
             </tr>
           ) : (

@@ -9,6 +9,7 @@ import { useLoaderData } from 'react-router';
 
 import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
 import { formatPrice } from '#/core/currency/format';
+import { useT } from '#/core/i18n';
 import { loadAdminDashboardData } from '#/core/reporting/index.server';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
@@ -100,6 +101,7 @@ function KpiTile({ icon: Icon, label, value }) {
  * @returns {React.ReactElement}
  */
 export default function AdminDashboardRoute() {
+  const t = useT();
   const {
     totalOrders,
     totalRevenueCents,
@@ -109,34 +111,42 @@ export default function AdminDashboardRoute() {
     slotBlocks,
   } = useLoaderData();
 
+  const columns = [
+    t('admin.dashboard.col.order'),
+    t('admin.dashboard.col.customer'),
+    t('admin.dashboard.col.status'),
+    t('admin.dashboard.col.total'),
+    t('admin.dashboard.col.date'),
+  ];
+
   return (
     <div className="space-y-8">
       {/* Page heading */}
       <PageHeader
-        title="Dashboard"
-        subtitle="Overview of your store's performance."
+        title={t('admin.dashboard.title')}
+        subtitle={t('admin.dashboard.subtitle')}
       />
 
       {/* KPI tiles */}
       <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiTile
           icon={ShoppingBagIcon}
-          label="Total Orders"
+          label={t('admin.dashboard.stat.totalOrders')}
           value={totalOrders.toLocaleString('en')}
         />
         <KpiTile
           icon={BanknotesIcon}
-          label="Total Revenue"
+          label={t('admin.dashboard.stat.totalRevenue')}
           value={formatPrice(totalRevenueCents)}
         />
         <KpiTile
           icon={ArchiveBoxXMarkIcon}
-          label="Abandoned Checkouts"
+          label={t('admin.dashboard.stat.abandonedCheckouts')}
           value={abandonedCheckouts.toLocaleString('en')}
         />
         <KpiTile
           icon={ExclamationTriangleIcon}
-          label="Low-Stock Items"
+          label={t('admin.dashboard.stat.lowStockItems')}
           value={lowStockCount.toLocaleString('en')}
         />
       </dl>
@@ -155,19 +165,21 @@ export default function AdminDashboardRoute() {
 
       {/* Recent orders */}
       <div>
-        <h2 className="text-text mb-4 text-lg font-semibold">Recent Orders</h2>
+        <h2 className="text-text mb-4 text-lg font-semibold">
+          {t('admin.dashboard.recentOrders')}
+        </h2>
 
         {recentOrders.length === 0 ? (
           <EmptyState
             icon={ShoppingBagIcon}
-            title="No orders yet"
-            description="Orders will appear here once customers start checking out."
+            title={t('admin.dashboard.emptyTitle')}
+            description={t('admin.dashboard.emptyDescription')}
           />
         ) : (
           <Table>
             <THead>
               <tr>
-                {['Order', 'Customer', 'Status', 'Total', 'Date'].map((col) => (
+                {columns.map((col) => (
                   <Th key={col}>{col}</Th>
                 ))}
               </tr>
