@@ -1,3 +1,4 @@
+import { useT } from '#/core/i18n';
 import Button from '#/components/ui/button';
 
 /**
@@ -17,29 +18,29 @@ export default function Pagination({
   onPageChange,
   className = '',
 }) {
+  const t = useT();
+
   if (totalPages <= 1) return null;
 
   return (
     <div
       className={`text-text-muted mt-4 flex items-center justify-between gap-3 text-sm ${className}`}
     >
-      <span>
-        Page {page} of {totalPages}
-      </span>
+      <span>{t('admin.pagination.pageOf', { page, totalPages })}</span>
       <div className="flex gap-2">
         <Button
           variant="secondary"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
         >
-          Previous
+          {t('admin.pagination.previous')}
         </Button>
         <Button
           variant="secondary"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
         >
-          Next
+          {t('admin.pagination.next')}
         </Button>
       </div>
     </div>

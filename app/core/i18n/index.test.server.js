@@ -274,6 +274,139 @@ describe('loadMessages', () => {
     expect(messages.common.loading).toBe('Loading...');
     expect(readFileSync).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps English values for keys missing from a partial locale overlay', async () => {
+    settingsGet.mockImplementation(async (key) => {
+      if (key === 'activeTheme') return null;
+      if (key === 'pluginOrder') return [];
+      return null;
+    });
+
+    readFileSync.mockImplementation((filePath) => {
+      if (filePath.endsWith('/en.json')) {
+        return JSON.stringify({
+          common: { save: 'Save', cancel: 'Cancel' },
+        });
+      }
+      if (filePath.endsWith('/de.json')) {
+        return JSON.stringify({
+          common: { save: 'Speichern' },
+        });
+      }
+      const enoent = new Error('ENOENT: no such file');
+      enoent.code = 'ENOENT';
+      throw enoent;
+    });
+
+    const messages = await loadMessages('de');
+    expect(messages.common.save).toBe('Speichern');
+    expect(messages.common.cancel).toBe('Cancel');
+  });
+
+  it('lets the requested locale override shared English keys', async () => {
+    settingsGet.mockImplementation(async (key) => {
+      if (key === 'activeTheme') return null;
+      if (key === 'pluginOrder') return [];
+      return null;
+    });
+
+    readFileSync.mockImplementation((filePath) => {
+      if (filePath.endsWith('/en.json')) {
+        return JSON.stringify({ common: { save: 'Save' } });
+      }
+      if (filePath.endsWith('/fr.json')) {
+        return JSON.stringify({ common: { save: 'Enregistrer' } });
+      }
+      const enoent = new Error('ENOENT: no such file');
+      enoent.code = 'ENOENT';
+      throw enoent;
+    });
+
+    const messages = await loadMessages('fr');
+    expect(messages.common.save).toBe('Enregistrer');
+  });
+
+  it('returns the English catalog when the locale file is missing entirely', async () => {
+    settingsGet.mockImplementation(async (key) => {
+      if (key === 'activeTheme') return null;
+      if (key === 'pluginOrder') return [];
+      return null;
+    });
+
+    readFileSync.mockImplementation((filePath) => {
+      if (filePath.endsWith('/en.json')) {
+        return JSON.stringify({ common: { loading: 'Loading...' } });
+      }
+      const enoent = new Error('ENOENT: no such file');
+      enoent.code = 'ENOENT';
+      throw enoent;
+    });
+
+    const messages = await loadMessages('de');
+    expect(messages.common.loading).toBe('Loading...');
+  });
+
+  it('reads English files only once when locale is en', async () => {
+    settingsGet.mockImplementation(async (key) => {
+      if (key === 'activeTheme') return null;
+      if (key === 'pluginOrder') return [];
+      return null;
+    });
+
+    readFileSync.mockReturnValueOnce(
+      JSON.stringify({ common: { loading: 'Loading...' } })
+    );
+
+    const messages = await loadMessages('en');
+    expect(messages.common.loading).toBe('Loading...');
+    expect(readFileSync).toHaveBeenCalledTimes(1);
+    expect(readFileSync.mock.calls[0][0]).toMatch(/\/en\.json$/);
+  });
+
+  it('loads en base then locale overlay for theme and plugin catalogs', async () => {
+    settingsGet.mockImplementation(async (key) => {
+      if (key === 'activeTheme') return '@acme/my-theme';
+      if (key === 'pluginOrder') return ['@acme/my-plugin'];
+      return null;
+    });
+    getRegisteredTheme.mockImplementation((id) =>
+      id === '@acme/my-theme' ? { slug: 'my-theme' } : null
+    );
+    getRegisteredPlugin.mockImplementation((id) =>
+      id === '@acme/my-plugin' ? { slug: 'my-plugin' } : null
+    );
+
+    readFileSync.mockImplementation((filePath) => {
+      if (filePath.includes('/core/i18n/messages/en.json')) {
+        return JSON.stringify({ common: { save: 'Save', cancel: 'Cancel' } });
+      }
+      if (filePath.includes('/themes/my-theme/i18n/en.json')) {
+        return JSON.stringify({ theme: { title: 'Theme EN' } });
+      }
+      if (filePath.includes('/plugins/my-plugin/i18n/en.json')) {
+        return JSON.stringify({ plugin: { hello: 'Hello' } });
+      }
+      if (filePath.includes('/core/i18n/messages/de.json')) {
+        return JSON.stringify({ common: { save: 'Speichern' } });
+      }
+      if (filePath.includes('/themes/my-theme/i18n/de.json')) {
+        return JSON.stringify({ theme: { title: 'Theme DE' } });
+      }
+      const enoent = new Error('ENOENT: no such file');
+      enoent.code = 'ENOENT';
+      throw enoent;
+    });
+
+    const messages = await loadMessages('de');
+    expect(messages.common.save).toBe('Speichern');
+    expect(messages.common.cancel).toBe('Cancel');
+    expect(messages.theme.title).toBe('Theme DE');
+    expect(messages.plugin.hello).toBe('Hello');
+
+    const paths = readFileSync.mock.calls.map(([filePath]) => filePath);
+    expect(paths.filter((p) => p.endsWith('/en.json'))).toHaveLength(3);
+    expect(paths.filter((p) => p.endsWith('/de.json'))).toHaveLength(3);
+  });
 });
 
 describe('t', () => {

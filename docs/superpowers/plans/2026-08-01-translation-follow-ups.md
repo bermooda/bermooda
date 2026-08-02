@@ -95,15 +95,15 @@ Reuse `emailT` / flat keys — do not invent a second catalog system.
 
 Without this, switching admin locale to `de`/`fr` yields empty catalogs and raw keys.
 
-- [ ] In [`loadMessages`](../../app/core/i18n/index.server.js):
+- [x] In [`loadMessages`](../../app/core/i18n/index.server.js):
   1. Always load `en` core (+ theme/plugin en) as base.
   2. Deep-merge the requested locale on top (same merge order: core → theme → plugins).
   3. Cache key stays `i18n:${locale}`; extend [`index.test.server.js`](../../app/core/i18n/index.test.server.js) for en-fallback when locale file is missing/partial.
-- [ ] Do **not** flatten nested keys or add CI coverage in this phase.
+- [x] Do **not** flatten nested keys or add CI coverage in this phase.
 
 #### B. Catalog shape for new admin strings
 
-- [ ] Add flat dotted keys into [`app/core/i18n/messages/en.json`](../../app/core/i18n/messages/en.json) (and de/fr for keys extracted in this phase). Example:
+- [x] Add flat dotted keys into [`app/core/i18n/messages/en.json`](../../app/core/i18n/messages/en.json) (and de/fr for keys extracted in this phase). Example:
 
 ```json
 {
@@ -114,7 +114,7 @@ Without this, switching admin locale to `de`/`fr` yields empty catalogs and raw 
 }
 ```
 
-- [ ] Leave existing nested `common` / `admin.topbar` entries in place for now (`resolveMessageKey` already supports nested + flat). Theme catalogs stay storefront-only (external theme package); admin copy lives in **core** messages only.
+- [x] Leave existing nested `common` / `admin.topbar` entries in place for now (`resolveMessageKey` already supports nested + flat). Theme catalogs stay storefront-only (external theme package); admin copy lives in **core** messages only.
 
 #### C. Start using `useT()` — phased extraction
 
@@ -122,10 +122,10 @@ Context is already provided in [`AdminLayout`](../../app/routes/admin/_layout.js
 
 **Wave 1 — chrome + shared shell**
 
-- [ ] [`nav-config/index.js`](../../app/components/admin/nav-config/index.js): change `label` / `name` to message keys (e.g. `admin.nav.products`); resolve with `useT()` where rendered in `_layout.jsx` / command palette.
-- [ ] Admin layout chrome: “View storefront”, “Logout”, “Open sidebar”, “Close sidebar”, command-palette aria, theme labels.
-- [ ] Shared primitives with stable copy: [`page-header.jsx`](../../app/components/admin/page-header.jsx), [`empty-state.jsx`](../../app/components/admin/empty-state.jsx), [`breadcrumbs.jsx`](../../app/components/admin/breadcrumbs.jsx), [`pagination.jsx`](../../app/components/admin/pagination.jsx), [`command-palette.jsx`](../../app/components/admin/command-palette.jsx) (static strings only).
-- [ ] Validation: unit tests for `loadMessages` fallback; nav-config tests updated for keys; lint + build; smoke admin layout locale switch shows translated chrome.
+- [x] [`nav-config/index.js`](../../app/components/admin/nav-config/index.js): change `label` / `name` to message keys (e.g. `admin.nav.products`); resolve with `useT()` where rendered in `_layout.jsx` / command palette.
+- [x] Admin layout chrome: “View storefront”, “Logout”, “Open sidebar”, “Close sidebar”, command-palette aria, theme labels.
+- [x] Shared primitives with stable copy: [`page-header.jsx`](../../app/components/admin/page-header.jsx), [`empty-state.jsx`](../../app/components/admin/empty-state.jsx), [`breadcrumbs.jsx`](../../app/components/admin/breadcrumbs.jsx), [`pagination.jsx`](../../app/components/admin/pagination.jsx), [`command-palette.jsx`](../../app/components/admin/command-palette.jsx) (static strings only).
+- [x] Validation: unit tests for `loadMessages` fallback; nav-config tests updated for keys; lint + build; smoke admin layout locale switch shows translated chrome.
 
 **Wave 2+ — route batches by nav group**
 

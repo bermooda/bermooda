@@ -2,6 +2,8 @@ import { ChevronRightIcon } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
 import { Link } from 'react-router';
 
+import { useT } from '#/core/i18n';
+
 /**
  * Breadcrumbs
  * Compact trail for admin detail and nested pages.
@@ -12,8 +14,13 @@ import { Link } from 'react-router';
  * @returns {React.ReactElement}
  */
 export default function Breadcrumbs({ items, className = '' }) {
+  const t = useT();
+
   return (
-    <nav aria-label="Breadcrumb" className={clsx('mb-3', className)}>
+    <nav
+      aria-label={t('admin.breadcrumbs.ariaLabel')}
+      className={clsx('mb-3', className)}
+    >
       <ol className="text-text-muted flex flex-wrap items-center gap-1.5 text-sm">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
