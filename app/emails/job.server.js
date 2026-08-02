@@ -24,7 +24,7 @@ const verifyEmailJob = defineQueueJob('verify_email', {
       taskData.locale ??
       (await resolveAuthEmailLocale({
         email: taskData.email,
-        preferCustomerLocale: true,
+        preferCustomerLocale: taskData.preferCustomerLocale === true,
       }));
     await sendVerificationEmail({
       email: taskData.email,
@@ -45,7 +45,7 @@ const passwordResetEmailJob = defineQueueJob('password_reset_email', {
       taskData.locale ??
       (await resolveAuthEmailLocale({
         email: taskData.email,
-        preferCustomerLocale: true,
+        preferCustomerLocale: taskData.preferCustomerLocale === true,
       }));
     await sendPasswordResetEmail({
       email: taskData.email,
@@ -87,14 +87,23 @@ const twoFactorOtpJob = defineQueueJob('two_factor_otp', {
  * @param {string} email - The email address to send the verification email to
  * @param {string} name - The name of the user to send the verification email to
  * @param {string} verificationUrl - The URL to verify the email
+ * @param {{ preferCustomerLocale?: boolean }} [options] - Locale resolution options
+ *   (`preferCustomerLocale` defaults to `false` — settings-only; customer auth
+ *   must pass `true`)
  */
-export function queueVerifyEmail(email, name, verificationUrl) {
+export function queueVerifyEmail(
+  email,
+  name,
+  verificationUrl,
+  { preferCustomerLocale = false } = {}
+) {
   logger.info(`Queueing verification email to: ${email}`);
 
   verifyEmailJob.add({
     email,
     name,
     url: verificationUrl,
+    preferCustomerLocale,
   });
 }
 
@@ -104,14 +113,23 @@ export function queueVerifyEmail(email, name, verificationUrl) {
  * @param {string} email - The email address to send the password reset email to
  * @param {string} name - The name of the user to send the password reset email to
  * @param {string} resetUrl - The URL to reset the password
+ * @param {{ preferCustomerLocale?: boolean }} [options] - Locale resolution options
+ *   (`preferCustomerLocale` defaults to `false` — settings-only; customer auth
+ *   must pass `true`)
  */
-export function queuePasswordResetEmail(email, name, resetUrl) {
+export function queuePasswordResetEmail(
+  email,
+  name,
+  resetUrl,
+  { preferCustomerLocale = false } = {}
+) {
   logger.info(`Queueing password reset email to: ${email}`);
 
   passwordResetEmailJob.add({
     email,
     name,
     url: resetUrl,
+    preferCustomerLocale,
   });
 }
 

@@ -103,11 +103,14 @@ export const customerAuth = betterAuth({
 
   emailAndPassword: createEmailPasswordConfig({
     sendResetPassword({ user, url }) {
-      queuePasswordResetEmail(user.email, user.name, url);
+      queuePasswordResetEmail(user.email, user.name, url, {
+        preferCustomerLocale: true,
+      });
     },
   }),
 
   emailVerification: createEmailVerificationConfig({
+    preferCustomerLocale: true,
     buildVerificationUrl({ url }) {
       return `${url}account?welcome-message=true`;
     },

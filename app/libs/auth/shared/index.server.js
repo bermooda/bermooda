@@ -86,8 +86,13 @@ export function createEmailPasswordConfig({ sendResetPassword }) {
  *
  * @param {object} options
  * @param {(args: { user: object, url: string }) => string} options.buildVerificationUrl
+ * @param {boolean} [options.preferCustomerLocale=false] - Prefer customer.preferredLocale
+ *   when resolving email locale (customer auth only)
  */
-export function createEmailVerificationConfig({ buildVerificationUrl }) {
+export function createEmailVerificationConfig({
+  buildVerificationUrl,
+  preferCustomerLocale = false,
+}) {
   return {
     enabled: true,
     sendOnSignUp: true,
@@ -96,7 +101,8 @@ export function createEmailVerificationConfig({ buildVerificationUrl }) {
       queueVerifyEmail(
         user.email,
         user.name,
-        buildVerificationUrl({ user, url })
+        buildVerificationUrl({ user, url }),
+        { preferCustomerLocale }
       );
     },
   };
