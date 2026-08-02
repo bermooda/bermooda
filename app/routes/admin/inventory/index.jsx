@@ -4,6 +4,7 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   ensureDefaultLocation,
   listInventoryLevelsForVariants,
@@ -48,20 +49,21 @@ export async function action({ request }) {
 }
 
 export default function AdminInventoryRoute() {
+  const t = useT();
   const { locations, variants, levelsByVariant } = useLoaderData();
 
   return (
     <div>
       <PageHeader
-        title="Inventory by location"
-        subtitle="Stock levels per warehouse location. Totals sync to variant inventory counts."
+        title={t('admin.inventory.index.title')}
+        subtitle={t('admin.inventory.index.subtitle')}
         actions={
           <Link
             to="/admin/inventory/new"
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
-            New location
+            {t('admin.inventory.index.newButton')}
           </Link>
         }
         className="mb-6"
@@ -69,19 +71,25 @@ export default function AdminInventoryRoute() {
 
       <div className="space-y-6">
         <Card>
-          <h2 className="text-text text-lg font-semibold">Locations</h2>
+          <h2 className="text-text text-lg font-semibold">
+            {t('admin.inventory.index.locations')}
+          </h2>
           <ul className="text-text-muted mt-3 space-y-2 text-sm">
             {locations.map((location) => (
               <li key={location.id}>
                 {location.name} ({location.code})
-                {location.isDefault ? ' — default' : ''}
+                {location.isDefault
+                  ? t('admin.inventory.index.defaultSuffix')
+                  : ''}
               </li>
             ))}
           </ul>
         </Card>
 
         <Card>
-          <h2 className="text-text text-lg font-semibold">Variant stock</h2>
+          <h2 className="text-text text-lg font-semibold">
+            {t('admin.inventory.index.variantStock')}
+          </h2>
           <div className="mt-4 space-y-6">
             {variants.map((variant) => (
               <div
@@ -91,7 +99,9 @@ export default function AdminInventoryRoute() {
                 <p className="text-text font-medium">
                   {variant.sku || variant.id}{' '}
                   <span className="text-text-muted">
-                    (total: {variant.inventoryCount})
+                    {t('admin.inventory.index.total', {
+                      count: variant.inventoryCount,
+                    })}
                   </span>
                 </p>
                 <div className="mt-2 flex flex-wrap gap-4">
@@ -123,7 +133,7 @@ export default function AdminInventoryRoute() {
                         className="w-20"
                       />
                       <Button type="submit" variant="secondary">
-                        Save
+                        {t('common.save')}
                       </Button>
                     </Form>
                   ))}

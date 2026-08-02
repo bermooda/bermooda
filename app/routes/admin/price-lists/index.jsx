@@ -3,6 +3,7 @@
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Link, useLoaderData } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import { listPriceLists } from '#/core/pricing/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
@@ -15,20 +16,21 @@ export async function loader() {
 }
 
 export default function AdminPriceListsRoute() {
+  const t = useT();
   const { priceLists } = useLoaderData();
 
   return (
     <div>
       <PageHeader
-        title="Price lists"
-        subtitle="Group and quantity-specific pricing overrides."
+        title={t('admin.priceLists.index.title')}
+        subtitle={t('admin.priceLists.index.subtitle')}
         actions={
           <Link
             to="/admin/price-lists/new"
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
-            New price list
+            {t('admin.priceLists.index.newButton')}
           </Link>
         }
         className="mb-6"
@@ -36,15 +38,15 @@ export default function AdminPriceListsRoute() {
 
       {priceLists.length === 0 ? (
         <EmptyState
-          title="No price lists yet"
-          description="Create a price list to add group or quantity-specific pricing."
+          title={t('admin.priceLists.index.emptyTitle')}
+          description={t('admin.priceLists.index.emptyDescription')}
           action={
             <Link
               to="/admin/price-lists/new"
               className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
             >
               <PlusIcon className="h-4 w-4" />
-              New price list
+              {t('admin.priceLists.index.newButton')}
             </Link>
           }
         />
@@ -65,7 +67,10 @@ export default function AdminPriceListsRoute() {
                 )}
               </div>
               <p className="text-text-muted mt-1 text-sm">
-                Priority {list.priority} · {list._count.entries} entries
+                {t('admin.priceLists.index.meta', {
+                  priority: list.priority,
+                  count: list._count.entries,
+                })}
               </p>
             </Card>
           ))}

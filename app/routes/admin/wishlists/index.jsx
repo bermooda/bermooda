@@ -3,6 +3,7 @@
 
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   deleteWishlistItem,
   loadWishlistAdminIndexData,
@@ -43,16 +44,24 @@ export async function action({ request }) {
   }
 }
 
+/**
+ * @param {string | Date | null | undefined} value
+ * @returns {string}
+ */
 function formatDate(value) {
   if (!value) return '—';
   return new Date(value).toLocaleString();
 }
 
 export default function AdminWishlistsRoute() {
+  const t = useT();
   const { items, total, page, pageSize, q } = useLoaderData();
   const [searchParams, setSearchParams] = useSearchParams();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
+  /**
+   * @param {number} nextPage
+   */
   function goToPage(nextPage) {
     const params = new URLSearchParams(searchParams);
     params.set('page', String(nextPage));
@@ -62,8 +71,8 @@ export default function AdminWishlistsRoute() {
   return (
     <div>
       <PageHeader
-        title="Wishlists"
-        subtitle="Saved products across customer wishlists."
+        title={t('admin.wishlists.index.title')}
+        subtitle={t('admin.wishlists.index.subtitle')}
         className="mb-6"
       />
 
@@ -71,23 +80,27 @@ export default function AdminWishlistsRoute() {
         <ToolbarGroup>
           <SearchField
             defaultValue={q}
-            placeholder="Search by email or SKU…"
+            placeholder={t('admin.wishlists.index.searchPlaceholder')}
             className="w-72"
           />
         </ToolbarGroup>
       </Toolbar>
 
-      <h2 className="text-text mb-3 text-lg font-semibold">Items ({total})</h2>
+      <h2 className="text-text mb-3 text-lg font-semibold">
+        {t('admin.wishlists.index.items', { total })}
+      </h2>
 
       {items.length === 0 ? (
         <EmptyState
           title={
-            q ? 'No wishlist items match your search' : 'No wishlist items yet'
+            q
+              ? t('admin.wishlists.index.emptyTitleSearch')
+              : t('admin.wishlists.index.emptyTitle')
           }
           description={
             q
-              ? 'Try a different email, SKU, or clear the search.'
-              : 'Customers can save products from product pages when signed in.'
+              ? t('admin.wishlists.index.emptyDescriptionSearch')
+              : t('admin.wishlists.index.emptyDescription')
           }
         />
       ) : (
@@ -95,11 +108,13 @@ export default function AdminWishlistsRoute() {
           <Table>
             <THead>
               <tr>
-                <Th>Product</Th>
-                <Th>Variant</Th>
-                <Th>Customer</Th>
-                <Th>Added</Th>
-                <Th className="text-right">Actions</Th>
+                <Th>{t('admin.wishlists.index.col.product')}</Th>
+                <Th>{t('admin.wishlists.index.col.variant')}</Th>
+                <Th>{t('admin.wishlists.index.col.customer')}</Th>
+                <Th>{t('admin.wishlists.index.col.added')}</Th>
+                <Th className="text-right">
+                  {t('admin.wishlists.index.col.actions')}
+                </Th>
               </tr>
             </THead>
             <TBody>
@@ -117,7 +132,7 @@ export default function AdminWishlistsRoute() {
                         type="submit"
                         className="text-danger text-sm hover:underline"
                       >
-                        Remove
+                        {t('admin.wishlists.index.remove')}
                       </button>
                     </Form>
                   </Td>

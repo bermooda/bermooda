@@ -7,6 +7,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import {
   createPriceList,
   listCustomerGroups,
@@ -49,6 +50,7 @@ export async function action({ request }) {
 }
 
 export default function AdminNewPriceListRoute() {
+  const t = useT();
   const { groups } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -60,13 +62,16 @@ export default function AdminNewPriceListRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Price lists', href: '/admin/price-lists' },
-              { label: 'New price list' },
+              {
+                label: t('admin.priceLists.index.title'),
+                href: '/admin/price-lists',
+              },
+              { label: t('admin.priceLists.new.breadcrumb') },
             ]}
           />
         }
-        title="New price list"
-        subtitle="Create group or quantity-specific pricing overrides."
+        title={t('admin.priceLists.new.title')}
+        subtitle={t('admin.priceLists.new.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -74,19 +79,25 @@ export default function AdminNewPriceListRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Price list details"
-            description="Higher priority lists take precedence when multiple apply."
+            title={t('admin.priceLists.new.cardTitle')}
+            description={t('admin.priceLists.new.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name *" htmlFor="price-list-name">
+            <Field
+              label={t('admin.priceLists.new.name')}
+              htmlFor="price-list-name"
+            >
               <Input
                 id="price-list-name"
                 name="name"
                 required
-                placeholder="Wholesale pricing"
+                placeholder={t('admin.priceLists.new.namePlaceholder')}
               />
             </Field>
-            <Field label="Currency *" htmlFor="price-list-currency">
+            <Field
+              label={t('admin.priceLists.new.currency')}
+              htmlFor="price-list-currency"
+            >
               <Input
                 id="price-list-currency"
                 name="currency"
@@ -96,13 +107,18 @@ export default function AdminNewPriceListRoute() {
                 className="uppercase"
               />
             </Field>
-            <Field label="Customer group" htmlFor="price-list-group">
+            <Field
+              label={t('admin.priceLists.new.customerGroup')}
+              htmlFor="price-list-group"
+            >
               <Select
                 id="price-list-group"
                 name="customerGroupId"
                 defaultValue=""
               >
-                <option value="">All customers</option>
+                <option value="">
+                  {t('admin.priceLists.new.allCustomers')}
+                </option>
                 {groups.map((group) => (
                   <option key={group.id} value={group.id}>
                     {group.name}
@@ -110,7 +126,10 @@ export default function AdminNewPriceListRoute() {
                 ))}
               </Select>
             </Field>
-            <Field label="Priority" htmlFor="price-list-priority">
+            <Field
+              label={t('admin.priceLists.new.priority')}
+              htmlFor="price-list-priority"
+            >
               <Input
                 id="price-list-priority"
                 name="priority"
@@ -128,10 +147,12 @@ export default function AdminNewPriceListRoute() {
               to="/admin/price-lists"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Create price list'}
+              {isSaving
+                ? t('admin.priceLists.new.creating')
+                : t('admin.priceLists.new.create')}
             </ButtonSubmit>
           </div>
         </ActionBar>

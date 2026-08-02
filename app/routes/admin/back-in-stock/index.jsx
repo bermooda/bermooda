@@ -9,6 +9,7 @@ import {
   loadBackInStockAdminIndexData,
   parseDeleteSubscriptionFromForm,
 } from '#/core/back-in-stock/index.server';
+import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
@@ -46,22 +47,30 @@ export async function action({ request }) {
   }
 }
 
+/**
+ * @param {string | Date | null | undefined} value
+ * @returns {string}
+ */
 function formatDate(value) {
   if (!value) return '—';
   return new Date(value).toLocaleString();
 }
 
 export default function AdminBackInStockRoute() {
+  const t = useT();
   const { subscriptions, total, page, pageSize, status, q } = useLoaderData();
   const [searchParams, setSearchParams] = useSearchParams();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const tabs = [
-    { key: 'pending', label: 'Pending' },
-    { key: 'notified', label: 'Notified' },
-    { key: 'all', label: 'All' },
+    { key: 'pending', label: t('admin.backInStock.index.tab.pending') },
+    { key: 'notified', label: t('admin.backInStock.index.tab.notified') },
+    { key: 'all', label: t('admin.backInStock.index.tab.all') },
   ];
 
+  /**
+   * @param {string} next
+   */
   function setTab(next) {
     const params = new URLSearchParams(searchParams);
     params.set('status', next);
@@ -69,6 +78,9 @@ export default function AdminBackInStockRoute() {
     setSearchParams(params);
   }
 
+  /**
+   * @param {number} nextPage
+   */
   function goToPage(nextPage) {
     const params = new URLSearchParams(searchParams);
     params.set('page', String(nextPage));
@@ -78,8 +90,8 @@ export default function AdminBackInStockRoute() {
   return (
     <div>
       <PageHeader
-        title="Back in stock"
-        subtitle="Customer email subscriptions for out-of-stock variants."
+        title={t('admin.backInStock.index.title')}
+        subtitle={t('admin.backInStock.index.subtitle')}
         className="mb-6"
       />
 
@@ -105,7 +117,7 @@ export default function AdminBackInStockRoute() {
         <ToolbarGroup>
           <SearchField
             defaultValue={q}
-            placeholder="Search by email…"
+            placeholder={t('admin.backInStock.index.searchPlaceholder')}
             className="w-64"
             hiddenFields={{ status }}
           />
@@ -113,18 +125,20 @@ export default function AdminBackInStockRoute() {
       </Toolbar>
 
       <h2 className="text-text mb-3 text-lg font-semibold">
-        Subscriptions ({total})
+        {t('admin.backInStock.index.subscriptions', { total })}
       </h2>
 
       {subscriptions.length === 0 ? (
         <EmptyState
           title={
-            q ? 'No subscriptions match your search' : 'No subscriptions yet'
+            q
+              ? t('admin.backInStock.index.emptyTitleSearch')
+              : t('admin.backInStock.index.emptyTitle')
           }
           description={
             q
-              ? 'Try a different email or clear the search.'
-              : 'Customers can subscribe from product pages when a variant is out of stock.'
+              ? t('admin.backInStock.index.emptyDescriptionSearch')
+              : t('admin.backInStock.index.emptyDescription')
           }
         />
       ) : (
@@ -132,12 +146,14 @@ export default function AdminBackInStockRoute() {
           <Table>
             <THead>
               <tr>
-                <Th>Product</Th>
-                <Th>Variant</Th>
-                <Th>Email</Th>
-                <Th>Status</Th>
-                <Th>Created</Th>
-                <Th className="text-right">Actions</Th>
+                <Th>{t('admin.backInStock.index.col.product')}</Th>
+                <Th>{t('admin.backInStock.index.col.variant')}</Th>
+                <Th>{t('admin.backInStock.index.col.email')}</Th>
+                <Th>{t('admin.backInStock.index.col.status')}</Th>
+                <Th>{t('admin.backInStock.index.col.created')}</Th>
+                <Th className="text-right">
+                  {t('admin.backInStock.index.col.actions')}
+                </Th>
               </tr>
             </THead>
             <TBody>
@@ -150,7 +166,9 @@ export default function AdminBackInStockRoute() {
                     <Badge
                       tone={subscription.notifiedAt ? 'neutral' : 'warning'}
                     >
-                      {subscription.notifiedAt ? 'Notified' : 'Pending'}
+                      {subscription.notifiedAt
+                        ? t('admin.backInStock.index.status.notified')
+                        : t('admin.backInStock.index.status.pending')}
                     </Badge>
                   </Td>
                   <Td>{formatDate(subscription.createdAt)}</Td>
@@ -162,7 +180,7 @@ export default function AdminBackInStockRoute() {
                         type="submit"
                         className="text-danger text-sm hover:underline"
                       >
-                        Remove
+                        {t('admin.backInStock.index.remove')}
                       </button>
                     </Form>
                   </Td>

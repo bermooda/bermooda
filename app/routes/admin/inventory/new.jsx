@@ -6,6 +6,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { useT } from '#/core/i18n';
 import { createLocation } from '#/core/inventory/index.server';
 import ActionBar from '#/components/admin/action-bar';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
@@ -35,6 +36,7 @@ export async function action({ request }) {
 }
 
 export default function AdminNewInventoryLocationRoute() {
+  const t = useT();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
@@ -45,13 +47,16 @@ export default function AdminNewInventoryLocationRoute() {
         breadcrumbs={
           <Breadcrumbs
             items={[
-              { label: 'Inventory', href: '/admin/inventory' },
-              { label: 'New location' },
+              {
+                label: t('admin.inventory.new.breadcrumbInventory'),
+                href: '/admin/inventory',
+              },
+              { label: t('admin.inventory.new.breadcrumbNew') },
             ]}
           />
         }
-        title="New inventory location"
-        subtitle="Add a warehouse or fulfillment location."
+        title={t('admin.inventory.new.title')}
+        subtitle={t('admin.inventory.new.subtitle')}
       />
 
       <ErrorAlert message={actionData?.error} />
@@ -59,27 +64,36 @@ export default function AdminNewInventoryLocationRoute() {
       <Form method="post" className="space-y-6">
         <Card>
           <CardHeader
-            title="Location details"
-            description="Code is a short lowercase identifier used internally."
+            title={t('admin.inventory.new.cardTitle')}
+            description={t('admin.inventory.new.cardDescription')}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name *" htmlFor="location-name">
+            <Field
+              label={t('admin.inventory.new.name')}
+              htmlFor="location-name"
+            >
               <Input
                 id="location-name"
                 name="name"
                 required
-                placeholder="Main warehouse"
+                placeholder={t('admin.inventory.new.namePlaceholder')}
               />
             </Field>
-            <Field label="Code *" htmlFor="location-code">
+            <Field
+              label={t('admin.inventory.new.code')}
+              htmlFor="location-code"
+            >
               <Input
                 id="location-code"
                 name="code"
                 required
-                placeholder="main"
+                placeholder={t('admin.inventory.new.codePlaceholder')}
               />
             </Field>
-            <Field label="Store pickup (BOPIS)" htmlFor="allows-pickup">
+            <Field
+              label={t('admin.inventory.new.pickup')}
+              htmlFor="allows-pickup"
+            >
               <label className="flex items-center gap-2 text-sm">
                 <input
                   id="allows-pickup"
@@ -87,7 +101,7 @@ export default function AdminNewInventoryLocationRoute() {
                   type="checkbox"
                   className="h-4 w-4 rounded border-stone-300"
                 />
-                Allow customers to pick up orders at this location
+                {t('admin.inventory.new.pickupLabel')}
               </label>
             </Field>
           </div>
@@ -100,10 +114,12 @@ export default function AdminNewInventoryLocationRoute() {
               to="/admin/inventory"
               className="text-text-muted hover:text-text text-sm transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </Link>
             <ButtonSubmit disabled={isSaving}>
-              {isSaving ? 'Creating…' : 'Create location'}
+              {isSaving
+                ? t('admin.inventory.new.creating')
+                : t('admin.inventory.new.create')}
             </ButtonSubmit>
           </div>
         </ActionBar>
