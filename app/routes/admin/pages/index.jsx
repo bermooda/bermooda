@@ -8,6 +8,7 @@ import {
 } from 'react-router';
 
 import { listPagesAdmin } from '#/core/content/index.server';
+import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
@@ -22,12 +23,25 @@ export async function loader({ request }) {
   return listPagesAdmin(url.searchParams);
 }
 
+/**
+ * @param {Object} props
+ * @param {string} props.status
+ */
 function StatusBadge({ status }) {
+  const t = useT();
+  const label =
+    status === 'published'
+      ? t('admin.pages.status.published')
+      : t('admin.pages.status.draft');
   return (
-    <Badge tone={status === 'published' ? 'success' : 'warn'}>{status}</Badge>
+    <Badge tone={status === 'published' ? 'success' : 'warn'}>{label}</Badge>
   );
 }
 
+/**
+ * @param {string} iso
+ * @returns {string}
+ */
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
@@ -37,6 +51,7 @@ function formatDate(iso) {
 }
 
 export default function AdminPagesIndexRoute() {
+  const t = useT();
   const {
     pages,
     total,
@@ -64,56 +79,73 @@ export default function AdminPagesIndexRoute() {
     setSearchParams(params);
   }
 
+  const statusFilters = [
+    { key: 'all', label: t('admin.pages.status.all') },
+    { key: 'draft', label: t('admin.pages.status.draft') },
+    { key: 'published', label: t('admin.pages.status.published') },
+  ];
+
+  const columns = [
+    t('admin.pages.index.col.page'),
+    t('admin.pages.index.col.status'),
+    t('admin.pages.index.col.updated'),
+  ];
+
   return (
     <div>
       <PageHeader
-        title="Pages"
-        subtitle="Manage CMS pages for the storefront."
+        title={t('admin.pages.index.title')}
+        subtitle={t('admin.pages.index.subtitle')}
         actions={
           <Link
             to="/admin/pages/new"
             className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
-            New page
+            {t('admin.pages.index.newButton')}
           </Link>
         }
       />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <Stat label="Total pages" value={total} />
-        <Stat label="Published" value={publishedCount} />
-        <Stat label="Drafts" value={draftCount} />
+        <Stat label={t('admin.pages.index.stat.total')} value={total} />
+        <Stat
+          label={t('admin.pages.index.stat.published')}
+          value={publishedCount}
+        />
+        <Stat label={t('admin.pages.index.stat.drafts')} value={draftCount} />
       </div>
 
       <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
         <Toolbar>
           <SearchField
             defaultValue={q}
-            placeholder="Search by slug…"
+            placeholder={t('admin.pages.index.searchPlaceholder')}
             formClassName="w-full sm:max-w-sm"
             hiddenFields={status !== 'all' ? { status } : {}}
           />
           <ToolbarGroup>
             <div className="flex flex-wrap gap-1.5">
-              {['all', 'draft', 'published'].map((s) => (
+              {statusFilters.map((s) => (
                 <button
-                  key={s}
+                  key={s.key}
                   type="button"
-                  onClick={() => setStatus(s)}
+                  onClick={() => setStatus(s.key)}
                   className={clsx(
-                    'rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors',
-                    status === s
+                    'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                    status === s.key
                       ? 'bg-accent text-accent-fg'
                       : 'bg-surface-2 text-text-muted hover:text-text'
                   )}
                 >
-                  {s}
+                  {s.label}
                 </button>
               ))}
             </div>
             <span className="text-text-muted text-sm">
-              {total} result{total !== 1 ? 's' : ''}
+              {total === 1
+                ? t('admin.pages.index.resultsOne', { count: total })
+                : t('admin.pages.index.results', { count: total })}
             </span>
           </ToolbarGroup>
         </Toolbar>
@@ -121,7 +153,7 @@ export default function AdminPagesIndexRoute() {
         <Table className="hidden rounded-none border-0 shadow-none md:block">
           <THead>
             <tr>
-              {['Page', 'Status', 'Updated'].map((col) => (
+              {columns.map((col) => (
                 <Th key={col}>{col}</Th>
               ))}
             </tr>
@@ -132,11 +164,11 @@ export default function AdminPagesIndexRoute() {
                 <Td colSpan={3} className="p-0">
                   <EmptyState
                     icon={DocumentTextIcon}
-                    title="No pages found"
+                    title={t('admin.pages.index.emptyTitle')}
                     description={
                       q || status !== 'all'
-                        ? 'Try a different search term or clear the filter.'
-                        : 'Create your first page to get started.'
+                        ? t('admin.pages.index.emptyDescriptionSearch')
+                        : t('admin.pages.index.emptyDescription')
                     }
                     action={
                       !q &&
@@ -146,7 +178,7 @@ export default function AdminPagesIndexRoute() {
                           className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
                         >
                           <PlusIcon className="h-4 w-4" />
-                          New page
+                          {t('admin.pages.index.newButton')}
                         </Link>
                       )
                     }
@@ -192,11 +224,11 @@ export default function AdminPagesIndexRoute() {
           {pages.length === 0 ? (
             <EmptyState
               icon={DocumentTextIcon}
-              title="No pages found"
+              title={t('admin.pages.index.emptyTitle')}
               description={
                 q || status !== 'all'
-                  ? 'Try a different search term.'
-                  : 'Create your first page to get started.'
+                  ? t('admin.pages.index.emptyDescriptionSearchShort')
+                  : t('admin.pages.index.emptyDescription')
               }
               className="border-0 shadow-none"
             />
@@ -219,7 +251,9 @@ export default function AdminPagesIndexRoute() {
                   <StatusBadge status={row.status} />
                 </div>
                 <p className="text-text-muted mt-3 text-xs">
-                  Updated {formatDate(row.updatedAt)}
+                  {t('admin.pages.index.updatedAt', {
+                    date: formatDate(row.updatedAt),
+                  })}
                 </p>
               </Link>
             ))
