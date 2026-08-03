@@ -158,7 +158,7 @@ export default function AdminPosRoute() {
                     <span
                       className={
                         session.status === 'open'
-                          ? 'text-xs font-medium text-green-700'
+                          ? 'text-success text-xs font-medium'
                           : 'text-text-muted text-xs'
                       }
                     >

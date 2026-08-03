@@ -72,7 +72,7 @@ export default function AdminSubscriptionsRoute() {
                 <span
                   className={
                     plan.active
-                      ? 'text-xs font-medium text-green-700'
+                      ? 'text-success text-xs font-medium'
                       : 'text-text-muted text-xs'
                   }
                 >

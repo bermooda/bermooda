@@ -37,13 +37,13 @@
   --color-text: oklch(0.21 0.01 270); /* primary text     #15171A */
   --color-text-muted: oklch(0.52 0.01 270); /* secondary text   #6B7177 */
 
-  /* Single brand accent (Ghost-style green) shared across both themes */
-  --color-accent: oklch(0.72 0.17 152);
-  --color-accent-hover: oklch(0.66 0.17 152);
+  /* Single brand accent (teal #22a6b3) shared across both themes */
+  --color-accent: oklch(0.665 0.107 205);
+  --color-accent-hover: oklch(0.605 0.107 205);
   --color-accent-fg: oklch(1 0 0); /* text/icon on accent surfaces */
 
   /* Semantic status colors (badges, alerts) */
-  --color-success: oklch(0.7 0.16 152);
+  --color-success: oklch(0.665 0.107 205);
   --color-warn: oklch(0.78 0.15 75);
   --color-danger: oklch(0.62 0.21 25);
 }
@@ -57,11 +57,11 @@
   --color-text: oklch(0.97 0.002 270); /* #F5F6F7 */
   --color-text-muted: oklch(0.72 0.012 270); /* #9CA3AF */
 
-  --color-accent: oklch(0.74 0.17 152);
-  --color-accent-hover: oklch(0.79 0.16 152);
-  --color-accent-fg: oklch(0.18 0.02 152);
+  --color-accent: oklch(0.72 0.11 205);
+  --color-accent-hover: oklch(0.77 0.1 205);
+  --color-accent-fg: oklch(0.18 0.02 205);
 
-  --color-success: oklch(0.74 0.16 152);
+  --color-success: oklch(0.72 0.11 205);
   --color-warn: oklch(0.8 0.15 75);
   --color-danger: oklch(0.68 0.19 25);
 }
