@@ -35,6 +35,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { installAllExtensionDeps } from './install-extension-deps.mjs';
+import { syncExtensionTwSources } from './sync-extension-tw-sources.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
@@ -193,6 +194,7 @@ async function main() {
   );
   console.log('extensions:install  Installing per-extension npm dependencies…');
   installAllExtensionDeps(APP_DIR, { omitDev: false });
+  syncExtensionTwSources({ log: console.log });
   await setExtensionsInDb();
   console.log('extensions:install  Done.');
 }

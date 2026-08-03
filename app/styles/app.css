@@ -1,5 +1,11 @@
 @import 'tailwindcss';
 
+/* Themes/plugins are gitignored install dirs. Tailwind v4 skips those paths
+   (even via @source), so scripts/sync-extension-tw-sources.mjs symlinks them
+   under node_modules/.cache — @source of node_modules is treated as external
+   and picks up storefront utilities (text-5xl, px-7, …). */
+@source '../../node_modules/.cache/bermooda-tw-sources';
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {

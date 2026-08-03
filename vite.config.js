@@ -7,6 +7,7 @@ import { defineConfig } from 'vite';
 
 import { collectExtensionRuntimeDependencyNames } from './app/core/extensions/deps.js';
 import { resolveDevPort } from './app/libs/config/port.js';
+import { syncExtensionTwSources } from './scripts/sync-extension-tw-sources.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const port = resolveDevPort();
@@ -21,8 +22,26 @@ const extensionNoExternal = collectExtensionRuntimeDependencyNames(
   path.resolve(__dirname, 'app')
 );
 
+/**
+ * Keep Tailwind's extension scan cache in sync before CSS is compiled.
+ * See scripts/sync-extension-tw-sources.mjs.
+ *
+ * @returns {import('vite').Plugin}
+ */
+function extensionTwSourcesPlugin() {
+  return {
+    name: 'bermooda-extension-tw-sources',
+    buildStart() {
+      syncExtensionTwSources();
+    },
+    configureServer() {
+      syncExtensionTwSources();
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [reactRouter(), tailwindcss()],
+  plugins: [extensionTwSourcesPlugin(), reactRouter(), tailwindcss()],
   server: {
     port,
     // Fail loudly if PORT is taken instead of silently binding another port
