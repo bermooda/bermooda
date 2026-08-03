@@ -1,6 +1,6 @@
 // app/routes/admin/products/index.jsx
-// Products admin list — paginated table with search, status, variant count,
-// category badges and a "New Product" button.
+// Products admin list — sticky-header table (Tailwind Plus pattern) with
+// search, status, variant count, category badges and a "New Product" button.
 
 import { CubeIcon, PlusIcon } from '@heroicons/react/24/outline';
 import {
@@ -76,6 +76,14 @@ function formatDate(iso) {
   });
 }
 
+/**
+ * @param {{ title?: string | null, slug?: string | null, idPrefix: string }} row
+ * @returns {string}
+ */
+function productLabel(row) {
+  return row.title || row.slug || `${row.idPrefix}…`;
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -94,14 +102,6 @@ export default function AdminProductsRoute() {
       return next;
     });
   }
-
-  const columns = [
-    t('admin.products.index.col.product'),
-    t('admin.products.index.col.status'),
-    t('admin.products.index.col.variants'),
-    t('admin.products.index.col.categories'),
-    t('admin.products.index.col.created'),
-  ];
 
   return (
     <div>
@@ -131,159 +131,146 @@ export default function AdminProductsRoute() {
         />
       </div>
 
-      <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
-        <Toolbar>
-          <SearchField
-            defaultValue={q}
-            placeholder={t('admin.products.index.searchPlaceholder')}
-            formClassName="w-full sm:max-w-sm"
-          />
-          <ToolbarGroup>
-            <span className="text-text-muted text-sm">
-              {total === 1
-                ? t('admin.products.index.resultsOne', { count: total })
-                : t('admin.products.index.results', { count: total })}
-            </span>
-          </ToolbarGroup>
-        </Toolbar>
+      <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
+        <SearchField
+          defaultValue={q}
+          placeholder={t('admin.products.index.searchPlaceholder')}
+          formClassName="w-full sm:max-w-sm"
+        />
+        <ToolbarGroup>
+          <span className="text-text-muted text-sm">
+            {total === 1
+              ? t('admin.products.index.resultsOne', { count: total })
+              : t('admin.products.index.results', { count: total })}
+          </span>
+        </ToolbarGroup>
+      </Toolbar>
 
-        {/* Table (md+) */}
-        <Table className="hidden rounded-none border-0 shadow-none md:block">
-          <THead>
+      {rows.length === 0 ? (
+        <EmptyState
+          icon={CubeIcon}
+          title={t('admin.products.index.emptyTitle')}
+          description={
+            q
+              ? t('admin.products.index.emptyDescriptionSearch')
+              : t('admin.products.index.emptyDescription')
+          }
+          action={
+            !q && (
+              <Link
+                to="/admin/products/new"
+                className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
+              >
+                <PlusIcon className="h-4 w-4" />
+                {t('admin.products.index.newButton')}
+              </Link>
+            )
+          }
+        />
+      ) : (
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
             <tr>
-              {columns.map((col) => (
-                <Th key={col}>{col}</Th>
-              ))}
+              <Th sticky className="py-3.5 pr-3 pl-4 sm:pl-6">
+                {t('admin.products.index.col.product')}
+              </Th>
+              <Th sticky className="px-3 py-3.5">
+                {t('admin.products.index.col.status')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 sm:table-cell">
+                {t('admin.products.index.col.variants')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 lg:table-cell">
+                {t('admin.products.index.col.categories')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 md:table-cell">
+                {t('admin.products.index.col.created')}
+              </Th>
+              <Th sticky className="py-3.5 pr-4 pl-3 sm:pr-6">
+                <span className="sr-only">
+                  {t('admin.products.index.col.edit')}
+                </span>
+              </Th>
             </tr>
           </THead>
-          <TBody>
-            {rows.length === 0 && (
-              <tr>
-                <Td colSpan={5} className="p-0">
-                  <EmptyState
-                    icon={CubeIcon}
-                    title={t('admin.products.index.emptyTitle')}
-                    description={
-                      q
-                        ? t('admin.products.index.emptyDescriptionSearch')
-                        : t('admin.products.index.emptyDescription')
+          <TBody sticky>
+            {rows.map((row) => {
+              const label = productLabel(row);
+              return (
+                <Tr
+                  key={row.id}
+                  role="link"
+                  tabIndex={0}
+                  className="group cursor-pointer"
+                  onClick={() => navigate(`/admin/products/${row.id}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      navigate(`/admin/products/${row.id}`);
                     }
-                    action={
-                      !q && (
-                        <Link
-                          to="/admin/products/new"
-                          className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
-                        >
-                          <PlusIcon className="h-4 w-4" />
-                          {t('admin.products.index.newButton')}
-                        </Link>
-                      )
-                    }
-                    className="border-0 shadow-none"
-                  />
-                </Td>
-              </tr>
-            )}
-            {rows.map((row) => (
-              <Tr
-                key={row.id}
-                role="link"
-                tabIndex={0}
-                className="group cursor-pointer"
-                onClick={() => navigate(`/admin/products/${row.id}`)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    navigate(`/admin/products/${row.id}`);
-                  }
-                }}
-              >
-                <Td className="whitespace-normal">
-                  <span className="block min-w-0">
-                    <span className="text-text group-hover:text-accent block truncate font-medium transition-colors">
-                      {row.title || row.slug || `${row.idPrefix}…`}
+                  }}
+                >
+                  <Td
+                    sticky
+                    className="text-text py-4 pr-3 pl-4 font-medium whitespace-normal sm:pl-6"
+                  >
+                    <span className="block min-w-0">
+                      <span className="group-hover:text-accent block truncate font-medium transition-colors">
+                        {label}
+                      </span>
+                      <span className="text-text-muted mt-0.5 block truncate font-mono text-xs font-normal">
+                        {row.slug ?? row.idPrefix}
+                      </span>
                     </span>
-                    <span className="text-text-muted mt-0.5 block truncate font-mono text-xs">
-                      {row.slug ?? row.idPrefix}
-                    </span>
-                  </span>
-                </Td>
-                <Td>
-                  <StatusBadge published={row.published} />
-                </Td>
-                <Td className="tabular-nums">{row.variantCount}</Td>
-                <Td className="whitespace-normal">
-                  <div className="flex max-w-xs flex-wrap gap-1">
-                    {row.categories.length === 0 ? (
-                      <span className="text-text-muted text-xs">—</span>
-                    ) : (
-                      row.categories.map((c) => (
-                        <CategoryBadge key={c.id} title={c.title} />
-                      ))
-                    )}
-                  </div>
-                </Td>
-                <Td className="tabular-nums">{formatDate(row.createdAt)}</Td>
-              </Tr>
-            ))}
+                  </Td>
+                  <Td sticky className="px-3 py-4">
+                    <StatusBadge published={row.published} />
+                  </Td>
+                  <Td
+                    sticky
+                    className="hidden px-3 py-4 tabular-nums sm:table-cell"
+                  >
+                    {row.variantCount}
+                  </Td>
+                  <Td
+                    sticky
+                    className="hidden px-3 py-4 whitespace-normal lg:table-cell"
+                  >
+                    <div className="flex max-w-xs flex-wrap gap-1">
+                      {row.categories.length === 0 ? (
+                        <span className="text-text-muted text-xs">—</span>
+                      ) : (
+                        row.categories.map((c) => (
+                          <CategoryBadge key={c.id} title={c.title} />
+                        ))
+                      )}
+                    </div>
+                  </Td>
+                  <Td
+                    sticky
+                    className="hidden px-3 py-4 tabular-nums md:table-cell"
+                  >
+                    {formatDate(row.createdAt)}
+                  </Td>
+                  <Td
+                    sticky
+                    className="py-4 pr-4 pl-3 text-right text-sm font-medium sm:pr-6"
+                  >
+                    <Link
+                      to={`/admin/products/${row.id}`}
+                      className="text-accent hover:text-accent-hover"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {t('admin.products.index.edit')}
+                      <span className="sr-only">, {label}</span>
+                    </Link>
+                  </Td>
+                </Tr>
+              );
+            })}
           </TBody>
         </Table>
-
-        {/* Card list (mobile) */}
-        <div className="divide-border divide-y md:hidden">
-          {rows.length === 0 ? (
-            <EmptyState
-              icon={CubeIcon}
-              title={t('admin.products.index.emptyTitle')}
-              description={
-                q
-                  ? t('admin.products.index.emptyDescriptionSearchShort')
-                  : t('admin.products.index.emptyDescription')
-              }
-              className="border-0 shadow-none"
-            />
-          ) : (
-            rows.map((row) => (
-              <Link
-                key={row.id}
-                to={`/admin/products/${row.id}`}
-                className="hover:bg-surface-2/60 block px-4 py-4 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-text truncate text-sm font-medium">
-                      {row.title || row.slug || `${row.idPrefix}…`}
-                    </p>
-                    <p className="text-text-muted mt-0.5 truncate font-mono text-xs">
-                      {row.slug ?? row.idPrefix}
-                    </p>
-                  </div>
-                  <StatusBadge published={row.published} />
-                </div>
-                {row.categories.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1">
-                    {row.categories.map((c) => (
-                      <CategoryBadge key={c.id} title={c.title} />
-                    ))}
-                  </div>
-                )}
-                <div className="text-text-muted mt-3 flex items-center justify-between text-xs">
-                  <span>
-                    {row.variantCount === 1
-                      ? t('admin.products.index.variantsCountOne', {
-                          count: row.variantCount,
-                        })
-                      : t('admin.products.index.variantsCount', {
-                          count: row.variantCount,
-                        })}
-                  </span>
-                  <span>{formatDate(row.createdAt)}</span>
-                </div>
-              </Link>
-            ))
-          )}
-        </div>
-      </div>
+      )}
 
       <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
     </div>
