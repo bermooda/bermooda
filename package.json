@@ -103,6 +103,7 @@
     "public",
     "scripts",
     "!scripts/record-admin-design-demo.mjs",
+    "!scripts/record-product-editor-demo.mjs",
     "bermooda.config.js",
     "prisma.config.js",
     "react-router.config.js",
