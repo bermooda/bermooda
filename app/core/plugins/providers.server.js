@@ -15,7 +15,7 @@ import {
   registerProvider as registerPaymentProvider,
   unregisterProvider as unregisterPaymentProvider,
 } from '#/core/payments/index.server';
-import { defineProviders } from '#/core/plugins/registry.server';
+import { defineProviders } from '#/core/plugins/define.server';
 import {
   getDefaultProviderId as getDefaultSearchProviderId,
   registerProvider as registerSearchProvider,
