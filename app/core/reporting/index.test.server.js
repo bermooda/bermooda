@@ -64,8 +64,8 @@ vi.mock('#/core/catalog/translations.server', async (importOriginal) => {
   };
 });
 
-import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import prisma from '#/libs/prisma.server';
+import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import {
   parseDateRange,
   parseReportParams,
