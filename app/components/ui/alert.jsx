@@ -36,7 +36,7 @@ export function ErrorAlert({ message }) {
 
 /**
  * Success Alert Component
- * Displays success messages with a green background
+ * Displays success messages with the success (brand accent) background
  *
  * @param {Object} props Component props
  * @param {string} props.message Success message to display
