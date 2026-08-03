@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/bermooda/bermooda/compare/bermooda-v0.6.0...bermooda-v0.6.1) (2026-08-03)
+
+
+### Bug Fixes
+
+* **themes:** restore Tailwind utilities for installed extensions ([#183](https://github.com/bermooda/bermooda/issues/183)) ([0b47a52](https://github.com/bermooda/bermooda/commit/0b47a52a4c6c402ab993db3cd3dc67b60b0ba708))
+
 ## [0.6.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.5.0...bermooda-v0.6.0) (2026-08-03)
 
 
