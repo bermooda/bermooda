@@ -8,11 +8,19 @@ import {
   assertSlugMatchesFolder,
   mergeExtensionPackage,
 } from '#/core/extensions/package-meta';
+import {
+  definePlugin,
+  defineHooks,
+  defineProvider,
+  defineProviders,
+} from '#/core/plugins/define.server';
 import { REQUIRED_MANIFEST_FIELDS } from '#/core/plugins/manifest';
 import {
   buildPluginRouteRegistry,
   resolvePluginRouteDescriptor,
 } from '#/core/plugins/routes';
+
+export { definePlugin, defineHooks, defineProvider, defineProviders };
 
 /**
  * @typedef {Object} PluginManifest
@@ -34,132 +42,6 @@ import {
 export const registry = new Map();
 /** @type {Map<string, string>} */
 export const slugIndex = new Map();
-
-// ---------------------------------------------------------------------------
-// definePlugin — validates plugin runtime configuration
-// ---------------------------------------------------------------------------
-
-/**
- * Validates plugin runtime configuration and returns it.
- *
- * @param {Record<string, unknown>} runtime
- * @returns {Record<string, unknown>}
- */
-export function definePlugin(runtime) {
-  if (!runtime || typeof runtime !== 'object') {
-    throw new Error('Plugin manifest must be an object');
-  }
-
-  if (runtime.providers) {
-    defineProviders(
-      /** @type {Record<string, { type: string } & Object>} */ (
-        runtime.providers
-      )
-    );
-  }
-
-  return runtime;
-}
-
-// ---------------------------------------------------------------------------
-// defineHooks — validates and returns a hooks map
-// ---------------------------------------------------------------------------
-
-/**
- * Returns a validated hooks object.
- * Values must be functions.
- *
- * @param {Record<string, Function>} hookMap
- * @returns {Record<string, Function>}
- */
-export function defineHooks(hookMap) {
-  if (!hookMap || typeof hookMap !== 'object') {
-    throw new Error('hookMap must be an object');
-  }
-
-  for (const [event, handler] of Object.entries(hookMap)) {
-    if (typeof handler !== 'function') {
-      throw new Error(
-        `Hook "${event}" must be a function, got ${typeof handler}`
-      );
-    }
-  }
-
-  return hookMap;
-}
-
-// ---------------------------------------------------------------------------
-// defineProvider — returns a typed provider spec
-// ---------------------------------------------------------------------------
-
-/**
- * Returns a typed provider spec object.
- *
- * @param {'payment' | 'shipping' | 'tax' | 'search' | 'address_validation' | 'email'} type
- * @param {Object} spec
- * @returns {{ type: string } & Object}
- */
-export function defineProvider(type, spec) {
-  if (
-    ![
-      'payment',
-      'shipping',
-      'tax',
-      'search',
-      'address_validation',
-      'email',
-    ].includes(type)
-  ) {
-    throw new Error(
-      `Invalid provider type "${type}". Must be one of: payment, shipping, tax, search, address_validation, email`
-    );
-  }
-
-  if (!spec || typeof spec !== 'object') {
-    throw new Error('Provider spec must be an object');
-  }
-
-  return { type, ...spec };
-}
-
-// ---------------------------------------------------------------------------
-// defineProviders — validates and returns a provider map
-// ---------------------------------------------------------------------------
-
-/**
- * Returns a validated providers object.
- * Values must be provider specs created with `defineProvider()`.
- *
- * @param {Record<string, { type: string } & Object>} providerMap
- * @returns {Record<string, { type: string } & Object>}
- */
-export function defineProviders(providerMap) {
-  if (!providerMap || typeof providerMap !== 'object') {
-    throw new Error('providerMap must be an object');
-  }
-
-  for (const [providerId, spec] of Object.entries(providerMap)) {
-    if (!spec || typeof spec !== 'object') {
-      throw new Error(`Provider "${providerId}" must be an object`);
-    }
-    if (
-      ![
-        'payment',
-        'shipping',
-        'tax',
-        'search',
-        'address_validation',
-        'email',
-      ].includes(spec.type)
-    ) {
-      throw new Error(
-        `Provider "${providerId}" has invalid type "${spec.type}". Must be one of: payment, shipping, tax, search, address_validation, email`
-      );
-    }
-  }
-
-  return providerMap;
-}
 
 // ---------------------------------------------------------------------------
 // Registry helpers
