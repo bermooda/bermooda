@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.5.0...bermooda-v0.6.0) (2026-08-03)
+
+
+### Features
+
+* **reporting:** enhance metrics functions to support locale parameter ([aafa115](https://github.com/bermooda/bermooda/commit/aafa115cd42f9f2f4634780ae68b63203b8c808b))
+
+
+### Bug Fixes
+
+* harden themes/plugins architecture and storefront contracts ([#178](https://github.com/bermooda/bermooda/issues/178)) ([e5009ad](https://github.com/bermooda/bermooda/commit/e5009ada8a81d16f995dd5266aecd892a35bf7ab))
+* **plugins:** break defineProvider circular import during discovery ([f2acd62](https://github.com/bermooda/bermooda/commit/f2acd624903067155dc3cc3bb51029bb809a41c6))
+* **plugins:** break defineProvider circular import during discovery ([ef036cd](https://github.com/bermooda/bermooda/commit/ef036cd1044bbbf9153854e7ca7f67e082877c85))
+* **tests:** correct import order in reporting test file ([c0ec987](https://github.com/bermooda/bermooda/commit/c0ec9874787263a68ba0f52685e3b6f8626296d6))
+
 ## [0.5.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.4.0...bermooda-v0.5.0) (2026-08-02)
 
 
