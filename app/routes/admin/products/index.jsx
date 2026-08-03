@@ -171,7 +171,7 @@ export default function AdminProductsRoute() {
         <Table variant="sticky" className="mt-2">
           <THead sticky>
             <tr>
-              <Th sticky className="py-3.5 pr-3 pl-4 sm:pl-6">
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
                 {t('admin.products.index.col.product')}
               </Th>
               <Th sticky className="px-3 py-3.5">
@@ -186,7 +186,7 @@ export default function AdminProductsRoute() {
               <Th sticky className="hidden px-3 py-3.5 md:table-cell">
                 {t('admin.products.index.col.created')}
               </Th>
-              <Th sticky className="py-3.5 pr-4 pl-3 sm:pr-6">
+              <Th sticky className="py-3.5 pr-1 pl-3 sm:pr-0">
                 <span className="sr-only">
                   {t('admin.products.index.col.edit')}
                 </span>
@@ -212,7 +212,7 @@ export default function AdminProductsRoute() {
                 >
                   <Td
                     sticky
-                    className="text-text py-4 pr-3 pl-4 font-medium whitespace-normal sm:pl-6"
+                    className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
                   >
                     <span className="block min-w-0">
                       <span className="group-hover:text-accent block truncate font-medium transition-colors">
@@ -254,7 +254,7 @@ export default function AdminProductsRoute() {
                   </Td>
                   <Td
                     sticky
-                    className="py-4 pr-4 pl-3 text-right text-sm font-medium sm:pr-6"
+                    className="py-4 pr-1 pl-3 text-right text-sm font-medium sm:pr-0"
                   >
                     <Link
                       to={`/admin/products/${row.id}`}

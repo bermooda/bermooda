@@ -5,8 +5,9 @@ import clsx from 'clsx';
  * Responsive wrapper around a native `<table>`.
  *
  * - `default` — contained surface with border, shadow, and horizontal scroll.
- * - `sticky` — Tailwind Plus “with sticky header” layout: full-bleed bleed
- *   margins, `border-separate` / `border-spacing-0`, frosted sticky headers.
+ * - `sticky` — Tailwind Plus “with sticky header” layout: page-aligned
+ *   columns, `border-separate` / `border-spacing-0`, frosted sticky headers
+ *   that pin flush to the admin main scrollport (`top-0`).
  *   Pair with `sticky` on `Th` / `Td` / `THead` / `TBody`.
  *
  * Compose with the exported `Th` / `Td` helpers, or pass raw `<thead>` /
@@ -28,12 +29,10 @@ export default function Table({
     // position:sticky relative to the admin main scrollport.
     return (
       <div className={clsx('flow-root', className)}>
-        <div className="-mx-4 -my-2 md:-mx-6">
-          <div className="inline-block min-w-full py-2 align-middle">
-            <table className="min-w-full border-separate border-spacing-0">
-              {children}
-            </table>
-          </div>
+        <div className="inline-block min-w-full align-middle">
+          <table className="min-w-full border-separate border-spacing-0">
+            {children}
+          </table>
         </div>
       </div>
     );
@@ -70,7 +69,7 @@ export function Th({ children, sticky = false, className = '', ...props }) {
       scope="col"
       className={clsx(
         sticky
-          ? 'text-text border-border bg-surface/75 sticky top-0 z-10 border-b py-3.5 text-left text-sm font-semibold backdrop-blur backdrop-filter'
+          ? 'text-text border-border bg-bg/90 sticky top-0 z-10 border-b py-3.5 text-left text-sm font-semibold backdrop-blur backdrop-filter'
           : 'text-text-muted px-4 py-3 text-left text-xs font-medium tracking-wide uppercase',
         className
       )}
