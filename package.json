@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build": "react-router build",
-    "prebuild": "node scripts/install-extension-deps.mjs --omit=dev",
+    "prebuild": "node scripts/install-extension-deps.mjs --omit=dev && node scripts/sync-extension-tw-sources.mjs",
     "dev": "op run --env-file=.env -- react-router dev --host",
     "start": "react-router-serve ./build/server/index.js",
     "docker:build": "docker build -t bermooda .",

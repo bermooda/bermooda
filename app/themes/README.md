@@ -21,6 +21,10 @@ bermooda install -y     # non-interactive — uses Resend as email provider
 
 The CLI installs `@bermooda/theme-default` here, runs `npm install` in the theme folder for its dependencies, and activates it.
 
+## Tailwind class scanning
+
+Theme folders are gitignored, and Tailwind v4 skips `.gitignore` paths (including explicit `@source` of those dirs). Vite runs `scripts/sync-extension-tw-sources.mjs` on startup to symlink installed themes into `node_modules/.cache/bermooda-tw-sources`, which `app/styles/app.css` registers via `@source`. Without that step, storefront utilities unique to the theme (e.g. `text-5xl`, `px-7`) are missing from the CSS and the theme looks unstyled.
+
 ## Package contract
 
 Each theme lives in a subdirectory matching its `bermooda.slug` (e.g. `app/themes/default/`). The directory must contain:
