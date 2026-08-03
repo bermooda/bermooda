@@ -433,16 +433,20 @@ export default function AdminLayout() {
         <div className="flex flex-1 flex-col md:ml-64">
           <CommandPalette open={open} onOpenChange={setOpen} />
 
-          <main className="flex-1 overflow-auto p-4 md:p-6">
-            <button
-              type="button"
-              className="text-text-muted hover:bg-surface-2 hover:text-text mb-2 -ml-1 rounded-md p-2 md:hidden"
-              onClick={() => setMobileOpen(true)}
-              aria-label={t('admin.chrome.openSidebar')}
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
-            <div className="mx-auto w-full max-w-7xl">
+          {/*
+            Padding lives on the inner shell (not the scrollport) so
+            position:sticky top-0 headers can sit flush at the top of main.
+          */}
+          <main className="flex-1 overflow-auto">
+            <div className="mx-auto w-full max-w-7xl p-4 md:p-6">
+              <button
+                type="button"
+                className="text-text-muted hover:bg-surface-2 hover:text-text mb-2 -ml-1 rounded-md p-2 md:hidden"
+                onClick={() => setMobileOpen(true)}
+                aria-label={t('admin.chrome.openSidebar')}
+              >
+                <Bars3Icon className="h-6 w-6" />
+              </button>
               <Outlet />
             </div>
           </main>

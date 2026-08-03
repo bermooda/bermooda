@@ -167,6 +167,8 @@
   "admin.products.index.col.variants": "Varianten",
   "admin.products.index.col.categories": "Kategorien",
   "admin.products.index.col.created": "Erstellt",
+  "admin.products.index.col.edit": "Bearbeiten",
+  "admin.products.index.edit": "Bearbeiten",
   "admin.products.index.emptyTitle": "Keine Produkte gefunden",
   "admin.products.index.emptyDescription": "Erstellen Sie Ihr erstes Produkt, um zu verkaufen.",
   "admin.products.index.emptyDescriptionSearch": "Anderen Suchbegriff versuchen oder Filter zurücksetzen.",
