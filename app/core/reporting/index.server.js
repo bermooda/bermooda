@@ -754,7 +754,7 @@ export async function getExportMetrics(params = {}) {
  * Abandoned checkouts and recent orders respect the date range;
  * low stock is a current snapshot.
  *
- * @param {{ startDate?: string, endDate?: string, limit?: number }} [params]
+ * @param {{ startDate?: string, endDate?: string, limit?: number, locale?: string }} [params]
  * @returns {Promise<{
  *   range: { start: string, end: string },
  *   asOf: string,
@@ -779,6 +779,7 @@ export async function getOpsMetrics(params = {}) {
     Math.max(Number(params.limit) || DEFAULT_REPORT_LIMIT, 1),
     MAX_REPORT_LIMIT
   );
+  const locale = params.locale;
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
   const lowStockWhere = {
     inventoryTracked: true,
@@ -821,10 +822,15 @@ export async function getOpsMetrics(params = {}) {
           id: true,
           sku: true,
           inventoryCount: true,
-          product: { select: { title: true } },
+          productId: true,
         },
       }),
     ]);
+
+  const titleByProductId = await loadProductTitleMap(
+    lowStockVariants.map((v) => v.productId),
+    locale || undefined
+  );
 
   return {
     range: {
@@ -844,7 +850,7 @@ export async function getOpsMetrics(params = {}) {
         id: variant.id,
         sku: variant.sku,
         inventoryCount: variant.inventoryCount,
-        title: variant.product?.title ?? null,
+        title: titleByProductId.get(variant.productId) ?? null,
       })),
     },
   };

@@ -64,6 +64,7 @@ vi.mock('#/core/catalog/translations.server', async (importOriginal) => {
   };
 });
 
+import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import prisma from '#/libs/prisma.server';
 import {
   parseDateRange,
@@ -337,7 +338,7 @@ describe('reporting', () => {
         id: 'var_1',
         sku: 'SKU-1',
         inventoryCount: 1,
-        product: { title: 'Hat' },
+        productId: 'p1',
       },
     ]);
 
@@ -392,9 +393,18 @@ describe('reporting', () => {
       inventoryTracked: true,
       inventoryCount: { lt: 5 },
     });
-    expect(prisma.productVariant.findMany.mock.calls[0][0].where).toEqual(
-      lowStockWhere
+    expect(prisma.productVariant.findMany.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        where: lowStockWhere,
+        select: {
+          id: true,
+          sku: true,
+          inventoryCount: true,
+          productId: true,
+        },
+      })
     );
+    expect(loadProductTitleMap).toHaveBeenCalledWith(['p1'], undefined);
   });
 
   it('getCustomerMetrics splits new vs returning and ranks top spenders', async () => {
