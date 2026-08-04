@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.7.0...bermooda-v0.8.0) (2026-08-04)
+
+
+### Features
+
+* **themes:** storefront theme settings and Layout ownership ([#188](https://github.com/bermooda/bermooda/issues/188)) ([22a6bfa](https://github.com/bermooda/bermooda/commit/22a6bfa5aab56d585ed7d3e43f264f4f2d017ec0))
+
 ## [0.7.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.6.1...bermooda-v0.7.0) (2026-08-04)
 
 
