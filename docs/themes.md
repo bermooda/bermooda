@@ -190,7 +190,7 @@ The optional `bermooda.settings` array lets themes declare admin-configurable op
 | `options` | `string[] \| {value,label}[]`    | Choices for `select` type                                                                           |
 | `default` | `any`                            | Fallback value when nothing is saved                                                                |
 
-Admin loads and saves values with `loadThemeSettings` / `saveThemeSettings` (and the Admin API equivalent). Storefront loaders receive the same values as `themeSettings` from `loadStorefrontPageContext(request)` and pass them as props into theme page components.
+Admin loads and saves values with `loadThemeSettings` / `saveThemeSettings` (and the Admin API equivalent). Storefront loaders receive the same values as `themeSettings` from `loadStorefrontPageContext(request)`. Pass `themeSettings` as props into theme page components when they need settings (the home loader does this today; other routes should adopt the same pattern as needed).
 
 ---
 
