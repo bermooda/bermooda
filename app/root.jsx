@@ -10,7 +10,7 @@ import {
 } from 'react-router';
 
 import { getThemeFromRequest } from '#/utils/theme.server';
-import { ThemeProvider } from '#/hooks/use-theme';
+import { ColorModeProvider } from '#/hooks/use-color-mode';
 
 // @ts-ignore
 import '#/styles/app.css';
@@ -124,9 +124,9 @@ export function Layout({ children }) {
 
 export default function App() {
   return (
-    <ThemeProvider>
+    <ColorModeProvider>
       <Outlet />
-    </ThemeProvider>
+    </ColorModeProvider>
   );
 }
 
