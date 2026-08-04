@@ -3,14 +3,16 @@
  * Contributor install helper.
  *
  * Copies the default theme and plugins from sibling checkout directories
- * into app/themes/ and app/plugins/. Falls back to `npm pack` / npm tarball
- * install when the sibling directory is absent.
+ * into app/themes/ and app/plugins/. Falls back to `npm pack` + tarball
+ * extract when the sibling directory is absent, placing package contents
+ * directly at `app/themes/<slug>/` or `app/plugins/<slug>/` (same layout
+ * as the sibling copy — not nested under `node_modules/<packageId>/`).
  *
  * Sibling copies exclude `node_modules` (so contributor checkouts stay lean);
- * after copy, this script runs `install-extension-deps` so each extension's
- * own package.json dependencies are installed into that folder's
- * `node_modules` for Vite resolution/bundling. The bermooda CLI performs the
- * same per-extension `npm install` on `theme add` / `plugin add`.
+ * after copy (or pack+extract), this script runs `install-extension-deps` so
+ * each extension's own package.json dependencies are installed into that
+ * folder's `node_modules` for Vite resolution/bundling. The bermooda CLI
+ * performs the same per-extension `npm install` on `theme add` / `plugin add`.
  *
  * Sibling layout (relative to bermooda repo root):
  *   ../theme-default   → app/themes/default/   (slug: default)
@@ -29,8 +31,8 @@
 
 import 'dotenv/config';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync } from 'node:fs';
-import { cpSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -122,30 +124,51 @@ function installFromSibling(spec) {
 }
 
 /**
- * Run `npm pack` inside the sibling directory and extract the tarball into
- * the destination directory as a fallback when the sibling is absent.
- *
- * This requires the sibling to be published to npm or use `npm pack`.
- * In practice contributors should always have the sibling checkout; this path
- * is intentionally a last-resort and prints a clear error on failure.
+ * Fallback when the sibling checkout is absent: `npm pack` the published
+ * package, extract the tarball, and copy contents into `spec.destDir` so
+ * `index.js` / `package.json` land at the slug root (same layout as
+ * {@link copyExtension}).
  *
  * @param {ExtensionSpec} spec
  */
 function installFromNpm(spec) {
   console.log(
-    `extensions:install  ${spec.packageId}  ← npm (sibling not found)`
+    `extensions:install  ${spec.packageId}  ← npm pack (sibling not found)`
   );
+  const tmp = mkdtempSync(join(tmpdir(), 'bermooda-ext-'));
   try {
-    execFileSync('npm', ['install', '--prefix', spec.destDir, spec.packageId], {
-      stdio: 'inherit',
-      cwd: REPO_ROOT,
-    });
-  } catch {
+    const packed = execFileSync(
+      'npm',
+      ['pack', spec.packageId, '--pack-destination', tmp],
+      {
+        encoding: 'utf8',
+        cwd: REPO_ROOT,
+      }
+    )
+      .trim()
+      .split('\n')
+      .pop();
+    const tarball = join(tmp, packed);
+    mkdirSync(spec.destDir, { recursive: true });
+    execFileSync('tar', ['-xzf', tarball, '-C', tmp], { stdio: 'inherit' });
+    // npm pack extracts to package/
+    const extracted = join(tmp, 'package');
+    if (
+      !existsSync(join(extracted, 'index.js')) &&
+      !existsSync(join(extracted, 'package.json'))
+    ) {
+      throw new Error(`Unexpected pack layout for ${spec.packageId}`);
+    }
+    copyExtension(extracted, spec.destDir);
+  } catch (err) {
     console.error(
-      `extensions:install  FAILED to install ${spec.packageId} via npm. ` +
-        `Clone the sibling repo at ${spec.siblingDir} or publish the package first.`
+      `extensions:install  FAILED to install ${spec.packageId} via npm pack. ` +
+        `Clone the sibling repo at ${spec.siblingDir} or publish the package first.`,
+      err
     );
     process.exit(1);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
   }
 }
 
