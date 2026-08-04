@@ -5,8 +5,8 @@ import prisma from '#/libs/prisma.server';
 import { buildPrismaPagination } from '#/libs/prisma/pagination/index.server';
 import { queueEmit } from '#/core/events/job.server';
 import { hasMarketingConsent } from '#/core/gdpr/index.server';
-import { queueAbandonedCart } from '#/emails/job.server';
 import { notFound } from '#/core/marketing/shared.server';
+import { queueAbandonedCart } from '#/emails/job.server';
 
 export const DEFAULT_ABANDONED_CART_SEQUENCES = [
   {

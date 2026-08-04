@@ -4,13 +4,13 @@
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { buildPrismaPagination } from '#/libs/prisma/pagination/index.server';
-import { sendCampaignEmail } from '#/emails/index.server';
 import {
   getSegment,
   resolveSegmentCustomers,
   serializeSegment,
 } from '#/core/marketing/segments.server';
 import { notFound } from '#/core/marketing/shared.server';
+import { sendCampaignEmail } from '#/emails/index.server';
 
 const CAMPAIGN_LIST_INCLUDE = {
   segment: true,
