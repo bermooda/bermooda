@@ -20,6 +20,26 @@ Theme registry code lives in `app/core/themes/index.server.js`. The module is se
 
 ---
 
+## Discovery
+
+Both the server registry and the client-safe component registry discover themes with Vite `import.meta.glob('#/themes/*/index.js')` (plus sibling `package.json`). **Both globs remain** — the client module needs its own eager graph for browser + SSR component resolution; the server module needs its own for bootstrap registration and engine checks.
+
+Shared pure helpers live in `app/core/themes/discover-shared.js`:
+
+- `buildMergedThemeManifest(pkg, runtime)` — wraps `mergeExtensionPackage`
+- `indexThemeManifest(registry, manifest)` — indexes by package `id` and `slug`
+
+Failure modes for **malformed** packages (bad `package.json` identity, merge errors, invalid manifests):
+
+| Surface                          | Behavior                                                              |
+| -------------------------------- | --------------------------------------------------------------------- |
+| Server (`discoverThemes`)        | Log via `#/utils/logger.server` and skip (`Skipping malformed theme`) |
+| Client (`storefront-components`) | Silent skip (no logger in the browser)                                |
+
+Incompatible `bermooda.engine` ranges are soft-skipped on the server with a log (`Skipping incompatible theme`). Folder/slug mismatches (`assertSlugMatchesFolder`) are also soft-skipped as malformed packages. Missing `package.json` for a theme folder and duplicate slugs still throw on the server.
+
+---
+
 ## Theme package contract
 
 Every theme has a `package.json` for identity and display metadata:

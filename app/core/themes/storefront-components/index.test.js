@@ -24,6 +24,17 @@ const TEST_THEME = {
   },
 };
 
+describe('registerStorefrontTheme', () => {
+  it('indexes the theme by package id and slug', () => {
+    registerStorefrontTheme(TEST_THEME);
+
+    expect(getStorefrontComponent('Layout', '@bermooda/theme-test')).toBe(
+      StubPage
+    );
+    expect(getStorefrontComponent('Layout', 'test')).toBe(StubPage);
+  });
+});
+
 describe('getStorefrontComponent', () => {
   beforeEach(() => {
     registerStorefrontTheme(TEST_THEME);

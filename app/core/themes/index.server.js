@@ -11,11 +11,11 @@ import { checkExtensionEngine, getAppVersion } from '#/core/extensions/engine';
 import {
   SLUG_PATTERN,
   assertSlugMatchesFolder,
-  mergeExtensionPackage,
 } from '#/core/extensions/package-meta';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
 import { defineTheme } from '#/core/themes/define';
+import { buildMergedThemeManifest } from '#/core/themes/discover-shared';
 import { REQUIRED_MANIFEST_FIELDS, SLOT_NAMES } from '#/core/themes/manifest';
 import { registerStorefrontTheme } from '#/core/themes/storefront-components';
 
@@ -355,15 +355,22 @@ function themeFolderFromPath(modulePath) {
 }
 
 /**
- * Register all installed themes from app/themes/*.
+ * Discover and register themes from glob-like module/package maps.
+ * Malformed packages (merge, slug/folder assert, registerTheme validation)
+ * are logged and skipped; incompatible engines are soft-skipped; duplicate
+ * slugs and missing package.json still throw.
+ *
+ * @param {Record<string, { default?: object }>} modules
+ * @param {Record<string, object>} packages
+ * @returns {void}
  */
-export function discoverThemes() {
+export function __discoverThemesFrom(modules, packages) {
   const seenSlugs = new Set();
   const shopVersion = getAppVersion();
 
-  for (const [modPath, mod] of Object.entries(themeModules)) {
+  for (const [modPath, mod] of Object.entries(modules)) {
     const folder = themeFolderFromPath(modPath);
-    const pkgEntry = Object.entries(themePackages).find(([pkgPath]) =>
+    const pkgEntry = Object.entries(packages).find(([pkgPath]) =>
       pkgPath.includes(`/themes/${folder}/`)
     );
     if (!pkgEntry) {
@@ -385,16 +392,44 @@ export function discoverThemes() {
       continue;
     }
 
-    const runtime = mod.default ?? {};
-    const manifest = mergeExtensionPackage(pkg, runtime);
-    assertSlugMatchesFolder(manifest.slug, folder, 'theme');
-
-    if (seenSlugs.has(manifest.slug)) {
-      throw new Error(`Duplicate theme slug "${manifest.slug}"`);
+    /** @type {Record<string, unknown>} */
+    let manifest;
+    /** @type {string} */
+    let slug;
+    try {
+      const runtime =
+        /** @type {Record<string, unknown>} */ (mod.default) ?? {};
+      manifest = buildMergedThemeManifest(pkg, runtime);
+      slug = /** @type {string} */ (manifest.slug);
+      assertSlugMatchesFolder(slug, folder, 'theme');
+    } catch (err) {
+      logger.error({ folder, err }, 'Skipping malformed theme');
+      continue;
     }
-    seenSlugs.add(manifest.slug);
-    registerTheme(manifest);
+
+    // Duplicate detection stays outside the soft-skip path so it always aborts.
+    if (seenSlugs.has(slug)) {
+      throw new Error(`Duplicate theme slug "${slug}"`);
+    }
+
+    try {
+      registerTheme(manifest);
+      seenSlugs.add(slug);
+    } catch (err) {
+      logger.error({ folder, err }, 'Skipping malformed theme');
+    }
   }
+}
+
+/**
+ * Register all installed themes from app/themes/*.
+ * Malformed packages are logged and skipped; incompatible engines are
+ * soft-skipped; duplicate slugs and missing package.json still throw.
+ *
+ * @returns {void}
+ */
+export function discoverThemes() {
+  __discoverThemesFrom(themeModules, themePackages);
 }
 
 // ---------------------------------------------------------------------------
