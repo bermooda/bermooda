@@ -10,10 +10,8 @@ import { Form, Link, useFetcher, useRevalidator } from 'react-router';
 
 import { slugify } from '#/utils/slugify';
 import { useT } from '#/core/i18n';
-import ActionBar from '#/components/admin/action-bar';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
-import Card, { CardHeader } from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Textarea from '#/components/admin/form/textarea';
@@ -25,6 +23,36 @@ import { Th } from '#/components/admin/table';
 import SlotBlocks from '#/components/slot-blocks';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
+
+/**
+ * Two-column form section (Tailwind UI form-layouts pattern).
+ * Left: title + description; right: fields spanning two columns on `md+`.
+ *
+ * @param {Object} props
+ * @param {React.ReactNode} props.title
+ * @param {React.ReactNode} [props.description]
+ * @param {React.ReactNode} props.children
+ * @param {boolean} [props.last=false] Omit bottom border on the final section
+ * @returns {React.ReactElement}
+ */
+function FormSection({ title, description, children, last = false }) {
+  return (
+    <div
+      className={clsx(
+        'grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-3',
+        !last && 'border-border border-b pb-12'
+      )}
+    >
+      <div>
+        <h2 className="text-text text-base/7 font-semibold">{title}</h2>
+        {description ? (
+          <p className="text-text-muted mt-1 text-sm/6">{description}</p>
+        ) : null}
+      </div>
+      <div className="min-w-0 md:col-span-2">{children}</div>
+    </div>
+  );
+}
 
 /**
  * Per-locale translation fields. Auto-generates slug from title on the primary
@@ -75,10 +103,11 @@ function LocaleEditor({
   }
 
   return (
-    <div className="space-y-5 pt-5">
+    <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 pt-6 sm:grid-cols-6">
       <input type="hidden" name="locales[]" value={locale} />
 
       <Field
+        className="sm:col-span-4"
         label={t('admin.products.editor.titleLabel')}
         htmlFor={`title-${locale}`}
       >
@@ -91,21 +120,24 @@ function LocaleEditor({
         />
       </Field>
 
-      <SlugField
-        id={`slug-${locale}`}
-        name={`slug[${locale}]`}
-        label={t('admin.products.editor.slugLabel', { locale })}
-        hint={
-          locale === primaryLocale
-            ? t('admin.products.editor.slugHint')
-            : undefined
-        }
-        value={slug}
-        onChange={handleSlugChange}
-        placeholder={t('admin.products.editor.slugPlaceholder')}
-      />
+      <div className="sm:col-span-4">
+        <SlugField
+          id={`slug-${locale}`}
+          name={`slug[${locale}]`}
+          label={t('admin.products.editor.slugLabel', { locale })}
+          hint={
+            locale === primaryLocale
+              ? t('admin.products.editor.slugHint')
+              : undefined
+          }
+          value={slug}
+          onChange={handleSlugChange}
+          placeholder={t('admin.products.editor.slugPlaceholder')}
+        />
+      </div>
 
       <Field
+        className="col-span-full"
         label={t('admin.products.editor.descriptionLabel')}
         htmlFor={`description-${locale}`}
       >
@@ -117,14 +149,16 @@ function LocaleEditor({
         />
       </Field>
 
-      <SeoFields
-        titleFieldName={`translation[${locale}][seoTitle]`}
-        descriptionFieldName={`translation[${locale}][seoDescription]`}
-        titleId={`seo-title-${locale}`}
-        descriptionId={`seo-desc-${locale}`}
-        defaultTitle={localeFields.seoTitle ?? ''}
-        defaultDescription={localeFields.seoDescription ?? ''}
-      />
+      <div className="col-span-full">
+        <SeoFields
+          titleFieldName={`translation[${locale}][seoTitle]`}
+          descriptionFieldName={`translation[${locale}][seoDescription]`}
+          titleId={`seo-title-${locale}`}
+          descriptionId={`seo-desc-${locale}`}
+          defaultTitle={localeFields.seoTitle ?? ''}
+          defaultDescription={localeFields.seoDescription ?? ''}
+        />
+      </div>
     </div>
   );
 }
@@ -620,7 +654,7 @@ export default function ProductEditor({
   );
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         breadcrumbs={
           <Breadcrumbs
@@ -670,130 +704,126 @@ export default function ProductEditor({
       )}
       {actionData?.error && <ErrorAlert message={actionData.error} />}
 
-      <Form method="post" className="space-y-6">
+      <Form method="post" id="product-editor-form">
         <input
           type="hidden"
           name="intent"
           value={isCreate ? 'create' : 'save'}
         />
 
-        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="min-w-0 space-y-6">
-            <Card>
-              <CardHeader
-                title={t('admin.products.editor.contentTitle')}
-                description={t('admin.products.editor.contentDescription')}
-              />
-              <LocaleTabs
-                locales={locales}
-                activeLocale={activeLocale}
-                onSelect={setActiveLocale}
-              />
-              {locales.map((locale) => (
-                <div
-                  key={locale}
-                  className={locale === activeLocale ? 'block' : 'hidden'}
-                >
-                  <LocaleEditor
-                    locale={locale}
-                    translations={translationMap}
-                    slugMap={slugMap}
-                    primaryLocale={primaryLocale}
-                    isActive={locale === activeLocale}
-                  />
-                </div>
-              ))}
-            </Card>
+        <div className="space-y-12">
+          <FormSection
+            title={t('admin.products.editor.contentTitle')}
+            description={t('admin.products.editor.contentDescription')}
+          >
+            <LocaleTabs
+              locales={locales}
+              activeLocale={activeLocale}
+              onSelect={setActiveLocale}
+            />
+            {locales.map((locale) => (
+              <div
+                key={locale}
+                className={locale === activeLocale ? 'block' : 'hidden'}
+              >
+                <LocaleEditor
+                  locale={locale}
+                  translations={translationMap}
+                  slugMap={slugMap}
+                  primaryLocale={primaryLocale}
+                  isActive={locale === activeLocale}
+                />
+              </div>
+            ))}
+          </FormSection>
 
-            <Card>
-              <CardHeader
-                title={t('admin.products.editor.optionsTitle')}
-                description={t('admin.products.editor.optionsDescription')}
-              />
+          <FormSection
+            title={t('admin.products.editor.optionsTitle')}
+            description={t('admin.products.editor.optionsDescription')}
+          >
+            <div className="max-w-2xl">
               <OptionsEditor initialOptions={product.options} />
-            </Card>
+            </div>
+          </FormSection>
 
-            <Card>
-              <CardHeader
-                title={t('admin.products.editor.variantsTitle')}
-                description={t('admin.products.editor.variantsDescription')}
-              />
-              {currencies.map((c) => (
-                <input key={c} type="hidden" name="currencies[]" value={c} />
-              ))}
-              <VariantPriceGrid
-                variants={product.variants}
-                currencies={currencies}
-              />
-            </Card>
-          </div>
+          <FormSection
+            title={t('admin.products.editor.variantsTitle')}
+            description={t('admin.products.editor.variantsDescription')}
+          >
+            {currencies.map((c) => (
+              <input key={c} type="hidden" name="currencies[]" value={c} />
+            ))}
+            <VariantPriceGrid
+              variants={product.variants}
+              currencies={currencies}
+            />
+          </FormSection>
 
-          <aside className="space-y-6">
-            <Card>
-              <CardHeader
-                title={t('admin.products.editor.categoriesTitle')}
-                description={t('admin.products.editor.categoriesDescription')}
-              />
+          <FormSection
+            title={t('admin.products.editor.categoriesTitle')}
+            description={t('admin.products.editor.categoriesDescription')}
+          >
+            <div className="max-w-2xl">
               <CategoryPicker
                 allCategories={allCategories}
                 selectedIds={product.selectedCategoryIds}
               />
-            </Card>
+            </div>
+          </FormSection>
 
-            <Card>
-              <CardHeader
-                title={t('admin.products.editor.mediaTitle')}
-                description={t('admin.products.editor.mediaDescription')}
-              />
+          <FormSection
+            title={t('admin.products.editor.mediaTitle')}
+            description={t('admin.products.editor.mediaDescription')}
+            last
+          >
+            <div className="max-w-2xl">
               <MediaUploader
                 initialMedia={product.media}
                 disabled={isCreate}
                 disabledMessage={t('admin.products.editor.mediaDisabled')}
               />
-            </Card>
-          </aside>
+            </div>
+          </FormSection>
         </div>
-
-        <ActionBar>
-          {!isCreate ? (
-            <Form method="post">
-              <input type="hidden" name="intent" value="delete" />
-              <button
-                type="submit"
-                onClick={(e) => {
-                  if (
-                    !window.confirm(t('admin.products.editor.confirmDelete'))
-                  ) {
-                    e.preventDefault();
-                  }
-                }}
-                className="text-danger hover:text-danger/80 text-sm font-medium transition-colors"
-              >
-                {t('admin.products.editor.delete')}
-              </button>
-            </Form>
-          ) : (
-            <span />
-          )}
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/products"
-              className="text-text-muted hover:text-text text-sm transition-colors"
-            >
-              {t('common.cancel')}
-            </Link>
-            <ButtonSubmit disabled={isSaving}>
-              {isSaving
-                ? isCreate
-                  ? t('admin.products.editor.creating')
-                  : t('admin.products.editor.saving')
-                : isCreate
-                  ? t('admin.products.editor.create')
-                  : t('admin.products.editor.save')}
-            </ButtonSubmit>
-          </div>
-        </ActionBar>
       </Form>
+
+      <div className="mt-6 flex items-center justify-between gap-x-6">
+        {!isCreate ? (
+          <Form method="post">
+            <input type="hidden" name="intent" value="delete" />
+            <button
+              type="submit"
+              onClick={(e) => {
+                if (!window.confirm(t('admin.products.editor.confirmDelete'))) {
+                  e.preventDefault();
+                }
+              }}
+              className="text-danger hover:text-danger/80 text-sm/6 font-semibold transition-colors"
+            >
+              {t('admin.products.editor.delete')}
+            </button>
+          </Form>
+        ) : (
+          <span />
+        )}
+        <div className="flex items-center gap-x-6">
+          <Link
+            to="/admin/products"
+            className="text-text text-sm/6 font-semibold transition-colors hover:opacity-80"
+          >
+            {t('common.cancel')}
+          </Link>
+          <ButtonSubmit form="product-editor-form" disabled={isSaving}>
+            {isSaving
+              ? isCreate
+                ? t('admin.products.editor.creating')
+                : t('admin.products.editor.saving')
+              : isCreate
+                ? t('admin.products.editor.create')
+                : t('admin.products.editor.save')}
+          </ButtonSubmit>
+        </div>
+      </div>
     </div>
   );
 }
