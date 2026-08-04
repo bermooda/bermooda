@@ -1,7 +1,10 @@
 // Client-safe storefront theme component registry.
 // Discovers themes at build time via import.meta.glob; routes select by themeId from loader data.
 
-import { mergeExtensionPackage } from '#/core/extensions/package-meta';
+import {
+  buildMergedThemeManifest,
+  indexThemeManifest,
+} from '#/core/themes/discover-shared';
 
 const themeModules = import.meta.glob('#/themes/*/index.js', { eager: true });
 const themePackages = import.meta.glob('#/themes/*/package.json', {
@@ -24,15 +27,17 @@ for (const [modPath, mod] of Object.entries(themeModules)) {
   const pkg = pkgEntry[1];
 
   try {
-    const runtime = /** @type {{ default?: object }} */ (mod).default ?? {};
-    const manifest = mergeExtensionPackage(pkg, runtime);
-    THEMES[manifest.id] = manifest;
-    // Also index by slug for legacy-friendly lookup.
-    if (manifest.slug) {
-      THEMES[manifest.slug] = manifest;
-    }
+    const runtime =
+      /** @type {Record<string, unknown>} */ (
+        /** @type {{ default?: object }} */ (mod).default
+      ) ?? {};
+    const manifest = buildMergedThemeManifest(pkg, runtime);
+    indexThemeManifest(
+      THEMES,
+      /** @type {{ id: string, slug?: string }} */ (manifest)
+    );
   } catch {
-    // Malformed theme package — skip.
+    // Malformed theme package — skip silently (no logger in the browser).
   }
 }
 
@@ -54,14 +59,12 @@ export function getStorefrontComponent(name, themeId) {
 
 /**
  * Registers a storefront theme manifest for client-side component lookup.
- * Called by the server-side registerTheme to keep client registry in sync.
+ * Indexes by package id and slug. Called by server-side `registerTheme`
+ * to keep the client registry in sync.
  *
- * @param {object} manifest
+ * @param {{ id: string, slug?: string }} manifest
  * @returns {void}
  */
 export function registerStorefrontTheme(manifest) {
-  THEMES[manifest.id] = manifest;
-  if (manifest.slug) {
-    THEMES[manifest.slug] = manifest;
-  }
+  indexThemeManifest(THEMES, manifest);
 }

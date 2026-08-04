@@ -11,11 +11,11 @@ import { checkExtensionEngine, getAppVersion } from '#/core/extensions/engine';
 import {
   SLUG_PATTERN,
   assertSlugMatchesFolder,
-  mergeExtensionPackage,
 } from '#/core/extensions/package-meta';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
 import { defineTheme } from '#/core/themes/define';
+import { buildMergedThemeManifest } from '#/core/themes/discover-shared';
 import { REQUIRED_MANIFEST_FIELDS, SLOT_NAMES } from '#/core/themes/manifest';
 import { registerStorefrontTheme } from '#/core/themes/storefront-components';
 
@@ -356,6 +356,10 @@ function themeFolderFromPath(modulePath) {
 
 /**
  * Register all installed themes from app/themes/*.
+ * Malformed packages are logged and skipped; incompatible engines are
+ * soft-skipped; duplicate slugs and missing package.json still throw.
+ *
+ * @returns {void}
  */
 export function discoverThemes() {
   const seenSlugs = new Set();
@@ -385,15 +389,27 @@ export function discoverThemes() {
       continue;
     }
 
-    const runtime = mod.default ?? {};
-    const manifest = mergeExtensionPackage(pkg, runtime);
-    assertSlugMatchesFolder(manifest.slug, folder, 'theme');
+    try {
+      const runtime =
+        /** @type {Record<string, unknown>} */ (mod.default) ?? {};
+      const manifest = buildMergedThemeManifest(pkg, runtime);
+      const slug = /** @type {string} */ (manifest.slug);
+      assertSlugMatchesFolder(slug, folder, 'theme');
 
-    if (seenSlugs.has(manifest.slug)) {
-      throw new Error(`Duplicate theme slug "${manifest.slug}"`);
+      if (seenSlugs.has(slug)) {
+        throw new Error(`Duplicate theme slug "${slug}"`);
+      }
+      registerTheme(manifest);
+      seenSlugs.add(slug);
+    } catch (err) {
+      if (
+        err instanceof Error &&
+        err.message.startsWith('Duplicate theme slug')
+      ) {
+        throw err;
+      }
+      logger.error({ folder, err }, 'Skipping malformed theme');
     }
-    seenSlugs.add(manifest.slug);
-    registerTheme(manifest);
   }
 }
 
