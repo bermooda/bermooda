@@ -461,6 +461,8 @@ git commit -m "docs: mark architecture improvements plan phases complete"
 
 Mirror the `orders/` and `plugins/` split pattern. **Do not mix into the same PR as Phase A/B.**
 
+**Status:** Done — domains landed as separate PRs (`refactor(<domain>): split index.server into concern modules`).
+
 | Module                               | Approx. lines | Suggested seams                         |
 | ------------------------------------ | ------------- | --------------------------------------- |
 | `app/core/reporting/index.server.js` | ~869          | kpis, sales, inventory, exports helpers |
@@ -471,11 +473,11 @@ Mirror the `orders/` and `plugins/` split pattern. **Do not mix into the same PR
 
 For each domain chosen:
 
-1. Identify pure leaf functions with no cycle risk
-2. Move to `*.server.js` siblings
-3. Keep `index.server.js` as a thin barrel
-4. Update imports that can point at leaves
-5. Targeted tests + commit per domain: `refactor(<domain>): split index.server into concern modules`
+- [x] Identify pure leaf functions with no cycle risk
+- [x] Move to `*.server.js` siblings
+- [x] Keep `index.server.js` as a thin barrel
+- [x] Update imports that can point at leaves
+- [x] Targeted tests + commit per domain: `refactor(<domain>): split index.server into concern modules`
 
 ---
 
