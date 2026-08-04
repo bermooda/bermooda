@@ -40,11 +40,7 @@ It must not resolve/wrap `Layout` itself. `NotFoundPage` in this theme currently
 import StorefrontShell from './storefront-chrome';
 
 export default function PagePage({ page }) {
-  return (
-    <StorefrontShell>
-      {/* page content */}
-    </StorefrontShell>
-  );
+  return <StorefrontShell>{/* page content */}</StorefrontShell>;
 }
 ```
 
