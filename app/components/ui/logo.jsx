@@ -1,4 +1,4 @@
-import useTheme from '#/hooks/use-theme';
+import useColorMode from '#/hooks/use-color-mode';
 
 /**
  * Logo component that switches between light and dark mode variants
@@ -9,7 +9,7 @@ import useTheme from '#/hooks/use-theme';
  * @returns {React.ReactElement} The logo image element
  */
 export default function Logo({ alt = 'Logo', className = '' }) {
-  const { isDark } = useTheme();
+  const { isDark } = useColorMode();
 
   const logoSrc = isDark
     ? '/assets/images/logo-dark.svg'
