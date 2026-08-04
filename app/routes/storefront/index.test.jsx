@@ -10,6 +10,7 @@ vi.mock('#/core/storefront/page-context.server', () => ({
     themeId: 'default',
     locale: 'en',
     currency: 'USD',
+    themeSettings: {},
   }),
 }));
 
@@ -34,6 +35,7 @@ vi.mock('#/core/themes/storefront-components', () => ({
 }));
 
 import { listCategories, listProducts } from '#/core/catalog/index.server';
+import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 
 import { loader } from '#/routes/storefront';
@@ -41,6 +43,12 @@ import { loader } from '#/routes/storefront';
 describe('storefront home loader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    loadStorefrontPageContext.mockResolvedValue({
+      themeId: 'default',
+      locale: 'en',
+      currency: 'USD',
+      themeSettings: {},
+    });
   });
 
   it('loads slot block maps for the home hero and featured slots', async () => {
@@ -67,5 +75,24 @@ describe('storefront home loader', () => {
         { pluginId: 'featured-plugin', component: expect.any(Function) },
       ],
     });
+    expect(data.themeSettings).toEqual({});
+  });
+
+  it('forwards themeSettings from page context to the home page props', async () => {
+    loadStorefrontPageContext.mockResolvedValue({
+      themeId: 'default',
+      locale: 'en',
+      currency: 'USD',
+      themeSettings: { accentColor: '#111' },
+    });
+    listProducts.mockResolvedValue({ products: [] });
+    listCategories.mockResolvedValue([]);
+    getSlotBlocksMap.mockResolvedValue({});
+
+    const data = await loader({
+      request: new Request('http://localhost/'),
+    });
+
+    expect(data.themeSettings).toEqual({ accentColor: '#111' });
   });
 });

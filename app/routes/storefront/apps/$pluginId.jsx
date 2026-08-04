@@ -10,10 +10,15 @@ import { loadStorefrontPageContext } from '#/core/storefront/page-context.server
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 /**
+ * Status / error chrome for the plugin apps host.
+ *
+ * Sole route-owned Layout exception: plugin pages are not theme pages and
+ * cannot import theme `Layout` without coupling, so this dispatcher resolves
+ * and wraps `Layout` around plugin content (and status messages).
+ *
  * @param {{ title: string, children: React.ReactNode, themeId?: string }} props
  */
 function StorefrontMessage({ title, children, themeId }) {
-  // Plugin error/status pages wrap Layout themselves (outside storefront chrome).
   const Layout = getStorefrontComponent('Layout', themeId);
   const inner = (
     <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
@@ -178,9 +183,9 @@ export default function StorefrontPluginDispatcher() {
     );
   }
 
+  // Sole route-owned Layout wrap — see StorefrontMessage JSDoc.
   const Layout = getStorefrontComponent('Layout', themeId);
   if (!Layout) return <PluginComponent loaderData={data.pluginLoaderData} />;
-  // Matched plugin pages wrap Layout themselves (same pattern as status states).
   return (
     <Layout>
       <PluginComponent loaderData={data.pluginLoaderData} />

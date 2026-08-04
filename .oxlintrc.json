@@ -2,6 +2,7 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "ignorePatterns": [
     ".react-router/**",
+    ".siblings/**",
     "build/**",
     "prisma/generated/**",
     "**/*.ts",

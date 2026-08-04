@@ -73,6 +73,7 @@
   "ignorePatterns": [
     ".github/**",
     ".react-router/**",
+    ".siblings/**",
     "build/**",
     "prisma/generated/**",
     "CHANGELOG.md"

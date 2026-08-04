@@ -172,12 +172,11 @@ Theme-internal helpers used by other theme components. Routes do not throw if th
 
 Storefront `_layout.jsx` does **not** render the theme `Layout`. It provides i18n context, menus, locale/currency, and layout slot blocks to child routes via the loader.
 
-Most theme page components **self-wrap** with `Layout` (nav/footer chrome). Exceptions that wrap `Layout` in the route module:
+Theme page components **self-wrap** with `Layout` (nav/footer chrome). Route modules must **not** wrap `Layout` around theme pages — including `routes/404.jsx`, which renders only `NotFoundPage` (the page owns chrome). Themes must wrap `NotFoundPage` the same way as other pages (e.g. `StorefrontShell` in `@bermooda/theme-default`). Companion agent prompt for that theme change: `docs/superpowers/prompts/2026-08-04-theme-default-notfound-self-wrap.md`.
 
-- `routes/404.jsx` — sits outside the storefront layout route; wraps `NotFoundPage` in `Layout`
-- `storefront/apps/$pluginId.jsx` — wraps plugin pages (and status messages) in `Layout`
+The sole route-owned Layout exception is the plugin apps host (`storefront/apps/$pluginId.jsx` / `/apps/:pluginId/*`). Plugin storefront pages are not theme pages and cannot import theme `Layout` without coupling, so that dispatcher resolves `Layout` once and wraps plugin content (and status messages).
 
-Account routes use optional-but-route-required `AccountLayout` from `account/_layout.jsx`. Checkout uses `CheckoutLayout` as the page component (not a nested layout wrapper around other theme pages).
+Account routes use optional-but-route-required `AccountLayout` from `account/_layout.jsx`. The checkout page **is** `CheckoutLayout` (not a nested layout wrapper around other theme pages).
 
 ### Theme settings
 
@@ -191,31 +190,31 @@ The optional `bermooda.settings` array lets themes declare admin-configurable op
 | `options` | `string[] \| {value,label}[]`    | Choices for `select` type                                                                           |
 | `default` | `any`                            | Fallback value when nothing is saved                                                                |
 
-Admin loads and saves values with `loadThemeSettings` / `saveThemeSettings` (and the Admin API equivalent). **Storefront loaders do not currently pass theme settings into theme components** — settings are admin-managed only until they are wired into the storefront render context.
+Admin loads and saves values with `loadThemeSettings` / `saveThemeSettings` (and the Admin API equivalent). Storefront loaders receive the same values as `themeSettings` from `loadStorefrontPageContext(request)`. Pass `themeSettings` as props into theme page components when they need settings (the home loader does this today; other routes should adopt the same pattern as needed).
 
 ---
 
 ## Page context
 
-Prefer `loadStorefrontPageContext(request)` from `#/core/storefront/page-context.server`. It returns `{ themeId, locale, currency }` by resolving the active theme (`preloadStorefrontTheme`), request locale, and request currency in parallel.
+Prefer `loadStorefrontPageContext(request)` from `#/core/storefront/page-context.server`. It returns `{ themeId, locale, currency, themeSettings }` by resolving the active theme (`preloadStorefrontTheme`), request locale, and request currency in parallel, then loading persisted settings for the active theme manifest (`loadThemeSettings`). When the theme has no settings schema (or is unregistered), `themeSettings` is `{}`.
 
-Pass `themeId` into `getStorefrontComponent(name, themeId)`. Do not resolve the active theme again in the route component.
+Pass `themeId` into `getStorefrontComponent(name, themeId)`. Pass `themeSettings` (and other loader fields) as props to the theme page component. Do not resolve the active theme again in the route component.
 
 ```js
 import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
 export async function loader({ request }) {
-  const { themeId, locale, currency } =
+  const { themeId, locale, currency, themeSettings } =
     await loadStorefrontPageContext(request);
-  return { themeId, locale, currency /* … */ };
+  return { themeId, locale, currency, themeSettings /* … */ };
 }
 
 export default function SomeRoute() {
-  const { themeId } = useLoaderData();
+  const { themeId, ...data } = useLoaderData();
   const HomePage = getStorefrontComponent('HomePage', themeId);
   if (!HomePage) throw new Error('HomePage theme component not found');
-  return <HomePage />;
+  return <HomePage {...data} />;
 }
 ```
 
