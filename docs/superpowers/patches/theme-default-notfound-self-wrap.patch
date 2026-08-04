@@ -1,0 +1,75 @@
+diff --git a/components/not-found-page.jsx b/components/not-found-page.jsx
+index 8c88ca1..f7c7cf0 100644
+--- a/components/not-found-page.jsx
++++ b/components/not-found-page.jsx
+@@ -1,7 +1,9 @@
+ import { Link } from 'react-router';
+ 
+-import config from '#/libs/config';
+ import { useT } from '#/core/i18n';
++import config from '#/libs/config';
++
++import StorefrontShell from './storefront-chrome';
+ 
+ const accountHome = config.auth.customerCallbackUrl;
+ 
+@@ -9,32 +11,34 @@ export default function NotFoundPage() {
+   const t = useT();
+ 
+   return (
+-    <div className="flex min-h-[60vh] items-center justify-center px-4">
+-      <div className="text-center">
+-        <p className="mb-4 text-sm font-medium tracking-widest text-stone-400 uppercase">
+-          404
+-        </p>
+-        <h1 className="mb-3 font-serif text-3xl text-stone-900 md:text-4xl">
+-          {t('common.notFound')}
+-        </h1>
+-        <p className="mb-8 text-stone-500">
+-          The page you&apos;re looking for doesn&apos;t exist.
+-        </p>
+-        <div className="flex flex-wrap items-center justify-center gap-4">
+-          <Link
+-            to="/"
+-            className="inline-block rounded-full bg-stone-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-stone-700"
+-          >
+-            {t('common.backToHome')}
+-          </Link>
+-          <Link
+-            to={accountHome}
+-            className="text-sm font-medium text-stone-700 hover:text-stone-900"
+-          >
+-            {t('nav.account')} →
+-          </Link>
++    <StorefrontShell>
++      <div className="flex min-h-[60vh] items-center justify-center px-4">
++        <div className="text-center">
++          <p className="mb-4 text-sm font-medium tracking-widest text-stone-400 uppercase">
++            404
++          </p>
++          <h1 className="mb-3 font-serif text-3xl text-stone-900 md:text-4xl">
++            {t('common.notFound')}
++          </h1>
++          <p className="mb-8 text-stone-500">
++            The page you&apos;re looking for doesn&apos;t exist.
++          </p>
++          <div className="flex flex-wrap items-center justify-center gap-4">
++            <Link
++              to="/"
++              className="inline-block rounded-full bg-stone-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-stone-700"
++            >
++              {t('common.backToHome')}
++            </Link>
++            <Link
++              to={accountHome}
++              className="text-sm font-medium text-stone-700 hover:text-stone-900"
++            >
++              {t('nav.account')} →
++            </Link>
++          </div>
+         </div>
+       </div>
+-    </div>
++    </StorefrontShell>
+   );
+ }
