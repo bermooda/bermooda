@@ -390,11 +390,11 @@ These were documented in #178. Only implement if a concrete multi-instance deplo
 | Admin plugin routes ignore enabled | Intentional for config                               | Gate mutations only if abuse appears                    |
 | `ctx.queue` any job name           | Documented constraint                                | Namespaced job registration API                         |
 
-- [ ] **Step 1: Optional runbook blurb**
+- [x] **Step 1: Optional runbook blurb**
 
 Add a short “Multi-instance deploys” subsection under `docs/plugins.md` Single-process section with: restart all app processes after enable/disable/theme switch, or accept TTL lag. No code.
 
-- [ ] **Step 2: Commit if docs changed**
+- [x] **Step 2: Commit if docs changed**
 
 ```bash
 git commit -m "docs(plugins): clarify multi-instance extension cache behavior"
