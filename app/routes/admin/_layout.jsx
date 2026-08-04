@@ -198,7 +198,7 @@ function AdminUserMenu() {
         anchor="top end"
         className="border-border bg-surface isolate z-30 w-max min-w-56 overflow-y-auto rounded-xl border p-1 shadow-lg transition [--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] focus:outline-hidden data-leave:duration-100 data-leave:ease-in data-closed:data-leave:opacity-0 data-[anchor~=end]:[--anchor-offset:6px]"
       >
-        {/* Theme Toggle */}
+        {/* Color mode toggle */}
         <MenuItem>
           <button
             type="button"
