@@ -139,15 +139,22 @@ async function main() {
   }
 
   const src = videoPath ?? path.join(outputDir, webm);
-  const destName = 'product-editor-two-column-demo.webm';
-  const dest = path.join(outputDir, destName);
-  if (path.resolve(src) !== path.resolve(dest)) {
+  const webmDest = path.join(outputDir, 'product-editor-two-column-demo.webm');
+  if (path.resolve(src) !== path.resolve(webmDest)) {
     try {
-      await rename(src, dest);
+      await rename(src, webmDest);
     } catch {
-      await copyFile(src, dest);
+      await copyFile(src, webmDest);
     }
   }
+
+  // Cursor / GitHub playback expects H.264 MP4 rather than Playwright's VP8 WebM.
+  const destName = 'product-editor-two-column-demo.mp4';
+  const dest = path.join(outputDir, destName);
+  execSync(
+    `ffmpeg -y -i ${JSON.stringify(webmDest)} -c:v libx264 -pix_fmt yuv420p -movflags +faststart ${JSON.stringify(dest)}`,
+    { stdio: 'inherit' }
+  );
 
   const publicArtifact = path.join(artifactDir, destName);
   await copyFile(dest, publicArtifact);
