@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.6.1...bermooda-v0.7.0) (2026-08-04)
+
+
+### Features
+
+* **admin:** restyle product editor as two-column form layout ([#187](https://github.com/bermooda/bermooda/issues/187)) ([f7e42a3](https://github.com/bermooda/bermooda/commit/f7e42a3fcaba685c961359e8d8f071316ae1333a))
+* **admin:** sticky-header products table layout ([#185](https://github.com/bermooda/bermooda/issues/185)) ([2d85561](https://github.com/bermooda/bermooda/commit/2d85561b5585821506a11c4813bb4cff35e48c20))
+
 ## [0.6.1](https://github.com/bermooda/bermooda/compare/bermooda-v0.6.0...bermooda-v0.6.1) (2026-08-03)
 
 
