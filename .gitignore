@@ -1,5 +1,6 @@
 .DS_Store
 /.worktrees/
+/.siblings/
 /node_modules/
 /.claude/
 

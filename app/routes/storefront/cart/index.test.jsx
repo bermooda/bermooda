@@ -27,6 +27,8 @@ vi.mock('#/libs/auth/customer/index.server', () => ({
 vi.mock('#/core/themes/index.server', () => ({
   preloadStorefrontTheme: vi.fn().mockResolvedValue('default'),
   getSlotBlocksMap: vi.fn().mockResolvedValue({}),
+  getRegisteredTheme: vi.fn().mockReturnValue(null),
+  loadThemeSettings: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock('#/core/themes/storefront-components', () => ({
