@@ -3,13 +3,13 @@
 
 import prisma from '#/libs/prisma.server';
 import { loadProductTitleMap } from '#/core/catalog/translations.server';
-import { DEFAULT_CURRENCY } from '#/core/settings/defaults';
-import { get } from '#/core/settings/index.server';
-import { SETTING_KEYS } from '#/core/settings/keys';
 import {
   DEFAULT_REPORT_LIMIT,
   MAX_REPORT_LIMIT,
 } from '#/core/reporting/shared.server';
+import { DEFAULT_CURRENCY } from '#/core/settings/defaults';
+import { get } from '#/core/settings/index.server';
+import { SETTING_KEYS } from '#/core/settings/keys';
 
 export const LOW_STOCK_THRESHOLD = 5;
 
