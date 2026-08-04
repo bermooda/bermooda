@@ -2,6 +2,10 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Status (2026-08-02):** Phases A–E are largely implemented on `master`.
+> Remaining extension follow-ups live in
+> `docs/superpowers/plans/2026-08-02-themes-plugins-architecture-follow-ups.md`.
+
 **Goal:** Restore the `libs → core` dependency boundary, finish sales-channel plumbing on the purchase path, split checkout/orders/plugins mega-modules, durable domain events via a LiteQuu job (email-job pattern), complete plugin dispatchers, and align platform docs/contracts with reality.
 
 **Architecture:** Keep the existing three-layer model (`routes → core → libs`) but make it enforceable. Hard-cut move pure config into `libs` (no `#/core/config` compatibility shim — app is pre-production). Relocate domain-aware helpers out of `libs`. Inject domain callbacks into auth at bootstrap. Persist post-commit `emit()` through a `domain_event` queue job while leaving `emitBefore` synchronous. Split oversized core modules along existing concern seams. Thread `salesChannelId` cart → checkout → order. Extend plugin dispatchers with `action` + richer path matching. Document single-shop / dual-DB / plugin `ctx` honestly.
@@ -69,7 +73,7 @@
 
 App is pre-production with no external consumers — do **not** leave a thin `#/core/config` re-export.
 
-- [ ] **Step 1: Move files and fix internal imports**
+- [x] **Step 1: Move files and fix internal imports**
 
 `app/libs/config/index.js` must import:
 
@@ -81,7 +85,7 @@ export { DEFAULT_DEV_PORT, resolveDevPort } from '#/libs/config/port';
 
 Leave behavior identical to today’s `app/core/config/index.js`.
 
-- [ ] **Step 2: Point all callers at `#/libs/config` and delete `app/core/config/`**
+- [x] **Step 2: Point all callers at `#/libs/config` and delete `app/core/config/`**
 
 ```bash
 rg -l "from '#/core/config" app --glob '*.{js,jsx}'
@@ -90,13 +94,13 @@ rg -l "from '#/core/config" app --glob '*.{js,jsx}'
 
 Also update `from "#/core/config/port"` if any. Then delete `app/core/config/`. Confirm zero matches for `#/core/config`.
 
-- [ ] **Step 3: Validate**
+- [x] **Step 3: Validate**
 
 Run: `npm run test -- app/libs/config app/libs/auth`
 Run: `npx -p typescript tsc --noEmit --allowJs --checkJs --strict --module preserve --moduleResolution bundler --target es2020 --jsx react-jsx "app/libs/config/index.js"`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -117,7 +121,7 @@ git commit -m "refactor(config): move runtime config from core to libs"
 - Produces: `setOnCustomerRegistered(fn | null)` in customer auth
 - Consumes: `emit` only from bootstrap (core), not from libs
 
-- [ ] **Step 1: Write failing test for injection**
+- [x] **Step 1: Write failing test for injection**
 
 In `app/libs/auth/customer/index.test.server.js`, assert the module does **not** import `#/core/events`, and that calling the registered callback runs the injected fn:
 
@@ -173,7 +177,7 @@ user create: {
 
 Remove `import { emit } from '#/core/events/index.server'`.
 
-- [ ] **Step 2: Wire bootstrap**
+- [x] **Step 2: Wire bootstrap**
 
 In `registerBuiltins()` (or immediately after imports that load email subscribers):
 
@@ -188,12 +192,12 @@ setOnCustomerRegistered((payload) => {
 
 Reset in bootstrap test teardown if needed.
 
-- [ ] **Step 3: Run tests**
+- [x] **Step 3: Run tests**
 
 Run: `npm run test -- app/libs/auth/customer app/core/bootstrap`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/libs/auth/customer app/core/bootstrap
@@ -214,7 +218,7 @@ git commit -m "refactor(auth): inject customer.registered emit from bootstrap"
 
 - Produces: `adminApiKeyContext`, `adminApiKeyMiddleware`, `requireAdminApiScope`, `requireApiKey` from `#/core/api-keys/middleware.server`
 
-- [ ] **Step 1: Move module + update imports**
+- [x] **Step 1: Move module + update imports**
 
 ```js
 // app/core/api-keys/middleware.server.js
@@ -236,11 +240,11 @@ import {
 } from '#/core/api-keys/middleware.server';
 ```
 
-- [ ] **Step 2: Remove `app/libs/auth/api` core-coupled files**
+- [x] **Step 2: Remove `app/libs/auth/api` core-coupled files**
 
 If nothing remains, delete the directory. Do not leave a re-export shim that pulls core into libs.
 
-- [ ] **Step 3: Tests + commit**
+- [x] **Step 3: Tests + commit**
 
 Run: `npm run test -- app/core/api-keys app/routes/api/admin`
 
@@ -263,7 +267,7 @@ git commit -m "refactor(api-keys): move admin API key middleware into core"
 - Produces: `loadStorefrontPageContext(request)`, `parseReturnTo(formData, fallback?)`
 - Produces (if extracted): `jsonFromHookAbort(err)` in `#/core/events/http.server.js`
 
-- [ ] **Step 1: Create page-context helper**
+- [x] **Step 1: Create page-context helper**
 
 ```js
 // app/core/storefront/page-context.server.js
@@ -298,13 +302,13 @@ export function parseReturnTo(formData, fallback = '/') {
 }
 ```
 
-- [ ] **Step 2: Strip core imports from `libs/api/admin`**
+- [x] **Step 2: Strip core imports from `libs/api/admin`**
 
 Move any function that calls `isHookAbort` to `#/core/events/http.server.js` (or inline in admin API layout). Keep `parseOptionalJsonBody`, `requireOneOfMethods`, pagination parsers in libs.
 
-- [ ] **Step 3: Delete `app/libs/api/storefront` after migration**
+- [x] **Step 3: Delete `app/libs/api/storefront` after migration**
 
-- [ ] **Step 4: Tests + commit**
+- [x] **Step 4: Tests + commit**
 
 Run: `npm run test -- app/core/storefront app/libs/api`
 
@@ -320,7 +324,7 @@ git commit -m "refactor: move storefront page context into core; purify libs/api
 - Modify: `.cursor/rules/libs-core.mdc` — note config lives in `#/libs/config`
 - Modify: `CLAUDE.md` / `AGENTS.md` one-liner if they mention config under core
 
-- [ ] **Step 1: Add override**
+- [x] **Step 1: Add override**
 
 ```json
 {
@@ -341,12 +345,12 @@ git commit -m "refactor: move storefront page context into core; purify libs/api
 }
 ```
 
-- [ ] **Step 2: Run lint and fix any remaining violations**
+- [x] **Step 2: Run lint and fix any remaining violations**
 
 Run: `npm run lint`
 Expected: PASS (or only pre-existing fmt noise)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git commit -m "chore(lint): forbid libs imports of core"
@@ -375,13 +379,15 @@ git commit -m "chore(lint): forbid libs imports of core"
 - Changes: `emit(event, payload)` calls enqueuer (or no-ops with warn if unset in production paths); **does not** run handlers inline
 - Unchanged: `emitBefore`, `on`, `off`, `deny`, `HookAbortError`, `isHookAbort`
 
+> **Landed as:** `queueEmit` from `#/core/events/job.server` (LiteQuu `domain_event` job); callers import `queueEmit` directly — no `setEventJobEnqueuer` / `queueDomainEvent` names in tree.
+
 Design notes (match emails/webhooks):
 
 - Payload must be JSON-serializable (already true for domain emits).
 - Worker calls `dispatchHandlers` so email/`on(...)` subscribers still run, then may enqueue further jobs (welcome email, webhook delivery) — acceptable double hop; durability is at the event edge.
 - Tests: default `setEventJobEnqueuer((event, payload) => dispatchHandlers(event, payload))` in event tests (sync), replacing today’s `flushEmit` microtask dance where needed.
 
-- [ ] **Step 1: Write failing tests for queued emit**
+- [x] **Step 1: Write failing tests for queued emit**
 
 ```js
 // app/core/events/index.test.server.js (adjust)
@@ -413,7 +419,7 @@ it('dispatchHandlers runs registered handlers and isolates failures', async () =
 });
 ```
 
-- [ ] **Step 2: Implement events core changes**
+- [x] **Step 2: Implement events core changes**
 
 ```js
 /** @type {null | ((event: string, payload: unknown) => void)} */
@@ -466,7 +472,7 @@ export function emit(event, payload) {
 
 Keep `emitBefore` exactly as today (sync, fail-closed). If `emitBefore` internally calls `emit('hook.blocked', ...)`, that goes through the queue too — correct.
 
-- [ ] **Step 3: Implement job module (email-job pattern)**
+- [x] **Step 3: Implement job module (email-job pattern)**
 
 ```js
 // app/core/events/job.server.js
@@ -507,7 +513,7 @@ export function queueDomainEvent(event, payload) {
 setEventJobEnqueuer(queueDomainEvent);
 ```
 
-- [ ] **Step 4: Load job from bootstrap**
+- [x] **Step 4: Load job from bootstrap**
 
 Next to other job imports in `app/core/bootstrap/index.server.js`:
 
@@ -517,7 +523,7 @@ import '#/core/events/job.server';
 
 Ensure this runs **before** any request can `emit`. Order relative to email job import: events job must register the enqueuer before emits; email `on(...)` registrations can load anytime before the worker processes jobs.
 
-- [ ] **Step 5: Fix tests that assumed in-process emit**
+- [x] **Step 5: Fix tests that assumed in-process emit**
 
 Any test that `emit`s and expects handlers without importing the job should call:
 
@@ -527,12 +533,12 @@ setEventJobEnqueuer((event, payload) => dispatchHandlers(event, payload));
 
 in `beforeEach`, or import `#/core/events/job.server` and mock `queue`.
 
-- [ ] **Step 6: Run tests**
+- [x] **Step 6: Run tests**
 
 Run: `npm run test -- app/core/events app/emails/job app/core/webhooks app/core/bootstrap`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add app/core/events app/core/bootstrap
@@ -561,7 +567,7 @@ git commit -m "feat(events): queue domain events via LiteQuu job"
 - `createCheckoutSession(cartId, { customerId?, email?, salesChannelId? })` writes session channel; default = `cart.salesChannelId`
 - `placeOrder` already copies `session.salesChannelId` — verify with a test that non-null session channel lands on `Order`
 
-- [ ] **Step 1: Failing tests**
+- [x] **Step 1: Failing tests**
 
 ```js
 it('createCart persists salesChannelId', async () => {
@@ -581,7 +587,7 @@ it('createCheckoutSession copies salesChannelId from cart when omitted', async (
 });
 ```
 
-- [ ] **Step 2: Implement cart**
+- [x] **Step 2: Implement cart**
 
 ```js
 export async function createCart({
@@ -612,7 +618,7 @@ export async function createCart({
 }
 ```
 
-- [ ] **Step 3: Implement checkout session create**
+- [x] **Step 3: Implement checkout session create**
 
 Load cart (or use lockCart return if available). Set:
 
@@ -622,7 +628,7 @@ salesChannelId: salesChannelId ?? cart.salesChannelId ?? null,
 
 Include `salesChannelId` on `checkout.started` payload.
 
-- [ ] **Step 4: Wire storefront + API routes**
+- [x] **Step 4: Wire storefront + API routes**
 
 ```js
 const channel = await resolveChannelFromRequest(request);
@@ -635,7 +641,7 @@ cart = await createCart({
 
 Checkout route: if creating a session from an existing cart, rely on cart copy; still pass `channel?.id` when creating a brand-new cart+session in one flow.
 
-- [ ] **Step 5: Tests + commit**
+- [x] **Step 5: Tests + commit**
 
 Run: `npm run test -- app/core/cart app/core/checkout app/core/orders app/routes/storefront/cart app/routes/api/v1/cart`
 
@@ -664,16 +670,16 @@ git commit -m "fix(channels): thread salesChannelId through cart and checkout"
 
 **Cycle rule:** `place.server.js` may import checkout `session.server` / `totals.server`. Checkout storefront may import `place.server` only. `orders/index.server` must not be imported by checkout if the barrel re-exports checkout-facing and checkout-importing symbols in a way that cycles — prefer direct deep imports from checkout → `place.server`.
 
-- [ ] **Step 1: Extract without behavior change** (move functions + update relative imports)
+- [x] **Step 1: Extract without behavior change** (move functions + update relative imports)
 
-- [ ] **Step 2: Fix admin order route dynamic import** if the cycle is gone — prefer static imports
+- [x] **Step 2: Fix admin order route dynamic import** if the cycle is gone — prefer static imports
 
-- [ ] **Step 3: Run orders + checkout + returns tests**
+- [x] **Step 3: Run orders + checkout + returns tests**
 
 Run: `npm run test -- app/core/orders app/core/checkout app/core/returns app/routes/admin/orders`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git commit -m "refactor(orders): split place, fulfillment, refunds, and admin modules"
@@ -725,14 +731,14 @@ export const PROVIDER_TYPE_HANDLERS = {
 
 Loop `Object.entries(defineProviders(providerMap))` and dispatch via the table instead of a growing `switch`.
 
-- [ ] **Step 1: Extract + keep barrel exports stable**
+- [x] **Step 1: Extract + keep barrel exports stable**
 
-- [ ] **Step 2: Tests**
+- [x] **Step 2: Tests**
 
 Run: `npm run test -- app/core/plugins app/core/bootstrap`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git commit -m "refactor(plugins): split registry/lifecycle/providers and unify provider table"
@@ -756,9 +762,9 @@ git commit -m "refactor(plugins): split registry/lifecycle/providers and unify p
 - Route descriptors may export `action({ request, params })`
 - Dispatcher `action` resolves the same descriptor as loader and invokes `descriptor.action` when present; otherwise 405 JSON/HTML-friendly error
 
-- [ ] **Step 1: Failing route test** — mock `resolvePluginStorefrontRoute` returning `{ action: vi.fn() }`, POST, expect action called
+- [x] **Step 1: Failing route test** — mock `resolvePluginStorefrontRoute` returning `{ action: vi.fn() }`, POST, expect action called
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 ```js
 export async function action({ request, params }) {
@@ -778,7 +784,7 @@ export async function action({ request, params }) {
 
 Mirror for admin (admin may skip `isPluginEnabled` if today’s loader does — match loader policy).
 
-- [ ] **Step 3: Tests + commit**
+- [x] **Step 3: Tests + commit**
 
 ```bash
 git commit -m "feat(plugins): support actions on storefront and admin dispatchers"
@@ -804,7 +810,7 @@ Matching algorithm (simple, no full path-to-regexp dependency):
 3. Else try pattern match: split on `/`; `:name` captures; trailing `*` captures rest as `splat`.
 4. First registered matching pattern wins (document registration order).
 
-- [ ] **Step 1: Tests for `:id` and `*`**
+- [x] **Step 1: Tests for `:id` and `*`**
 
 ```js
 expect(resolvePluginRouteDescriptor(map, 'demo', 'orders/abc').path).toBe(
@@ -812,9 +818,9 @@ expect(resolvePluginRouteDescriptor(map, 'demo', 'orders/abc').path).toBe(
 );
 ```
 
-- [ ] **Step 2: Implement + thread params through dispatchers**
+- [x] **Step 2: Implement + thread params through dispatchers**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git commit -m "feat(plugins): support param and splat paths in plugin route matching"
@@ -837,9 +843,9 @@ git commit -m "feat(plugins): support param and splat paths in plugin route matc
 
 No schema multi-tenant work. No forced removal of `ctx.db` in this plan (would break plugins); documentation + deprecation only.
 
-- [ ] **Step 1: Edit docs as above**
+- [x] **Step 1: Edit docs as above**
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git commit -m "docs: align architecture docs with libs boundary, events job, and plugins"
@@ -847,7 +853,7 @@ git commit -m "docs: align architecture docs with libs boundary, events job, and
 
 ### Task 13: Final validation gate
 
-- [ ] **Step 1: Full preflight**
+- [x] **Step 1: Full preflight**
 
 ```bash
 npm run lint
@@ -857,7 +863,7 @@ npm run test
 
 Expected: lint/build exit 0; tests green (fix any regressions from queued `emit`).
 
-- [ ] **Step 2: Grep guardrails**
+- [x] **Step 2: Grep guardrails**
 
 ```bash
 rg "from '#/core" app/libs --glob '*.{js,jsx}'   # must be empty
@@ -865,7 +871,7 @@ rg "setEventJobEnqueuer|queueDomainEvent" app/core/events
 rg "salesChannelId" app/core/cart/index.server.js app/core/checkout/pipeline.server.js
 ```
 
-- [ ] **Step 3: Final commit only if fixes were needed**
+- [x] **Step 3: Final commit only if fixes were needed**
 
 ---
 
