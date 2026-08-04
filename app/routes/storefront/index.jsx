@@ -13,7 +13,7 @@ import { getStorefrontComponent } from '#/core/themes/storefront-components';
 import { JsonLd } from '#/components/seo/json-ld';
 
 export async function loader({ request }) {
-  const { themeId, locale, currency } =
+  const { themeId, locale, currency, themeSettings } =
     await loadStorefrontPageContext(request);
 
   const [{ products: rawProducts }, categories, slotBlocks] = await Promise.all(
@@ -38,6 +38,7 @@ export async function loader({ request }) {
     categories,
     locale,
     currency,
+    themeSettings,
     slotBlocks,
     jsonLd: [organization, webSite],
     metaTags,
