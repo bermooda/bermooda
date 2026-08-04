@@ -981,6 +981,12 @@ Plugin catalogs under `i18n/<locale>.json` merge into storefront/admin message c
 
 `isEnabled`, wired hooks, and providers live in the current Node process. Multi-instance deploys can diverge after a toggle until each process reloads plugins (restart) or you add shared invalidation. Persisted `enabledPlugins` is the source of truth across restarts; in-memory wiring is not shared.
 
+### Multi-instance deploys
+
+Enable/disable and theme activation update only the process that handled the admin request (live wiring / local cache bust). Other instances keep their in-memory plugin registry and `activeTheme` TTL caches until restart or expiry.
+
+**Runbook:** after plugin enable/disable or a theme switch, restart **all** app processes so every instance matches persisted `enabledPlugins` / `activeTheme`. Or accept per-process divergence and TTL lag (theme resolution is cached ~5 minutes; plugin hook wiring does not catch up without a restart or shared invalidation). There is no built-in cross-instance invalidation today.
+
 ## Plugin npm dependencies
 
 Plugins may declare their own packages in `package.json` `dependencies` / `optionalDependencies`. The bermooda CLI installs those into `app/plugins/<slug>/node_modules` on `plugin add`. Contributors get the same via `npm run extensions:install` (or `npm run extensions:install-deps`).
