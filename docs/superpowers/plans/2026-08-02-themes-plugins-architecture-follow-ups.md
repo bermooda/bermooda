@@ -88,7 +88,7 @@ flowchart LR
 
 **Current gap:** `loadThemeSettings` / `saveThemeSettings` work in admin; storefront loaders never call them.
 
-- [ ] **Step 1: Write failing test for page context shape**
+- [x] **Step 1: Write failing test for page context shape**
 
 In `app/core/storefront/page-context.test.server.js`, mock themes + settings and assert:
 
@@ -102,7 +102,7 @@ it('includes themeSettings from the active theme manifest', async () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 npm run test -- app/core/storefront/page-context.test.server.js
@@ -110,7 +110,7 @@ npm run test -- app/core/storefront/page-context.test.server.js
 
 Expected: FAIL (property missing / undefined).
 
-- [ ] **Step 3: Extend `loadStorefrontPageContext`**
+- [x] **Step 3: Extend `loadStorefrontPageContext`**
 
 ```js
 /**
@@ -136,7 +136,7 @@ export async function loadStorefrontPageContext(request) {
 
 Avoid importing the full themes barrel if that creates a cycle; import `loadThemeSettings` + `getRegisteredTheme` from the same modules page-context already can reach, or add a thin `loadActiveThemeSettings()` helper on the themes server module.
 
-- [ ] **Step 4: Thread `themeSettings` through loaders that return theme page props**
+- [x] **Step 4: Thread `themeSettings` through loaders that return theme page props**
 
 At minimum:
 
@@ -146,11 +146,11 @@ At minimum:
 
 Pass `themeSettings` as a prop into `getStorefrontComponent(...)` page components. Do **not** invent a React context unless an existing theme already expects one — prefer props to match current loader→component style.
 
-- [ ] **Step 5: Update default theme (sibling package) only if needed**
+- [x] **Step 5: Update default theme (sibling package) only if needed**
 
 If `@bermooda/theme-default` should read settings (e.g. accent color), change that package in its sibling repo / installed copy under `app/themes/default/`. Do not hardcode settings keys in core beyond the schema-driven map.
 
-- [ ] **Step 6: Docs + validate**
+- [x] **Step 6: Docs + validate**
 
 Update `docs/themes.md` Theme settings section: settings are available as `themeSettings` from `loadStorefrontPageContext`.
 
@@ -159,7 +159,7 @@ npm run test -- app/core/storefront app/routes/storefront/index.test.jsx
 npm run lint
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A
@@ -195,19 +195,19 @@ export default function NotFoundRoute() {
 }
 ```
 
-- [ ] **Step 1: Confirm default theme `NotFoundPage` self-wraps `Layout`**
+- [x] **Step 1: Confirm default theme `NotFoundPage` self-wraps `Layout`**
 
 Inspect `app/themes/default/components/not-found-page.jsx` (after `npm run extensions:install`). If it does not wrap `Layout`, add the wrap in the theme package (sibling repo preferred).
 
-- [ ] **Step 2: Update `404.jsx` to stop wrapping Layout**
+- [x] **Step 2: Update `404.jsx` to stop wrapping Layout**
 
 Remove `getStorefrontComponent('Layout', themeId)` usage from the route.
 
-- [ ] **Step 3: Decide plugin apps host chrome**
+- [x] **Step 3: Decide plugin apps host chrome**
 
 **Chosen approach:** Route resolves `Layout` once and wraps the plugin page component **only** for `/apps/:pluginId/*`, because plugin pages are not theme pages and cannot import theme Layout without coupling. Document this as the sole route-owned Layout exception. Remove any redundant comments that imply 404 is also an exception.
 
-- [ ] **Step 4: Update docs**
+- [x] **Step 4: Update docs**
 
 In `docs/themes.md`:
 
@@ -217,7 +217,7 @@ In `docs/themes.md`:
 - Plugin dispatcher may wrap `Layout` around plugin content
 - `404` does not wrap `Layout`
 
-- [ ] **Step 5: Validate + commit**
+- [x] **Step 5: Validate + commit**
 
 ```bash
 npm run test -- app/routes/storefront/apps/$pluginId.test.jsx
@@ -251,7 +251,7 @@ git commit -m "refactor(themes): unify Layout ownership with self-wrap pages"
 - Modify: `app/core/themes/storefront-components/index.test.js`
 - Modify: `docs/themes.md` (discovery section)
 
-- [ ] **Step 1: Extract shared merge/index helpers (client-safe)**
+- [x] **Step 1: Extract shared merge/index helpers (client-safe)**
 
 ```js
 // app/core/themes/discover-shared.js
@@ -277,15 +277,15 @@ export function indexThemeManifest(registry, manifest) {
 }
 ```
 
-- [ ] **Step 2: Point both discovery loops at the helpers**
+- [x] **Step 2: Point both discovery loops at the helpers**
 
 No behavior change yet beyond shared code path.
 
-- [ ] **Step 3: Add a test that registering via `registerStorefrontTheme` indexes id + slug**
+- [x] **Step 3: Add a test that registering via `registerStorefrontTheme` indexes id + slug**
 
 Already partially covered; ensure discover-shared unit tests exist.
 
-- [ ] **Step 4: Validate + commit**
+- [x] **Step 4: Validate + commit**
 
 ```bash
 npm run test -- app/core/themes
@@ -308,7 +308,7 @@ git commit -m "refactor(themes): share theme discovery merge helpers"
 - Optionally add: `scripts/install-default-extensions.test.mjs` if the repo has script tests; otherwise a dry-run manual check documented in the PR
 - Modify: `app/themes/README.md` and/or `docs/themes.md` install notes if they mention the broken path
 
-- [ ] **Step 1: Replace `installFromNpm` with pack + extract**
+- [x] **Step 1: Replace `installFromNpm` with pack + extract**
 
 ```js
 import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
@@ -359,9 +359,9 @@ function installFromNpm(spec) {
 
 Adjust extract path if `npm pack` naming differs; verify with one real package in CI/cloud.
 
-- [ ] **Step 2: Align the file header comment** with the real pack+extract behavior (it already claims pack but code used `--prefix`).
+- [x] **Step 2: Align the file header comment** with the real pack+extract behavior (it already claims pack but code used `--prefix`).
 
-- [ ] **Step 3: Manual verify locally**
+- [x] **Step 3: Manual verify locally**
 
 ```bash
 rm -rf app/themes/default
@@ -370,7 +370,7 @@ npm run extensions:install
 test -f app/themes/default/index.js && test -f app/themes/default/package.json
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/install-default-extensions.mjs
@@ -413,17 +413,17 @@ git commit -m "docs(plugins): clarify multi-instance extension cache behavior"
 - Update imports: `app/root.jsx`, `app/components/ui/logo.jsx`, `app/routes/admin/_layout.jsx`, any tests
 - Update cookie/localStorage key only if safe (`theme` key can remain for backward compatibility with stored preference)
 
-- [ ] **Step 1: Rename file + exports; re-export deprecated aliases for one release if needed**
+- [x] **Step 1: Rename file + exports; re-export deprecated aliases for one release if needed**
 
 Prefer hard cut (pre-production): no deprecated aliases.
 
-- [ ] **Step 2: Update all callers**
+- [x] **Step 2: Update all callers**
 
 ```bash
 rg -n "use-theme|useTheme|ThemeProvider" app --glob '*.{js,jsx}'
 ```
 
-- [ ] **Step 3: Validate + commit**
+- [x] **Step 3: Validate + commit**
 
 ```bash
 npm run test -- app/hooks app/root.jsx
@@ -440,8 +440,8 @@ git commit -m "refactor: rename use-theme to use-color-mode"
 
 Phases A–E largely landed before/with #178. Unchecked boxes mislead agents.
 
-- [ ] **Step 1: Mark completed phases/tasks with `[x]`** based on current code reality
-- [ ] **Step 2: Add a status banner at the top**
+- [x] **Step 1: Mark completed phases/tasks with `[x]`** based on current code reality
+- [x] **Step 2: Add a status banner at the top**
 
 ```markdown
 > **Status (2026-08-02):** Phases A–E are largely implemented on `master`.
@@ -449,7 +449,7 @@ Phases A–E largely landed before/with #178. Unchecked boxes mislead agents.
 > `docs/superpowers/plans/2026-08-02-themes-plugins-architecture-follow-ups.md`.
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git commit -m "docs: mark architecture improvements plan phases complete"
@@ -513,6 +513,6 @@ Fix oxfmt with `npm run fmt` if needed.
 - [x] Documented assumptions — Phase C
 - [x] use-theme rename — Task 5
 - [x] Aug 1 plan reconciliation — Task 6
-- [x] Oversized domains — Task 7 (optional, separate PRs)
+- [ ] Oversized domains — Task 7 (optional, separate PRs)
 - [x] No silent theme fallback reintroduced
 - [x] Conventional Commits + preflight called out

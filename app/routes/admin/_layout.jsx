@@ -26,10 +26,10 @@ import { authenticate } from '#/libs/auth/admin/index.server';
 import { ADMIN_AVAILABLE_LOCALES, translate, useT } from '#/core/i18n';
 import { I18nContext } from '#/core/i18n/context';
 import { getRequestLocale, loadMessages } from '#/core/i18n/index.server';
+import useColorMode from '#/hooks/use-color-mode';
 import useCommandPalette, {
   getCommandPaletteShortcutLabel,
 } from '#/hooks/use-command-palette';
-import useTheme from '#/hooks/use-theme';
 import CommandPalette from '#/components/admin/command-palette';
 import { NAV_GROUPS } from '#/components/admin/nav-config';
 import Logo from '#/components/ui/logo';
@@ -169,7 +169,7 @@ function NavLink({ item, onClick }) {
 function AdminUserMenu() {
   const t = useT();
   const { user } = useLoaderData();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, toggleColorMode } = useColorMode();
 
   return (
     <Menu>
@@ -198,11 +198,11 @@ function AdminUserMenu() {
         anchor="top end"
         className="border-border bg-surface isolate z-30 w-max min-w-56 overflow-y-auto rounded-xl border p-1 shadow-lg transition [--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] focus:outline-hidden data-leave:duration-100 data-leave:ease-in data-closed:data-leave:opacity-0 data-[anchor~=end]:[--anchor-offset:6px]"
       >
-        {/* Theme Toggle */}
+        {/* Color mode toggle */}
         <MenuItem>
           <button
             type="button"
-            onClick={toggleTheme}
+            onClick={toggleColorMode}
             className="text-text data-focus:bg-accent data-focus:text-accent-fg group col-span-full grid w-full cursor-default grid-cols-[auto_1fr] items-center rounded-lg px-3 py-1.5 text-left text-sm focus:outline-hidden"
           >
             {isDark ? (

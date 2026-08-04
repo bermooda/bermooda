@@ -4,7 +4,7 @@
 
 Redesign the bermooda **admin back office** (`/admin/*`) to feel modern and close to the [Ghost](https://ghost.org) blogging platform's admin, with first-class **dark and light** modes and full **mobile optimisation**. This is a UI/UX and design-system refactor of the admin surface only — the storefront (themed) and the REST API are out of scope.
 
-The plan is grounded in the current code: the admin shell lives in [`app/routes/admin/_layout.jsx`](../app/routes/admin/_layout.jsx), design tokens in [`app/styles/app.css`](../app/styles/app.css), and theming infra in [`app/hooks/use-theme.jsx`](../app/hooks/use-theme.jsx) + [`app/utils/theme.server.js`](../app/utils/theme.server.js).
+The plan is grounded in the current code: the admin shell lives in [`app/routes/admin/_layout.jsx`](../app/routes/admin/_layout.jsx), design tokens in [`app/styles/app.css`](../app/styles/app.css), and theming infra in [`app/hooks/use-color-mode.jsx`](../app/hooks/use-color-mode.jsx) + [`app/utils/theme.server.js`](../app/utils/theme.server.js).
 
 ---
 
@@ -28,7 +28,7 @@ Ghost's admin (including its 2026 "new admin shell") is built on one discipline:
 ## 2. Scope & guiding constraints
 
 - **In scope:** the authenticated admin shell ([`app/routes/admin/_layout.jsx`](../app/routes/admin/_layout.jsx)), admin auth pages, admin design tokens, and a small set of reusable admin UI primitives the route pages can adopt.
-- **Theme:** reuse the existing, working theming infra (`#/hooks/use-theme`, `app/utils/theme.server.js`, `.dark` class, SSR cookie). No new theme engine — only new tokens + classes.
+- **Theme:** reuse the existing, working theming infra (`#/hooks/use-color-mode`, `app/utils/theme.server.js`, `.dark` class, SSR cookie). No new theme engine — only new tokens + classes.
 - **Repo constraints:** JS/JSX only, Tailwind v4 CSS-first config in `app/styles/app.css`, `#/*` imports without extensions, Heroicons (already the only icon set), smallest change that fully solves the task, prefer existing patterns.
 - **Migration safety:** the redesign is additive at the token level so the ~30 monolithic route pages keep working while migrated incrementally.
 
