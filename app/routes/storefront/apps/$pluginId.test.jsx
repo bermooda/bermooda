@@ -258,7 +258,7 @@ describe('storefront plugin dispatcher', () => {
     }
   });
 
-  it('renders the resolved storefront component inside the storefront shell', () => {
+  it('renders the resolved storefront component inside the storefront shell (sole route-owned Layout)', () => {
     function MockPluginPage({ loaderData }) {
       return <div>Event count: {loaderData.eventCount}</div>;
     }

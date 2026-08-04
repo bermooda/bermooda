@@ -172,12 +172,11 @@ Theme-internal helpers used by other theme components. Routes do not throw if th
 
 Storefront `_layout.jsx` does **not** render the theme `Layout`. It provides i18n context, menus, locale/currency, and layout slot blocks to child routes via the loader.
 
-Most theme page components **self-wrap** with `Layout` (nav/footer chrome). Exceptions that wrap `Layout` in the route module:
+Theme page components **self-wrap** with `Layout` (nav/footer chrome). Route modules must **not** wrap `Layout` around theme pages — including `routes/404.jsx`, which renders only `NotFoundPage` (the page owns chrome).
 
-- `routes/404.jsx` — sits outside the storefront layout route; wraps `NotFoundPage` in `Layout`
-- `storefront/apps/$pluginId.jsx` — wraps plugin pages (and status messages) in `Layout`
+The sole route-owned Layout exception is the plugin apps host (`storefront/apps/$pluginId.jsx` / `/apps/:pluginId/*`). Plugin storefront pages are not theme pages and cannot import theme `Layout` without coupling, so that dispatcher resolves `Layout` once and wraps plugin content (and status messages).
 
-Account routes use optional-but-route-required `AccountLayout` from `account/_layout.jsx`. Checkout uses `CheckoutLayout` as the page component (not a nested layout wrapper around other theme pages).
+Account routes use optional-but-route-required `AccountLayout` from `account/_layout.jsx`. The checkout page **is** `CheckoutLayout` (not a nested layout wrapper around other theme pages).
 
 ### Theme settings
 
