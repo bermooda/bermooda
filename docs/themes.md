@@ -172,7 +172,7 @@ Theme-internal helpers used by other theme components. Routes do not throw if th
 
 Storefront `_layout.jsx` does **not** render the theme `Layout`. It provides i18n context, menus, locale/currency, and layout slot blocks to child routes via the loader.
 
-Theme page components **self-wrap** with `Layout` (nav/footer chrome). Route modules must **not** wrap `Layout` around theme pages — including `routes/404.jsx`, which renders only `NotFoundPage` (the page owns chrome). Themes must wrap `NotFoundPage` the same way as other pages (e.g. `StorefrontShell` in `@bermooda/theme-default`). A companion patch lives at `docs/superpowers/patches/theme-default-notfound-self-wrap.patch` until that package publishes the wrap.
+Theme page components **self-wrap** with `Layout` (nav/footer chrome). Route modules must **not** wrap `Layout` around theme pages — including `routes/404.jsx`, which renders only `NotFoundPage` (the page owns chrome). Themes must wrap `NotFoundPage` the same way as other pages (e.g. `StorefrontShell` in `@bermooda/theme-default`). Companion agent prompt for that theme change: `docs/superpowers/prompts/2026-08-04-theme-default-notfound-self-wrap.md`.
 
 The sole route-owned Layout exception is the plugin apps host (`storefront/apps/$pluginId.jsx` / `/apps/:pluginId/*`). Plugin storefront pages are not theme pages and cannot import theme `Layout` without coupling, so that dispatcher resolves `Layout` once and wraps plugin content (and status messages).
 
