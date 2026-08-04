@@ -27,10 +27,7 @@ for (const [modPath, mod] of Object.entries(themeModules)) {
   const pkg = pkgEntry[1];
 
   try {
-    const runtime =
-      /** @type {Record<string, unknown>} */ (
-        /** @type {{ default?: object }} */ (mod).default
-      ) ?? {};
+    const runtime = /** @type {Record<string, unknown>} */ (mod.default) ?? {};
     const manifest = buildMergedThemeManifest(pkg, runtime);
     indexThemeManifest(
       THEMES,

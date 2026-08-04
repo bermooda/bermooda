@@ -355,19 +355,22 @@ function themeFolderFromPath(modulePath) {
 }
 
 /**
- * Register all installed themes from app/themes/*.
- * Malformed packages are logged and skipped; incompatible engines are
- * soft-skipped; duplicate slugs and missing package.json still throw.
+ * Discover and register themes from glob-like module/package maps.
+ * Malformed packages (merge, slug/folder assert, registerTheme validation)
+ * are logged and skipped; incompatible engines are soft-skipped; duplicate
+ * slugs and missing package.json still throw.
  *
+ * @param {Record<string, { default?: object }>} modules
+ * @param {Record<string, object>} packages
  * @returns {void}
  */
-export function discoverThemes() {
+export function __discoverThemesFrom(modules, packages) {
   const seenSlugs = new Set();
   const shopVersion = getAppVersion();
 
-  for (const [modPath, mod] of Object.entries(themeModules)) {
+  for (const [modPath, mod] of Object.entries(modules)) {
     const folder = themeFolderFromPath(modPath);
-    const pkgEntry = Object.entries(themePackages).find(([pkgPath]) =>
+    const pkgEntry = Object.entries(packages).find(([pkgPath]) =>
       pkgPath.includes(`/themes/${folder}/`)
     );
     if (!pkgEntry) {
@@ -389,28 +392,44 @@ export function discoverThemes() {
       continue;
     }
 
+    /** @type {Record<string, unknown>} */
+    let manifest;
+    /** @type {string} */
+    let slug;
     try {
       const runtime =
         /** @type {Record<string, unknown>} */ (mod.default) ?? {};
-      const manifest = buildMergedThemeManifest(pkg, runtime);
-      const slug = /** @type {string} */ (manifest.slug);
+      manifest = buildMergedThemeManifest(pkg, runtime);
+      slug = /** @type {string} */ (manifest.slug);
       assertSlugMatchesFolder(slug, folder, 'theme');
+    } catch (err) {
+      logger.error({ folder, err }, 'Skipping malformed theme');
+      continue;
+    }
 
-      if (seenSlugs.has(slug)) {
-        throw new Error(`Duplicate theme slug "${slug}"`);
-      }
+    // Duplicate detection stays outside the soft-skip path so it always aborts.
+    if (seenSlugs.has(slug)) {
+      throw new Error(`Duplicate theme slug "${slug}"`);
+    }
+
+    try {
       registerTheme(manifest);
       seenSlugs.add(slug);
     } catch (err) {
-      if (
-        err instanceof Error &&
-        err.message.startsWith('Duplicate theme slug')
-      ) {
-        throw err;
-      }
       logger.error({ folder, err }, 'Skipping malformed theme');
     }
   }
+}
+
+/**
+ * Register all installed themes from app/themes/*.
+ * Malformed packages are logged and skipped; incompatible engines are
+ * soft-skipped; duplicate slugs and missing package.json still throw.
+ *
+ * @returns {void}
+ */
+export function discoverThemes() {
+  __discoverThemesFrom(themeModules, themePackages);
 }
 
 // ---------------------------------------------------------------------------

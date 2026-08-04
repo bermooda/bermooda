@@ -68,10 +68,12 @@ const {
   setActiveTheme,
   getSlotBlocks,
   getSlotBlocksMap,
+  __discoverThemesFrom,
   __resetRegistry,
 } = await import('#/core/themes/index.server');
 
 import cache, { invalidateCachePrefix } from '#/utils/cache/index.server';
+import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { getPluginBlocksForSlot } from '#/core/plugins/index.server';
 import { get, set } from '#/core/settings/index.server';
@@ -394,5 +396,135 @@ describe('getSlotBlocksMap', () => {
         { pluginId: 'featured', component: expect.any(Function) },
       ],
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// discoverThemes — soft-skip vs hard-fail
+// ---------------------------------------------------------------------------
+
+describe('discoverThemes soft-skip behavior', () => {
+  /**
+   * @param {string} slug
+   * @param {Record<string, unknown>} [overrides]
+   */
+  function discoveryPkg(slug, overrides = {}) {
+    return {
+      name: `@bermooda/theme-${slug}`,
+      version: '1.0.0',
+      bermooda: {
+        title: `Theme ${slug}`,
+        slug,
+        engine: '>=0.1.0',
+      },
+      ...overrides,
+    };
+  }
+
+  function discoveryMod(overrides = {}) {
+    return { default: validRuntime(overrides) };
+  }
+
+  beforeEach(() => {
+    __resetRegistry();
+    vi.clearAllMocks();
+  });
+
+  it('registers a valid theme from glob-like maps', () => {
+    __discoverThemesFrom(
+      { '/app/themes/aurora/index.js': discoveryMod() },
+      { '/app/themes/aurora/package.json': discoveryPkg('aurora') }
+    );
+
+    expect(getRegisteredThemeBySlug('aurora')).toMatchObject({
+      id: '@bermooda/theme-aurora',
+      slug: 'aurora',
+    });
+    expect(logger.error).not.toHaveBeenCalledWith(
+      expect.anything(),
+      'Skipping malformed theme'
+    );
+  });
+
+  it('soft-skips merge/validation failures and logs', () => {
+    __discoverThemesFrom(
+      {
+        '/app/themes/broken/index.js': { default: { components: {} } },
+        '/app/themes/good/index.js': discoveryMod(),
+      },
+      {
+        '/app/themes/broken/package.json': discoveryPkg('broken'),
+        '/app/themes/good/package.json': discoveryPkg('good'),
+      }
+    );
+
+    expect(listRegisteredThemes()).toHaveLength(1);
+    expect(getRegisteredThemeBySlug('good')).toBeTruthy();
+    expect(getRegisteredThemeBySlug('broken')).toBeNull();
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ folder: 'broken', err: expect.any(Error) }),
+      'Skipping malformed theme'
+    );
+  });
+
+  it('soft-skips folder/slug mismatch and logs', () => {
+    __discoverThemesFrom(
+      { '/app/themes/folder-a/index.js': discoveryMod() },
+      { '/app/themes/folder-a/package.json': discoveryPkg('other-slug') }
+    );
+
+    expect(listRegisteredThemes()).toEqual([]);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ folder: 'folder-a', err: expect.any(Error) }),
+      'Skipping malformed theme'
+    );
+  });
+
+  it('soft-skips packages that fail merge and logs', () => {
+    __discoverThemesFrom(
+      { '/app/themes/nometas/index.js': discoveryMod() },
+      {
+        '/app/themes/nometas/package.json': {
+          name: '@bermooda/theme-nometas',
+          version: '1.0.0',
+          // engine present so engine check passes; title/slug missing → merge fails
+          bermooda: { engine: '>=0.1.0' },
+        },
+      }
+    );
+
+    expect(listRegisteredThemes()).toEqual([]);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ folder: 'nometas', err: expect.any(Error) }),
+      'Skipping malformed theme'
+    );
+  });
+
+  it('throws on duplicate theme slug (outside soft-skip)', () => {
+    // Two module paths resolve to the same folder/slug — second must hard-fail.
+    expect(() =>
+      __discoverThemesFrom(
+        {
+          '/workspace/app/themes/dup/index.js': discoveryMod(),
+          '/vendor/app/themes/dup/index.js': discoveryMod(),
+        },
+        { '/workspace/app/themes/dup/package.json': discoveryPkg('dup') }
+      )
+    ).toThrow(/Duplicate theme slug "dup"/);
+
+    expect(getRegisteredThemeBySlug('dup')).toBeTruthy();
+    expect(logger.error).not.toHaveBeenCalledWith(
+      expect.anything(),
+      'Skipping malformed theme'
+    );
+  });
+
+  it('throws when package.json is missing for a theme folder', () => {
+    expect(() =>
+      __discoverThemesFrom(
+        { '/app/themes/orphan/index.js': discoveryMod() },
+        {}
+      )
+    ).toThrow(/Missing package.json for theme folder "orphan"/);
   });
 });
