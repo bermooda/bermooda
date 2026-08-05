@@ -2,6 +2,7 @@
 // B2B price lists and customer-group-aware variant pricing.
 
 import prisma from '#/libs/prisma.server';
+import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import { getChannelPriceOverride } from '#/core/channels/index.server';
 
 /**
@@ -370,12 +371,14 @@ export async function listPriceLists() {
 
 /**
  * Load a price list with entries for the admin detail page.
+ * Product titles come from Translation rows (Product has no title column).
  *
  * @param {string} id
+ * @param {string} [locale='en']
  * @returns {Promise<object | null>}
  */
-export async function getPriceList(id) {
-  return prisma.priceList.findUnique({
+export async function getPriceList(id, locale = 'en') {
+  const priceList = await prisma.priceList.findUnique({
     where: { id },
     include: {
       customerGroup: true,
@@ -386,7 +389,7 @@ export async function getPriceList(id) {
             select: {
               id: true,
               sku: true,
-              product: { select: { id: true, title: true } },
+              product: { select: { id: true } },
             },
           },
         },
@@ -394,6 +397,33 @@ export async function getPriceList(id) {
       },
     },
   });
+
+  if (!priceList) return null;
+
+  const productIds = priceList.entries
+    .map(/** @param {{ variant?: { product?: { id?: string } } }} entry */ (entry) => entry.variant?.product?.id)
+    .filter(Boolean);
+  const titleMap = await loadProductTitleMap(productIds, locale);
+
+  return {
+    ...priceList,
+    entries: priceList.entries.map(
+      /** @param {{ variant?: { product?: { id: string } } }} entry */ (entry) => {
+        const product = entry.variant?.product;
+        if (!product) return entry;
+        return {
+          ...entry,
+          variant: {
+            ...entry.variant,
+            product: {
+              ...product,
+              title: titleMap.get(product.id) ?? null,
+            },
+          },
+        };
+      }
+    ),
+  };
 }
 
 export async function createPriceList(data) {

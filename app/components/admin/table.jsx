@@ -7,7 +7,7 @@ import clsx from 'clsx';
  * - `default` — contained surface with border, shadow, and horizontal scroll.
  * - `sticky` — Tailwind Plus “with sticky header” layout: page-aligned
  *   columns, `border-separate` / `border-spacing-0`, frosted sticky headers
- *   that pin flush to the admin main scrollport (`top-0`).
+ *   that pin flush to the viewport (`top-0`).
  *   Pair with `sticky` on `Th` / `Td` / `THead` / `TBody`.
  *
  * Compose with the exported `Th` / `Td` helpers, or pass raw `<thead>` /
@@ -25,8 +25,8 @@ export default function Table({
   className = '',
 }) {
   if (variant === 'sticky') {
-    // No overflow-x wrapper: non-visible overflow on an ancestor breaks
-    // position:sticky relative to the admin main scrollport.
+    // No overflow wrapper: any non-visible overflow ancestor becomes the
+    // sticky containing scrollport and breaks pinning to the document/viewport.
     return (
       <div className={clsx('flow-root', className)}>
         <div className="inline-block min-w-full align-middle">

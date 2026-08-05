@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('#/libs/prisma.server', () => ({
   default: {
     variantPrice: { findUnique: vi.fn(), findMany: vi.fn() },
-    priceList: { findMany: vi.fn() },
+    priceList: { findMany: vi.fn(), findUnique: vi.fn() },
     customerGroupMember: { findMany: vi.fn() },
     channelPriceOverride: { findMany: vi.fn() },
   },
@@ -15,12 +15,18 @@ vi.mock('#/core/channels/index.server', () => ({
   getChannelPriceOverride: vi.fn(),
 }));
 
+vi.mock('#/core/catalog/translations.server', () => ({
+  loadProductTitleMap: vi.fn(),
+}));
+
 import prisma from '#/libs/prisma.server';
+import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import { getChannelPriceOverride } from '#/core/channels/index.server';
 import {
   applyPriceListToCartLines,
   buildPriceListGroupWhere,
   getCustomerGroupIds,
+  getPriceList,
   isPriceListActive,
   pickBestVariantPrice,
   resolveCustomerGroupIds,
@@ -262,5 +268,42 @@ describe('resolveCustomerGroupIds', () => {
     await expect(
       resolveCustomerGroupIds({ customerId: 'cust-1' })
     ).resolves.toEqual(['g1']);
+  });
+});
+
+describe('getPriceList', () => {
+  it('returns null when the price list is missing', async () => {
+    prisma.priceList.findUnique.mockResolvedValue(null);
+
+    await expect(getPriceList('missing')).resolves.toBeNull();
+    expect(loadProductTitleMap).not.toHaveBeenCalled();
+  });
+
+  it('attaches translated product titles to entries', async () => {
+    prisma.priceList.findUnique.mockResolvedValue({
+      id: 'pl1',
+      name: 'Wholesale',
+      entries: [
+        {
+          id: 'e1',
+          variant: {
+            id: 'v1',
+            sku: 'SKU-1',
+            product: { id: 'p1' },
+          },
+        },
+      ],
+      _count: { entries: 1 },
+      customerGroup: null,
+    });
+    loadProductTitleMap.mockResolvedValue(new Map([['p1', 'Blue Shirt']]));
+
+    const result = await getPriceList('pl1');
+
+    expect(loadProductTitleMap).toHaveBeenCalledWith(['p1'], 'en');
+    expect(result.entries[0].variant.product).toEqual({
+      id: 'p1',
+      title: 'Blue Shirt',
+    });
   });
 });

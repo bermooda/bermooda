@@ -420,7 +420,12 @@ export default function AdminLayout() {
 
   return (
     <I18nContext.Provider value={{ t }}>
-      <div className="bg-bg text-text flex min-h-screen">
+      {/*
+        Document is the scrollport (no overflow on main). Nested overflow:auto
+        on an unbounded main breaks position:sticky and can create empty
+        overscroll below content. Sticky table headers use top-0 vs the viewport.
+      */}
+      <div className="bg-bg text-text flex min-h-full">
         {/* Sidebars */}
         <DesktopSidebar onOpenCommandPalette={openPalette} />
         <MobileSidebar
@@ -433,11 +438,7 @@ export default function AdminLayout() {
         <div className="flex flex-1 flex-col md:ml-64">
           <CommandPalette open={open} onOpenChange={setOpen} />
 
-          {/*
-            Padding lives on the inner shell (not the scrollport) so
-            position:sticky top-0 headers can sit flush at the top of main.
-          */}
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1">
             <div className="mx-auto w-full max-w-7xl p-4 md:p-6">
               <button
                 type="button"

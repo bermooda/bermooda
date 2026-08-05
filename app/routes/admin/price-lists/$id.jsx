@@ -6,6 +6,7 @@ import {
   useNavigation,
 } from 'react-router';
 
+import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import { useT } from '#/core/i18n';
 import { listRecentVariantsForInventory } from '#/core/inventory/index.server';
 import {
@@ -33,11 +34,19 @@ export async function loader({ params }) {
     throw new Response('Price list not found', { status: 404 });
   }
 
-  const variants = recentVariants.map((variant) => ({
-    id: variant.id,
-    sku: variant.sku,
-    title: variant.product?.title ?? null,
-  }));
+  const productIds = recentVariants
+    .map((variant) => variant.productId ?? variant.product?.id)
+    .filter(Boolean);
+  const titleMap = await loadProductTitleMap(productIds);
+
+  const variants = recentVariants.map((variant) => {
+    const productId = variant.productId ?? variant.product?.id;
+    return {
+      id: variant.id,
+      sku: variant.sku,
+      title: productId ? (titleMap.get(productId) ?? null) : null,
+    };
+  });
 
   return { priceList, variants };
 }
