@@ -48,7 +48,7 @@ Target composition: `PageHeader` → optional `Stat` → bordered `Toolbar` + `S
 
 ### 1c — Pages index
 
-- [ ] `app/routes/admin/pages/index.jsx`
+- [x] `app/routes/admin/pages/index.jsx`
 - Notes: status filter pills in toolbar are fine; sticky table + EmptyState pattern.
 
 ---
