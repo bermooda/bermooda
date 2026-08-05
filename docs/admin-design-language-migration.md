@@ -108,8 +108,9 @@ Target: `mx-auto max-w-5xl` → `PageHeader` + `Breadcrumbs` → two-column `For
 
 ### 4b — Collections create/edit
 
-- [ ] `app/routes/admin/collections/new.jsx`
-- [ ] `app/routes/admin/collections/$id.jsx`
+- [x] `app/routes/admin/collections/new.jsx`
+- [x] `app/routes/admin/collections/$id.jsx`
+- Notes: shared `CollectionEditor` in `#/components/admin/collection-editor.jsx`; create loads product picker + rule options.
 
 ### 4c — Discounts create/edit
 
