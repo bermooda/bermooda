@@ -172,15 +172,15 @@ Use detail shell (`PageHeader`, breadcrumbs, width, semantic tokens, section tit
 
 ### 5a — Orders detail
 
-- [ ] `app/routes/admin/orders/$id.jsx`
+- [x] `app/routes/admin/orders/$id.jsx`
 
 ### 5b — Quotes detail
 
-- [ ] `app/routes/admin/quotes/$id.jsx`
+- [x] `app/routes/admin/quotes/$id.jsx`
 
 ### 5c — Product merchandising sub-page
 
-- [ ] `app/routes/admin/products/$id/merchandising.jsx` (breadcrumbs + FormSection-style sections where fields exist)
+- [x] `app/routes/admin/products/$id/merchandising.jsx` (breadcrumbs + FormSection-style sections where fields exist)
 
 ---
 

@@ -1,5 +1,4 @@
-import { redirect } from 'react-router';
-import { Form, useLoaderData } from 'react-router';
+import { Form, redirect, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin/index.server';
 import {
@@ -13,6 +12,8 @@ import {
   setProductRelations,
 } from '#/core/catalog/relations.server';
 import { useT } from '#/core/i18n';
+import Breadcrumbs from '#/components/admin/breadcrumbs';
+import FormSection from '#/components/admin/form-section';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
@@ -68,81 +69,134 @@ export function meta({ loaderData }) {
 export default function AdminProductMerchandisingRoute() {
   const t = useT();
   const { product, attributes, related } = useLoaderData();
+  const productTitle =
+    product.title ??
+    t('admin.products.editor.fallbackTitle', { id: product.id });
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-5xl">
       <PageHeader
-        title={t('admin.products.merchandising.title', {
-          title: product.title,
-        })}
+        breadcrumbs={
+          <Breadcrumbs
+            items={[
+              {
+                label: t('admin.products.index.title'),
+                href: '/admin/products',
+              },
+              {
+                label: productTitle,
+                href: `/admin/products/${product.id}`,
+              },
+              { label: t('admin.products.merchandising.pageTitle') },
+            ]}
+          />
+        }
+        title={t('admin.products.merchandising.pageTitle')}
         subtitle={t('admin.products.merchandising.subtitle')}
       />
 
-      <section>
-        <h2 className="mb-3 text-lg font-semibold">
-          {t('admin.products.merchandising.attributesHeading')}
-        </h2>
-        <ul className="mb-4 divide-y rounded border">
-          {attributes.map((attr) => (
-            <li
-              key={attr.id}
-              className="flex items-center justify-between px-3 py-2"
+      <div className="space-y-12">
+        <FormSection
+          title={t('admin.products.merchandising.attributesHeading')}
+          description={t('admin.products.merchandising.attributesDescription')}
+        >
+          <ul className="border-border divide-border mb-6 divide-y rounded-md border">
+            {attributes.length === 0 ? (
+              <li className="text-text-muted px-3 py-2 text-sm">
+                {t('admin.products.merchandising.noAttributes')}
+              </li>
+            ) : (
+              attributes.map((attr) => (
+                <li
+                  key={attr.id}
+                  className="flex items-center justify-between gap-3 px-3 py-2"
+                >
+                  <span className="text-text text-sm">
+                    <span className="font-medium">{attr.name}</span>
+                    <span className="text-text-muted">
+                      : {attr.values.map((v) => v.value).join(', ')}
+                    </span>
+                  </span>
+                  <Form method="post">
+                    <input
+                      type="hidden"
+                      name="intent"
+                      value="deleteAttribute"
+                    />
+                    <input type="hidden" name="attributeId" value={attr.id} />
+                    <button
+                      type="submit"
+                      className="text-danger hover:text-danger/80 text-sm font-semibold"
+                    >
+                      {t('admin.products.merchandising.delete')}
+                    </button>
+                  </Form>
+                </li>
+              ))
+            )}
+          </ul>
+          <Form
+            method="post"
+            className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6"
+          >
+            <input type="hidden" name="intent" value="addAttribute" />
+            <Field
+              label={t('admin.products.merchandising.name')}
+              htmlFor="name"
+              className="sm:col-span-3"
             >
-              <span>
-                {attr.name}: {attr.values.map((v) => v.value).join(', ')}
-              </span>
-              <Form method="post">
-                <input type="hidden" name="intent" value="deleteAttribute" />
-                <input type="hidden" name="attributeId" value={attr.id} />
-                <button type="submit" className="text-sm text-red-600">
-                  {t('admin.products.merchandising.delete')}
-                </button>
-              </Form>
-            </li>
-          ))}
-        </ul>
-        <Form method="post" className="grid max-w-lg gap-3">
-          <input type="hidden" name="intent" value="addAttribute" />
-          <Field label={t('admin.products.merchandising.name')} htmlFor="name">
-            <Input id="name" name="name" required />
-          </Field>
-          <Field
-            label={t('admin.products.merchandising.values')}
-            htmlFor="values"
-          >
-            <Input
-              id="values"
-              name="values"
-              placeholder={t('admin.products.merchandising.valuesPlaceholder')}
-            />
-          </Field>
-          <ButtonSubmit>
-            {t('admin.products.merchandising.addAttribute')}
-          </ButtonSubmit>
-        </Form>
-      </section>
+              <Input id="name" name="name" required />
+            </Field>
+            <Field
+              label={t('admin.products.merchandising.values')}
+              htmlFor="values"
+              className="sm:col-span-3"
+            >
+              <Input
+                id="values"
+                name="values"
+                placeholder={t(
+                  'admin.products.merchandising.valuesPlaceholder'
+                )}
+              />
+            </Field>
+            <div className="sm:col-span-6">
+              <ButtonSubmit>
+                {t('admin.products.merchandising.addAttribute')}
+              </ButtonSubmit>
+            </div>
+          </Form>
+        </FormSection>
 
-      <section>
-        <h2 className="mb-3 text-lg font-semibold">
-          {t('admin.products.merchandising.relatedHeading')}
-        </h2>
-        <Form method="post" className="max-w-lg space-y-3">
-          <input type="hidden" name="intent" value="setRelated" />
-          <Field
-            label={t('admin.products.merchandising.relatedIds')}
-            htmlFor="relatedIds"
+        <FormSection
+          title={t('admin.products.merchandising.relatedHeading')}
+          description={t('admin.products.merchandising.relatedDescription')}
+          last
+        >
+          <Form
+            method="post"
+            className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6"
           >
-            <Input
-              id="relatedIds"
-              name="relatedIds"
-              defaultValue={related.map((r) => r.relatedId).join(', ')}
-            />
-          </Field>
-          <ButtonSubmit>
-            {t('admin.products.merchandising.saveRelated')}
-          </ButtonSubmit>
-        </Form>
-      </section>
+            <input type="hidden" name="intent" value="setRelated" />
+            <Field
+              label={t('admin.products.merchandising.relatedIds')}
+              htmlFor="relatedIds"
+              className="col-span-full"
+            >
+              <Input
+                id="relatedIds"
+                name="relatedIds"
+                defaultValue={related.map((r) => r.relatedId).join(', ')}
+              />
+            </Field>
+            <div className="sm:col-span-6">
+              <ButtonSubmit>
+                {t('admin.products.merchandising.saveRelated')}
+              </ButtonSubmit>
+            </div>
+          </Form>
+        </FormSection>
+      </div>
     </div>
   );
 }
