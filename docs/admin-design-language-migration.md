@@ -28,7 +28,7 @@ Use one **session / PR** per checklist section (or a smaller subset if a section
 - [x] Reference list — `app/routes/admin/products/index.jsx`
 - [x] Reference detail — `app/components/admin/product-editor.jsx` (+ `products/$id`, `products/new`)
 
-**Optional follow-up (any early session):** extract shared `FormSection` from product-editor into `#/components/admin/form-section.jsx` so detail migrations share one component.
+**Done:** shared `FormSection` lives in `#/components/admin/form-section.jsx` (extracted with Phase 4a).
 
 ---
 
@@ -102,8 +102,9 @@ Target: `mx-auto max-w-5xl` → `PageHeader` + `Breadcrumbs` → two-column `For
 
 ### 4a — Page editor (unlocks pages create/edit)
 
-- [ ] `app/components/admin/page-editor.jsx`
-- [ ] Verify `app/routes/admin/pages/$id.jsx` + `pages/new.jsx` (thin routes)
+- [x] `app/components/admin/page-editor.jsx`
+- [x] Verify `app/routes/admin/pages/$id.jsx` + `pages/new.jsx` (thin routes)
+- Notes: extracted shared `FormSection` to `#/components/admin/form-section.jsx`; product-editor imports it.
 
 ### 4b — Collections create/edit
 
