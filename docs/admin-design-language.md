@@ -417,6 +417,8 @@ Products uses a non-sticky footer (preferred default for detail pages):
 
 ## 7. Migration notes
 
+Phased checklist (one area per session): [admin-design-language-migration.md](./admin-design-language-migration.md).
+
 When updating an existing admin page:
 
 1. Identify list vs detail.
