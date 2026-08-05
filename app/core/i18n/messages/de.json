@@ -989,7 +989,7 @@
   "admin.companies.index.resultsOne": "{count} Ergebnis",
   "admin.companies.index.emptyTitle": "Noch keine Unternehmen",
   "admin.companies.index.emptyTitleSearch": "Keine Unternehmen passen zur Suche",
-    "admin.companies.index.emptyDescription": "Erstellen Sie ein Unternehmenskonto für gemeinsames Einkaufen.",
+  "admin.companies.index.emptyDescription": "Erstellen Sie ein Unternehmenskonto für gemeinsames Einkaufen.",
   "admin.companies.index.emptyDescriptionSearch": "Anderen Suchbegriff versuchen oder Filter löschen.",
   "admin.companies.index.col.company": "Unternehmen",
   "admin.companies.index.col.netTerms": "Zahlungsziel",
