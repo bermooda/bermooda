@@ -1,3 +1,6 @@
+// app/routes/admin/customers/index.jsx
+// Customers admin list — sticky-header table with search and stats.
+
 import { PlusIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import {
   Link,
@@ -54,12 +57,24 @@ export async function loader({ request }) {
   };
 }
 
+/**
+ * @param {string} iso
+ * @returns {string}
+ */
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
+}
+
+/**
+ * @param {{ name?: string | null, email: string }} row
+ * @returns {string}
+ */
+function customerLabel(row) {
+  return row.name || row.email;
 }
 
 export default function AdminCustomersRoute() {
@@ -75,13 +90,6 @@ export default function AdminCustomersRoute() {
       return next;
     });
   }
-
-  const columns = [
-    t('admin.customers.index.col.customer'),
-    t('admin.customers.index.col.phone'),
-    t('admin.customers.index.col.orders'),
-    t('admin.customers.index.col.joined'),
-  ];
 
   return (
     <div>
@@ -107,136 +115,129 @@ export default function AdminCustomersRoute() {
         />
       </div>
 
-      <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
-        <Toolbar>
-          <SearchField
-            defaultValue={q}
-            placeholder={t('admin.customers.index.searchPlaceholder')}
-            formClassName="w-full sm:max-w-sm"
-          />
-          <ToolbarGroup>
-            <span className="text-text-muted text-sm">
-              {total === 1
-                ? t('admin.customers.index.resultsOne', { count: total })
-                : t('admin.customers.index.results', { count: total })}
-            </span>
-          </ToolbarGroup>
-        </Toolbar>
+      <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
+        <SearchField
+          defaultValue={q}
+          placeholder={t('admin.customers.index.searchPlaceholder')}
+          formClassName="w-full sm:max-w-sm"
+        />
+        <ToolbarGroup>
+          <span className="text-text-muted text-sm">
+            {total === 1
+              ? t('admin.customers.index.resultsOne', { count: total })
+              : t('admin.customers.index.results', { count: total })}
+          </span>
+        </ToolbarGroup>
+      </Toolbar>
 
-        <Table className="hidden rounded-none border-0 shadow-none md:block">
-          <THead>
+      {rows.length === 0 ? (
+        <EmptyState
+          icon={UserGroupIcon}
+          title={t('admin.customers.index.emptyTitle')}
+          description={
+            q
+              ? t('admin.customers.index.emptyDescriptionSearch')
+              : t('admin.customers.index.emptyDescription')
+          }
+          action={
+            !q && (
+              <Link
+                to="/admin/customers/new"
+                className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
+              >
+                <PlusIcon className="h-4 w-4" />
+                {t('admin.customers.index.newButton')}
+              </Link>
+            )
+          }
+        />
+      ) : (
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
             <tr>
-              {columns.map((col) => (
-                <Th key={col}>{col}</Th>
-              ))}
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                {t('admin.customers.index.col.customer')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 sm:table-cell">
+                {t('admin.customers.index.col.phone')}
+              </Th>
+              <Th sticky className="px-3 py-3.5">
+                {t('admin.customers.index.col.orders')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 md:table-cell">
+                {t('admin.customers.index.col.joined')}
+              </Th>
+              <Th sticky className="py-3.5 pr-1 pl-3 sm:pr-0">
+                <span className="sr-only">
+                  {t('admin.customers.index.col.edit')}
+                </span>
+              </Th>
             </tr>
           </THead>
-          <TBody>
-            {rows.length === 0 && (
-              <tr>
-                <Td colSpan={4} className="p-0">
-                  <EmptyState
-                    icon={UserGroupIcon}
-                    title={t('admin.customers.index.emptyTitle')}
-                    description={
-                      q
-                        ? t('admin.customers.index.emptyDescriptionSearch')
-                        : t('admin.customers.index.emptyDescription')
+          <TBody sticky>
+            {rows.map((row) => {
+              const label = customerLabel(row);
+              return (
+                <Tr
+                  key={row.id}
+                  role="link"
+                  tabIndex={0}
+                  className="group cursor-pointer"
+                  onClick={() => navigate(`/admin/customers/${row.id}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      navigate(`/admin/customers/${row.id}`);
                     }
-                    action={
-                      !q && (
-                        <Link
-                          to="/admin/customers/new"
-                          className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
-                        >
-                          <PlusIcon className="h-4 w-4" />
-                          {t('admin.customers.index.newButton')}
-                        </Link>
-                      )
-                    }
-                    className="border-0 shadow-none"
-                  />
-                </Td>
-              </tr>
-            )}
-            {rows.map((row) => (
-              <Tr
-                key={row.id}
-                role="link"
-                tabIndex={0}
-                className="group cursor-pointer"
-                onClick={() => navigate(`/admin/customers/${row.id}`)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    navigate(`/admin/customers/${row.id}`);
-                  }
-                }}
-              >
-                <Td className="whitespace-normal">
-                  <span className="block min-w-0">
-                    <span className="text-text group-hover:text-accent block truncate font-medium transition-colors">
-                      {row.name || row.email}
-                    </span>
-                    {row.name && (
-                      <span className="text-text-muted mt-0.5 block truncate text-xs">
-                        {row.email}
+                  }}
+                >
+                  <Td
+                    sticky
+                    className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+                  >
+                    <span className="block min-w-0">
+                      <span className="group-hover:text-accent block truncate font-medium transition-colors">
+                        {label}
                       </span>
-                    )}
-                  </span>
-                </Td>
-                <Td className="text-text">{row.phone ?? '—'}</Td>
-                <Td className="tabular-nums">{row.orderCount}</Td>
-                <Td className="tabular-nums">{formatDate(row.createdAt)}</Td>
-              </Tr>
-            ))}
+                      <span className="text-text-muted mt-0.5 block truncate font-mono text-xs font-normal">
+                        {row.name ? row.email : row.id.slice(0, 8)}
+                      </span>
+                    </span>
+                  </Td>
+                  <Td
+                    sticky
+                    className="text-text hidden px-3 py-4 sm:table-cell"
+                  >
+                    {row.phone ?? '—'}
+                  </Td>
+                  <Td sticky className="px-3 py-4 tabular-nums">
+                    {row.orderCount}
+                  </Td>
+                  <Td
+                    sticky
+                    className="hidden px-3 py-4 tabular-nums md:table-cell"
+                  >
+                    {formatDate(row.createdAt)}
+                  </Td>
+                  <Td
+                    sticky
+                    className="py-4 pr-1 pl-3 text-right text-sm font-medium sm:pr-0"
+                  >
+                    <Link
+                      to={`/admin/customers/${row.id}`}
+                      className="text-accent hover:text-accent-hover"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {t('admin.customers.index.edit')}
+                      <span className="sr-only">, {label}</span>
+                    </Link>
+                  </Td>
+                </Tr>
+              );
+            })}
           </TBody>
         </Table>
-
-        <div className="divide-border divide-y md:hidden">
-          {rows.length === 0 ? (
-            <EmptyState
-              icon={UserGroupIcon}
-              title={t('admin.customers.index.emptyTitle')}
-              description={
-                q
-                  ? t('admin.customers.index.emptyDescriptionSearchShort')
-                  : t('admin.customers.index.emptyDescription')
-              }
-              className="border-0 shadow-none"
-            />
-          ) : (
-            rows.map((row) => (
-              <Link
-                key={row.id}
-                to={`/admin/customers/${row.id}`}
-                className="hover:bg-surface-2/60 block px-4 py-4 transition-colors"
-              >
-                <p className="text-text truncate text-sm font-medium">
-                  {row.name || row.email}
-                </p>
-                {row.name && (
-                  <p className="text-text-muted mt-0.5 truncate text-xs">
-                    {row.email}
-                  </p>
-                )}
-                <div className="text-text-muted mt-3 flex items-center justify-between text-xs">
-                  <span>
-                    {row.orderCount === 1
-                      ? t('admin.customers.index.ordersCountOne', {
-                          count: row.orderCount,
-                        })
-                      : t('admin.customers.index.ordersCount', {
-                          count: row.orderCount,
-                        })}
-                  </span>
-                  <span>{formatDate(row.createdAt)}</span>
-                </div>
-              </Link>
-            ))
-          )}
-        </div>
-      </div>
+      )}
 
       <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
     </div>
