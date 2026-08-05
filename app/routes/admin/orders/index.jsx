@@ -1,12 +1,8 @@
 // app/routes/admin/orders/index.jsx
-// Orders admin list — paginated table with status filter and search.
+// Orders admin list — sticky-header table with status filter and search.
 
+import { ShoppingBagIcon } from '@heroicons/react/24/outline';
 import {
-  MagnifyingGlassIcon,
-  ShoppingBagIcon,
-} from '@heroicons/react/24/outline';
-import {
-  Form,
   Link,
   useLoaderData,
   useNavigate,
@@ -17,11 +13,11 @@ import { formatPrice } from '#/core/currency/format';
 import { useT } from '#/core/i18n';
 import { loadOrdersAdminIndexData } from '#/core/orders/index.server';
 import EmptyState from '#/components/admin/empty-state';
-import { controlClasses } from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
+import SearchField from '#/components/admin/search-field';
 import Stat from '#/components/admin/stat';
 import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
@@ -32,6 +28,10 @@ export async function loader({ request }) {
   return loadOrdersAdminIndexData(request, { pageSize: PAGE_SIZE });
 }
 
+/**
+ * @param {string} iso
+ * @returns {string}
+ */
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
@@ -64,6 +64,19 @@ export default function AdminOrdersRoute() {
     });
   }
 
+  /**
+   * @param {string} nextStatus
+   */
+  function setStatus(nextStatus) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (!nextStatus) next.delete('status');
+      else next.set('status', nextStatus);
+      next.delete('page');
+      return next;
+    });
+  }
+
   const statusOptions = [
     { value: '', label: t('admin.orders.index.statusAll') },
     { value: 'pending', label: t('admin.orders.status.pending') },
@@ -73,13 +86,7 @@ export default function AdminOrdersRoute() {
     { value: 'refunded', label: t('admin.orders.status.refunded') },
   ];
 
-  const columns = [
-    { key: 'order', label: t('admin.orders.index.col.order') },
-    { key: 'customer', label: t('admin.orders.index.col.customer') },
-    { key: 'status', label: t('admin.orders.index.col.status') },
-    { key: 'total', label: t('admin.orders.index.col.total'), right: true },
-    { key: 'created', label: t('admin.orders.index.col.created') },
-  ];
+  const hasFilter = Boolean(q) || status !== 'all';
 
   return (
     <div>
@@ -101,73 +108,74 @@ export default function AdminOrdersRoute() {
         />
       </div>
 
-      <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
-        <Toolbar>
-          <Form
-            method="get"
-            className="flex w-full flex-col gap-3 sm:max-w-xl sm:flex-row"
+      <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
+        <div className="flex w-full flex-col gap-3 sm:max-w-xl sm:flex-row sm:items-center">
+          <SearchField
+            defaultValue={q}
+            placeholder={t('admin.orders.index.searchPlaceholder')}
+            formClassName="w-full flex-1"
+            hiddenFields={status !== 'all' ? { status } : {}}
+          />
+          <Select
+            name="status"
+            value={status === 'all' ? '' : status}
+            onChange={(event) => setStatus(event.target.value)}
+            className="sm:w-44"
+            aria-label={t('admin.orders.index.col.status')}
           >
-            <div className="relative flex-1">
-              <MagnifyingGlassIcon className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <input
-                type="search"
-                name="q"
-                defaultValue={q}
-                placeholder={t('admin.orders.index.searchPlaceholder')}
-                className={`${controlClasses} pl-9`}
-              />
-            </div>
-            <Select
-              name="status"
-              defaultValue={status === 'all' ? '' : status}
-              className="sm:w-44"
-            >
-              {statusOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </Select>
-          </Form>
-          <ToolbarGroup>
-            <span className="text-text-muted text-sm">
-              {total === 1
-                ? t('admin.orders.index.resultsOne', { count: total })
-                : t('admin.orders.index.results', { count: total })}
-            </span>
-          </ToolbarGroup>
-        </Toolbar>
+            {statusOptions.map((opt) => (
+              <option key={opt.value || 'all'} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <ToolbarGroup>
+          <span className="text-text-muted text-sm">
+            {total === 1
+              ? t('admin.orders.index.resultsOne', { count: total })
+              : t('admin.orders.index.results', { count: total })}
+          </span>
+        </ToolbarGroup>
+      </Toolbar>
 
-        <Table className="hidden rounded-none border-0 shadow-none md:block">
-          <THead>
+      {rows.length === 0 ? (
+        <EmptyState
+          icon={ShoppingBagIcon}
+          title={t('admin.orders.index.emptyTitle')}
+          description={
+            hasFilter
+              ? t('admin.orders.index.emptyDescriptionSearch')
+              : t('admin.orders.index.emptyDescription')
+          }
+        />
+      ) : (
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
             <tr>
-              {columns.map((col) => (
-                <Th
-                  key={col.key}
-                  className={col.right ? 'text-right' : undefined}
-                >
-                  {col.label}
-                </Th>
-              ))}
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                {t('admin.orders.index.col.order')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 sm:table-cell">
+                {t('admin.orders.index.col.customer')}
+              </Th>
+              <Th sticky className="px-3 py-3.5">
+                {t('admin.orders.index.col.status')}
+              </Th>
+              <Th sticky className="px-3 py-3.5 text-right">
+                {t('admin.orders.index.col.total')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 md:table-cell">
+                {t('admin.orders.index.col.created')}
+              </Th>
+              <Th sticky className="py-3.5 pr-1 pl-3 sm:pr-0">
+                <span className="sr-only">
+                  {t('admin.orders.index.col.view')}
+                </span>
+              </Th>
             </tr>
           </THead>
-          <TBody>
-            {rows.length === 0 && (
-              <tr>
-                <Td colSpan={5} className="p-0">
-                  <EmptyState
-                    icon={ShoppingBagIcon}
-                    title={t('admin.orders.index.emptyTitle')}
-                    description={
-                      q || status !== 'all'
-                        ? t('admin.orders.index.emptyDescriptionSearch')
-                        : t('admin.orders.index.emptyDescription')
-                    }
-                    className="border-0 shadow-none"
-                  />
-                </Td>
-              </tr>
-            )}
+          <TBody sticky>
             {rows.map((row) => (
               <Tr
                 key={row.id}
@@ -182,63 +190,55 @@ export default function AdminOrdersRoute() {
                   }
                 }}
               >
-                <Td>
-                  <span className="text-text group-hover:text-accent font-mono text-sm font-medium transition-colors">
-                    {row.orderNumber}
+                <Td
+                  sticky
+                  className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+                >
+                  <span className="block min-w-0">
+                    <span className="group-hover:text-accent block truncate font-mono font-medium transition-colors">
+                      {row.orderNumber}
+                    </span>
+                    <span className="text-text-muted mt-0.5 block truncate text-xs font-normal sm:hidden">
+                      {row.email}
+                    </span>
                   </span>
                 </Td>
-                <Td className="text-text whitespace-normal">
+                <Td
+                  sticky
+                  className="hidden px-3 py-4 whitespace-normal sm:table-cell"
+                >
                   <span className="block truncate">{row.email}</span>
                 </Td>
-                <Td>
+                <Td sticky className="px-3 py-4">
                   <OrderStatusBadge status={row.status} />
                 </Td>
-                <Td className="text-text text-right tabular-nums">
+                <Td sticky className="px-3 py-4 text-right tabular-nums">
                   {formatPrice(row.totalCents, row.currency)}
                 </Td>
-                <Td className="tabular-nums">{formatDate(row.createdAt)}</Td>
+                <Td
+                  sticky
+                  className="hidden px-3 py-4 tabular-nums md:table-cell"
+                >
+                  {formatDate(row.createdAt)}
+                </Td>
+                <Td
+                  sticky
+                  className="py-4 pr-1 pl-3 text-right text-sm font-medium sm:pr-0"
+                >
+                  <Link
+                    to={`/admin/orders/${row.id}`}
+                    className="text-accent hover:text-accent-hover"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    {t('admin.orders.index.view')}
+                    <span className="sr-only">, {row.orderNumber}</span>
+                  </Link>
+                </Td>
               </Tr>
             ))}
           </TBody>
         </Table>
-
-        <div className="divide-border divide-y md:hidden">
-          {rows.length === 0 ? (
-            <EmptyState
-              icon={ShoppingBagIcon}
-              title={t('admin.orders.index.emptyTitle')}
-              description={
-                q || status !== 'all'
-                  ? t('admin.orders.index.emptyDescriptionSearchShort')
-                  : t('admin.orders.index.emptyDescription')
-              }
-              className="border-0 shadow-none"
-            />
-          ) : (
-            rows.map((row) => (
-              <Link
-                key={row.id}
-                to={`/admin/orders/${row.id}`}
-                className="hover:bg-surface-2/60 block px-4 py-4 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <span className="text-accent font-mono text-sm font-medium">
-                    {row.orderNumber}
-                  </span>
-                  <OrderStatusBadge status={row.status} />
-                </div>
-                <p className="text-text mt-2 truncate text-sm">{row.email}</p>
-                <div className="text-text-muted mt-3 flex items-center justify-between text-xs">
-                  <span className="text-text font-medium">
-                    {formatPrice(row.totalCents, row.currency)}
-                  </span>
-                  <span>{formatDate(row.createdAt)}</span>
-                </div>
-              </Link>
-            ))
-          )}
-        </div>
-      </div>
+      )}
 
       <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
     </div>
