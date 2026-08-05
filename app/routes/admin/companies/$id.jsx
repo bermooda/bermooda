@@ -13,14 +13,14 @@ import {
   parseAddCompanyMemberForm,
 } from '#/core/b2b/index.server';
 import { useT } from '#/core/i18n';
-import ActionBar from '#/components/admin/action-bar';
+import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
-import Card, { CardHeader } from '#/components/admin/card';
+import FormSection from '#/components/admin/form-section';
 import Field from '#/components/admin/form/field';
 import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
-import Button, { ButtonSubmit } from '#/components/ui/button';
+import { ButtonSubmit } from '#/components/ui/button';
 
 export async function loader({ params }) {
   try {
@@ -71,7 +71,7 @@ export default function AdminCompanyDetailRoute() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         breadcrumbs={
           <Breadcrumbs
@@ -85,39 +85,44 @@ export default function AdminCompanyDetailRoute() {
           />
         }
         title={company.name}
-        subtitle={t('admin.companies.detail.subtitle', {
-          days: company.netTermsDays,
-          members: company.memberCount ?? 0,
-          quotes: company.quoteCount ?? 0,
-        })}
-        actions={
-          <Button as={Link} to="/admin/companies" variant="secondary">
-            {t('admin.companies.detail.back')}
-          </Button>
+        subtitle={
+          <span className="inline-flex flex-wrap items-center gap-2">
+            <Badge tone={company.active ? 'success' : 'neutral'}>
+              {company.active
+                ? t('admin.companies.detail.active')
+                : t('admin.companies.detail.inactive')}
+            </Badge>
+            <span>
+              {t('admin.companies.detail.subtitle', {
+                days: company.netTermsDays,
+                members: company.memberCount ?? 0,
+                quotes: company.quoteCount ?? 0,
+              })}
+            </span>
+          </span>
         }
       />
 
       <ErrorAlert message={actionData?.error} />
-      {actionData?.ok && (
+      {actionData?.ok ? (
         <SuccessAlert message={t('admin.companies.detail.memberAdded')} />
-      )}
+      ) : null}
 
-      <div className="mt-6 space-y-6">
-        <Card>
-          <CardHeader
-            title={t('admin.companies.detail.detailsTitle')}
-            description={
-              company.taxId
-                ? t('admin.companies.detail.taxIdSet', { taxId: company.taxId })
-                : t('admin.companies.detail.noTaxId')
-            }
-          />
-          <dl className="grid gap-3 text-sm sm:grid-cols-3">
+      <div className="space-y-12">
+        <FormSection
+          title={t('admin.companies.detail.detailsTitle')}
+          description={
+            company.taxId
+              ? t('admin.companies.detail.taxIdSet', { taxId: company.taxId })
+              : t('admin.companies.detail.noTaxId')
+          }
+        >
+          <dl className="grid max-w-2xl gap-6 text-sm sm:grid-cols-3">
             <div>
               <dt className="text-text-muted">
                 {t('admin.companies.detail.status')}
               </dt>
-              <dd className="text-text font-medium">
+              <dd className="text-text mt-1 font-medium">
                 {company.active
                   ? t('admin.companies.detail.active')
                   : t('admin.companies.detail.inactive')}
@@ -127,7 +132,7 @@ export default function AdminCompanyDetailRoute() {
               <dt className="text-text-muted">
                 {t('admin.companies.detail.netTerms')}
               </dt>
-              <dd className="text-text font-medium">
+              <dd className="text-text mt-1 font-medium tabular-nums">
                 {t('admin.companies.detail.netTermsValue', {
                   days: company.netTermsDays,
                 })}
@@ -137,28 +142,33 @@ export default function AdminCompanyDetailRoute() {
               <dt className="text-text-muted">
                 {t('admin.companies.detail.taxId')}
               </dt>
-              <dd className="text-text font-medium">{company.taxId || '—'}</dd>
+              <dd className="text-text mt-1 font-medium">
+                {company.taxId || '—'}
+              </dd>
             </div>
           </dl>
-        </Card>
+        </FormSection>
 
-        <Card>
-          <CardHeader
-            title={t('admin.companies.detail.membersTitle')}
-            description={t('admin.companies.detail.membersDescription')}
-          />
+        <FormSection
+          title={t('admin.companies.detail.membersTitle')}
+          description={t('admin.companies.detail.membersDescription')}
+          last
+        >
           {(company.members ?? []).length === 0 ? (
-            <p className="text-text-muted text-sm">
+            <p className="text-text-muted mb-6 text-sm">
               {t('admin.companies.detail.noMembers')}
             </p>
           ) : (
-            <ul className="divide-border mb-4 divide-y text-sm">
+            <ul className="divide-border border-border mb-6 divide-y rounded-lg border text-sm">
               {(company.members ?? []).map((member) => (
-                <li key={member.id} className="flex justify-between py-2">
+                <li
+                  key={member.id}
+                  className="flex items-center justify-between gap-3 px-4 py-3"
+                >
                   <span className="text-text">
                     {member.customer?.email ?? member.id}
                   </span>
-                  <span className="text-text-muted uppercase">
+                  <span className="text-text-muted text-xs font-medium tracking-wide uppercase">
                     {member.role}
                   </span>
                 </li>
@@ -166,13 +176,16 @@ export default function AdminCompanyDetailRoute() {
             </ul>
           )}
 
-          <Form method="post" className="flex flex-wrap items-end gap-3">
+          <Form
+            method="post"
+            className="flex max-w-2xl flex-wrap items-end gap-3"
+          >
             <input type="hidden" name="intent" value="add-member" />
             <input type="hidden" name="companyId" value={company.id} />
             <Field
               label={t('admin.companies.detail.customer')}
               htmlFor="member-customer"
-              className="flex-1"
+              className="min-w-0 flex-1"
             >
               <Select
                 id="member-customer"
@@ -200,17 +213,17 @@ export default function AdminCompanyDetailRoute() {
                 : t('admin.companies.detail.addMember')}
             </ButtonSubmit>
           </Form>
-        </Card>
+        </FormSection>
+      </div>
 
-        <ActionBar>
-          <span />
-          <Link
-            to="/admin/companies"
-            className="text-text-muted hover:text-text text-sm transition-colors"
-          >
-            {t('admin.companies.detail.backToCompanies')}
-          </Link>
-        </ActionBar>
+      <div className="mt-6 mb-6 flex items-center justify-between gap-x-6">
+        <span />
+        <Link
+          to="/admin/companies"
+          className="text-text text-sm/6 font-semibold transition-colors hover:opacity-80"
+        >
+          {t('admin.companies.detail.backToCompanies')}
+        </Link>
       </div>
     </div>
   );

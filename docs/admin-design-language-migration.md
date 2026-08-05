@@ -120,25 +120,29 @@ Target: `mx-auto max-w-5xl` → `PageHeader` + `Breadcrumbs` → two-column `For
 
 ### 4d — Categories create/edit
 
-- [ ] `app/routes/admin/categories/new.jsx`
-- [ ] `app/routes/admin/categories/$id.jsx`
+- [x] `app/routes/admin/categories/new.jsx`
+- [x] `app/routes/admin/categories/$id.jsx`
+- Notes: shared `CategoryEditor` in `#/components/admin/category-editor.jsx`; create parent select + edit LocaleTabs.
 
 ### 4e — Customers create + edit
 
-- [ ] `app/routes/admin/customers/new.jsx`
-- [ ] `app/routes/admin/customers/$id.jsx` (hybrid: FormSection for profile fields; nested order tables can stay `Table` default)
+- [x] `app/routes/admin/customers/new.jsx`
+- [x] `app/routes/admin/customers/$id.jsx` (hybrid: FormSection for profile fields; nested order tables can stay `Table` default)
+- Notes: create uses `CustomerEditor`; detail keeps multi-intent forms in FormSections with default `Table` for ledger/orders.
 
 ### 4f — Customer groups & companies
 
-- [ ] `app/routes/admin/customer-groups/new.jsx`
-- [ ] `app/routes/admin/customer-groups/$id.jsx`
-- [ ] `app/routes/admin/companies/new.jsx`
-- [ ] `app/routes/admin/companies/$id.jsx` (mostly readonly + member form — FormSection where editing)
+- [x] `app/routes/admin/customer-groups/new.jsx`
+- [x] `app/routes/admin/customer-groups/$id.jsx`
+- [x] `app/routes/admin/companies/new.jsx`
+- [x] `app/routes/admin/companies/$id.jsx` (mostly readonly + member form — FormSection where editing)
+- Notes: create editors extracted; detail pages use FormSection for members (and company readonly details).
 
 ### 4g — Channels
 
-- [ ] `app/routes/admin/channels/new.jsx`
-- [ ] `app/routes/admin/channels/$id.jsx`
+- [x] `app/routes/admin/channels/new.jsx`
+- [x] `app/routes/admin/channels/$id.jsx`
+- Notes: shared `ChannelEditor` in `#/components/admin/channel-editor.jsx`.
 
 ### 4h — Price lists & gift cards / inventory create
 
