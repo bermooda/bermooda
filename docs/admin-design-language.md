@@ -2,9 +2,9 @@
 
 Source of truth for bermooda admin list pages and detail/editor pages. Canonical references:
 
-| Pattern | Reference |
-| ------- | --------- |
-| List (tables) | [`app/routes/admin/products/index.jsx`](../app/routes/admin/products/index.jsx) |
+| Pattern         | Reference                                                                                                                                                             |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| List (tables)   | [`app/routes/admin/products/index.jsx`](../app/routes/admin/products/index.jsx)                                                                                       |
 | Detail (editor) | [`app/components/admin/product-editor.jsx`](../app/components/admin/product-editor.jsx) + [`app/routes/admin/products/$id.jsx`](../app/routes/admin/products/$id.jsx) |
 
 This document replaces the earlier Ghost redesign plan. Apply these patterns when building or migrating any admin page that shows a table, or any admin detail/edit page that should match the products editor.
@@ -27,17 +27,17 @@ Primitives live in [`app/components/admin/`](../app/components/admin/). Prefer t
 
 Defined in [`app/styles/app.css`](../app/styles/app.css) (`@theme` + `.dark` overrides). Use Tailwind utilities that map to these:
 
-| Token | Typical utilities | Role |
-| ----- | ----------------- | ---- |
-| `bg` | `bg-bg` | Page background |
-| `surface` | `bg-surface` | Cards, toolbar, sidebar panels |
-| `surface-2` | `bg-surface-2`, `hover:bg-surface-2/50` | Inset / hover |
-| `border` | `border-border` | Hairline borders |
-| `text` | `text-text` | Primary text |
-| `text-muted` | `text-text-muted` | Secondary text, meta |
-| `accent` | `bg-accent`, `text-accent`, `hover:bg-accent-hover` | Primary CTA, links, focus |
-| `accent-fg` | `text-accent-fg` | Text/icons on accent fills |
-| `success` / `warn` / `danger` | badge tones, destructive text | Semantic only |
+| Token                         | Typical utilities                                   | Role                           |
+| ----------------------------- | --------------------------------------------------- | ------------------------------ |
+| `bg`                          | `bg-bg`                                             | Page background                |
+| `surface`                     | `bg-surface`                                        | Cards, toolbar, sidebar panels |
+| `surface-2`                   | `bg-surface-2`, `hover:bg-surface-2/50`             | Inset / hover                  |
+| `border`                      | `border-border`                                     | Hairline borders               |
+| `text`                        | `text-text`                                         | Primary text                   |
+| `text-muted`                  | `text-text-muted`                                   | Secondary text, meta           |
+| `accent`                      | `bg-accent`, `text-accent`, `hover:bg-accent-hover` | Primary CTA, links, focus      |
+| `accent-fg`                   | `text-accent-fg`                                    | Text/icons on accent fills     |
+| `success` / `warn` / `danger` | badge tones, destructive text                       | Semantic only                  |
 
 **Do not use in admin:** `dark-gradient-*`, `dark-glass`, `glow-accent*`, `text-gradient-accent`, `accent-gradient`, `dark-mesh-gradient`, or decorative multi-stop brand gradients.
 
@@ -121,9 +121,15 @@ Use `Stat` only for high-level counts — not filters.
 <Table variant="sticky" className="mt-2">
   <THead sticky>
     <tr>
-      <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">Primary</Th>
-      <Th sticky className="px-3 py-3.5">Status</Th>
-      <Th sticky className="hidden px-3 py-3.5 sm:table-cell">…</Th>
+      <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+        Primary
+      </Th>
+      <Th sticky className="px-3 py-3.5">
+        Status
+      </Th>
+      <Th sticky className="hidden px-3 py-3.5 sm:table-cell">
+        …
+      </Th>
       {/* … */}
       <Th sticky className="py-3.5 pr-1 pl-3 sm:pr-0">
         <span className="sr-only">Edit</span>
@@ -145,7 +151,10 @@ Use `Stat` only for high-level counts — not filters.
           }
         }}
       >
-        <Td sticky className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0">
+        <Td
+          sticky
+          className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+        >
           <span className="block min-w-0">
             <span className="group-hover:text-accent block truncate font-medium transition-colors">
               {primaryLabel}
@@ -164,18 +173,18 @@ Use `Stat` only for high-level counts — not filters.
 
 **Sticky table rules**
 
-| Rule | Detail |
-| ---- | ------ |
-| Variant | `Table variant="sticky"` + `sticky` on `THead` / `TBody` / `Th` / `Td` |
-| No overflow ancestor | Sticky pins to the viewport; do not wrap in `overflow-hidden` / `overflow-x-auto` |
-| Primary column | Title (medium) + muted mono secondary (slug / id prefix) |
-| Row click | Whole row navigates to detail; keyboard Enter/Space; trailing `Link` uses `stopPropagation` |
-| Hover | Primary label → `group-hover:text-accent`; row uses built-in hover surface |
-| Responsive columns | Hide secondary cols with `hidden sm:table-cell` / `md:` / `lg:` |
-| Numbers / dates | `tabular-nums`; dates like `MMM D, YYYY` |
-| Status | `Badge` tones — e.g. published → `success`, draft → `neutral` |
-| Tags / categories | `Badge tone="accent"`; empty → muted `—` |
-| Trailing action | Accent text link (“Edit”) + `sr-only` resource name |
+| Rule                 | Detail                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| Variant              | `Table variant="sticky"` + `sticky` on `THead` / `TBody` / `Th` / `Td`                      |
+| No overflow ancestor | Sticky pins to the viewport; do not wrap in `overflow-hidden` / `overflow-x-auto`           |
+| Primary column       | Title (medium) + muted mono secondary (slug / id prefix)                                    |
+| Row click            | Whole row navigates to detail; keyboard Enter/Space; trailing `Link` uses `stopPropagation` |
+| Hover                | Primary label → `group-hover:text-accent`; row uses built-in hover surface                  |
+| Responsive columns   | Hide secondary cols with `hidden sm:table-cell` / `md:` / `lg:`                             |
+| Numbers / dates      | `tabular-nums`; dates like `MMM D, YYYY`                                                    |
+| Status               | `Badge` tones — e.g. published → `success`, draft → `neutral`                               |
+| Tags / categories    | `Badge tone="accent"`; empty → muted `—`                                                    |
+| Trailing action      | Accent text link (“Edit”) + `sr-only` resource name                                         |
 
 **Default table variant** (`variant="default"`) — contained bordered surface with horizontal scroll. Use for nested/small tables inside detail sections (e.g. variant price grids), not for primary resource indexes.
 
@@ -297,15 +306,15 @@ function FormSection({ title, description, children, last = false }) {
 
 Use admin form primitives:
 
-| Need | Component |
-| ---- | --------- |
-| Label + control + hint/error | `Field` |
-| Text | `Input` |
-| Multiline | `Textarea` |
-| Select | `Select` |
-| URL slug | `SlugField` |
-| SEO title/description | `SeoFields` |
-| Locale switching | `LocaleTabs` |
+| Need                         | Component    |
+| ---------------------------- | ------------ |
+| Label + control + hint/error | `Field`      |
+| Text                         | `Input`      |
+| Multiline                    | `Textarea`   |
+| Select                       | `Select`     |
+| URL slug                     | `SlugField`  |
+| SEO title/description        | `SeoFields`  |
+| Locale switching             | `LocaleTabs` |
 
 Field grids inside a section typically use:
 
@@ -333,7 +342,10 @@ Products uses a non-sticky footer (preferred default for detail pages):
 ```jsx
 <div className="mt-6 mb-6 flex items-center justify-between gap-x-6">
   {/* left: destructive */}
-  <button type="submit" className="text-danger hover:text-danger/80 text-sm/6 font-semibold …">
+  <button
+    type="submit"
+    className="text-danger hover:text-danger/80 text-sm/6 font-semibold …"
+  >
     Delete
   </button>
   <div className="flex items-center gap-x-6">
@@ -347,10 +359,10 @@ Products uses a non-sticky footer (preferred default for detail pages):
 </div>
 ```
 
-| Position | Action |
-| -------- | ------ |
-| Left | Destructive (delete) — text-only `danger`, confirm before submit |
-| Right | Cancel (text link back to list) + primary `ButtonSubmit` Save/Create |
+| Position | Action                                                               |
+| -------- | -------------------------------------------------------------------- |
+| Left     | Destructive (delete) — text-only `danger`, confirm before submit     |
+| Right    | Cancel (text link back to list) + primary `ButtonSubmit` Save/Create |
 
 `ActionBar` (`#/components/admin/action-bar`) is available when a sticky frosted footer is needed; default new editors to the products footer unless sticky save is required.
 
@@ -375,23 +387,23 @@ Products uses a non-sticky footer (preferred default for detail pages):
 
 ## 5. Component map
 
-| Component | Path | Use on |
-| --------- | ---- | ------ |
-| `PageHeader` | `page-header.jsx` | Every list + detail |
-| `Breadcrumbs` | `breadcrumbs.jsx` | Detail / nested |
-| `Stat` | `stat.jsx` | List summary metrics |
-| `Toolbar` / `ToolbarGroup` | `toolbar.jsx` | List filters/search |
-| `SearchField` | `search-field.jsx` | List search |
-| `Table`, `Th`, `Td`, `Tr`, `THead`, `TBody` | `table.jsx` | Lists (`sticky`); nested (`default`) |
-| `Badge` | `badge.jsx` | Status + tags |
-| `EmptyState` | `empty-state.jsx` | Zero-data lists |
-| `Pagination` | `pagination.jsx` | Paged lists |
-| `Field` / `Input` / `Textarea` / `Select` | `form/*` | Detail forms |
-| `SlugField` / `SeoFields` / `LocaleTabs` | respective files | Localized content editors |
-| `ActionBar` | `action-bar.jsx` | Optional sticky editor footer |
-| `Button` / `ButtonSubmit` | `#/components/ui/button` | Primary/secondary actions |
-| `SuccessAlert` / `ErrorAlert` | `#/components/ui/alert` | Mutation feedback |
-| `Card` | `card.jsx` | Non-table panels when a surface container is needed |
+| Component                                   | Path                     | Use on                                              |
+| ------------------------------------------- | ------------------------ | --------------------------------------------------- |
+| `PageHeader`                                | `page-header.jsx`        | Every list + detail                                 |
+| `Breadcrumbs`                               | `breadcrumbs.jsx`        | Detail / nested                                     |
+| `Stat`                                      | `stat.jsx`               | List summary metrics                                |
+| `Toolbar` / `ToolbarGroup`                  | `toolbar.jsx`            | List filters/search                                 |
+| `SearchField`                               | `search-field.jsx`       | List search                                         |
+| `Table`, `Th`, `Td`, `Tr`, `THead`, `TBody` | `table.jsx`              | Lists (`sticky`); nested (`default`)                |
+| `Badge`                                     | `badge.jsx`              | Status + tags                                       |
+| `EmptyState`                                | `empty-state.jsx`        | Zero-data lists                                     |
+| `Pagination`                                | `pagination.jsx`         | Paged lists                                         |
+| `Field` / `Input` / `Textarea` / `Select`   | `form/*`                 | Detail forms                                        |
+| `SlugField` / `SeoFields` / `LocaleTabs`    | respective files         | Localized content editors                           |
+| `ActionBar`                                 | `action-bar.jsx`         | Optional sticky editor footer                       |
+| `Button` / `ButtonSubmit`                   | `#/components/ui/button` | Primary/secondary actions                           |
+| `SuccessAlert` / `ErrorAlert`               | `#/components/ui/alert`  | Mutation feedback                                   |
+| `Card`                                      | `card.jsx`               | Non-table panels when a surface container is needed |
 
 ---
 

@@ -214,7 +214,7 @@ function AdminUserMenu() {
           </button>
         </MenuItem>
 
-        <hr className="border-border -mx-[3px] my-1 block" />
+        <hr className="border-border -mx-0.75 my-1 block" />
 
         {/* View storefront */}
         <MenuItem>
@@ -229,7 +229,7 @@ function AdminUserMenu() {
           </a>
         </MenuItem>
 
-        <hr className="border-border -mx-[3px] my-1 block" />
+        <hr className="border-border -mx-0.75 my-1 block" />
 
         {/* Logout */}
         <MenuItem>
