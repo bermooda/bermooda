@@ -31,7 +31,7 @@ import {
   receiveReturn,
 } from '#/core/returns/index.server';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
-import Card, { CardHeader } from '#/components/admin/card';
+import FormSection from '#/components/admin/form-section';
 import { controlClasses } from '#/components/admin/form/input';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
@@ -263,21 +263,6 @@ export async function action({ request, params }) {
 
 /**
  * @param {Object} props
- * @param {string} props.title
- * @param {string} [props.description]
- * @param {React.ReactNode} props.children
- */
-function SectionCard({ title, description, children }) {
-  return (
-    <Card>
-      <CardHeader title={title} description={description} />
-      {children}
-    </Card>
-  );
-}
-
-/**
- * @param {Object} props
  * @param {string|null|undefined} props.json
  * @param {string} [props.label]
  * @param {(key: string, vars?: Record<string, string|number>) => string} props.t
@@ -376,7 +361,7 @@ export default function AdminOrderRoute() {
   });
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         breadcrumbs={
           <Breadcrumbs
@@ -399,12 +384,26 @@ export default function AdminOrderRoute() {
           </span>
         }
         actions={
-          <a
-            href={`/admin/orders/${order.id}/documents`}
-            className="border-border bg-surface-2 text-text hover:bg-surface inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-xs transition"
-          >
-            {t('admin.orders.detail.downloadInvoice')}
-          </a>
+          <>
+            <a
+              href={`/admin/orders/${order.id}/documents`}
+              className="border-border bg-surface text-text hover:bg-surface-2 inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-xs transition"
+            >
+              {t('admin.orders.detail.downloadInvoice')}
+            </a>
+            {transitions.map((transition) => (
+              <Form method="post" key={transition.status}>
+                <input type="hidden" name="intent" value="update-status" />
+                <input type="hidden" name="status" value={transition.status} />
+                <ButtonSubmit
+                  variant={transition.danger ? 'danger' : 'primary'}
+                  disabled={isSubmitting}
+                >
+                  {t(transition.labelKey)}
+                </ButtonSubmit>
+              </Form>
+            ))}
+          </>
         }
       />
 
@@ -413,140 +412,125 @@ export default function AdminOrderRoute() {
         slotProps={{ order }}
       />
 
-      {/* Action feedback */}
       {actionData?.ok && (
         <SuccessAlert message={t('admin.orders.detail.saved')} />
       )}
       {actionData?.error && <ErrorAlert message={actionData.error} />}
 
-      {/* Status transitions */}
-      {transitions.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {transitions.map((transition) => (
-            <Form method="post" key={transition.status}>
-              <input type="hidden" name="intent" value="update-status" />
-              <input type="hidden" name="status" value={transition.status} />
-              <ButtonSubmit
-                variant={transition.danger ? 'danger' : 'primary'}
-                disabled={isSubmitting}
-              >
-                {t(transition.labelKey)}
-              </ButtonSubmit>
-            </Form>
-          ))}
-        </div>
-      )}
+      <div className="space-y-12">
+        <FormSection
+          title={t('admin.orders.detail.lineItems')}
+          description={t('admin.orders.detail.lineItemsDesc')}
+        >
+          <div className="overflow-x-auto">
+            <table className="divide-border min-w-full divide-y">
+              <thead className="bg-surface-2/50">
+                <tr>
+                  <Th>{t('admin.orders.detail.col.item')}</Th>
+                  <Th>{t('admin.orders.detail.col.sku')}</Th>
+                  <Th className="text-center">
+                    {t('admin.orders.detail.col.qty')}
+                  </Th>
+                  <Th className="text-center">
+                    {t('admin.orders.detail.col.fulfilled')}
+                  </Th>
+                  <Th className="text-center">
+                    {t('admin.orders.detail.col.returned')}
+                  </Th>
+                  <Th className="text-right">
+                    {t('admin.orders.detail.col.unitPrice')}
+                  </Th>
+                  <Th className="text-right">
+                    {t('admin.orders.detail.col.total')}
+                  </Th>
+                </tr>
+              </thead>
+              <tbody className="divide-border divide-y">
+                {order.lines.map((line) => (
+                  <tr key={line.id}>
+                    <Td className="text-text">{line.title}</Td>
+                    <Td className="font-mono text-xs tabular-nums">
+                      {line.sku ?? '—'}
+                    </Td>
+                    <Td className="text-text text-center tabular-nums">
+                      {line.quantity}
+                    </Td>
+                    <Td className="text-text text-center tabular-nums">
+                      {line.fulfilledQuantity}
+                    </Td>
+                    <Td className="text-text text-center tabular-nums">
+                      {line.returnedQuantity}
+                    </Td>
+                    <Td className="text-text text-right tabular-nums">
+                      {formatPrice(line.priceCents, order.currency)}
+                    </Td>
+                    <Td className="text-text text-right font-medium tabular-nums">
+                      {formatPrice(line.totalCents, order.currency)}
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="border-border border-t">
+                <tr>
+                  <Td colSpan={6} className="text-right">
+                    {t('admin.orders.detail.subtotal')}
+                  </Td>
+                  <Td className="text-text text-right tabular-nums">
+                    {formatPrice(order.subtotalCents, order.currency)}
+                  </Td>
+                </tr>
+                {order.shippingCents > 0 && (
+                  <tr>
+                    <Td colSpan={6} className="text-right">
+                      {t('admin.orders.detail.shipping')}
+                    </Td>
+                    <Td className="text-text text-right tabular-nums">
+                      {formatPrice(order.shippingCents, order.currency)}
+                    </Td>
+                  </tr>
+                )}
+                {order.taxCents > 0 && (
+                  <tr>
+                    <Td colSpan={6} className="text-right">
+                      {t('admin.orders.detail.tax')}
+                    </Td>
+                    <Td className="text-text text-right tabular-nums">
+                      {formatPrice(order.taxCents, order.currency)}
+                    </Td>
+                  </tr>
+                )}
+                {order.discountCents > 0 && (
+                  <tr>
+                    <Td colSpan={6} className="text-right">
+                      {t('admin.orders.detail.discount')}
+                    </Td>
+                    <Td className="text-success text-right tabular-nums">
+                      -{formatPrice(order.discountCents, order.currency)}
+                    </Td>
+                  </tr>
+                )}
+                <tr className="border-border border-t">
+                  <Td
+                    colSpan={6}
+                    className="text-text text-right font-semibold"
+                  >
+                    {t('admin.orders.detail.total')}
+                  </Td>
+                  <Td className="text-text text-right font-semibold tabular-nums">
+                    {formatPrice(order.totalCents, order.currency)}
+                  </Td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </FormSection>
 
-      {/* Line items */}
-      <SectionCard
-        title={t('admin.orders.detail.lineItems')}
-        description={t('admin.orders.detail.lineItemsDesc')}
-      >
-        <div className="overflow-x-auto">
-          <table className="divide-border min-w-full divide-y">
-            <thead className="bg-surface-2/50">
-              <tr>
-                <Th>{t('admin.orders.detail.col.item')}</Th>
-                <Th>{t('admin.orders.detail.col.sku')}</Th>
-                <Th className="text-center">
-                  {t('admin.orders.detail.col.qty')}
-                </Th>
-                <Th className="text-center">
-                  {t('admin.orders.detail.col.fulfilled')}
-                </Th>
-                <Th className="text-center">
-                  {t('admin.orders.detail.col.returned')}
-                </Th>
-                <Th className="text-right">
-                  {t('admin.orders.detail.col.unitPrice')}
-                </Th>
-                <Th className="text-right">
-                  {t('admin.orders.detail.col.total')}
-                </Th>
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
-              {order.lines.map((line) => (
-                <tr key={line.id}>
-                  <Td className="text-text">{line.title}</Td>
-                  <Td className="font-mono text-xs">{line.sku ?? '—'}</Td>
-                  <Td className="text-text text-center">{line.quantity}</Td>
-                  <Td className="text-text text-center">
-                    {line.fulfilledQuantity}
-                  </Td>
-                  <Td className="text-text text-center">
-                    {line.returnedQuantity}
-                  </Td>
-                  <Td className="text-text text-right">
-                    {formatPrice(line.priceCents, order.currency)}
-                  </Td>
-                  <Td className="text-text text-right font-medium">
-                    {formatPrice(line.totalCents, order.currency)}
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot className="border-border border-t">
-              <tr>
-                <Td colSpan={6} className="text-right">
-                  {t('admin.orders.detail.subtotal')}
-                </Td>
-                <Td className="text-text text-right">
-                  {formatPrice(order.subtotalCents, order.currency)}
-                </Td>
-              </tr>
-              {order.shippingCents > 0 && (
-                <tr>
-                  <Td colSpan={6} className="text-right">
-                    {t('admin.orders.detail.shipping')}
-                  </Td>
-                  <Td className="text-text text-right">
-                    {formatPrice(order.shippingCents, order.currency)}
-                  </Td>
-                </tr>
-              )}
-              {order.taxCents > 0 && (
-                <tr>
-                  <Td colSpan={6} className="text-right">
-                    {t('admin.orders.detail.tax')}
-                  </Td>
-                  <Td className="text-text text-right">
-                    {formatPrice(order.taxCents, order.currency)}
-                  </Td>
-                </tr>
-              )}
-              {order.discountCents > 0 && (
-                <tr>
-                  <Td colSpan={6} className="text-right">
-                    {t('admin.orders.detail.discount')}
-                  </Td>
-                  <Td className="text-success text-right">
-                    -{formatPrice(order.discountCents, order.currency)}
-                  </Td>
-                </tr>
-              )}
-              <tr className="border-border border-t">
-                <Td colSpan={6} className="text-text text-right font-semibold">
-                  {t('admin.orders.detail.total')}
-                </Td>
-                <Td className="text-text text-right font-semibold">
-                  {formatPrice(order.totalCents, order.currency)}
-                </Td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </SectionCard>
-
-      {/* Payment info + Address (side by side on wider screens) */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Payment info */}
-        <SectionCard
+        <FormSection
           title={t('admin.orders.detail.payment')}
           description={t('admin.orders.detail.paymentDesc')}
         >
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
+          <dl className="max-w-2xl space-y-2 text-sm">
+            <div className="flex justify-between gap-4">
               <dt className="text-text-muted">
                 {t('admin.orders.detail.provider')}
               </dt>
@@ -554,7 +538,7 @@ export default function AdminOrderRoute() {
                 {order.paymentProvider ?? '—'}
               </dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-4">
               <dt className="text-text-muted">
                 {t('admin.orders.detail.intentId')}
               </dt>
@@ -563,7 +547,7 @@ export default function AdminOrderRoute() {
               </dd>
             </div>
             {order.couponCode && (
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <dt className="text-text-muted">
                   {t('admin.orders.detail.coupon')}
                 </dt>
@@ -572,27 +556,26 @@ export default function AdminOrderRoute() {
                 </dd>
               </div>
             )}
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-4">
               <dt className="text-text-muted">
                 {t('admin.orders.detail.currency')}
               </dt>
               <dd className="text-text font-medium">{order.currency}</dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-4">
               <dt className="text-text-muted">
                 {t('admin.orders.detail.customer')}
               </dt>
-              <dd className="text-text">
+              <dd className="text-text text-right">
                 {order.customer?.name
                   ? `${order.customer.name} (${order.email})`
                   : order.email}
               </dd>
             </div>
           </dl>
-        </SectionCard>
+        </FormSection>
 
-        {/* Shipping address */}
-        <SectionCard
+        <FormSection
           title={t('admin.orders.detail.shippingAddress')}
           description={t('admin.orders.detail.shippingAddressDesc')}
         >
@@ -606,376 +589,380 @@ export default function AdminOrderRoute() {
               />
             </div>
           )}
-        </SectionCard>
-      </div>
+        </FormSection>
 
-      {/* Shipments */}
-      <SectionCard
-        title={t('admin.orders.detail.shipments')}
-        description={t('admin.orders.detail.shipmentsDesc')}
-      >
-        {order.shipments.length > 0 && (
-          <div className="mb-4 overflow-x-auto">
-            <table className="divide-border min-w-full divide-y text-sm">
-              <thead className="bg-surface-2/50">
-                <tr>
-                  <Th>{t('admin.orders.detail.col.status')}</Th>
-                  <Th>{t('admin.orders.detail.col.carrier')}</Th>
-                  <Th>{t('admin.orders.detail.col.tracking')}</Th>
-                  <Th>{t('admin.orders.detail.col.shippedAt')}</Th>
-                  <Th>{t('admin.orders.detail.col.documents')}</Th>
-                </tr>
-              </thead>
-              <tbody className="divide-border divide-y">
-                {order.shipments.map((s) => (
-                  <tr key={s.id}>
-                    <Td className="text-text">
-                      {shipmentStatusLabel(t, s.status)}
-                    </Td>
-                    <Td className="text-text">{s.carrier ?? '—'}</Td>
-                    <Td>
-                      {s.trackingUrl ? (
-                        <a
-                          href={s.trackingUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-accent font-mono text-xs hover:underline"
-                        >
-                          {s.trackingNumber ?? s.trackingUrl}
-                        </a>
-                      ) : (
-                        <span className="font-mono text-xs">
-                          {s.trackingNumber ?? '—'}
-                        </span>
-                      )}
-                    </Td>
-                    <Td>
-                      {s.shippedAt
-                        ? new Date(s.shippedAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '—'}
-                    </Td>
-                    <Td>
-                      <a
-                        href={`/admin/shipments/${s.id}/documents`}
-                        className="text-accent text-xs font-medium hover:underline"
-                      >
-                        {t('admin.orders.detail.packingSlip')}
-                      </a>
-                    </Td>
+        <FormSection
+          title={t('admin.orders.detail.shipments')}
+          description={t('admin.orders.detail.shipmentsDesc')}
+        >
+          {order.shipments.length > 0 && (
+            <div className="mb-4 overflow-x-auto">
+              <table className="divide-border min-w-full divide-y text-sm">
+                <thead className="bg-surface-2/50">
+                  <tr>
+                    <Th>{t('admin.orders.detail.col.status')}</Th>
+                    <Th>{t('admin.orders.detail.col.carrier')}</Th>
+                    <Th>{t('admin.orders.detail.col.tracking')}</Th>
+                    <Th>{t('admin.orders.detail.col.shippedAt')}</Th>
+                    <Th>{t('admin.orders.detail.col.documents')}</Th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Partial fulfillment quantities */}
-        {order.lines.some(
-          (l) => l.fulfilledQuantity < l.quantity - l.returnedQuantity
-        ) && (
-          <div className="mb-4 space-y-2">
-            <p className="text-text-muted text-xs font-medium">
-              {t('admin.orders.detail.shipQuantities')}
-            </p>
-            {order.lines
-              .filter(
-                (l) => l.fulfilledQuantity < l.quantity - l.returnedQuantity
-              )
-              .map((line) => (
-                <div key={line.id} className="flex items-center gap-3 text-sm">
-                  <span className="text-text flex-1">{line.title}</span>
-                  <input
-                    type="number"
-                    name={`ship-qty-${line.id}`}
-                    min={0}
-                    max={
-                      line.quantity -
-                      line.fulfilledQuantity -
-                      line.returnedQuantity
-                    }
-                    defaultValue={
-                      line.quantity -
-                      line.fulfilledQuantity -
-                      line.returnedQuantity
-                    }
-                    className={`${controlClasses} w-20`}
-                  />
-                </div>
-              ))}
-          </div>
-        )}
-
-        {/* Mark Shipped form */}
-        <Form method="post" className="space-y-3">
-          <input type="hidden" name="intent" value="add-shipment" />
-          <p className="text-text text-sm font-medium">
-            {t('admin.orders.detail.addShipment')}
-          </p>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <label className="text-text-muted mb-1 block text-xs">
-                {t('admin.orders.detail.carrier')}
-              </label>
-              <input
-                type="text"
-                name="carrier"
-                placeholder={t('admin.orders.detail.carrierPlaceholder')}
-                className={controlClasses}
-              />
-            </div>
-            <div>
-              <label className="text-text-muted mb-1 block text-xs">
-                {t('admin.orders.detail.trackingNumber')}
-              </label>
-              <input
-                type="text"
-                name="trackingNumber"
-                placeholder={t('admin.orders.detail.trackingNumberPlaceholder')}
-                className={controlClasses}
-              />
-            </div>
-            <div>
-              <label className="text-text-muted mb-1 block text-xs">
-                {t('admin.orders.detail.trackingUrl')}
-              </label>
-              <input
-                type="url"
-                name="trackingUrl"
-                placeholder={t('admin.orders.detail.trackingUrlPlaceholder')}
-                className={controlClasses}
-              />
-            </div>
-          </div>
-          <ButtonSubmit disabled={isSubmitting}>
-            {t('admin.orders.detail.markShipped')}
-          </ButtonSubmit>
-        </Form>
-      </SectionCard>
-
-      {/* Returns */}
-      <SectionCard
-        title={t('admin.orders.detail.returns')}
-        description={t('admin.orders.detail.returnsDesc')}
-      >
-        {order.returns.length > 0 && (
-          <div className="mb-4 space-y-4">
-            {order.returns.map((ret) => (
-              <div key={ret.id} className="border-border rounded-md border p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-text-muted font-mono text-xs">
-                    {ret.id.slice(-8)}
-                  </span>
-                  <span className="flex items-center gap-2 text-sm">
-                    <ReturnStatusBadge status={ret.status} />
-                    {ret.resolution ? (
-                      <span className="text-text-muted">
-                        ({returnResolutionLabel(t, ret.resolution)})
-                      </span>
-                    ) : null}
-                  </span>
-                </div>
-                {ret.reason && (
-                  <p className="text-text-muted mb-2 text-sm">{ret.reason}</p>
-                )}
-                <ul className="text-text mb-3 text-sm">
-                  {ret.lines.map((l) => (
-                    <li key={l.id}>
-                      {l.title} × {l.quantity}
-                      {l.restocked
-                        ? ` ${t('admin.orders.detail.restocked')}`
-                        : ''}
-                    </li>
+                </thead>
+                <tbody className="divide-border divide-y">
+                  {order.shipments.map((s) => (
+                    <tr key={s.id}>
+                      <Td className="text-text">
+                        {shipmentStatusLabel(t, s.status)}
+                      </Td>
+                      <Td className="text-text">{s.carrier ?? '—'}</Td>
+                      <Td>
+                        {s.trackingUrl ? (
+                          <a
+                            href={s.trackingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-accent font-mono text-xs hover:underline"
+                          >
+                            {s.trackingNumber ?? s.trackingUrl}
+                          </a>
+                        ) : (
+                          <span className="font-mono text-xs">
+                            {s.trackingNumber ?? '—'}
+                          </span>
+                        )}
+                      </Td>
+                      <Td className="tabular-nums">
+                        {s.shippedAt
+                          ? new Date(s.shippedAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })
+                          : '—'}
+                      </Td>
+                      <Td>
+                        <a
+                          href={`/admin/shipments/${s.id}/documents`}
+                          className="text-accent text-xs font-medium hover:underline"
+                        >
+                          {t('admin.orders.detail.packingSlip')}
+                        </a>
+                      </Td>
+                    </tr>
                   ))}
-                </ul>
-                <div className="flex flex-wrap gap-2">
-                  {ret.status === 'requested' && (
-                    <Form method="post" className="inline">
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <Form method="post" className="space-y-3">
+            <input type="hidden" name="intent" value="add-shipment" />
+            {order.lines.some(
+              (l) => l.fulfilledQuantity < l.quantity - l.returnedQuantity
+            ) && (
+              <div className="space-y-2">
+                <p className="text-text-muted text-xs font-medium">
+                  {t('admin.orders.detail.shipQuantities')}
+                </p>
+                {order.lines
+                  .filter(
+                    (l) => l.fulfilledQuantity < l.quantity - l.returnedQuantity
+                  )
+                  .map((line) => (
+                    <div
+                      key={line.id}
+                      className="flex items-center gap-3 text-sm"
+                    >
+                      <span className="text-text flex-1">{line.title}</span>
                       <input
-                        type="hidden"
-                        name="intent"
-                        value="approve-return"
+                        type="number"
+                        name={`ship-qty-${line.id}`}
+                        min={0}
+                        max={
+                          line.quantity -
+                          line.fulfilledQuantity -
+                          line.returnedQuantity
+                        }
+                        defaultValue={
+                          line.quantity -
+                          line.fulfilledQuantity -
+                          line.returnedQuantity
+                        }
+                        className={`${controlClasses} w-20`}
                       />
-                      <input type="hidden" name="returnId" value={ret.id} />
-                      <input type="hidden" name="resolution" value="refund" />
-                      <Button type="submit" variant="primary">
-                        {t('admin.orders.detail.approveRefund')}
-                      </Button>
-                    </Form>
+                    </div>
+                  ))}
+              </div>
+            )}
+            <p className="text-text text-sm font-medium">
+              {t('admin.orders.detail.addShipment')}
+            </p>
+            <div className="grid max-w-2xl gap-3 sm:grid-cols-3">
+              <div>
+                <label className="text-text-muted mb-1 block text-xs">
+                  {t('admin.orders.detail.carrier')}
+                </label>
+                <input
+                  type="text"
+                  name="carrier"
+                  placeholder={t('admin.orders.detail.carrierPlaceholder')}
+                  className={controlClasses}
+                />
+              </div>
+              <div>
+                <label className="text-text-muted mb-1 block text-xs">
+                  {t('admin.orders.detail.trackingNumber')}
+                </label>
+                <input
+                  type="text"
+                  name="trackingNumber"
+                  placeholder={t(
+                    'admin.orders.detail.trackingNumberPlaceholder'
                   )}
-                  {(ret.status === 'requested' ||
-                    ret.status === 'approved') && (
-                    <Form method="post" className="inline">
-                      <input
-                        type="hidden"
-                        name="intent"
-                        value="cancel-return"
-                      />
-                      <input type="hidden" name="returnId" value={ret.id} />
-                      <Button type="submit" variant="secondary">
-                        {t('common.cancel')}
-                      </Button>
-                    </Form>
+                  className={controlClasses}
+                />
+              </div>
+              <div>
+                <label className="text-text-muted mb-1 block text-xs">
+                  {t('admin.orders.detail.trackingUrl')}
+                </label>
+                <input
+                  type="url"
+                  name="trackingUrl"
+                  placeholder={t('admin.orders.detail.trackingUrlPlaceholder')}
+                  className={controlClasses}
+                />
+              </div>
+            </div>
+            <ButtonSubmit disabled={isSubmitting}>
+              {t('admin.orders.detail.markShipped')}
+            </ButtonSubmit>
+          </Form>
+        </FormSection>
+
+        <FormSection
+          title={t('admin.orders.detail.returns')}
+          description={t('admin.orders.detail.returnsDesc')}
+        >
+          {order.returns.length > 0 ? (
+            <div className="space-y-4">
+              {order.returns.map((ret) => (
+                <div
+                  key={ret.id}
+                  className="border-border rounded-md border p-4"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-text-muted font-mono text-xs">
+                      {ret.id.slice(-8)}
+                    </span>
+                    <span className="flex items-center gap-2 text-sm">
+                      <ReturnStatusBadge status={ret.status} />
+                      {ret.resolution ? (
+                        <span className="text-text-muted">
+                          ({returnResolutionLabel(t, ret.resolution)})
+                        </span>
+                      ) : null}
+                    </span>
+                  </div>
+                  {ret.reason && (
+                    <p className="text-text-muted mb-2 text-sm">{ret.reason}</p>
                   )}
-                  {ret.status === 'approved' && (
-                    <Form method="post" className="inline">
-                      <input
-                        type="hidden"
-                        name="intent"
-                        value="receive-return"
-                      />
-                      <input type="hidden" name="returnId" value={ret.id} />
-                      <Button type="submit" variant="primary">
-                        {t('admin.orders.detail.markReceived')}
-                      </Button>
-                    </Form>
-                  )}
-                  {ret.status === 'received' && (
-                    <>
+                  <ul className="text-text mb-3 text-sm">
+                    {ret.lines.map((l) => (
+                      <li key={l.id}>
+                        {l.title} × {l.quantity}
+                        {l.restocked
+                          ? ` ${t('admin.orders.detail.restocked')}`
+                          : ''}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-wrap gap-2">
+                    {ret.status === 'requested' && (
                       <Form method="post" className="inline">
                         <input
                           type="hidden"
                           name="intent"
-                          value="complete-return"
+                          value="approve-return"
                         />
                         <input type="hidden" name="returnId" value={ret.id} />
                         <input type="hidden" name="resolution" value="refund" />
-                        <Button type="submit" variant="danger">
-                          {t('admin.orders.detail.issueRefund')}
+                        <Button type="submit" variant="primary">
+                          {t('admin.orders.detail.approveRefund')}
                         </Button>
                       </Form>
+                    )}
+                    {(ret.status === 'requested' ||
+                      ret.status === 'approved') && (
                       <Form method="post" className="inline">
                         <input
                           type="hidden"
                           name="intent"
-                          value="complete-return"
+                          value="cancel-return"
                         />
                         <input type="hidden" name="returnId" value={ret.id} />
-                        <input
-                          type="hidden"
-                          name="resolution"
-                          value="store_credit"
-                        />
-                        <Button type="submit" variant="primary">
-                          {t('admin.orders.detail.issueStoreCredit')}
+                        <Button type="submit" variant="secondary">
+                          {t('common.cancel')}
                         </Button>
                       </Form>
-                    </>
-                  )}
+                    )}
+                    {ret.status === 'approved' && (
+                      <Form method="post" className="inline">
+                        <input
+                          type="hidden"
+                          name="intent"
+                          value="receive-return"
+                        />
+                        <input type="hidden" name="returnId" value={ret.id} />
+                        <Button type="submit" variant="primary">
+                          {t('admin.orders.detail.markReceived')}
+                        </Button>
+                      </Form>
+                    )}
+                    {ret.status === 'received' && (
+                      <>
+                        <Form method="post" className="inline">
+                          <input
+                            type="hidden"
+                            name="intent"
+                            value="complete-return"
+                          />
+                          <input type="hidden" name="returnId" value={ret.id} />
+                          <input
+                            type="hidden"
+                            name="resolution"
+                            value="refund"
+                          />
+                          <Button type="submit" variant="danger">
+                            {t('admin.orders.detail.issueRefund')}
+                          </Button>
+                        </Form>
+                        <Form method="post" className="inline">
+                          <input
+                            type="hidden"
+                            name="intent"
+                            value="complete-return"
+                          />
+                          <input type="hidden" name="returnId" value={ret.id} />
+                          <input
+                            type="hidden"
+                            name="resolution"
+                            value="store_credit"
+                          />
+                          <Button type="submit" variant="primary">
+                            {t('admin.orders.detail.issueStoreCredit')}
+                          </Button>
+                        </Form>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-        {order.returns.length === 0 && (
-          <p className="text-text-muted text-sm">
-            {t('admin.orders.detail.noReturns')}
-          </p>
-        )}
-      </SectionCard>
+              ))}
+            </div>
+          ) : (
+            <p className="text-text-muted text-sm">
+              {t('admin.orders.detail.noReturns')}
+            </p>
+          )}
+        </FormSection>
 
-      {/* Refunds */}
-      <SectionCard
-        title={t('admin.orders.detail.refunds')}
-        description={t('admin.orders.detail.refundsDesc')}
-      >
-        {order.refunds.length > 0 && (
-          <div className="mb-4 overflow-x-auto">
-            <table className="divide-border min-w-full divide-y text-sm">
-              <thead className="bg-surface-2/50">
-                <tr>
-                  <Th>{t('admin.orders.detail.col.amount')}</Th>
-                  <Th>{t('admin.orders.detail.col.reason')}</Th>
-                  <Th>{t('admin.orders.detail.col.status')}</Th>
-                  <Th>{t('admin.orders.detail.col.date')}</Th>
-                </tr>
-              </thead>
-              <tbody className="divide-border divide-y">
-                {order.refunds.map((r) => (
-                  <tr key={r.id}>
-                    <Td className="text-text font-medium">
-                      {formatPrice(r.amountCents, order.currency)}
-                    </Td>
-                    <Td className="text-text">{r.reason ?? '—'}</Td>
-                    <Td className="text-text capitalize">{r.status}</Td>
-                    <Td>
-                      {new Date(r.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </Td>
+        <FormSection
+          title={t('admin.orders.detail.refunds')}
+          description={t('admin.orders.detail.refundsDesc')}
+        >
+          {order.refunds.length > 0 && (
+            <div className="mb-4 overflow-x-auto">
+              <table className="divide-border min-w-full divide-y text-sm">
+                <thead className="bg-surface-2/50">
+                  <tr>
+                    <Th>{t('admin.orders.detail.col.amount')}</Th>
+                    <Th>{t('admin.orders.detail.col.reason')}</Th>
+                    <Th>{t('admin.orders.detail.col.status')}</Th>
+                    <Th>{t('admin.orders.detail.col.date')}</Th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Refund form */}
-        <Form method="post" className="space-y-3">
-          <input type="hidden" name="intent" value="add-refund" />
-          <p className="text-text text-sm font-medium">
-            {t('admin.orders.detail.issueRefundHeading')}
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="text-text-muted mb-1 block text-xs">
-                {t('admin.orders.detail.amountCents')}
-              </label>
-              <input
-                type="number"
-                name="amountCents"
-                min={1}
-                placeholder={t('admin.orders.detail.amountCentsPlaceholder')}
-                className={controlClasses}
-              />
+                </thead>
+                <tbody className="divide-border divide-y">
+                  {order.refunds.map((r) => (
+                    <tr key={r.id}>
+                      <Td className="text-text font-medium tabular-nums">
+                        {formatPrice(r.amountCents, order.currency)}
+                      </Td>
+                      <Td className="text-text">{r.reason ?? '—'}</Td>
+                      <Td className="text-text capitalize">{r.status}</Td>
+                      <Td className="tabular-nums">
+                        {new Date(r.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div>
-              <label className="text-text-muted mb-1 block text-xs">
-                {t('admin.orders.detail.reason')}
-              </label>
-              <input
-                type="text"
-                name="reason"
-                placeholder={t('admin.orders.detail.reasonPlaceholder')}
-                className={controlClasses}
-              />
-            </div>
-          </div>
-          <ButtonSubmit variant="danger" disabled={isSubmitting}>
-            {t('admin.orders.detail.createRefund')}
-          </ButtonSubmit>
-        </Form>
-      </SectionCard>
+          )}
 
-      {/* Notes */}
-      <SectionCard
-        title={t('admin.orders.detail.notes')}
-        description={t('admin.orders.detail.notesDesc')}
-      >
-        {order.notes && (
-          <p className="text-text mb-4 text-sm whitespace-pre-wrap">
-            {order.notes}
-          </p>
-        )}
-        <Form method="post" className="space-y-3">
-          <input type="hidden" name="intent" value="update-notes" />
-          <textarea
-            name="notes"
-            defaultValue={order.notes}
-            rows={4}
-            placeholder={t('admin.orders.detail.notesPlaceholder')}
-            className={controlClasses}
-          />
-          <ButtonSubmit disabled={isSubmitting}>
-            {t('admin.orders.detail.saveNotes')}
-          </ButtonSubmit>
-        </Form>
-      </SectionCard>
+          <Form method="post" className="space-y-3">
+            <input type="hidden" name="intent" value="add-refund" />
+            <p className="text-text text-sm font-medium">
+              {t('admin.orders.detail.issueRefundHeading')}
+            </p>
+            <div className="grid max-w-2xl gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-text-muted mb-1 block text-xs">
+                  {t('admin.orders.detail.amountCents')}
+                </label>
+                <input
+                  type="number"
+                  name="amountCents"
+                  min={1}
+                  placeholder={t('admin.orders.detail.amountCentsPlaceholder')}
+                  className={controlClasses}
+                />
+              </div>
+              <div>
+                <label className="text-text-muted mb-1 block text-xs">
+                  {t('admin.orders.detail.reason')}
+                </label>
+                <input
+                  type="text"
+                  name="reason"
+                  placeholder={t('admin.orders.detail.reasonPlaceholder')}
+                  className={controlClasses}
+                />
+              </div>
+            </div>
+            <ButtonSubmit variant="danger" disabled={isSubmitting}>
+              {t('admin.orders.detail.createRefund')}
+            </ButtonSubmit>
+          </Form>
+        </FormSection>
+
+        <FormSection
+          title={t('admin.orders.detail.notes')}
+          description={t('admin.orders.detail.notesDesc')}
+          last
+        >
+          {order.notes && (
+            <p className="text-text mb-4 text-sm whitespace-pre-wrap">
+              {order.notes}
+            </p>
+          )}
+          <Form method="post" className="max-w-2xl space-y-3">
+            <input type="hidden" name="intent" value="update-notes" />
+            <textarea
+              name="notes"
+              defaultValue={order.notes}
+              rows={4}
+              placeholder={t('admin.orders.detail.notesPlaceholder')}
+              className={controlClasses}
+            />
+            <ButtonSubmit disabled={isSubmitting}>
+              {t('admin.orders.detail.saveNotes')}
+            </ButtonSubmit>
+          </Form>
+        </FormSection>
+      </div>
     </div>
   );
 }

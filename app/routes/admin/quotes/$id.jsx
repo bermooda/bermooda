@@ -1,6 +1,5 @@
 import {
   Form,
-  Link,
   redirect,
   useActionData,
   useLoaderData,
@@ -9,13 +8,12 @@ import {
 
 import { getQuote, sendQuote } from '#/core/b2b/index.server';
 import { useT } from '#/core/i18n';
-import ActionBar from '#/components/admin/action-bar';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
-import Card, { CardHeader } from '#/components/admin/card';
+import FormSection from '#/components/admin/form-section';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
-import Button, { ButtonSubmit } from '#/components/ui/button';
+import { ButtonSubmit } from '#/components/ui/button';
 
 export async function loader({ params }) {
   try {
@@ -52,6 +50,7 @@ export function meta({ loaderData }) {
 /**
  * @param {string} status
  * @param {(key: string) => string} t
+ * @returns {string}
  */
 function quoteStatusLabel(status, t) {
   const key = `admin.quotes.status.${status}`;
@@ -65,9 +64,10 @@ export default function AdminQuoteDetailRoute() {
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
+  const isDraft = quote.status === 'draft';
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         breadcrumbs={
           <Breadcrumbs
@@ -81,16 +81,28 @@ export default function AdminQuoteDetailRoute() {
           />
         }
         title={quote.quoteNumber}
-        subtitle={`${quote.company?.name ?? t('admin.quotes.detail.companyFallback')} · ${quote.formattedTotal}`}
-        actions={
-          <div className="flex items-center gap-2">
-            <Badge tone={quote.status === 'draft' ? 'neutral' : 'success'}>
+        subtitle={
+          <span className="inline-flex flex-wrap items-center gap-2">
+            <Badge tone={isDraft ? 'neutral' : 'success'}>
               {quoteStatusLabel(quote.status, t)}
             </Badge>
-            <Button as={Link} to="/admin/quotes" variant="secondary">
-              {t('admin.quotes.detail.back')}
-            </Button>
-          </div>
+            <span>
+              {quote.company?.name ?? t('admin.quotes.detail.companyFallback')}{' '}
+              · {quote.formattedTotal}
+            </span>
+          </span>
+        }
+        actions={
+          isDraft ? (
+            <Form method="post">
+              <input type="hidden" name="intent" value="send-quote" />
+              <ButtonSubmit disabled={isSaving}>
+                {isSaving
+                  ? t('admin.quotes.detail.sending')
+                  : t('admin.quotes.detail.markSent')}
+              </ButtonSubmit>
+            </Form>
+          ) : null
         }
       />
 
@@ -99,10 +111,9 @@ export default function AdminQuoteDetailRoute() {
         <SuccessAlert message={t('admin.quotes.detail.updated')} />
       )}
 
-      <div className="mt-6 space-y-6">
-        <Card>
-          <CardHeader title={t('admin.quotes.detail.summary')} />
-          <dl className="grid gap-3 text-sm sm:grid-cols-3">
+      <div className="space-y-12">
+        <FormSection title={t('admin.quotes.detail.summary')}>
+          <dl className="grid max-w-2xl gap-3 text-sm sm:grid-cols-3">
             <div>
               <dt className="text-text-muted">
                 {t('admin.quotes.detail.company')}
@@ -121,25 +132,26 @@ export default function AdminQuoteDetailRoute() {
               <dt className="text-text-muted">
                 {t('admin.quotes.detail.total')}
               </dt>
-              <dd className="text-text font-medium">{quote.formattedTotal}</dd>
+              <dd className="text-text font-medium tabular-nums">
+                {quote.formattedTotal}
+              </dd>
             </div>
           </dl>
-        </Card>
+        </FormSection>
 
-        <Card>
-          <CardHeader title={t('admin.quotes.detail.lineItems')} />
+        <FormSection title={t('admin.quotes.detail.lineItems')} last>
           {(quote.lines ?? []).length === 0 ? (
             <p className="text-text-muted text-sm">
               {t('admin.quotes.detail.noLineItems')}
             </p>
           ) : (
-            <ul className="divide-border divide-y text-sm">
+            <ul className="divide-border max-w-2xl divide-y text-sm">
               {(quote.lines ?? []).map((line) => (
                 <li
                   key={line.id}
                   className="flex items-center justify-between gap-3 py-2"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-text font-medium">
                       {line.titleSnapshot ??
                         line.variant?.productTitle ??
@@ -152,28 +164,14 @@ export default function AdminQuoteDetailRoute() {
                       })}
                     </p>
                   </div>
-                  <span className="text-text font-mono text-xs">
+                  <span className="text-text font-mono text-xs tabular-nums">
                     {line.priceCents}¢
                   </span>
                 </li>
               ))}
             </ul>
           )}
-        </Card>
-
-        {quote.status === 'draft' && (
-          <Form method="post">
-            <input type="hidden" name="intent" value="send-quote" />
-            <ActionBar>
-              <span />
-              <ButtonSubmit disabled={isSaving}>
-                {isSaving
-                  ? t('admin.quotes.detail.sending')
-                  : t('admin.quotes.detail.markSent')}
-              </ButtonSubmit>
-            </ActionBar>
-          </Form>
-        )}
+        </FormSection>
       </div>
     </div>
   );
