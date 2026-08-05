@@ -114,8 +114,9 @@ Target: `mx-auto max-w-5xl` → `PageHeader` + `Breadcrumbs` → two-column `For
 
 ### 4c — Discounts create/edit
 
-- [ ] `app/routes/admin/discounts/new.jsx`
-- [ ] `app/routes/admin/discounts/$id.jsx`
+- [x] `app/routes/admin/discounts/new.jsx`
+- [x] `app/routes/admin/discounts/$id.jsx`
+- Notes: shared `DiscountEditor` in `#/components/admin/discount-editor.jsx`; FormSection details + limits; delete in footer on edit.
 
 ### 4d — Categories create/edit
 
