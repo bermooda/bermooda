@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.8.0...bermooda-v0.9.0) (2026-08-05)
+
+
+### Features
+
+* **admin:** migrate orders index to sticky design language ([#199](https://github.com/bermooda/bermooda/issues/199)) ([8d480a1](https://github.com/bermooda/bermooda/commit/8d480a175d71bd1335fd5a70e84e0daf8a0e42f1))
+* **pricing:** enhance getPriceList to include translated product titles and update related tests ([fdc082a](https://github.com/bermooda/bermooda/commit/fdc082a5f98461d13194d24b5f3032c0b3732ed0))
+
 ## [0.8.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.7.0...bermooda-v0.8.0) (2026-08-04)
 
 
