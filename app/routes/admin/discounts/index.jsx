@@ -1,16 +1,25 @@
 // app/routes/admin/discounts/index.jsx
-// Discounts list — delete, toggle active. Create/edit on dedicated pages.
+// Discounts list — sticky table with search; delete / toggle on dedicated actions.
 
 import {
-  PlusIcon,
-  TrashIcon,
-  PencilSquareIcon,
   CheckIcon,
+  PlusIcon,
+  TicketIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import { Link, useFetcher, useLoaderData } from 'react-router';
+import {
+  Link,
+  useFetcher,
+  useLoaderData,
+  useNavigate,
+  useSearchParams,
+} from 'react-router';
 
-import { handleAdminActionError } from '#/libs/api/admin-ui/index.server';
+import {
+  handleAdminActionError,
+  parseAdminSearchParams,
+} from '#/libs/api/admin-ui/index.server';
 import {
   deleteDiscount,
   listDiscounts,
@@ -18,20 +27,39 @@ import {
 } from '#/core/discounts/index.server';
 import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
-import Card from '#/components/admin/card';
+import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
+import Pagination from '#/components/admin/pagination';
+import SearchField from '#/components/admin/search-field';
+import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
+import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
+
+const PAGE_SIZE = 20;
 
 // ---------------------------------------------------------------------------
 // Loader
 // ---------------------------------------------------------------------------
 
-export async function loader() {
-  const { discounts } = await listDiscounts({
-    page: 1,
-    limit: 500,
-    orderBy: { createdAt: 'desc' },
+export async function loader({ request }) {
+  const url = new URL(request.url);
+  const { page, q } = parseAdminSearchParams(url.searchParams, {
+    limit: PAGE_SIZE,
   });
-  return { discounts };
+
+  const { discounts, total } = await listDiscounts({
+    page,
+    limit: PAGE_SIZE,
+    orderBy: { createdAt: 'desc' },
+    q: q || undefined,
+  });
+
+  return {
+    discounts,
+    total,
+    page,
+    totalPages: Math.ceil(total / PAGE_SIZE),
+    q,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -42,7 +70,6 @@ export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get('intent');
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
   if (intent === 'delete') {
     const id = formData.get('id')?.toString();
     if (!id) return { ok: false, error: 'Missing id.', intent };
@@ -60,7 +87,6 @@ export async function action({ request }) {
     return { ok: true, intent };
   }
 
-  // ── Toggle active ─────────────────────────────────────────────────────────
   if (intent === 'toggle-active') {
     const id = formData.get('id')?.toString();
     if (!id) return { ok: false, error: 'Missing id.', intent };
@@ -88,91 +114,46 @@ export async function action({ request }) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Format a value for display depending on type */
+/**
+ * @param {string} type
+ * @param {number} value
+ * @param {string | null | undefined} currency
+ * @returns {string}
+ */
 function formatValue(type, value, currency) {
   if (type === 'percent') return `${value}%`;
   const amount = (value / 100).toFixed(2);
   return currency ? `${currency.toUpperCase()} ${amount}` : amount;
 }
 
+/**
+ * @param {string | Date | null | undefined} dateVal
+ * @returns {string}
+ */
 function formatDate(dateVal) {
   if (!dateVal) return '—';
-  return new Date(dateVal).toLocaleDateString();
+  return new Date(dateVal).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
-
-// ---------------------------------------------------------------------------
-// DiscountRow
-// ---------------------------------------------------------------------------
 
 /**
  * @param {Object} props
- * @param {Object} props.discount
+ * @param {object} props.discount
  */
-function DiscountRow({ discount }) {
+function DiscountActions({ discount }) {
   const t = useT();
   const deleteFetcher = useFetcher();
   const toggleFetcher = useFetcher();
 
-  const isExpired =
-    discount.expiresAt && new Date(discount.expiresAt) < new Date();
-
   return (
-    <div className="hover:bg-surface-2/50 flex items-center gap-3 px-4 py-3">
-      <Link
-        to={`/admin/discounts/${discount.id}`}
-        className="text-text hover:text-accent w-32 shrink-0 font-mono text-sm font-semibold"
-      >
-        {discount.code}
-      </Link>
-
-      <span className="w-16 shrink-0">
-        <Badge tone={discount.type === 'percent' ? 'accent' : 'neutral'}>
-          {discount.type === 'percent'
-            ? t('admin.discounts.type.percent')
-            : discount.type === 'fixed'
-              ? t('admin.discounts.type.fixed')
-              : discount.type}
-        </Badge>
-      </span>
-
-      <span className="text-text w-24 shrink-0 text-sm">
-        {formatValue(discount.type, discount.value, discount.currency)}
-      </span>
-
-      <span className="text-text-muted hidden w-28 shrink-0 text-sm sm:block">
-        {discount.minSubtotalCents != null
-          ? `$${(discount.minSubtotalCents / 100).toFixed(2)}`
-          : '—'}
-      </span>
-
-      <span className="text-text-muted hidden w-24 shrink-0 text-sm md:block">
-        {discount.usedCount}
-        {discount.maxUsesCount != null ? ` / ${discount.maxUsesCount}` : ''}
-      </span>
-
-      <span className="text-text-muted hidden w-16 shrink-0 text-sm lg:block">
-        {discount.currency ? discount.currency.toUpperCase() : '—'}
-      </span>
-
-      <span
-        className={clsx(
-          'hidden w-24 shrink-0 text-sm lg:block',
-          isExpired ? 'text-danger' : 'text-text-muted'
-        )}
-      >
-        {formatDate(discount.expiresAt)}
-      </span>
-
-      <span className="flex-1" />
-
-      <span className="shrink-0">
-        <Badge tone={discount.active ? 'success' : 'neutral'}>
-          {discount.active
-            ? t('admin.discounts.status.active')
-            : t('admin.discounts.status.inactive')}
-        </Badge>
-      </span>
-
+    <div
+      className="flex items-center justify-end gap-2"
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
       <toggleFetcher.Form method="post">
         <input type="hidden" name="intent" value="toggle-active" />
         <input type="hidden" name="id" value={discount.id} />
@@ -197,10 +178,11 @@ function DiscountRow({ discount }) {
 
       <Link
         to={`/admin/discounts/${discount.id}`}
-        title={t('admin.discounts.index.edit')}
-        className="text-text-muted hover:text-text rounded p-1 transition-colors"
+        className="text-accent hover:text-accent-hover text-sm font-medium"
+        onClick={(event) => event.stopPropagation()}
       >
-        <PencilSquareIcon className="h-4 w-4" />
+        {t('admin.discounts.index.edit')}
+        <span className="sr-only">, {discount.code}</span>
       </Link>
 
       <deleteFetcher.Form
@@ -238,19 +220,26 @@ function DiscountRow({ discount }) {
 
 export default function AdminDiscountsRoute() {
   const t = useT();
-  const { discounts } = useLoaderData();
+  const { discounts, total, page, totalPages, q } = useLoaderData();
+  const [, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  /**
+   * @param {number} p
+   */
+  function goToPage(p) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('page', String(p));
+      return next;
+    });
+  }
 
   return (
     <div>
       <PageHeader
         title={t('admin.discounts.index.title')}
-        subtitle={
-          discounts.length === 1
-            ? t('admin.discounts.index.subtitleOne', {
-                count: discounts.length,
-              })
-            : t('admin.discounts.index.subtitle', { count: discounts.length })
-        }
+        subtitle={t('admin.discounts.index.subtitle')}
         actions={
           <Link
             to="/admin/discounts/new"
@@ -260,58 +249,165 @@ export default function AdminDiscountsRoute() {
             {t('admin.discounts.index.newButton')}
           </Link>
         }
-        className="mb-6"
       />
 
-      <Card padded={false} className="overflow-hidden">
-        <div className="border-border bg-surface-2/50 flex items-center gap-3 border-b px-4 py-2">
-          <span className="text-text-muted w-32 shrink-0 text-xs font-medium tracking-wide uppercase">
-            {t('admin.discounts.index.col.code')}
+      <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
+        <SearchField
+          defaultValue={q}
+          placeholder={t('admin.discounts.index.searchPlaceholder')}
+          formClassName="w-full sm:max-w-sm"
+        />
+        <ToolbarGroup>
+          <span className="text-text-muted text-sm">
+            {total === 1
+              ? t('admin.discounts.index.resultsOne', { count: total })
+              : t('admin.discounts.index.results', { count: total })}
           </span>
-          <span className="text-text-muted w-16 shrink-0 text-xs font-medium tracking-wide uppercase">
-            {t('admin.discounts.index.col.type')}
-          </span>
-          <span className="text-text-muted w-24 shrink-0 text-xs font-medium tracking-wide uppercase">
-            {t('admin.discounts.index.col.value')}
-          </span>
-          <span className="text-text-muted hidden w-28 shrink-0 text-xs font-medium tracking-wide uppercase sm:block">
-            {t('admin.discounts.index.col.minSubtotal')}
-          </span>
-          <span className="text-text-muted hidden w-24 shrink-0 text-xs font-medium tracking-wide uppercase md:block">
-            {t('admin.discounts.index.col.uses')}
-          </span>
-          <span className="text-text-muted hidden w-16 shrink-0 text-xs font-medium tracking-wide uppercase lg:block">
-            {t('admin.discounts.index.col.currency')}
-          </span>
-          <span className="text-text-muted hidden w-24 shrink-0 text-xs font-medium tracking-wide uppercase lg:block">
-            {t('admin.discounts.index.col.expires')}
-          </span>
-          <span className="flex-1" />
-          <span className="text-text-muted shrink-0 text-xs font-medium tracking-wide uppercase">
-            {t('admin.discounts.index.col.status')}
-          </span>
-          <span className="w-24 shrink-0" />
-        </div>
+        </ToolbarGroup>
+      </Toolbar>
 
-        {discounts.length === 0 ? (
-          <div className="text-text-muted px-4 py-10 text-center text-sm">
-            {t('admin.discounts.index.empty')}{' '}
-            <Link
-              to="/admin/discounts/new"
-              className="text-accent hover:underline"
-            >
-              {t('admin.discounts.index.emptyLink')}
-            </Link>
-            .
-          </div>
-        ) : (
-          <div className="divide-border divide-y">
-            {discounts.map((discount) => (
-              <DiscountRow key={discount.id} discount={discount} />
-            ))}
-          </div>
-        )}
-      </Card>
+      {discounts.length === 0 ? (
+        <EmptyState
+          icon={TicketIcon}
+          title={
+            q
+              ? t('admin.discounts.index.emptyTitleSearch')
+              : t('admin.discounts.index.emptyTitle')
+          }
+          description={
+            q
+              ? t('admin.discounts.index.emptyDescriptionSearch')
+              : t('admin.discounts.index.emptyDescription')
+          }
+          action={
+            !q && (
+              <Link
+                to="/admin/discounts/new"
+                className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
+              >
+                <PlusIcon className="h-4 w-4" />
+                {t('admin.discounts.index.newButton')}
+              </Link>
+            )
+          }
+        />
+      ) : (
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
+            <tr>
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                {t('admin.discounts.index.col.code')}
+              </Th>
+              <Th sticky className="px-3 py-3.5">
+                {t('admin.discounts.index.col.type')}
+              </Th>
+              <Th sticky className="px-3 py-3.5">
+                {t('admin.discounts.index.col.value')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 md:table-cell">
+                {t('admin.discounts.index.col.uses')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 lg:table-cell">
+                {t('admin.discounts.index.col.expires')}
+              </Th>
+              <Th sticky className="px-3 py-3.5">
+                {t('admin.discounts.index.col.status')}
+              </Th>
+              <Th sticky className="py-3.5 pr-1 pl-3 sm:pr-0">
+                <span className="sr-only">
+                  {t('admin.discounts.index.col.actions')}
+                </span>
+              </Th>
+            </tr>
+          </THead>
+          <TBody sticky>
+            {discounts.map((discount) => {
+              const isExpired =
+                discount.expiresAt && new Date(discount.expiresAt) < new Date();
+              return (
+                <Tr
+                  key={discount.id}
+                  role="link"
+                  tabIndex={0}
+                  className="group cursor-pointer"
+                  onClick={() => navigate(`/admin/discounts/${discount.id}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      navigate(`/admin/discounts/${discount.id}`);
+                    }
+                  }}
+                >
+                  <Td
+                    sticky
+                    className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+                  >
+                    <span className="block min-w-0">
+                      <span className="group-hover:text-accent block truncate font-mono font-medium transition-colors">
+                        {discount.code}
+                      </span>
+                      <span className="text-text-muted mt-0.5 block truncate font-mono text-xs font-normal">
+                        {discount.id.slice(0, 8)}
+                      </span>
+                    </span>
+                  </Td>
+                  <Td sticky className="px-3 py-4">
+                    <Badge
+                      tone={discount.type === 'percent' ? 'accent' : 'neutral'}
+                    >
+                      {discount.type === 'percent'
+                        ? t('admin.discounts.type.percent')
+                        : discount.type === 'fixed'
+                          ? t('admin.discounts.type.fixed')
+                          : discount.type}
+                    </Badge>
+                  </Td>
+                  <Td sticky className="px-3 py-4 tabular-nums">
+                    {formatValue(
+                      discount.type,
+                      discount.value,
+                      discount.currency
+                    )}
+                  </Td>
+                  <Td
+                    sticky
+                    className="hidden px-3 py-4 tabular-nums md:table-cell"
+                  >
+                    {discount.usedCount}
+                    {discount.maxUsesCount != null
+                      ? ` / ${discount.maxUsesCount}`
+                      : ''}
+                  </Td>
+                  <Td
+                    sticky
+                    className={clsx(
+                      'hidden px-3 py-4 tabular-nums lg:table-cell',
+                      isExpired ? 'text-danger' : 'text-text-muted'
+                    )}
+                  >
+                    {formatDate(discount.expiresAt)}
+                  </Td>
+                  <Td sticky className="px-3 py-4">
+                    <Badge tone={discount.active ? 'success' : 'neutral'}>
+                      {discount.active
+                        ? t('admin.discounts.status.active')
+                        : t('admin.discounts.status.inactive')}
+                    </Badge>
+                  </Td>
+                  <Td
+                    sticky
+                    className="py-4 pr-1 pl-3 text-right text-sm font-medium sm:pr-0"
+                  >
+                    <DiscountActions discount={discount} />
+                  </Td>
+                </Tr>
+              );
+            })}
+          </TBody>
+        </Table>
+      )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
     </div>
   );
 }

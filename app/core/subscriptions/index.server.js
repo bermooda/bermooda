@@ -406,10 +406,16 @@ async function requireSubscriptionRecord(
 
 /**
  * Load data for the admin subscription plans index page.
+ *
+ * @param {{ page?: number, limit?: number }} [params]
  */
-export async function loadSubscriptionPlanAdminData() {
+export async function loadSubscriptionPlanAdminData(params = {}) {
   const [{ plans, total, page, limit }, variants] = await Promise.all([
-    listSubscriptionPlans({ activeOnly: false, limit: 100 }),
+    listSubscriptionPlans({
+      activeOnly: false,
+      page: params.page,
+      limit: params.limit ?? 100,
+    }),
     listRecentVariantsForInventory({ take: 50 }),
   ]);
 
