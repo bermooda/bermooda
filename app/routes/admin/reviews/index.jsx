@@ -1,3 +1,7 @@
+// app/routes/admin/reviews/index.jsx
+// Reviews admin list — sticky-header table with status filters and moderation.
+
+import { StarIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
@@ -12,9 +16,11 @@ import {
   REVIEW_STATUSES,
 } from '#/core/reviews/index.server';
 import Badge from '#/components/admin/badge';
+import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
-import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
+import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
+import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
 
 const PAGE_SIZE = 20;
 
@@ -37,6 +43,7 @@ export async function loader({ request }) {
     total,
     page,
     pageSize: PAGE_SIZE,
+    totalPages: Math.ceil(total / PAGE_SIZE),
     status,
     pendingCount,
     reviewStatuses: REVIEW_STATUSES,
@@ -67,10 +74,9 @@ export async function action({ request }) {
 
 export default function AdminReviewsRoute() {
   const t = useT();
-  const { reviews, total, page, pageSize, status, pendingCount } =
+  const { reviews, total, page, totalPages, status, pendingCount } =
     useLoaderData();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const [, setSearchParams] = useSearchParams();
 
   const tabs = [
     {
@@ -82,88 +88,147 @@ export default function AdminReviewsRoute() {
     { key: 'all', label: t('admin.reviews.index.tab.all') },
   ];
 
+  /**
+   * @param {string} next
+   */
   function setTab(next) {
-    const params = new URLSearchParams(searchParams);
-    params.set('status', next);
-    params.delete('page');
-    setSearchParams(params);
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set('status', next);
+      params.delete('page');
+      return params;
+    });
   }
 
+  /**
+   * @param {number} p
+   */
   function goToPage(p) {
-    const params = new URLSearchParams(searchParams);
-    params.set('page', String(p));
-    setSearchParams(params);
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set('page', String(p));
+      return params;
+    });
   }
 
   return (
     <div>
-      <PageHeader title={t('admin.reviews.index.title')} className="mb-6" />
+      <PageHeader
+        title={t('admin.reviews.index.title')}
+        subtitle={t('admin.reviews.index.subtitle')}
+      />
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setTab(tab.key)}
-            className={clsx(
-              'rounded-full px-3 py-1 text-sm font-medium transition-colors',
-              status === tab.key
-                ? 'bg-accent text-accent-fg'
-                : 'bg-surface-2 text-text-muted hover:text-text'
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
+        <ToolbarGroup>
+          <div className="flex flex-wrap gap-1.5">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setTab(tab.key)}
+                className={clsx(
+                  'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                  status === tab.key
+                    ? 'bg-accent text-accent-fg'
+                    : 'bg-surface-2 text-text-muted hover:text-text'
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </ToolbarGroup>
+        <ToolbarGroup>
+          <span className="text-text-muted text-sm">
+            {total === 1
+              ? t('admin.reviews.index.resultsOne', { count: total })
+              : t('admin.reviews.index.results', { count: total })}
+          </span>
+        </ToolbarGroup>
+      </Toolbar>
 
-      <Table>
-        <THead>
-          <tr>
-            <Th>{t('admin.reviews.index.col.product')}</Th>
-            <Th>{t('admin.reviews.index.col.customer')}</Th>
-            <Th>{t('admin.reviews.index.col.rating')}</Th>
-            <Th>{t('admin.reviews.index.col.review')}</Th>
-            <Th className="text-right">
-              {t('admin.reviews.index.col.actions')}
-            </Th>
-          </tr>
-        </THead>
-        <TBody>
-          {reviews.length === 0 ? (
+      {reviews.length === 0 ? (
+        <EmptyState
+          icon={StarIcon}
+          title={t('admin.reviews.index.emptyTitle')}
+          description={t('admin.reviews.index.emptyDescription')}
+        />
+      ) : (
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
             <tr>
-              <Td colSpan={5} className="py-8 text-center">
-                {t('admin.reviews.index.empty')}
-              </Td>
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                {t('admin.reviews.index.col.product')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 sm:table-cell">
+                {t('admin.reviews.index.col.customer')}
+              </Th>
+              <Th sticky className="px-3 py-3.5">
+                {t('admin.reviews.index.col.rating')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 md:table-cell">
+                {t('admin.reviews.index.col.review')}
+              </Th>
+              <Th sticky className="py-3.5 pr-1 pl-3 sm:pr-0">
+                <span className="sr-only">
+                  {t('admin.reviews.index.col.actions')}
+                </span>
+              </Th>
             </tr>
-          ) : (
-            reviews.map((r) => (
-              <tr key={r.id}>
-                <Td className="text-text">{r.productTitle}</Td>
-                <Td>{r.customerName}</Td>
-                <Td>
-                  <span className="text-warn">{'★'.repeat(r.rating)}</span>
-                  {r.verifiedPurchase && (
-                    <Badge tone="success" className="ml-2">
-                      {t('admin.reviews.index.verified')}
-                    </Badge>
-                  )}
+          </THead>
+          <TBody sticky>
+            {reviews.map((r) => (
+              <Tr key={r.id}>
+                <Td
+                  sticky
+                  className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+                >
+                  <span className="block min-w-0">
+                    <span className="block truncate font-medium">
+                      {r.productTitle}
+                    </span>
+                    <span className="text-text-muted mt-0.5 block truncate text-xs font-normal sm:hidden">
+                      {r.customerName}
+                    </span>
+                  </span>
                 </Td>
-                <Td className="max-w-xs truncate whitespace-normal">
+                <Td sticky className="hidden px-3 py-4 sm:table-cell">
+                  {r.customerName}
+                </Td>
+                <Td sticky className="px-3 py-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-warn tabular-nums">
+                      {'★'.repeat(r.rating)}
+                    </span>
+                    {r.verifiedPurchase ? (
+                      <Badge tone="success">
+                        {t('admin.reviews.index.verified')}
+                      </Badge>
+                    ) : null}
+                  </div>
+                </Td>
+                <Td
+                  sticky
+                  className="text-text-muted hidden max-w-xs truncate px-3 py-4 whitespace-normal md:table-cell"
+                >
                   {r.body}
                 </Td>
-                <Td className="text-right">
-                  <div className="flex justify-end gap-3">
-                    {r.status === 'pending' && (
+                <Td
+                  sticky
+                  className="py-4 pr-1 pl-3 text-right text-sm font-medium sm:pr-0"
+                >
+                  <div className="flex flex-wrap justify-end gap-3">
+                    {r.status === 'pending' ? (
                       <>
                         <Form method="post" className="inline">
                           <input type="hidden" name="id" value={r.id} />
                           <input type="hidden" name="intent" value="approve" />
                           <button
                             type="submit"
-                            className="text-success text-sm hover:underline"
+                            className="text-success hover:text-success/80"
                           >
                             {t('admin.reviews.index.approve')}
+                            <span className="sr-only">, {r.productTitle}</span>
                           </button>
                         </Form>
                         <Form method="post" className="inline">
@@ -171,30 +236,32 @@ export default function AdminReviewsRoute() {
                           <input type="hidden" name="intent" value="reject" />
                           <button
                             type="submit"
-                            className="text-warn text-sm hover:underline"
+                            className="text-warn hover:text-warn/80"
                           >
                             {t('admin.reviews.index.reject')}
+                            <span className="sr-only">, {r.productTitle}</span>
                           </button>
                         </Form>
                       </>
-                    )}
+                    ) : null}
                     <Form method="post" className="inline">
                       <input type="hidden" name="id" value={r.id} />
                       <input type="hidden" name="intent" value="delete" />
                       <button
                         type="submit"
-                        className="text-danger text-sm hover:underline"
+                        className="text-danger hover:text-danger/80"
                       >
                         {t('admin.reviews.index.delete')}
+                        <span className="sr-only">, {r.productTitle}</span>
                       </button>
                     </Form>
                   </div>
                 </Td>
-              </tr>
-            ))
-          )}
-        </TBody>
-      </Table>
+              </Tr>
+            ))}
+          </TBody>
+        </Table>
+      )}
 
       <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
     </div>
