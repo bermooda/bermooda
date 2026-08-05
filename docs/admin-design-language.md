@@ -273,7 +273,19 @@ Place below the table. Component hides itself when `totalPages <= 1`. Drive page
 
 ### Form sections (two-column)
 
-Match the Tailwind UI “form layout” used in the product editor:
+Match the Tailwind UI “form layout” used in the product editor. Use the shared primitive:
+
+```jsx
+import FormSection from '#/components/admin/form-section';
+```
+
+```jsx
+<FormSection title={…} description={…} last={…}>
+  {children}
+</FormSection>
+```
+
+Implementation (`#/components/admin/form-section.jsx`):
 
 ```jsx
 function FormSection({ title, description, children, last = false }) {
@@ -300,7 +312,6 @@ function FormSection({ title, description, children, last = false }) {
 - Left column: section title + short description.
 - Right column (`md:col-span-2`): fields; nest field grids with `max-w-2xl` / `sm:grid-cols-6` as in products.
 - Last section: pass `last` to drop the bottom border.
-- Prefer extracting a shared `FormSection` into `#/components/admin/` when a second editor needs it; until then, copy this exact structure.
 
 ### Fields
 
@@ -401,6 +412,7 @@ Products uses a non-sticky footer (preferred default for detail pages):
 | `Field` / `Input` / `Textarea` / `Select`   | `form/*`                 | Detail forms                                        |
 | `SlugField` / `SeoFields` / `LocaleTabs`    | respective files         | Localized content editors                           |
 | `ActionBar`                                 | `action-bar.jsx`         | Optional sticky editor footer                       |
+| `FormSection`                               | `form-section.jsx`       | Two-column detail/editor sections                   |
 | `Button` / `ButtonSubmit`                   | `#/components/ui/button` | Primary/secondary actions                           |
 | `SuccessAlert` / `ErrorAlert`               | `#/components/ui/alert`  | Mutation feedback                                   |
 | `Card`                                      | `card.jsx`               | Non-table panels when a surface container is needed |
