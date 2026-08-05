@@ -1,6 +1,7 @@
 // app/routes/admin/wishlists/index.jsx
-// Wishlist items admin UI.
+// Wishlist items admin list — sticky-header table with search.
 
+import { HeartIcon } from '@heroicons/react/24/outline';
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
 import { useT } from '#/core/i18n';
@@ -13,7 +14,7 @@ import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
 import SearchField from '#/components/admin/search-field';
-import Table, { Th, Td, THead, TBody } from '#/components/admin/table';
+import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
 
 const PAGE_SIZE = 20;
@@ -28,6 +29,7 @@ export async function loader({ request }) {
   return {
     ...data,
     pageSize: PAGE_SIZE,
+    totalPages: Math.ceil(data.total / PAGE_SIZE),
     q: url.searchParams.get('q')?.trim() ?? '',
   };
 }
@@ -50,22 +52,27 @@ export async function action({ request }) {
  */
 function formatDate(value) {
   if (!value) return '—';
-  return new Date(value).toLocaleString();
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 export default function AdminWishlistsRoute() {
   const t = useT();
-  const { items, total, page, pageSize, q } = useLoaderData();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const { items, total, page, totalPages, q } = useLoaderData();
+  const [, setSearchParams] = useSearchParams();
 
   /**
    * @param {number} nextPage
    */
   function goToPage(nextPage) {
-    const params = new URLSearchParams(searchParams);
-    params.set('page', String(nextPage));
-    setSearchParams(params);
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set('page', String(nextPage));
+      return params;
+    });
   }
 
   return (
@@ -73,25 +80,26 @@ export default function AdminWishlistsRoute() {
       <PageHeader
         title={t('admin.wishlists.index.title')}
         subtitle={t('admin.wishlists.index.subtitle')}
-        className="mb-6"
       />
 
-      <Toolbar className="mb-4">
+      <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
+        <SearchField
+          defaultValue={q}
+          placeholder={t('admin.wishlists.index.searchPlaceholder')}
+          formClassName="w-full sm:max-w-sm"
+        />
         <ToolbarGroup>
-          <SearchField
-            defaultValue={q}
-            placeholder={t('admin.wishlists.index.searchPlaceholder')}
-            className="w-72"
-          />
+          <span className="text-text-muted text-sm">
+            {total === 1
+              ? t('admin.wishlists.index.resultsOne', { count: total })
+              : t('admin.wishlists.index.results', { count: total })}
+          </span>
         </ToolbarGroup>
       </Toolbar>
 
-      <h2 className="text-text mb-3 text-lg font-semibold">
-        {t('admin.wishlists.index.items', { total })}
-      </h2>
-
       {items.length === 0 ? (
         <EmptyState
+          icon={HeartIcon}
           title={
             q
               ? t('admin.wishlists.index.emptyTitleSearch')
@@ -104,51 +112,86 @@ export default function AdminWishlistsRoute() {
           }
         />
       ) : (
-        <>
-          <Table>
-            <THead>
-              <tr>
-                <Th>{t('admin.wishlists.index.col.product')}</Th>
-                <Th>{t('admin.wishlists.index.col.variant')}</Th>
-                <Th>{t('admin.wishlists.index.col.customer')}</Th>
-                <Th>{t('admin.wishlists.index.col.added')}</Th>
-                <Th className="text-right">
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
+            <tr>
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                {t('admin.wishlists.index.col.product')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 sm:table-cell">
+                {t('admin.wishlists.index.col.variant')}
+              </Th>
+              <Th sticky className="px-3 py-3.5">
+                {t('admin.wishlists.index.col.customer')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 md:table-cell">
+                {t('admin.wishlists.index.col.added')}
+              </Th>
+              <Th sticky className="py-3.5 pr-1 pl-3 sm:pr-0">
+                <span className="sr-only">
                   {t('admin.wishlists.index.col.actions')}
-                </Th>
-              </tr>
-            </THead>
-            <TBody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <Td>{item.productTitle ?? '—'}</Td>
-                  <Td>{item.variantSku ?? item.variantId}</Td>
-                  <Td>{item.customer?.email ?? item.customerId ?? '—'}</Td>
-                  <Td>{formatDate(item.createdAt)}</Td>
-                  <Td className="text-right">
+                </span>
+              </Th>
+            </tr>
+          </THead>
+          <TBody sticky>
+            {items.map((item) => {
+              const label = item.productTitle ?? '—';
+              const customer = item.customer?.email ?? item.customerId ?? '—';
+              return (
+                <Tr key={item.id}>
+                  <Td
+                    sticky
+                    className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+                  >
+                    <span className="block min-w-0">
+                      <span className="block truncate font-medium">
+                        {label}
+                      </span>
+                      <span className="text-text-muted mt-0.5 block truncate font-mono text-xs font-normal">
+                        {item.variantSku ?? item.variantId}
+                      </span>
+                    </span>
+                  </Td>
+                  <Td
+                    sticky
+                    className="text-text-muted hidden px-3 py-4 font-mono text-sm sm:table-cell"
+                  >
+                    {item.variantSku ?? item.variantId}
+                  </Td>
+                  <Td sticky className="px-3 py-4">
+                    {customer}
+                  </Td>
+                  <Td
+                    sticky
+                    className="hidden px-3 py-4 tabular-nums md:table-cell"
+                  >
+                    {formatDate(item.createdAt)}
+                  </Td>
+                  <Td
+                    sticky
+                    className="py-4 pr-1 pl-3 text-right text-sm font-medium sm:pr-0"
+                  >
                     <Form method="post" className="inline">
                       <input type="hidden" name="intent" value="delete" />
                       <input type="hidden" name="id" value={item.id} />
                       <button
                         type="submit"
-                        className="text-danger text-sm hover:underline"
+                        className="text-danger hover:text-danger/80"
                       >
                         {t('admin.wishlists.index.remove')}
+                        <span className="sr-only">, {label}</span>
                       </button>
                     </Form>
                   </Td>
-                </tr>
-              ))}
-            </TBody>
-          </Table>
-
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            className="mt-6"
-            onPageChange={goToPage}
-          />
-        </>
+                </Tr>
+              );
+            })}
+          </TBody>
+        </Table>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
     </div>
   );
 }

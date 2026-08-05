@@ -59,18 +59,18 @@ Same sticky list pattern. Add Toolbar/SearchField where missing.
 
 ### 2a — Gift cards & wishlists
 
-- [ ] `app/routes/admin/gift-cards/index.jsx`
-- [ ] `app/routes/admin/wishlists/index.jsx`
+- [x] `app/routes/admin/gift-cards/index.jsx`
+- [x] `app/routes/admin/wishlists/index.jsx`
 
 ### 2b — Back in stock & returns
 
-- [ ] `app/routes/admin/back-in-stock/index.jsx` (prefer `#/components/admin/tabs` if replacing custom tabs)
-- [ ] `app/routes/admin/returns/index.jsx`
+- [x] `app/routes/admin/back-in-stock/index.jsx` (prefer `#/components/admin/tabs` if replacing custom tabs)
+- [x] `app/routes/admin/returns/index.jsx`
 
 ### 2c — Reviews & audit log
 
-- [ ] `app/routes/admin/reviews/index.jsx`
-- [ ] `app/routes/admin/audit-log.jsx` (filters → Toolbar; not a Card form above the table)
+- [x] `app/routes/admin/reviews/index.jsx`
+- [x] `app/routes/admin/audit-log.jsx` (filters → Toolbar; not a Card form above the table)
 
 ---
 
