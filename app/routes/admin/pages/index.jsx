@@ -1,3 +1,6 @@
+// app/routes/admin/pages/index.jsx
+// Pages admin list — sticky-header table with search and status filters.
+
 import { DocumentTextIcon, PlusIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import {
@@ -34,7 +37,7 @@ function StatusBadge({ status }) {
       ? t('admin.pages.status.published')
       : t('admin.pages.status.draft');
   return (
-    <Badge tone={status === 'published' ? 'success' : 'warn'}>{label}</Badge>
+    <Badge tone={status === 'published' ? 'success' : 'neutral'}>{label}</Badge>
   );
 }
 
@@ -50,6 +53,14 @@ function formatDate(iso) {
   });
 }
 
+/**
+ * @param {{ title?: string | null, slug?: string | null, id: string }} row
+ * @returns {string}
+ */
+function pageLabel(row) {
+  return row.title || row.slug || `${row.id.slice(0, 8)}…`;
+}
+
 export default function AdminPagesIndexRoute() {
   const t = useT();
   const {
@@ -62,21 +73,31 @@ export default function AdminPagesIndexRoute() {
     status,
     q,
   } = useLoaderData();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  /**
+   * @param {string} next
+   */
   function setStatus(next) {
-    const params = new URLSearchParams(searchParams);
-    if (next === 'all') params.delete('status');
-    else params.set('status', next);
-    params.delete('page');
-    setSearchParams(params);
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (next === 'all') params.delete('status');
+      else params.set('status', next);
+      params.delete('page');
+      return params;
+    });
   }
 
+  /**
+   * @param {number} p
+   */
   function goToPage(p) {
-    const params = new URLSearchParams(searchParams);
-    params.set('page', String(p));
-    setSearchParams(params);
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set('page', String(p));
+      return params;
+    });
   }
 
   const statusFilters = [
@@ -85,11 +106,7 @@ export default function AdminPagesIndexRoute() {
     { key: 'published', label: t('admin.pages.status.published') },
   ];
 
-  const columns = [
-    t('admin.pages.index.col.page'),
-    t('admin.pages.index.col.status'),
-    t('admin.pages.index.col.updated'),
-  ];
+  const hasFilter = Boolean(q) || status !== 'all';
 
   return (
     <div>
@@ -116,150 +133,138 @@ export default function AdminPagesIndexRoute() {
         <Stat label={t('admin.pages.index.stat.drafts')} value={draftCount} />
       </div>
 
-      <div className="border-border bg-surface overflow-hidden rounded-xl border shadow-xs">
-        <Toolbar>
-          <SearchField
-            defaultValue={q}
-            placeholder={t('admin.pages.index.searchPlaceholder')}
-            formClassName="w-full sm:max-w-sm"
-            hiddenFields={status !== 'all' ? { status } : {}}
-          />
-          <ToolbarGroup>
-            <div className="flex flex-wrap gap-1.5">
-              {statusFilters.map((s) => (
-                <button
-                  key={s.key}
-                  type="button"
-                  onClick={() => setStatus(s.key)}
-                  className={clsx(
-                    'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                    status === s.key
-                      ? 'bg-accent text-accent-fg'
-                      : 'bg-surface-2 text-text-muted hover:text-text'
-                  )}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            <span className="text-text-muted text-sm">
-              {total === 1
-                ? t('admin.pages.index.resultsOne', { count: total })
-                : t('admin.pages.index.results', { count: total })}
-            </span>
-          </ToolbarGroup>
-        </Toolbar>
+      <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
+        <SearchField
+          defaultValue={q}
+          placeholder={t('admin.pages.index.searchPlaceholder')}
+          formClassName="w-full sm:max-w-sm"
+          hiddenFields={status !== 'all' ? { status } : {}}
+        />
+        <ToolbarGroup>
+          <div className="flex flex-wrap gap-1.5">
+            {statusFilters.map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setStatus(s.key)}
+                className={clsx(
+                  'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                  status === s.key
+                    ? 'bg-accent text-accent-fg'
+                    : 'bg-surface-2 text-text-muted hover:text-text'
+                )}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-text-muted text-sm">
+            {total === 1
+              ? t('admin.pages.index.resultsOne', { count: total })
+              : t('admin.pages.index.results', { count: total })}
+          </span>
+        </ToolbarGroup>
+      </Toolbar>
 
-        <Table className="hidden rounded-none border-0 shadow-none md:block">
-          <THead>
+      {pages.length === 0 ? (
+        <EmptyState
+          icon={DocumentTextIcon}
+          title={t('admin.pages.index.emptyTitle')}
+          description={
+            hasFilter
+              ? t('admin.pages.index.emptyDescriptionSearch')
+              : t('admin.pages.index.emptyDescription')
+          }
+          action={
+            !hasFilter && (
+              <Link
+                to="/admin/pages/new"
+                className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
+              >
+                <PlusIcon className="h-4 w-4" />
+                {t('admin.pages.index.newButton')}
+              </Link>
+            )
+          }
+        />
+      ) : (
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
             <tr>
-              {columns.map((col) => (
-                <Th key={col}>{col}</Th>
-              ))}
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                {t('admin.pages.index.col.page')}
+              </Th>
+              <Th sticky className="px-3 py-3.5">
+                {t('admin.pages.index.col.status')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 md:table-cell">
+                {t('admin.pages.index.col.updated')}
+              </Th>
+              <Th sticky className="py-3.5 pr-1 pl-3 sm:pr-0">
+                <span className="sr-only">
+                  {t('admin.pages.index.col.edit')}
+                </span>
+              </Th>
             </tr>
           </THead>
-          <TBody>
-            {pages.length === 0 && (
-              <tr>
-                <Td colSpan={3} className="p-0">
-                  <EmptyState
-                    icon={DocumentTextIcon}
-                    title={t('admin.pages.index.emptyTitle')}
-                    description={
-                      q || status !== 'all'
-                        ? t('admin.pages.index.emptyDescriptionSearch')
-                        : t('admin.pages.index.emptyDescription')
+          <TBody sticky>
+            {pages.map((row) => {
+              const label = pageLabel(row);
+              return (
+                <Tr
+                  key={row.id}
+                  role="link"
+                  tabIndex={0}
+                  className="group cursor-pointer"
+                  onClick={() => navigate(`/admin/pages/${row.id}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      navigate(`/admin/pages/${row.id}`);
                     }
-                    action={
-                      !q &&
-                      status === 'all' && (
-                        <Link
-                          to="/admin/pages/new"
-                          className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
-                        >
-                          <PlusIcon className="h-4 w-4" />
-                          {t('admin.pages.index.newButton')}
-                        </Link>
-                      )
-                    }
-                    className="border-0 shadow-none"
-                  />
-                </Td>
-              </tr>
-            )}
-            {pages.map((row) => (
-              <Tr
-                key={row.id}
-                role="link"
-                tabIndex={0}
-                className="group cursor-pointer"
-                onClick={() => navigate(`/admin/pages/${row.id}`)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    navigate(`/admin/pages/${row.id}`);
-                  }
-                }}
-              >
-                <Td className="whitespace-normal">
-                  <span className="block min-w-0">
-                    <span className="text-text group-hover:text-accent block truncate font-medium transition-colors">
-                      {row.title || row.slug || `${row.id.slice(0, 8)}…`}
+                  }}
+                >
+                  <Td
+                    sticky
+                    className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+                  >
+                    <span className="block min-w-0">
+                      <span className="group-hover:text-accent block truncate font-medium transition-colors">
+                        {label}
+                      </span>
+                      <span className="text-text-muted mt-0.5 block truncate font-mono text-xs font-normal">
+                        {row.slug ?? row.id.slice(0, 8)}
+                      </span>
                     </span>
-                    <span className="text-text-muted mt-0.5 block truncate font-mono text-xs">
-                      {row.slug ?? row.id.slice(0, 8)}
-                    </span>
-                  </span>
-                </Td>
-                <Td>
-                  <StatusBadge status={row.status} />
-                </Td>
-                <Td className="tabular-nums">{formatDate(row.updatedAt)}</Td>
-              </Tr>
-            ))}
+                  </Td>
+                  <Td sticky className="px-3 py-4">
+                    <StatusBadge status={row.status} />
+                  </Td>
+                  <Td
+                    sticky
+                    className="hidden px-3 py-4 tabular-nums md:table-cell"
+                  >
+                    {formatDate(row.updatedAt)}
+                  </Td>
+                  <Td
+                    sticky
+                    className="py-4 pr-1 pl-3 text-right text-sm font-medium sm:pr-0"
+                  >
+                    <Link
+                      to={`/admin/pages/${row.id}`}
+                      className="text-accent hover:text-accent-hover"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {t('admin.pages.index.edit')}
+                      <span className="sr-only">, {label}</span>
+                    </Link>
+                  </Td>
+                </Tr>
+              );
+            })}
           </TBody>
         </Table>
-
-        <div className="divide-border divide-y md:hidden">
-          {pages.length === 0 ? (
-            <EmptyState
-              icon={DocumentTextIcon}
-              title={t('admin.pages.index.emptyTitle')}
-              description={
-                q || status !== 'all'
-                  ? t('admin.pages.index.emptyDescriptionSearchShort')
-                  : t('admin.pages.index.emptyDescription')
-              }
-              className="border-0 shadow-none"
-            />
-          ) : (
-            pages.map((row) => (
-              <Link
-                key={row.id}
-                to={`/admin/pages/${row.id}`}
-                className="hover:bg-surface-2/60 block px-4 py-4 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-text truncate text-sm font-medium">
-                      {row.title || row.slug || `${row.id.slice(0, 8)}…`}
-                    </p>
-                    <p className="text-text-muted mt-0.5 truncate font-mono text-xs">
-                      {row.slug ?? row.id.slice(0, 8)}
-                    </p>
-                  </div>
-                  <StatusBadge status={row.status} />
-                </div>
-                <p className="text-text-muted mt-3 text-xs">
-                  {t('admin.pages.index.updatedAt', {
-                    date: formatDate(row.updatedAt),
-                  })}
-                </p>
-              </Link>
-            ))
-          )}
-        </div>
-      </div>
+      )}
 
       <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
     </div>
