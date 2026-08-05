@@ -43,7 +43,7 @@ Target composition: `PageHeader` → optional `Stat` → bordered `Toolbar` + `S
 
 ### 1b — Customers index
 
-- [ ] `app/routes/admin/customers/index.jsx`
+- [x] `app/routes/admin/customers/index.jsx`
 - Notes: same gaps as orders.
 
 ### 1c — Pages index
