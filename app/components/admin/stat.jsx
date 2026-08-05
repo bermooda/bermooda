@@ -14,7 +14,7 @@ export default function Stat({ label, value, className = '' }) {
   return (
     <div
       className={clsx(
-        'border-border bg-surface rounded-lg border px-4 py-3',
+        'border-border bg-surface rounded-xl border px-4 py-3',
         className
       )}
     >

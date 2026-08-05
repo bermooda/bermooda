@@ -787,7 +787,7 @@ export default function ProductEditor({
         </div>
       </Form>
 
-      <div className="mt-6 flex items-center justify-between gap-x-6">
+      <div className="mt-6 mb-6 flex items-center justify-between gap-x-6">
         {!isCreate ? (
           <Form method="post">
             <input type="hidden" name="intent" value="delete" />

@@ -420,7 +420,7 @@ export default function AdminLayout() {
 
   return (
     <I18nContext.Provider value={{ t }}>
-      <div className="bg-bg text-text flex h-full min-h-screen">
+      <div className="bg-bg text-text flex min-h-screen">
         {/* Sidebars */}
         <DesktopSidebar onOpenCommandPalette={openPalette} />
         <MobileSidebar
