@@ -38,7 +38,7 @@ Target composition: `PageHeader` → optional `Stat` → bordered `Toolbar` + `S
 
 ### 1a — Orders index
 
-- [ ] `app/routes/admin/orders/index.jsx`
+- [x] `app/routes/admin/orders/index.jsx`
 - Notes: already has Stat/Toolbar/Table; remove card wrapper; adopt sticky; use `SearchField` if not already; EmptyState outside table body.
 
 ### 1b — Customers index
