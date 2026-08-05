@@ -80,19 +80,19 @@ These indexes should become standard resource lists (not card stacks / `<ul>`s).
 
 ### 3a — Discounts & collections
 
-- [ ] `app/routes/admin/discounts/index.jsx`
-- [ ] `app/routes/admin/collections/index.jsx` (also remove legacy `stone-*` tokens)
+- [x] `app/routes/admin/discounts/index.jsx`
+- [x] `app/routes/admin/collections/index.jsx` (also remove legacy `stone-*` tokens)
 
 ### 3b — Price lists & customer groups
 
-- [ ] `app/routes/admin/price-lists/index.jsx`
-- [ ] `app/routes/admin/customer-groups/index.jsx`
+- [x] `app/routes/admin/price-lists/index.jsx`
+- [x] `app/routes/admin/customer-groups/index.jsx`
 
 ### 3c — B2B / commerce lists
 
-- [ ] `app/routes/admin/companies/index.jsx`
-- [ ] `app/routes/admin/quotes/index.jsx`
-- [ ] `app/routes/admin/subscriptions/index.jsx`
+- [x] `app/routes/admin/companies/index.jsx`
+- [x] `app/routes/admin/quotes/index.jsx`
+- [x] `app/routes/admin/subscriptions/index.jsx`
 
 ---
 

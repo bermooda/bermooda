@@ -272,6 +272,19 @@ describe('listDiscounts', () => {
     );
   });
 
+  it('filters by code when q is provided', async () => {
+    prisma.discount.findMany.mockResolvedValue([]);
+    prisma.discount.count.mockResolvedValue(0);
+
+    await listDiscounts({ q: 'save' });
+
+    expect(prisma.discount.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { code: expect.objectContaining({ contains: 'SAVE' }) },
+      })
+    );
+  });
+
   it('applies pagination via page and limit', async () => {
     prisma.discount.findMany.mockResolvedValue([]);
     prisma.discount.count.mockResolvedValue(0);

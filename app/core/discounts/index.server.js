@@ -2,7 +2,10 @@
 // Promotions engine: validation, stacking, automatic discounts, CRUD.
 
 import prisma from '#/libs/prisma.server';
-import { equalsFilter } from '#/libs/prisma/filters/index.server';
+import {
+  containsFilter,
+  equalsFilter,
+} from '#/libs/prisma/filters/index.server';
 import { summarizeCartLines } from '#/core/cart/lines';
 
 // ---------------------------------------------------------------------------
@@ -341,14 +344,31 @@ export async function deleteDiscount(id) {
   await prisma.discount.delete({ where: { id } });
 }
 
+/**
+ * List discounts with optional active/code filters and pagination.
+ *
+ * @param {{
+ *   active?: boolean,
+ *   page?: number,
+ *   limit?: number,
+ *   orderBy?: object,
+ *   q?: string,
+ * }} [options]
+ * @returns {Promise<{ discounts: object[], total: number }>}
+ */
 export async function listDiscounts({
   active,
   page = 1,
   limit = 20,
   orderBy = { code: 'asc' },
+  q,
 } = {}) {
   const where = {};
   if (active !== undefined) where.active = active;
+  const query = q?.trim();
+  if (query) {
+    where.code = containsFilter(query.toUpperCase());
+  }
 
   const skip = (page - 1) * limit;
 

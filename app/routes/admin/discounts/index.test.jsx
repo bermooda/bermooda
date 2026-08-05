@@ -48,13 +48,35 @@ describe('admin discounts route', () => {
       total: 1,
     });
 
-    const data = await loader();
+    const data = await loader({
+      request: new Request('http://localhost/admin/discounts'),
+    });
 
     expect(data.discounts).toHaveLength(1);
+    expect(data.total).toBe(1);
+    expect(data.page).toBe(1);
+    expect(data.q).toBe('');
     expect(mockListDiscounts).toHaveBeenCalledWith({
       page: 1,
-      limit: 500,
+      limit: 20,
       orderBy: { createdAt: 'desc' },
+      q: undefined,
+    });
+  });
+
+  it('loader passes search query to listDiscounts', async () => {
+    mockListDiscounts.mockResolvedValue({ discounts: [], total: 0 });
+
+    const data = await loader({
+      request: new Request('http://localhost/admin/discounts?q=SAVE'),
+    });
+
+    expect(data.q).toBe('SAVE');
+    expect(mockListDiscounts).toHaveBeenCalledWith({
+      page: 1,
+      limit: 20,
+      orderBy: { createdAt: 'desc' },
+      q: 'SAVE',
     });
   });
 
