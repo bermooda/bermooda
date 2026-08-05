@@ -1,0 +1,39 @@
+---
+description: Admin list and detail page design language (products as reference)
+globs: app/routes/admin/**/*,app/components/admin/**/*
+alwaysApply: false
+---
+
+# Admin design language
+
+Full guide: [docs/admin-design-language.md](mdc:docs/admin-design-language.md).
+
+**References:** `app/routes/admin/products/index.jsx` (lists), `app/components/admin/product-editor.jsx` (detail).
+
+## Always
+
+- Semantic tokens only (`bg`, `surface`, `surface-2`, `border`, `text`, `text-muted`, `accent`, `success`/`warn`/`danger`) — no gradients, glass, or glow in admin.
+- Prefer `#/components/admin/*` primitives over one-off markup.
+- Heroicons only.
+
+## List pages
+
+`PageHeader` → optional `Stat` grid → bordered `Toolbar` + `SearchField` → `Table variant="sticky"` (or `EmptyState`) → `Pagination`.
+
+- Sticky table: `sticky` on `THead`/`TBody`/`Th`/`Td`; no overflow wrapper.
+- Rows navigate to detail (click + Enter/Space); primary cell = title + muted mono meta; `Badge` for status/tags.
+- Hide secondary columns with `sm:`/`md:`/`lg:table-cell`.
+
+## Detail pages
+
+`mx-auto max-w-5xl` → `PageHeader` + `Breadcrumbs` → two-column `FormSection` stack (`space-y-12`, `md:grid-cols-3`) → footer (delete left · cancel + `ButtonSubmit` right).
+
+- Save in footer, not header. Header actions = secondary workflows (e.g. publish).
+- Forms: `Field` / `Input` / `Textarea` / `Select` / `SlugField` / `SeoFields` / `LocaleTabs`.
+- Alerts via `SuccessAlert` / `ErrorAlert` from `actionData`.
+
+## Don’t
+
+- Ad-hoc `gray-*`/`zinc-*` tables or headers.
+- Overflow wrappers around sticky list tables.
+- Cards as the main list composition (use stats + toolbar + table).
