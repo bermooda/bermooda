@@ -12,10 +12,10 @@ Use one **session / PR** per checklist section (or a smaller subset if a section
 
 ## Status legend
 
-| Mark | Meaning |
-| ---- | ------- |
-| `[ ]` | Not started |
-| `[~]` | Partial / in progress |
+| Mark  | Meaning                         |
+| ----- | ------------------------------- |
+| `[ ]` | Not started                     |
+| `[~]` | Partial / in progress           |
 | `[x]` | Done (matches products pattern) |
 
 ---
@@ -223,20 +223,20 @@ When touching these, align tokens + `PageHeader` only. Keep bespoke layouts.
 
 ## Suggested session order
 
-| Session | Work from this plan |
-| ------- | ------------------- |
-| 1 | Phase 1a — Orders index |
-| 2 | Phase 1b — Customers index |
-| 3 | Phase 1c — Pages index |
-| 4 | Phase 2a |
-| 5 | Phase 2b |
-| 6 | Phase 2c |
-| 7 | Phase 3a |
-| 8 | Phase 3b |
-| 9 | Phase 3c |
-| 10 | Optional: extract `FormSection` + Phase 4a PageEditor |
-| 11+ | Phase 4b → 4k (one lettered section per session) |
-| … | Phase 5, then Phase 6 as needed |
+| Session | Work from this plan                                   |
+| ------- | ----------------------------------------------------- |
+| 1       | Phase 1a — Orders index                               |
+| 2       | Phase 1b — Customers index                            |
+| 3       | Phase 1c — Pages index                                |
+| 4       | Phase 2a                                              |
+| 5       | Phase 2b                                              |
+| 6       | Phase 2c                                              |
+| 7       | Phase 3a                                              |
+| 8       | Phase 3b                                              |
+| 9       | Phase 3c                                              |
+| 10      | Optional: extract `FormSection` + Phase 4a PageEditor |
+| 11+     | Phase 4b → 4k (one lettered section per session)      |
+| …       | Phase 5, then Phase 6 as needed                       |
 
 ---
 
@@ -246,9 +246,11 @@ Copy into the PR description:
 
 ```md
 ## Summary
+
 - Migrate <route> to admin design language ([docs/admin-design-language.md](docs/admin-design-language.md))
 
 ## Checklist
+
 - [ ] Matches list or detail pattern from the design language doc
 - [ ] Semantic tokens only (no gray/zinc/stone/gradients)
 - [ ] Light + dark smoke

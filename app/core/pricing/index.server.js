@@ -401,14 +401,20 @@ export async function getPriceList(id, locale = 'en') {
   if (!priceList) return null;
 
   const productIds = priceList.entries
-    .map(/** @param {{ variant?: { product?: { id?: string } } }} entry */ (entry) => entry.variant?.product?.id)
+    .map(
+      /** @param {{ variant?: { product?: { id?: string } } }} entry */ (
+        entry
+      ) => entry.variant?.product?.id
+    )
     .filter(Boolean);
   const titleMap = await loadProductTitleMap(productIds, locale);
 
   return {
     ...priceList,
     entries: priceList.entries.map(
-      /** @param {{ variant?: { product?: { id: string } } }} entry */ (entry) => {
+      /** @param {{ variant?: { product?: { id: string } } }} entry */ (
+        entry
+      ) => {
         const product = entry.variant?.product;
         if (!product) return entry;
         return {
