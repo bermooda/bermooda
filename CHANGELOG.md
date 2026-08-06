@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.3](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.2...bermooda-v0.9.3) (2026-08-06)
+
+
+### Bug Fixes
+
+* **i18n:** bundle catalogs for production SSR admin translations ([#218](https://github.com/bermooda/bermooda/issues/218)) ([759d77e](https://github.com/bermooda/bermooda/commit/759d77e3383ecb67ed1655b2f7d8f5d5a6d76eec))
+
 ## [0.9.2](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.1...bermooda-v0.9.2) (2026-08-06)
 
 
