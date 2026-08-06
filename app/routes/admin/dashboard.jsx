@@ -5,7 +5,7 @@ import {
   ExclamationTriangleIcon,
   ShoppingBagIcon,
 } from '@heroicons/react/24/outline';
-import { useLoaderData } from 'react-router';
+import { Link, useLoaderData, useNavigate } from 'react-router';
 
 import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
 import { formatPrice } from '#/core/currency/format';
@@ -15,7 +15,7 @@ import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
-import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import SlotBlocks from '#/components/slot-blocks';
 
 // ---------------------------------------------------------------------------
@@ -61,10 +61,10 @@ export async function loader() {
  * @returns {string}
  */
 function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en', {
-    year: 'numeric',
+  return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
+    year: 'numeric',
   });
 }
 
@@ -102,6 +102,7 @@ function KpiTile({ icon: Icon, label, value }) {
  */
 export default function AdminDashboardRoute() {
   const t = useT();
+  const navigate = useNavigate();
   const {
     totalOrders,
     totalRevenueCents,
@@ -111,23 +112,13 @@ export default function AdminDashboardRoute() {
     slotBlocks,
   } = useLoaderData();
 
-  const columns = [
-    t('admin.dashboard.col.order'),
-    t('admin.dashboard.col.customer'),
-    t('admin.dashboard.col.status'),
-    t('admin.dashboard.col.total'),
-    t('admin.dashboard.col.date'),
-  ];
-
   return (
     <div className="space-y-8">
-      {/* Page heading */}
       <PageHeader
         title={t('admin.dashboard.title')}
         subtitle={t('admin.dashboard.subtitle')}
       />
 
-      {/* KPI tiles */}
       <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiTile
           icon={ShoppingBagIcon}
@@ -151,7 +142,6 @@ export default function AdminDashboardRoute() {
         />
       </dl>
 
-      {/* Plugin slot */}
       <SlotBlocks
         blocks={slotBlocks['dashboard.widgets'] ?? []}
         slotProps={{
@@ -163,7 +153,6 @@ export default function AdminDashboardRoute() {
         }}
       />
 
-      {/* Recent orders */}
       <div>
         <h2 className="text-text mb-4 text-lg font-semibold">
           {t('admin.dashboard.recentOrders')}
@@ -176,30 +165,95 @@ export default function AdminDashboardRoute() {
             description={t('admin.dashboard.emptyDescription')}
           />
         ) : (
-          <Table>
-            <THead>
+          <Table variant="sticky" className="mt-2">
+            <THead sticky>
               <tr>
-                {columns.map((col) => (
-                  <Th key={col}>{col}</Th>
-                ))}
+                <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                  {t('admin.dashboard.col.order')}
+                </Th>
+                <Th sticky className="hidden px-3 py-3.5 sm:table-cell">
+                  {t('admin.dashboard.col.customer')}
+                </Th>
+                <Th sticky className="px-3 py-3.5">
+                  {t('admin.dashboard.col.status')}
+                </Th>
+                <Th sticky className="px-3 py-3.5 text-right">
+                  {t('admin.dashboard.col.total')}
+                </Th>
+                <Th sticky className="hidden px-3 py-3.5 md:table-cell">
+                  {t('admin.dashboard.col.date')}
+                </Th>
+                <Th sticky className="py-3.5 pr-1 pl-3 sm:pr-0">
+                  <span className="sr-only">
+                    {t('admin.dashboard.col.view')}
+                  </span>
+                </Th>
               </tr>
             </THead>
-            <TBody>
-              {recentOrders.map((order) => (
-                <tr key={order.id}>
-                  <Td className="text-text font-medium">
-                    #{order.orderNumber}
-                  </Td>
-                  <Td>{order.customer?.email ?? order.email}</Td>
-                  <Td>
-                    <OrderStatusBadge status={order.status} />
-                  </Td>
-                  <Td className="text-text">
-                    {formatPrice(order.totalCents, order.currency)}
-                  </Td>
-                  <Td>{formatDate(order.createdAt)}</Td>
-                </tr>
-              ))}
+            <TBody sticky>
+              {recentOrders.map((order) => {
+                const customerLabel = order.customer?.email ?? order.email;
+                return (
+                  <Tr
+                    key={order.id}
+                    role="link"
+                    tabIndex={0}
+                    className="group cursor-pointer"
+                    onClick={() => navigate(`/admin/orders/${order.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        navigate(`/admin/orders/${order.id}`);
+                      }
+                    }}
+                  >
+                    <Td
+                      sticky
+                      className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+                    >
+                      <span className="block min-w-0">
+                        <span className="group-hover:text-accent block truncate font-mono font-medium transition-colors">
+                          #{order.orderNumber}
+                        </span>
+                        <span className="text-text-muted mt-0.5 block truncate text-xs font-normal sm:hidden">
+                          {customerLabel}
+                        </span>
+                      </span>
+                    </Td>
+                    <Td
+                      sticky
+                      className="hidden px-3 py-4 whitespace-normal sm:table-cell"
+                    >
+                      <span className="block truncate">{customerLabel}</span>
+                    </Td>
+                    <Td sticky className="px-3 py-4">
+                      <OrderStatusBadge status={order.status} />
+                    </Td>
+                    <Td sticky className="px-3 py-4 text-right tabular-nums">
+                      {formatPrice(order.totalCents, order.currency)}
+                    </Td>
+                    <Td
+                      sticky
+                      className="hidden px-3 py-4 tabular-nums md:table-cell"
+                    >
+                      {formatDate(order.createdAt)}
+                    </Td>
+                    <Td
+                      sticky
+                      className="py-4 pr-1 pl-3 text-right text-sm font-medium sm:pr-0"
+                    >
+                      <Link
+                        to={`/admin/orders/${order.id}`}
+                        className="text-accent hover:text-accent-hover"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        {t('admin.dashboard.view')}
+                        <span className="sr-only">, #{order.orderNumber}</span>
+                      </Link>
+                    </Td>
+                  </Tr>
+                );
+              })}
             </TBody>
           </Table>
         )}

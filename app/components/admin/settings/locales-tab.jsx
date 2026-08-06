@@ -7,9 +7,8 @@ import {
   CHECKBOX_CLASS,
   RADIO_CLASS,
   SaveButton,
-  SectionCard,
 } from '#/components/admin/settings/shared';
-import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 
 /**
  * Locales settings tab.
@@ -24,6 +23,9 @@ export function LocalesTab({ data }) {
   const [enabled, setEnabled] = useState(data.locales);
   const [defaultLocale, setDefaultLocale] = useState(data.defaultLocale);
 
+  /**
+   * @param {string} l
+   */
   function toggle(l) {
     setEnabled((prev) =>
       prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]
@@ -31,55 +33,71 @@ export function LocalesTab({ data }) {
   }
 
   return (
-    <SectionCard title={t('admin.settings.locales.title')}>
-      <fetcher.Form method="post" className="space-y-4">
+    <div>
+      <div className="mb-4">
+        <h2 className="text-text text-base font-semibold">
+          {t('admin.settings.locales.title')}
+        </h2>
+        <p className="text-text-muted mt-1 text-sm">
+          {t('admin.settings.locales.help')}
+        </p>
+      </div>
+
+      <fetcher.Form method="post" className="space-y-6">
         <input type="hidden" name="intent" value="save-locales" />
         {enabled.map((l) => (
           <input key={l} type="hidden" name="locales" value={l} />
         ))}
         <input type="hidden" name="defaultLocale" value={defaultLocale} />
 
-        <p className="text-text-muted text-sm">
-          {t('admin.settings.locales.help')}
-        </p>
-
-        <Table>
-          <THead>
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
             <tr>
-              <Th>{t('admin.settings.locales.col.locale')}</Th>
-              <Th className="text-center">
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                {t('admin.settings.locales.col.locale')}
+              </Th>
+              <Th sticky className="px-3 py-3.5 text-center">
                 {t('admin.settings.locales.col.enabled')}
               </Th>
-              <Th className="text-center">
+              <Th sticky className="px-3 py-3.5 text-center">
                 {t('admin.settings.locales.col.default')}
               </Th>
             </tr>
           </THead>
-          <TBody>
+          <TBody sticky>
             {LOCALE_OPTIONS.map((l) => {
               const isEnabled = enabled.includes(l);
               const isDefault = defaultLocale === l;
               return (
-                <tr key={l}>
-                  <Td className="text-text font-mono font-semibold">{l}</Td>
-                  <Td className="text-center">
+                <Tr key={l}>
+                  <Td
+                    sticky
+                    className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+                  >
+                    <span className="block truncate font-mono font-medium">
+                      {l}
+                    </span>
+                  </Td>
+                  <Td sticky className="px-3 py-4 text-center">
                     <input
                       type="checkbox"
                       checked={isEnabled}
                       onChange={() => toggle(l)}
                       className={CHECKBOX_CLASS}
+                      aria-label={t('admin.settings.locales.col.enabled')}
                     />
                   </Td>
-                  <Td className="text-center">
+                  <Td sticky className="px-3 py-4 text-center">
                     <input
                       type="radio"
                       checked={isDefault}
                       disabled={!isEnabled}
                       onChange={() => setDefaultLocale(l)}
                       className={clsx(RADIO_CLASS, 'disabled:opacity-40')}
+                      aria-label={t('admin.settings.locales.col.default')}
                     />
                   </Td>
-                </tr>
+                </Tr>
               );
             })}
           </TBody>
@@ -87,6 +105,6 @@ export function LocalesTab({ data }) {
 
         <SaveButton fetcher={fetcher} intent="save-locales" />
       </fetcher.Form>
-    </SectionCard>
+    </div>
   );
 }

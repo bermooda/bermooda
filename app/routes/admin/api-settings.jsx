@@ -1,7 +1,12 @@
 // app/routes/admin/api-settings.jsx
 // Admin UI for managing API keys and outbound webhook subscriptions.
 
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import {
+  KeyIcon,
+  PlusIcon,
+  TrashIcon,
+  BoltIcon,
+} from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { Link, useFetcher, useLoaderData } from 'react-router';
 
@@ -16,10 +21,11 @@ import {
   updateSubscription,
 } from '#/core/webhooks/index.server';
 import Badge from '#/components/admin/badge';
-import Card from '#/components/admin/card';
+import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
-import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import Tabs from '#/components/admin/tabs';
+import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -111,27 +117,19 @@ export function meta() {
 }
 
 // ---------------------------------------------------------------------------
-// Shared sub-components
+// Helpers
 // ---------------------------------------------------------------------------
 
 /**
- * @param {Object} props
- * @param {string} props.title
- * @param {string} [props.description]
- * @param {React.ReactNode} props.children
+ * @param {string} iso
+ * @returns {string}
  */
-function SectionCard({ title, description, children }) {
-  return (
-    <Card padded={false}>
-      <div className="border-border border-b px-4 py-4 sm:px-6">
-        <h2 className="text-text text-base font-semibold">{title}</h2>
-        {description && (
-          <p className="text-text-muted mt-0.5 text-sm">{description}</p>
-        )}
-      </div>
-      <div className="p-4 sm:p-6">{children}</div>
-    </Card>
-  );
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -144,88 +142,161 @@ function SectionCard({ title, description, children }) {
 function ApiKeysSection({ data }) {
   const t = useT();
   const revokeFetcher = useFetcher();
+  const count = data.apiKeys.length;
 
   return (
-    <SectionCard
-      title={t('admin.apiSettings.index.keysTitle')}
-      description={t('admin.apiSettings.index.keysDescription')}
-    >
-      <div className="mb-4 flex justify-end">
-        <Link
-          to="/admin/api-settings/keys/new"
-          className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
-        >
-          <PlusIcon className="h-4 w-4" />
-          {t('admin.apiSettings.index.createKey')}
-        </Link>
-      </div>
+    <div>
+      <p className="text-text-muted mb-4 text-sm">
+        {t('admin.apiSettings.index.keysDescription')}
+      </p>
 
-      <Table>
-        <THead>
-          <tr>
-            <Th>{t('admin.apiSettings.index.col.label')}</Th>
-            <Th>{t('admin.apiSettings.index.col.scopes')}</Th>
-            <Th>{t('admin.apiSettings.index.col.lastUsed')}</Th>
-            <Th>{t('admin.apiSettings.index.col.created')}</Th>
-            <Th />
-          </tr>
-        </THead>
-        <TBody>
-          {data.apiKeys.length === 0 && (
+      <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
+        <ToolbarGroup>
+          <span className="text-text-muted text-sm">
+            {count === 1
+              ? t('admin.apiSettings.index.keysResultsOne', { count })
+              : t('admin.apiSettings.index.keysResults', { count })}
+          </span>
+        </ToolbarGroup>
+        <ToolbarGroup>
+          <Link
+            to="/admin/api-settings/keys/new"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
+            <PlusIcon className="h-4 w-4" />
+            {t('admin.apiSettings.index.createKey')}
+          </Link>
+        </ToolbarGroup>
+      </Toolbar>
+
+      {count === 0 ? (
+        <EmptyState
+          icon={KeyIcon}
+          title={t('admin.apiSettings.index.emptyKeysTitle')}
+          description={t('admin.apiSettings.index.emptyKeysDescription')}
+          action={
+            <Link
+              to="/admin/api-settings/keys/new"
+              className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
+            >
+              <PlusIcon className="h-4 w-4" />
+              {t('admin.apiSettings.index.createKey')}
+            </Link>
+          }
+        />
+      ) : (
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
             <tr>
-              <Td colSpan={5} className="py-8 text-center">
-                {t('admin.apiSettings.index.noKeys')}
-              </Td>
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                {t('admin.apiSettings.index.col.label')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 sm:table-cell">
+                {t('admin.apiSettings.index.col.scopes')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 md:table-cell">
+                {t('admin.apiSettings.index.col.lastUsed')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 lg:table-cell">
+                {t('admin.apiSettings.index.col.created')}
+              </Th>
+              <Th sticky className="py-3.5 pr-1 pl-3 sm:pr-0">
+                <span className="sr-only">
+                  {t('admin.apiSettings.index.revokeTitle')}
+                </span>
+              </Th>
             </tr>
-          )}
-          {data.apiKeys.map((key) => (
-            <tr key={key.id}>
-              <Td className="text-text font-medium">{key.label}</Td>
-              <Td>
-                <div className="flex flex-wrap gap-1">
-                  {key.scopes.map((s) => (
-                    <Badge key={s} tone="accent">
-                      {s}
-                    </Badge>
-                  ))}
-                </div>
-              </Td>
-              <Td>
-                {key.lastUsedAt
-                  ? new Date(key.lastUsedAt).toLocaleDateString()
-                  : t('admin.apiSettings.index.never')}
-              </Td>
-              <Td>{new Date(key.createdAt).toLocaleDateString()}</Td>
-              <Td>
-                <revokeFetcher.Form method="post">
-                  <input type="hidden" name="intent" value="revoke-api-key" />
-                  <input type="hidden" name="id" value={key.id} />
-                  <button
-                    type="submit"
-                    disabled={revokeFetcher.state !== 'idle'}
-                    onClick={(e) => {
-                      if (
-                        !confirm(
-                          t('admin.apiSettings.index.revokeConfirm', {
-                            label: key.label,
-                          })
-                        )
-                      ) {
-                        e.preventDefault();
-                      }
-                    }}
-                    className="text-text-muted hover:text-danger rounded p-1 disabled:opacity-50"
-                    title={t('admin.apiSettings.index.revokeTitle')}
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
-                </revokeFetcher.Form>
-              </Td>
-            </tr>
-          ))}
-        </TBody>
-      </Table>
-    </SectionCard>
+          </THead>
+          <TBody sticky>
+            {data.apiKeys.map((key) => (
+              <Tr key={key.id}>
+                <Td
+                  sticky
+                  className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+                >
+                  <span className="block min-w-0">
+                    <span className="block truncate font-medium">
+                      {key.label}
+                    </span>
+                    <span className="text-text-muted mt-0.5 block truncate font-mono text-xs font-normal">
+                      {key.id.slice(0, 8)}
+                    </span>
+                    <span className="mt-1 flex flex-wrap gap-1 sm:hidden">
+                      {key.scopes.map((s) => (
+                        <Badge key={s} tone="accent">
+                          {s}
+                        </Badge>
+                      ))}
+                    </span>
+                  </span>
+                </Td>
+                <Td
+                  sticky
+                  className="hidden px-3 py-4 whitespace-normal sm:table-cell"
+                >
+                  <div className="flex max-w-xs flex-wrap gap-1">
+                    {key.scopes.length === 0 ? (
+                      <span className="text-text-muted text-xs">—</span>
+                    ) : (
+                      key.scopes.map((s) => (
+                        <Badge key={s} tone="accent">
+                          {s}
+                        </Badge>
+                      ))
+                    )}
+                  </div>
+                </Td>
+                <Td
+                  sticky
+                  className="hidden px-3 py-4 tabular-nums md:table-cell"
+                >
+                  {key.lastUsedAt
+                    ? formatDate(key.lastUsedAt)
+                    : t('admin.apiSettings.index.never')}
+                </Td>
+                <Td
+                  sticky
+                  className="hidden px-3 py-4 tabular-nums lg:table-cell"
+                >
+                  {formatDate(key.createdAt)}
+                </Td>
+                <Td
+                  sticky
+                  className="py-4 pr-1 pl-3 text-right text-sm font-medium sm:pr-0"
+                >
+                  <revokeFetcher.Form method="post" className="inline">
+                    <input type="hidden" name="intent" value="revoke-api-key" />
+                    <input type="hidden" name="id" value={key.id} />
+                    <button
+                      type="submit"
+                      disabled={revokeFetcher.state !== 'idle'}
+                      onClick={(e) => {
+                        if (
+                          !confirm(
+                            t('admin.apiSettings.index.revokeConfirm', {
+                              label: key.label,
+                            })
+                          )
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="text-danger hover:text-danger/80 inline-flex items-center gap-1 disabled:opacity-50"
+                      title={t('admin.apiSettings.index.revokeTitle')}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      <span className="sr-only">
+                        {t('admin.apiSettings.index.revokeTitle')}, {key.label}
+                      </span>
+                    </button>
+                  </revokeFetcher.Form>
+                </Td>
+              </Tr>
+            ))}
+          </TBody>
+        </Table>
+      )}
+    </div>
   );
 }
 
@@ -240,117 +311,200 @@ function WebhooksSection({ data }) {
   const t = useT();
   const deleteFetcher = useFetcher();
   const toggleFetcher = useFetcher();
+  const count = data.subscriptions.length;
 
   return (
-    <SectionCard
-      title={t('admin.apiSettings.index.webhooksTitle')}
-      description={t('admin.apiSettings.index.webhooksDescription')}
-    >
-      <div className="mb-4 flex justify-end">
-        <Link
-          to="/admin/api-settings/webhooks/new"
-          className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
-        >
-          <PlusIcon className="h-4 w-4" />
-          {t('admin.apiSettings.index.addEndpoint')}
-        </Link>
-      </div>
+    <div>
+      <p className="text-text-muted mb-4 text-sm">
+        {t('admin.apiSettings.index.webhooksDescription')}
+      </p>
 
-      <Table>
-        <THead>
-          <tr>
-            <Th>{t('admin.apiSettings.index.col.url')}</Th>
-            <Th>{t('admin.apiSettings.index.col.events')}</Th>
-            <Th>{t('admin.apiSettings.index.col.status')}</Th>
-            <Th>{t('admin.apiSettings.index.col.created')}</Th>
-            <Th />
-          </tr>
-        </THead>
-        <TBody>
-          {data.subscriptions.length === 0 && (
+      <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
+        <ToolbarGroup>
+          <span className="text-text-muted text-sm">
+            {count === 1
+              ? t('admin.apiSettings.index.webhooksResultsOne', { count })
+              : t('admin.apiSettings.index.webhooksResults', { count })}
+          </span>
+        </ToolbarGroup>
+        <ToolbarGroup>
+          <Link
+            to="/admin/api-settings/webhooks/new"
+            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+          >
+            <PlusIcon className="h-4 w-4" />
+            {t('admin.apiSettings.index.addEndpoint')}
+          </Link>
+        </ToolbarGroup>
+      </Toolbar>
+
+      {count === 0 ? (
+        <EmptyState
+          icon={BoltIcon}
+          title={t('admin.apiSettings.index.emptyWebhooksTitle')}
+          description={t('admin.apiSettings.index.emptyWebhooksDescription')}
+          action={
+            <Link
+              to="/admin/api-settings/webhooks/new"
+              className="bg-accent text-accent-fg hover:bg-accent-hover inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition"
+            >
+              <PlusIcon className="h-4 w-4" />
+              {t('admin.apiSettings.index.addEndpoint')}
+            </Link>
+          }
+        />
+      ) : (
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
             <tr>
-              <Td colSpan={5} className="py-8 text-center">
-                {t('admin.apiSettings.index.noWebhooks')}
-              </Td>
-            </tr>
-          )}
-          {data.subscriptions.map((sub) => (
-            <tr key={sub.id}>
-              <Td className="text-text max-w-xs">
-                <span className="block truncate font-mono" title={sub.url}>
-                  {sub.url}
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                {t('admin.apiSettings.index.col.url')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 lg:table-cell">
+                {t('admin.apiSettings.index.col.events')}
+              </Th>
+              <Th sticky className="px-3 py-3.5">
+                {t('admin.apiSettings.index.col.status')}
+              </Th>
+              <Th sticky className="hidden px-3 py-3.5 md:table-cell">
+                {t('admin.apiSettings.index.col.created')}
+              </Th>
+              <Th sticky className="py-3.5 pr-1 pl-3 sm:pr-0">
+                <span className="sr-only">
+                  {t('admin.apiSettings.index.deleteTitle')}
                 </span>
-                {sub.label && (
-                  <span className="text-text-muted text-xs">{sub.label}</span>
-                )}
-              </Td>
-              <Td>
-                <div className="flex flex-wrap gap-1">
-                  {sub.events.map((ev) => (
-                    <Badge key={ev} className="font-mono">
-                      {ev}
-                    </Badge>
-                  ))}
-                </div>
-              </Td>
-              <Td>
-                <toggleFetcher.Form method="post">
-                  <input type="hidden" name="intent" value="toggle-webhook" />
-                  <input type="hidden" name="id" value={sub.id} />
-                  <input
-                    type="hidden"
-                    name="active"
-                    value={String(sub.active)}
-                  />
-                  <button
-                    type="submit"
-                    disabled={toggleFetcher.state !== 'idle'}
-                    className="disabled:opacity-50"
-                    title={
-                      sub.active
-                        ? t('admin.apiSettings.index.pauseWebhook')
-                        : t('admin.apiSettings.index.activateWebhook')
-                    }
-                  >
-                    <Badge tone={sub.active ? 'success' : 'neutral'}>
-                      {sub.active
-                        ? t('admin.apiSettings.index.statusActive')
-                        : t('admin.apiSettings.index.statusPaused')}
-                    </Badge>
-                  </button>
-                </toggleFetcher.Form>
-              </Td>
-              <Td>{new Date(sub.createdAt).toLocaleDateString()}</Td>
-              <Td>
-                <deleteFetcher.Form method="post">
-                  <input type="hidden" name="intent" value="delete-webhook" />
-                  <input type="hidden" name="id" value={sub.id} />
-                  <button
-                    type="submit"
-                    disabled={deleteFetcher.state !== 'idle'}
-                    onClick={(e) => {
-                      if (
-                        !confirm(
-                          t('admin.apiSettings.index.deleteConfirm', {
-                            url: sub.url,
-                          })
-                        )
-                      )
-                        e.preventDefault();
-                    }}
-                    className="text-text-muted hover:text-danger rounded p-1 disabled:opacity-50"
-                    title={t('admin.apiSettings.index.deleteTitle')}
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
-                </deleteFetcher.Form>
-              </Td>
+              </Th>
             </tr>
-          ))}
-        </TBody>
-      </Table>
+          </THead>
+          <TBody sticky>
+            {data.subscriptions.map((sub) => {
+              const primaryLabel = sub.label || sub.url;
+              return (
+                <Tr key={sub.id}>
+                  <Td
+                    sticky
+                    className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+                  >
+                    <span className="block min-w-0">
+                      <span className="block truncate font-medium">
+                        {primaryLabel}
+                      </span>
+                      {sub.label ? (
+                        <span
+                          className="text-text-muted mt-0.5 block truncate font-mono text-xs font-normal"
+                          title={sub.url}
+                        >
+                          {sub.url}
+                        </span>
+                      ) : (
+                        <span className="text-text-muted mt-0.5 block truncate font-mono text-xs font-normal">
+                          {sub.id.slice(0, 8)}
+                        </span>
+                      )}
+                      <span className="mt-1 flex flex-wrap gap-1 lg:hidden">
+                        {sub.events.map((ev) => (
+                          <Badge key={ev} className="font-mono">
+                            {ev}
+                          </Badge>
+                        ))}
+                      </span>
+                    </span>
+                  </Td>
+                  <Td
+                    sticky
+                    className="hidden px-3 py-4 whitespace-normal lg:table-cell"
+                  >
+                    <div className="flex max-w-xs flex-wrap gap-1">
+                      {sub.events.length === 0 ? (
+                        <span className="text-text-muted text-xs">—</span>
+                      ) : (
+                        sub.events.map((ev) => (
+                          <Badge key={ev} className="font-mono">
+                            {ev}
+                          </Badge>
+                        ))
+                      )}
+                    </div>
+                  </Td>
+                  <Td sticky className="px-3 py-4">
+                    <toggleFetcher.Form method="post">
+                      <input
+                        type="hidden"
+                        name="intent"
+                        value="toggle-webhook"
+                      />
+                      <input type="hidden" name="id" value={sub.id} />
+                      <input
+                        type="hidden"
+                        name="active"
+                        value={String(sub.active)}
+                      />
+                      <button
+                        type="submit"
+                        disabled={toggleFetcher.state !== 'idle'}
+                        className="disabled:opacity-50"
+                        title={
+                          sub.active
+                            ? t('admin.apiSettings.index.pauseWebhook')
+                            : t('admin.apiSettings.index.activateWebhook')
+                        }
+                      >
+                        <Badge tone={sub.active ? 'success' : 'neutral'}>
+                          {sub.active
+                            ? t('admin.apiSettings.index.statusActive')
+                            : t('admin.apiSettings.index.statusPaused')}
+                        </Badge>
+                      </button>
+                    </toggleFetcher.Form>
+                  </Td>
+                  <Td
+                    sticky
+                    className="hidden px-3 py-4 tabular-nums md:table-cell"
+                  >
+                    {formatDate(sub.createdAt)}
+                  </Td>
+                  <Td
+                    sticky
+                    className="py-4 pr-1 pl-3 text-right text-sm font-medium sm:pr-0"
+                  >
+                    <deleteFetcher.Form method="post" className="inline">
+                      <input
+                        type="hidden"
+                        name="intent"
+                        value="delete-webhook"
+                      />
+                      <input type="hidden" name="id" value={sub.id} />
+                      <button
+                        type="submit"
+                        disabled={deleteFetcher.state !== 'idle'}
+                        onClick={(e) => {
+                          if (
+                            !confirm(
+                              t('admin.apiSettings.index.deleteConfirm', {
+                                url: sub.url,
+                              })
+                            )
+                          )
+                            e.preventDefault();
+                        }}
+                        className="text-danger hover:text-danger/80 inline-flex items-center gap-1 disabled:opacity-50"
+                        title={t('admin.apiSettings.index.deleteTitle')}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        <span className="sr-only">
+                          {t('admin.apiSettings.index.deleteTitle')}, {sub.url}
+                        </span>
+                      </button>
+                    </deleteFetcher.Form>
+                  </Td>
+                </Tr>
+              );
+            })}
+          </TBody>
+        </Table>
+      )}
 
-      <div className="border-border bg-surface-2 mt-4 rounded-lg border px-4 py-3">
+      <div className="border-border bg-surface mt-6 rounded-xl border px-4 py-3">
         <p className="text-text-muted text-xs">
           <strong className="text-text font-semibold">
             {t('admin.apiSettings.index.signatureVerification')}
@@ -358,7 +512,7 @@ function WebhooksSection({ data }) {
           {t('admin.apiSettings.index.signatureHelp')}
         </p>
       </div>
-    </SectionCard>
+    </div>
   );
 }
 
