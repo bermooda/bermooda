@@ -47,6 +47,11 @@ COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/prisma /app/prisma
 COPY --from=build-env /app/prisma.config.js /app/prisma.config.js
 COPY --from=build-env /app/build /app/build
+# Theme/plugin i18n overlays are read from disk at runtime (core + email
+# catalogs are bundled into build/server). Nested extension node_modules are
+# not required — SSR already inlined those deps via ssr.noExternal.
+COPY --from=build-env /app/app/themes /app/app/themes
+COPY --from=build-env /app/app/plugins /app/app/plugins
 WORKDIR /app
 
 EXPOSE 3000

@@ -1,41 +1,35 @@
 // app/emails/i18n.server.js
 // Flat-key message catalogs for shop transactional emails.
 
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
 import { translate } from '#/core/i18n';
 
-const I18N_DIR = new URL('./i18n', import.meta.url).pathname;
+/**
+ * Email catalogs are eager-imported so they ship inside the SSR bundle.
+ * Production `react-router-serve` runs from `build/server/index.js`, where
+ * `import.meta.url`-relative `./i18n` paths do not exist on disk.
+ *
+ * @type {Record<string, Record<string, string>>}
+ */
+const EMAIL_CATALOGS = import.meta.glob('./i18n/*.json', {
+  eager: true,
+  import: 'default',
+});
 
 /** @type {Map<string, Record<string, string>>} */
 const cache = new Map();
 
 /**
- * Reads a locale JSON catalog. Missing files yield an empty object.
+ * Reads a locale JSON catalog. Missing catalogs yield an empty object.
  *
  * @param {string} locale
  * @returns {Record<string, string>}
  */
 function readLocaleFile(locale) {
-  const filePath = join(I18N_DIR, `${locale}.json`);
-  try {
-    const raw = readFileSync(filePath, 'utf-8');
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-      ? /** @type {Record<string, string>} */ (parsed)
-      : {};
-  } catch (err) {
-    if (
-      err &&
-      typeof err === 'object' &&
-      'code' in err &&
-      err.code === 'ENOENT'
-    ) {
-      return {};
-    }
-    throw err;
+  const catalog = EMAIL_CATALOGS[`./i18n/${locale}.json`];
+  if (!catalog || typeof catalog !== 'object' || Array.isArray(catalog)) {
+    return {};
   }
+  return { ...catalog };
 }
 
 /**

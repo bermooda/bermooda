@@ -22,7 +22,26 @@ import { getRegisteredTheme } from '#/core/themes/index.server';
 
 export { translate as t } from '#/core/i18n';
 
-const APP_DIR = new URL('../../../app', import.meta.url).pathname;
+/**
+ * Core message catalogs are eager-imported so they ship inside the SSR
+ * bundle. Production `react-router-serve` runs `build/server/index.js`, where
+ * `import.meta.url`-relative paths to `app/core/i18n/messages` resolve outside
+ * the shop (and Docker images may omit source trees entirely).
+ *
+ * @type {Record<string, Record<string, any>>}
+ */
+const CORE_CATALOGS = import.meta.glob('./messages/*.json', {
+  eager: true,
+  import: 'default',
+});
+
+/**
+ * Shop `app/` directory for theme/plugin catalog overlays on disk.
+ * Always resolve from `process.cwd()` (shop root) — not from
+ * `import.meta.url` — because the production SSR bundle lives under
+ * `build/server/`.
+ */
+const APP_DIR = join(process.cwd(), 'app');
 
 /**
  * Returns storefront-enabled locales from settings.
@@ -35,16 +54,29 @@ export async function getAvailableLocales() {
 }
 
 /**
- * Builds catalog file paths for a locale from core, theme, and plugin sources.
+ * Loads a bundled core message catalog for `locale`.
+ *
+ * @param {string} locale
+ * @returns {Record<string, any>}
+ */
+function loadCoreCatalog(locale) {
+  const catalog = CORE_CATALOGS[`./messages/${locale}.json`];
+  if (!catalog || typeof catalog !== 'object' || Array.isArray(catalog)) {
+    return {};
+  }
+  return { ...catalog };
+}
+
+/**
+ * Builds theme/plugin catalog file paths for a locale (core catalogs are bundled).
  *
  * @param {string} locale
  * @param {string | null} themeSlug
  * @param {string[]} pluginSlugs
  * @returns {string[]}
  */
-function catalogPathsForLocale(locale, themeSlug, pluginSlugs) {
+function extensionCatalogPathsForLocale(locale, themeSlug, pluginSlugs) {
   return [
-    join(APP_DIR, 'core', 'i18n', 'messages', `${locale}.json`),
     ...(themeSlug
       ? [join(APP_DIR, 'themes', themeSlug, 'i18n', `${locale}.json`)]
       : []),
@@ -84,6 +116,8 @@ function mergeCatalogFiles(filePaths, base = {}) {
  * Result is TTL-cached under `i18n:${locale}` (bust with `invalidateCachePrefix('i18n:')`
  * when the active theme or enabled plugins change).
  *
+ * Merge order: core en → theme/plugin en → core locale → theme/plugin locale.
+ *
  * @param {string} locale
  * @returns {Promise<Record<string, any>>}
  */
@@ -108,19 +142,21 @@ export async function loadMessages(locale) {
       .map((id) => getRegisteredPlugin(id)?.slug)
       .filter(Boolean);
 
-    if (locale === 'en') {
-      return mergeCatalogFiles(
-        catalogPathsForLocale('en', themeSlug, pluginSlugs)
+    let merged = loadCoreCatalog('en');
+    merged = mergeCatalogFiles(
+      extensionCatalogPathsForLocale('en', themeSlug, pluginSlugs),
+      merged
+    );
+
+    if (locale !== 'en') {
+      merged = deepMerge(merged, loadCoreCatalog(locale));
+      merged = mergeCatalogFiles(
+        extensionCatalogPathsForLocale(locale, themeSlug, pluginSlugs),
+        merged
       );
     }
 
-    const enBase = mergeCatalogFiles(
-      catalogPathsForLocale('en', themeSlug, pluginSlugs)
-    );
-    return mergeCatalogFiles(
-      catalogPathsForLocale(locale, themeSlug, pluginSlugs),
-      enBase
-    );
+    return merged;
   });
 }
 
