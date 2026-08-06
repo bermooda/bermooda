@@ -167,7 +167,7 @@ describe('getRequestLocale', () => {
 });
 
 describe('loadMessages', () => {
-  it('returns merged messages from core + theme + plugin files', async () => {
+  it('returns bundled core messages merged with theme + plugin files', async () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@acme/my-theme';
       if (key === 'pluginOrder') return ['@acme/my-plugin'];
@@ -182,7 +182,6 @@ describe('loadMessages', () => {
     );
 
     readFileSync
-      .mockReturnValueOnce(JSON.stringify({ 'common.save': 'Save' }))
       .mockReturnValueOnce(
         JSON.stringify({
           'common.save': 'Speichern',
@@ -196,6 +195,8 @@ describe('loadMessages', () => {
     expect(messages['common.save']).toBe('Speichern');
     expect(messages['common.cancel']).toBe('Abbrechen');
     expect(messages.plugin.hello).toBe('Hello');
+    expect(messages['admin.dashboard.title']).toBe('Dashboard');
+    expect(readFileSync).toHaveBeenCalledTimes(2);
   });
 
   it('skips disabled plugins even when present in pluginOrder', async () => {
@@ -209,13 +210,9 @@ describe('loadMessages', () => {
       id === '@acme/disabled-plugin' ? { slug: 'disabled-plugin' } : null
     );
 
-    readFileSync.mockReturnValueOnce(
-      JSON.stringify({ 'common.loading': 'Loading...' })
-    );
-
     const messages = await loadMessages('en');
     expect(messages['common.loading']).toBe('Loading...');
-    expect(readFileSync).toHaveBeenCalledTimes(1);
+    expect(readFileSync).toHaveBeenCalledTimes(0);
     expect(
       readFileSync.mock.calls.some(([p]) =>
         String(p).includes('/plugins/disabled-plugin/')
@@ -223,7 +220,7 @@ describe('loadMessages', () => {
     ).toBe(false);
   });
 
-  it('skips files that do not exist (ENOENT) without throwing', async () => {
+  it('keeps bundled core messages when theme/plugin files are missing', async () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@acme/missing-theme';
       if (key === 'pluginOrder') return ['@acme/missing-plugin'];
@@ -243,10 +240,12 @@ describe('loadMessages', () => {
       throw enoent;
     });
 
-    await expect(loadMessages('en')).resolves.toEqual({});
+    const messages = await loadMessages('en');
+    expect(messages['admin.dashboard.title']).toBe('Dashboard');
+    expect(messages['common.loading']).toBe('Loading...');
   });
 
-  it('returns only core messages when no theme or plugins are configured', async () => {
+  it('returns only bundled core messages when no theme or plugins are configured', async () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return null;
       if (key === 'pluginOrder') return [];
@@ -254,16 +253,13 @@ describe('loadMessages', () => {
       return null;
     });
 
-    readFileSync.mockReturnValueOnce(
-      JSON.stringify({ 'common.loading': 'Loading...' })
-    );
-
     const messages = await loadMessages('en');
     expect(messages['common.loading']).toBe('Loading...');
-    expect(readFileSync).toHaveBeenCalledTimes(1);
+    expect(messages['admin.nav.dashboard']).toBe('Dashboard');
+    expect(readFileSync).toHaveBeenCalledTimes(0);
   });
 
-  it('resolves package ids to registered theme/plugin slug paths', async () => {
+  it('resolves package ids to registered theme/plugin slug paths under cwd/app', async () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return '@bermooda/theme-default';
       if (key === 'pluginOrder') return ['@bermooda/plugin-meilisearch'];
@@ -285,11 +281,20 @@ describe('loadMessages', () => {
 
     await loadMessages('en');
 
-    const paths = readFileSync.mock.calls.map(([filePath]) => filePath);
-    expect(paths.some((p) => p.includes('/themes/default/i18n/'))).toBe(true);
-    expect(paths.some((p) => p.includes('/plugins/meilisearch/i18n/'))).toBe(
-      true
-    );
+    const paths = readFileSync.mock.calls.map(([filePath]) => String(filePath));
+    expect(
+      paths.some(
+        (p) =>
+          p.endsWith('/app/themes/default/i18n/en.json') ||
+          p.includes(`${process.cwd()}/app/themes/default/i18n/`)
+      )
+    ).toBe(true);
+    expect(
+      paths.some((p) =>
+        p.includes(`${process.cwd()}/app/plugins/meilisearch/i18n/`)
+      )
+    ).toBe(true);
+    expect(paths.every((p) => !p.includes('/core/i18n/messages/'))).toBe(true);
   });
 
   it('skips theme/plugin i18n when ids are not registered', async () => {
@@ -300,13 +305,9 @@ describe('loadMessages', () => {
       return null;
     });
 
-    readFileSync.mockReturnValueOnce(
-      JSON.stringify({ 'common.loading': 'Loading...' })
-    );
-
     const messages = await loadMessages('en');
     expect(messages['common.loading']).toBe('Loading...');
-    expect(readFileSync).toHaveBeenCalledTimes(1);
+    expect(readFileSync).toHaveBeenCalledTimes(0);
   });
 
   it('keeps English values for keys missing from a partial locale overlay', async () => {
@@ -317,26 +318,10 @@ describe('loadMessages', () => {
       return null;
     });
 
-    readFileSync.mockImplementation((filePath) => {
-      if (filePath.endsWith('/en.json')) {
-        return JSON.stringify({
-          'common.save': 'Save',
-          'common.cancel': 'Cancel',
-        });
-      }
-      if (filePath.endsWith('/de.json')) {
-        return JSON.stringify({
-          'common.save': 'Speichern',
-        });
-      }
-      const enoent = new Error('ENOENT: no such file');
-      enoent.code = 'ENOENT';
-      throw enoent;
-    });
-
     const messages = await loadMessages('de');
     expect(messages['common.save']).toBe('Speichern');
-    expect(messages['common.cancel']).toBe('Cancel');
+    expect(messages['common.cancel']).toBe('Abbrechen');
+    expect(messages['admin.dashboard.title']).toBe('Dashboard');
   });
 
   it('lets the requested locale override shared English keys', async () => {
@@ -347,23 +332,12 @@ describe('loadMessages', () => {
       return null;
     });
 
-    readFileSync.mockImplementation((filePath) => {
-      if (filePath.endsWith('/en.json')) {
-        return JSON.stringify({ 'common.save': 'Save' });
-      }
-      if (filePath.endsWith('/fr.json')) {
-        return JSON.stringify({ 'common.save': 'Enregistrer' });
-      }
-      const enoent = new Error('ENOENT: no such file');
-      enoent.code = 'ENOENT';
-      throw enoent;
-    });
-
     const messages = await loadMessages('fr');
     expect(messages['common.save']).toBe('Enregistrer');
+    expect(messages['admin.dashboard.title']).toBe('Tableau de bord');
   });
 
-  it('returns the English catalog when the locale file is missing entirely', async () => {
+  it('returns the English catalog when an unknown locale has no core overlay', async () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return null;
       if (key === 'pluginOrder') return [];
@@ -371,35 +345,22 @@ describe('loadMessages', () => {
       return null;
     });
 
-    readFileSync.mockImplementation((filePath) => {
-      if (filePath.endsWith('/en.json')) {
-        return JSON.stringify({ 'common.loading': 'Loading...' });
-      }
-      const enoent = new Error('ENOENT: no such file');
-      enoent.code = 'ENOENT';
-      throw enoent;
-    });
-
-    const messages = await loadMessages('de');
+    const messages = await loadMessages('ja');
     expect(messages['common.loading']).toBe('Loading...');
+    expect(messages['admin.dashboard.title']).toBe('Dashboard');
   });
 
-  it('reads English files only once when locale is en', async () => {
+  it('does not read core catalogs from disk when locale is en', async () => {
     settingsGet.mockImplementation(async (key) => {
       if (key === 'activeTheme') return null;
       if (key === 'pluginOrder') return [];
       if (key === 'enabledPlugins') return [];
       return null;
     });
-
-    readFileSync.mockReturnValueOnce(
-      JSON.stringify({ 'common.loading': 'Loading...' })
-    );
 
     const messages = await loadMessages('en');
     expect(messages['common.loading']).toBe('Loading...');
-    expect(readFileSync).toHaveBeenCalledTimes(1);
-    expect(readFileSync.mock.calls[0][0]).toMatch(/\/en\.json$/);
+    expect(readFileSync).toHaveBeenCalledTimes(0);
   });
 
   it('loads en base then locale overlay for theme and plugin catalogs', async () => {
@@ -417,22 +378,14 @@ describe('loadMessages', () => {
     );
 
     readFileSync.mockImplementation((filePath) => {
-      if (filePath.includes('/core/i18n/messages/en.json')) {
-        return JSON.stringify({
-          'common.save': 'Save',
-          'common.cancel': 'Cancel',
-        });
-      }
-      if (filePath.includes('/themes/my-theme/i18n/en.json')) {
+      const path = String(filePath);
+      if (path.includes('/themes/my-theme/i18n/en.json')) {
         return JSON.stringify({ theme: { title: 'Theme EN' } });
       }
-      if (filePath.includes('/plugins/my-plugin/i18n/en.json')) {
+      if (path.includes('/plugins/my-plugin/i18n/en.json')) {
         return JSON.stringify({ plugin: { hello: 'Hello' } });
       }
-      if (filePath.includes('/core/i18n/messages/de.json')) {
-        return JSON.stringify({ 'common.save': 'Speichern' });
-      }
-      if (filePath.includes('/themes/my-theme/i18n/de.json')) {
+      if (path.includes('/themes/my-theme/i18n/de.json')) {
         return JSON.stringify({ theme: { title: 'Theme DE' } });
       }
       const enoent = new Error('ENOENT: no such file');
@@ -442,13 +395,14 @@ describe('loadMessages', () => {
 
     const messages = await loadMessages('de');
     expect(messages['common.save']).toBe('Speichern');
-    expect(messages['common.cancel']).toBe('Cancel');
+    expect(messages['common.cancel']).toBe('Abbrechen');
     expect(messages.theme.title).toBe('Theme DE');
     expect(messages.plugin.hello).toBe('Hello');
 
-    const paths = readFileSync.mock.calls.map(([filePath]) => filePath);
-    expect(paths.filter((p) => p.endsWith('/en.json'))).toHaveLength(3);
-    expect(paths.filter((p) => p.endsWith('/de.json'))).toHaveLength(3);
+    const paths = readFileSync.mock.calls.map(([filePath]) => String(filePath));
+    expect(paths.filter((p) => p.endsWith('/en.json'))).toHaveLength(2);
+    expect(paths.filter((p) => p.endsWith('/de.json'))).toHaveLength(2);
+    expect(paths.every((p) => !p.includes('/core/i18n/messages/'))).toBe(true);
   });
 });
 
