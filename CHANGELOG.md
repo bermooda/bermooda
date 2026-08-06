@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.2](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.1...bermooda-v0.9.2) (2026-08-06)
+
+
+### Bug Fixes
+
+* **ci:** ensure bermooda.config.js before build and test ([#217](https://github.com/bermooda/bermooda/issues/217)) ([58e6bb3](https://github.com/bermooda/bermooda/commit/58e6bb33b80bc4f51ed0be88f380f43c15adc82e))
+* generate shop config on install and skip admin 2FA until email is ready ([#215](https://github.com/bermooda/bermooda/issues/215)) ([f18c6e9](https://github.com/bermooda/bermooda/commit/f18c6e98185e0ae0eb265711c736aae8fa2f1d47))
+
 ## [0.9.1](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.0...bermooda-v0.9.1) (2026-08-06)
 
 
