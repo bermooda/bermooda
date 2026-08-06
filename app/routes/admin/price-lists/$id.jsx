@@ -13,16 +13,15 @@ import {
   getPriceList,
   upsertPriceListEntry,
 } from '#/core/pricing/index.server';
-import ActionBar from '#/components/admin/action-bar';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
-import Card, { CardHeader } from '#/components/admin/card';
+import FormSection from '#/components/admin/form-section';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
-import Button, { ButtonSubmit } from '#/components/ui/button';
+import { ButtonSubmit } from '#/components/ui/button';
 
 export async function loader({ params }) {
   const [priceList, recentVariants] = await Promise.all([
@@ -99,7 +98,7 @@ export default function AdminPriceListDetailRoute() {
   const isSaving = navigation.state === 'submitting';
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         breadcrumbs={
           <Breadcrumbs
@@ -113,42 +112,41 @@ export default function AdminPriceListDetailRoute() {
           />
         }
         title={priceList.name}
-        subtitle={t('admin.priceLists.detail.subtitle', {
-          priority: priceList.priority,
-          count: priceList._count.entries,
-        })}
-        actions={
-          <div className="flex items-center gap-2">
+        subtitle={
+          <span className="inline-flex flex-wrap items-center gap-2">
             <Badge tone="neutral">{priceList.currency}</Badge>
-            {priceList.customerGroup && (
+            {priceList.customerGroup ? (
               <Badge tone="accent">{priceList.customerGroup.name}</Badge>
-            )}
-            <Button as={Link} to="/admin/price-lists" variant="secondary">
-              {t('admin.priceLists.detail.back')}
-            </Button>
-          </div>
+            ) : null}
+            <span>
+              {t('admin.priceLists.detail.subtitle', {
+                priority: priceList.priority,
+                count: priceList._count.entries,
+              })}
+            </span>
+          </span>
         }
       />
 
       <ErrorAlert message={actionData?.error} />
-      {actionData?.ok && <SuccessAlert message={actionData.message} />}
+      {actionData?.ok ? <SuccessAlert message={actionData.message} /> : null}
 
-      <div className="mt-6 space-y-6">
-        <Card>
-          <CardHeader
-            title={t('admin.priceLists.detail.entriesTitle')}
-            description={t('admin.priceLists.detail.entriesDescription')}
-          />
+      <div className="space-y-12">
+        <FormSection
+          title={t('admin.priceLists.detail.entriesTitle')}
+          description={t('admin.priceLists.detail.entriesDescription')}
+          last
+        >
           {(priceList.entries ?? []).length === 0 ? (
-            <p className="text-text-muted mb-4 text-sm">
+            <p className="text-text-muted mb-6 text-sm">
               {t('admin.priceLists.detail.noEntries')}
             </p>
           ) : (
-            <ul className="divide-border mb-4 divide-y text-sm">
+            <ul className="divide-border border-border mb-6 divide-y rounded-lg border text-sm">
               {priceList.entries.map((entry) => (
                 <li
                   key={entry.id}
-                  className="flex items-center justify-between gap-3 py-2"
+                  className="flex items-center justify-between gap-3 px-4 py-3"
                 >
                   <div>
                     <p className="text-text font-medium">
@@ -163,7 +161,7 @@ export default function AdminPriceListDetailRoute() {
                       })}
                     </p>
                   </div>
-                  <span className="text-text font-mono text-xs">
+                  <span className="text-text font-mono text-xs tabular-nums">
                     {entry.priceCents}¢
                   </span>
                 </li>
@@ -171,11 +169,15 @@ export default function AdminPriceListDetailRoute() {
             </ul>
           )}
 
-          <Form method="post" className="flex flex-wrap items-end gap-3">
+          <Form
+            method="post"
+            className="flex max-w-2xl flex-wrap items-end gap-3"
+          >
             <input type="hidden" name="intent" value="add-entry" />
             <Field
               label={t('admin.priceLists.detail.variant')}
               htmlFor="entry-variant"
+              className="min-w-0 flex-1"
             >
               <Select id="entry-variant" name="variantId" required>
                 {variants.map((variant) => (
@@ -219,17 +221,17 @@ export default function AdminPriceListDetailRoute() {
                 : t('admin.priceLists.detail.addEntry')}
             </ButtonSubmit>
           </Form>
-        </Card>
+        </FormSection>
+      </div>
 
-        <ActionBar>
-          <span />
-          <Link
-            to="/admin/price-lists"
-            className="text-text-muted hover:text-text text-sm transition-colors"
-          >
-            {t('admin.priceLists.detail.backToList')}
-          </Link>
-        </ActionBar>
+      <div className="mt-6 mb-6 flex items-center justify-between gap-x-6">
+        <span />
+        <Link
+          to="/admin/price-lists"
+          className="text-text text-sm/6 font-semibold transition-colors hover:opacity-80"
+        >
+          {t('admin.priceLists.detail.backToList')}
+        </Link>
       </div>
     </div>
   );
