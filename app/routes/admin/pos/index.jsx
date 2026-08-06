@@ -81,7 +81,6 @@ export default function AdminPosRoute() {
       <PageHeader
         title={t('admin.pos.index.title')}
         subtitle={t('admin.pos.index.subtitle')}
-        className="mb-6"
       />
 
       <div className="grid gap-6 lg:grid-cols-2">

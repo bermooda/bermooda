@@ -388,7 +388,6 @@ export default function AdminApiSettingsRoute() {
             <code className="font-mono text-xs">/api/admin/v1</code>
           </>
         }
-        className="mb-6"
       />
 
       <Tabs

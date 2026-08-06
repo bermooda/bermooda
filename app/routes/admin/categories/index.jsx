@@ -178,7 +178,6 @@ export default function AdminCategoriesRoute() {
             {t('admin.categories.index.newButton')}
           </Link>
         }
-        className="mb-6"
       />
 
       <Card padded={false} className="overflow-hidden">

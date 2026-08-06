@@ -9,6 +9,8 @@ import {
   getRegisteredPluginBySlug,
   resolvePluginAdminRoute as resolveAdminRoute,
 } from '#/core/plugins/index.server';
+import Breadcrumbs from '#/components/admin/breadcrumbs';
+import PageHeader from '#/components/admin/page-header';
 
 /**
  * @param {{ params: { pluginId?: string } }} args
@@ -87,6 +89,35 @@ export async function action({ request, params }) {
 }
 
 /**
+ * Error / empty chrome for plugin host states (not-found, no admin routes).
+ *
+ * @param {Object} props
+ * @param {string} props.title
+ * @param {string} props.subtitle
+ * @returns {React.ReactElement}
+ */
+function PluginHostChrome({ title, subtitle }) {
+  const t = useT();
+
+  return (
+    <div>
+      <PageHeader
+        breadcrumbs={
+          <Breadcrumbs
+            items={[
+              { label: t('admin.plugins.index.title'), href: '/admin/plugins' },
+              { label: title },
+            ]}
+          />
+        }
+        title={title}
+        subtitle={subtitle}
+      />
+    </div>
+  );
+}
+
+/**
  * @returns {React.ReactElement}
  */
 export default function AdminPluginDispatcher() {
@@ -95,38 +126,30 @@ export default function AdminPluginDispatcher() {
 
   if (data.status === 'not-found') {
     return (
-      <div className="space-y-2">
-        <h1 className="text-text text-2xl font-bold">
-          {t('admin.plugins.detail.notFoundTitle')}
-        </h1>
-        <p className="text-text-muted text-sm">
-          {t('admin.plugins.detail.notFoundDescription', {
-            id: data.pluginId,
-          })}
-        </p>
-      </div>
+      <PluginHostChrome
+        title={t('admin.plugins.detail.notFoundTitle')}
+        subtitle={t('admin.plugins.detail.notFoundDescription', {
+          id: data.pluginId,
+        })}
+      />
     );
   }
 
   if (data.status === 'no-admin-routes') {
     return (
-      <div className="space-y-2">
-        <h1 className="text-text text-2xl font-bold">{data.manifest.title}</h1>
-        <p className="text-text-muted text-sm">
-          {t('admin.plugins.detail.noAdminPages')}
-        </p>
-      </div>
+      <PluginHostChrome
+        title={data.manifest.title}
+        subtitle={t('admin.plugins.detail.noAdminPages')}
+      />
     );
   }
 
   if (data.status === 'no-match') {
     return (
-      <div className="space-y-2">
-        <h1 className="text-text text-2xl font-bold">{data.manifest.title}</h1>
-        <p className="text-text-muted text-sm">
-          {t('admin.plugins.detail.noAdminPagesForPath')}
-        </p>
-      </div>
+      <PluginHostChrome
+        title={data.manifest.title}
+        subtitle={t('admin.plugins.detail.noAdminPagesForPath')}
+      />
     );
   }
 
@@ -135,12 +158,10 @@ export default function AdminPluginDispatcher() {
 
   if (!PluginComponent) {
     return (
-      <div className="space-y-2">
-        <h1 className="text-text text-2xl font-bold">{data.manifest.title}</h1>
-        <p className="text-text-muted text-sm">
-          {t('admin.plugins.detail.noAdminPagesForPath')}
-        </p>
-      </div>
+      <PluginHostChrome
+        title={data.manifest.title}
+        subtitle={t('admin.plugins.detail.noAdminPagesForPath')}
+      />
     );
   }
 
