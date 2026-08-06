@@ -146,29 +146,33 @@ Target: `mx-auto max-w-5xl` → `PageHeader` + `Breadcrumbs` → two-column `For
 
 ### 4h — Price lists & gift cards / inventory create
 
-- [ ] `app/routes/admin/price-lists/new.jsx`
-- [ ] `app/routes/admin/price-lists/$id.jsx`
-- [ ] `app/routes/admin/gift-cards/new.jsx`
-- [ ] `app/routes/admin/inventory/new.jsx`
+- [x] `app/routes/admin/price-lists/new.jsx`
+- [x] `app/routes/admin/price-lists/$id.jsx`
+- [x] `app/routes/admin/gift-cards/new.jsx`
+- [x] `app/routes/admin/inventory/new.jsx`
+- Notes: `PriceListEditor`, `GiftCardEditor`, `InventoryLocationEditor`; price list detail uses FormSection for entries (companies-style hybrid).
 
 ### 4i — Subscriptions & quotes create
 
-- [ ] `app/routes/admin/subscriptions/new.jsx`
-- [ ] `app/routes/admin/subscriptions/$id.jsx`
-- [ ] `app/routes/admin/quotes/new.jsx`
+- [x] `app/routes/admin/subscriptions/new.jsx`
+- [x] `app/routes/admin/subscriptions/$id.jsx`
+- [x] `app/routes/admin/quotes/new.jsx`
+- Notes: shared `SubscriptionPlanEditor`; `QuoteEditor` for create.
 
 ### 4j — Marketing create flows
 
-- [ ] `app/routes/admin/marketing/segments/new.jsx`
-- [ ] `app/routes/admin/marketing/campaigns/new.jsx`
-- [ ] `app/routes/admin/marketing/sequences/new.jsx`
+- [x] `app/routes/admin/marketing/segments/new.jsx`
+- [x] `app/routes/admin/marketing/campaigns/new.jsx`
+- [x] `app/routes/admin/marketing/sequences/new.jsx`
+- Notes: `MarketingSegmentEditor`, `MarketingCampaignEditor`, `MarketingSequenceEditor`.
 
 ### 4k — API & settings create flows
 
-- [ ] `app/routes/admin/api-settings/keys/new.jsx`
-- [ ] `app/routes/admin/api-settings/webhooks/new.jsx`
-- [ ] `app/routes/admin/settings/users/new.jsx`
-- [ ] `app/routes/admin/reports/schedules/new.jsx`
+- [x] `app/routes/admin/api-settings/keys/new.jsx`
+- [x] `app/routes/admin/api-settings/webhooks/new.jsx`
+- [x] `app/routes/admin/settings/users/new.jsx`
+- [x] `app/routes/admin/reports/schedules/new.jsx`
+- Notes: `ApiKeyEditor`, `WebhookEditor`, `AdminUserEditor`, `ScheduledExportEditor`.
 
 ---
 
