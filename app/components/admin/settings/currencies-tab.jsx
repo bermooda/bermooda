@@ -8,9 +8,8 @@ import {
   CHECKBOX_CLASS,
   RADIO_CLASS,
   SaveButton,
-  SectionCard,
 } from '#/components/admin/settings/shared';
-import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 
 /**
  * Currencies settings tab.
@@ -25,6 +24,9 @@ export function CurrenciesTab({ data }) {
   const [enabled, setEnabled] = useState(data.currencies);
   const [defaultCurrency, setDefaultCurrency] = useState(data.defaultCurrency);
 
+  /**
+   * @param {string} c
+   */
   function toggle(c) {
     setEnabled((prev) =>
       prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]
@@ -32,55 +34,71 @@ export function CurrenciesTab({ data }) {
   }
 
   return (
-    <SectionCard title={t('admin.settings.currencies.title')}>
-      <fetcher.Form method="post" className="space-y-4">
+    <div>
+      <div className="mb-4">
+        <h2 className="text-text text-base font-semibold">
+          {t('admin.settings.currencies.title')}
+        </h2>
+        <p className="text-text-muted mt-1 text-sm">
+          {t('admin.settings.currencies.help')}
+        </p>
+      </div>
+
+      <fetcher.Form method="post" className="space-y-6">
         <input type="hidden" name="intent" value="save-currencies" />
         {enabled.map((c) => (
           <input key={c} type="hidden" name="currencies" value={c} />
         ))}
         <input type="hidden" name="defaultCurrency" value={defaultCurrency} />
 
-        <p className="text-text-muted text-sm">
-          {t('admin.settings.currencies.help')}
-        </p>
-
-        <Table>
-          <THead>
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
             <tr>
-              <Th>{t('admin.settings.currencies.col.currency')}</Th>
-              <Th className="text-center">
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                {t('admin.settings.currencies.col.currency')}
+              </Th>
+              <Th sticky className="px-3 py-3.5 text-center">
                 {t('admin.settings.currencies.col.enabled')}
               </Th>
-              <Th className="text-center">
+              <Th sticky className="px-3 py-3.5 text-center">
                 {t('admin.settings.currencies.col.default')}
               </Th>
             </tr>
           </THead>
-          <TBody>
+          <TBody sticky>
             {AVAILABLE_CURRENCIES.map((c) => {
               const isEnabled = enabled.includes(c);
               const isDefault = defaultCurrency === c;
               return (
-                <tr key={c}>
-                  <Td className="text-text font-mono font-semibold">{c}</Td>
-                  <Td className="text-center">
+                <Tr key={c}>
+                  <Td
+                    sticky
+                    className="text-text py-4 pr-3 pl-1 font-medium whitespace-normal sm:pl-0"
+                  >
+                    <span className="block truncate font-mono font-medium">
+                      {c}
+                    </span>
+                  </Td>
+                  <Td sticky className="px-3 py-4 text-center">
                     <input
                       type="checkbox"
                       checked={isEnabled}
                       onChange={() => toggle(c)}
                       className={CHECKBOX_CLASS}
+                      aria-label={t('admin.settings.currencies.col.enabled')}
                     />
                   </Td>
-                  <Td className="text-center">
+                  <Td sticky className="px-3 py-4 text-center">
                     <input
                       type="radio"
                       checked={isDefault}
                       disabled={!isEnabled}
                       onChange={() => setDefaultCurrency(c)}
                       className={clsx(RADIO_CLASS, 'disabled:opacity-40')}
+                      aria-label={t('admin.settings.currencies.col.default')}
                     />
                   </Td>
-                </tr>
+                </Tr>
               );
             })}
           </TBody>
@@ -88,6 +106,6 @@ export function CurrenciesTab({ data }) {
 
         <SaveButton fetcher={fetcher} intent="save-currencies" />
       </fetcher.Form>
-    </SectionCard>
+    </div>
   );
 }

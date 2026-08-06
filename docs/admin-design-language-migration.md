@@ -200,13 +200,14 @@ When touching these, align tokens + `PageHeader` only. Keep bespoke layouts.
 
 ### 6a — Overview
 
-- [x] `app/routes/admin/dashboard.jsx`
+- [x] `app/routes/admin/dashboard.jsx` (recent orders → sticky table + row navigate; KPI tiles stay bespoke)
 - [x] `app/routes/admin/reports/index.jsx`
 
 ### 6b — Config hubs
 
 - [x] `app/routes/admin/settings/index.jsx` (+ tab panels as needed)
-- [x] `app/routes/admin/api-settings.jsx`
+- [x] Currencies / Locales / Admin users tabs → sticky tables (drop SectionCard wrappers around lists)
+- [x] `app/routes/admin/api-settings.jsx` (API keys + webhooks → sticky tables + EmptyState)
 - [x] `app/routes/admin/loyalty/index.jsx`
 
 ### 6c — Marketplace / tools
@@ -221,7 +222,7 @@ When touching these, align tokens + `PageHeader` only. Keep bespoke layouts.
 
 - [x] `app/routes/admin/categories/index.jsx` (sortable tree)
 - [x] `app/routes/admin/menus/index.jsx` (sortable menu editor)
-- [x] `app/routes/admin/channels/index.jsx` (hybrid table + inline forms)
+- [x] `app/routes/admin/channels/index.jsx` (sticky channel list + price-override Card)
 - [x] `app/routes/admin/inventory/index.jsx` (locations + inline qty)
 
 ### 6e — Plugin host
