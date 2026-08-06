@@ -10,8 +10,12 @@ import {
   serializeImportResult,
   validateImportType,
 } from '#/core/imports/index.server';
+import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
+import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
+import { ErrorAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
 export async function loader({ request }) {
@@ -86,55 +90,53 @@ export default function AdminImportRoute() {
         title={t('admin.import.index.title')}
         subtitle={t('admin.import.index.subtitle')}
       />
-      <div className="mb-4 flex flex-wrap gap-3 text-sm">
+
+      <div className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm">
         {types.map((type) => (
           <a
             key={type}
             href={`/admin/import?template=${type}`}
-            className="text-stone-700 underline decoration-stone-300 underline-offset-2 hover:text-stone-900"
+            className="text-accent hover:text-accent-hover decoration-accent/30 underline underline-offset-2"
           >
             {t('admin.import.index.downloadTemplate', { type })}
           </a>
         ))}
       </div>
-      <Form
-        method="post"
-        encType="multipart/form-data"
-        className="max-w-lg space-y-4"
-      >
-        <Field label={t('admin.import.index.importType')} htmlFor="type">
-          <select
-            id="type"
-            name="type"
-            className="w-full rounded-md border px-3 py-2"
-            defaultValue="products"
-          >
-            {types.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label={t('admin.import.index.csvFile')} htmlFor="file">
-          <input
-            id="file"
-            name="file"
-            type="file"
-            accept=".csv,text/csv"
-            required
-          />
-        </Field>
-        <ButtonSubmit>{t('admin.import.index.submit')}</ButtonSubmit>
-      </Form>
-      {actionData?.error && (
-        <p className="mt-4 text-sm text-red-600">{actionData.error}</p>
-      )}
-      {actionData?.ok && (
-        <pre className="mt-4 overflow-auto rounded bg-stone-100 p-4 text-xs">
+
+      <Card className="max-w-lg">
+        <Form method="post" encType="multipart/form-data" className="space-y-4">
+          <Field label={t('admin.import.index.importType')} htmlFor="type">
+            <Select id="type" name="type" defaultValue="products">
+              {types.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label={t('admin.import.index.csvFile')} htmlFor="file">
+            <Input
+              id="file"
+              name="file"
+              type="file"
+              accept=".csv,text/csv"
+              required
+            />
+          </Field>
+          <ButtonSubmit>{t('admin.import.index.submit')}</ButtonSubmit>
+        </Form>
+      </Card>
+
+      {actionData?.error ? (
+        <div className="mt-4 max-w-lg">
+          <ErrorAlert message={actionData.error} />
+        </div>
+      ) : null}
+      {actionData?.ok ? (
+        <pre className="border-border bg-surface-2 text-text mt-4 max-w-2xl overflow-auto rounded-lg border p-4 text-xs">
           {JSON.stringify(actionData.result, null, 2)}
         </pre>
-      )}
+      ) : null}
     </div>
   );
 }

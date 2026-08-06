@@ -69,7 +69,6 @@ export default function AdminMarketingRoute() {
       <PageHeader
         title={t('admin.marketing.index.title')}
         subtitle={t('admin.marketing.index.subtitle')}
-        className="mb-6"
       />
 
       <div className="space-y-6">

@@ -63,7 +63,6 @@ export default function AdminChannelsRoute() {
             {t('admin.channels.index.newButton')}
           </Link>
         }
-        className="mb-6"
       />
 
       <div className="space-y-6">

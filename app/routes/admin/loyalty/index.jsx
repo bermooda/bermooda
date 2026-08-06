@@ -49,7 +49,6 @@ export default function AdminLoyaltyRoute() {
       <PageHeader
         title={t('admin.loyalty.index.title')}
         subtitle={t('admin.loyalty.index.subtitle')}
-        className="mb-6"
       />
 
       <Card className="max-w-lg">

@@ -180,7 +180,6 @@ export default function AdminSettingsRoute() {
       <PageHeader
         title={t('admin.settings.index.title')}
         subtitle={t('admin.settings.index.subtitle')}
-        className="mb-6"
       />
 
       <Tabs

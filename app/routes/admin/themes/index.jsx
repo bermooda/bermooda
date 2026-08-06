@@ -266,7 +266,7 @@ function SettingField({ setting, value }) {
             className="peer sr-only"
           />
           <div className="bg-surface-2 peer-checked:bg-accent h-5 w-9 rounded-full" />
-          <div className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-4" />
+          <div className="bg-bg absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition peer-checked:translate-x-4" />
         </div>
         <span className="text-text text-sm font-medium">{label ?? key}</span>
       </label>

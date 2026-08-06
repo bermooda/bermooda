@@ -80,7 +80,6 @@ export default function AdminMenusRoute() {
       <PageHeader
         title={t('admin.menus.index.title')}
         subtitle={t('admin.menus.index.subtitle')}
-        className="mb-6"
       />
 
       <div className="mb-4 flex flex-wrap gap-2">

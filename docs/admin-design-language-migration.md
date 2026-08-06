@@ -200,33 +200,33 @@ When touching these, align tokens + `PageHeader` only. Keep bespoke layouts.
 
 ### 6a — Overview
 
-- [ ] `app/routes/admin/dashboard.jsx`
-- [ ] `app/routes/admin/reports/index.jsx`
+- [x] `app/routes/admin/dashboard.jsx`
+- [x] `app/routes/admin/reports/index.jsx`
 
 ### 6b — Config hubs
 
-- [ ] `app/routes/admin/settings/index.jsx` (+ tab panels as needed)
-- [ ] `app/routes/admin/api-settings.jsx`
-- [ ] `app/routes/admin/loyalty/index.jsx`
+- [x] `app/routes/admin/settings/index.jsx` (+ tab panels as needed)
+- [x] `app/routes/admin/api-settings.jsx`
+- [x] `app/routes/admin/loyalty/index.jsx`
 
 ### 6c — Marketplace / tools
 
-- [ ] `app/routes/admin/themes/index.jsx`
-- [ ] `app/routes/admin/plugins/index.jsx`
-- [ ] `app/routes/admin/marketing/index.jsx`
-- [ ] `app/routes/admin/import/index.jsx`
-- [ ] `app/routes/admin/pos/index.jsx`
+- [x] `app/routes/admin/themes/index.jsx`
+- [x] `app/routes/admin/plugins/index.jsx`
+- [x] `app/routes/admin/marketing/index.jsx`
+- [x] `app/routes/admin/import/index.jsx`
+- [x] `app/routes/admin/pos/index.jsx`
 
 ### 6d — Non-table management UIs
 
-- [ ] `app/routes/admin/categories/index.jsx` (sortable tree)
-- [ ] `app/routes/admin/menus/index.jsx` (sortable menu editor)
-- [ ] `app/routes/admin/channels/index.jsx` (hybrid table + inline forms)
-- [ ] `app/routes/admin/inventory/index.jsx` (locations + inline qty)
+- [x] `app/routes/admin/categories/index.jsx` (sortable tree)
+- [x] `app/routes/admin/menus/index.jsx` (sortable menu editor)
+- [x] `app/routes/admin/channels/index.jsx` (hybrid table + inline forms)
+- [x] `app/routes/admin/inventory/index.jsx` (locations + inline qty)
 
 ### 6e — Plugin host
 
-- [ ] `app/routes/admin/plugins/$pluginId.jsx` (error/empty chrome only)
+- [x] `app/routes/admin/plugins/$pluginId.jsx` (error/empty chrome only)
 
 **Skip UI:** `orders/$id/documents.jsx`, `shipments/$id/documents.jsx`, `reports/export.jsx` (loaders / downloads). Auth routes are out of scope for this plan.
 

@@ -66,7 +66,6 @@ export default function AdminInventoryRoute() {
             {t('admin.inventory.index.newButton')}
           </Link>
         }
-        className="mb-6"
       />
 
       <div className="space-y-6">
