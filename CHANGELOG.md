@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.0...bermooda-v0.9.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* **slug-field:** adjust padding class from "pl-7" to "pl-4.5" for improved layout ([339916f](https://github.com/bermooda/bermooda/commit/339916fa566aa237a8c755ed742a3f7098379423))
+
 ## [0.9.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.8.0...bermooda-v0.9.0) (2026-08-05)
 
 
