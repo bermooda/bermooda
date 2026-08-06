@@ -6,6 +6,7 @@ import { isValidEmail, normalizeEmail } from '#/utils/email';
 import { adminAuth } from '#/libs/auth/admin/index.server';
 import prisma from '#/libs/prisma.server';
 import { DEFAULT_MAX_LIST_RESULTS } from '#/libs/prisma/pagination/index.server';
+import { isAdminEmailReady } from '#/core/auth/email-ready.server';
 import {
   ADMIN_ROLES,
   ADMIN_WILDCARD,
@@ -248,6 +249,8 @@ export async function createAdminStaffUser(input) {
       role: 'staff',
       // Admin-issued invite proves mailbox ownership for sign-in.
       emailVerified: true,
+      // Auto-enable 2FA for new staff only once email delivery works.
+      twoFactorEnabled: isAdminEmailReady(),
     },
     select: {
       id: true,
@@ -256,6 +259,7 @@ export async function createAdminStaffUser(input) {
       role: true,
       createdAt: true,
       emailVerified: true,
+      twoFactorEnabled: true,
     },
   });
 

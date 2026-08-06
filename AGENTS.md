@@ -72,6 +72,8 @@ Port comes from `PORT` (default `3000`) via Vite `server.port` / `#/libs/config`
 
 A `.env` file must exist in the repo root (see `.env.example`). Placeholder values are fine for basic local development — the app starts and serves pages without real API keys for Stripe, Resend, etc.
 
+`bermooda.config.js` is gitignored and created by `npm run setup` (copies `bermooda.config.example.js`) or by `bermooda install` / `bermooda dev-setup`. Production requires `baseUrl` in that file.
+
 ### Key commands
 
 | Task                   | Command                                   |

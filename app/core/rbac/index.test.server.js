@@ -36,8 +36,13 @@ vi.mock('#/libs/config', () => ({
   },
 }));
 
+vi.mock('#/core/auth/email-ready.server', () => ({
+  isAdminEmailReady: vi.fn(() => false),
+}));
+
 import { adminAuth } from '#/libs/auth/admin/index.server';
 import prisma from '#/libs/prisma.server';
+import { isAdminEmailReady } from '#/core/auth/email-ready.server';
 import {
   __resetPermissionCache,
   createAdminStaffUser,
@@ -144,14 +149,21 @@ describe('rbac', () => {
       role: 'staff',
       createdAt: new Date('2026-01-02T00:00:00.000Z'),
       emailVerified: true,
+      twoFactorEnabled: false,
     });
     adminAuth.api.requestPasswordReset.mockResolvedValue({ status: true });
+    isAdminEmailReady.mockReturnValue(false);
 
     const result = await createAdminStaffUser({ email: 'staff@example.com' });
 
     expect(result.inviteEmailSent).toBe(true);
     expect(result.user.role).toBe('staff');
     expect(result.user.emailVerified).toBe(true);
+    expect(prisma.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ twoFactorEnabled: false }),
+      })
+    );
     expect(prisma.account.create).not.toHaveBeenCalled();
     expect(adminAuth.api.requestPasswordReset).toHaveBeenCalledWith({
       body: {
@@ -159,6 +171,29 @@ describe('rbac', () => {
         redirectTo: 'http://localhost:3000/admin/reset-password',
       },
     });
+  });
+
+  it('createAdminStaffUser enables 2FA when email is ready', async () => {
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockResolvedValue({
+      id: 'u3',
+      email: 'staff2@example.com',
+      name: 'staff2@example.com',
+      role: 'staff',
+      createdAt: new Date('2026-01-02T00:00:00.000Z'),
+      emailVerified: true,
+      twoFactorEnabled: true,
+    });
+    adminAuth.api.requestPasswordReset.mockResolvedValue({ status: true });
+    isAdminEmailReady.mockReturnValue(true);
+
+    await createAdminStaffUser({ email: 'staff2@example.com' });
+
+    expect(prisma.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ twoFactorEnabled: true }),
+      })
+    );
   });
 
   it('updateAdminUserRole returns 404 when user missing', async () => {
