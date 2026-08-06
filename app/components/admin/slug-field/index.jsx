@@ -44,7 +44,7 @@ export default function SlugField({
           placeholder={placeholder}
           required={required}
           pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-          className="pl-7"
+          className="pl-4.5"
           {...inputProps}
         />
       </div>
