@@ -13,9 +13,9 @@ import {
   getCustomerGroup,
   removeCustomerFromGroup,
 } from '#/core/pricing/index.server';
-import ActionBar from '#/components/admin/action-bar';
+import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
-import Card, { CardHeader } from '#/components/admin/card';
+import FormSection from '#/components/admin/form-section';
 import Field from '#/components/admin/form/field';
 import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
@@ -76,7 +76,7 @@ export default function AdminCustomerGroupDetailRoute() {
   const availableCustomers = customers.filter((c) => !memberIds.has(c.id));
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         breadcrumbs={
           <Breadcrumbs
@@ -90,20 +90,24 @@ export default function AdminCustomerGroupDetailRoute() {
           />
         }
         title={group.name}
-        subtitle={t('admin.customerGroups.detail.subtitle', {
-          handle: group.handle,
-          members: group._count.members,
-          priceLists: group._count.priceLists,
-        })}
-        actions={
-          <Button as={Link} to="/admin/customer-groups" variant="secondary">
-            {t('admin.customerGroups.detail.back')}
-          </Button>
+        subtitle={
+          <span className="inline-flex flex-wrap items-center gap-2">
+            <Badge tone="accent" className="font-mono">
+              {group.handle}
+            </Badge>
+            <span>
+              {t('admin.customerGroups.detail.subtitle', {
+                handle: group.handle,
+                members: group._count.members,
+                priceLists: group._count.priceLists,
+              })}
+            </span>
+          </span>
         }
       />
 
       <ErrorAlert message={actionData?.error} />
-      {actionData?.ok && (
+      {actionData?.ok ? (
         <SuccessAlert
           message={t(
             actionData.intent === 'remove-member'
@@ -111,25 +115,24 @@ export default function AdminCustomerGroupDetailRoute() {
               : 'admin.customerGroups.detail.memberAdded'
           )}
         />
-      )}
+      ) : null}
 
-      <div className="mt-6 space-y-6">
-        <Card>
-          <CardHeader
-            title={t('admin.customerGroups.detail.membersTitle')}
-            description={t('admin.customerGroups.detail.membersDescription')}
-          />
-
+      <div className="space-y-12">
+        <FormSection
+          title={t('admin.customerGroups.detail.membersTitle')}
+          description={t('admin.customerGroups.detail.membersDescription')}
+          last
+        >
           {group.members.length === 0 ? (
-            <p className="text-text-muted mb-4 text-sm">
+            <p className="text-text-muted mb-6 text-sm">
               {t('admin.customerGroups.detail.noMembers')}
             </p>
           ) : (
-            <ul className="divide-border mb-4 divide-y text-sm">
+            <ul className="divide-border border-border mb-6 divide-y rounded-lg border text-sm">
               {group.members.map((row) => (
                 <li
                   key={row.id}
-                  className="flex items-center justify-between gap-3 py-2"
+                  className="flex items-center justify-between gap-3 px-4 py-3"
                 >
                   <span className="text-text">{row.customer.email}</span>
                   <Form method="post">
@@ -148,12 +151,15 @@ export default function AdminCustomerGroupDetailRoute() {
             </ul>
           )}
 
-          <Form method="post" className="flex flex-wrap items-end gap-3">
+          <Form
+            method="post"
+            className="flex max-w-2xl flex-wrap items-end gap-3"
+          >
             <input type="hidden" name="intent" value="add-member" />
             <Field
               label={t('admin.customerGroups.detail.customer')}
               htmlFor="group-customer"
-              className="flex-1"
+              className="min-w-0 flex-1"
             >
               <Select
                 id="group-customer"
@@ -181,17 +187,17 @@ export default function AdminCustomerGroupDetailRoute() {
                 : t('admin.customerGroups.detail.addMember')}
             </ButtonSubmit>
           </Form>
-        </Card>
+        </FormSection>
+      </div>
 
-        <ActionBar>
-          <span />
-          <Link
-            to="/admin/customer-groups"
-            className="text-text-muted hover:text-text text-sm transition-colors"
-          >
-            {t('admin.customerGroups.detail.backToGroups')}
-          </Link>
-        </ActionBar>
+      <div className="mt-6 mb-6 flex items-center justify-between gap-x-6">
+        <span />
+        <Link
+          to="/admin/customer-groups"
+          className="text-text text-sm/6 font-semibold transition-colors hover:opacity-80"
+        >
+          {t('admin.customerGroups.detail.backToGroups')}
+        </Link>
       </div>
     </div>
   );

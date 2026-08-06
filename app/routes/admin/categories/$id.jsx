@@ -1,8 +1,4 @@
-import clsx from 'clsx';
-import { useState } from 'react';
 import {
-  Form,
-  Link,
   redirect,
   useActionData,
   useLoaderData,
@@ -14,17 +10,7 @@ import {
   loadCategoryAdminEditData,
   saveCategoryAdminForm,
 } from '#/core/catalog/admin/index.server';
-import { useT } from '#/core/i18n';
-import ActionBar from '#/components/admin/action-bar';
-import Breadcrumbs from '#/components/admin/breadcrumbs';
-import Card, { CardHeader } from '#/components/admin/card';
-import Field from '#/components/admin/form/field';
-import Input from '#/components/admin/form/input';
-import Textarea from '#/components/admin/form/textarea';
-import LocaleTabs from '#/components/admin/locale-tabs';
-import PageHeader from '#/components/admin/page-header';
-import { ErrorAlert } from '#/components/ui/alert';
-import { ButtonSubmit } from '#/components/ui/button';
+import CategoryEditor from '#/components/admin/category-editor';
 
 export async function loader({ params }) {
   const data = await loadCategoryAdminEditData(params.id);
@@ -55,131 +41,18 @@ export function meta({ loaderData }) {
 }
 
 export default function AdminEditCategoryRoute() {
-  const t = useT();
   const { category, locales } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
-  const [activeLocale, setActiveLocale] = useState(locales[0] ?? 'en');
-  const displayTitle =
-    category.enTitle || t('admin.categories.edit.fallbackTitle');
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <PageHeader
-        breadcrumbs={
-          <Breadcrumbs
-            items={[
-              {
-                label: t('admin.categories.index.title'),
-                href: '/admin/categories',
-              },
-              { label: displayTitle },
-            ]}
-          />
-        }
-        title={displayTitle}
-        subtitle={t('admin.categories.edit.subtitle')}
-      />
-
-      <ErrorAlert message={actionData?.error} />
-
-      <Form method="post" className="space-y-6">
-        {locales.map((locale) => (
-          <input key={locale} type="hidden" name="locales[]" value={locale} />
-        ))}
-
-        <Card>
-          <CardHeader
-            title={t('admin.categories.edit.cardTitle')}
-            description={t('admin.categories.edit.cardDescription')}
-          />
-
-          <LocaleTabs
-            locales={locales}
-            activeLocale={activeLocale}
-            onSelect={setActiveLocale}
-          />
-
-          {locales.map((locale) => (
-            <div
-              key={locale}
-              className={clsx(
-                'mt-4 space-y-4',
-                locale !== activeLocale && 'hidden'
-              )}
-            >
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field
-                  label={t('admin.categories.edit.titleLocale', { locale })}
-                  htmlFor={`title-${locale}`}
-                >
-                  <Input
-                    id={`title-${locale}`}
-                    type="text"
-                    name={`title[${locale}]`}
-                    defaultValue={category.translations[locale]?.title ?? ''}
-                    placeholder={t('admin.categories.edit.titlePlaceholder')}
-                  />
-                </Field>
-                <Field
-                  label={t('admin.categories.edit.slugLocale', { locale })}
-                  htmlFor={`slug-${locale}`}
-                >
-                  <Input
-                    id={`slug-${locale}`}
-                    type="text"
-                    name={`slug[${locale}]`}
-                    defaultValue={category.slugs[locale] ?? ''}
-                    placeholder={t('admin.categories.edit.slugPlaceholder')}
-                  />
-                </Field>
-              </div>
-              <Field
-                label={t('admin.categories.edit.metaTitle', { locale })}
-                htmlFor={`metaTitle-${locale}`}
-              >
-                <Input
-                  id={`metaTitle-${locale}`}
-                  type="text"
-                  name={`metaTitle[${locale}]`}
-                  defaultValue={category.translations[locale]?.metaTitle ?? ''}
-                />
-              </Field>
-              <Field
-                label={t('admin.categories.edit.metaDescription', { locale })}
-                htmlFor={`metaDescription-${locale}`}
-              >
-                <Textarea
-                  id={`metaDescription-${locale}`}
-                  name={`metaDescription[${locale}]`}
-                  rows={2}
-                  defaultValue={
-                    category.translations[locale]?.metaDescription ?? ''
-                  }
-                />
-              </Field>
-            </div>
-          ))}
-        </Card>
-
-        <ActionBar>
-          <span />
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/categories"
-              className="text-text-muted hover:text-text text-sm transition-colors"
-            >
-              {t('common.cancel')}
-            </Link>
-            <ButtonSubmit disabled={isSaving}>
-              {isSaving
-                ? t('admin.categories.edit.saving')
-                : t('admin.categories.edit.save')}
-            </ButtonSubmit>
-          </div>
-        </ActionBar>
-      </Form>
-    </div>
+    <CategoryEditor
+      mode="edit"
+      category={category}
+      locales={locales}
+      actionData={actionData}
+      isSaving={isSaving}
+    />
   );
 }
