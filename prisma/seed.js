@@ -178,8 +178,10 @@ async function main() {
       name: 'Admin',
       emailVerified: true,
       role: 'admin',
+      // Skip 2FA until email is configured; enable from Admin → Security.
+      twoFactorEnabled: false,
     },
-    update: { role: 'admin', emailVerified: true },
+    update: { role: 'admin', emailVerified: true, twoFactorEnabled: false },
   });
 
   // Keep credential password in sync on re-seed / CLI re-bootstrap.

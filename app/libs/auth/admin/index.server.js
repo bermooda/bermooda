@@ -91,6 +91,8 @@ export const adminAuth = betterAuth({
 
   plugins: [
     twoFactor({
+      // Email OTP is the admin second factor; skip TOTP QR on enable.
+      skipVerificationOnEnable: true,
       otpOptions: {
         async sendOTP({ user, otp }) {
           queueTwoFactorOtp(user.email, user.name, otp);

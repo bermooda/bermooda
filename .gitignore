@@ -19,6 +19,7 @@
 
 # Files
 .env
+bermooda.config.js
 .bermooda/bootstrap-api-key
 /prisma/dev.db
 /prisma/dev.db-journal

@@ -14,6 +14,7 @@ import {
   ComputerDesktopIcon,
   MagnifyingGlassIcon,
   MoonIcon,
+  ShieldCheckIcon,
   SunIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
@@ -231,6 +232,19 @@ function AdminUserMenu() {
 
         <hr className="border-border -mx-0.75 my-1 block" />
 
+        {/* Security */}
+        <MenuItem>
+          <Link
+            to="/admin/security"
+            className="text-text data-focus:bg-accent data-focus:text-accent-fg group col-span-full grid w-full cursor-default grid-cols-[auto_1fr] items-center rounded-lg px-3 py-1.5 text-left text-sm focus:outline-hidden"
+          >
+            <ShieldCheckIcon className="text-text-muted group-data-focus:text-accent-fg mr-2 h-4 w-4" />
+            {t('admin.chrome.security')}
+          </Link>
+        </MenuItem>
+
+        <hr className="border-border -mx-0.75 my-1 block" />
+
         {/* Logout */}
         <MenuItem>
           <Link
@@ -411,12 +425,16 @@ export const handle = {
  */
 export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { messages } = useLoaderData();
+  const { messages, user } = useLoaderData();
   const { open, setOpen, openPalette } = useCommandPalette();
+  const location = useLocation();
 
   function t(key, params) {
     return translate(key, params, messages);
   }
+
+  const showTwoFactorBanner =
+    !user?.twoFactorEnabled && location.pathname !== '/admin/security';
 
   return (
     <I18nContext.Provider value={{ t }}>
@@ -448,6 +466,19 @@ export default function AdminLayout() {
               >
                 <Bars3Icon className="h-6 w-6" />
               </button>
+              {showTwoFactorBanner ? (
+                <div className="bg-warn/10 border-warn/30 mb-4 rounded-md border p-4">
+                  <p className="text-text text-sm/6">
+                    {t('admin.chrome.twoFactorBanner')}{' '}
+                    <Link
+                      to="/admin/security"
+                      className="text-accent font-semibold hover:underline"
+                    >
+                      {t('admin.chrome.twoFactorBannerCta')}
+                    </Link>
+                  </p>
+                </div>
+              ) : null}
               <Outlet />
             </div>
           </main>

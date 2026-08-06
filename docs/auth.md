@@ -24,6 +24,11 @@ Handles staff/admin logins. Maps to the standard better-auth model set
 (`User`, `Session`, `Account`, `Verification`) that already exists in the
 Prisma schema.
 
+Admin `twoFactor` uses email OTP (`skipVerificationOnEnable: true`). New users
+default to `twoFactorEnabled: false`. Bootstrap/seed keeps 2FA off until email
+is ready; new staff created after email is configured get 2FA on automatically.
+Existing users enable it from **Admin → Security**.
+
 ### Customer auth
 
 | Property      | Value                                                                    |
