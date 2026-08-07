@@ -22,7 +22,6 @@ import { UserIcon as UserIconSolid } from '@heroicons/react/24/solid';
 import { useState } from 'react';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 
-import { PLATFORM_NAME } from '#/libs/config';
 import { authenticate } from '#/libs/auth/admin/index.server';
 import { ADMIN_AVAILABLE_LOCALES, translate, useT } from '#/core/i18n';
 import { I18nContext } from '#/core/i18n/context';
@@ -33,7 +32,6 @@ import useCommandPalette, {
 } from '#/hooks/use-command-palette';
 import CommandPalette from '#/components/admin/command-palette';
 import { NAV_GROUPS } from '#/components/admin/nav-config';
-import Logo from '#/components/ui/logo';
 
 /**
  * Loader — verifies admin session; redirects to /admin/login on failure.
@@ -297,11 +295,14 @@ function SidebarContent({ onClose, onOpenCommandPalette }) {
       <div className="relative flex items-center justify-between gap-2 px-4 py-4">
         <Link
           to="/admin/dashboard"
-          className="text-text flex min-w-0 items-center gap-2 px-1"
+          className="text-text flex min-w-0 items-center px-1"
           onClick={onClose}
         >
-          <Logo alt="Admin" className="-m-1 h-7 w-auto shrink-0" />
-          <span className="truncate text-base font-bold">{PLATFORM_NAME}</span>
+          <img
+            alt="bermooda"
+            src="/assets/images/logo-full.svg"
+            className="h-5 w-auto shrink-0"
+          />
         </Link>
 
         <div className="flex shrink-0 items-center gap-1">
@@ -458,14 +459,21 @@ export default function AdminLayout() {
 
           <main className="flex-1">
             <div className="mx-auto w-full max-w-7xl p-4 md:p-6">
-              <button
-                type="button"
-                className="text-text-muted hover:bg-surface-2 hover:text-text mb-2 -ml-1 rounded-md p-2 md:hidden"
-                onClick={() => setMobileOpen(true)}
-                aria-label={t('admin.chrome.openSidebar')}
-              >
-                <Bars3Icon className="h-6 w-6" />
-              </button>
+              <div className="relative mb-2 flex items-center md:hidden">
+                <button
+                  type="button"
+                  className="text-text-muted hover:bg-surface-2 hover:text-text relative z-10 -ml-1 rounded-md p-2"
+                  onClick={() => setMobileOpen(true)}
+                  aria-label={t('admin.chrome.openSidebar')}
+                >
+                  <Bars3Icon className="h-6 w-6" />
+                </button>
+                <img
+                  alt="bermooda"
+                  src="/assets/images/logo-full.svg"
+                  className="pointer-events-none absolute left-1/2 h-5 w-auto -translate-x-1/2"
+                />
+              </div>
               {showTwoFactorBanner ? (
                 <div className="bg-warn/10 border-warn/30 mb-4 rounded-md border p-4">
                   <p className="text-text text-sm/6">
