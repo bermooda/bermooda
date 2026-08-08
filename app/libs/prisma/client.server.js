@@ -1,9 +1,10 @@
-import { PrismaClient } from '#/generated/prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 
 import { getDatabaseProvider } from '#/libs/prisma/provider/index.server';
+
+import { PrismaClient } from '#/generated/prisma/client';
 
 /**
  * Re-export Prisma model types
