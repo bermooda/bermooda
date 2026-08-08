@@ -52,7 +52,6 @@ export default defineConfig({
     alias: {
       '#': path.resolve(__dirname, './app'),
       '#bermooda.config': path.resolve(__dirname, './bermooda.config.js'),
-      '#prisma/client': path.resolve(__dirname, './prisma/generated/client'),
     },
     // Prefer the shop's React when themes/plugins also nest a copy via peers.
     dedupe: ['react', 'react-dom', 'react-router', 'react-router/dom'],

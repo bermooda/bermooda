@@ -168,7 +168,7 @@ Dual auth — admin/staff and customers are separate better-auth instances ([doc
 When `prisma/schema.prisma` changes, complete these steps before finishing:
 
 1. Create a migration: `npm run prisma:migrate -- --name <descriptive_snake_case_name>`. Confirm generated SQL in `prisma/migrations/` matches the intent.
-2. Regenerate client: `npx prisma generate`.
-3. Verify that `prisma/generated/` reflects the updated schema.
+2. Always regenerate with: `DATABASE_URL="file:./prisma/dev.db" npm run prisma:generate`.
+3. Always use `npm run prisma:generate` — do not call `npx prisma generate` or `prisma generate` directly. The generated client under `app/generated/prisma/` is gitignored; do not commit it.
 
 Do not ship schema changes without a migration.

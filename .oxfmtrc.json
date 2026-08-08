@@ -75,7 +75,7 @@
     ".react-router/**",
     ".siblings/**",
     "build/**",
-    "prisma/generated/**",
+    "app/generated/prisma/**",
     "CHANGELOG.md"
   ]
 }

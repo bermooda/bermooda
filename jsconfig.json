@@ -9,8 +9,7 @@
     "baseUrl": ".",
     "paths": {
       "#/*": ["./app/*"],
-      "#bermooda.config": ["./bermooda.config.js"],
-      "#prisma/client": ["./prisma/generated/client"]
+      "#bermooda.config": ["./bermooda.config.js"]
     },
     "resolveJsonModule": true,
     "strict": false,

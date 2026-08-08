@@ -94,7 +94,7 @@ A `.env` file must exist in the repo root (see `.env.example`). Placeholder valu
 
 - **Vitest** (`vitest.config.js`) runs two projects: `unit` (happy-dom) and `server` (Node). Shared setup is `app/test-setup.js`. Use `npm run test`, `npm run test:watch`, or `npm run test:coverage`.
 - The SQLite database file is created at `prisma/dev.db` on first `prisma migrate deploy`. Delete it and re-run `npm run setup` to reset.
-- `prisma/generated/` is committed but must match the schema; always run `npx prisma generate` after pulling schema changes.
+- The Prisma client under `app/generated/prisma/` is gitignored; create it with `npm run prisma:generate` (also run by `npm run setup`). Do not call `npx prisma generate` or `prisma generate` directly.
 - Lint exit code 1 from pre-existing oxfmt formatting warnings is expected and not a sign of breakage.
 - The `#/*` import alias maps to `./app/` (configured in `vite.config.js`).
 - Inside `app/themes/<slug>/` and `app/plugins/<slug>/`, use relative imports for sibling modules; keep `#/…` for core app modules. Oxlint enforces this via `no-restricted-imports` overrides.

@@ -65,7 +65,7 @@ export function MyComponent({ title, onSelect }) { /* ... */ }
 **Prisma / external types**
 
 ```js
-/** @typedef {import('#prisma/client').Order} Order */
+/** @typedef {import('#/generated/prisma/client').Order} Order */
 ```
 
 ## Typing hygiene
