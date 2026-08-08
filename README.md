@@ -20,11 +20,11 @@ If you want a full shop you can fork, understand, and grow—welcome.
 
 | Layer         | Choice                                                                                   |
 | ------------- | ---------------------------------------------------------------------------------------- |
-| Runtime       | Node.js ≥ 22.22                                                                          |
-| App framework | [React Router 8](https://reactrouter.com/) (SSR, loaders, actions)                       |
-| UI            | React 19, Tailwind CSS 4                                                                 |
-| Build         | Vite 8                                                                                   |
-| Data          | Prisma 7 · SQLite (local) · PostgreSQL (production-ready)                                |
+| Runtime       | Node.js ≥ 24                                                                             |
+| App framework | [React Router](https://reactrouter.com/) (SSR, loaders, actions)                         |
+| UI            | React, Tailwind CSS                                                                      |
+| Build         | Vite                                                                                     |
+| Data          | Prisma · SQLite (local) · PostgreSQL (production-ready)                                  |
 | Auth          | [better-auth](https://www.better-auth.com/) (separate admin/staff and customer sessions) |
 | Payments      | Stripe                                                                                   |
 | Email         | Resend (+ React Email templates)                                                         |
@@ -55,7 +55,7 @@ Open [http://localhost:3000](http://localhost:3000). Admin is typically at `/adm
 npm i -g @bermooda/cli@latest
 ```
 
-Requires **Node.js ≥ 22.22**. After install, the `bermooda` binary is available globally.
+Requires **Node.js ≥ 24**. After install, the `bermooda` binary is available globally.
 
 ### CLI commands (overview)
 
