@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.3...bermooda-v1.0.0) (2026-08-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* Node.js 24 or later is now required (was ≥ 22.22).
+
+### Miscellaneous Chores
+
+* require Node.js ≥ 24 and bump dependencies ([#221](https://github.com/bermooda/bermooda/issues/221)) ([4b02f1f](https://github.com/bermooda/bermooda/commit/4b02f1f0c99cf7982ce20d36c44d53206601c541))
+
 ## [0.9.3](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.2...bermooda-v0.9.3) (2026-08-06)
 
 
