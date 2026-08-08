@@ -1,4 +1,4 @@
-import { PrismaClient } from '#prisma/client';
+import { PrismaClient } from '#/generated/prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
@@ -7,11 +7,11 @@ import { getDatabaseProvider } from '#/libs/prisma/provider/index.server';
 
 /**
  * Re-export Prisma model types
- * @typedef {import('#prisma/client').User} User
- * @typedef {import('#prisma/client').Session} Session
- * @typedef {import('#prisma/client').Account} Account
- * @typedef {import('#prisma/client').Verification} Verification
- * @typedef {import('#prisma/client').TwoFactor} TwoFactor
+ * @typedef {import('#/generated/prisma/client').User} User
+ * @typedef {import('#/generated/prisma/client').Session} Session
+ * @typedef {import('#/generated/prisma/client').Account} Account
+ * @typedef {import('#/generated/prisma/client').Verification} Verification
+ * @typedef {import('#/generated/prisma/client').TwoFactor} TwoFactor
  */
 
 /**

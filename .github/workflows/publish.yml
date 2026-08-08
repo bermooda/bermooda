@@ -45,6 +45,9 @@ jobs:
         run: npm install -g npm@latest
 
       - run: npm ci --legacy-peer-deps
+      - run: npm run prisma:generate
+        env:
+          DATABASE_URL: file:./sqlite.db
       - run: npm run lint
       - run: npm run build
         env:

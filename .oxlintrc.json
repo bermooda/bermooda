@@ -4,7 +4,7 @@
     ".react-router/**",
     ".siblings/**",
     "build/**",
-    "prisma/generated/**",
+    "app/generated/prisma/**",
     "**/*.ts",
     "**/*.tsx",
     "**/*.mts",

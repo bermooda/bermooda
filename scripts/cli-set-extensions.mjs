@@ -24,7 +24,7 @@ import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 
-import { PrismaClient } from '../prisma/generated/client.ts';
+import { PrismaClient } from '../app/generated/prisma/client.ts';
 
 /** @returns {'sqlite' | 'postgresql'} */
 function getDatabaseProvider() {
@@ -54,7 +54,7 @@ function createPrismaClient() {
 }
 
 /**
- * @param {import('../prisma/generated/client.ts').PrismaClient} prisma
+ * @param {import('../app/generated/prisma/client.ts').PrismaClient} prisma
  * @param {string} key
  * @param {unknown} value
  */
@@ -79,7 +79,7 @@ function parseCommaSeparatedIds(raw) {
 }
 
 /**
- * @param {import('../prisma/generated/client.ts').PrismaClient} prisma
+ * @param {import('../app/generated/prisma/client.ts').PrismaClient} prisma
  * @returns {Promise<string[]>}
  */
 async function readEnabledPlugins(prisma) {

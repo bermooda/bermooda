@@ -27,3 +27,6 @@ bermooda.config.js
 /prisma/queue.db-shm
 /prisma/queue.db-wal
 /prisma/e2e-smoke.db
+
+# Prisma client (created by `npm run prisma:generate`)
+/app/generated/prisma/
