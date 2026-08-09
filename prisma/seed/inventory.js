@@ -5,7 +5,7 @@
 import { LOCATION_IDS } from './ids.js';
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  */
 export async function seedInventory(prisma) {
   const defaultLocation = await prisma.location.upsert({

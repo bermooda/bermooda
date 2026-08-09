@@ -7,7 +7,7 @@ import { daysAgo } from './helpers.js';
 import { CATALOG } from './ids.js';
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  */
 export async function seedB2b(prisma) {
   const customers = await listSeedCustomers(prisma);

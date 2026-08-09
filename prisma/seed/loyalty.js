@@ -6,7 +6,7 @@ import { listSeedCustomers } from './customers.js';
 import { daysAgo } from './helpers.js';
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  */
 export async function seedLoyalty(prisma) {
   const customers = await listSeedCustomers(prisma);

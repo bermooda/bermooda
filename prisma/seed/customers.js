@@ -29,7 +29,7 @@ const CUSTOMER_NAMES = [
 ];
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  */
 export async function seedCustomers(prisma) {
   const passwordHash = await bcrypt.hash(DEMO_CUSTOMER_PASSWORD, 12);
@@ -137,7 +137,7 @@ export async function seedCustomers(prisma) {
 
 /**
  * Resolve seeded customers in stable order for dependent modules.
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  */
 export async function listSeedCustomers(prisma) {
   const emails = CUSTOMER_NAMES.map(([first, last], i) =>

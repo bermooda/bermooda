@@ -4,7 +4,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
 
-import { PrismaClient } from './generated/client.ts';
+import { PrismaClient } from '../app/generated/prisma/client.ts';
 import { seedB2b } from './seed/b2b.js';
 import { seedCatalog } from './seed/catalog.js';
 import { seedChannels } from './seed/channels.js';

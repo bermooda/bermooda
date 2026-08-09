@@ -8,7 +8,7 @@ import { daysAgo, upsertSlug, upsertTranslation } from './helpers.js';
 import { CATALOG, GROUP_IDS, PRODUCT_IDS, VARIANT_IDS } from './ids.js';
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  */
 export async function seedCommerceExtras(prisma) {
   const customers = await listSeedCustomers(prisma);

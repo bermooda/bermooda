@@ -5,7 +5,7 @@
 import { daysAgo } from './helpers.js';
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  * @param {{ adminEmail?: string, adminUserId?: string }} [actor]
  */
 export async function seedOps(prisma, actor = {}) {

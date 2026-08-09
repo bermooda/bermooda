@@ -6,7 +6,7 @@ import { daysAgo } from './helpers.js';
 import { DISCOUNT_IDS, GROUP_IDS } from './ids.js';
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  */
 export async function seedDiscounts(prisma) {
   // Ensure VIP group exists before discount FK (full memberships seeded later).

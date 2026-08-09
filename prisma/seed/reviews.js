@@ -58,7 +58,7 @@ const REVIEW_COPY = [
 ];
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  */
 export async function seedReviews(prisma) {
   const customers = await listSeedCustomers(prisma);
