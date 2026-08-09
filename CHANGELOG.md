@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.4](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.3...bermooda-v0.9.4) (2026-08-09)
+
+
+### Bug Fixes
+
+* **seed:** load Prisma client from app/generated/prisma ([#224](https://github.com/bermooda/bermooda/issues/224)) ([8ce06f4](https://github.com/bermooda/bermooda/commit/8ce06f472c88fddaa39b9297af32bca14d28547e))
+
 ## [0.9.3](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.2...bermooda-v0.9.3) (2026-08-06)
 
 
