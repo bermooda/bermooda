@@ -21,7 +21,7 @@ export const DEMO_ADDRESS = {
 };
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  * @param {string} key
  * @param {unknown} value
  */
@@ -35,7 +35,7 @@ export async function upsertSetting(prisma, key, value) {
 }
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  * @param {string} entityType
  * @param {string} entityId
  * @param {string} slug
@@ -68,7 +68,7 @@ export async function upsertSlug(
 }
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  * @param {string} entityType
  * @param {string} entityId
  * @param {string} field

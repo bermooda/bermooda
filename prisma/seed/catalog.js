@@ -6,7 +6,7 @@ import { PRICE_CURRENCIES, upsertSlug, upsertTranslation } from './helpers.js';
 import { CATEGORY_IDS, PRODUCT_IDS, VARIANT_IDS } from './ids.js';
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  * @param {object} category
  */
 async function upsertCategory(prisma, category) {
@@ -29,7 +29,7 @@ async function upsertCategory(prisma, category) {
 }
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  * @param {object} product
  */
 async function upsertProduct(prisma, product) {
@@ -79,7 +79,7 @@ async function upsertProduct(prisma, product) {
 }
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  * @param {string} productId
  * @param {string} categoryId
  * @param {number} [position]
@@ -100,7 +100,7 @@ async function linkProductToCategory(
 }
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  */
 export async function seedCatalog(prisma) {
   const categories = [

@@ -7,7 +7,7 @@ import { daysAgo } from './helpers.js';
 import { VARIANT_IDS } from './ids.js';
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  * @param {string} adminUserId
  */
 export async function seedSubscriptionsPos(prisma, adminUserId) {

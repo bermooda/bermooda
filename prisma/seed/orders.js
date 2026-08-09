@@ -9,7 +9,7 @@ import { CATALOG, orderId, orderNumber } from './ids.js';
 /** @typedef {'pending' | 'pending_payment' | 'confirmed' | 'paid' | 'fulfilled' | 'cancelled' | 'refunded'} OrderStatus */
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  */
 export async function seedOrders(prisma) {
   const customers = await listSeedCustomers(prisma);

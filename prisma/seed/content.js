@@ -5,7 +5,7 @@
 import { upsertSlug, upsertTranslation } from './helpers.js';
 
 /**
- * @param {import('../generated/client.ts').PrismaClient} prisma
+ * @param {import('../../app/generated/prisma/client.ts').PrismaClient} prisma
  */
 export async function seedContent(prisma) {
   const aboutPage = await prisma.page.upsert({
