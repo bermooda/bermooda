@@ -459,7 +459,7 @@ export default function AdminLayout() {
 
           <main className="flex-1">
             <div className="mx-auto w-full max-w-7xl p-4 md:p-6">
-              <div className="relative mb-2 flex items-center md:hidden">
+              <div className="relative mb-2 flex items-center justify-between md:hidden">
                 <button
                   type="button"
                   className="text-text-muted hover:bg-surface-2 hover:text-text relative z-10 -ml-1 rounded-md p-2"
@@ -471,8 +471,9 @@ export default function AdminLayout() {
                 <img
                   alt="bermooda"
                   src="/assets/images/logo-full.svg"
-                  className="pointer-events-none absolute left-1/2 h-5 w-auto -translate-x-1/2"
+                  className="pointer-events-none h-5 w-auto"
                 />
+                <div className="w-10"></div>
               </div>
               {showTwoFactorBanner ? (
                 <div className="bg-warn/10 border-warn/30 mb-4 rounded-md border p-4">

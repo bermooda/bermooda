@@ -627,6 +627,7 @@ export default function ProductEditor({
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
+        sticky
         breadcrumbs={
           <Breadcrumbs
             items={[
