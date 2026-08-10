@@ -262,7 +262,10 @@ describe('admin plugin dispatcher', () => {
       params: { 'pluginId': 'demo-plugin', '*': '' },
     });
 
-    expect(result).toEqual({ error: 'Missing pluginId' });
+    expect(result).toEqual({
+      error: 'Missing pluginId',
+      intent: 'save-settings',
+    });
     expect(mockSavePluginSettings).not.toHaveBeenCalled();
   });
 
@@ -288,7 +291,10 @@ describe('admin plugin dispatcher', () => {
       params: { 'pluginId': 'demo-plugin', '*': '' },
     });
 
-    expect(result).toEqual({ error: 'Missing pluginId' });
+    expect(result).toEqual({
+      error: 'Missing pluginId',
+      intent: 'save-settings',
+    });
     expect(mockSavePluginSettings).not.toHaveBeenCalled();
   });
 
@@ -307,7 +313,10 @@ describe('admin plugin dispatcher', () => {
       params: { 'pluginId': 'demo-plugin', '*': '' },
     });
 
-    expect(result).toEqual({ error: 'No settings for plugin' });
+    expect(result).toEqual({
+      error: 'No settings for plugin',
+      intent: 'save-settings',
+    });
     expect(mockSavePluginSettings).not.toHaveBeenCalled();
   });
 

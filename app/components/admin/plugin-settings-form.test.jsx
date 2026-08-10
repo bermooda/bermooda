@@ -58,4 +58,29 @@ describe('PluginSettingsForm', () => {
     );
     expect(html).toBe('');
   });
+
+  it('shows ErrorAlert only for save-settings intent errors', () => {
+    mockUseActionData.mockReturnValue({
+      intent: 'save-settings',
+      error: 'Missing pluginId',
+    });
+
+    const html = renderToStaticMarkup(
+      <PluginSettingsForm manifest={manifest} values={{}} />
+    );
+
+    expect(html).toContain('Missing pluginId');
+  });
+
+  it('hides ErrorAlert for non-save-settings action errors', () => {
+    mockUseActionData.mockReturnValue({
+      error: 'Custom plugin admin error',
+    });
+
+    const html = renderToStaticMarkup(
+      <PluginSettingsForm manifest={manifest} values={{}} />
+    );
+
+    expect(html).not.toContain('Custom plugin admin error');
+  });
 });

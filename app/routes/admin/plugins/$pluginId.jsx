@@ -105,16 +105,17 @@ export async function action({ request, params }) {
     if (formData.get('intent') === 'save-settings') {
       const pluginId = formData.get('pluginId');
       if (!pluginId || pluginId !== manifest.id) {
-        return { error: 'Missing pluginId' };
+        return { error: 'Missing pluginId', intent: 'save-settings' };
       }
       if (!manifest.settings?.length) {
-        return { error: 'No settings for plugin' };
+        return { error: 'No settings for plugin', intent: 'save-settings' };
       }
       try {
         await savePluginSettings(manifest.id, manifest, formData);
       } catch (err) {
         return {
           error: err instanceof Error ? err.message : 'Failed to save settings',
+          intent: 'save-settings',
         };
       }
       return {

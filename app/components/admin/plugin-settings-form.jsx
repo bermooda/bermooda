@@ -120,7 +120,7 @@ export default function PluginSettingsForm({ manifest, values }) {
       {saved ? (
         <SuccessAlert message={t('admin.plugins.detail.settingsSaved')} />
       ) : null}
-      {actionData?.error && !saved ? (
+      {actionData?.intent === 'save-settings' && actionData?.error && !saved ? (
         <ErrorAlert message={actionData.error} />
       ) : null}
 
