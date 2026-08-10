@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.5](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.4...bermooda-v0.9.5) (2026-08-10)
+
+
+### Bug Fixes
+
+* **admin:** sticky PageHeader on all detail editors ([444cbea](https://github.com/bermooda/bermooda/commit/444cbeaffc1604f4f3ea82a8fd259f3489c3be2d))
+* **admin:** sticky PageHeader on all detail pages ([c2a90a2](https://github.com/bermooda/bermooda/commit/c2a90a255ce9f4d7fcb40d456ec2c2e051ae289e))
+* **subscriptions:** load plan product titles from translations ([3657ecc](https://github.com/bermooda/bermooda/commit/3657eccab1666d1724dcaf85d59e8faae6d8708d))
+* **subscriptions:** load plan product titles from translations ([2e2ca2c](https://github.com/bermooda/bermooda/commit/2e2ca2c25c0235076c69c6b80d28942703694289))
+
 ## [0.9.4](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.3...bermooda-v0.9.4) (2026-08-09)
 
 
