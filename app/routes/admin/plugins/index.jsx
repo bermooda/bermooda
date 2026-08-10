@@ -1,21 +1,13 @@
 // app/routes/admin/plugins/index.jsx
-// Admin Plugins page — list registered plugins, enable/disable, reorder, settings.
+// Admin Plugins page — list registered plugins, enable/disable, reorder.
 
-import { useEffect, useRef, useState } from 'react';
-import {
-  Form,
-  useActionData,
-  useFetcher,
-  useLoaderData,
-  useNavigation,
-} from 'react-router';
+import { useEffect, useState } from 'react';
+import { Form, useFetcher, useLoaderData, useNavigation } from 'react-router';
 
 import { useT } from '#/core/i18n';
 import {
-  getRegisteredPlugin,
   listRegisteredPlugins,
-  loadAllPluginSettings,
-  savePluginSettings,
+  resolvePluginAdminRoute,
   setPluginEnabledState,
   setPluginOrder,
   sortPluginsByOrder,
@@ -24,14 +16,10 @@ import { get } from '#/core/settings/index.server';
 import Badge from '#/components/admin/badge';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
-import Field from '#/components/admin/form/field';
-import Input from '#/components/admin/form/input';
-import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import SortableList, { SortableGrip } from '#/components/admin/sortable-list';
 import Tabs from '#/components/admin/tabs';
-import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
-import Button, { ButtonSubmit } from '#/components/ui/button';
+import Button from '#/components/ui/button';
 
 // ---------------------------------------------------------------------------
 // Meta
@@ -49,8 +37,7 @@ export function meta() {
 // ---------------------------------------------------------------------------
 
 /**
- * Loads all registered plugins, the enabled list, the display order,
- * and any per-plugin setting values.
+ * Loads all registered plugins, the enabled list, and the display order.
  */
 export async function loader() {
   const allPlugins = listRegisteredPlugins();
@@ -60,18 +47,19 @@ export async function loader() {
   ]);
   const enabledPluginIds = Array.isArray(enabledPlugins) ? enabledPlugins : [];
   const pluginOrder = Array.isArray(pluginOrderRaw) ? pluginOrderRaw : [];
-  const plugins = [...allPlugins].sort((a, b) =>
-    a.title.localeCompare(b.title)
-  );
+  const plugins = [...allPlugins]
+    .sort((a, b) => a.title.localeCompare(b.title))
+    .map((manifest) => ({
+      ...manifest,
+      hasAdminUi: Boolean(resolvePluginAdminRoute(manifest.slug, '')),
+    }));
   const orderedPlugins = sortPluginsByOrder(allPlugins, pluginOrder);
-  const pluginSettings = await loadAllPluginSettings(allPlugins);
 
   return {
     plugins,
     orderedPlugins,
     enabledPlugins: enabledPluginIds,
     pluginOrder,
-    pluginSettings,
   };
 }
 
@@ -81,10 +69,9 @@ export async function loader() {
 
 /**
  * Handles:
- *  - intent=enable        → add pluginId to enabledPlugins
- *  - intent=disable       → remove pluginId from enabledPlugins
- *  - intent=reorder       → persist plugin block order from drag and drop
- *  - intent=save-settings → persist per-plugin setting values
+ *  - intent=enable  → add pluginId to enabledPlugins
+ *  - intent=disable → remove pluginId from enabledPlugins
+ *  - intent=reorder → persist plugin block order from drag and drop
  */
 export async function action({ request }) {
   const formData = await request.formData();
@@ -132,159 +119,12 @@ export async function action({ request }) {
     return { success: true, intent };
   }
 
-  if (intent === 'save-settings') {
-    const pluginId = formData.get('pluginId');
-    if (!pluginId) return { error: 'Missing pluginId' };
-
-    const manifest = getRegisteredPlugin(pluginId);
-    if (!manifest) return { error: 'Plugin not found' };
-
-    try {
-      await savePluginSettings(pluginId, manifest, formData);
-    } catch (err) {
-      return {
-        error: err instanceof Error ? err.message : 'Failed to save settings',
-      };
-    }
-
-    return { success: true, intent, savedSettings: pluginId };
-  }
-
   return { error: `Unknown intent: ${intent}` };
 }
 
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
-
-/**
- * Renders a single setting field based on its type.
- *
- * @param {{ setting: object, value: any }} props
- */
-function SettingField({ setting, value }) {
-  const t = useT();
-  const { key, label, type, options } = setting;
-  const id = `setting-${key}`;
-
-  if (type === 'text') {
-    return (
-      <Field label={label ?? key} htmlFor={id}>
-        <Input id={id} type="text" name={key} defaultValue={value} />
-      </Field>
-    );
-  }
-
-  if (type === 'password') {
-    const configured = value === '••••••••';
-    return (
-      <Field label={label ?? key} htmlFor={id}>
-        <Input
-          id={id}
-          type="password"
-          name={key}
-          defaultValue=""
-          autoComplete="off"
-          placeholder={
-            configured
-              ? t('admin.plugins.index.passwordKeepPlaceholder')
-              : undefined
-          }
-        />
-      </Field>
-    );
-  }
-
-  if (type === 'select') {
-    return (
-      <Field label={label ?? key} htmlFor={id}>
-        <Select id={id} name={key} defaultValue={value}>
-          {(options ?? []).map((opt) => {
-            const optValue = typeof opt === 'object' ? opt.value : opt;
-            const optLabel = typeof opt === 'object' ? opt.label : opt;
-            return (
-              <option key={optValue} value={optValue}>
-                {optLabel}
-              </option>
-            );
-          })}
-        </Select>
-      </Field>
-    );
-  }
-
-  if (type === 'toggle') {
-    return (
-      <label className="flex cursor-pointer items-center gap-3">
-        <div className="relative">
-          <input
-            id={id}
-            type="checkbox"
-            name={key}
-            defaultChecked={value === true || value === 'true'}
-            className="peer sr-only"
-          />
-          <div className="bg-surface-2 peer-checked:bg-accent h-5 w-9 rounded-full" />
-          <div className="bg-bg absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition peer-checked:translate-x-4" />
-        </div>
-        <span className="text-text text-sm font-medium">{label ?? key}</span>
-      </label>
-    );
-  }
-
-  return null;
-}
-
-/**
- * Manifest-driven settings form for a plugin.
- *
- * @param {{ manifest: object, values: object }} props
- */
-function PluginSettingsForm({ manifest, values }) {
-  const t = useT();
-  const actionData = useActionData();
-  const formRef = useRef(null);
-
-  const savedThisPlugin = actionData?.savedSettings === manifest.id;
-
-  if (!manifest.settings?.length) return null;
-
-  return (
-    <div className="border-border bg-surface-2 mt-4 rounded-lg border">
-      <div className="border-border border-b px-4 py-3">
-        <h4 className="text-text text-sm font-semibold">
-          {t('admin.plugins.index.settingsTitle')}
-        </h4>
-      </div>
-
-      <Form ref={formRef} method="post" className="px-4 py-4">
-        <input type="hidden" name="intent" value="save-settings" />
-        <input type="hidden" name="pluginId" value={manifest.id} />
-
-        <div className="space-y-4">
-          {manifest.settings.map((setting) => (
-            <SettingField
-              key={setting.key}
-              setting={setting}
-              value={values[setting.key] ?? setting.default ?? ''}
-            />
-          ))}
-        </div>
-
-        <div className="mt-4 flex items-center justify-between gap-3">
-          {savedThisPlugin ? (
-            <SuccessAlert message={t('admin.plugins.index.settingsSaved')} />
-          ) : actionData?.error ? (
-            <ErrorAlert message={actionData.error} />
-          ) : (
-            <span />
-          )}
-          <ButtonSubmit>{t('admin.plugins.index.saveSettings')}</ButtonSubmit>
-        </div>
-      </Form>
-    </div>
-  );
-}
 
 /**
  * Whether a plugin manifest declares an email transport provider.
@@ -306,15 +146,9 @@ function isEmailProviderPlugin(manifest) {
  * @param {Object} props
  * @param {object} props.manifest
  * @param {boolean} props.isEnabled
- * @param {object} props.pluginSettings
  * @param {boolean} [props.isEmailProvider]
  */
-function PluginCard({
-  manifest,
-  isEnabled,
-  pluginSettings,
-  isEmailProvider = false,
-}) {
+function PluginCard({ manifest, isEnabled, isEmailProvider = false }) {
   const t = useT();
   const navigation = useNavigation();
 
@@ -325,7 +159,6 @@ function PluginCard({
     navigation.formData?.get('pluginId') === manifest.id;
 
   const toggleIntent = isEnabled ? 'disable' : 'enable';
-  const values = pluginSettings[manifest.id] ?? {};
   const enableLabel = isEmailProvider
     ? t('admin.plugins.index.activate')
     : t('admin.plugins.index.enable');
@@ -335,6 +168,8 @@ function PluginCard({
   const activeBadge = isEmailProvider
     ? t('admin.plugins.index.badge.active')
     : t('admin.plugins.index.badge.enabled');
+  const showSettings =
+    Boolean(manifest.settings?.length) || Boolean(manifest.hasAdminUi);
 
   return (
     <Card
@@ -363,21 +198,18 @@ function PluginCard({
         )}
       </div>
 
-      {/* Manifest-driven settings form */}
-      {manifest.settings?.length > 0 && (
-        <PluginSettingsForm manifest={manifest} values={values} />
-      )}
-
       {/* Actions — pinned to card bottom for aligned grid rows */}
       <div className="mt-auto pt-4">
         <div className="border-border flex items-center justify-between gap-2 border-t pt-3">
           <div>
-            <a
-              href={`/admin/plugins/${manifest.slug}`}
-              className="border-border text-text hover:bg-surface-2 rounded-md border px-3 py-1.5 text-xs font-medium transition"
-            >
-              {t('admin.plugins.index.pluginAdmin')}
-            </a>
+            {showSettings ? (
+              <a
+                href={`/admin/plugins/${manifest.slug}`}
+                className="border-border text-text hover:bg-surface-2 rounded-md border px-3 py-1.5 text-xs font-medium transition"
+              >
+                {t('admin.plugins.index.settings')}
+              </a>
+            ) : null}
           </div>
           <Form method="post">
             <input type="hidden" name="intent" value={toggleIntent} />
@@ -479,11 +311,11 @@ function BlockOrderTab({ orderedPlugins, enabledPlugins }) {
 }
 
 /**
- * Main plugins tab — enable/disable and configure plugins.
+ * Main plugins tab — enable/disable and open plugin settings.
  *
- * @param {{ plugins: object[], enabledPlugins: string[], pluginSettings: object }} props
+ * @param {{ plugins: object[], enabledPlugins: string[] }} props
  */
-function PluginsTab({ plugins, enabledPlugins, pluginSettings }) {
+function PluginsTab({ plugins, enabledPlugins }) {
   const t = useT();
   const emailPlugins = plugins.filter(isEmailProviderPlugin);
   const otherPlugins = plugins.filter(
@@ -512,7 +344,6 @@ function PluginsTab({ plugins, enabledPlugins, pluginSettings }) {
                 key={manifest.id}
                 manifest={manifest}
                 isEnabled={enabledPlugins.includes(manifest.id)}
-                pluginSettings={pluginSettings}
                 isEmailProvider
               />
             ))}
@@ -537,7 +368,6 @@ function PluginsTab({ plugins, enabledPlugins, pluginSettings }) {
                 key={manifest.id}
                 manifest={manifest}
                 isEnabled={enabledPlugins.includes(manifest.id)}
-                pluginSettings={pluginSettings}
               />
             ))}
           </div>
@@ -558,8 +388,7 @@ function PluginsTab({ plugins, enabledPlugins, pluginSettings }) {
  */
 export default function AdminPluginsRoute() {
   const t = useT();
-  const { plugins, orderedPlugins, enabledPlugins, pluginSettings } =
-    useLoaderData();
+  const { plugins, orderedPlugins, enabledPlugins } = useLoaderData();
   const [activeTab, setActiveTab] = useState(0);
   const tabs = [
     t('admin.plugins.index.tab.plugins'),
@@ -581,11 +410,7 @@ export default function AdminPluginsRoute() {
       />
 
       {activeTab === 0 && (
-        <PluginsTab
-          plugins={plugins}
-          enabledPlugins={enabledPlugins}
-          pluginSettings={pluginSettings}
-        />
+        <PluginsTab plugins={plugins} enabledPlugins={enabledPlugins} />
       )}
       {activeTab === 1 && (
         <BlockOrderTab
