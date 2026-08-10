@@ -35,6 +35,7 @@ export default function QuoteEditor({
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
+        sticky
         breadcrumbs={
           <Breadcrumbs
             items={[

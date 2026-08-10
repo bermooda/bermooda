@@ -60,6 +60,7 @@ export default function ApiKeyEditor({ actionData, isSaving }) {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
+        sticky
         breadcrumbs={
           <Breadcrumbs
             items={[

@@ -24,6 +24,7 @@ export default function AdminUserEditor({ actionData, isSaving }) {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
+        sticky
         breadcrumbs={
           <Breadcrumbs
             items={[
