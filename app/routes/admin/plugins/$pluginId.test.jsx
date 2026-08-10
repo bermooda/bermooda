@@ -216,13 +216,87 @@ describe('admin plugin dispatcher', () => {
       params: { 'pluginId': 'demo-plugin', '*': '' },
     });
 
-    expect(mockSavePluginSettings).toHaveBeenCalled();
+    expect(mockSavePluginSettings).toHaveBeenCalledWith(
+      manifest.id,
+      manifest,
+      expect.any(FormData)
+    );
     expect(result).toEqual({
       success: true,
       intent: 'save-settings',
       savedSettings: '@acme/demo-plugin',
     });
     expect(mockServerResolve).not.toHaveBeenCalled();
+  });
+
+  it('returns Missing pluginId when pluginId is absent on save-settings', async () => {
+    const manifest = {
+      id: '@acme/demo-plugin',
+      title: 'Demo Plugin',
+      slug: 'demo-plugin',
+      settings: [{ key: 'host', type: 'text' }],
+    };
+    mockGetRegisteredPluginBySlug.mockReturnValue(manifest);
+
+    const formData = new FormData();
+    formData.set('intent', 'save-settings');
+    formData.set('host', 'example.com');
+
+    const result = await action({
+      request: new Request('http://localhost/admin/plugins/demo-plugin', {
+        method: 'POST',
+        body: formData,
+      }),
+      params: { 'pluginId': 'demo-plugin', '*': '' },
+    });
+
+    expect(result).toEqual({ error: 'Missing pluginId' });
+    expect(mockSavePluginSettings).not.toHaveBeenCalled();
+  });
+
+  it('returns Missing pluginId when pluginId does not match manifest.id', async () => {
+    const manifest = {
+      id: '@acme/demo-plugin',
+      title: 'Demo Plugin',
+      slug: 'demo-plugin',
+      settings: [{ key: 'host', type: 'text' }],
+    };
+    mockGetRegisteredPluginBySlug.mockReturnValue(manifest);
+
+    const formData = new FormData();
+    formData.set('intent', 'save-settings');
+    formData.set('pluginId', '@acme/other-plugin');
+    formData.set('host', 'example.com');
+
+    const result = await action({
+      request: new Request('http://localhost/admin/plugins/demo-plugin', {
+        method: 'POST',
+        body: formData,
+      }),
+      params: { 'pluginId': 'demo-plugin', '*': '' },
+    });
+
+    expect(result).toEqual({ error: 'Missing pluginId' });
+    expect(mockSavePluginSettings).not.toHaveBeenCalled();
+  });
+
+  it('returns No settings for plugin when manifest has no settings schema', async () => {
+    mockGetRegisteredPluginBySlug.mockReturnValue(sampleManifest);
+
+    const formData = new FormData();
+    formData.set('intent', 'save-settings');
+    formData.set('pluginId', sampleManifest.id);
+
+    const result = await action({
+      request: new Request('http://localhost/admin/plugins/demo-plugin', {
+        method: 'POST',
+        body: formData,
+      }),
+      params: { 'pluginId': 'demo-plugin', '*': '' },
+    });
+
+    expect(result).toEqual({ error: 'No settings for plugin' });
+    expect(mockSavePluginSettings).not.toHaveBeenCalled();
   });
 
   it('invokes the matched descriptor action on POST', async () => {

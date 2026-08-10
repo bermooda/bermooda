@@ -27,6 +27,13 @@ export function meta({ params }) {
 
 /**
  * @param {{ params: Record<string, string | undefined>, request: Request }} args
+ * @returns {Promise<
+ *   | { status: 'not-found', pluginId: string }
+ *   | { status: 'no-admin-routes', pluginId: string, manifest: import('#/core/plugins/registry.server').PluginManifest }
+ *   | { status: 'no-match', pluginId: string, manifest: import('#/core/plugins/registry.server').PluginManifest, splatPath: string }
+ *   | { status: 'ok', pluginId: string, manifest: import('#/core/plugins/registry.server').PluginManifest, splatPath: string, pluginLoaderData: unknown, pluginSettings: Record<string, string> }
+ * >} Settings-only plugins (settings schema, no admin routes) resolve as `ok` on
+ * the root path with `pluginSettings` loaded and `pluginLoaderData` null.
  */
 export async function loader({ params, request }) {
   const pluginSlug = params.pluginId ?? '';
