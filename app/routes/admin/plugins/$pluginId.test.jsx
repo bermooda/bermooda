@@ -4,11 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   mockClientResolve,
   mockGetRegisteredPluginBySlug,
+  mockLoadPluginSettings,
+  mockSavePluginSettings,
   mockServerResolve,
   mockUseLoaderData,
 } = vi.hoisted(() => ({
   mockClientResolve: vi.fn(),
   mockGetRegisteredPluginBySlug: vi.fn(),
+  mockLoadPluginSettings: vi.fn(),
+  mockSavePluginSettings: vi.fn(),
   mockServerResolve: vi.fn(),
   mockUseLoaderData: vi.fn(),
 }));
@@ -23,7 +27,9 @@ vi.mock('#/core/plugins/admin-routes.client', () => ({
 
 vi.mock('#/core/plugins/index.server', () => ({
   getRegisteredPluginBySlug: mockGetRegisteredPluginBySlug,
+  loadPluginSettings: mockLoadPluginSettings,
   resolvePluginAdminRoute: mockServerResolve,
+  savePluginSettings: mockSavePluginSettings,
 }));
 
 import AdminPluginDispatcher, {
@@ -50,6 +56,7 @@ describe('admin plugin dispatcher', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetRegisteredPluginBySlug.mockReturnValue(sampleManifest);
+    mockLoadPluginSettings.mockResolvedValue({});
   });
 
   it('builds meta tags from the plugin id', () => {
@@ -97,6 +104,33 @@ describe('admin plugin dispatcher', () => {
       status: 'no-admin-routes',
       pluginId: 'hold-check',
       manifest: { id: '@acme/hold-check', title: 'Hold Check' },
+    });
+  });
+
+  it('returns ok with settings when plugin has settings but no admin routes', async () => {
+    const manifest = {
+      id: '@acme/settings-only',
+      title: 'Settings Only',
+      slug: 'settings-only',
+      settings: [{ key: 'host', label: 'Host', type: 'text' }],
+    };
+    mockGetRegisteredPluginBySlug.mockReturnValue(manifest);
+    mockServerResolve.mockReturnValue(null);
+    mockLoadPluginSettings.mockResolvedValue({ host: 'localhost' });
+
+    const result = await loader({
+      request: new Request('http://localhost/admin/plugins/settings-only'),
+      params: { 'pluginId': 'settings-only', '*': '' },
+    });
+
+    expect(mockLoadPluginSettings).toHaveBeenCalledWith(manifest);
+    expect(result).toMatchObject({
+      status: 'ok',
+      pluginId: 'settings-only',
+      manifest,
+      splatPath: '',
+      pluginSettings: { host: 'localhost' },
+      pluginLoaderData: null,
     });
   });
 
@@ -155,7 +189,40 @@ describe('admin plugin dispatcher', () => {
       manifest: sampleManifest,
       splatPath: 'orders/order_1',
       pluginLoaderData,
+      pluginSettings: {},
     });
+  });
+
+  it('saves settings via intent=save-settings without requiring a plugin action', async () => {
+    const manifest = {
+      id: '@acme/demo-plugin',
+      title: 'Demo Plugin',
+      slug: 'demo-plugin',
+      settings: [{ key: 'host', type: 'text' }],
+    };
+    mockGetRegisteredPluginBySlug.mockReturnValue(manifest);
+    mockSavePluginSettings.mockResolvedValue(undefined);
+
+    const formData = new FormData();
+    formData.set('intent', 'save-settings');
+    formData.set('pluginId', '@acme/demo-plugin');
+    formData.set('host', 'example.com');
+
+    const result = await action({
+      request: new Request('http://localhost/admin/plugins/demo-plugin', {
+        method: 'POST',
+        body: formData,
+      }),
+      params: { 'pluginId': 'demo-plugin', '*': '' },
+    });
+
+    expect(mockSavePluginSettings).toHaveBeenCalled();
+    expect(result).toEqual({
+      success: true,
+      intent: 'save-settings',
+      savedSettings: '@acme/demo-plugin',
+    });
+    expect(mockServerResolve).not.toHaveBeenCalled();
   });
 
   it('invokes the matched descriptor action on POST', async () => {

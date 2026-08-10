@@ -7,7 +7,9 @@ import { useT } from '#/core/i18n';
 import { resolvePluginAdminRoute } from '#/core/plugins/admin-routes.client';
 import {
   getRegisteredPluginBySlug,
+  loadPluginSettings,
   resolvePluginAdminRoute as resolveAdminRoute,
+  savePluginSettings,
 } from '#/core/plugins/index.server';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import PageHeader from '#/components/admin/page-header';
@@ -38,22 +40,27 @@ export async function loader({ params, request }) {
 
   const rootDescriptor = resolveAdminRoute(pluginSlug, '');
   const descriptor = resolveAdminRoute(pluginSlug, splatPath);
+  const hasSettings = Boolean(manifest.settings?.length);
+  const isRoot = splatPath === '';
 
-  if (!rootDescriptor && !descriptor) {
+  if (!rootDescriptor && !descriptor && !(hasSettings && isRoot)) {
     return { status: 'no-admin-routes', pluginId: pluginSlug, manifest };
   }
 
-  if (!descriptor) {
+  if (!descriptor && !(hasSettings && isRoot)) {
     return { status: 'no-match', pluginId: pluginSlug, manifest, splatPath };
   }
 
   let pluginLoaderData = null;
-  if (typeof descriptor.loader === 'function') {
+  if (descriptor && typeof descriptor.loader === 'function') {
     pluginLoaderData = await descriptor.loader({
       request,
       params: { ...params, ...descriptor.params },
     });
   }
+
+  const pluginSettings =
+    hasSettings && isRoot ? await loadPluginSettings(manifest) : {};
 
   return {
     status: 'ok',
@@ -61,11 +68,13 @@ export async function loader({ params, request }) {
     manifest,
     splatPath,
     pluginLoaderData,
+    pluginSettings,
   };
 }
 
 /**
- * Dispatches POST/mutations to the matched plugin admin route `action`.
+ * Dispatches POST/mutations to the matched plugin admin route `action`,
+ * or handles core `save-settings` intent for plugin config forms.
  * Matches loader policy: requires a registered plugin; does not check enabled.
  *
  * @param {{ request: Request, params: Record<string, string | undefined> }} args
@@ -78,6 +87,37 @@ export async function action({ request, params }) {
   if (!manifest) {
     throw new Response('Not Found', { status: 404 });
   }
+
+  const contentType = request.headers.get('content-type') ?? '';
+  if (
+    contentType.includes('application/x-www-form-urlencoded') ||
+    contentType.includes('multipart/form-data')
+  ) {
+    const formData = await request.clone().formData();
+    if (formData.get('intent') === 'save-settings') {
+      const pluginId = formData.get('pluginId');
+      if (!pluginId || pluginId !== manifest.id) {
+        return { error: 'Missing pluginId' };
+      }
+      if (!manifest.settings?.length) {
+        return { error: 'No settings for plugin' };
+      }
+      try {
+        await savePluginSettings(manifest.id, manifest, formData);
+      } catch (err) {
+        return {
+          error:
+            err instanceof Error ? err.message : 'Failed to save settings',
+        };
+      }
+      return {
+        success: true,
+        intent: 'save-settings',
+        savedSettings: manifest.id,
+      };
+    }
+  }
+
   const descriptor = resolveAdminRoute(pluginSlug, splatPath);
   if (!descriptor || typeof descriptor.action !== 'function') {
     throw new Response('Method Not Allowed', { status: 405 });
