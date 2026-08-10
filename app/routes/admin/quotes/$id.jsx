@@ -69,6 +69,7 @@ export default function AdminQuoteDetailRoute() {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
+        sticky
         breadcrumbs={
           <Breadcrumbs
             items={[

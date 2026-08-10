@@ -363,6 +363,7 @@ export default function AdminOrderRoute() {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
+        sticky
         breadcrumbs={
           <Breadcrumbs
             items={[
