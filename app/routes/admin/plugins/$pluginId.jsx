@@ -13,6 +13,7 @@ import {
 } from '#/core/plugins/index.server';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import PageHeader from '#/components/admin/page-header';
+import PluginSettingsForm from '#/components/admin/plugin-settings-form';
 
 /**
  * @param {{ params: { pluginId?: string } }} args
@@ -147,7 +148,7 @@ function PluginHostChrome({ title, subtitle }) {
   const t = useT();
 
   return (
-    <div>
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         breadcrumbs={
           <Breadcrumbs
@@ -200,21 +201,46 @@ export default function AdminPluginDispatcher() {
     );
   }
 
+  const isRoot = data.splatPath === '';
+  const hasSettings = Boolean(data.manifest.settings?.length);
   const descriptor = resolvePluginAdminRoute(data.pluginId, data.splatPath);
   const PluginComponent = descriptor?.Component;
 
-  if (!PluginComponent) {
-    return (
-      <PluginHostChrome
-        title={data.manifest.title}
-        subtitle={t('admin.plugins.detail.noAdminPagesForPath')}
-      />
-    );
-  }
-
   return (
-    <div>
-      <PluginComponent loaderData={data.pluginLoaderData} />
+    <div className="mx-auto max-w-5xl">
+      <PageHeader
+        sticky
+        breadcrumbs={
+          <Breadcrumbs
+            items={[
+              {
+                label: t('admin.plugins.index.title'),
+                href: '/admin/plugins',
+              },
+              { label: data.manifest.title },
+            ]}
+          />
+        }
+        title={data.manifest.title}
+        subtitle={`v${data.manifest.version} · ${data.manifest.id}`}
+      />
+
+      {isRoot && hasSettings ? (
+        <PluginSettingsForm
+          manifest={data.manifest}
+          values={data.pluginSettings ?? {}}
+        />
+      ) : null}
+
+      {PluginComponent ? (
+        <PluginComponent loaderData={data.pluginLoaderData} />
+      ) : null}
+
+      {!PluginComponent && !(isRoot && hasSettings) ? (
+        <p className="text-text-muted text-sm">
+          {t('admin.plugins.detail.noAdminPagesForPath')}
+        </p>
+      ) : null}
     </div>
   );
 }

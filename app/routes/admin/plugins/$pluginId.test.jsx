@@ -19,6 +19,18 @@ const {
 
 vi.mock('react-router', () => ({
   useLoaderData: mockUseLoaderData,
+  useActionData: () => undefined,
+  useNavigation: () => ({ state: 'idle' }),
+  Form: ({ children, ...props }) => <form {...props}>{children}</form>,
+  Link: ({ children, to, ...props }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+vi.mock('#/core/i18n', () => ({
+  useT: () => (key) => key,
 }));
 
 vi.mock('#/core/plugins/admin-routes.client', () => ({
@@ -405,5 +417,92 @@ describe('admin plugin dispatcher', () => {
     const html = renderToStaticMarkup(<AdminPluginDispatcher />);
 
     expect(html).toContain('Events: 1');
+  });
+
+  it('renders settings form above the plugin component on root', () => {
+    function MockPluginPage() {
+      return <div>Custom Admin</div>;
+    }
+
+    mockUseLoaderData.mockReturnValue({
+      status: 'ok',
+      pluginId: 'demo-plugin',
+      manifest: {
+        id: '@acme/demo-plugin',
+        title: 'Demo Plugin',
+        version: '1.0.0',
+        settings: [{ key: 'host', label: 'Host', type: 'text' }],
+      },
+      splatPath: '',
+      pluginLoaderData: null,
+      pluginSettings: { host: 'localhost' },
+    });
+    mockClientResolve.mockReturnValue({
+      path: '',
+      Component: MockPluginPage,
+    });
+
+    const html = renderToStaticMarkup(<AdminPluginDispatcher />);
+
+    expect(html).toContain('Demo Plugin');
+    expect(html).toContain('name="host"');
+    expect(html).toContain('Custom Admin');
+    expect(html.indexOf('name="host"')).toBeLessThan(
+      html.indexOf('Custom Admin')
+    );
+  });
+
+  it('does not render settings form on nested splat paths', () => {
+    function MockPluginPage() {
+      return <div>Nested Page</div>;
+    }
+
+    mockUseLoaderData.mockReturnValue({
+      status: 'ok',
+      pluginId: 'demo-plugin',
+      manifest: {
+        id: '@acme/demo-plugin',
+        title: 'Demo Plugin',
+        version: '1.0.0',
+        settings: [{ key: 'host', type: 'text' }],
+      },
+      splatPath: 'reports',
+      pluginLoaderData: {},
+      pluginSettings: {},
+    });
+    mockClientResolve.mockReturnValue({
+      path: 'reports',
+      Component: MockPluginPage,
+    });
+
+    const html = renderToStaticMarkup(<AdminPluginDispatcher />);
+
+    expect(html).toContain('Nested Page');
+    expect(html).not.toContain('name="host"');
+  });
+
+  it('renders settings form with PageHeader for settings-only plugins', () => {
+    mockUseLoaderData.mockReturnValue({
+      status: 'ok',
+      pluginId: 'settings-only',
+      manifest: {
+        id: '@acme/settings-only',
+        title: 'Settings Only',
+        version: '2.0.0',
+        settings: [{ key: 'host', label: 'Host', type: 'text' }],
+      },
+      splatPath: '',
+      pluginLoaderData: null,
+      pluginSettings: { host: 'localhost' },
+    });
+    mockClientResolve.mockReturnValue(null);
+
+    const html = renderToStaticMarkup(<AdminPluginDispatcher />);
+
+    expect(html).toContain('Settings Only');
+    expect(html).toContain('v2.0.0 · @acme/settings-only');
+    expect(html).toContain('name="host"');
+    expect(html).not.toContain('admin.plugins.detail.noAdminPagesForPath');
+    expect(html).not.toContain('admin.plugins.detail.noAdminPages');
   });
 });
