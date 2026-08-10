@@ -9,6 +9,7 @@ import {
   parseListPagination,
   readQueryParam,
 } from '#/libs/prisma/pagination/index.server';
+import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import { listRecentVariantsForInventory } from '#/core/inventory/index.server';
 
 export const SUBSCRIPTION_INTERVALS = ['day', 'week', 'month', 'year'];
@@ -33,16 +34,7 @@ const PLAN_LIST_INCLUDE = {
   variant: { select: { id: true, sku: true, productId: true } },
 };
 
-const PLAN_DETAIL_INCLUDE = {
-  variant: {
-    select: {
-      id: true,
-      sku: true,
-      productId: true,
-      product: { select: { id: true, title: true } },
-    },
-  },
-};
+const PLAN_DETAIL_INCLUDE = PLAN_LIST_INCLUDE;
 
 const SUBSCRIPTION_LIST_INCLUDE = {
   plan: {
@@ -304,8 +296,9 @@ export function parseCreateSubscriptionInput(input = {}) {
  * Serialize a subscription plan for admin/API responses.
  *
  * @param {object} record
+ * @param {{ productTitle?: string|null }} [options]
  */
-export function serializePlan(record) {
+export function serializePlan(record, { productTitle } = {}) {
   return {
     id: record.id,
     name: record.name,
@@ -320,10 +313,36 @@ export function serializePlan(record) {
           id: record.variant.id,
           sku: record.variant.sku ?? null,
           productId: record.variant.productId ?? null,
-          productTitle: record.variant.product?.title ?? null,
+          productTitle:
+            productTitle ??
+            record.productTitle ??
+            record.variant.product?.title ??
+            null,
         }
       : undefined,
   };
+}
+
+/**
+ * Serialize plans and attach product titles from translations.
+ *
+ * @param {object[]} plans
+ * @param {string} [locale='en']
+ * @returns {Promise<object[]>}
+ */
+async function serializePlansWithProductTitles(plans, locale = 'en') {
+  const productIds = [
+    ...new Set(plans.map((plan) => plan.variant?.productId).filter(Boolean)),
+  ];
+  const titleMap = await loadProductTitleMap(productIds, locale);
+
+  return plans.map((plan) =>
+    serializePlan(plan, {
+      productTitle: plan.variant?.productId
+        ? (titleMap.get(plan.variant.productId) ?? null)
+        : null,
+    })
+  );
 }
 
 /**
@@ -379,22 +398,30 @@ function throwSubscriptionNotFound(subscriptionId) {
   });
 }
 
+/**
+ * @param {string} planId
+ * @param {object|null} [include]
+ */
 async function requirePlanRecord(planId, include = PLAN_DETAIL_INCLUDE) {
   const plan = await prisma.subscriptionPlan.findUnique({
     where: { id: planId },
-    include,
+    ...(include ? { include } : {}),
   });
   if (!plan) throwPlanNotFound(planId);
   return plan;
 }
 
+/**
+ * @param {string} subscriptionId
+ * @param {object|null} [include]
+ */
 async function requireSubscriptionRecord(
   subscriptionId,
   include = SUBSCRIPTION_DETAIL_INCLUDE
 ) {
   const subscription = await prisma.subscription.findUnique({
     where: { id: subscriptionId },
-    include,
+    ...(include ? { include } : {}),
   });
   if (!subscription) throwSubscriptionNotFound(subscriptionId);
   return subscription;
@@ -468,15 +495,18 @@ export async function listSubscriptionPlans(options = {}) {
     prisma.subscriptionPlan.count({ where }),
   ]);
 
+  const plans = await serializePlansWithProductTitles(items);
+
   return {
-    plans: items.map(serializePlan),
+    plans,
     ...buildPaginationMeta({ page: safePage, limit: safeLimit, total }),
   };
 }
 
 export async function getSubscriptionPlan(planId) {
   const plan = await requirePlanRecord(planId);
-  return serializePlan(plan);
+  const [serialized] = await serializePlansWithProductTitles([plan]);
+  return serialized;
 }
 
 export async function createSubscriptionPlan(input) {
@@ -501,11 +531,12 @@ export async function createSubscriptionPlan(input) {
   });
 
   logger.info({ planId: plan.id }, 'subscription plan created');
-  return serializePlan(plan);
+  const [serialized] = await serializePlansWithProductTitles([plan]);
+  return serialized;
 }
 
 export async function updateSubscriptionPlan(planId, input) {
-  await requirePlanRecord(planId, { variant: false });
+  await requirePlanRecord(planId, null);
   const data = parseUpdatePlanInput(input);
 
   const plan = await prisma.subscriptionPlan.update({
@@ -515,7 +546,8 @@ export async function updateSubscriptionPlan(planId, input) {
   });
 
   logger.info({ planId }, 'subscription plan updated');
-  return serializePlan(plan);
+  const [serialized] = await serializePlansWithProductTitles([plan]);
+  return serialized;
 }
 
 // ---------------------------------------------------------------------------
@@ -578,7 +610,7 @@ export async function getSubscription(subscriptionId) {
 export async function createSubscription(input) {
   const data = parseCreateSubscriptionInput(input);
 
-  await requirePlanRecord(data.planId, { variant: false });
+  await requirePlanRecord(data.planId, null);
 
   const customer = await prisma.customer.findUnique({
     where: { id: data.customerId },
@@ -607,7 +639,7 @@ export async function createSubscription(input) {
 }
 
 export async function cancelSubscription(id) {
-  await requireSubscriptionRecord(id, { plan: false, customer: false });
+  await requireSubscriptionRecord(id, null);
 
   const subscription = await prisma.subscription.update({
     where: { id },

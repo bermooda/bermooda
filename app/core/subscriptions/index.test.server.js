@@ -31,7 +31,12 @@ vi.mock('#/core/inventory/index.server', () => ({
   listRecentVariantsForInventory: vi.fn(),
 }));
 
+vi.mock('#/core/catalog/translations.server', () => ({
+  loadProductTitleMap: vi.fn(),
+}));
+
 import prisma from '#/libs/prisma.server';
+import { loadProductTitleMap } from '#/core/catalog/translations.server';
 import {
   buildPlanWhere,
   buildSubscriptionWhere,
@@ -57,6 +62,7 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  loadProductTitleMap.mockResolvedValue(new Map());
 });
 
 describe('parsePlanListParams', () => {
@@ -274,6 +280,41 @@ describe('getSubscriptionPlan', () => {
     await expect(getSubscriptionPlan('missing')).rejects.toMatchObject({
       code: 'NOT_FOUND',
     });
+  });
+
+  it('loads product titles from translations, not Product.title', async () => {
+    prisma.subscriptionPlan.findUnique.mockResolvedValue({
+      id: 'plan_1',
+      name: 'Annual',
+      variantId: 'var_1',
+      interval: 'year',
+      intervalCount: 1,
+      active: true,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      variant: {
+        id: 'var_1',
+        sku: 'SKU-1',
+        productId: 'prod_1',
+      },
+    });
+    loadProductTitleMap.mockResolvedValue(new Map([['prod_1', 'Speaker']]));
+
+    const plan = await getSubscriptionPlan('plan_1');
+
+    expect(prisma.subscriptionPlan.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          variant: expect.objectContaining({
+            select: expect.not.objectContaining({
+              product: expect.anything(),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(loadProductTitleMap).toHaveBeenCalledWith(['prod_1'], 'en');
+    expect(plan.variant.productTitle).toBe('Speaker');
   });
 });
 
