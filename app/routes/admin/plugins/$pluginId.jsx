@@ -114,8 +114,7 @@ export async function action({ request, params }) {
         await savePluginSettings(manifest.id, manifest, formData);
       } catch (err) {
         return {
-          error:
-            err instanceof Error ? err.message : 'Failed to save settings',
+          error: err instanceof Error ? err.message : 'Failed to save settings',
         };
       }
       return {

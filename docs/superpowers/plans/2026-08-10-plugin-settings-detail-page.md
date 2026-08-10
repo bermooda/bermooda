@@ -14,20 +14,21 @@
 
 ## File map
 
-| Path | Responsibility |
-| ---- | -------------- |
+| Path                                            | Responsibility                                                        |
+| ----------------------------------------------- | --------------------------------------------------------------------- |
 | `app/components/admin/plugin-settings-form.jsx` | `SettingField` + `PluginSettingsForm` (FormSection + fields + footer) |
-| `app/routes/admin/plugins/$pluginId.jsx` | Load/save settings; host chrome + settings above custom Component |
-| `app/routes/admin/plugins/$pluginId.test.jsx` | Loader/action/render coverage for settings paths |
-| `app/routes/admin/plugins/index.jsx` | Remove inline settings; gated Settings link; drop save-settings |
-| `app/routes/admin/plugins/index.test.jsx` | Assert save-settings unknown; keep enable/disable |
-| `app/core/i18n/messages/{en,de,fr}.json` | Rename Settings label; move detail settings copy |
+| `app/routes/admin/plugins/$pluginId.jsx`        | Load/save settings; host chrome + settings above custom Component     |
+| `app/routes/admin/plugins/$pluginId.test.jsx`   | Loader/action/render coverage for settings paths                      |
+| `app/routes/admin/plugins/index.jsx`            | Remove inline settings; gated Settings link; drop save-settings       |
+| `app/routes/admin/plugins/index.test.jsx`       | Assert save-settings unknown; keep enable/disable                     |
+| `app/core/i18n/messages/{en,de,fr}.json`        | Rename Settings label; move detail settings copy                      |
 
 ---
 
 ### Task 1: i18n keys
 
 **Files:**
+
 - Modify: `app/core/i18n/messages/en.json`
 - Modify: `app/core/i18n/messages/de.json`
 - Modify: `app/core/i18n/messages/fr.json`
@@ -59,15 +60,15 @@ Keep `admin.plugins.detail.noAdminPages` / `noAdminPagesForPath` for true empty 
 
 - [ ] **Step 2: Mirror de/fr**
 
-| Key | de | fr |
-| --- | -- | -- |
-| `admin.plugins.index.settings` | Einstellungen | Paramètres |
-| `admin.plugins.detail.settingsTitle` | Einstellungen | Paramètres |
-| `admin.plugins.detail.settingsDescription` | Dieses Plugin konfigurieren. Änderungen gelten nach dem Speichern. | Configurez ce plugin. Les modifications s'appliquent après l'enregistrement. |
-| `admin.plugins.detail.settingsSaved` | Einstellungen gespeichert. | Paramètres enregistrés. |
-| `admin.plugins.detail.saveSettings` | Speichern | Enregistrer |
-| `admin.plugins.detail.passwordKeepPlaceholder` | •••••••• (gespeichert — leer lassen zum Behalten) | •••••••• (enregistré — laisser vide pour conserver) |
-| `admin.plugins.detail.cancel` | Abbrechen | Annuler |
+| Key                                            | de                                                                 | fr                                                                           |
+| ---------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `admin.plugins.index.settings`                 | Einstellungen                                                      | Paramètres                                                                   |
+| `admin.plugins.detail.settingsTitle`           | Einstellungen                                                      | Paramètres                                                                   |
+| `admin.plugins.detail.settingsDescription`     | Dieses Plugin konfigurieren. Änderungen gelten nach dem Speichern. | Configurez ce plugin. Les modifications s'appliquent après l'enregistrement. |
+| `admin.plugins.detail.settingsSaved`           | Einstellungen gespeichert.                                         | Paramètres enregistrés.                                                      |
+| `admin.plugins.detail.saveSettings`            | Speichern                                                          | Enregistrer                                                                  |
+| `admin.plugins.detail.passwordKeepPlaceholder` | •••••••• (gespeichert — leer lassen zum Behalten)                  | •••••••• (enregistré — laisser vide pour conserver)                          |
+| `admin.plugins.detail.cancel`                  | Abbrechen                                                          | Annuler                                                                      |
 
 Remove the same four `admin.plugins.index.settings*` keys and `pluginAdmin` from de/fr.
 
@@ -87,6 +88,7 @@ EOF
 ### Task 2: Extract `PluginSettingsForm` component
 
 **Files:**
+
 - Create: `app/components/admin/plugin-settings-form.jsx`
 - Create: `app/components/admin/plugin-settings-form.test.jsx`
 
@@ -358,6 +360,7 @@ EOF
 ### Task 3: Detail route loader + action for settings
 
 **Files:**
+
 - Modify: `app/routes/admin/plugins/$pluginId.jsx`
 - Modify: `app/routes/admin/plugins/$pluginId.test.jsx`
 
@@ -393,64 +396,64 @@ vi.mock('#/core/plugins/index.server', () => ({
 Update the existing `no-admin-routes` test so a plugin **without** settings still returns `no-admin-routes`. Add:
 
 ```jsx
-  it('returns ok with settings when plugin has settings but no admin routes', async () => {
-    const manifest = {
-      id: '@acme/settings-only',
-      title: 'Settings Only',
-      slug: 'settings-only',
-      settings: [{ key: 'host', label: 'Host', type: 'text' }],
-    };
-    mockGetRegisteredPluginBySlug.mockReturnValue(manifest);
-    mockServerResolve.mockReturnValue(null);
-    mockLoadPluginSettings.mockResolvedValue({ host: 'localhost' });
+it('returns ok with settings when plugin has settings but no admin routes', async () => {
+  const manifest = {
+    id: '@acme/settings-only',
+    title: 'Settings Only',
+    slug: 'settings-only',
+    settings: [{ key: 'host', label: 'Host', type: 'text' }],
+  };
+  mockGetRegisteredPluginBySlug.mockReturnValue(manifest);
+  mockServerResolve.mockReturnValue(null);
+  mockLoadPluginSettings.mockResolvedValue({ host: 'localhost' });
 
-    const result = await loader({
-      request: new Request('http://localhost/admin/plugins/settings-only'),
-      params: { 'pluginId': 'settings-only', '*': '' },
-    });
-
-    expect(mockLoadPluginSettings).toHaveBeenCalledWith(manifest);
-    expect(result).toMatchObject({
-      status: 'ok',
-      pluginId: 'settings-only',
-      manifest,
-      splatPath: '',
-      pluginSettings: { host: 'localhost' },
-      pluginLoaderData: null,
-    });
+  const result = await loader({
+    request: new Request('http://localhost/admin/plugins/settings-only'),
+    params: { 'pluginId': 'settings-only', '*': '' },
   });
 
-  it('saves settings via intent=save-settings without requiring a plugin action', async () => {
-    const manifest = {
-      id: '@acme/demo-plugin',
-      title: 'Demo Plugin',
-      slug: 'demo-plugin',
-      settings: [{ key: 'host', type: 'text' }],
-    };
-    mockGetRegisteredPluginBySlug.mockReturnValue(manifest);
-    mockSavePluginSettings.mockResolvedValue(undefined);
-
-    const formData = new FormData();
-    formData.set('intent', 'save-settings');
-    formData.set('pluginId', '@acme/demo-plugin');
-    formData.set('host', 'example.com');
-
-    const result = await action({
-      request: new Request('http://localhost/admin/plugins/demo-plugin', {
-        method: 'POST',
-        body: formData,
-      }),
-      params: { 'pluginId': 'demo-plugin', '*': '' },
-    });
-
-    expect(mockSavePluginSettings).toHaveBeenCalled();
-    expect(result).toEqual({
-      success: true,
-      intent: 'save-settings',
-      savedSettings: '@acme/demo-plugin',
-    });
-    expect(mockServerResolve).not.toHaveBeenCalled();
+  expect(mockLoadPluginSettings).toHaveBeenCalledWith(manifest);
+  expect(result).toMatchObject({
+    status: 'ok',
+    pluginId: 'settings-only',
+    manifest,
+    splatPath: '',
+    pluginSettings: { host: 'localhost' },
+    pluginLoaderData: null,
   });
+});
+
+it('saves settings via intent=save-settings without requiring a plugin action', async () => {
+  const manifest = {
+    id: '@acme/demo-plugin',
+    title: 'Demo Plugin',
+    slug: 'demo-plugin',
+    settings: [{ key: 'host', type: 'text' }],
+  };
+  mockGetRegisteredPluginBySlug.mockReturnValue(manifest);
+  mockSavePluginSettings.mockResolvedValue(undefined);
+
+  const formData = new FormData();
+  formData.set('intent', 'save-settings');
+  formData.set('pluginId', '@acme/demo-plugin');
+  formData.set('host', 'example.com');
+
+  const result = await action({
+    request: new Request('http://localhost/admin/plugins/demo-plugin', {
+      method: 'POST',
+      body: formData,
+    }),
+    params: { 'pluginId': 'demo-plugin', '*': '' },
+  });
+
+  expect(mockSavePluginSettings).toHaveBeenCalled();
+  expect(result).toEqual({
+    success: true,
+    intent: 'save-settings',
+    savedSettings: '@acme/demo-plugin',
+  });
+  expect(mockServerResolve).not.toHaveBeenCalled();
+});
 ```
 
 Also update the matched-route loader test expectation to allow `pluginSettings` (empty object or loaded values). When splat is non-empty and settings exist, loader should still load settings into data but UI task will not render the form on nested paths — for simplicity, only call `loadPluginSettings` when `splatPath === ''` and settings exist.
@@ -477,84 +480,86 @@ import {
 Replace loader body logic after resolving `manifest` with:
 
 ```js
-  const splatPath = params['*'] ?? '';
-  const rootDescriptor = resolveAdminRoute(pluginSlug, '');
-  const descriptor = resolveAdminRoute(pluginSlug, splatPath);
-  const hasSettings = Boolean(manifest.settings?.length);
-  const isRoot = splatPath === '';
+const splatPath = params['*'] ?? '';
+const rootDescriptor = resolveAdminRoute(pluginSlug, '');
+const descriptor = resolveAdminRoute(pluginSlug, splatPath);
+const hasSettings = Boolean(manifest.settings?.length);
+const isRoot = splatPath === '';
 
-  if (!rootDescriptor && !descriptor && !(hasSettings && isRoot)) {
-    return { status: 'no-admin-routes', pluginId: pluginSlug, manifest };
-  }
+if (!rootDescriptor && !descriptor && !(hasSettings && isRoot)) {
+  return { status: 'no-admin-routes', pluginId: pluginSlug, manifest };
+}
 
-  if (!descriptor && !(hasSettings && isRoot)) {
-    return { status: 'no-match', pluginId: pluginSlug, manifest, splatPath };
-  }
+if (!descriptor && !(hasSettings && isRoot)) {
+  return { status: 'no-match', pluginId: pluginSlug, manifest, splatPath };
+}
 
-  let pluginLoaderData = null;
-  if (descriptor && typeof descriptor.loader === 'function') {
-    pluginLoaderData = await descriptor.loader({
-      request,
-      params: { ...params, ...descriptor.params },
-    });
-  }
+let pluginLoaderData = null;
+if (descriptor && typeof descriptor.loader === 'function') {
+  pluginLoaderData = await descriptor.loader({
+    request,
+    params: { ...params, ...descriptor.params },
+  });
+}
 
-  const pluginSettings =
-    hasSettings && isRoot ? await loadPluginSettings(manifest) : {};
+const pluginSettings =
+  hasSettings && isRoot ? await loadPluginSettings(manifest) : {};
 
-  return {
-    status: 'ok',
-    pluginId: pluginSlug,
-    manifest,
-    splatPath,
-    pluginLoaderData,
-    pluginSettings,
-  };
+return {
+  status: 'ok',
+  pluginId: pluginSlug,
+  manifest,
+  splatPath,
+  pluginLoaderData,
+  pluginSettings,
+};
 ```
 
 Replace action start (after resolving manifest) with:
 
 ```js
-  const formData = await request.clone().formData();
-  const intent = formData.get('intent');
+const formData = await request.clone().formData();
+const intent = formData.get('intent');
 
-  if (intent === 'save-settings') {
-    const pluginId = formData.get('pluginId');
-    if (!pluginId || pluginId !== manifest.id) {
-      return { error: 'Missing pluginId' };
-    }
-    if (!manifest.settings?.length) {
-      return { error: 'No settings for plugin' };
-    }
-    try {
-      await savePluginSettings(manifest.id, manifest, formData);
-    } catch (err) {
-      return {
-        error:
-          err instanceof Error ? err.message : 'Failed to save settings',
-      };
-    }
+if (intent === 'save-settings') {
+  const pluginId = formData.get('pluginId');
+  if (!pluginId || pluginId !== manifest.id) {
+    return { error: 'Missing pluginId' };
+  }
+  if (!manifest.settings?.length) {
+    return { error: 'No settings for plugin' };
+  }
+  try {
+    await savePluginSettings(manifest.id, manifest, formData);
+  } catch (err) {
     return {
-      success: true,
-      intent: 'save-settings',
-      savedSettings: manifest.id,
+      error: err instanceof Error ? err.message : 'Failed to save settings',
     };
   }
+  return {
+    success: true,
+    intent: 'save-settings',
+    savedSettings: manifest.id,
+  };
+}
 
-  // existing descriptor.action dispatch unchanged
+// existing descriptor.action dispatch unchanged
 ```
 
 **Note:** Prefer reading formData once. If cloning is awkward with the existing stream, use `await request.formData()` once and pass the same `formData` into `savePluginSettings` / plugin action only when needed. Plugin `descriptor.action` currently receives `{ request, params }` and may call `request.formData()` itself — keep passing the original `request` for plugin actions; only parse formData early when you need `intent`. Pattern:
 
 ```js
-  const contentType = request.headers.get('content-type') ?? '';
-  if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
-    const formData = await request.clone().formData();
-    if (formData.get('intent') === 'save-settings') {
-      // handle save-settings using formData, return
-    }
+const contentType = request.headers.get('content-type') ?? '';
+if (
+  contentType.includes('application/x-www-form-urlencoded') ||
+  contentType.includes('multipart/form-data')
+) {
+  const formData = await request.clone().formData();
+  if (formData.get('intent') === 'save-settings') {
+    // handle save-settings using formData, return
   }
-  // fall through to descriptor.action with original request
+}
+// fall through to descriptor.action with original request
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -579,74 +584,75 @@ EOF
 ### Task 4: Detail route UI chrome
 
 **Files:**
+
 - Modify: `app/routes/admin/plugins/$pluginId.jsx`
 - Modify: `app/routes/admin/plugins/$pluginId.test.jsx`
 
 - [ ] **Step 1: Write failing render test**
 
 ```jsx
-  it('renders settings form above the plugin component on root', () => {
-    function MockPluginPage() {
-      return <div>Custom Admin</div>;
-    }
+it('renders settings form above the plugin component on root', () => {
+  function MockPluginPage() {
+    return <div>Custom Admin</div>;
+  }
 
-    mockUseLoaderData.mockReturnValue({
-      status: 'ok',
-      pluginId: 'demo-plugin',
-      manifest: {
-        id: '@acme/demo-plugin',
-        title: 'Demo Plugin',
-        version: '1.0.0',
-        settings: [{ key: 'host', label: 'Host', type: 'text' }],
-      },
-      splatPath: '',
-      pluginLoaderData: null,
-      pluginSettings: { host: 'localhost' },
-    });
-    mockClientResolve.mockReturnValue({
-      path: '',
-      Component: MockPluginPage,
-    });
-
-    const html = renderToStaticMarkup(<AdminPluginDispatcher />);
-
-    expect(html).toContain('Demo Plugin');
-    expect(html).toContain('name="host"');
-    expect(html).toContain('Custom Admin');
-    // settings appear before custom admin
-    expect(html.indexOf('name="host"')).toBeLessThan(
-      html.indexOf('Custom Admin')
-    );
+  mockUseLoaderData.mockReturnValue({
+    status: 'ok',
+    pluginId: 'demo-plugin',
+    manifest: {
+      id: '@acme/demo-plugin',
+      title: 'Demo Plugin',
+      version: '1.0.0',
+      settings: [{ key: 'host', label: 'Host', type: 'text' }],
+    },
+    splatPath: '',
+    pluginLoaderData: null,
+    pluginSettings: { host: 'localhost' },
+  });
+  mockClientResolve.mockReturnValue({
+    path: '',
+    Component: MockPluginPage,
   });
 
-  it('does not render settings form on nested splat paths', () => {
-    function MockPluginPage() {
-      return <div>Nested Page</div>;
-    }
+  const html = renderToStaticMarkup(<AdminPluginDispatcher />);
 
-    mockUseLoaderData.mockReturnValue({
-      status: 'ok',
-      pluginId: 'demo-plugin',
-      manifest: {
-        id: '@acme/demo-plugin',
-        title: 'Demo Plugin',
-        version: '1.0.0',
-        settings: [{ key: 'host', type: 'text' }],
-      },
-      splatPath: 'reports',
-      pluginLoaderData: {},
-      pluginSettings: {},
-    });
-    mockClientResolve.mockReturnValue({
-      path: 'reports',
-      Component: MockPluginPage,
-    });
+  expect(html).toContain('Demo Plugin');
+  expect(html).toContain('name="host"');
+  expect(html).toContain('Custom Admin');
+  // settings appear before custom admin
+  expect(html.indexOf('name="host"')).toBeLessThan(
+    html.indexOf('Custom Admin')
+  );
+});
 
-    const html = renderToStaticMarkup(<AdminPluginDispatcher />);
+it('does not render settings form on nested splat paths', () => {
+  function MockPluginPage() {
+    return <div>Nested Page</div>;
+  }
 
-    expect(html).toContain('Nested Page');
-    expect(html).not.toContain('name="host"');
+  mockUseLoaderData.mockReturnValue({
+    status: 'ok',
+    pluginId: 'demo-plugin',
+    manifest: {
+      id: '@acme/demo-plugin',
+      title: 'Demo Plugin',
+      version: '1.0.0',
+      settings: [{ key: 'host', type: 'text' }],
+    },
+    splatPath: 'reports',
+    pluginLoaderData: {},
+    pluginSettings: {},
   });
+  mockClientResolve.mockReturnValue({
+    path: 'reports',
+    Component: MockPluginPage,
+  });
+
+  const html = renderToStaticMarkup(<AdminPluginDispatcher />);
+
+  expect(html).toContain('Nested Page');
+  expect(html).not.toContain('name="host"');
+});
 ```
 
 Mock `#/components/admin/plugin-settings-form` is optional — prefer real component with react-router Form/Link/useActionData mocks already present; extend the react-router mock:
@@ -684,48 +690,48 @@ import PluginSettingsForm from '#/components/admin/plugin-settings-form';
 Rewrite the `status === 'ok'` branch of `AdminPluginDispatcher`:
 
 ```jsx
-  const isRoot = data.splatPath === '';
-  const hasSettings = Boolean(data.manifest.settings?.length);
-  const descriptor = resolvePluginAdminRoute(data.pluginId, data.splatPath);
-  const PluginComponent = descriptor?.Component;
+const isRoot = data.splatPath === '';
+const hasSettings = Boolean(data.manifest.settings?.length);
+const descriptor = resolvePluginAdminRoute(data.pluginId, data.splatPath);
+const PluginComponent = descriptor?.Component;
 
-  return (
-    <div className="mx-auto max-w-5xl">
-      <PageHeader
-        sticky
-        breadcrumbs={
-          <Breadcrumbs
-            items={[
-              {
-                label: t('admin.plugins.index.title'),
-                href: '/admin/plugins',
-              },
-              { label: data.manifest.title },
-            ]}
-          />
-        }
-        title={data.manifest.title}
-        subtitle={`v${data.manifest.version} · ${data.manifest.id}`}
-      />
-
-      {isRoot && hasSettings ? (
-        <PluginSettingsForm
-          manifest={data.manifest}
-          values={data.pluginSettings ?? {}}
+return (
+  <div className="mx-auto max-w-5xl">
+    <PageHeader
+      sticky
+      breadcrumbs={
+        <Breadcrumbs
+          items={[
+            {
+              label: t('admin.plugins.index.title'),
+              href: '/admin/plugins',
+            },
+            { label: data.manifest.title },
+          ]}
         />
-      ) : null}
+      }
+      title={data.manifest.title}
+      subtitle={`v${data.manifest.version} · ${data.manifest.id}`}
+    />
 
-      {PluginComponent ? (
-        <PluginComponent loaderData={data.pluginLoaderData} />
-      ) : null}
+    {isRoot && hasSettings ? (
+      <PluginSettingsForm
+        manifest={data.manifest}
+        values={data.pluginSettings ?? {}}
+      />
+    ) : null}
 
-      {!PluginComponent && !(isRoot && hasSettings) ? (
-        <p className="text-text-muted text-sm">
-          {t('admin.plugins.detail.noAdminPagesForPath')}
-        </p>
-      ) : null}
-    </div>
-  );
+    {PluginComponent ? (
+      <PluginComponent loaderData={data.pluginLoaderData} />
+    ) : null}
+
+    {!PluginComponent && !(isRoot && hasSettings) ? (
+      <p className="text-text-muted text-sm">
+        {t('admin.plugins.detail.noAdminPagesForPath')}
+      </p>
+    ) : null}
+  </div>
+);
 ```
 
 Also update `PluginHostChrome` / error states to use `mx-auto max-w-5xl` for consistency (optional, small).
@@ -754,6 +760,7 @@ EOF
 ### Task 5: Slim plugins index
 
 **Files:**
+
 - Modify: `app/routes/admin/plugins/index.jsx`
 - Modify: `app/routes/admin/plugins/index.test.jsx`
 
@@ -762,13 +769,13 @@ EOF
 In `index.test.jsx`, add:
 
 ```jsx
-  it('returns unknown intent for save-settings', async () => {
-    const result = await action({
-      request: buildRequest('save-settings', '@acme/demo-plugin'),
-    });
-
-    expect(result).toEqual({ error: 'Unknown intent: save-settings' });
+it('returns unknown intent for save-settings', async () => {
+  const result = await action({
+    request: buildRequest('save-settings', '@acme/demo-plugin'),
   });
+
+  expect(result).toEqual({ error: 'Unknown intent: save-settings' });
+});
 ```
 
 - [ ] **Step 2: Run to verify current behavior still accepts save-settings (fails new expectation)**
@@ -784,12 +791,12 @@ Expected: FAIL (success: true from old handler) — if it already fails differen
 3. Loader: drop `pluginSettings` / `loadAllPluginSettings`. Compute:
 
 ```js
-  const plugins = [...allPlugins]
-    .sort((a, b) => a.title.localeCompare(b.title))
-    .map((manifest) => ({
-      ...manifest,
-      hasAdminUi: Boolean(resolvePluginAdminRoute(manifest.slug, '')),
-    }));
+const plugins = [...allPlugins]
+  .sort((a, b) => a.title.localeCompare(b.title))
+  .map((manifest) => ({
+    ...manifest,
+    hasAdminUi: Boolean(resolvePluginAdminRoute(manifest.slug, '')),
+  }));
 ```
 
 Return `{ plugins, orderedPlugins, enabledPlugins, pluginOrder }` without `pluginSettings`.
@@ -908,17 +915,17 @@ Only if there are formatting diffs.
 
 ## Spec coverage checklist
 
-| Spec requirement | Task |
-| ---------------- | ---- |
+| Spec requirement                              | Task |
+| --------------------------------------------- | ---- |
 | Settings on detail with product-editor layout | 2, 4 |
-| Settings above custom admin UI | 4 |
-| Settings only on root splat | 3, 4 |
-| Settings-only plugins not error chrome | 3 |
-| Index cards without inline settings | 5 |
-| Settings link renamed + gated | 1, 5 |
-| save-settings on detail; removed from index | 3, 5 |
-| i18n en/de/fr | 1 |
-| Tests | 2–6 |
+| Settings above custom admin UI                | 4    |
+| Settings only on root splat                   | 3, 4 |
+| Settings-only plugins not error chrome        | 3    |
+| Index cards without inline settings           | 5    |
+| Settings link renamed + gated                 | 1, 5 |
+| save-settings on detail; removed from index   | 3, 5 |
+| i18n en/de/fr                                 | 1    |
+| Tests                                         | 2–6  |
 
 ## Out of scope (do not implement)
 
