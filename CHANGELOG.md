@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.10.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.5...bermooda-v0.10.0) (2026-08-11)
+
+
+### Features
+
+* **admin:** move plugin settings to detail page ([9203f2c](https://github.com/bermooda/bermooda/commit/9203f2c7133cee6618cef9473bf11916a855201c))
+* **admin:** replace member select with lazy customer combobox ([#230](https://github.com/bermooda/bermooda/issues/230)) ([309c551](https://github.com/bermooda/bermooda/commit/309c551702142b2a53745e300de6b09efbd2fa27))
+* install default theme from npm run setup ([#232](https://github.com/bermooda/bermooda/issues/232)) ([ff3b92e](https://github.com/bermooda/bermooda/commit/ff3b92e51a75f4aab1ebd5f20339cdc0aa923aba))
+
 ## [0.9.5](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.4...bermooda-v0.9.5) (2026-08-10)
 
 
