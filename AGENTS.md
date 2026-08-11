@@ -33,13 +33,12 @@ bermooda is an open-source ecommerce platform built with React Router 7 (SSR), P
 
 The checked-in [`.cursor/environment.json`](.cursor/environment.json) configures the Cloud Agent install step. On each agent startup, Cursor runs [`.cursor/cloud-agent-install.sh`](.cursor/cloud-agent-install.sh), which:
 
-1. Copies [`.env.example`](.env.example) to `.env` when `.env` is missing (Prisma requires `DATABASE_URL` at setup time).
-2. Runs `npm install --legacy-peer-deps`.
-3. Runs `npm run setup` (Prisma generate + migrate deploy + default theme install).
+1. Runs `npm install --legacy-peer-deps`.
+2. Runs `npm run setup` (creates `.env` / `bermooda.config.js` when missing, Prisma generate + migrate deploy, default theme install).
 
 The install script is idempotent and safe to run repeatedly. To reset the local database, delete `prisma/dev.db` and re-run `npm run setup`.
 
-**Themes are not bundled in the repo.** `npm run setup` still creates config, runs Prisma generate + migrate, then installs the default theme (`@bermooda/theme-default`) from a sibling checkout (`../theme-default`) or npm pack into `app/themes/default/`, installs that theme's npm dependencies, and sets `activeTheme` when `DATABASE_URL` is available. It does not install plugins. Re-run `npm run extensions:install` after pulling new theme code. To only (re)install nested deps for extensions already on disk: `npm run extensions:install-deps`.
+**Themes are not bundled in the repo.** `npm run setup` creates `.env` from `.env.example` when missing, ensures config, runs Prisma generate + migrate, then installs the default theme (`@bermooda/theme-default`) from a sibling checkout (`../theme-default`) or npm pack into `app/themes/default/`, installs that theme's npm dependencies, and sets `activeTheme` when `DATABASE_URL` is available. It does not install plugins. Re-run `npm run extensions:install` after pulling new theme code. To only (re)install nested deps for extensions already on disk: `npm run extensions:install-deps`.
 
 **Architecture layers:**
 
@@ -64,25 +63,25 @@ npx react-router dev --host
 
 Port comes from `PORT` (default `3000`) via Vite `server.port` / `#/libs/config` — set `PORT=4000` to change it. `strictPort` is enabled so a busy port fails instead of silently binding another one.
 
-A `.env` file must exist in the repo root (see `.env.example`). Placeholder values are fine for basic local development — the app starts and serves pages without real API keys for Stripe, Resend, etc.
+A `.env` file must exist in the repo root (see `.env.example`). `npm run setup` creates it from the example when missing. Placeholder values are fine for basic local development — the app starts and serves pages without real API keys for Stripe, Resend, etc.
 
 `bermooda.config.js` is gitignored and created by `npm run setup` (copies `bermooda.config.example.js`) or by `bermooda install`. Production requires `baseUrl` in that file.
 
 ### Key commands
 
-| Task                   | Command                                           |
-| ---------------------- | ------------------------------------------------- |
-| Install deps           | `npm install`                                     |
-| Full local setup       | `npm run setup` (config + Prisma + default theme) |
-| Install default theme  | `npm run extensions:install`                      |
-| Install extension deps | `npm run extensions:install-deps`                 |
-| Dev server             | `npx react-router dev --host`                     |
-| Lint                   | `npm run lint` (oxlint + oxfmt --check)           |
-| Format                 | `npm run fmt`                                     |
-| Build                  | `npm run build`                                   |
-| Tests                  | `npm run test`                                    |
-| New migration          | `npm run prisma:migrate -- --name <name>`         |
-| Set extension settings | `npm run cli:set-extensions`                      |
+| Task                   | Command                                            |
+| ---------------------- | -------------------------------------------------- |
+| Install deps           | `npm install`                                      |
+| Full local setup       | `npm run setup` (`.env` + config + Prisma + theme) |
+| Install default theme  | `npm run extensions:install`                       |
+| Install extension deps | `npm run extensions:install-deps`                  |
+| Dev server             | `npx react-router dev --host`                      |
+| Lint                   | `npm run lint` (oxlint + oxfmt --check)            |
+| Format                 | `npm run fmt`                                      |
+| Build                  | `npm run build`                                    |
+| Tests                  | `npm run test`                                     |
+| New migration          | `npm run prisma:migrate -- --name <name>`          |
+| Set extension settings | `npm run cli:set-extensions`                       |
 
 ### Non-obvious notes
 

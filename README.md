@@ -88,8 +88,7 @@ Useful if you are contributing to the platform itself:
 
 ```bash
 npm install
-cp .env.example .env   # placeholders are fine for basic local work
-npm run setup          # config + prisma generate/migrate + default theme
+npm run setup          # .env + config + prisma generate/migrate + default theme
 npm run seed           # optional demo catalog + admin
 ```
 
@@ -149,7 +148,7 @@ Deeper reading:
 
 ## Configuration
 
-Copy [`.env.example`](.env.example) to `.env`. Placeholder values are enough to boot the app; wire real keys when you need payments, email, OAuth, or object storage.
+Copy [`.env.example`](.env.example) to `.env` (or run `npm run setup`, which creates it when missing). Placeholder values are enough to boot the app; wire real keys when you need payments, email, OAuth, or object storage.
 
 Notable variables:
 
