@@ -4,7 +4,7 @@
 import { useLoaderData } from 'react-router';
 
 import { useT } from '#/core/i18n';
-import { resolvePluginAdminRoute } from '#/core/plugins/admin-routes.client';
+import { resolvePluginAdminRoute } from '#/core/plugins/admin-routes';
 import {
   getRegisteredPluginBySlug,
   loadPluginSettings,

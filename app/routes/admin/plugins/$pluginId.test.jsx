@@ -33,7 +33,7 @@ vi.mock('#/core/i18n', () => ({
   useT: () => (key) => key,
 }));
 
-vi.mock('#/core/plugins/admin-routes.client', () => ({
+vi.mock('#/core/plugins/admin-routes', () => ({
   resolvePluginAdminRoute: mockClientResolve,
 }));
 

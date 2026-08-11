@@ -205,7 +205,7 @@ function PluginCard({ manifest, isEnabled, isEmailProvider = false }) {
             {showSettings ? (
               <a
                 href={`/admin/plugins/${manifest.slug}`}
-                className="border-border text-text hover:bg-surface-2 rounded-md border px-3 py-1.5 text-xs font-medium transition"
+                className="border-border bg-surface text-text hover:bg-surface-2 inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm leading-6 font-semibold shadow-sm transition"
               >
                 {t('admin.plugins.index.settings')}
               </a>

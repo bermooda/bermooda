@@ -5,7 +5,7 @@ import {
   isPluginEnabled,
   resolvePluginStorefrontRoute as resolveServerRoute,
 } from '#/core/plugins/index.server';
-import { resolvePluginStorefrontRoute as resolveClientRoute } from '#/core/plugins/storefront-routes.client';
+import { resolvePluginStorefrontRoute as resolveClientRoute } from '#/core/plugins/storefront-routes';
 import { loadStorefrontPageContext } from '#/core/storefront/page-context.server';
 import { getStorefrontComponent } from '#/core/themes/storefront-components';
 
