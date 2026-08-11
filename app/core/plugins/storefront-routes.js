@@ -24,9 +24,5 @@ const storefrontRoutesByPlugin = buildPluginRouteRegistry(
  * @returns {(Record<string, unknown> & { params: Record<string, string> }) | null}
  */
 export function resolvePluginStorefrontRoute(pluginId, path) {
-  return resolvePluginRouteDescriptor(
-    storefrontRoutesByPlugin,
-    pluginId,
-    path
-  );
+  return resolvePluginRouteDescriptor(storefrontRoutesByPlugin, pluginId, path);
 }
