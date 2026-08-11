@@ -107,7 +107,6 @@ export default function CustomerMemberCombobox({
       name={name}
       value={selected}
       onChange={handleChange}
-      query={query}
       onQueryChange={setQuery}
       options={options}
       placeholder={placeholder}

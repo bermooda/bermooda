@@ -25,7 +25,6 @@ import { controlClasses } from '#/components/admin/form/input';
  * @param {string} [props.name] Hidden input name when a selection is made
  * @param {ComboboxOptionItem | null} [props.value]
  * @param {(value: ComboboxOptionItem | null) => void} props.onChange
- * @param {string} props.query
  * @param {(query: string) => void} props.onQueryChange
  * @param {ComboboxOptionItem[]} props.options
  * @param {string} [props.placeholder]
@@ -42,7 +41,6 @@ export default function Combobox({
   name,
   value = null,
   onChange,
-  query,
   onQueryChange,
   options,
   placeholder = '',
