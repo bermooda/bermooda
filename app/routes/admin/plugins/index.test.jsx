@@ -6,13 +6,11 @@ const { mockSetPluginOrder, mockSetPluginEnabledState } = vi.hoisted(() => ({
 }));
 
 vi.mock('#/core/plugins/index.server', () => ({
-  getRegisteredPlugin: vi.fn(),
   listRegisteredPlugins: vi.fn(() => []),
-  loadAllPluginSettings: vi.fn(async () => ({})),
   setPluginOrder: mockSetPluginOrder,
-  savePluginSettings: vi.fn(),
   setPluginEnabledState: mockSetPluginEnabledState,
   sortPluginsByOrder: vi.fn((plugins) => plugins),
+  resolvePluginAdminRoute: vi.fn(() => null),
 }));
 
 vi.mock('#/core/settings/index.server', () => ({
@@ -91,5 +89,13 @@ describe('admin plugins action', () => {
 
     expect(result).toEqual({ success: true, intent: 'reorder' });
     expect(mockSetPluginOrder).toHaveBeenCalledWith(['@acme/demo-plugin']);
+  });
+
+  it('returns unknown intent for save-settings', async () => {
+    const result = await action({
+      request: buildRequest('save-settings', '@acme/demo-plugin'),
+    });
+
+    expect(result).toEqual({ error: 'Unknown intent: save-settings' });
   });
 });

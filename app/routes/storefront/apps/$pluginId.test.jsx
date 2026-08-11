@@ -21,7 +21,7 @@ vi.mock('react-router', () => ({
   useLoaderData: mockUseLoaderData,
 }));
 
-vi.mock('#/core/plugins/storefront-routes.client', () => ({
+vi.mock('#/core/plugins/storefront-routes', () => ({
   resolvePluginStorefrontRoute: mockClientResolve,
 }));
 
