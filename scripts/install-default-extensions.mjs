@@ -2,31 +2,30 @@
 /**
  * Contributor install helper.
  *
- * Copies the default theme and plugins from sibling checkout directories
- * into app/themes/ and app/plugins/. Falls back to `npm pack` + tarball
- * extract when the sibling directory is absent, placing package contents
- * directly at `app/themes/<slug>/` or `app/plugins/<slug>/` (same layout
- * as the sibling copy — not nested under `node_modules/<packageId>/`).
+ * Copies the default theme from a sibling checkout directory into
+ * app/themes/. Falls back to `npm pack` + tarball extract when the sibling
+ * directory is absent, placing package contents directly at
+ * `app/themes/<slug>/` (same layout as the sibling copy — not nested under
+ * `node_modules/<packageId>/`).
+ *
+ * Does not install plugins — add those with `bermooda plugin add` when needed.
  *
  * Sibling copies exclude `node_modules` (so contributor checkouts stay lean);
  * after copy (or pack+extract), this script runs `install-extension-deps` so
- * each extension's own package.json dependencies are installed into that
- * folder's `node_modules` for Vite resolution/bundling. The bermooda CLI
- * performs the same per-extension `npm install` on `theme add` / `plugin add`.
+ * the theme's own package.json dependencies are installed into that folder's
+ * `node_modules` for Vite resolution/bundling. The bermooda CLI performs the
+ * same per-extension `npm install` on `theme add` / `plugin add`.
  *
  * Sibling layout (relative to bermooda repo root):
- *   ../theme-default   → app/themes/default/   (slug: default)
- *   ../plugin-meilisearch → app/plugins/meilisearch/
- *   ../plugin-resend   → app/plugins/resend/
- *   ../plugin-sendgrid → app/plugins/sendgrid/ (optional)
- *   ../plugin-aws-ses  → app/plugins/aws-ses/ (optional)
+ *   ../theme-default → app/themes/default/   (always; npm fallback)
  *
  * After copying, optionally calls cli-set-extensions.mjs to activate the
- * theme and enable the plugins when DATABASE_URL is available.
+ * default theme when DATABASE_URL is available.
  *
  * Usage:
  *   node scripts/install-default-extensions.mjs
  *   npm run extensions:install
+ *   (also invoked by `npm run setup`)
  */
 
 import 'dotenv/config';
@@ -46,40 +45,11 @@ const APP_DIR = join(REPO_ROOT, 'app');
 /** @typedef {{ siblingDir: string, destDir: string, packageId: string }} ExtensionSpec */
 
 /** @type {ExtensionSpec[]} */
-const ALWAYS_INSTALL = [
+const DEFAULT_THEME = [
   {
     siblingDir: join(REPO_ROOT, '..', 'theme-default'),
     destDir: join(APP_DIR, 'themes', 'default'),
     packageId: '@bermooda/theme-default',
-  },
-  {
-    siblingDir: join(REPO_ROOT, '..', 'plugin-meilisearch'),
-    destDir: join(APP_DIR, 'plugins', 'meilisearch'),
-    packageId: '@bermooda/plugin-meilisearch',
-  },
-  {
-    siblingDir: join(REPO_ROOT, '..', 'plugin-resend'),
-    destDir: join(APP_DIR, 'plugins', 'resend'),
-    packageId: '@bermooda/plugin-resend',
-  },
-];
-
-/**
- * Optional extensions installed only when the sibling directory is present.
- * These are not activated by default but are needed for tests and local dev.
- *
- * @type {ExtensionSpec[]}
- */
-const OPTIONAL_INSTALL = [
-  {
-    siblingDir: join(REPO_ROOT, '..', 'plugin-sendgrid'),
-    destDir: join(APP_DIR, 'plugins', 'sendgrid'),
-    packageId: '@bermooda/plugin-sendgrid',
-  },
-  {
-    siblingDir: join(REPO_ROOT, '..', 'plugin-aws-ses'),
-    destDir: join(APP_DIR, 'plugins', 'aws-ses'),
-    packageId: '@bermooda/plugin-aws-ses',
   },
 ];
 
@@ -187,8 +157,6 @@ async function setExtensionsInDb() {
       env: {
         ...process.env,
         BERMOODA_ACTIVE_THEME: '@bermooda/theme-default',
-        BERMOODA_ENABLED_PLUGINS:
-          '@bermooda/plugin-meilisearch,@bermooda/plugin-resend',
       },
     });
   } catch {
@@ -199,23 +167,17 @@ async function setExtensionsInDb() {
 }
 
 async function main() {
-  console.log('extensions:install  Installing default extensions…');
+  console.log('extensions:install  Installing default theme…');
 
-  for (const spec of ALWAYS_INSTALL) {
+  for (const spec of DEFAULT_THEME) {
     const installed = installFromSibling(spec);
     if (!installed) {
       installFromNpm(spec);
     }
   }
 
-  for (const spec of OPTIONAL_INSTALL) {
-    installFromSibling(spec);
-  }
-
-  console.log(
-    'extensions:install  Extensions copied to app/themes and app/plugins.'
-  );
-  console.log('extensions:install  Installing per-extension npm dependencies…');
+  console.log('extensions:install  Default theme copied to app/themes.');
+  console.log('extensions:install  Installing theme npm dependencies…');
   installAllExtensionDeps(APP_DIR, { omitDev: false });
   syncExtensionTwSources({ log: console.log });
   await setExtensionsInDb();

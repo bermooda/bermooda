@@ -20,7 +20,7 @@ From [`.env.example`](mdc:.env.example):
 
 - `BETTER_AUTH_SECRET` — also used to encrypt plugin password settings at rest
 
-Activate one plugin in **Admin → Plugins → Email providers** and enter API keys in that plugin's settings form (encrypted in the `Setting` table). `bermooda install` enables `@bermooda/plugin-resend` by default. Contributors install plugins via `npm run extensions:install`.
+Activate one plugin in **Admin → Plugins → Email providers** and enter API keys in that plugin's settings form (encrypted in the `Setting` table). Install an email provider with `bermooda plugin add` when needed — default `npm run setup` / `bermooda install` do not enable one.
 
 ## Custom providers (plugins)
 

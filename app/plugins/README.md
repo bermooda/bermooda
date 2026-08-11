@@ -6,24 +6,27 @@ This directory is the install target for plugins. It is intentionally empty in t
 
 **Contributors / local dev:**
 
-```bash
-npm run extensions:install
-```
+`npm run setup` / `npm run extensions:install` install the **default theme only** — no plugins.
 
-This copies the default plugins (`meilisearch`, `resend`) from sibling checkouts (`../plugin-meilisearch`, `../plugin-resend`) or falls back to npm pack, then installs each plugin's own `package.json` dependencies into `app/plugins/<slug>/node_modules`.
+To add a plugin:
+
+```bash
+bermooda plugin add @bermooda/plugin-meilisearch --enable
+# or from a sibling checkout:
+bermooda plugin add --path ../plugin-meilisearch --enable
+```
 
 **Production / CLI install:**
 
 ```bash
-bermooda install        # interactive — prompts for email provider
-bermooda install -y     # non-interactive — uses Resend as email provider
+bermooda install
 ```
 
-The CLI installs `@bermooda/plugin-meilisearch` and the chosen email provider here, runs `npm install` in each plugin folder for its dependencies, and enables them.
+The CLI installs `@bermooda/plugin-meilisearch` by default. Add email or other plugins afterward with `bermooda plugin add`.
 
 ## Package contract
 
-Each plugin lives in a subdirectory matching its `bermooda.slug` (e.g. `app/plugins/resend/`). The directory must contain:
+Each plugin lives in a subdirectory matching its `bermooda.slug` (e.g. `app/plugins/meilisearch/`). The directory must contain:
 
 - `package.json` with a `bermooda` block (`title`, `slug`, `engine`)
 - `index.server.js` exporting `definePlugin(...)` as `pluginManifest` or `default`

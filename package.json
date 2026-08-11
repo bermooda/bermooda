@@ -16,7 +16,7 @@
     "start": "react-router-serve ./build/server/index.js",
     "docker:build": "docker build -t bermooda .",
     "docker:run": "docker run -p 3000:3000 --env-file .env -e DATABASE_URL=file:/data/sqlite.db bermooda",
-    "setup": "node scripts/ensure-bermooda-config.mjs && npm run prisma:generate && prisma migrate deploy",
+    "setup": "bash scripts/ensure-env.sh && node scripts/ensure-bermooda-config.mjs && npm run prisma:generate && prisma migrate deploy && npm run extensions:install",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:reset": "prisma migrate reset",

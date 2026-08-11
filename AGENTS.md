@@ -33,19 +33,12 @@ bermooda is an open-source ecommerce platform built with React Router 7 (SSR), P
 
 The checked-in [`.cursor/environment.json`](.cursor/environment.json) configures the Cloud Agent install step. On each agent startup, Cursor runs [`.cursor/cloud-agent-install.sh`](.cursor/cloud-agent-install.sh), which:
 
-1. Copies [`.env.example`](.env.example) to `.env` when `.env` is missing (Prisma requires `DATABASE_URL` at setup time).
-2. Runs `npm install --legacy-peer-deps`.
-3. Runs `npm run setup` (Prisma generate + migrate deploy).
+1. Runs `npm install --legacy-peer-deps`.
+2. Runs `npm run setup` (creates `.env` / `bermooda.config.js` when missing, Prisma generate + migrate deploy, default theme install).
 
 The install script is idempotent and safe to run repeatedly. To reset the local database, delete `prisma/dev.db` and re-run `npm run setup`.
 
-**Themes and plugins are not bundled in the repo.** After `npm run setup`, install the default extensions from the sibling checkouts (or npm):
-
-```
-npm run extensions:install
-```
-
-This copies `@bermooda/theme-default` (from `../theme-default`), `@bermooda/plugin-meilisearch` (from `../plugin-meilisearch`), and `@bermooda/plugin-resend` (from `../plugin-resend`) into `app/themes/` and `app/plugins/`, installs each package's own npm dependencies into that folder's `node_modules`, then writes `activeTheme` / `enabledPlugins` settings if `DATABASE_URL` is available. Re-run after pulling new extension code from sibling repos. To only (re)install nested deps for extensions already on disk: `npm run extensions:install-deps`.
+**Themes are not bundled in the repo.** `npm run setup` creates `.env` from `.env.example` when missing, ensures config, runs Prisma generate + migrate, then installs the default theme (`@bermooda/theme-default`) from a sibling checkout (`../theme-default`) or npm pack into `app/themes/default/`, installs that theme's npm dependencies, and sets `activeTheme` when `DATABASE_URL` is available. It does not install plugins. Re-run `npm run extensions:install` after pulling new theme code. To only (re)install nested deps for extensions already on disk: `npm run extensions:install-deps`.
 
 **Architecture layers:**
 
@@ -70,25 +63,25 @@ npx react-router dev --host
 
 Port comes from `PORT` (default `3000`) via Vite `server.port` / `#/libs/config` — set `PORT=4000` to change it. `strictPort` is enabled so a busy port fails instead of silently binding another one.
 
-A `.env` file must exist in the repo root (see `.env.example`). Placeholder values are fine for basic local development — the app starts and serves pages without real API keys for Stripe, Resend, etc.
+A `.env` file must exist in the repo root (see `.env.example`). `npm run setup` creates it from the example when missing. Placeholder values are fine for basic local development — the app starts and serves pages without real API keys for Stripe, Resend, etc.
 
-`bermooda.config.js` is gitignored and created by `npm run setup` (copies `bermooda.config.example.js`) or by `bermooda install` / `bermooda dev-setup`. Production requires `baseUrl` in that file.
+`bermooda.config.js` is gitignored and created by `npm run setup` (copies `bermooda.config.example.js`) or by `bermooda install`. Production requires `baseUrl` in that file.
 
 ### Key commands
 
-| Task                   | Command                                   |
-| ---------------------- | ----------------------------------------- |
-| Install deps           | `npm install`                             |
-| Prisma setup           | `npm run setup` (generate + migrate)      |
-| Install extensions     | `npm run extensions:install`              |
-| Install extension deps | `npm run extensions:install-deps`         |
-| Dev server             | `npx react-router dev --host`             |
-| Lint                   | `npm run lint` (oxlint + oxfmt --check)   |
-| Format                 | `npm run fmt`                             |
-| Build                  | `npm run build`                           |
-| Tests                  | `npm run test`                            |
-| New migration          | `npm run prisma:migrate -- --name <name>` |
-| Set extension settings | `npm run cli:set-extensions`              |
+| Task                   | Command                                            |
+| ---------------------- | -------------------------------------------------- |
+| Install deps           | `npm install`                                      |
+| Full local setup       | `npm run setup` (`.env` + config + Prisma + theme) |
+| Install default theme  | `npm run extensions:install`                       |
+| Install extension deps | `npm run extensions:install-deps`                  |
+| Dev server             | `npx react-router dev --host`                      |
+| Lint                   | `npm run lint` (oxlint + oxfmt --check)            |
+| Format                 | `npm run fmt`                                      |
+| Build                  | `npm run build`                                    |
+| Tests                  | `npm run test`                                     |
+| New migration          | `npm run prisma:migrate -- --name <name>`          |
+| Set extension settings | `npm run cli:set-extensions`                       |
 
 ### Non-obvious notes
 
@@ -99,6 +92,6 @@ A `.env` file must exist in the repo root (see `.env.example`). Placeholder valu
 - The `#/*` import alias maps to `./app/` (configured in `vite.config.js`).
 - Inside `app/themes/<slug>/` and `app/plugins/<slug>/`, use relative imports for sibling modules; keep `#/…` for core app modules. Oxlint enforces this via `no-restricted-imports` overrides.
 - **Alerting:** use `sendErrorAlert` / `sendAlertMessage` from `#/libs/alerting/index.server` for production errors and ops notifications; route handlers use `handleError` from `#/libs/error/index.server`. Default provider is Telegram (`ERROR_ALERT_PROVIDER=telegram`). Do not call `sendTelegramError` / `sendTelegramMessage` in new code. See [.cursor/rules/alerting.mdc](.cursor/rules/alerting.mdc).
-- **Emails:** shop transactional templates in `app/emails/shop/`; auth templates in `app/emails/templates/`. Email transports are external plugins (`@bermooda/plugin-resend`, `@bermooda/plugin-sendgrid`, `@bermooda/plugin-aws-ses`) activated under Admin → Plugins — see [.cursor/rules/email-providers.mdc](.cursor/rules/email-providers.mdc).
-- **Extensions:** `app/themes/` and `app/plugins/` are empty in the repo and gitignored. Run `npm run extensions:install` to populate them from sibling checkouts or npm (also installs each extension's `package.json` dependencies into that folder). `npm run build` runs `prebuild` → `extensions:install-deps` so nested deps exist for Vite; extension runtime deps are listed in `ssr.noExternal` and bundled into the server build.
+- **Emails:** shop transactional templates in `app/emails/shop/`; auth templates in `app/emails/templates/`. Optional email transports are external plugins (`@bermooda/plugin-resend`, `@bermooda/plugin-sendgrid`, `@bermooda/plugin-aws-ses`) activated under Admin → Plugins — see [.cursor/rules/email-providers.mdc](.cursor/rules/email-providers.mdc).
+- **Extensions:** `app/themes/` and `app/plugins/` are empty in the repo and gitignored. `npm run setup` (or `npm run extensions:install`) installs the default theme from a sibling checkout or npm — not plugins. `npm run build` runs `prebuild` → `extensions:install-deps` so nested deps exist for Vite; extension runtime deps are listed in `ssr.noExternal` and bundled into the server build.
 - **Locale:** storefront locale is cookie-driven, not in URL paths.

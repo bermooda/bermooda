@@ -7,6 +7,8 @@ This directory is the install target for storefront themes. It is intentionally 
 **Contributors / local dev:**
 
 ```bash
+npm run setup
+# or, theme only:
 npm run extensions:install
 ```
 
@@ -15,8 +17,7 @@ This copies the default theme from the sibling `../theme-default` checkout (or f
 **Production / CLI install:**
 
 ```bash
-bermooda install        # interactive — prompts for email provider
-bermooda install -y     # non-interactive — uses Resend as email provider
+bermooda install
 ```
 
 The CLI installs `@bermooda/theme-default` here, runs `npm install` in the theme folder for its dependencies, and activates it.

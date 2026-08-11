@@ -3,7 +3,7 @@
  * Sets activeTheme and enabledPlugins settings via Prisma.
  *
  * Used by the bermooda CLI (theme add --activate, plugin add --enable) and by
- * the contributor install script. Reads env vars:
+ * the contributor theme install script. Reads env vars:
  *
  *   BERMOODA_ACTIVE_THEME     — package id to activate (e.g. @bermooda/theme-default)
  *   BERMOODA_ENABLED_PLUGINS  — comma-separated package ids (full replace when set)
