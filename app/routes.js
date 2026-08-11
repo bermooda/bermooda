@@ -357,6 +357,7 @@ export default [
       // Customers (P5-6)
       route('customers', 'routes/admin/customers/index.jsx'),
       route('customers/new', 'routes/admin/customers/new.jsx'),
+      route('customers/search', 'routes/admin/customers/search.jsx'),
       route('customers/:id', 'routes/admin/customers/$id.jsx'),
       // Discounts (P5-7)
       route('discounts', 'routes/admin/discounts/index.jsx'),
