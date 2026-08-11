@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Form,
   Link,
@@ -6,7 +7,6 @@ import {
   useNavigation,
 } from 'react-router';
 
-import { listCustomers } from '#/core/customers/index.server';
 import { useT } from '#/core/i18n';
 import {
   addCustomerToGroup,
@@ -15,24 +15,21 @@ import {
 } from '#/core/pricing/index.server';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
+import CustomerMemberCombobox from '#/components/admin/customer-member-combobox';
 import FormSection from '#/components/admin/form-section';
 import Field from '#/components/admin/form/field';
-import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import Button, { ButtonSubmit } from '#/components/ui/button';
 
 export async function loader({ params }) {
-  const [group, customersResult] = await Promise.all([
-    getCustomerGroup(params.id),
-    listCustomers({ limit: 100 }),
-  ]);
+  const group = await getCustomerGroup(params.id);
 
   if (!group) {
     throw new Response('Customer group not found', { status: 404 });
   }
 
-  return { group, customers: customersResult.customers };
+  return { group };
 }
 
 export async function action({ request, params }) {
@@ -68,12 +65,12 @@ export function meta({ loaderData }) {
 
 export default function AdminCustomerGroupDetailRoute() {
   const t = useT();
-  const { group, customers } = useLoaderData();
+  const { group } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
-  const memberIds = new Set(group.members.map((m) => m.customerId));
-  const availableCustomers = customers.filter((c) => !memberIds.has(c.id));
+  const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  const memberIds = group.members.map((m) => m.customerId);
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -162,27 +159,20 @@ export default function AdminCustomerGroupDetailRoute() {
               htmlFor="group-customer"
               className="min-w-0 flex-1"
             >
-              <Select
+              <CustomerMemberCombobox
+                key={memberIds.join(',') || 'none'}
                 id="group-customer"
                 name="customerId"
-                required
-                disabled={availableCustomers.length === 0}
-              >
-                <option value="">
-                  {availableCustomers.length === 0
-                    ? t('admin.customerGroups.detail.noCustomersAvailable')
-                    : t('admin.customerGroups.detail.selectCustomer')}
-                </option>
-                {availableCustomers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.email}
-                  </option>
-                ))}
-              </Select>
+                excludeIds={memberIds}
+                placeholder={t('admin.customerGroups.detail.selectCustomer')}
+                emptyMessage={t(
+                  'admin.customerGroups.detail.noCustomersAvailable'
+                )}
+                loadingMessage={t('admin.customerGroups.detail.searching')}
+                onChange={(option) => setSelectedCustomerId(option?.id ?? null)}
+              />
             </Field>
-            <ButtonSubmit
-              disabled={isSaving || availableCustomers.length === 0}
-            >
+            <ButtonSubmit disabled={isSaving || !selectedCustomerId}>
               {isSaving
                 ? t('admin.customerGroups.detail.adding')
                 : t('admin.customerGroups.detail.addMember')}

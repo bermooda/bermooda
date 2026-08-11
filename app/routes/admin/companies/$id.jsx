@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Form,
   Link,
@@ -9,26 +10,22 @@ import {
 import {
   addCompanyMember,
   getCompany,
-  listCustomersForCompanyForm,
   parseAddCompanyMemberForm,
 } from '#/core/b2b/index.server';
 import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
+import CustomerMemberCombobox from '#/components/admin/customer-member-combobox';
 import FormSection from '#/components/admin/form-section';
 import Field from '#/components/admin/form/field';
-import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert, SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
 export async function loader({ params }) {
   try {
-    const [company, customers] = await Promise.all([
-      getCompany(params.id),
-      listCustomersForCompanyForm(),
-    ]);
-    return { company, customers };
+    const company = await getCompany(params.id);
+    return { company };
   } catch (err) {
     if (err.code === 'NOT_FOUND' || err.status === 404) {
       throw new Response('Company not found', { status: 404 });
@@ -59,16 +56,14 @@ export function meta({ loaderData }) {
 
 export default function AdminCompanyDetailRoute() {
   const t = useT();
-  const { company, customers } = useLoaderData();
+  const { company } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
   const isSaving = navigation.state === 'submitting';
-  const memberCustomerIds = new Set(
-    (company.members ?? []).map((m) => m.customer?.id).filter(Boolean)
-  );
-  const availableCustomers = customers.filter(
-    (c) => !memberCustomerIds.has(c.id)
-  );
+  const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  const memberCustomerIds = (company.members ?? [])
+    .map((m) => m.customer?.id)
+    .filter(Boolean);
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -188,27 +183,18 @@ export default function AdminCompanyDetailRoute() {
               htmlFor="member-customer"
               className="min-w-0 flex-1"
             >
-              <Select
+              <CustomerMemberCombobox
+                key={memberCustomerIds.join(',') || 'none'}
                 id="member-customer"
                 name="customerId"
-                required
-                disabled={availableCustomers.length === 0}
-              >
-                <option value="">
-                  {availableCustomers.length === 0
-                    ? t('admin.companies.detail.noCustomersAvailable')
-                    : t('admin.companies.detail.selectCustomer')}
-                </option>
-                {availableCustomers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.email}
-                  </option>
-                ))}
-              </Select>
+                excludeIds={memberCustomerIds}
+                placeholder={t('admin.companies.detail.selectCustomer')}
+                emptyMessage={t('admin.companies.detail.noCustomersAvailable')}
+                loadingMessage={t('admin.companies.detail.searching')}
+                onChange={(option) => setSelectedCustomerId(option?.id ?? null)}
+              />
             </Field>
-            <ButtonSubmit
-              disabled={isSaving || availableCustomers.length === 0}
-            >
+            <ButtonSubmit disabled={isSaving || !selectedCustomerId}>
               {isSaving
                 ? t('admin.companies.detail.adding')
                 : t('admin.companies.detail.addMember')}
