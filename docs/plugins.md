@@ -989,7 +989,7 @@ Enable/disable and theme activation update only the process that handled the adm
 
 ## Plugin npm dependencies
 
-Plugins may declare their own packages in `package.json` `dependencies` / `optionalDependencies`. The bermooda CLI installs those into `app/plugins/<slug>/node_modules` on `plugin add`. Contributors can copy sibling plugin checkouts via `npm run extensions:install` (optional siblings only) or install with the CLI; use `npm run extensions:install-deps` to refresh nested deps.
+Plugins may declare their own packages in `package.json` `dependencies` / `optionalDependencies`. The bermooda CLI installs those into `app/plugins/<slug>/node_modules` on `plugin add`. Contributors install plugins with the CLI (`bermooda plugin add`); use `npm run extensions:install-deps` to refresh nested deps for extensions already on disk.
 
 - Prefer `peerDependencies` for shared shop libraries (`react`, `react-dom`, `react-router`, etc.) so they resolve from the shop root.
 - `npm run build` runs `prebuild` → `extensions:install-deps` so nested `node_modules` exist before Vite resolves imports.

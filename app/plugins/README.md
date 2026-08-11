@@ -6,9 +6,9 @@ This directory is the install target for plugins. It is intentionally empty in t
 
 **Contributors / local dev:**
 
-`npm run setup` / `npm run extensions:install` install the **default theme only**. Plugin siblings under `../plugin-*` are copied when present on disk, but are not enabled by default.
+`npm run setup` / `npm run extensions:install` install the **default theme only** — no plugins.
 
-To add a plugin intentionally:
+To add a plugin:
 
 ```bash
 bermooda plugin add @bermooda/plugin-meilisearch --enable
