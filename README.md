@@ -89,7 +89,7 @@ Useful if you are contributing to the platform itself:
 ```bash
 npm install
 cp .env.example .env   # placeholders are fine for basic local work
-npm run setup          # prisma generate + migrate deploy
+npm run setup          # config + prisma generate/migrate + default theme
 npm run seed           # optional demo catalog + admin
 ```
 
@@ -109,17 +109,17 @@ App: [http://localhost:3000](http://localhost:3000)
 
 ### Common scripts
 
-| Task                           | Command                                   |
-| ------------------------------ | ----------------------------------------- |
-| Setup DB                       | `npm run setup`                           |
-| Seed demo data                 | `npm run seed`                            |
-| Install default themes/plugins | `npm run extensions:install`              |
-| Install extension deps         | `npm run extensions:install-deps`         |
-| Tests                          | `npm run test`                            |
-| Lint                           | `npm run lint`                            |
-| Format                         | `npm run fmt`                             |
-| Production build               | `npm run build`                           |
-| New migration                  | `npm run prisma:migrate -- --name <name>` |
+| Task                   | Command                                   |
+| ---------------------- | ----------------------------------------- |
+| Full local setup       | `npm run setup`                           |
+| Seed demo data         | `npm run seed`                            |
+| Install default theme  | `npm run extensions:install`              |
+| Install extension deps | `npm run extensions:install-deps`         |
+| Tests                  | `npm run test`                            |
+| Lint                   | `npm run lint`                            |
+| Format                 | `npm run fmt`                             |
+| Production build       | `npm run build`                           |
+| New migration          | `npm run prisma:migrate -- --name <name>` |
 
 Reset local SQLite: delete `prisma/dev.db` and re-run `npm run setup`.
 

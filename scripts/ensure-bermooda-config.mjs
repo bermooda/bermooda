@@ -2,7 +2,7 @@
 /**
  * Ensure bermooda.config.js exists for Vite / `#bermooda.config`.
  * Copies from bermooda.config.example.js when missing (dev clones, Cloud Agent).
- * Merchant installs should prefer CLI-generated config from install/dev-setup.
+ * Merchant installs should prefer CLI-generated config from `bermooda install`.
  */
 import { copyFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';

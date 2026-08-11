@@ -2,11 +2,15 @@
 /**
  * Contributor install helper.
  *
- * Copies the default theme and plugins from sibling checkout directories
- * into app/themes/ and app/plugins/. Falls back to `npm pack` + tarball
- * extract when the sibling directory is absent, placing package contents
- * directly at `app/themes/<slug>/` or `app/plugins/<slug>/` (same layout
- * as the sibling copy — not nested under `node_modules/<packageId>/`).
+ * Copies the default theme from a sibling checkout directory into
+ * app/themes/. Falls back to `npm pack` + tarball extract when the sibling
+ * directory is absent, placing package contents directly at
+ * `app/themes/<slug>/` (same layout as the sibling copy — not nested under
+ * `node_modules/<packageId>/`).
+ *
+ * Optional plugin siblings (meilisearch, resend, sendgrid, aws-ses) are
+ * copied only when present on disk — they are not fetched via npm and are
+ * not enabled by default.
  *
  * Sibling copies exclude `node_modules` (so contributor checkouts stay lean);
  * after copy (or pack+extract), this script runs `install-extension-deps` so
@@ -15,14 +19,14 @@
  * performs the same per-extension `npm install` on `theme add` / `plugin add`.
  *
  * Sibling layout (relative to bermooda repo root):
- *   ../theme-default   → app/themes/default/   (slug: default)
- *   ../plugin-meilisearch → app/plugins/meilisearch/
- *   ../plugin-resend   → app/plugins/resend/
- *   ../plugin-sendgrid → app/plugins/sendgrid/ (optional)
- *   ../plugin-aws-ses  → app/plugins/aws-ses/ (optional)
+ *   ../theme-default      → app/themes/default/   (always; npm fallback)
+ *   ../plugin-meilisearch → app/plugins/meilisearch/ (optional sibling only)
+ *   ../plugin-resend      → app/plugins/resend/ (optional sibling only)
+ *   ../plugin-sendgrid    → app/plugins/sendgrid/ (optional sibling only)
+ *   ../plugin-aws-ses     → app/plugins/aws-ses/ (optional sibling only)
  *
  * After copying, optionally calls cli-set-extensions.mjs to activate the
- * theme and enable the plugins when DATABASE_URL is available.
+ * default theme when DATABASE_URL is available.
  *
  * Usage:
  *   node scripts/install-default-extensions.mjs
@@ -52,6 +56,15 @@ const ALWAYS_INSTALL = [
     destDir: join(APP_DIR, 'themes', 'default'),
     packageId: '@bermooda/theme-default',
   },
+];
+
+/**
+ * Optional extensions installed only when the sibling directory is present.
+ * These are not activated by default but are useful for local plugin work.
+ *
+ * @type {ExtensionSpec[]}
+ */
+const OPTIONAL_INSTALL = [
   {
     siblingDir: join(REPO_ROOT, '..', 'plugin-meilisearch'),
     destDir: join(APP_DIR, 'plugins', 'meilisearch'),
@@ -62,15 +75,6 @@ const ALWAYS_INSTALL = [
     destDir: join(APP_DIR, 'plugins', 'resend'),
     packageId: '@bermooda/plugin-resend',
   },
-];
-
-/**
- * Optional extensions installed only when the sibling directory is present.
- * These are not activated by default but are needed for tests and local dev.
- *
- * @type {ExtensionSpec[]}
- */
-const OPTIONAL_INSTALL = [
   {
     siblingDir: join(REPO_ROOT, '..', 'plugin-sendgrid'),
     destDir: join(APP_DIR, 'plugins', 'sendgrid'),
@@ -187,8 +191,6 @@ async function setExtensionsInDb() {
       env: {
         ...process.env,
         BERMOODA_ACTIVE_THEME: '@bermooda/theme-default',
-        BERMOODA_ENABLED_PLUGINS:
-          '@bermooda/plugin-meilisearch,@bermooda/plugin-resend',
       },
     });
   } catch {
@@ -199,7 +201,7 @@ async function setExtensionsInDb() {
 }
 
 async function main() {
-  console.log('extensions:install  Installing default extensions…');
+  console.log('extensions:install  Installing default theme…');
 
   for (const spec of ALWAYS_INSTALL) {
     const installed = installFromSibling(spec);
@@ -213,7 +215,7 @@ async function main() {
   }
 
   console.log(
-    'extensions:install  Extensions copied to app/themes and app/plugins.'
+    'extensions:install  Default theme copied to app/themes (optional plugins copied when siblings exist).'
   );
   console.log('extensions:install  Installing per-extension npm dependencies…');
   installAllExtensionDeps(APP_DIR, { omitDev: false });
