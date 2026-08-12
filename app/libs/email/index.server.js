@@ -1,10 +1,13 @@
 import logger from '#/utils/logger.server';
+import { createNodemailerEmailProvider } from '#/libs/email/nodemailer.server';
 
 /** @type {Map<string, import('#/libs/email-types.server').EmailProvider>} */
 const _registry = new Map();
 
 /** @type {string | null} */
 let _activeProviderId = null;
+
+let _builtinsRegistered = false;
 
 /**
  * Register an email transport provider.
@@ -59,6 +62,7 @@ export function unregisterProvider(id) {
  * @returns {boolean}
  */
 export function hasProvider(id) {
+  ensureBuiltinProviders();
   return _registry.has(id);
 }
 
@@ -69,6 +73,7 @@ export function hasProvider(id) {
  * @returns {import('#/libs/email-types.server').EmailProvider}
  */
 export function getProvider(id) {
+  ensureBuiltinProviders();
   const provider = _registry.get(id);
 
   if (!provider) {
@@ -85,6 +90,7 @@ export function getProvider(id) {
  * @returns {string}
  */
 export function resolveEmailProvider(providerId) {
+  ensureBuiltinProviders();
   const normalized = String(providerId || '').trim();
   if (!normalized || !_registry.has(normalized)) {
     throw new Error(`Unknown email provider "${providerId}"`);
@@ -98,6 +104,7 @@ export function resolveEmailProvider(providerId) {
  * @param {string} id
  */
 export function setActiveProvider(id) {
+  ensureBuiltinProviders();
   if (!_registry.has(id)) {
     throw new Error(`Email provider "${id}" is not registered`);
   }
@@ -110,6 +117,7 @@ export function setActiveProvider(id) {
  * @returns {string | null}
  */
 export function getActiveProviderId() {
+  ensureBuiltinProviders();
   return _activeProviderId;
 }
 
@@ -119,6 +127,7 @@ export function getActiveProviderId() {
  * @returns {Array<{ id: string, name: string }>}
  */
 export function listProvidersWithDetails() {
+  ensureBuiltinProviders();
   return Array.from(_registry.values()).map((provider) => ({
     id: provider.id,
     name: provider.name || provider.id,
@@ -126,14 +135,18 @@ export function listProvidersWithDetails() {
 }
 
 /**
- * Resolve the active email provider (from enabled email plugins).
+ * Resolve the active email provider.
+ * Defaults to the built-in Nodemailer transport unless an email plugin
+ * has taken over as the active provider.
  *
  * @returns {import('#/libs/email-types.server').EmailProvider}
  */
 export function getActiveProvider() {
+  ensureBuiltinProviders();
+
   if (!_activeProviderId || !_registry.has(_activeProviderId)) {
     throw new Error(
-      'No email provider is active. Enable one under Admin → Plugins (Email providers).'
+      'No email provider is active. Configure SMTP in bermooda.config.js or enable an email plugin under Admin → Plugins.'
     );
   }
 
@@ -175,8 +188,18 @@ export async function sendEmail(message, options = {}) {
   }
 }
 
+function ensureBuiltinProviders() {
+  if (_builtinsRegistered) {
+    return;
+  }
+
+  _builtinsRegistered = true;
+  registerProvider('nodemailer', createNodemailerEmailProvider());
+}
+
 /** Reset registry state. Test use only — never call in production. */
 export function __resetEmailRegistry() {
   _registry.clear();
   _activeProviderId = null;
+  _builtinsRegistered = false;
 }

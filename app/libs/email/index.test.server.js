@@ -9,6 +9,14 @@ vi.mock('#/utils/logger.server', () => ({
   },
 }));
 
+vi.mock('#/libs/email/nodemailer.server', () => ({
+  createNodemailerEmailProvider: () => ({
+    id: 'nodemailer',
+    name: 'Nodemailer (SMTP)',
+    send: vi.fn(async () => ({ success: true, id: 'nm_1' })),
+  }),
+}));
+
 import {
   __resetEmailRegistry,
   getActiveProvider,
@@ -34,22 +42,28 @@ describe('email registry', () => {
     __resetEmailRegistry();
   });
 
-  it('requires an enabled provider before send', async () => {
-    expect(() => getActiveProvider()).toThrow(/No email provider is active/);
-    await expect(sendEmail(sampleMessage)).rejects.toThrow(
-      /No email provider is active/
-    );
-  });
-
-  it('activates the first registered provider', async () => {
-    const send = vi.fn(async () => ({ success: true, id: '1' }));
-    registerProvider('resend', { id: 'resend', name: 'Resend', send });
-
-    expect(getActiveProviderId()).toBe('resend');
+  it('registers the built-in Nodemailer provider by default', async () => {
+    expect(getActiveProviderId()).toBe('nodemailer');
+    expect(hasProvider('nodemailer')).toBe(true);
     expect(listProvidersWithDetails()).toEqual([
-      { id: 'resend', name: 'Resend' },
+      { id: 'nodemailer', name: 'Nodemailer (SMTP)' },
     ]);
 
+    const result = await sendEmail(sampleMessage);
+    expect(result.success).toBe(true);
+    expect(result.id).toBe('nm_1');
+  });
+
+  it('lets an email plugin take over as the active provider', async () => {
+    const send = vi.fn(async () => ({ success: true, id: '1' }));
+    // Ensure builtin is registered first (as at runtime).
+    expect(getActiveProviderId()).toBe('nodemailer');
+
+    registerProvider('resend', { id: 'resend', name: 'Resend', send }, {
+      isActive: true,
+    });
+
+    expect(getActiveProviderId()).toBe('resend');
     await sendEmail(sampleMessage);
     expect(send).toHaveBeenCalledWith(sampleMessage);
   });
@@ -79,11 +93,8 @@ describe('email registry', () => {
   });
 
   it('unregisters providers and falls back to another active id', () => {
-    registerProvider('resend', {
-      id: 'resend',
-      name: 'Resend',
-      send: vi.fn(),
-    });
+    expect(getActiveProviderId()).toBe('nodemailer');
+
     registerProvider(
       'sendgrid',
       { id: 'sendgrid', name: 'SendGrid', send: vi.fn() },
@@ -93,16 +104,12 @@ describe('email registry', () => {
     expect(getActiveProviderId()).toBe('sendgrid');
     unregisterProvider('sendgrid');
     expect(hasProvider('sendgrid')).toBe(false);
-    expect(getActiveProviderId()).toBe('resend');
+    expect(getActiveProviderId()).toBe('nodemailer');
     expect(() => resolveEmailProvider('sendgrid')).toThrow(/sendgrid/);
   });
 
   it('rejects invalid messages', async () => {
-    registerProvider('resend', {
-      id: 'resend',
-      name: 'Resend',
-      send: vi.fn(async () => ({ success: true })),
-    });
+    expect(getActiveProvider().id).toBe('nodemailer');
 
     await expect(sendEmail(/** @type {any} */ (null))).rejects.toThrow(
       /message/

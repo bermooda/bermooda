@@ -43,8 +43,17 @@ export const DEFAULT_AUTH = {
  */
 
 /**
+ * Nodemailer SMTP options (`email.smtp` in bermooda.config.js).
+ * Pass-through to `nodemailer.createTransport`. When omitted, Nodemailer
+ * uses its defaults (localhost:587, no auth). May also be a connection URL.
+ *
+ * @typedef {Record<string, unknown> | string} EmailSmtpConfig
+ */
+
+/**
  * @typedef {Object} EmailConfig
  * @property {string} [fromNoReply]
+ * @property {EmailSmtpConfig} [smtp]
  */
 
 /**

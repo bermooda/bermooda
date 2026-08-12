@@ -23,8 +23,8 @@ import { seedSubscriptionsPos } from './seed/subscriptions-pos.js';
 
 // Inline seed defaults so `node prisma/seed.js` works without Vite `#/` aliases.
 // Keep in sync with app/core/settings/defaults.js where practical.
-const DEFAULT_ENABLED_PLUGINS = ['@bermooda/plugin-resend'];
-const DEFAULT_PLUGIN_ORDER = ['@bermooda/plugin-resend'];
+const DEFAULT_ENABLED_PLUGINS = [];
+const DEFAULT_PLUGIN_ORDER = [];
 const SETTING_DEFAULTS = {
   defaultCurrency: 'USD',
   currencies: ['USD', 'EUR', 'AUD'],
