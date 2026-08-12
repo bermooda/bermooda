@@ -22,7 +22,7 @@
 
 /**
  * @typedef {Object} EmailProvider
- * @property {string} id - Provider identifier used in EMAIL_PROVIDER / settings
+ * @property {string} id - Provider identifier (e.g. `nodemailer`, or a plugin id)
  * @property {string} [name] - Human-readable provider name
  * @property {(message: EmailMessage) => Promise<EmailSendResult>} send
  */

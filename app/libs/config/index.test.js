@@ -103,6 +103,25 @@ describe('createConfig', () => {
     const config = createConfig({}, { nodeEnv: 'development', port: 4173 });
     expect(config.baseUrl).toBe('http://localhost:4173');
   });
+  it('passes through email.smtp from root config', () => {
+    const smtp = {
+      host: 'smtp.example.com',
+      port: 587,
+      auth: { user: 'u', pass: 'p' },
+    };
+    const config = createConfig(
+      {
+        baseUrl: 'https://demo.example',
+        email: {
+          fromNoReply: 'shop <noreply@example.com>',
+          smtp,
+        },
+      },
+      { nodeEnv: 'production' }
+    );
+
+    expect(config.email.smtp).toEqual(smtp);
+  });
 });
 
 describe('PLATFORM_NAME', () => {

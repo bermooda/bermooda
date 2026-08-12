@@ -63,7 +63,7 @@ npx react-router dev --host
 
 Port comes from `PORT` (default `3000`) via Vite `server.port` / `#/libs/config` — set `PORT=4000` to change it. `strictPort` is enabled so a busy port fails instead of silently binding another one.
 
-A `.env` file must exist in the repo root (see `.env.example`). `npm run setup` creates it from the example when missing. Placeholder values are fine for basic local development — the app starts and serves pages without real API keys for Stripe, Resend, etc.
+A `.env` file must exist in the repo root (see `.env.example`). `npm run setup` creates it from the example when missing. Placeholder values are fine for basic local development — the app starts and serves pages without real API keys for Stripe, etc. Transactional email defaults to built-in Nodemailer (SMTP via `email.smtp` in `bermooda.config.js`; Nodemailer defaults when omitted).
 
 `bermooda.config.js` is gitignored and created by `npm run setup` (copies `bermooda.config.example.js`) or by `bermooda install`. Production requires `baseUrl` in that file.
 

@@ -6,7 +6,8 @@ import { getActiveProviderId } from '#/libs/email/index.server';
 
 /**
  * True when transactional admin mail can be sent:
- * a non-empty `fromNoReply` and an active registered email provider.
+ * a non-empty `fromNoReply` and an active registered email provider
+ * (built-in Nodemailer by default, or an enabled email plugin).
  *
  * @returns {boolean}
  */

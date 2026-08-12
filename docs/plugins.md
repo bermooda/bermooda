@@ -212,7 +212,14 @@ providers: {
 };
 ```
 
-Custom email transports implement `send({ from, to, subject, html, text? })`. First-party transports are external plugins (`@bermooda/plugin-resend`, `@bermooda/plugin-sendgrid`, `@bermooda/plugin-aws-ses`) installed under `app/plugins/{resend,sendgrid,aws-ses}/`. Only one email-provider plugin can be active: enabling another under **Admin → Plugins → Email providers** automatically deactivates the previous one.
+The built-in default transport is **Nodemailer (SMTP)** via `email.smtp` in
+`bermooda.config.js` (Nodemailer defaults when omitted). Custom / ESP transports
+implement `send({ from, to, subject, html, text? })`. First-party ESP plugins
+(`@bermooda/plugin-resend`, `@bermooda/plugin-sendgrid`,
+`@bermooda/plugin-aws-ses`) install under `app/plugins/{resend,sendgrid,aws-ses}/`.
+Only one email-provider plugin can be active: enabling another under
+**Admin → Plugins → Email providers** automatically deactivates the previous one
+and replaces Nodemailer until the plugin is disabled.
 
 ```js
 import { definePlugin, defineProvider } from '#/core/plugins/index.server';
@@ -230,7 +237,9 @@ export const pluginManifest = definePlugin({
 });
 ```
 
-The email registry lives in `#/libs/email`. Credentials stay in environment variables.
+The email registry lives in `#/libs/email`. Nodemailer SMTP settings live in
+`bermooda.config.js`; ESP plugin credentials stay in plugin settings (or env
+where a plugin documents that).
 
 For `search`, pass the search implementation as `spec.provider`. Set `isDefault: true` if the plugin should become the active default search provider while enabled:
 

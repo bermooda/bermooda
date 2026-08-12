@@ -2,12 +2,21 @@
 
 This directory contains React Email templates and send helpers for the application.
 
-Transport is pluggable: enable **one** email provider plugin under **Admin → Plugins** (Resend, SendGrid, Amazon SES, or a custom plugin). Templates render to HTML via `@react-email/render`, then call `#/libs/email`.
+Transport defaults to the **built-in Nodemailer (SMTP)** provider, configured via
+`email.smtp` in `bermooda.config.js`. When `email.smtp` is omitted, Nodemailer
+uses its defaults (`localhost:587`, no auth). You can optionally enable **one**
+email provider plugin under **Admin → Plugins** (Resend, SendGrid, Amazon SES,
+or a custom plugin) to replace Nodemailer as the active transport. Templates
+render to HTML via `@react-email/render`, then call `#/libs/email`.
 
 ## Choosing a provider
 
-1. Open **Admin → Plugins → Email providers**, enter credentials in the plugin settings form (API keys are encrypted at rest), and save.
-2. Click **Activate** on exactly one transport. Activating another deactivates the current one.
+1. **Default (Nodemailer):** set `email.fromNoReply` (and optionally `email.smtp`)
+   in `bermooda.config.js`. No plugin required.
+2. **ESP plugin:** open **Admin → Plugins → Email providers**, enter credentials
+   in the plugin settings form (API keys are encrypted at rest), and click
+   **Activate** on exactly one transport. Activating another deactivates the
+   current one; disabling the plugin falls back to Nodemailer.
 
 ## Custom providers via plugins
 
