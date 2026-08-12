@@ -59,9 +59,13 @@ describe('email registry', () => {
     // Ensure builtin is registered first (as at runtime).
     expect(getActiveProviderId()).toBe('nodemailer');
 
-    registerProvider('resend', { id: 'resend', name: 'Resend', send }, {
-      isActive: true,
-    });
+    registerProvider(
+      'resend',
+      { id: 'resend', name: 'Resend', send },
+      {
+        isActive: true,
+      }
+    );
 
     expect(getActiveProviderId()).toBe('resend');
     await sendEmail(sampleMessage);
