@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.10.0...bermooda-v0.11.0) (2026-08-12)
+
+
+### Features
+
+* **email:** add nodemailer as default SMTP transport ([#233](https://github.com/bermooda/bermooda/issues/233)) ([88d3869](https://github.com/bermooda/bermooda/commit/88d38696c019f50baedcd24148d06effd2d915d7))
+
 ## [0.10.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.9.5...bermooda-v0.10.0) (2026-08-11)
 
 
