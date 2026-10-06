@@ -89,15 +89,38 @@ paths:
   /api/admin/v1/setup:
     get:
       summary: Bootstrap readiness status
+      description: No API key required. Rate-limited (setup policy).
       tags: [Setup]
       responses:
         '200':
           description: Setup status snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  setup:
+                    type: object
+                    properties:
+                      onboardingAvailable: { type: boolean }
+                      adminExists: { type: boolean }
+                      adminSetupComplete: { type: boolean }
+                      apiKeyCount: { type: integer }
+                      bootstrapApiKeyAvailable: { type: boolean }
+                      setupTokenConfigured: { type: boolean }
+        '429':
+          description: Rate limited
 
   /api/admin/v1/setup/admin:
     post:
       summary: Create first admin (when onboarding available)
+      description: >-
+        No API key required. When SETUP_TOKEN is configured on the server, the
+        request must send it via X-Setup-Token or Authorization Bearer; when it
+        is unset, the endpoint is open while onboarding is available (same gate
+        as the Admin UI).
       tags: [Setup]
+      security: [{ setupToken: [] }, {}]
       requestBody:
         required: true
         content:
@@ -108,31 +131,63 @@ paths:
               properties:
                 name: { type: string }
                 email: { type: string }
-                password: { type: string }
-                confirmPassword: { type: string }
+                password: { type: string, minLength: 12 }
+                confirmPassword:
+                  type: string
+                  description: Defaults to password when omitted
       responses:
         '201':
           description: Admin created
+        '400':
+          description: Invalid JSON
+        '401':
+          description: SETUP_TOKEN is configured and missing or invalid
         '409':
           description: Setup already complete
+        '422':
+          description: Validation failed (fieldErrors + fields)
+        '429':
+          description: Rate limited
+        '500':
+          description: Unexpected error (INTERNAL_ERROR)
 
   /api/admin/v1/setup/api-key:
     post:
       summary: Create first bootstrap API key
-      description: Requires SETUP_TOKEN via X-Setup-Token or Bearer.
+      description: >-
+        Requires SETUP_TOKEN via X-Setup-Token or Authorization Bearer. Refused
+        when SETUP_TOKEN is not configured on the server (use CLI
+        seed/bootstrap instead).
       tags: [Setup]
       security: [{ setupToken: [] }]
-      parameters:
-        - name: X-Setup-Token
-          in: header
-          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label: { type: string, default: bootstrap }
+                scopes:
+                  type: array
+                  items: { type: string }
+                  default: [admin]
+                expiresAt: { type: string, format: date-time, nullable: true }
       responses:
         '201':
           description: Bootstrap key created (raw key returned once)
+        '400':
+          description: Invalid JSON or input (LABEL_REQUIRED, SCOPES_REQUIRED, SCOPES_INVALID, EXPIRES_AT_INVALID)
         '401':
-          description: SETUP_TOKEN missing or invalid
+          description: SETUP_TOKEN missing, invalid, or not configured (SETUP_TOKEN_REQUIRED)
         '409':
-          description: API key already exists
+          description: API key already exists (BOOTSTRAP_KEY_EXISTS)
+        '422':
+          description: No admin user exists yet (ADMIN_REQUIRED)
+        '429':
+          description: Rate limited
+        '500':
+          description: Unexpected error (INTERNAL_ERROR)
 
   /api/admin/v1/settings:
     get:
@@ -698,4 +753,6 @@ components:
       type: apiKey
       in: header
       name: X-Setup-Token
-      description: One-shot SETUP_TOKEN for bootstrap API key creation
+      description: >-
+        SETUP_TOKEN for the unauthenticated setup endpoints. Also accepted as
+        Authorization: Bearer <token>.

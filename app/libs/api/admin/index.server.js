@@ -1,5 +1,6 @@
 // Shared helpers for authenticated admin REST API routes (/api/admin/v1/*).
 
+import { handleError } from '#/libs/error/index.server';
 import { parseListPagination } from '#/libs/prisma/pagination/index.server';
 
 export {
@@ -155,4 +156,20 @@ export function createDomainErrorMapper({
 
     return Response.json({ error: err.message, code: err.code }, { status });
   };
+}
+
+/**
+ * Log and alert an unexpected error via `handleError`, then return a generic
+ * 500 JSON response so internal error messages never reach API clients.
+ *
+ * @param {unknown} err
+ * @param {{ source: string }} options
+ * @returns {Response}
+ */
+export function jsonUnexpectedError(err, { source }) {
+  handleError(err, { source, status: 500 });
+  return Response.json(
+    { error: 'Internal server error', code: 'INTERNAL_ERROR' },
+    { status: 500 }
+  );
 }

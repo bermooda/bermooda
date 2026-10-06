@@ -29,12 +29,12 @@ import {
 import { createApiKey, listApiKeys } from '#/core/api-keys/index.server';
 
 import {
+  checkSetupToken,
   createBootstrapApiKey,
   createBootstrapApiKeyTrusted,
   createSetupAdmin,
   extractSetupToken,
   getSetupStatus,
-  isSetupTokenAuthorized,
   parseSetupAdminInput,
   setupTokensMatch,
 } from './index.server';
@@ -53,6 +53,11 @@ describe('setupTokensMatch', () => {
     expect(setupTokensMatch('abc', 'abd')).toBe(false);
     expect(setupTokensMatch('', 'abc')).toBe(false);
     expect(setupTokensMatch('abc', '')).toBe(false);
+  });
+
+  it('rejects tokens of a different length without throwing', () => {
+    expect(setupTokensMatch('abc', 'abcdef')).toBe(false);
+    expect(setupTokensMatch('a-much-longer-token', 'abc')).toBe(false);
   });
 });
 
@@ -73,22 +78,62 @@ describe('extractSetupToken', () => {
     });
     expect(extractSetupToken(request)).toBe('secret-token');
   });
-});
 
-describe('isSetupTokenAuthorized', () => {
-  it('returns false when SETUP_TOKEN is unset', () => {
+  it('accepts a case-insensitive Bearer scheme', () => {
     const request = new Request('http://localhost/setup', {
-      headers: { 'X-Setup-Token': 'anything' },
+      headers: { Authorization: 'bearer   secret-token' },
     });
-    expect(isSetupTokenAuthorized(request)).toBe(false);
+    expect(extractSetupToken(request)).toBe('secret-token');
   });
 
-  it('returns true when token matches', () => {
-    process.env.SETUP_TOKEN = 'shop-setup-secret';
-    const request = new Request('http://localhost/setup', {
-      headers: { 'X-Setup-Token': 'shop-setup-secret' },
+  it('returns an empty string for other schemes or no headers', () => {
+    expect(
+      extractSetupToken(
+        new Request('http://localhost/setup', {
+          headers: { Authorization: 'Basic dXNlcjpwYXNz' },
+        })
+      )
+    ).toBe('');
+    expect(extractSetupToken(new Request('http://localhost/setup'))).toBe('');
+  });
+});
+
+describe('checkSetupToken', () => {
+  const withToken = (token) =>
+    new Request('http://localhost/setup', {
+      headers: token ? { 'X-Setup-Token': token } : {},
     });
-    expect(isSetupTokenAuthorized(request)).toBe(true);
+
+  it('refuses required routes when SETUP_TOKEN is unset', () => {
+    expect(checkSetupToken(withToken('anything'))).toMatchObject({
+      status: 401,
+      body: { code: 'SETUP_TOKEN_REQUIRED' },
+    });
+  });
+
+  it('lets optional routes through when SETUP_TOKEN is unset', () => {
+    expect(checkSetupToken(withToken(null), { optional: true })).toBeNull();
+  });
+
+  it('accepts the configured token', () => {
+    process.env.SETUP_TOKEN = 'shop-setup-secret';
+    expect(checkSetupToken(withToken('shop-setup-secret'))).toBeNull();
+    expect(
+      checkSetupToken(withToken('shop-setup-secret'), { optional: true })
+    ).toBeNull();
+  });
+
+  it('rejects a missing or wrong token when SETUP_TOKEN is set', () => {
+    process.env.SETUP_TOKEN = 'shop-setup-secret';
+    for (const options of [{}, { optional: true }]) {
+      expect(checkSetupToken(withToken(null), options)).toMatchObject({
+        status: 401,
+        body: { code: 'SETUP_TOKEN_REQUIRED' },
+      });
+      expect(checkSetupToken(withToken('wrong'), options)).toMatchObject({
+        status: 401,
+      });
+    }
   });
 });
 

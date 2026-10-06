@@ -4,7 +4,7 @@
 import { rateLimitMiddleware } from '#/libs/rate-limit.server';
 import { getSetupStatus } from '#/core/setup/index.server';
 
-export const middleware = [rateLimitMiddleware('api-admin')];
+export const middleware = [rateLimitMiddleware('setup')];
 
 export async function loader() {
   const setup = await getSetupStatus();

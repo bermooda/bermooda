@@ -2,7 +2,7 @@
 // Machine-friendly shop bootstrap: status, first admin, first API key.
 // Complements UI onboarding and CLI seed — used by agents and post-install tooling.
 
-import { timingSafeEqual } from 'crypto';
+import { createHash, timingSafeEqual } from 'crypto';
 
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
@@ -37,7 +37,16 @@ function readConfiguredSetupToken() {
 }
 
 /**
+ * @param {string} value
+ * @returns {Buffer}
+ */
+function sha256(value) {
+  return createHash('sha256').update(value).digest();
+}
+
+/**
  * Constant-time compare of two strings (empty never matches).
+ * Compares SHA-256 digests so the token length is not leaked via timing.
  *
  * @param {string} provided
  * @param {string} expected
@@ -45,10 +54,7 @@ function readConfiguredSetupToken() {
  */
 export function setupTokensMatch(provided, expected) {
   if (!provided || !expected) return false;
-  const a = Buffer.from(provided);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
+  return timingSafeEqual(sha256(provided), sha256(expected));
 }
 
 /**
@@ -62,23 +68,38 @@ export function extractSetupToken(request) {
   if (headerToken) return headerToken;
 
   const auth = request.headers.get('Authorization') ?? '';
-  if (auth.startsWith('Bearer ')) {
-    return auth.slice(7).trim();
-  }
-  return '';
+  const match = /^bearer\s+(.+)$/i.exec(auth.trim());
+  return match ? match[1].trim() : '';
 }
 
 /**
- * Whether the request presents a valid SETUP_TOKEN.
- * When SETUP_TOKEN is unset, returns false (CLI seed remains the trusted path).
+ * Enforce the SETUP_TOKEN gate for an unauthenticated setup request.
+ *
+ * - SETUP_TOKEN set: the request must present it.
+ * - SETUP_TOKEN unset: `optional` routes pass (first-admin onboarding, same as
+ *   the Admin UI); other routes are refused (CLI seed remains the trusted path).
  *
  * @param {Request} request
- * @returns {boolean}
+ * @param {{ optional?: boolean }} [options]
+ * @returns {{ status: number, body: { error: string, code: string } } | null}
+ *   null when authorized, otherwise the 401 payload.
  */
-export function isSetupTokenAuthorized(request) {
+export function checkSetupToken(request, { optional = false } = {}) {
   const expected = readConfiguredSetupToken();
-  if (!expected) return false;
-  return setupTokensMatch(extractSetupToken(request), expected);
+  if (!expected && optional) return null;
+  if (expected && setupTokensMatch(extractSetupToken(request), expected)) {
+    return null;
+  }
+
+  return {
+    status: 401,
+    body: {
+      error: expected
+        ? 'A valid SETUP_TOKEN is required (X-Setup-Token or Authorization: Bearer).'
+        : 'SETUP_TOKEN is not configured on the server. Create the key via CLI seed/bootstrap instead.',
+      code: 'SETUP_TOKEN_REQUIRED',
+    },
+  };
 }
 
 /**
