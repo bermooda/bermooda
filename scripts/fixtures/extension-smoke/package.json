@@ -1,0 +1,17 @@
+{
+  "name": "@bermooda/theme-extension-smoke",
+  "version": "0.0.0",
+  "private": true,
+  "description": "CI fixture: a theme with its own nested runtime dependency tree.",
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "clsx": "1.2.1",
+    "p-limit": "7.3.3"
+  },
+  "bermooda": {
+    "title": "Extension smoke",
+    "slug": "extension-smoke",
+    "engine": ">=0.11.0"
+  }
+}

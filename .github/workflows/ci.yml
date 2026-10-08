@@ -33,6 +33,15 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - run: npm run prisma:generate
       - run: npm run build
+      # Rebuild with a fixture theme that has its own locked nested deps, then
+      # drop its node_modules (as the Docker image does) and check the server
+      # bundle still imports and the client chunk stays free of semver.
+      - name: Extension smoke build
+        run: |
+          cp -R scripts/fixtures/extension-smoke app/themes/extension-smoke
+          npm run build
+          rm -rf app/themes/extension-smoke/node_modules
+          node scripts/check-extension-smoke-build.mjs
     env:
       DATABASE_URL: file:./sqlite.db
 

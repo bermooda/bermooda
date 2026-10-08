@@ -70,10 +70,23 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 - **Problem:** It always takes `latest`. If a newer theme requires a newer `bermooda.engine`, server discovery soft-skips it and a fresh `npm run setup` ends with no usable storefront theme and only a log line.
 - **Fix:** After extracting, read the theme's `package.json` and check `bermooda.engine` against the root version with `semver.satisfies`. Fail with a clear message, or pack the newest compatible version via `npm view @bermooda/theme-default versions --json` + `semver.maxSatisfying`. The script can't import `engine.server.js` directly (it imports JSON without import attributes), so use `semver` + `JSON.parse(readFileSync('package.json'))` in the script.
 
-#### O4. CI never exercises the extension build path (Medium, automation/testing)
+#### O4. CI never exercises the extension build path (Medium, automation/testing) — **Fixed**
 
 - **Where:** `.github/workflows/ci.yml` `build` job. CI has no installed themes/plugins, so `install-extension-deps` logs "nothing to install" and `ssr.noExternal` is empty.
-- **Fix:** Add a fixture extension (e.g. `scripts/fixtures/extension-smoke/` with a theme that has one nested dependency that imports another, plus a lockfile) and a CI step that copies it into `app/themes/`, runs `npm run build`, and asserts `build/server/index.js` contains the dependency and imports without `ERR_MODULE_NOT_FOUND`. This also covers P1 regressions if it asserts the client `storefront-components-*.js` chunk has no `SEMVER_SPEC_VERSION`.
+- **Fix:** The fixture theme `scripts/fixtures/extension-smoke/` has a lockfile and two exact-pinned deps:
+  - `p-limit`, which imports `yocto-queue`. Neither is a shop-root dependency.
+  - `clsx@1`, which shadows the shop root's `clsx@2`.
+
+  The CI `build` job's "Extension smoke build" step copies the fixture to `app/themes/extension-smoke/`, runs `npm run build` (prebuild runs `npm ci --ignore-scripts` for it), and deletes the nested `node_modules` as the Docker image does. It then runs `scripts/check-extension-smoke-build.mjs`, which asserts:
+  - `build/server/index.js` has no external `import` of any of the three deps;
+  - importing `build/server/index.js` exits 0 without `ERR_MODULE_NOT_FOUND`, and server discovery logs `Theme registered` for the fixture;
+  - no `storefront-components-*.js` client chunk contains `SEMVER_SPEC_VERSION` (guards P1).
+
+- **Why `clsx`:** Vite only externalizes a bare import it can resolve from the shop root, so extension-only deps like `p-limit` get inlined even without `ssr.noExternal`. The setting only matters when the root also has the package, often at another version, as with `clsx`. Without the `clsx` dep the smoke would still pass after `ssr.noExternal` was removed.
+- **Verified failure modes:** each regression was injected locally and the check failed with a specific message:
+  - `ssr.noExternal: []`: "imports "clsx" as an external".
+  - `p-limit` forced into `ssr.external`: the external-import failure plus the import's `ERR_MODULE_NOT_FOUND`.
+  - `semver` re-imported into the client registry: "bundles semver".
 
 #### O5. Client registry eagerly bundles every installed theme (Low now, scales badly)
 
@@ -90,7 +103,7 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 
 1. [x] O1: Docker final-stage cleanup (verified with `docker build` + `docker run`).
 2. [x] O2: decide on install-script policy with the maintainer, then implement (`--ignore-scripts` + `BERMOODA_EXTENSION_INSTALL_SCRIPTS` opt-in).
-3. [ ] O4: fixture extension + CI smoke build (also guards P1/D1).
+3. [x] O4: fixture extension + CI smoke build (also guards P1, O1's "no nested node_modules at runtime", and `ssr.noExternal`).
 4. [ ] O3: engine-aware default theme fallback.
 5. [ ] O6: reuse `EXTENSION_KIND_DIRS` in the Tailwind sync.
 6. [ ] O5: move to a `core/themes` performance pass (record in the tracker's later-pass table if not done here).
