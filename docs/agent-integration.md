@@ -58,9 +58,9 @@ Gaps that block “agent sets up a shop from scratch”:
 
 Treat the Admin API as the agent contract. Before or alongside MCP, close bootstrap and catalog holes:
 
-1. **Bootstrap / setup endpoints** (guarded: only when no admin, or via one-time setup token from CLI seed)
+1. **Bootstrap / setup endpoints** (first admin: only while onboarding is open, plus `SETUP_TOKEN` when configured; first API key: `SETUP_TOKEN` required)
    - Create first admin (or document that seed/CLI already did)
-   - Create first API key from a trusted bootstrap path (CLI after seed, or one-shot setup secret)
+   - Create first API key from a trusted bootstrap path (CLI after seed, or `SETUP_TOKEN`)
 2. **Categories admin CRUD** mirroring products
 3. **Theme / plugin** read+activate (or extend settings snapshot)
 4. **OpenAPI** (or equivalent) generated/kept in sync — MCP and future SDKs derive from this

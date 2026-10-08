@@ -26,7 +26,7 @@ Authorization: Bearer berm_<your_key>
 **Bootstrap (no existing key):**
 
 1. Prefer **CLI seed / `npm run cli:bootstrap`** — creates the first admin (if needed), marks setup complete, prints a one-time bootstrap `berm_` key, writes `.bermooda/bootstrap-api-key`, and may append `BERMOODA_API_KEY` to `.env`. Then run `bermooda mcp init` from [@bermooda/cli](https://github.com/bermooda/cli).
-2. Or use the unauthenticated setup endpoints below with a one-shot `SETUP_TOKEN` (see `.env.example`).
+2. Or use the unauthenticated setup endpoints below with `SETUP_TOKEN` (see `.env.example`).
 
 **Creating additional keys:** `POST /api/admin/v1/api-keys` (requires an existing admin key), or **Admin → API**.
 
@@ -51,7 +51,9 @@ Keys may call `/api/admin/v1` when they have `admin` or any granular admin-area 
 
 ### Setup endpoints (no API key)
 
-These live under `/api/admin/v1/setup*` and are rate-limited but **not** API-key authenticated.
+These live under `/api/admin/v1/setup*` and are **not** API-key authenticated. They share a strict `setup` rate limit (10 requests/min per client and path).
+
+`SETUP_TOKEN` is sent as `X-Setup-Token: <token>` or `Authorization: Bearer <token>`. It stays valid until you remove it from the environment; the endpoints themselves only act once (first admin, first key). Set it on any publicly reachable deployment before first start, so nobody else can claim the first admin. A missing or wrong token returns `401` with `code: "SETUP_TOKEN_REQUIRED"`. Unexpected server errors return `500` with `code: "INTERNAL_ERROR"` and no internal details.
 
 #### `GET /api/admin/v1/setup`
 
@@ -59,15 +61,21 @@ Bootstrap readiness snapshot: `onboardingAvailable`, `adminExists`, `adminSetupC
 
 #### `POST /api/admin/v1/setup/admin`
 
-Create the first admin when onboarding is still available (same gate as the Admin UI).
+Create the first admin when onboarding is still available (same gate as the Admin UI). When `SETUP_TOKEN` is configured, the request must include it; when it is unset, the endpoint is open while onboarding is available.
 
 **Body:** `{ "name": "...", "email": "...", "password": "...", "confirmPassword": "..." }` — `confirmPassword` defaults to `password` when omitted.
+
+Errors: `401 SETUP_TOKEN_REQUIRED` (only when `SETUP_TOKEN` is configured), `409` when setup is already complete, `422` with `fieldErrors` + `fields` on validation failure.
 
 #### `POST /api/admin/v1/setup/api-key`
 
 Create the **first** API key when none exist. Requires `SETUP_TOKEN` via `X-Setup-Token` or `Authorization: Bearer <SETUP_TOKEN>`. Returns `{ "key": "berm_...", "apiKey": { ... } }` once.
 
-When `SETUP_TOKEN` is unset, use CLI seed/bootstrap instead.
+**Body (optional):** `{ "label": "bootstrap", "scopes": ["admin"], "expiresAt": null }`.
+
+Errors: `401 SETUP_TOKEN_REQUIRED`, `409 BOOTSTRAP_KEY_EXISTS`, `422 ADMIN_REQUIRED` (create the first admin first), `400` for invalid input.
+
+When `SETUP_TOKEN` is unset, this endpoint always returns `401`; use CLI seed/bootstrap instead.
 
 ## Error responses
 

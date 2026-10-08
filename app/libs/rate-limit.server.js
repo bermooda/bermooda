@@ -9,6 +9,8 @@ export const RATE_LIMITS = {
   'api-public': { limit: 120, windowMs: 60_000 },
   'api-admin': { limit: 300, windowMs: 60_000 },
   'webhooks': { limit: 200, windowMs: 60_000 },
+  // Unauthenticated /api/admin/v1/setup* (first admin, SETUP_TOKEN guess attempts).
+  'setup': { limit: 10, windowMs: 60_000 },
 };
 
 /**

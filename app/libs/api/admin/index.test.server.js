@@ -1,14 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('#/libs/error/index.server', () => ({
+  handleError: vi.fn(),
+}));
 
 import {
   createDomainErrorMapper,
   jsonListResponse,
+  jsonUnexpectedError,
   jsonResourceOr404,
   parseAdminListPagination,
   parseBooleanQueryParam,
   parseOptionalJsonBody,
   requireOneOfMethods,
 } from '#/libs/api/admin/index.server';
+import { handleError } from '#/libs/error/index.server';
 
 describe('requireOneOfMethods', () => {
   it('returns null when the method is allowed', () => {
@@ -144,5 +150,22 @@ describe('createDomainErrorMapper', () => {
       Object.assign(new Error('Duplicate'), { code: 'DUPLICATE' })
     );
     expect(conflict.status).toBe(409);
+  });
+});
+
+describe('jsonUnexpectedError', () => {
+  it('reports via handleError and hides the internal message', async () => {
+    const err = new Error('connect ECONNREFUSED 10.0.0.5:5432');
+    const response = jsonUnexpectedError(err, { source: 'api/test' });
+
+    expect(handleError).toHaveBeenCalledWith(err, {
+      source: 'api/test',
+      status: 500,
+    });
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+    });
   });
 });

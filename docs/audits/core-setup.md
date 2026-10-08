@@ -116,8 +116,8 @@ Verified with `grep -rn` across `app/`, `prisma/`, `scripts/` at baseline:
 
 Missing coverage at baseline. Add it alongside the fixes above:
 
-- **No route tests** for the three setup routes. Add `app/routes/api/admin/v1/setup.test.jsx`, `setup/admin.test.jsx`, `setup/api-key.test.jsx` (no `.server` in route test names, per CLAUDE.md), covering method guard (405), token guard (401), invalid JSON (400), success (201), domain errors (409/422), unexpected errors (handleError path), and middleware composition.
-- **Core:** `createBootstrapApiKey` happy path; its `BOOTSTRAP_KEY_EXISTS` path; `extractSetupToken` with no headers / non-Bearer scheme / lowercase scheme; `getSetupStatus` with `adminSetupComplete: false`.
+- ~~**No route tests** for the three setup routes.~~ Done in PR 1. Add `app/routes/api/admin/v1/setup.test.jsx`, `setup/admin.test.jsx`, `setup/api-key.test.jsx` (no `.server` in route test names, per CLAUDE.md), covering method guard (405), token guard (401), invalid JSON (400), success (201), domain errors (409/422), unexpected errors (handleError path), and middleware composition.
+- **Core:** `createBootstrapApiKey` happy path; its `BOOTSTRAP_KEY_EXISTS` path; ~~`extractSetupToken` with no headers / non-Bearer scheme / lowercase scheme~~ (done in PR 1); `getSetupStatus` with `adminSetupComplete: false`.
 
 ### D1. Docs drift (Low)
 
@@ -147,18 +147,18 @@ S3 adds a `SETTING_KEYS` entry only. That's a settings row, not a schema change,
 
 ## Status checklist
 
-- [ ] S1 setup/admin token gate (policy decided: \_\_\_)
-- [ ] S2 dedicated rate-limit bucket
+- [x] S1 setup/admin token gate (policy: required when `SETUP_TOKEN` is configured, open otherwise)
+- [x] S2 dedicated rate-limit bucket (`setup`, 10/min)
 - [ ] S3 race-safe bootstrap key
 - [ ] S4 P2002 mapping in `createFirstAdmin`
-- [ ] S5 `handleError` for unexpected errors
+- [x] S5 `handleError` for unexpected errors (`jsonUnexpectedError` in `#/libs/api/admin/index.server`)
 - [ ] S6 audit log entries
 - [ ] S7 status payload trimmed (or decision recorded)
-- [ ] S8 digest compare + case-insensitive Bearer
+- [x] S8 digest compare + case-insensitive Bearer
 - [ ] Q1 shared key primitives, seed migrated
 - [ ] Q2 dead/redundant code removed
 - [ ] Q3 lockout message
 - [ ] Q4 seed email normalized
-- [ ] T1 route + core tests
-- [ ] D1 docs synced
+- [ ] T1 route + core tests (done: route tests, `extractSetupToken`/`checkSetupToken`; open: `createBootstrapApiKey` happy/409 paths, `getSetupStatus` with no flag. Add with S3/Q2.)
+- [x] D1 docs synced
 - [ ] `setup/` row in [code-quality-review.md](../code-quality-review.md) marked ✅ with a summary

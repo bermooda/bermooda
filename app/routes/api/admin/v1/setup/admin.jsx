@@ -1,19 +1,30 @@
 // POST /api/admin/v1/setup/admin — create first admin when onboarding is open
-// No API key required. Same gate as the Admin UI onboarding form.
+// No API key required. Same gate as the Admin UI onboarding form, plus
+// SETUP_TOKEN (X-Setup-Token or Authorization Bearer) when it is configured.
 
-import { parseJsonBody, requireMethod } from '#/libs/api/admin/index.server';
+import {
+  jsonUnexpectedError,
+  parseJsonBody,
+  requireMethod,
+} from '#/libs/api/admin/index.server';
 import { rateLimitMiddleware } from '#/libs/rate-limit.server';
 import {
+  checkSetupToken,
   createSetupAdmin,
   mapSetupAdminError,
   parseSetupAdminInput,
 } from '#/core/setup/index.server';
 
-export const middleware = [rateLimitMiddleware('api-admin')];
+export const middleware = [rateLimitMiddleware('setup')];
 
 export async function action({ request }) {
   const methodError = requireMethod(request, 'POST');
   if (methodError) return methodError;
+
+  const tokenError = checkSetupToken(request, { optional: true });
+  if (tokenError) {
+    return Response.json(tokenError.body, { status: tokenError.status });
+  }
 
   const parsed = await parseJsonBody(request, {
     invalidMessage: 'Invalid JSON',
@@ -30,6 +41,6 @@ export async function action({ request }) {
     if (mapped) {
       return Response.json(mapped.body, { status: mapped.status });
     }
-    throw err;
+    return jsonUnexpectedError(err, { source: 'api/admin/v1/setup/admin' });
   }
 }
