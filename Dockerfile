@@ -29,6 +29,9 @@ RUN npm ci --omit=dev
 # build/server and do not need nested node_modules at runtime, so they are
 # removed before the final stage copies the extension trees.
 FROM base AS build-env
+# Extension dependency lifecycle scripts are skipped unless the operator opts
+# in, e.g. --build-arg BERMOODA_EXTENSION_INSTALL_SCRIPTS=plugins/<slug>.
+ARG BERMOODA_EXTENSION_INSTALL_SCRIPTS=""
 COPY . /app/
 COPY --from=development-dependencies-env /app/node_modules /app/node_modules
 WORKDIR /app

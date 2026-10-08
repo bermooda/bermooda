@@ -55,12 +55,14 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 - **Fix:** `build-env` runs `RUN rm -rf app/themes/*/node_modules app/plugins/*/node_modules` right after `RUN npm run build`. `docs/plugins.md` says so.
 - **Verified in a real image:** `docker build` with a fixture theme in `app/themes/` whose deps are `p-limit` (imports `yocto-queue`) and `clsx@1` (the shop root has `clsx@2`). Prebuild ran `npm ci --prefix app/themes/extension-smoke` and the build succeeded. `docker run` with a migrated SQLite DB and `activeTheme` set to the fixture served `GET /` with 200, rendering the fixture's `extension-smoke concurrency-1`, so the bundled deps ran. `ls -d app/themes/*/node_modules` in the container found nothing.
 
-#### O2. Extension dependency lifecycle scripts run at build time (Medium, security, needs a decision)
+#### O2. Extension dependency lifecycle scripts run at build time (Medium, security) — **Fixed**
 
 - **Where:** `buildExtensionInstallArgs` in `deps.server.js` (no `--ignore-scripts`).
 - **Problem:** Every `prebuild` (CI, Docker) executes `preinstall`/`postinstall` scripts of each third-party theme/plugin's dependency tree with full build-environment access (env vars, registry tokens). `npm ci` (S1) narrows which versions run but not whether scripts run.
-- **Decide first (ask the maintainer):** default to `--ignore-scripts` with an opt-in (e.g. `bermooda.allowInstallScripts: true` in the extension's `package.json`, or a `BERMOODA_EXTENSION_INSTALL_SCRIPTS=1` env), or keep scripts on and document the trust model. Opt-in is safer; it could break extensions whose deps need a postinstall (native builds), which the docs already steer to shop-root deps.
-- **Done when:** the chosen behavior is in `buildExtensionInstallArgs` with tests, and `docs/plugins.md` / `docs/themes.md` describe it.
+- **Decision (maintainer):** `--ignore-scripts` by default, with an operator-only opt-in through an env var. A `bermooda.allowInstallScripts` flag in the extension's own `package.json` was rejected: the extension author is the party being guarded against, so they could just set it.
+- **Fix:** `buildExtensionInstallArgs` appends `--ignore-scripts` unless `extensionInstallScriptsAllowed(ext, process.env.BERMOODA_EXTENSION_INSTALL_SCRIPTS)` holds. `1` / `true` / `all` allow every extension; a comma list of `<kind>/<slug>` (`plugins/resend,themes/default`) allows only those. Anything else, including a bare slug, keeps scripts off. `install-extension-deps` logs `lifecycle scripts allowed` for opted-in extensions. The Dockerfile `build-env` stage declares the env var as an `ARG` (default empty) so `docker build --build-arg …` can opt in. Unit tests cover the parser, the default, the env read, and the explicit option. `docs/plugins.md` and `docs/themes.md` describe the policy.
+- **Verified:** a temp plugin whose dependency's `postinstall` writes a marker file installs without writing it by default, and writes it with `BERMOODA_EXTENSION_INSTALL_SCRIPTS=plugins/<slug>`.
+- **Not covered:** the bermooda CLI (`theme add` / `plugin add`) lives in a separate repo and runs its own install. It should pass `--ignore-scripts` under the same env var.
 
 #### O3. `extensions:install` fallback packs an unpinned default theme (Low, reliability/supply chain)
 
@@ -87,7 +89,7 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 ## Work plan
 
 1. [x] O1: Docker final-stage cleanup (verified with `docker build` + `docker run`).
-2. [ ] O2: decide on install-script policy with the maintainer, then implement.
+2. [x] O2: decide on install-script policy with the maintainer, then implement (`--ignore-scripts` + `BERMOODA_EXTENSION_INSTALL_SCRIPTS` opt-in).
 3. [ ] O4: fixture extension + CI smoke build (also guards P1/D1).
 4. [ ] O3: engine-aware default theme fallback.
 5. [ ] O6: reuse `EXTENSION_KIND_DIRS` in the Tailwind sync.
