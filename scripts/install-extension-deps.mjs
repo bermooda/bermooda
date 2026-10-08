@@ -9,9 +9,14 @@
  * covers contributor `extensions:install` and Docker/`prebuild` so nested
  * `node_modules` exist before Vite resolves and bundles imports.
  *
+ * npm lifecycle scripts are skipped (`--ignore-scripts`) unless the operator
+ * sets BERMOODA_EXTENSION_INSTALL_SCRIPTS (`1`/`true`/`all`, or a comma list
+ * such as `themes/default,plugins/resend`).
+ *
  * Usage:
  *   node scripts/install-extension-deps.mjs
  *   node scripts/install-extension-deps.mjs --omit=dev
+ *   BERMOODA_EXTENSION_INSTALL_SCRIPTS=plugins/resend node scripts/install-extension-deps.mjs
  */
 
 import { execFileSync } from 'node:child_process';
@@ -68,8 +73,11 @@ export function installAllExtensionDeps(appDir = APP_DIR, options = {}) {
   for (const ext of needing) {
     const args = buildExtensionInstallArgs(ext, { omitDev });
     const depCount = runtimeDependencyNamesFromPackage(ext.packageJson).length;
+    const scripts = args.includes('--ignore-scripts')
+      ? ''
+      : ', lifecycle scripts allowed';
     log(
-      `extension-deps: npm ${args[0]} --prefix app/${ext.kind}/${ext.slug} (${depCount} runtime dep(s))`
+      `extension-deps: npm ${args[0]} --prefix app/${ext.kind}/${ext.slug} (${depCount} runtime dep(s)${scripts})`
     );
     execFileSync('npm', args, { stdio: 'inherit', cwd: REPO_ROOT });
   }

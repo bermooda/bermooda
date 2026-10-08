@@ -5,8 +5,10 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  EXTENSION_INSTALL_SCRIPTS_ENV,
   buildExtensionInstallArgs,
   collectExtensionRuntimeDependencyNames,
+  extensionInstallScriptsAllowed,
   filterExtensionsNeedingInstall,
   hasRuntimeDependencies,
   listExtensionPackages,
@@ -146,17 +148,70 @@ describe('filterExtensionsNeedingInstall', () => {
   });
 });
 
+describe('extensionInstallScriptsAllowed', () => {
+  const ext = { kind: 'plugins', slug: 'resend' };
+
+  it('denies scripts when the setting is unset, empty, or off', () => {
+    for (const setting of [undefined, '', '0', 'false', 'no']) {
+      expect(extensionInstallScriptsAllowed(ext, setting)).toBe(false);
+    }
+  });
+
+  it('allows every extension for 1, true, or all', () => {
+    for (const setting of ['1', 'true', 'ALL', ' all ']) {
+      expect(extensionInstallScriptsAllowed(ext, setting)).toBe(true);
+    }
+  });
+
+  it('allows only listed <kind>/<slug> entries', () => {
+    const setting = 'themes/default, plugins/resend';
+    expect(extensionInstallScriptsAllowed(ext, setting)).toBe(true);
+    expect(
+      extensionInstallScriptsAllowed(
+        { kind: 'themes', slug: 'default' },
+        setting
+      )
+    ).toBe(true);
+    expect(
+      extensionInstallScriptsAllowed(
+        { kind: 'plugins', slug: 'sendgrid' },
+        setting
+      )
+    ).toBe(false);
+    // A bare slug or the wrong kind does not match.
+    expect(extensionInstallScriptsAllowed(ext, 'resend')).toBe(false);
+    expect(extensionInstallScriptsAllowed(ext, 'themes/resend')).toBe(false);
+  });
+});
+
 describe('buildExtensionInstallArgs', () => {
-  it('uses npm install when the extension has no lockfile', () => {
+  /** @type {string | undefined} */
+  let savedEnv;
+
+  beforeEach(() => {
+    savedEnv = process.env[EXTENSION_INSTALL_SCRIPTS_ENV];
+    delete process.env[EXTENSION_INSTALL_SCRIPTS_ENV];
+  });
+
+  afterEach(() => {
+    if (savedEnv === undefined)
+      delete process.env[EXTENSION_INSTALL_SCRIPTS_ENV];
+    else process.env[EXTENSION_INSTALL_SCRIPTS_ENV] = savedEnv;
+  });
+
+  it('uses npm install without lifecycle scripts when there is no lockfile', () => {
     const dir = writeExtension('plugins', 'resend', {
       dependencies: { resend: '4.0.0' },
     });
 
-    expect(buildExtensionInstallArgs({ dir })).toEqual([
+    expect(
+      buildExtensionInstallArgs({ dir, kind: 'plugins', slug: 'resend' })
+    ).toEqual([
       'install',
       '--prefix',
       dir,
       '--legacy-peer-deps',
+      '--ignore-scripts',
     ]);
   });
 
@@ -166,12 +221,46 @@ describe('buildExtensionInstallArgs', () => {
     });
     writeFileSync(join(dir, 'package-lock.json'), '{}');
 
-    expect(buildExtensionInstallArgs({ dir }, { omitDev: true })).toEqual([
+    expect(
+      buildExtensionInstallArgs(
+        { dir, kind: 'themes', slug: 'default' },
+        { omitDev: true }
+      )
+    ).toEqual([
       'ci',
       '--prefix',
       dir,
       '--legacy-peer-deps',
       '--omit=dev',
+      '--ignore-scripts',
     ]);
+  });
+
+  it('runs lifecycle scripts only for extensions the operator allows', () => {
+    const dir = writeExtension('plugins', 'resend', {
+      dependencies: { resend: '4.0.0' },
+    });
+    const ext = { dir, kind: 'plugins', slug: 'resend' };
+
+    expect(
+      buildExtensionInstallArgs(ext, { installScripts: 'plugins/resend' })
+    ).not.toContain('--ignore-scripts');
+    expect(
+      buildExtensionInstallArgs(ext, { installScripts: 'themes/default' })
+    ).toContain('--ignore-scripts');
+  });
+
+  it('reads the opt-in from BERMOODA_EXTENSION_INSTALL_SCRIPTS by default', () => {
+    const dir = writeExtension('plugins', 'resend', {
+      dependencies: { resend: '4.0.0' },
+    });
+    const ext = { dir, kind: 'plugins', slug: 'resend' };
+
+    process.env[EXTENSION_INSTALL_SCRIPTS_ENV] = '1';
+    expect(buildExtensionInstallArgs(ext)).not.toContain('--ignore-scripts');
+    // An explicit option wins over the env var.
+    expect(
+      buildExtensionInstallArgs(ext, { installScripts: undefined })
+    ).toContain('--ignore-scripts');
   });
 });

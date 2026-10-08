@@ -2,7 +2,7 @@
 
 Audit date: 2026-10-08. Baseline commit: `aea9c60` (bermooda 0.11.0).
 
-This doc is a work queue for later sessions. Findings marked **Fixed** landed with the audit PR. Work through the **Open** items in the **Work plan** order, tick the checklist, and update the `extensions/` row in [code-quality-review.md](../code-quality-review.md) when everything is closed. Follow the agent rules at the top of that tracker.
+Status: **closed.** The first-pass findings landed with the audit PR (#238). The second pass, on branch `fix/extensions-audit` from `1520424`, fixed O1–O6. Each item below records its fix and how it was verified. The `extensions/` row in [code-quality-review.md](../code-quality-review.md) is ✅.
 
 ## Why this area
 
@@ -46,50 +46,97 @@ Severity: **High** = security or data-integrity risk on a real deployment · **M
 
 Verified non-issue: transitive deps of extension-only packages are inlined by the SSR build (checked with a fixture: `foo` in `ssr.noExternal` importing nested `bar` bundles both and runs from `build/`).
 
-### Open
+### Second pass (formerly open)
 
-#### O1. Final Docker image ships nested extension `node_modules` it doesn't need (Medium, scalability)
+#### O1. Final Docker image ships nested extension `node_modules` it doesn't need (Medium, scalability) — **Fixed**
 
 - **Where:** `Dockerfile`, final stage `COPY --from=build-env /app/app/themes …` and `/app/app/plugins …`.
 - **Problem:** `prebuild` installs extension deps into `app/{themes,plugins}/<slug>/node_modules`, and the final stage copies those trees wholesale. The Dockerfile comment and `docs/plugins.md` both say runtime doesn't need them (SSR inlines them; native addons must be shop-root deps), so they only add image size and attack surface.
-- **Fix:** In `build-env`, after `RUN npm run build`, add `RUN rm -rf app/themes/*/node_modules app/plugins/*/node_modules`.
-- **Done when:** `docker build` with a theme that has a runtime dep succeeds, `docker run` serves the storefront, and `docker run --rm <img> sh -c 'ls app/themes/*/node_modules'` finds nothing. Needs a Docker host; this session had none.
+- **Fix:** `build-env` runs `RUN rm -rf app/themes/*/node_modules app/plugins/*/node_modules` right after `RUN npm run build`. `docs/plugins.md` says so.
+- **Verified in a real image:** `docker build` with a fixture theme in `app/themes/` whose deps are `p-limit` (imports `yocto-queue`) and `clsx@1` (the shop root has `clsx@2`). Prebuild ran `npm ci --prefix app/themes/extension-smoke` and the build succeeded. `docker run` with a migrated SQLite DB and `activeTheme` set to the fixture served `GET /` with 200, rendering the fixture's `extension-smoke concurrency-1`, so the bundled deps ran. `ls -d app/themes/*/node_modules` in the container found nothing.
 
-#### O2. Extension dependency lifecycle scripts run at build time (Medium, security, needs a decision)
+#### O2. Extension dependency lifecycle scripts run at build time (Medium, security) — **Fixed**
 
 - **Where:** `buildExtensionInstallArgs` in `deps.server.js` (no `--ignore-scripts`).
 - **Problem:** Every `prebuild` (CI, Docker) executes `preinstall`/`postinstall` scripts of each third-party theme/plugin's dependency tree with full build-environment access (env vars, registry tokens). `npm ci` (S1) narrows which versions run but not whether scripts run.
-- **Decide first (ask the maintainer):** default to `--ignore-scripts` with an opt-in (e.g. `bermooda.allowInstallScripts: true` in the extension's `package.json`, or a `BERMOODA_EXTENSION_INSTALL_SCRIPTS=1` env), or keep scripts on and document the trust model. Opt-in is safer; it could break extensions whose deps need a postinstall (native builds), which the docs already steer to shop-root deps.
-- **Done when:** the chosen behavior is in `buildExtensionInstallArgs` with tests, and `docs/plugins.md` / `docs/themes.md` describe it.
+- **Decision (maintainer):** `--ignore-scripts` by default, with an operator-only opt-in through an env var. A `bermooda.allowInstallScripts` flag in the extension's own `package.json` was rejected: the extension author is the party being guarded against, so they could just set it.
+- **Fix:** `buildExtensionInstallArgs` appends `--ignore-scripts` unless `extensionInstallScriptsAllowed(ext, process.env.BERMOODA_EXTENSION_INSTALL_SCRIPTS)` holds. `1` / `true` / `all` allow every extension; a comma list of `<kind>/<slug>` (`plugins/resend,themes/default`) allows only those. Anything else, including a bare slug, keeps scripts off. `install-extension-deps` logs `lifecycle scripts allowed` for opted-in extensions. The Dockerfile `build-env` stage declares the env var as an `ARG` (default empty) so `docker build --build-arg …` can opt in. Unit tests cover the parser, the default, the env read, and the explicit option. `docs/plugins.md` and `docs/themes.md` describe the policy.
+- **Verified:** a temp plugin whose dependency's `postinstall` writes a marker file installs without writing it by default, and writes it with `BERMOODA_EXTENSION_INSTALL_SCRIPTS=plugins/<slug>`.
+- **CLI:** the bermooda CLI (`theme add` / `plugin add` / `update`) runs its own extension-local `npm install`. It gets the same policy and env var on `bermooda/cli` branch `fix/extension-install-scripts` (`5ec45a2`), which takes effect once merged and released. The CLI's shop-root install of merged `peerDependencies` / `bermooda.dependencies` keeps scripts on, because native addons are meant to live there.
 
-#### O3. `extensions:install` fallback packs an unpinned default theme (Low, reliability/supply chain)
+#### O3. `extensions:install` fallback packs an unpinned default theme (Low, reliability/supply chain) — **Fixed**
 
 - **Where:** `installFromNpm` in `scripts/install-default-extensions.mjs` (`npm pack @bermooda/theme-default`).
 - **Problem:** It always takes `latest`. If a newer theme requires a newer `bermooda.engine`, server discovery soft-skips it and a fresh `npm run setup` ends with no usable storefront theme and only a log line.
-- **Fix:** After extracting, read the theme's `package.json` and check `bermooda.engine` against the root version with `semver.satisfies`. Fail with a clear message, or pack the newest compatible version via `npm view @bermooda/theme-default versions --json` + `semver.maxSatisfying`. The script can't import `engine.server.js` directly (it imports JSON without import attributes), so use `semver` + `JSON.parse(readFileSync('package.json'))` in the script.
+- **Fix:** `installFromNpm` now packs an exact version.
+  - It reads the shop version with `JSON.parse(readFileSync('package.json'))`. `engine.server.js` can't be imported from plain Node because it imports JSON without import attributes.
+  - It lists versions with `npm view <pkg> versions --json`. `npm view <pkg>@* <field>` only reports the newest match, so it can't read every version's engine in one call.
+  - `findNewestCompatibleVersion` walks stable versions newest first and reads each `bermooda.engine` with `npm view <pkg>@<v> bermooda.engine --json`. It returns the first version whose range `semver.satisfies` the shop version (the same check as server discovery), usually after one lookup.
+  - With no compatible version the script exits 1 with `No published <pkg> version supports bermooda <version> (bermooda.engine)` and points at the sibling checkout.
+  - The script's `main()` now only runs when executed directly, so the helper is importable. `vitest.config.js` collects `scripts/**/*.test.mjs` in the node project, and `scripts/install-default-extensions.test.mjs` covers ordering, early stop, no match, prereleases, and missing or invalid ranges.
+- **Verified:** with no sibling checkout, `node scripts/install-default-extensions.mjs` packed `@bermooda/theme-default@0.2.1` (engine `>=0.1.0`) and installed it. With the root version temporarily set to `0.0.1`, it exited 1 with the message above and installed nothing.
 
-#### O4. CI never exercises the extension build path (Medium, automation/testing)
+#### O4. CI never exercises the extension build path (Medium, automation/testing) — **Fixed**
 
 - **Where:** `.github/workflows/ci.yml` `build` job. CI has no installed themes/plugins, so `install-extension-deps` logs "nothing to install" and `ssr.noExternal` is empty.
-- **Fix:** Add a fixture extension (e.g. `scripts/fixtures/extension-smoke/` with a theme that has one nested dependency that imports another, plus a lockfile) and a CI step that copies it into `app/themes/`, runs `npm run build`, and asserts `build/server/index.js` contains the dependency and imports without `ERR_MODULE_NOT_FOUND`. This also covers P1 regressions if it asserts the client `storefront-components-*.js` chunk has no `SEMVER_SPEC_VERSION`.
+- **Fix:** The fixture theme `scripts/fixtures/extension-smoke/` has a lockfile and two exact-pinned deps:
+  - `p-limit`, which imports `yocto-queue`. Neither is a shop-root dependency.
+  - `clsx@1`, which shadows the shop root's `clsx@2`.
 
-#### O5. Client registry eagerly bundles every installed theme (Low now, scales badly)
+  The CI `build` job's "Extension smoke build" step copies the fixture to `app/themes/extension-smoke/`, runs `npm run build` (prebuild runs `npm ci --ignore-scripts` for it), and deletes the nested `node_modules` as the Docker image does. It then runs `scripts/check-extension-smoke-build.mjs`, which asserts:
+  - `build/server/index.js` has no external `import` of any of the three deps;
+  - importing `build/server/index.js` exits 0 without `ERR_MODULE_NOT_FOUND`, and server discovery logs `Theme registered` for the fixture;
+  - no `storefront-components-*.js` client chunk contains `SEMVER_SPEC_VERSION` (guards P1).
+
+- **Why `clsx`:** Vite only externalizes a bare import it can resolve from the shop root, so extension-only deps like `p-limit` get inlined even without `ssr.noExternal`. The setting only matters when the root also has the package, often at another version, as with `clsx`. Without the `clsx` dep the smoke would still pass after `ssr.noExternal` was removed.
+- **Verified failure modes:** each regression was injected locally and the check failed with a specific message:
+  - `ssr.noExternal: []`: "imports "clsx" as an external".
+  - `p-limit` forced into `ssr.external`: the external-import failure plus the import's `ERR_MODULE_NOT_FOUND`.
+  - `semver` re-imported into the client registry: "bundles semver".
+
+#### O5. Client registry eagerly bundles every installed theme (Low now, scales badly) — **Fixed**
 
 - **Where:** `app/core/themes/storefront-components/index.js` (`import.meta.glob('#/themes/*/index.js', { eager: true })`).
 - **Problem:** Every installed theme's components ship to every shopper, active or not. Harmless with one theme, but the cost grows linearly with installed themes (marketplace previews, theme switching). The client registry also doesn't check `bermooda.engine`, so it can hold themes the server skipped (lookups use the server's `themeId`, so this is only dead weight).
-- **Fix:** Belongs to a `core/themes` pass: lazy-load (`eager: false`) per theme and resolve the active theme's module in the route `clientLoader`/lazy component, or build-time filter to the active theme. Measure client bundle before/after with two themes installed.
+- **Fix:** `getStorefrontComponent(name, themeId)` keeps its synchronous signature, so none of the 24 callers changed.
+  - **Server:** the module globs nothing (`import.meta.env.SSR`). Server `registerTheme` already fills the registry at startup, so SSR resolves synchronously.
+  - **Browser:** a lazy `import.meta.glob` makes each theme's `index.js` its own chunk. An eager `package.json` glob maps package id and slug to its loader. The first lookup for a theme that hasn't loaded yet calls React `use()` on a cached per-theme load promise and suspends until the chunk arrives; later lookups are synchronous.
+  - On first load the suspension happens during hydration, and React keeps the server HTML meanwhile. On a client-side navigation to a newly activated theme, React Router keeps the previous page meanwhile. A malformed theme package still resolves to `null`, as before.
+  - `__registerLazyThemesFrom` is a test seam (like `__discoverThemesFrom`). The registry test is now `index.test.jsx` and renders through Suspense: it suspends, resolves by id and slug with one load, resolves a malformed package to `null`, and loads nothing for an unknown theme. `docs/themes.md` (Discovery, `getStorefrontComponent`) describes the new behavior.
+- **Measured** (`npm run build`, published `@bermooda/theme-default@0.2.1`):
 
-#### O6. Tailwind source sync duplicates the extension dir scan (Low, maintainability)
+  | Themes installed                  | `storefront-components-*.js` | gzip     | Theme chunk loaded                   | All client JS |
+  | --------------------------------- | ---------------------------- | -------- | ------------------------------------ | ------------- |
+  | default (before)                  | 135,358 B                    | 30,698 B | (in the registry chunk)              | 1,314,124 B   |
+  | default + a renamed copy (before) | 259,319 B                    | 56,394 B | (in the registry chunk)              | 1,438,085 B   |
+  | default + a renamed copy (after)  | 4,573 B                      | 1,795 B  | active only: 124,055 B / 27,126 B gz | 1,432,678 B   |
+
+  Each extra installed theme now costs shoppers nothing. The active theme's chunk is fetched after the route modules start, which adds one request to the critical path on first load.
+
+- **Verified in Chromium** (Playwright against the production server with both themes installed):
+  - First load of `/` requested only the active theme's chunk, never the copy.
+  - A client-side navigation to `/cart` kept the same document, so hydration completed.
+  - After switching `activeTheme` to the copy and restarting the server, a client-side navigation in the same tab fetched the copy's chunk and rendered it.
+  - No console errors or warnings in any step. `react-router dev` hydrates and navigates the same way.
+
+  With a cold Vite dependency cache, dev mode logs "504 Outdated Optimize Dep" on first load. master does the same, so it isn't caused by this change.
+
+#### O6. Tailwind source sync duplicates the extension dir scan (Low, maintainability) — **Fixed**
 
 - **Where:** `listExtensionSlugs` in `scripts/sync-extension-tw-sources.mjs` hardcodes `'themes'`/`'plugins'` and its own `readdirSync` filter.
-- **Fix:** Loop over `EXTENSION_KIND_DIRS` from `deps.server.js` (keep including folders without `package.json` if Tailwind needs them; otherwise reuse `listExtensionPackages`). Add a test for the symlink sync with a temp dir.
+- **Fix:** `syncExtensionTwSources` loops over `EXTENSION_KIND_DIRS` and takes a `repoRoot` option, which defaults to the repo.
+  - It doesn't reuse `listExtensionPackages`. Folders without a `package.json` still hold class names Tailwind should scan, and an invalid `package.json` must not break CSS builds (`install-extension-deps` already reports that).
+  - Each kind's link dir is rebuilt on every sync, so links to removed extensions no longer linger.
+  - Removed the unused `EXTENSION_TW_SOURCES_DIR` export.
+  - `scripts/sync-extension-tw-sources.test.mjs` uses a temp repo root. It covers links and their targets, skipped dotfolders and files, folders without a `package.json`, stale-link pruning that leaves link targets intact, and the empty case.
+- **Verified:** with the published default theme installed, `npm run build` produced byte-identical `root-*.css` with the old and new sync.
 
 ## Work plan
 
-1. [ ] O1: Docker final-stage cleanup (needs Docker to verify).
-2. [ ] O2: decide on install-script policy with the maintainer, then implement.
-3. [ ] O4: fixture extension + CI smoke build (also guards P1/D1).
-4. [ ] O3: engine-aware default theme fallback.
-5. [ ] O6: reuse `EXTENSION_KIND_DIRS` in the Tailwind sync.
-6. [ ] O5: move to a `core/themes` performance pass (record in the tracker's later-pass table if not done here).
-7. [ ] Mark `extensions/` ✅ in [code-quality-review.md](../code-quality-review.md).
+1. [x] O1: Docker final-stage cleanup (verified with `docker build` + `docker run`).
+2. [x] O2: decide on install-script policy with the maintainer, then implement (`--ignore-scripts` + `BERMOODA_EXTENSION_INSTALL_SCRIPTS` opt-in).
+3. [x] O4: fixture extension + CI smoke build (also guards P1, O1's "no nested node_modules at runtime", and `ssr.noExternal`).
+4. [x] O3: engine-aware default theme fallback.
+5. [x] O6: reuse `EXTENSION_KIND_DIRS` in the Tailwind sync.
+6. [x] O5: lazy-load only the active theme on the client (measured and verified in Chromium).
+7. [x] Mark `extensions/` ✅ in [code-quality-review.md](../code-quality-review.md).

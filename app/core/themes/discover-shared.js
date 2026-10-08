@@ -1,5 +1,5 @@
 // Client-safe shared helpers for theme discovery merge + registry indexing.
-// Used by both server discoverThemes and the storefront-components eager glob.
+// Used by both server discoverThemes and the storefront-components lazy loader.
 
 import { mergeExtensionPackage } from '#/core/extensions/package-meta';
 

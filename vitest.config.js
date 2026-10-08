@@ -32,6 +32,7 @@ export default defineConfig({
             'app/**/*.test.server.js',
             'app/**/*.test.server.jsx',
             'app/routes/**/*.test.jsx',
+            'scripts/**/*.test.mjs',
           ],
           setupFiles: ['./app/test-setup.js'],
           alias: {

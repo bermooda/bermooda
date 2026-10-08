@@ -164,13 +164,42 @@ export function filterExtensionsNeedingInstall(extensions) {
   return extensions.filter((ext) => hasRuntimeDependencies(ext.packageJson));
 }
 
+/** Shop-operator env var that opts extensions in to npm lifecycle scripts. */
+export const EXTENSION_INSTALL_SCRIPTS_ENV =
+  'BERMOODA_EXTENSION_INSTALL_SCRIPTS';
+
+const ALLOW_ALL_INSTALL_SCRIPTS = new Set(['1', 'true', 'all']);
+
+/**
+ * Whether npm lifecycle scripts (`preinstall`, `postinstall`, …) may run when
+ * installing one extension's deps.
+ *
+ * Off by default: they would run third-party code with full build-env access
+ * (env vars, registry tokens). Only the shop operator can opt in, through
+ * {@link EXTENSION_INSTALL_SCRIPTS_ENV}: `1` / `true` / `all` for every
+ * extension, or a comma list of `<kind>/<slug>` (`themes/default,plugins/x`).
+ * An extension's own package.json cannot opt itself in.
+ *
+ * @param {Pick<ExtensionPackageInfo, 'kind' | 'slug'>} ext
+ * @param {string | undefined} setting Value of the env var
+ * @returns {boolean}
+ */
+export function extensionInstallScriptsAllowed(ext, setting) {
+  const value = (setting ?? '').trim().toLowerCase();
+  if (ALLOW_ALL_INSTALL_SCRIPTS.has(value)) return true;
+  const id = `${ext.kind}/${ext.slug}`.toLowerCase();
+  return value.split(',').some((entry) => entry.trim() === id);
+}
+
 /**
  * npm arguments that install one extension's runtime deps into its own
  * `node_modules`. Uses `npm ci` when the extension ships a lockfile so builds
- * are reproducible and never rewrite the extension's lockfile.
+ * are reproducible and never rewrite the extension's lockfile, and passes
+ * `--ignore-scripts` unless {@link extensionInstallScriptsAllowed}.
  *
- * @param {Pick<ExtensionPackageInfo, 'dir'>} ext
- * @param {{ omitDev?: boolean }} [options]
+ * @param {Pick<ExtensionPackageInfo, 'dir' | 'kind' | 'slug'>} ext
+ * @param {{ omitDev?: boolean, installScripts?: string }} [options]
+ *   `installScripts` defaults to `process.env.BERMOODA_EXTENSION_INSTALL_SCRIPTS`.
  * @returns {string[]}
  */
 export function buildExtensionInstallArgs(ext, options = {}) {
@@ -180,6 +209,13 @@ export function buildExtensionInstallArgs(ext, options = {}) {
   const args = [command, '--prefix', ext.dir, '--legacy-peer-deps'];
   if (options.omitDev) {
     args.push('--omit=dev');
+  }
+  const installScripts =
+    'installScripts' in options
+      ? options.installScripts
+      : process.env[EXTENSION_INSTALL_SCRIPTS_ENV];
+  if (!extensionInstallScriptsAllowed(ext, installScripts)) {
+    args.push('--ignore-scripts');
   }
   return args;
 }

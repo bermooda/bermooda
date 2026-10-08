@@ -22,7 +22,9 @@ Theme registry code lives in `app/core/themes/index.server.js`. The module is se
 
 ## Discovery
 
-Both the server registry and the client-safe component registry discover themes with Vite `import.meta.glob('#/themes/*/index.js')` (plus sibling `package.json`). **Both globs remain** — the client module needs its own eager graph for browser + SSR component resolution; the server module needs its own for bootstrap registration and engine checks.
+The server registry discovers themes with an eager Vite `import.meta.glob('#/themes/*/index.js')` (plus sibling `package.json`) for bootstrap registration and engine checks. `registerTheme` also fills the client-safe component registry (`#/core/themes/storefront-components`), so SSR resolves components synchronously.
+
+In the browser, the component registry lazy-globs the same files: each theme's `index.js` is its own chunk, and only the active theme's chunk is downloaded. The first `getStorefrontComponent` call for a theme that hasn't loaded yet suspends (React `use`) until its chunk arrives. On first load that happens during hydration, and React keeps the server HTML until then. On a client-side navigation to a newly activated theme, React Router keeps the previous page until then. Installed but inactive themes add nothing to what shoppers download. The active theme's chunk is fetched after the route modules start, so it adds one request to the critical path.
 
 Shared pure helpers live in `app/core/themes/discover-shared.js`:
 
@@ -346,7 +348,7 @@ Async. Resolves the active theme id (via `resolveActiveTheme`) and caches it in-
 
 ### `getStorefrontComponent(name, themeId)`
 
-**Sync.** Client-safe. Resolves a single component by name from a registered theme. Import from `#/core/themes/storefront-components` (not from the server registry).
+**Sync once the theme is loaded.** Client-safe. Resolves a single component by name from a registered theme. Import from `#/core/themes/storefront-components` (not from the server registry). Call it during render: in the browser, the first lookup for a theme whose chunk hasn't loaded suspends until it has (see [Discovery](#discovery)).
 
 - Callers **must** pass `themeId` from loader data (`loadStorefrontPageContext` or `preloadStorefrontTheme`).
 - Returns `null` if `themeId` is missing/unknown or the component is not in `manifest.components`.
@@ -527,7 +529,7 @@ The TTL / preload caches will expire within their windows, or restart the dev se
 - **Relative sibling imports.** Theme files must not import each other via `#/themes/…`; use relative paths. Keep `#/…` for core app modules.
 - **Client-safe runtime entry.** Theme `index.js` imports `defineTheme` from `#/core/themes/define`, not from the server-only registry. Component lookup uses `#/core/themes/storefront-components`.
 - **Server-only registry.** `app/core/themes/index.server.js` must never be imported in client code. The `.server.js` suffix enforces this in React Router / Vite builds.
-- **Own npm dependencies.** Themes may list packages in `package.json` `dependencies`. Install them into the theme folder (`npm install` in that directory — the CLI and `npm run extensions:install` / `extensions:install-deps` do this). Prefer `peerDependencies` for shared shop libraries (`react`, `react-dom`, `react-router`). Vite resolves nested `app/themes/<slug>/node_modules` from theme source during build and forces those runtime deps into the SSR bundle via `ssr.noExternal`.
+- **Own npm dependencies.** Themes may list packages in `package.json` `dependencies`. Install them into the theme folder (`npm install` in that directory — the CLI and `npm run extensions:install` / `extensions:install-deps` do this). Prefer `peerDependencies` for shared shop libraries (`react`, `react-dom`, `react-router`). Vite resolves nested `app/themes/<slug>/node_modules` from theme source during build and forces those runtime deps into the SSR bundle via `ssr.noExternal`. `extensions:install-deps` uses `npm ci` when the theme ships a `package-lock.json` and skips dependency lifecycle scripts (`--ignore-scripts`) unless the shop operator sets `BERMOODA_EXTENSION_INSTALL_SCRIPTS` (`1` / `true` / `all`, or a comma list such as `themes/default`; Docker: `--build-arg`). A theme cannot opt itself in. See [Plugin npm dependencies](plugins.md#plugin-npm-dependencies).
 - **In-memory registry.** The registry is process-local. In a multi-process deployment (e.g. multiple Node workers) every process registers themes independently at startup from the same source files, so the registry is consistent across processes without any shared state.
 - **Single-process activeTheme caches.** `resolveActiveTheme` / `preloadStorefrontTheme` use in-process TTL caches. Multi-instance deploys may lag until each process’s TTL expires (or restart), even though the activating process busts its own cache immediately.
 - **i18n catalogs.** `loadMessages` merges core + active theme slug + plugins in `pluginOrder ∩ enabledPlugins`. `setActiveTheme` and plugin enable/order changes bust the `i18n:` cache prefix.

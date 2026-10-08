@@ -4,7 +4,8 @@
  *
  * Copies the default theme from a sibling checkout directory into
  * app/themes/. Falls back to `npm pack` + tarball extract when the sibling
- * directory is absent, placing package contents directly at
+ * directory is absent (newest published version whose `bermooda.engine`
+ * accepts this shop's version), placing package contents directly at
  * `app/themes/<slug>/` (same layout as the sibling copy — not nested under
  * `node_modules/<packageId>/`).
  *
@@ -30,10 +31,19 @@
 
 import 'dotenv/config';
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import semver from 'semver';
 
 import { installAllExtensionDeps } from './install-extension-deps.mjs';
 import { syncExtensionTwSources } from './sync-extension-tw-sources.mjs';
@@ -94,22 +104,98 @@ function installFromSibling(spec) {
 }
 
 /**
- * Fallback when the sibling checkout is absent: `npm pack` the published
- * package, extract the tarball, and copy contents into `spec.destDir` so
- * `index.js` / `package.json` land at the slug root (same layout as
- * {@link copyExtension}).
+ * Shop version from the root package.json. Read as JSON here because plain
+ * Node can't load `engine.server.js` (it imports JSON without attributes).
+ *
+ * @returns {string}
+ */
+function readShopVersion() {
+  const { version } = JSON.parse(
+    readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')
+  );
+  if (!semver.valid(version)) {
+    throw new Error(
+      'bermooda root package.json must declare a valid semver "version"'
+    );
+  }
+  return version;
+}
+
+/**
+ * Newest stable published version whose `bermooda.engine` range accepts the
+ * shop version (same check as server discovery). Walks versions newest first
+ * and stops at the first match, so it usually costs one `engineFor` call.
+ *
+ * @param {{ versions: string[], shopVersion: string, engineFor: (version: string) => unknown }} options
+ * @returns {string | null}
+ */
+export function findNewestCompatibleVersion({
+  versions,
+  shopVersion,
+  engineFor,
+}) {
+  const stable = versions.filter(
+    (version) => semver.valid(version) && !semver.prerelease(version)
+  );
+  for (const version of semver.rsort(stable)) {
+    const engine = engineFor(version);
+    if (
+      typeof engine === 'string' &&
+      semver.validRange(engine) &&
+      semver.satisfies(shopVersion, engine)
+    ) {
+      return version;
+    }
+  }
+  return null;
+}
+
+/**
+ * `npm view <args> --json`, parsed; `undefined` when the field is absent.
+ *
+ * @param {string[]} args
+ * @returns {unknown}
+ */
+function npmViewJson(args) {
+  const out = execFileSync('npm', ['view', ...args, '--json'], {
+    encoding: 'utf8',
+    cwd: REPO_ROOT,
+  }).trim();
+  return out ? JSON.parse(out) : undefined;
+}
+
+/**
+ * Fallback when the sibling checkout is absent: `npm pack` the newest
+ * published version compatible with this shop's `bermooda.engine`, extract
+ * the tarball, and copy contents into `spec.destDir` so `index.js` /
+ * `package.json` land at the slug root (same layout as
+ * {@link copyExtension}). Packing plain `latest` could fetch a theme that
+ * server discovery then skips as incompatible, leaving no storefront theme.
  *
  * @param {ExtensionSpec} spec
  */
 function installFromNpm(spec) {
-  console.log(
-    `extensions:install  ${spec.packageId}  ← npm pack (sibling not found)`
-  );
   const tmp = mkdtempSync(join(tmpdir(), 'bermooda-ext-'));
   try {
+    const shopVersion = readShopVersion();
+    const versions = npmViewJson([spec.packageId, 'versions']) ?? [];
+    const version = findNewestCompatibleVersion({
+      versions: Array.isArray(versions) ? versions : [versions],
+      shopVersion,
+      engineFor: (v) =>
+        npmViewJson([`${spec.packageId}@${v}`, 'bermooda.engine']),
+    });
+    if (!version) {
+      throw new Error(
+        `No published ${spec.packageId} version supports bermooda ${shopVersion} (bermooda.engine).`
+      );
+    }
+    console.log(
+      `extensions:install  ${spec.packageId}@${version}  ← npm pack (sibling not found)`
+    );
     const packed = execFileSync(
       'npm',
-      ['pack', spec.packageId, '--pack-destination', tmp],
+      ['pack', `${spec.packageId}@${version}`, '--pack-destination', tmp],
       {
         encoding: 'utf8',
         cwd: REPO_ROOT,
@@ -132,9 +218,9 @@ function installFromNpm(spec) {
     copyExtension(extracted, spec.destDir);
   } catch (err) {
     console.error(
-      `extensions:install  FAILED to install ${spec.packageId} via npm pack. ` +
-        `Clone the sibling repo at ${spec.siblingDir} or publish the package first.`,
-      err
+      `extensions:install  FAILED to install ${spec.packageId} via npm pack: ` +
+        `${err instanceof Error ? err.message : String(err)} ` +
+        `Clone the sibling repo at ${spec.siblingDir} or publish a compatible version first.`
     );
     process.exit(1);
   } finally {
@@ -184,7 +270,13 @@ async function main() {
   console.log('extensions:install  Done.');
 }
 
-main().catch((err) => {
-  console.error('extensions:install failed:', err.message);
-  process.exit(1);
-});
+const isDirectRun =
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error('extensions:install failed:', err.message);
+    process.exit(1);
+  });
+}
