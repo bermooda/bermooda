@@ -100,10 +100,15 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 - **Problem:** Every installed theme's components ship to every shopper, active or not. Harmless with one theme, but the cost grows linearly with installed themes (marketplace previews, theme switching). The client registry also doesn't check `bermooda.engine`, so it can hold themes the server skipped (lookups use the server's `themeId`, so this is only dead weight).
 - **Fix:** Belongs to a `core/themes` pass: lazy-load (`eager: false`) per theme and resolve the active theme's module in the route `clientLoader`/lazy component, or build-time filter to the active theme. Measure client bundle before/after with two themes installed.
 
-#### O6. Tailwind source sync duplicates the extension dir scan (Low, maintainability)
+#### O6. Tailwind source sync duplicates the extension dir scan (Low, maintainability) — **Fixed**
 
 - **Where:** `listExtensionSlugs` in `scripts/sync-extension-tw-sources.mjs` hardcodes `'themes'`/`'plugins'` and its own `readdirSync` filter.
-- **Fix:** Loop over `EXTENSION_KIND_DIRS` from `deps.server.js` (keep including folders without `package.json` if Tailwind needs them; otherwise reuse `listExtensionPackages`). Add a test for the symlink sync with a temp dir.
+- **Fix:** `syncExtensionTwSources` loops over `EXTENSION_KIND_DIRS` and takes a `repoRoot` option, which defaults to the repo.
+  - It doesn't reuse `listExtensionPackages`. Folders without a `package.json` still hold class names Tailwind should scan, and an invalid `package.json` must not break CSS builds (`install-extension-deps` already reports that).
+  - Each kind's link dir is rebuilt on every sync, so links to removed extensions no longer linger.
+  - Removed the unused `EXTENSION_TW_SOURCES_DIR` export.
+  - `scripts/sync-extension-tw-sources.test.mjs` uses a temp repo root. It covers links and their targets, skipped dotfolders and files, folders without a `package.json`, stale-link pruning that leaves link targets intact, and the empty case.
+- **Verified:** with the published default theme installed, `npm run build` produced byte-identical `root-*.css` with the old and new sync.
 
 ## Work plan
 
@@ -111,6 +116,6 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 2. [x] O2: decide on install-script policy with the maintainer, then implement (`--ignore-scripts` + `BERMOODA_EXTENSION_INSTALL_SCRIPTS` opt-in).
 3. [x] O4: fixture extension + CI smoke build (also guards P1, O1's "no nested node_modules at runtime", and `ssr.noExternal`).
 4. [x] O3: engine-aware default theme fallback.
-5. [ ] O6: reuse `EXTENSION_KIND_DIRS` in the Tailwind sync.
+5. [x] O6: reuse `EXTENSION_KIND_DIRS` in the Tailwind sync.
 6. [ ] O5: move to a `core/themes` performance pass (record in the tracker's later-pass table if not done here).
 7. [ ] Mark `extensions/` ✅ in [code-quality-review.md](../code-quality-review.md).

@@ -19,81 +19,70 @@ import {
   readdirSync,
   rmSync,
   symlinkSync,
-  lstatSync,
 } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { EXTENSION_KIND_DIRS } from '../app/core/extensions/deps.server.js';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
-const CACHE_DIR = join(
-  REPO_ROOT,
-  'node_modules',
-  '.cache',
-  'bermooda-tw-sources'
-);
 
 /**
- * @param {string} kind - `themes` or `plugins`
+ * Extension folder names under one kind dir. Unlike `listExtensionPackages`,
+ * keeps folders without a package.json: Tailwind only needs their files.
+ *
+ * @param {string} kindDir
  * @returns {string[]}
  */
-function listExtensionSlugs(kind) {
-  const dir = join(REPO_ROOT, 'app', kind);
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir, { withFileTypes: true })
+function listExtensionFolders(kindDir) {
+  if (!existsSync(kindDir)) return [];
+  return readdirSync(kindDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
     .map((entry) => entry.name);
 }
 
 /**
- * Replace dest with a relative symlink to target.
+ * Sync theme/plugin trees into the Tailwind scan cache. Each kind's link dir
+ * is rebuilt from scratch, so links to removed extensions don't linger.
  *
- * @param {string} targetAbs
- * @param {string} destAbs
- */
-function ensureSymlink(targetAbs, destAbs) {
-  mkdirSync(dirname(destAbs), { recursive: true });
-  try {
-    lstatSync(destAbs);
-    rmSync(destAbs, { recursive: true, force: true });
-  } catch {
-    // missing — nothing to remove
-  }
-  const rel = relative(dirname(destAbs), targetAbs);
-  symlinkSync(rel, destAbs);
-}
-
-/**
- * Sync theme/plugin trees into the Tailwind scan cache.
- *
- * @param {{ log?: (msg: string) => void }} [options]
- * @returns {{ themes: number, plugins: number }}
+ * @param {{ log?: (msg: string) => void, repoRoot?: string }} [options]
+ * @returns {Record<string, number>} Linked folders per kind (`themes`, `plugins`)
  */
 export function syncExtensionTwSources(options = {}) {
   const log = options.log ?? (() => {});
-  mkdirSync(CACHE_DIR, { recursive: true });
+  const repoRoot = options.repoRoot ?? REPO_ROOT;
+  const cacheDir = join(
+    repoRoot,
+    'node_modules',
+    '.cache',
+    'bermooda-tw-sources'
+  );
 
-  let themes = 0;
-  for (const slug of listExtensionSlugs('themes')) {
-    const target = join(REPO_ROOT, 'app', 'themes', slug);
-    ensureSymlink(target, join(CACHE_DIR, 'themes', slug));
-    themes += 1;
-  }
+  /** @type {Record<string, number>} */
+  const counts = {};
+  for (const kind of EXTENSION_KIND_DIRS) {
+    const kindDir = join(repoRoot, 'app', kind);
+    const linkDir = join(cacheDir, kind);
+    // rmSync removes the links themselves, never their targets.
+    rmSync(linkDir, { recursive: true, force: true });
+    mkdirSync(linkDir, { recursive: true });
 
-  let plugins = 0;
-  for (const slug of listExtensionSlugs('plugins')) {
-    const target = join(REPO_ROOT, 'app', 'plugins', slug);
-    ensureSymlink(target, join(CACHE_DIR, 'plugins', slug));
-    plugins += 1;
+    const folders = listExtensionFolders(kindDir);
+    for (const folder of folders) {
+      symlinkSync(
+        relative(linkDir, join(kindDir, folder)),
+        join(linkDir, folder)
+      );
+    }
+    counts[kind] = folders.length;
   }
 
   log(
-    `extension-tw-sources: linked ${themes} theme(s), ${plugins} plugin(s) → ${relative(REPO_ROOT, CACHE_DIR)}`
+    `extension-tw-sources: linked ${counts.themes} theme(s), ${counts.plugins} plugin(s) → ${relative(repoRoot, cacheDir)}`
   );
-  return { themes, plugins };
+  return counts;
 }
-
-export const EXTENSION_TW_SOURCES_DIR = CACHE_DIR;
 
 const isDirectRun =
   process.argv[1] &&
