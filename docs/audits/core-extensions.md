@@ -64,11 +64,17 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 - **Verified:** a temp plugin whose dependency's `postinstall` writes a marker file installs without writing it by default, and writes it with `BERMOODA_EXTENSION_INSTALL_SCRIPTS=plugins/<slug>`.
 - **Not covered:** the bermooda CLI (`theme add` / `plugin add`) lives in a separate repo and runs its own install. It should pass `--ignore-scripts` under the same env var.
 
-#### O3. `extensions:install` fallback packs an unpinned default theme (Low, reliability/supply chain)
+#### O3. `extensions:install` fallback packs an unpinned default theme (Low, reliability/supply chain) — **Fixed**
 
 - **Where:** `installFromNpm` in `scripts/install-default-extensions.mjs` (`npm pack @bermooda/theme-default`).
 - **Problem:** It always takes `latest`. If a newer theme requires a newer `bermooda.engine`, server discovery soft-skips it and a fresh `npm run setup` ends with no usable storefront theme and only a log line.
-- **Fix:** After extracting, read the theme's `package.json` and check `bermooda.engine` against the root version with `semver.satisfies`. Fail with a clear message, or pack the newest compatible version via `npm view @bermooda/theme-default versions --json` + `semver.maxSatisfying`. The script can't import `engine.server.js` directly (it imports JSON without import attributes), so use `semver` + `JSON.parse(readFileSync('package.json'))` in the script.
+- **Fix:** `installFromNpm` now packs an exact version.
+  - It reads the shop version with `JSON.parse(readFileSync('package.json'))`. `engine.server.js` can't be imported from plain Node because it imports JSON without import attributes.
+  - It lists versions with `npm view <pkg> versions --json`. `npm view <pkg>@* <field>` only reports the newest match, so it can't read every version's engine in one call.
+  - `findNewestCompatibleVersion` walks stable versions newest first and reads each `bermooda.engine` with `npm view <pkg>@<v> bermooda.engine --json`. It returns the first version whose range `semver.satisfies` the shop version (the same check as server discovery), usually after one lookup.
+  - With no compatible version the script exits 1 with `No published <pkg> version supports bermooda <version> (bermooda.engine)` and points at the sibling checkout.
+  - The script's `main()` now only runs when executed directly, so the helper is importable. `vitest.config.js` collects `scripts/**/*.test.mjs` in the node project, and `scripts/install-default-extensions.test.mjs` covers ordering, early stop, no match, prereleases, and missing or invalid ranges.
+- **Verified:** with no sibling checkout, `node scripts/install-default-extensions.mjs` packed `@bermooda/theme-default@0.2.1` (engine `>=0.1.0`) and installed it. With the root version temporarily set to `0.0.1`, it exited 1 with the message above and installed nothing.
 
 #### O4. CI never exercises the extension build path (Medium, automation/testing) — **Fixed**
 
@@ -104,7 +110,7 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 1. [x] O1: Docker final-stage cleanup (verified with `docker build` + `docker run`).
 2. [x] O2: decide on install-script policy with the maintainer, then implement (`--ignore-scripts` + `BERMOODA_EXTENSION_INSTALL_SCRIPTS` opt-in).
 3. [x] O4: fixture extension + CI smoke build (also guards P1, O1's "no nested node_modules at runtime", and `ssr.noExternal`).
-4. [ ] O3: engine-aware default theme fallback.
+4. [x] O3: engine-aware default theme fallback.
 5. [ ] O6: reuse `EXTENSION_KIND_DIRS` in the Tailwind sync.
 6. [ ] O5: move to a `core/themes` performance pass (record in the tracker's later-pass table if not done here).
 7. [ ] Mark `extensions/` ✅ in [code-quality-review.md](../code-quality-review.md).
