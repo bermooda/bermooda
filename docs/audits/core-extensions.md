@@ -2,7 +2,7 @@
 
 Audit date: 2026-10-08. Baseline commit: `aea9c60` (bermooda 0.11.0).
 
-Status: **closed.** The first-pass findings landed with the audit PR (#238). The second pass, on branch `fix/extensions-audit` from `1520424`, fixed O1–O4 and O6 and moved O5 to the tracker's later-pass table. Each item below records its fix and how it was verified. The `extensions/` row in [code-quality-review.md](../code-quality-review.md) is ✅.
+Status: **closed.** The first-pass findings landed with the audit PR (#238). The second pass, on branch `fix/extensions-audit` from `1520424`, fixed O1–O6. Each item below records its fix and how it was verified. The `extensions/` row in [code-quality-review.md](../code-quality-review.md) is ✅.
 
 ## Why this area
 
@@ -94,21 +94,32 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
   - `p-limit` forced into `ssr.external`: the external-import failure plus the import's `ERR_MODULE_NOT_FOUND`.
   - `semver` re-imported into the client registry: "bundles semver".
 
-#### O5. Client registry eagerly bundles every installed theme (Low now, scales badly) — **Moved to the tracker's later-pass table**
+#### O5. Client registry eagerly bundles every installed theme (Low now, scales badly) — **Fixed**
 
 - **Where:** `app/core/themes/storefront-components/index.js` (`import.meta.glob('#/themes/*/index.js', { eager: true })`).
 - **Problem:** Every installed theme's components ship to every shopper, active or not. Harmless with one theme, but the cost grows linearly with installed themes (marketplace previews, theme switching). The client registry also doesn't check `bermooda.engine`, so it can hold themes the server skipped (lookups use the server's `themeId`, so this is only dead weight).
-- **Fix:** Belongs to a `core/themes` pass: lazy-load (`eager: false`) per theme and resolve the active theme's module in the route `clientLoader`/lazy component, or build-time filter to the active theme. Measure client bundle before/after with two themes installed.
+- **Fix:** `getStorefrontComponent(name, themeId)` keeps its synchronous signature, so none of the 24 callers changed.
+  - **Server:** the module globs nothing (`import.meta.env.SSR`). Server `registerTheme` already fills the registry at startup, so SSR resolves synchronously.
+  - **Browser:** a lazy `import.meta.glob` makes each theme's `index.js` its own chunk. An eager `package.json` glob maps package id and slug to its loader. The first lookup for a theme that hasn't loaded yet calls React `use()` on a cached per-theme load promise and suspends until the chunk arrives; later lookups are synchronous.
+  - On first load the suspension happens during hydration, and React keeps the server HTML meanwhile. On a client-side navigation to a newly activated theme, React Router keeps the previous page meanwhile. A malformed theme package still resolves to `null`, as before.
+  - `__registerLazyThemesFrom` is a test seam (like `__discoverThemesFrom`). The registry test is now `index.test.jsx` and renders through Suspense: it suspends, resolves by id and slug with one load, resolves a malformed package to `null`, and loads nothing for an unknown theme. `docs/themes.md` (Discovery, `getStorefrontComponent`) describes the new behavior.
 - **Measured** (`npm run build`, published `@bermooda/theme-default@0.2.1`):
 
-  | Themes installed         | `storefront-components-*.js` | gzip     | All client JS |
-  | ------------------------ | ---------------------------- | -------- | ------------- |
-  | default                  | 135,358 B                    | 30,698 B | 1,314,124 B   |
-  | default + a renamed copy | 259,319 B                    | 56,394 B | 1,438,085 B   |
+  | Themes installed                  | `storefront-components-*.js` | gzip     | Theme chunk loaded                   | All client JS |
+  | --------------------------------- | ---------------------------- | -------- | ------------------------------------ | ------------- |
+  | default (before)                  | 135,358 B                    | 30,698 B | (in the registry chunk)              | 1,314,124 B   |
+  | default + a renamed copy (before) | 259,319 B                    | 56,394 B | (in the registry chunk)              | 1,438,085 B   |
+  | default + a renamed copy (after)  | 4,573 B                      | 1,795 B  | active only: 124,055 B / 27,126 B gz | 1,432,678 B   |
 
-  Each extra theme adds about 124 KB (26 KB gz) to a chunk every storefront route loads.
+  Each extra installed theme now costs shoppers nothing. The active theme's chunk is fetched after the route modules start, which adds one request to the critical path on first load.
 
-- **Why not here:** the active theme is a DB setting, so a build-time filter doesn't work. Lazy-loading changes how all 24 `getStorefrontComponent` callers hydrate (storefront layout `clientLoader` with `hydrate`, or `React.lazy` + Suspense, plus an id → folder map) and needs browser-level hydration testing. That isn't a small change, so it's recorded as "Lazy-load storefront themes on the client" in the [later-pass table](../code-quality-review.md#later-pass-cross-cutting-leftovers).
+- **Verified in Chromium** (Playwright against the production server with both themes installed):
+  - First load of `/` requested only the active theme's chunk, never the copy.
+  - A client-side navigation to `/cart` kept the same document, so hydration completed.
+  - After switching `activeTheme` to the copy and restarting the server, a client-side navigation in the same tab fetched the copy's chunk and rendered it.
+  - No console errors or warnings in any step. `react-router dev` hydrates and navigates the same way.
+
+  With a cold Vite dependency cache, dev mode logs "504 Outdated Optimize Dep" on first load. master does the same, so it isn't caused by this change.
 
 #### O6. Tailwind source sync duplicates the extension dir scan (Low, maintainability) — **Fixed**
 
@@ -127,5 +138,5 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 3. [x] O4: fixture extension + CI smoke build (also guards P1, O1's "no nested node_modules at runtime", and `ssr.noExternal`).
 4. [x] O3: engine-aware default theme fallback.
 5. [x] O6: reuse `EXTENSION_KIND_DIRS` in the Tailwind sync.
-6. [x] O5: measured, then moved to the tracker's later-pass table ("Lazy-load storefront themes on the client").
+6. [x] O5: lazy-load only the active theme on the client (measured and verified in Chromium).
 7. [x] Mark `extensions/` ✅ in [code-quality-review.md](../code-quality-review.md).
