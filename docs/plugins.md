@@ -1004,5 +1004,5 @@ Plugins may declare their own packages in `package.json` `dependencies` / `optio
 - Prefer `peerDependencies` for shared shop libraries (`react`, `react-dom`, `react-router`, etc.) so they resolve from the shop root.
 - `npm run build` runs `prebuild` → `extensions:install-deps` so nested `node_modules` exist before Vite resolves imports.
 - `extensions:install-deps` runs `npm ci` for extensions that ship a `package-lock.json` (reproducible, never rewrites the lockfile) and `npm install` otherwise. Ship a lockfile with published plugins. An extension `package.json` that is not valid JSON fails the install/build with its path.
-- Vite sets `ssr.noExternal` to the union of extension runtime dependency names so those packages are bundled into `build/server` (production images do not need nested extension `node_modules` at runtime).
+- Vite sets `ssr.noExternal` to the union of extension runtime dependency names so those packages are bundled into `build/server`. Production does not need nested extension `node_modules` at runtime; the Docker image deletes them after `npm run build`.
 - Native addons that cannot be bundled should be shop-root dependencies (or peers installed at the shop root), not extension-only nested installs.

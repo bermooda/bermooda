@@ -48,12 +48,12 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 
 ### Open
 
-#### O1. Final Docker image ships nested extension `node_modules` it doesn't need (Medium, scalability)
+#### O1. Final Docker image ships nested extension `node_modules` it doesn't need (Medium, scalability) — **Fixed**
 
 - **Where:** `Dockerfile`, final stage `COPY --from=build-env /app/app/themes …` and `/app/app/plugins …`.
 - **Problem:** `prebuild` installs extension deps into `app/{themes,plugins}/<slug>/node_modules`, and the final stage copies those trees wholesale. The Dockerfile comment and `docs/plugins.md` both say runtime doesn't need them (SSR inlines them; native addons must be shop-root deps), so they only add image size and attack surface.
-- **Fix:** In `build-env`, after `RUN npm run build`, add `RUN rm -rf app/themes/*/node_modules app/plugins/*/node_modules`.
-- **Done when:** `docker build` with a theme that has a runtime dep succeeds, `docker run` serves the storefront, and `docker run --rm <img> sh -c 'ls app/themes/*/node_modules'` finds nothing. Needs a Docker host; this session had none.
+- **Fix:** `build-env` runs `RUN rm -rf app/themes/*/node_modules app/plugins/*/node_modules` right after `RUN npm run build`. `docs/plugins.md` says so.
+- **Verified in a real image:** `docker build` with a fixture theme in `app/themes/` whose deps are `p-limit` (imports `yocto-queue`) and `clsx@1` (the shop root has `clsx@2`). Prebuild ran `npm ci --prefix app/themes/extension-smoke` and the build succeeded. `docker run` with a migrated SQLite DB and `activeTheme` set to the fixture served `GET /` with 200, rendering the fixture's `extension-smoke concurrency-1`, so the bundled deps ran. `ls -d app/themes/*/node_modules` in the container found nothing.
 
 #### O2. Extension dependency lifecycle scripts run at build time (Medium, security, needs a decision)
 
@@ -86,7 +86,7 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 
 ## Work plan
 
-1. [ ] O1: Docker final-stage cleanup (needs Docker to verify).
+1. [x] O1: Docker final-stage cleanup (verified with `docker build` + `docker run`).
 2. [ ] O2: decide on install-script policy with the maintainer, then implement.
 3. [ ] O4: fixture extension + CI smoke build (also guards P1/D1).
 4. [ ] O3: engine-aware default theme fallback.
