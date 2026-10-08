@@ -7,7 +7,11 @@ import cache, {
 } from '#/utils/cache/index.server';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
-import { checkExtensionEngine, getAppVersion } from '#/core/extensions/engine';
+import { pairExtensionModules } from '#/core/extensions/discovery';
+import {
+  checkExtensionEngine,
+  getAppVersion,
+} from '#/core/extensions/engine.server';
 import {
   SLUG_PATTERN,
   assertSlugMatchesFolder,
@@ -341,20 +345,6 @@ const themePackages = import.meta.glob('#/themes/*/package.json', {
 });
 
 /**
- * Returns the theme folder segment from an import.meta.glob path.
- *
- * @param {string} modulePath
- * @returns {string}
- */
-function themeFolderFromPath(modulePath) {
-  const match = modulePath.match(/\/themes\/([^/]+)\//);
-  if (!match) {
-    throw new Error(`Cannot parse theme folder from "${modulePath}"`);
-  }
-  return match[1];
-}
-
-/**
  * Discover and register themes from glob-like module/package maps.
  * Malformed packages (merge, slug/folder assert, registerTheme validation)
  * are logged and skipped; incompatible engines are soft-skipped; duplicate
@@ -368,15 +358,14 @@ export function __discoverThemesFrom(modules, packages) {
   const seenSlugs = new Set();
   const shopVersion = getAppVersion();
 
-  for (const [modPath, mod] of Object.entries(modules)) {
-    const folder = themeFolderFromPath(modPath);
-    const pkgEntry = Object.entries(packages).find(([pkgPath]) =>
-      pkgPath.includes(`/themes/${folder}/`)
-    );
-    if (!pkgEntry) {
+  for (const { folder, mod, pkg } of pairExtensionModules(
+    modules,
+    packages,
+    'themes'
+  )) {
+    if (!pkg) {
       throw new Error(`Missing package.json for theme folder "${folder}"`);
     }
-    const pkg = pkgEntry[1];
 
     const engineCheck = checkExtensionEngine({
       shopVersion,

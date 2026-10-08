@@ -37,16 +37,34 @@ export const EXTENSION_KIND_DIRS = Object.freeze(['themes', 'plugins']);
 /**
  * Read and parse a package.json file.
  *
+ * Throws on unreadable or invalid JSON so a broken extension fails the
+ * install/build with its path, instead of silently skipping its deps and
+ * failing later on an unresolved import.
+ *
  * @param {string} packageJsonPath
- * @returns {ExtensionPackageJson | null}
+ * @returns {ExtensionPackageJson}
  */
-export function readPackageJsonFile(packageJsonPath) {
+function readPackageJsonFile(packageJsonPath) {
   try {
-    const raw = readFileSync(packageJsonPath, 'utf8');
-    return /** @type {ExtensionPackageJson} */ (JSON.parse(raw));
-  } catch {
-    return null;
+    return /** @type {ExtensionPackageJson} */ (
+      JSON.parse(readFileSync(packageJsonPath, 'utf8'))
+    );
+  } catch (err) {
+    throw new Error(
+      `Invalid extension package.json at ${packageJsonPath}: ${err instanceof Error ? err.message : String(err)}`
+    );
   }
+}
+
+/**
+ * Keys of a package.json dependency map; ignores non-object values.
+ *
+ * @param {unknown} map
+ * @returns {string[]}
+ */
+function dependencyMapKeys(map) {
+  if (!map || typeof map !== 'object' || Array.isArray(map)) return [];
+  return Object.keys(map);
 }
 
 /**
@@ -59,8 +77,8 @@ export function readPackageJsonFile(packageJsonPath) {
 export function runtimeDependencyNamesFromPackage(pkg) {
   if (!pkg || typeof pkg !== 'object') return [];
   const names = new Set([
-    ...Object.keys(pkg.dependencies ?? {}),
-    ...Object.keys(pkg.optionalDependencies ?? {}),
+    ...dependencyMapKeys(pkg.dependencies),
+    ...dependencyMapKeys(pkg.optionalDependencies),
   ]);
   return [...names].sort();
 }
@@ -78,8 +96,9 @@ export function hasRuntimeDependencies(pkg) {
 /**
  * List installed extension packages under `app/themes` and `app/plugins`.
  *
- * Skips placeholder dirs without a readable package.json (e.g. empty gitkeep
- * trees). Does not recurse into nested packages.
+ * Skips placeholder dirs without a package.json (e.g. empty gitkeep trees);
+ * throws when a package.json exists but is not valid JSON. Does not recurse
+ * into nested packages.
  *
  * @param {string} appDir Absolute path to the shop `app/` directory
  * @returns {ExtensionPackageInfo[]}
@@ -109,8 +128,6 @@ export function listExtensionPackages(appDir) {
       if (!existsSync(packageJsonPath)) continue;
 
       const packageJson = readPackageJsonFile(packageJsonPath);
-      if (!packageJson) continue;
-
       results.push({ kind, slug, dir, packageJsonPath, packageJson });
     }
   }
@@ -140,11 +157,29 @@ export function collectExtensionRuntimeDependencyNames(appDir) {
 /**
  * Extension directories that need `npm install --prefix` (have runtime deps).
  *
- * @param {string} appDir Absolute path to the shop `app/` directory
+ * @param {ExtensionPackageInfo[]} extensions From {@link listExtensionPackages}
  * @returns {ExtensionPackageInfo[]}
  */
-export function listExtensionsNeedingInstall(appDir) {
-  return listExtensionPackages(appDir).filter((ext) =>
-    hasRuntimeDependencies(ext.packageJson)
-  );
+export function filterExtensionsNeedingInstall(extensions) {
+  return extensions.filter((ext) => hasRuntimeDependencies(ext.packageJson));
+}
+
+/**
+ * npm arguments that install one extension's runtime deps into its own
+ * `node_modules`. Uses `npm ci` when the extension ships a lockfile so builds
+ * are reproducible and never rewrite the extension's lockfile.
+ *
+ * @param {Pick<ExtensionPackageInfo, 'dir'>} ext
+ * @param {{ omitDev?: boolean }} [options]
+ * @returns {string[]}
+ */
+export function buildExtensionInstallArgs(ext, options = {}) {
+  const command = existsSync(join(ext.dir, 'package-lock.json'))
+    ? 'ci'
+    : 'install';
+  const args = [command, '--prefix', ext.dir, '--legacy-peer-deps'];
+  if (options.omitDev) {
+    args.push('--omit=dev');
+  }
+  return args;
 }

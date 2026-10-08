@@ -2,7 +2,8 @@
 /**
  * Install npm dependencies declared by installed themes and plugins.
  *
- * Runs `npm install --prefix <extension-dir>` for every
+ * Runs `npm ci --prefix <extension-dir>` (or `npm install` when the extension
+ * has no package-lock.json) for every
  * `app/themes/<slug>` / `app/plugins/<slug>` package that lists runtime
  * dependencies. The bermooda CLI does this on theme/plugin add; this script
  * covers contributor `extensions:install` and Docker/`prebuild` so nested
@@ -18,9 +19,11 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  buildExtensionInstallArgs,
+  filterExtensionsNeedingInstall,
   listExtensionPackages,
-  listExtensionsNeedingInstall,
-} from '../app/core/extensions/deps.js';
+  runtimeDependencyNamesFromPackage,
+} from '../app/core/extensions/deps.server.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
@@ -37,23 +40,6 @@ function parseArgs(argv) {
 }
 
 /**
- * Install runtime dependencies for one extension directory.
- *
- * @param {string} dir
- * @param {{ omitDev: boolean }} options
- */
-export function installDepsForExtension(dir, options) {
-  const args = ['install', '--prefix', dir, '--legacy-peer-deps'];
-  if (options.omitDev) {
-    args.push('--omit=dev');
-  }
-  execFileSync('npm', args, {
-    stdio: 'inherit',
-    cwd: REPO_ROOT,
-  });
-}
-
-/**
  * Install deps for every extension under app/ that declares runtime deps.
  *
  * @param {string} [appDir]
@@ -64,7 +50,7 @@ export function installAllExtensionDeps(appDir = APP_DIR, options = {}) {
   const omitDev = options.omitDev ?? false;
   const log = options.log ?? ((msg) => console.log(msg));
   const all = listExtensionPackages(appDir);
-  const needing = listExtensionsNeedingInstall(appDir);
+  const needing = filterExtensionsNeedingInstall(all);
   const skipped = all.length - needing.length;
 
   if (all.length === 0) {
@@ -80,13 +66,12 @@ export function installAllExtensionDeps(appDir = APP_DIR, options = {}) {
   }
 
   for (const ext of needing) {
-    const depCount =
-      Object.keys(ext.packageJson.dependencies ?? {}).length +
-      Object.keys(ext.packageJson.optionalDependencies ?? {}).length;
+    const args = buildExtensionInstallArgs(ext, { omitDev });
+    const depCount = runtimeDependencyNamesFromPackage(ext.packageJson).length;
     log(
-      `extension-deps: npm install --prefix app/${ext.kind}/${ext.slug} (${depCount} runtime dep(s))`
+      `extension-deps: npm ${args[0]} --prefix app/${ext.kind}/${ext.slug} (${depCount} runtime dep(s))`
     );
-    installDepsForExtension(ext.dir, { omitDev });
+    execFileSync('npm', args, { stdio: 'inherit', cwd: REPO_ROOT });
   }
 
   return { installed: needing.length, skipped };

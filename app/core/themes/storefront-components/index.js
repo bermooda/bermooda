@@ -1,6 +1,7 @@
 // Client-safe storefront theme component registry.
 // Discovers themes at build time via import.meta.glob; routes select by themeId from loader data.
 
+import { pairExtensionModules } from '#/core/extensions/discovery';
 import {
   buildMergedThemeManifest,
   indexThemeManifest,
@@ -15,16 +16,12 @@ const themePackages = import.meta.glob('#/themes/*/package.json', {
 /** @type {Record<string, object>} theme id → merged manifest */
 const THEMES = {};
 
-for (const [modPath, mod] of Object.entries(themeModules)) {
-  const folderMatch = modPath.match(/\/themes\/([^/]+)\//);
-  if (!folderMatch) continue;
-  const folder = folderMatch[1];
-
-  const pkgEntry = Object.entries(themePackages).find(([pkgPath]) =>
-    pkgPath.includes(`/themes/${folder}/`)
-  );
-  if (!pkgEntry) continue;
-  const pkg = pkgEntry[1];
+for (const { mod, pkg } of pairExtensionModules(
+  themeModules,
+  themePackages,
+  'themes'
+)) {
+  if (!pkg) continue;
 
   try {
     const runtime = /** @type {Record<string, unknown>} */ (mod.default) ?? {};

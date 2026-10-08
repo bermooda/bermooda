@@ -1,4 +1,4 @@
-// app/core/extensions/engine.js
+// app/core/extensions/engine.server.js
 import semver from 'semver';
 
 import appPackage from '../../../package.json';
