@@ -5,12 +5,13 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  buildExtensionInstallArgs,
   collectExtensionRuntimeDependencyNames,
+  filterExtensionsNeedingInstall,
   hasRuntimeDependencies,
   listExtensionPackages,
-  listExtensionsNeedingInstall,
   runtimeDependencyNamesFromPackage,
-} from './deps.js';
+} from '#/core/extensions/deps.server';
 
 /** @type {string} */
 let appDir;
@@ -59,6 +60,17 @@ describe('runtimeDependencyNamesFromPackage', () => {
       false
     );
   });
+
+  it('ignores dependency fields that are not objects', () => {
+    expect(
+      runtimeDependencyNamesFromPackage(
+        /** @type {any} */ ({
+          dependencies: 'zod',
+          optionalDependencies: ['meilisearch'],
+        })
+      )
+    ).toEqual([]);
+  });
 });
 
 describe('listExtensionPackages', () => {
@@ -79,6 +91,16 @@ describe('listExtensionPackages', () => {
       'plugins/meilisearch',
       'themes/default',
     ]);
+  });
+
+  it('throws with the path when a package.json is not valid JSON', () => {
+    const dir = join(appDir, 'plugins', 'broken');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'package.json'), '{ "name": ');
+
+    expect(() => listExtensionPackages(appDir)).toThrow(
+      /Invalid extension package.json at .*plugins\/broken\/package.json/
+    );
   });
 });
 
@@ -107,7 +129,7 @@ describe('collectExtensionRuntimeDependencyNames', () => {
   });
 });
 
-describe('listExtensionsNeedingInstall', () => {
+describe('filterExtensionsNeedingInstall', () => {
   it('only includes packages with runtime dependencies', () => {
     writeExtension('themes', 'default', {
       peerDependencies: { react: '19' },
@@ -116,8 +138,40 @@ describe('listExtensionsNeedingInstall', () => {
       dependencies: { resend: '4.0.0' },
     });
 
-    const needing = listExtensionsNeedingInstall(appDir);
+    const needing = filterExtensionsNeedingInstall(
+      listExtensionPackages(appDir)
+    );
     expect(needing).toHaveLength(1);
     expect(needing[0].slug).toBe('resend');
+  });
+});
+
+describe('buildExtensionInstallArgs', () => {
+  it('uses npm install when the extension has no lockfile', () => {
+    const dir = writeExtension('plugins', 'resend', {
+      dependencies: { resend: '4.0.0' },
+    });
+
+    expect(buildExtensionInstallArgs({ dir })).toEqual([
+      'install',
+      '--prefix',
+      dir,
+      '--legacy-peer-deps',
+    ]);
+  });
+
+  it('uses npm ci when the extension ships a lockfile', () => {
+    const dir = writeExtension('themes', 'default', {
+      dependencies: { 'theme-lib': '1.0.0' },
+    });
+    writeFileSync(join(dir, 'package-lock.json'), '{}');
+
+    expect(buildExtensionInstallArgs({ dir }, { omitDev: true })).toEqual([
+      'ci',
+      '--prefix',
+      dir,
+      '--legacy-peer-deps',
+      '--omit=dev',
+    ]);
   });
 });

@@ -1,5 +1,7 @@
 // app/core/extensions/package-meta.js
-import { assertEngineRange } from '#/core/extensions/engine';
+// Client-safe: imported by the storefront theme registry, so keep it free of
+// Node-only and heavy deps. Semver range checks live in `engine.server.js` and
+// run in server discovery before packages are merged.
 
 /** @typedef {{ id: string, title: string, version: string, description?: string, slug: string, engine: string, settings?: unknown }} ExtensionPackageMeta */
 
@@ -53,7 +55,7 @@ export function parseExtensionPackage(pkg) {
     );
   }
 
-  const engine = assertEngineRange(bermooda.engine);
+  const engine = requireNonEmptyString(bermooda.engine, 'bermooda.engine');
 
   /** @type {ExtensionPackageMeta} */
   const meta = { id, version, title, slug, engine };

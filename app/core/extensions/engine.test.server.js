@@ -1,4 +1,4 @@
-// app/core/extensions/engine.test.js
+// app/core/extensions/engine.test.server.js
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -6,7 +6,7 @@ import {
   checkExtensionEngine,
   getAppVersion,
   isEngineCompatible,
-} from '#/core/extensions/engine';
+} from '#/core/extensions/engine.server';
 
 describe('assertEngineRange', () => {
   it('returns trimmed range when valid', () => {

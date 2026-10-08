@@ -5,7 +5,7 @@ import { reactRouter } from '@react-router/dev/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
-import { collectExtensionRuntimeDependencyNames } from './app/core/extensions/deps.js';
+import { collectExtensionRuntimeDependencyNames } from './app/core/extensions/deps.server.js';
 import { resolveDevPort } from './app/libs/config/port.js';
 import { syncExtensionTwSources } from './scripts/sync-extension-tw-sources.mjs';
 

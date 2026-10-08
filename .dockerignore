@@ -2,3 +2,6 @@
 build
 node_modules
 README.md
+# Nested extension deps (app/themes/*/node_modules, app/plugins/*/node_modules)
+# are reinstalled for the image platform by `prebuild`.
+**/node_modules

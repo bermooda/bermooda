@@ -85,6 +85,7 @@ Rules:
 - Bundled folders use `app/plugins/<slug>/`; the folder name must equal `bermooda.slug`.
 - `enabledPlugins` and plugin data namespaces store full package ids.
 - `bermooda.engine` is checked against the shop root `package.json` `version`. The bermooda CLI rejects install/update when incompatible; at runtime, discovery logs and soft-skips incompatible plugins instead of failing startup.
+- Malformed packages (bad `package.json` identity, folder/slug mismatch, invalid runtime manifest) are logged (`Skipping malformed plugin`) and skipped, same as themes. A plugin folder without `package.json` and duplicate slugs still throw at startup.
 - `adminRoutes` and `storefrontRoutes` do not belong in package metadata. Route presence is discovered from `admin/routes` and `storefront/routes` files.
 
 Runtime behavior is declared in `index.server.js`:
@@ -1002,5 +1003,6 @@ Plugins may declare their own packages in `package.json` `dependencies` / `optio
 
 - Prefer `peerDependencies` for shared shop libraries (`react`, `react-dom`, `react-router`, etc.) so they resolve from the shop root.
 - `npm run build` runs `prebuild` → `extensions:install-deps` so nested `node_modules` exist before Vite resolves imports.
+- `extensions:install-deps` runs `npm ci` for extensions that ship a `package-lock.json` (reproducible, never rewrites the lockfile) and `npm install` otherwise. Ship a lockfile with published plugins. An extension `package.json` that is not valid JSON fails the install/build with its path.
 - Vite sets `ssr.noExternal` to the union of extension runtime dependency names so those packages are bundled into `build/server` (production images do not need nested extension `node_modules` at runtime).
 - Native addons that cannot be bundled should be shop-root dependencies (or peers installed at the shop root), not extension-only nested installs.

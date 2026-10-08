@@ -2,7 +2,11 @@
 // In-memory plugin registry, define* helpers, discovery, and route resolution.
 
 import logger from '#/utils/logger.server';
-import { checkExtensionEngine, getAppVersion } from '#/core/extensions/engine';
+import { pairExtensionModules } from '#/core/extensions/discovery';
+import {
+  checkExtensionEngine,
+  getAppVersion,
+} from '#/core/extensions/engine.server';
 import {
   SLUG_PATTERN,
   assertSlugMatchesFolder,
@@ -132,37 +136,27 @@ const pluginPackages = import.meta.glob('#/plugins/*/package.json', {
 });
 
 /**
- * Returns the plugin folder segment from an import.meta.glob path.
+ * Discover and register plugins from glob-like module/package maps.
+ * Malformed packages (merge, slug/folder assert, manifest validation) and
+ * incompatible engines are logged and skipped; duplicate slugs and missing
+ * package.json still throw.
  *
- * @param {string} modulePath
- * @returns {string}
- */
-function pluginFolderFromPath(modulePath) {
-  const match = modulePath.match(/\/plugins\/([^/]+)\//);
-  if (!match) {
-    throw new Error(`Cannot parse plugin folder from "${modulePath}"`);
-  }
-  return match[1];
-}
-
-/**
- * Register all bundled plugins from app/plugins/*.
- *
+ * @param {Record<string, { pluginManifest?: object, default?: object }>} modules
+ * @param {Record<string, object>} packages
  * @returns {void}
  */
-export function discoverPlugins() {
+export function __discoverPluginsFrom(modules, packages) {
   const seenSlugs = new Set();
   const shopVersion = getAppVersion();
 
-  for (const [modPath, mod] of Object.entries(pluginModules)) {
-    const folder = pluginFolderFromPath(modPath);
-    const pkgEntry = Object.entries(pluginPackages).find(([pkgPath]) =>
-      pkgPath.includes(`/plugins/${folder}/`)
-    );
-    if (!pkgEntry) {
+  for (const { folder, mod, pkg } of pairExtensionModules(
+    modules,
+    packages,
+    'plugins'
+  )) {
+    if (!pkg) {
       throw new Error(`Missing package.json for plugin folder "${folder}"`);
     }
-    const pkg = pkgEntry[1];
 
     const engineCheck = checkExtensionEngine({
       shopVersion,
@@ -178,17 +172,40 @@ export function discoverPlugins() {
       continue;
     }
 
-    const runtime = mod.pluginManifest ?? mod.default ?? {};
-    const manifest = /** @type {PluginManifest} */ (
-      mergeExtensionPackage(pkg, runtime)
-    );
-    assertSlugMatchesFolder(manifest.slug, folder, 'plugin');
+    /** @type {PluginManifest} */
+    let manifest;
+    try {
+      const runtime = mod.pluginManifest ?? mod.default ?? {};
+      manifest = /** @type {PluginManifest} */ (
+        mergeExtensionPackage(pkg, runtime)
+      );
+      assertSlugMatchesFolder(manifest.slug, folder, 'plugin');
+    } catch (err) {
+      logger.error({ folder, err }, 'Skipping malformed plugin');
+      continue;
+    }
+
+    // Duplicate detection stays outside the soft-skip path so it always aborts.
     if (seenSlugs.has(manifest.slug)) {
       throw new Error(`Duplicate plugin slug "${manifest.slug}"`);
     }
-    seenSlugs.add(manifest.slug);
-    register(manifest);
+
+    try {
+      register(manifest);
+      seenSlugs.add(manifest.slug);
+    } catch (err) {
+      logger.error({ folder, err }, 'Skipping malformed plugin');
+    }
   }
+}
+
+/**
+ * Register all bundled plugins from app/plugins/*.
+ *
+ * @returns {void}
+ */
+export function discoverPlugins() {
+  __discoverPluginsFrom(pluginModules, pluginPackages);
 }
 
 // ---------------------------------------------------------------------------
