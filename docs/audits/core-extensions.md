@@ -2,7 +2,7 @@
 
 Audit date: 2026-10-08. Baseline commit: `aea9c60` (bermooda 0.11.0).
 
-This doc is a work queue for later sessions. Findings marked **Fixed** landed with the audit PR. Work through the **Open** items in the **Work plan** order, tick the checklist, and update the `extensions/` row in [code-quality-review.md](../code-quality-review.md) when everything is closed. Follow the agent rules at the top of that tracker.
+Status: **closed.** The first-pass findings landed with the audit PR (#238). The second pass, on branch `fix/extensions-audit` from `1520424`, fixed O1–O4 and O6 and moved O5 to the tracker's later-pass table. Each item below records its fix and how it was verified. The `extensions/` row in [code-quality-review.md](../code-quality-review.md) is ✅.
 
 ## Why this area
 
@@ -46,7 +46,7 @@ Severity: **High** = security or data-integrity risk on a real deployment · **M
 
 Verified non-issue: transitive deps of extension-only packages are inlined by the SSR build (checked with a fixture: `foo` in `ssr.noExternal` importing nested `bar` bundles both and runs from `build/`).
 
-### Open
+### Second pass (formerly open)
 
 #### O1. Final Docker image ships nested extension `node_modules` it doesn't need (Medium, scalability) — **Fixed**
 
@@ -94,11 +94,21 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
   - `p-limit` forced into `ssr.external`: the external-import failure plus the import's `ERR_MODULE_NOT_FOUND`.
   - `semver` re-imported into the client registry: "bundles semver".
 
-#### O5. Client registry eagerly bundles every installed theme (Low now, scales badly)
+#### O5. Client registry eagerly bundles every installed theme (Low now, scales badly) — **Moved to the tracker's later-pass table**
 
 - **Where:** `app/core/themes/storefront-components/index.js` (`import.meta.glob('#/themes/*/index.js', { eager: true })`).
 - **Problem:** Every installed theme's components ship to every shopper, active or not. Harmless with one theme, but the cost grows linearly with installed themes (marketplace previews, theme switching). The client registry also doesn't check `bermooda.engine`, so it can hold themes the server skipped (lookups use the server's `themeId`, so this is only dead weight).
 - **Fix:** Belongs to a `core/themes` pass: lazy-load (`eager: false`) per theme and resolve the active theme's module in the route `clientLoader`/lazy component, or build-time filter to the active theme. Measure client bundle before/after with two themes installed.
+- **Measured** (`npm run build`, published `@bermooda/theme-default@0.2.1`):
+
+  | Themes installed         | `storefront-components-*.js` | gzip     | All client JS |
+  | ------------------------ | ---------------------------- | -------- | ------------- |
+  | default                  | 135,358 B                    | 30,698 B | 1,314,124 B   |
+  | default + a renamed copy | 259,319 B                    | 56,394 B | 1,438,085 B   |
+
+  Each extra theme adds about 124 KB (26 KB gz) to a chunk every storefront route loads.
+
+- **Why not here:** the active theme is a DB setting, so a build-time filter doesn't work. Lazy-loading changes how all 24 `getStorefrontComponent` callers hydrate (storefront layout `clientLoader` with `hydrate`, or `React.lazy` + Suspense, plus an id → folder map) and needs browser-level hydration testing. That isn't a small change, so it's recorded as "Lazy-load storefront themes on the client" in the [later-pass table](../code-quality-review.md#later-pass-cross-cutting-leftovers).
 
 #### O6. Tailwind source sync duplicates the extension dir scan (Low, maintainability) — **Fixed**
 
@@ -117,5 +127,5 @@ Verified non-issue: transitive deps of extension-only packages are inlined by th
 3. [x] O4: fixture extension + CI smoke build (also guards P1, O1's "no nested node_modules at runtime", and `ssr.noExternal`).
 4. [x] O3: engine-aware default theme fallback.
 5. [x] O6: reuse `EXTENSION_KIND_DIRS` in the Tailwind sync.
-6. [ ] O5: move to a `core/themes` performance pass (record in the tracker's later-pass table if not done here).
-7. [ ] Mark `extensions/` ✅ in [code-quality-review.md](../code-quality-review.md).
+6. [x] O5: measured, then moved to the tracker's later-pass table ("Lazy-load storefront themes on the client").
+7. [x] Mark `extensions/` ✅ in [code-quality-review.md](../code-quality-review.md).
