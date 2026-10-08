@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.11.1](https://github.com/bermooda/bermooda/compare/bermooda-v0.11.0...bermooda-v0.11.1) (2026-10-08)
+
+
+### Bug Fixes
+
+* **extensions:** drop nested extension node_modules from the Docker image ([49421cb](https://github.com/bermooda/bermooda/commit/49421cbf9da14b7919a1f1affe5cb7c7d7b8e15c))
+* **extensions:** pack an engine-compatible default theme in extensions:install ([8d7c30a](https://github.com/bermooda/bermooda/commit/8d7c30a894f5a43ef043659bdf92b71855ebc0b1))
+* **extensions:** reuse EXTENSION_KIND_DIRS in the Tailwind source sync ([b68d3d4](https://github.com/bermooda/bermooda/commit/b68d3d4dc96e91cb18da48d7b00e618bfdff69ae))
+* **extensions:** skip extension dependency install scripts by default ([707f6b3](https://github.com/bermooda/bermooda/commit/707f6b3e51860d61cf608e019dc9f50586e7079a))
+* **extensions:** trim client bundle, harden discovery and extension deps ([9ad685e](https://github.com/bermooda/bermooda/commit/9ad685e8ecce9e2d12011fac26cd12ef931712e0))
+* **setup:** harden unauthenticated setup endpoints ([e957909](https://github.com/bermooda/bermooda/commit/e957909a11a645897cc43aa4de9fde79e17da4ee))
+
+
+### Performance Improvements
+
+* **themes:** lazy-load only the active storefront theme in the browser ([a19f0bf](https://github.com/bermooda/bermooda/commit/a19f0bffb038040f0e3254412f89120605f45505))
+
 ## [0.11.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.10.0...bermooda-v0.11.0) (2026-08-12)
 
 
