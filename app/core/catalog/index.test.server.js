@@ -491,6 +491,40 @@ describe('getProduct', () => {
     expect(result.title).toBe('Product Title');
     expect(result.slug).toBe('product-title');
   });
+
+  it('localizes category titles and slugs when locale provided', async () => {
+    prisma.product.findUnique.mockResolvedValue({
+      id: 'prod_1',
+      publishedAt: null,
+      variants: [],
+      media: [],
+      options: [],
+      categories: [
+        { productId: 'prod_1', categoryId: 'cat_1', category: { id: 'cat_1' } },
+      ],
+    });
+    prisma.translation.findMany.mockImplementation(({ where }) =>
+      Promise.resolve(
+        where.entityType === 'category'
+          ? [{ field: 'title', value: 'Ceramics' }]
+          : [{ field: 'title', value: 'Glazed bud vase' }]
+      )
+    );
+    prisma.slug.findFirst.mockImplementation(({ where }) =>
+      Promise.resolve({
+        slug: where.entityType === 'category' ? 'ceramics' : 'glazed-bud-vase',
+      })
+    );
+
+    const result = await getProduct('prod_1', { locale: 'en' });
+
+    expect(result.title).toBe('Glazed bud vase');
+    expect(result.categories[0].category).toMatchObject({
+      id: 'cat_1',
+      title: 'Ceramics',
+      slug: 'ceramics',
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
