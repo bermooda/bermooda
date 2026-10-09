@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.12.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.11.1...bermooda-v0.12.0) (2026-10-09)
+
+
+### Features
+
+* **currency:** fix zero-decimal charges, enforce currency precision, honor channel currency ([7b7679c](https://github.com/bermooda/bermooda/commit/7b7679c31266a2ddf6d3dec034e74afc04b35bef))
+* **currency:** honor sales-channel currency and enforce currency precision ([30430d3](https://github.com/bermooda/bermooda/commit/30430d3444363a95200b128f859d136639947985))
+
+
+### Bug Fixes
+
+* **cart:** reprice carts on currency switch and refuse disabled cart currencies ([bfcd694](https://github.com/bermooda/bermooda/commit/bfcd6946294d94a69d53acb783cd3434dd02a3a2))
+* **currency:** charge zero-decimal currencies correctly and validate the currency cookie ([1d872a4](https://github.com/bermooda/bermooda/commit/1d872a4444e346a2cde8783f0f6746164efa5d6d))
+* **currency:** close out the currency audit ([96f2ad2](https://github.com/bermooda/bermooda/commit/96f2ad2e4e646f8ad8b319533d6bff7739a54df7))
+* **i18n:** audit core i18n and fix storefront payload, lang, and locale resolution ([14ae8ed](https://github.com/bermooda/bermooda/commit/14ae8ed2b62c94f374c5cba1a583cab08d393dc6))
+* **storefront:** harden storefront cookies ([129974d](https://github.com/bermooda/bermooda/commit/129974d12eec97c90d62be969682589ec9b312d2))
+* **storefront:** harden storefront cookies ([ec55521](https://github.com/bermooda/bermooda/commit/ec55521c7e2e76dd93bbf6f61a9b60ff5548e61b))
+
 ## [0.11.1](https://github.com/bermooda/bermooda/compare/bermooda-v0.11.0...bermooda-v0.11.1) (2026-10-08)
 
 
