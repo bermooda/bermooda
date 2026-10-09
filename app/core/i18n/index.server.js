@@ -7,21 +7,32 @@ import { join } from 'path';
 
 import { getCachedResult } from '#/utils/cache/index.server';
 import { serializeCookie } from '#/utils/cookies/index.server';
+import logger from '#/utils/logger.server';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import prisma from '#/libs/prisma.server';
 import {
+  ADMIN_AVAILABLE_LOCALES,
   DEFAULT_LOCALE,
   isValidLocaleTag,
-  normalizeLocaleList,
-  parseAcceptLanguage,
+  negotiateAcceptLanguage,
   parseCookieLocale,
   pickEnabledLocale,
 } from '#/core/i18n/locales';
 import { getRegisteredPlugin } from '#/core/plugins/index.server';
-import { get as settingsGet } from '#/core/settings/index.server';
+import {
+  getEnabledLocales,
+  get as settingsGet,
+} from '#/core/settings/index.server';
 import { getRegisteredTheme } from '#/core/themes/index.server';
 
-export { translate as t } from '#/core/i18n';
+/**
+ * Keys under this namespace are admin UI strings. They are dropped from the
+ * storefront payload (see `loadStorefrontMessages`).
+ */
+const ADMIN_NAMESPACE = 'admin';
+
+/** Keys that could rewrite the merged catalog's prototype chain. */
+const UNSAFE_MERGE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 /**
  * Core message catalogs are eager-imported so they ship inside the SSR
@@ -43,16 +54,6 @@ const CORE_CATALOGS = import.meta.glob('./messages/*.json', {
  * `build/server/`.
  */
 const APP_DIR = join(process.cwd(), 'app');
-
-/**
- * Returns storefront-enabled locales from settings.
- *
- * @returns {Promise<string[]>}
- */
-export async function getAvailableLocales() {
-  const locales = await settingsGet('locales');
-  return normalizeLocaleList(locales);
-}
 
 /**
  * Loads a bundled core message catalog for `locale`.
@@ -88,7 +89,9 @@ function extensionCatalogPathsForLocale(locale, themeSlug, pluginSlugs) {
 }
 
 /**
- * Deep-merges JSON catalogs from the given paths. Missing files (ENOENT) are skipped.
+ * Deep-merges JSON catalogs from the given paths. Missing files (ENOENT) are
+ * skipped silently; unreadable, invalid, or non-object catalogs are logged and
+ * skipped so one broken theme/plugin file can't take down every page.
  *
  * @param {string[]} filePaths
  * @param {Record<string, any>} [base]
@@ -97,15 +100,20 @@ function extensionCatalogPathsForLocale(locale, themeSlug, pluginSlugs) {
 function mergeCatalogFiles(filePaths, base = {}) {
   let merged = base;
   for (const filePath of filePaths) {
+    let parsed;
     try {
-      const raw = readFileSync(filePath, 'utf-8');
-      const parsed = JSON.parse(raw);
-      merged = deepMerge(merged, parsed);
+      parsed = JSON.parse(readFileSync(filePath, 'utf-8'));
     } catch (err) {
       if (err.code !== 'ENOENT') {
-        throw err;
+        logger.error({ filePath, err }, 'Skipping unreadable i18n catalog');
       }
+      continue;
     }
+    if (!isPlainCatalog(parsed)) {
+      logger.error({ filePath }, 'Skipping i18n catalog that is not an object');
+      continue;
+    }
+    merged = deepMerge(merged, parsed);
   }
   return merged;
 }
@@ -162,6 +170,28 @@ export async function loadMessages(locale) {
 }
 
 /**
+ * Loads the catalog for storefront pages: `loadMessages` without the
+ * `admin.*` namespace (flat `admin.x` keys or a nested `admin` object). The
+ * storefront layout serializes this into every page and every revalidation,
+ * and admin strings are nearly all of the core catalog. Cached under
+ * `i18n:storefront:${locale}`, so `invalidateCachePrefix('i18n:')` busts it too.
+ *
+ * @param {string} locale
+ * @returns {Promise<Record<string, any>>}
+ */
+export async function loadStorefrontMessages(locale) {
+  return getCachedResult(`i18n:storefront:${locale}`, async () => {
+    const messages = await loadMessages(locale);
+    return Object.fromEntries(
+      Object.entries(messages).filter(
+        ([key]) =>
+          key !== ADMIN_NAMESPACE && !key.startsWith(`${ADMIN_NAMESPACE}.`)
+      )
+    );
+  });
+}
+
+/**
  * Resolves the locale for an incoming request:
  *   1. `locale` cookie (when enabled)
  *   2. Customer preferredLocale (logged-in, no cookie)
@@ -175,7 +205,7 @@ export async function getRequestLocale(request) {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const [defaultLocaleSetting, enabledLocales] = await Promise.all([
     settingsGet('defaultLocale'),
-    getAvailableLocales(),
+    getEnabledLocales(),
   ]);
   const fallbackLocale =
     pickEnabledLocale(
@@ -194,13 +224,44 @@ export async function getRequestLocale(request) {
     return sessionLocale;
   }
 
-  const acceptLanguage = request.headers.get('accept-language') ?? '';
-  const negotiatedLocale = parseAcceptLanguage(acceptLanguage);
-  if (negotiatedLocale && enabledLocales.includes(negotiatedLocale)) {
-    return negotiatedLocale;
+  const negotiatedLocale = negotiateAcceptLanguage(
+    request.headers.get('accept-language') ?? '',
+    enabledLocales
+  );
+  return negotiatedLocale ?? fallbackLocale;
+}
+
+/**
+ * Resolves the admin UI locale. Admin chrome ships catalogs for
+ * `ADMIN_AVAILABLE_LOCALES`, independent of which locales the storefront
+ * enables, and never consults the customer session:
+ *   1. `locale` cookie (when an admin locale)
+ *   2. Accept-Language (when an admin locale)
+ *   3. `defaultLocale` setting (when an admin locale)
+ *   4. `DEFAULT_LOCALE`
+ *
+ * @param {Request} request
+ * @returns {Promise<string>}
+ */
+export async function getAdminRequestLocale(request) {
+  const cookieLocale = parseCookieLocale(request.headers.get('cookie') ?? '');
+  if (cookieLocale && ADMIN_AVAILABLE_LOCALES.includes(cookieLocale)) {
+    return cookieLocale;
   }
 
-  return fallbackLocale;
+  const negotiatedLocale = negotiateAcceptLanguage(
+    request.headers.get('accept-language') ?? '',
+    ADMIN_AVAILABLE_LOCALES
+  );
+  if (negotiatedLocale) return negotiatedLocale;
+
+  return (
+    pickEnabledLocale(
+      await settingsGet('defaultLocale'),
+      ADMIN_AVAILABLE_LOCALES,
+      DEFAULT_LOCALE
+    ) ?? DEFAULT_LOCALE
+  );
 }
 
 /**
@@ -218,41 +279,19 @@ export function appendLocaleCookie(headers, locale) {
 }
 
 /**
- * Appends a locale cookie to a Response when the tag is valid.
- *
- * @param {Response} response
- * @param {string} locale
- */
-export function setLocaleCookie(response, locale) {
-  appendLocaleCookie(response.headers, locale);
-}
-
-/**
- * Resolves request locale and persists it in a cookie when absent.
+ * Resolves the storefront request locale and persists it in a cookie when absent.
  *
  * @param {Request} request
- * @param {Response|Headers} target
+ * @param {Headers} headers - response headers to append `Set-Cookie` to
  * @returns {Promise<string>}
  */
-export async function resolveLocale(request, target) {
+export async function resolveLocale(request, headers) {
   const cookieLocale = parseCookieLocale(request.headers.get('cookie') ?? '');
   const locale = await getRequestLocale(request);
   if (!cookieLocale) {
-    const headers = target instanceof Response ? target.headers : target;
     appendLocaleCookie(headers, locale);
   }
   return locale;
-}
-
-/**
- * Resolves request locale and persists it via response headers when absent.
- *
- * @param {Request} request
- * @param {Headers} headers
- * @returns {Promise<string>}
- */
-export async function resolveRequestLocale(request, headers) {
-  return resolveLocale(request, headers);
 }
 
 async function getCustomerPreferredLocale(request) {
@@ -268,18 +307,28 @@ async function getCustomerPreferredLocale(request) {
   return locale && isValidLocaleTag(locale) ? locale : null;
 }
 
+/**
+ * @param {unknown} value
+ * @returns {value is Record<string, any>}
+ */
+function isPlainCatalog(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Deep-merges `source` onto a copy of `target`. Skips `__proto__` /
+ * `constructor` / `prototype` keys (JSON.parse keeps `__proto__` as an own key).
+ *
+ * @param {Record<string, any>} target
+ * @param {Record<string, any>} source
+ * @returns {Record<string, any>}
+ */
 function deepMerge(target, source) {
   const result = { ...target };
 
   for (const [key, value] of Object.entries(source)) {
-    if (
-      value !== null &&
-      typeof value === 'object' &&
-      !Array.isArray(value) &&
-      typeof result[key] === 'object' &&
-      result[key] !== null &&
-      !Array.isArray(result[key])
-    ) {
+    if (UNSAFE_MERGE_KEYS.has(key)) continue;
+    if (isPlainCatalog(value) && isPlainCatalog(result[key])) {
       result[key] = deepMerge(result[key], value);
     } else {
       result[key] = value;

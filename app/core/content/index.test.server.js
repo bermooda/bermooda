@@ -48,8 +48,8 @@ vi.mock('#/core/catalog/translations.server', () => ({
   })),
 }));
 
-vi.mock('#/core/i18n/index.server', () => ({
-  getAvailableLocales: vi.fn().mockResolvedValue(['en']),
+vi.mock('#/core/settings/index.server', () => ({
+  getEnabledLocales: vi.fn().mockResolvedValue(['en']),
 }));
 
 import prisma from '#/libs/prisma.server';

@@ -39,18 +39,44 @@ export function parseCookieLocale(cookieHeader) {
   return value && isValidLocaleTag(value) ? value : null;
 }
 
+/** Upper bound on Accept-Language ranges considered (header is client input). */
+const MAX_ACCEPT_LANGUAGE_RANGES = 32;
+
 /**
+ * Picks the best supported locale for an `Accept-Language` header. Ranges are
+ * tried in `q` order (header order breaks ties); each matches a supported
+ * locale exactly (`pt-BR`) or by primary subtag (`de-CH` → `de`). `*` and
+ * `q=0` ranges are ignored so the caller's default applies.
+ *
  * @param {string} acceptLanguage
+ * @param {string[]} supportedLocales
  * @returns {string|null}
  */
-export function parseAcceptLanguage(acceptLanguage) {
-  if (!acceptLanguage) return null;
+export function negotiateAcceptLanguage(acceptLanguage, supportedLocales) {
+  if (!acceptLanguage || !supportedLocales?.length) return null;
 
-  const first = acceptLanguage.split(',')[0].trim();
-  const tag = first.split(';')[0].trim();
-  const primary = tag.split('-')[0].split('_')[0].toLowerCase();
+  const ranges = acceptLanguage
+    .split(',', MAX_ACCEPT_LANGUAGE_RANGES)
+    .map((part, index) => {
+      const [tag = '', ...params] = part.split(';');
+      const qParam = params
+        .map((p) => p.trim())
+        .find((p) => p.startsWith('q='));
+      const q = qParam ? Number(qParam.slice(2)) : 1;
+      return { tag: tag.trim(), q: Number.isFinite(q) ? q : 0, index };
+    })
+    .filter((range) => range.tag && range.tag !== '*' && range.q > 0)
+    .sort((a, b) => b.q - a.q || a.index - b.index);
 
-  return primary && isValidLocaleTag(primary) ? primary : null;
+  for (const { tag } of ranges) {
+    const [primary = '', region] = tag.split(/[-_]/);
+    const language = primary.toLowerCase();
+    const exact = region ? `${language}-${region.toUpperCase()}` : language;
+    if (supportedLocales.includes(exact)) return exact;
+    if (supportedLocales.includes(language)) return language;
+  }
+
+  return null;
 }
 
 /**

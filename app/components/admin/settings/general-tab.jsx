@@ -29,9 +29,13 @@ export function AdminLocaleField({ adminLocale, availableLocales }) {
   return (
     <fetcher.Form method="post" action="/api/set-locale">
       <input type="hidden" name="returnTo" value={returnTo} />
-      <FieldLabel>{t('admin.settings.general.adminLocale')}</FieldLabel>
+      <FieldLabel htmlFor="admin-locale">
+        {t('admin.settings.general.adminLocale')}
+      </FieldLabel>
       <select
+        id="admin-locale"
         name="locale"
+        aria-describedby="admin-locale-help"
         defaultValue={adminLocale}
         onChange={(event) => event.currentTarget.form.requestSubmit()}
         className={selectClass()}
@@ -42,7 +46,7 @@ export function AdminLocaleField({ adminLocale, availableLocales }) {
           </option>
         ))}
       </select>
-      <p className="text-text-muted mt-1 text-xs">
+      <p id="admin-locale-help" className="text-text-muted mt-1 text-xs">
         {t('admin.settings.general.adminLocaleHelp')}
       </p>
     </fetcher.Form>
@@ -86,8 +90,11 @@ export function GeneralTab({ data }) {
             />
           </div>
           <div>
-            <FieldLabel>{t('admin.settings.general.defaultLocale')}</FieldLabel>
+            <FieldLabel htmlFor="settings-default-locale">
+              {t('admin.settings.general.defaultLocale')}
+            </FieldLabel>
             <select
+              id="settings-default-locale"
               name="defaultLocale"
               defaultValue={data.defaultLocale}
               className={selectClass()}

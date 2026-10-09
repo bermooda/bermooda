@@ -23,9 +23,9 @@ import { useState } from 'react';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin/index.server';
-import { ADMIN_AVAILABLE_LOCALES, translate, useT } from '#/core/i18n';
+import { useI18nValue, useT } from '#/core/i18n';
 import { I18nContext } from '#/core/i18n/context';
-import { getRequestLocale, loadMessages } from '#/core/i18n/index.server';
+import { getAdminRequestLocale, loadMessages } from '#/core/i18n/index.server';
 import useColorMode from '#/hooks/use-color-mode';
 import useCommandPalette, {
   getCommandPaletteShortcutLabel,
@@ -40,18 +40,16 @@ import { NAV_GROUPS } from '#/components/admin/nav-config';
  * @returns {Promise<{
  *   user: object,
  *   locale: string,
- *   availableLocales: string[],
  *   messages: Record<string, string>,
  * }>}
  */
 export async function loader({ request }) {
   const session = await authenticate(request);
-  const locale = await getRequestLocale(request);
+  const locale = await getAdminRequestLocale(request);
   const messages = await loadMessages(locale);
   return {
     user: session.user,
     locale,
-    availableLocales: ADMIN_AVAILABLE_LOCALES,
     messages,
   };
 }
@@ -429,16 +427,14 @@ export default function AdminLayout() {
   const { locale, messages, user } = useLoaderData();
   const { open, setOpen, openPalette } = useCommandPalette();
   const location = useLocation();
-
-  function t(key, params) {
-    return translate(key, params, messages);
-  }
+  const i18n = useI18nValue(locale, messages);
+  const { t } = i18n;
 
   const showTwoFactorBanner =
     !user?.twoFactorEnabled && location.pathname !== '/admin/security';
 
   return (
-    <I18nContext.Provider value={{ t, locale }}>
+    <I18nContext.Provider value={i18n}>
       {/*
         Document is the scrollport (no overflow on main). Nested overflow:auto
         on an unbounded main breaks position:sticky and can create empty

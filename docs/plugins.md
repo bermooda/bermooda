@@ -987,6 +987,8 @@ The `index.server.js` file is the runtime module imported at startup. It must ex
 
 Plugin catalogs under `i18n/<locale>.json` merge into storefront/admin message catalogs only for plugins in `pluginOrder ∩ enabledPlugins` (ordered intersection). Enabling/disabling a plugin or changing plugin order busts the `i18n:` cache prefix.
 
+Put admin-only strings under `admin.` (for example `admin.plugins.meilisearch.reindex`). The storefront layout drops the `admin.*` namespace from the catalog it sends to shoppers, so storefront blocks and `/apps/<slug>` pages must use keys outside it. A catalog file that is not valid JSON, or is not a JSON object, is logged (`Skipping unreadable i18n catalog`) and skipped; the rest of the catalog still loads. See [docs/i18n.md](i18n.md).
+
 ## Single-process enable state
 
 `isEnabled`, wired hooks, and providers live in the current Node process. Multi-instance deploys can diverge after a toggle until each process reloads plugins (restart) or you add shared invalidation. Persisted `enabledPlugins` is the source of truth across restarts; in-memory wiring is not shared.

@@ -33,8 +33,12 @@ export async function loadStorefrontPageContext(request) {
  */
 export function parseReturnTo(formData, fallback = '/') {
   const returnTo = formData.get('returnTo')?.toString();
-  if (!returnTo || !returnTo.startsWith('/') || returnTo.startsWith('//')) {
-    return fallback;
-  }
-  return returnTo;
+  if (!returnTo || !returnTo.startsWith('/')) return fallback;
+
+  // Resolve like a browser would: `/\evil.com` and `/<tab>/evil.com` both
+  // become `//evil.com`, so a prefix check alone is an open redirect.
+  const base = 'http://return-to.invalid';
+  const url = new URL(returnTo, base);
+  if (url.origin !== base) return fallback;
+  return `${url.pathname}${url.search}${url.hash}`;
 }

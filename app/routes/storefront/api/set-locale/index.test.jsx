@@ -11,11 +11,14 @@ vi.mock('#/core/storefront/page-context.server', () => ({
 }));
 
 vi.mock('#/core/i18n/index.server', () => ({
-  getAvailableLocales: vi.fn().mockResolvedValue(['en', 'de']),
-  setLocaleCookie: vi.fn(),
+  appendLocaleCookie: vi.fn(),
 }));
 
-import { setLocaleCookie } from '#/core/i18n/index.server';
+vi.mock('#/core/settings/index.server', () => ({
+  getEnabledLocales: vi.fn().mockResolvedValue(['en', 'es']),
+}));
+
+import { appendLocaleCookie } from '#/core/i18n/index.server';
 
 import { action as setLocaleAction } from '#/routes/storefront/api/set-locale';
 
@@ -26,7 +29,7 @@ describe('storefront set-locale action', () => {
 
   it('set-locale sets cookie for enabled locale', async () => {
     const form = new FormData();
-    form.set('locale', 'de');
+    form.set('locale', 'es');
     form.set('returnTo', '/cart');
 
     const response = await setLocaleAction({
@@ -38,7 +41,7 @@ describe('storefront set-locale action', () => {
 
     expect(response.status).toBe(302);
     expect(response.headers.get('Location')).toBe('/cart');
-    expect(setLocaleCookie).toHaveBeenCalledWith(response, 'de');
+    expect(appendLocaleCookie).toHaveBeenCalledWith(response.headers, 'es');
   });
 
   it('set-locale ignores invalid locale but still redirects', async () => {
@@ -54,6 +57,22 @@ describe('storefront set-locale action', () => {
     });
 
     expect(response.status).toBe(302);
-    expect(setLocaleCookie).not.toHaveBeenCalled();
+    expect(appendLocaleCookie).not.toHaveBeenCalled();
+  });
+
+  it('set-locale accepts admin UI locales the storefront does not enable', async () => {
+    const form = new FormData();
+    form.set('locale', 'de');
+    form.set('returnTo', '/admin/settings');
+
+    const response = await setLocaleAction({
+      request: new Request('http://localhost/api/set-locale', {
+        method: 'POST',
+        body: form,
+      }),
+    });
+
+    expect(response.headers.get('Location')).toBe('/admin/settings');
+    expect(appendLocaleCookie).toHaveBeenCalledWith(response.headers, 'de');
   });
 });
