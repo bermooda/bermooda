@@ -1,5 +1,7 @@
 // Shared checkout_session cookie helpers for storefront routes.
 
+import { readCookie, serializeCookie } from '#/utils/cookies/index.server';
+
 const CHECKOUT_SESSION_COOKIE = 'checkout_session';
 
 /**
@@ -7,9 +9,7 @@ const CHECKOUT_SESSION_COOKIE = 'checkout_session';
  * @returns {string | null}
  */
 export function getCheckoutSessionIdFromRequest(request) {
-  const cookie = request.headers.get('cookie') ?? '';
-  const match = cookie.match(/(?:^|;\s*)checkout_session=([^;]+)/);
-  return match ? decodeURIComponent(match[1].trim()) : null;
+  return readCookie(request, CHECKOUT_SESSION_COOKIE);
 }
 
 /**
@@ -17,7 +17,9 @@ export function getCheckoutSessionIdFromRequest(request) {
  * @returns {string}
  */
 export function buildCheckoutSessionCookie(sessionId) {
-  return `${CHECKOUT_SESSION_COOKIE}=${encodeURIComponent(sessionId)}; Path=/; HttpOnly; SameSite=Lax`;
+  return serializeCookie(CHECKOUT_SESSION_COOKIE, sessionId, {
+    httpOnly: true,
+  });
 }
 
 /**
@@ -34,6 +36,6 @@ export function appendCheckoutSessionCookie(headers, sessionId) {
 export function clearCheckoutSessionCookie(headers) {
   headers.append(
     'Set-Cookie',
-    `${CHECKOUT_SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`
+    serializeCookie(CHECKOUT_SESSION_COOKIE, '', { maxAge: 0, httpOnly: true })
   );
 }

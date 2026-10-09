@@ -8,6 +8,7 @@
  */
 import { Outlet, useLoaderData } from 'react-router';
 
+import { readCookie, serializeCookie } from '#/utils/cookies/index.server';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { getMenuByHandle } from '#/core/content/index.server';
@@ -19,9 +20,15 @@ import {
   loadMessages,
   resolveRequestLocale,
 } from '#/core/i18n/index.server';
-import { trackReferral } from '#/core/loyalty/index.server';
+import {
+  normalizeReferralCode,
+  settleReferral,
+} from '#/core/loyalty/index.server';
 import { getEnabledCurrencies } from '#/core/settings/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
+
+const REF_COOKIE = 'bermooda_ref';
+const REF_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
 export async function loader({ request }) {
   const headers = new Headers();
@@ -30,22 +37,18 @@ export async function loader({ request }) {
   const currency = await getRequestCurrency(request);
 
   const url = new URL(request.url);
-  const refCode = url.searchParams.get('ref');
-  const cookie = request.headers.get('cookie') ?? '';
-  const refCookieMatch = cookie.match(/(?:^|;\s*)bermooda_ref=([^;]+)/);
-  const cookieRef = refCookieMatch
-    ? decodeURIComponent(refCookieMatch[1].trim())
-    : null;
+  const refParam = url.searchParams.get('ref')?.trim();
+  const refCode = refParam ? normalizeReferralCode(refParam) : null;
+  const cookieRef = readCookie(request, REF_COOKIE);
   const effectiveRef = refCode ?? cookieRef;
   const session = await getCustomerSession(request);
 
-  if (effectiveRef && session?.user?.id) {
-    try {
-      await trackReferral(effectiveRef, session.user.id);
-    } catch {
-      // Self-referral or invalid code — ignore
-    }
-  }
+  // Track once per signed-in customer, then drop the cookie so later page
+  // views skip the loyalty lookup. Guests keep the cookie until they sign in.
+  const referralSettled =
+    effectiveRef && session?.user?.id
+      ? await settleReferral(effectiveRef, session.user.id)
+      : false;
 
   const [
     messages,
@@ -65,10 +68,20 @@ export async function loader({ request }) {
     getSlotBlocksMap(['layout.header', 'layout.footer']),
   ]);
 
-  if (refCode) {
+  if (referralSettled) {
+    if (cookieRef) {
+      headers.append(
+        'Set-Cookie',
+        serializeCookie(REF_COOKIE, '', { maxAge: 0 })
+      );
+    }
+  } else if (refCode) {
     headers.append(
       'Set-Cookie',
-      `bermooda_ref=${encodeURIComponent(refCode.trim().toUpperCase())}; Path=/; Max-Age=${30 * 24 * 60 * 60}; SameSite=Lax`
+      serializeCookie(REF_COOKIE, refCode, {
+        maxAge: REF_MAX_AGE,
+        httpOnly: true,
+      })
     );
   }
 

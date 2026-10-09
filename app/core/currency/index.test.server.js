@@ -227,7 +227,7 @@ describe('setCurrencyCookie', () => {
     const res = makeResponse();
     setCurrencyCookie(res, 'USD');
     expect(res.headers.get('Set-Cookie')).toBe(
-      'currency=USD; Path=/; SameSite=Lax; Max-Age=31536000'
+      'currency=USD; Path=/; Max-Age=31536000; SameSite=Lax; Secure'
     );
   });
 

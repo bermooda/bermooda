@@ -333,6 +333,27 @@ export async function trackReferral(referralCode, referredCustomerId) {
   });
 }
 
+/**
+ * Attribute a referral for a signed-in customer without throwing. Returns
+ * true once the outcome is final (attributed, unknown code, or self-referral)
+ * so the caller can drop the referral cookie, and false when an unexpected
+ * error means tracking should be retried on a later request.
+ *
+ * @param {string} referralCode
+ * @param {string} customerId
+ * @returns {Promise<boolean>}
+ */
+export async function settleReferral(referralCode, customerId) {
+  try {
+    await trackReferral(referralCode, customerId);
+    return true;
+  } catch (err) {
+    if (err.message === 'SELF_REFERRAL_NOT_ALLOWED') return true;
+    logger.warn({ err, customerId }, 'Referral tracking failed');
+    return false;
+  }
+}
+
 async function processReferralReward(orderId, customerId) {
   const referral = await prisma.referral.findUnique({
     where: { referredCustomerId: customerId },
