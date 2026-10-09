@@ -9,6 +9,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { Form, Link, useFetcher, useRevalidator } from 'react-router';
 
 import { slugify } from '#/utils/slugify';
+import { centsToInputValue, currencyInputStep } from '#/core/currency/format';
 import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
@@ -291,11 +292,6 @@ function OptionsEditor({ initialOptions }) {
 function VariantPriceGrid({ variants, currencies }) {
   const t = useT();
 
-  function centsToDisplay(cents) {
-    if (cents === '' || cents === null || cents === undefined) return '';
-    return (Number(cents) / 100).toFixed(2);
-  }
-
   return (
     <div className="border-border min-w-0 overflow-hidden rounded-lg border">
       <div className="overflow-x-auto">
@@ -349,13 +345,13 @@ function VariantPriceGrid({ variants, currencies }) {
                           type="number"
                           name={`price[${variant.id}][${cur}]`}
                           defaultValue={
-                            priceData
-                              ? centsToDisplay(priceData.priceCents)
+                            priceData?.priceCents != null
+                              ? centsToInputValue(priceData.priceCents, cur)
                               : ''
                           }
                           min={0}
-                          step="0.01"
-                          placeholder="0.00"
+                          step={currencyInputStep(cur)}
+                          placeholder={centsToInputValue(0, cur)}
                           className="w-20"
                         />
                       </td>
@@ -365,11 +361,14 @@ function VariantPriceGrid({ variants, currencies }) {
                           name={`comparePrice[${variant.id}][${cur}]`}
                           defaultValue={
                             priceData?.comparePriceCents
-                              ? centsToDisplay(priceData.comparePriceCents)
+                              ? centsToInputValue(
+                                  priceData.comparePriceCents,
+                                  cur
+                                )
                               : ''
                           }
                           min={0}
-                          step="0.01"
+                          step={currencyInputStep(cur)}
                           placeholder="—"
                           className="w-20"
                         />

@@ -2,6 +2,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+vi.mock('#/core/channels/index.server', () => ({
+  resolveChannelFromRequest: vi.fn(),
+}));
+
 vi.mock('#/core/settings/index.server', () => ({
   DEFAULT_CURRENCY: 'USD',
   SETTING_KEYS: { DEFAULT_CURRENCY: 'defaultCurrency' },
@@ -10,11 +14,17 @@ vi.mock('#/core/settings/index.server', () => ({
 }));
 
 // Import after mocks are registered
+import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import {
+  centsPerMinorUnit,
+  centsToInputValue,
   centsToMajorUnitString,
   centsToMinorUnits,
   currencyFractionDigits,
+  currencyInputStep,
   formatPrice,
+  isCentsAtCurrencyPrecision,
+  roundCentsToCurrency,
 } from '#/core/currency/format';
 import {
   getRequestCurrency,
@@ -46,6 +56,10 @@ function makeResponse() {
 beforeEach(() => {
   vi.clearAllMocks();
   getEnabledCurrencies.mockResolvedValue(['USD', 'EUR', 'GBP']);
+  resolveChannelFromRequest.mockResolvedValue({
+    isDefault: true,
+    currency: 'USD',
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -92,6 +106,41 @@ describe('getRequestCurrency', () => {
     expect(await getRequestCurrency(req)).toBe('USD');
   });
 
+  it('uses a non-default channel currency when there is no cookie', async () => {
+    resolveChannelFromRequest.mockResolvedValueOnce({
+      isDefault: false,
+      currency: 'EUR',
+    });
+    expect(await getRequestCurrency(makeRequest())).toBe('EUR');
+    expect(settingsGet).not.toHaveBeenCalled();
+  });
+
+  it('prefers the cookie over the channel currency', async () => {
+    resolveChannelFromRequest.mockResolvedValueOnce({
+      isDefault: false,
+      currency: 'EUR',
+    });
+    expect(await getRequestCurrency(makeRequest('currency=GBP'))).toBe('GBP');
+  });
+
+  it('lets the default channel defer to the defaultCurrency setting', async () => {
+    resolveChannelFromRequest.mockResolvedValueOnce({
+      isDefault: true,
+      currency: 'USD',
+    });
+    settingsGet.mockResolvedValueOnce('EUR');
+    expect(await getRequestCurrency(makeRequest())).toBe('EUR');
+  });
+
+  it('ignores a channel currency that is not enabled', async () => {
+    resolveChannelFromRequest.mockResolvedValueOnce({
+      isDefault: false,
+      currency: 'JPY',
+    });
+    settingsGet.mockResolvedValueOnce('USD');
+    expect(await getRequestCurrency(makeRequest())).toBe('USD');
+  });
+
   it('does not match cookies whose name only ends in currency', async () => {
     settingsGet.mockResolvedValueOnce('USD');
     const req = makeRequest('xcurrency=EUR');
@@ -113,6 +162,11 @@ describe('formatPrice', () => {
     const result = formatPrice(1999, 'EUR', 'de-DE');
     expect(result).toMatch(/19[,.]99/);
     expect(result).toMatch(/EUR|€/);
+  });
+
+  it('uses the currency precision', () => {
+    expect(formatPrice(100000, 'JPY', 'en')).toBe('¥1,000');
+    expect(formatPrice(1234, 'KWD', 'en')).toMatch(/^KWD\s12\.340$/);
   });
 
   it('reuses formatters across calls', () => {
@@ -176,5 +230,30 @@ describe('setCurrencyCookie', () => {
     expect(() => setCurrencyCookie(res, 'US')).toThrow();
     expect(() => setCurrencyCookie(res, 'USDD')).toThrow();
     expect(() => setCurrencyCookie(res, '')).toThrow();
+  });
+});
+
+describe('currency precision helpers', () => {
+  it('reports cents per smallest unit', () => {
+    expect(centsPerMinorUnit('USD')).toBe(1);
+    expect(centsPerMinorUnit('JPY')).toBe(100);
+    expect(centsPerMinorUnit('KWD')).toBe(1);
+  });
+
+  it('rounds and checks cents against the currency precision', () => {
+    expect(roundCentsToCurrency(150, 'JPY')).toBe(200);
+    expect(roundCentsToCurrency(1999, 'USD')).toBe(1999);
+    expect(isCentsAtCurrencyPrecision(150, 'JPY')).toBe(false);
+    expect(isCentsAtCurrencyPrecision(100000, 'JPY')).toBe(true);
+    expect(isCentsAtCurrencyPrecision(1999, 'USD')).toBe(true);
+  });
+
+  it('builds admin input step and value', () => {
+    expect(currencyInputStep('USD')).toBe('0.01');
+    expect(currencyInputStep('JPY')).toBe('1');
+    expect(centsToInputValue(1999, 'USD')).toBe('19.99');
+    expect(centsToInputValue(100000, 'JPY')).toBe('1000');
+    expect(centsToInputValue(150, 'JPY')).toBe('2');
+    expect(centsToInputValue(0, 'USD')).toBe('0.00');
   });
 });

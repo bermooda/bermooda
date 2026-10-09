@@ -5,8 +5,11 @@
 // every currency (the admin price form multiplies by 100). Payment providers
 // expect the ISO 4217 minor unit instead, which differs for zero-decimal
 // (JPY) and three-decimal (KWD) currencies — convert with the helpers below.
+// Zero-decimal currencies can't hold sub-unit amounts: ¥1 is 100 cents, so
+// stored JPY cents are always a multiple of 100 (see `centsPerMinorUnit`).
 
 const formatters = new Map();
+const fractionDigits = new Map();
 
 /**
  * @param {string} currency
@@ -17,11 +20,7 @@ function getFormatter(currency, locale) {
   const key = `${locale}|${currency}`;
   let formatter = formatters.get(key);
   if (!formatter) {
-    formatter = new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 2,
-    });
+    formatter = new Intl.NumberFormat(locale, { style: 'currency', currency });
     formatters.set(key, formatter);
   }
   return formatter;
@@ -46,10 +45,61 @@ export function formatPrice(cents, currency = 'USD', locale = 'en') {
  * @returns {number}
  */
 export function currencyFractionDigits(currency) {
-  return new Intl.NumberFormat('en', {
-    style: 'currency',
-    currency,
-  }).resolvedOptions().maximumFractionDigits;
+  let digits = fractionDigits.get(currency);
+  if (digits === undefined) {
+    digits = new Intl.NumberFormat('en', {
+      style: 'currency',
+      currency,
+    }).resolvedOptions().maximumFractionDigits;
+    fractionDigits.set(currency, digits);
+  }
+  return digits;
+}
+
+/**
+ * Stored cents in the currency's smallest valid amount (USD 1, JPY 100).
+ * Currencies with more than two minor-unit digits still store whole cents.
+ *
+ * @param {string} currency
+ * @returns {number}
+ */
+export function centsPerMinorUnit(currency) {
+  const digits = currencyFractionDigits(currency);
+  return digits >= 2 ? 1 : 10 ** (2 - digits);
+}
+
+/**
+ * Round stored cents to an amount the currency can represent
+ * (150 JPY cents → 200, i.e. ¥1.50 → ¥2).
+ *
+ * @param {number} cents
+ * @param {string} currency
+ * @returns {number}
+ */
+export function roundCentsToCurrency(cents, currency) {
+  const step = centsPerMinorUnit(currency);
+  return Math.round(cents / step) * step;
+}
+
+/**
+ * Whether stored cents are representable in the currency.
+ *
+ * @param {number} cents
+ * @param {string} currency
+ * @returns {boolean}
+ */
+export function isCentsAtCurrencyPrecision(cents, currency) {
+  return cents % centsPerMinorUnit(currency) === 0;
+}
+
+/**
+ * `step` attribute for a decimal major-unit price input ("0.01", JPY "1").
+ *
+ * @param {string} currency
+ * @returns {string}
+ */
+export function currencyInputStep(currency) {
+  return String(centsPerMinorUnit(currency) / 100);
 }
 
 /**
@@ -79,4 +129,17 @@ export function centsToMinorUnits(cents, currency) {
 export function centsToMajorUnitString(cents, currency) {
   const digits = currencyFractionDigits(currency);
   return (centsToMinorUnits(cents, currency) / 10 ** digits).toFixed(digits);
+}
+
+/**
+ * Stored cents as the decimal shown in admin price inputs, at the precision
+ * the input accepts (1999 USD → "19.99", 100000 JPY → "1000").
+ *
+ * @param {number} cents
+ * @param {string} currency
+ * @returns {string}
+ */
+export function centsToInputValue(cents, currency) {
+  const digits = Math.min(2, currencyFractionDigits(currency));
+  return (roundCentsToCurrency(cents, currency) / 100).toFixed(digits);
 }

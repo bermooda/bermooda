@@ -339,6 +339,31 @@ describe('parseDiscountFormData', () => {
       error: 'Currency is required for fixed discounts.',
     });
   });
+
+  it('uppercases the currency of fixed discounts', () => {
+    const formData = new FormData();
+    formData.set('code', 'FIXED5');
+    formData.set('type', 'fixed');
+    formData.set('value', '500');
+    formData.set('currency', ' usd ');
+
+    expect(parseDiscountFormData(formData).data.currency).toBe('USD');
+  });
+
+  it('rejects fixed values below the currency precision', () => {
+    const formData = new FormData();
+    formData.set('code', 'YEN');
+    formData.set('type', 'fixed');
+    formData.set('value', '150');
+    formData.set('currency', 'JPY');
+
+    expect(parseDiscountFormData(formData)).toEqual({
+      error: 'Value must be a whole amount in JPY.',
+    });
+
+    formData.set('value', '50000');
+    expect(parseDiscountFormData(formData).data.value).toBe(50000);
+  });
 });
 
 describe('toggleDiscountActive', () => {

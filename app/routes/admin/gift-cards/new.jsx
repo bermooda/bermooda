@@ -1,6 +1,7 @@
 import { redirect, useActionData, useNavigation } from 'react-router';
 
 import {
+  getIssueGiftCardInputError,
   issueGiftCard,
   parseIssueGiftCardInput,
 } from '#/core/gift-cards/index.server';
@@ -14,8 +15,9 @@ export async function action({ request }) {
     currency: formData.get('currency'),
   });
 
-  if (!input.balanceCents || input.balanceCents <= 0) {
-    return { error: 'Balance must be greater than zero.' };
+  const inputError = getIssueGiftCardInputError(input);
+  if (inputError) {
+    return { error: inputError };
   }
 
   try {

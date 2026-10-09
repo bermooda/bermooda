@@ -3,8 +3,9 @@
 
 import prisma from '#/libs/prisma.server';
 import { publishProduct, unpublishProduct } from '#/core/catalog/index.server';
+import { roundCentsToCurrency } from '#/core/currency/format';
 import { setDefaultLocationQuantity } from '#/core/inventory/locations/index.server';
-import { get } from '#/core/settings/index.server';
+import { get, isValidCurrencyCode } from '#/core/settings/index.server';
 
 /** Placeholder variant id used in the create-product form before persistence. */
 export const NEW_VARIANT_ID = 'new-variant-0';
@@ -67,6 +68,51 @@ function remapVariantIds(formData, variantIdMap) {
     remapped.append(nextKey, value);
   }
   return remapped;
+}
+
+/**
+ * Parse `price[variantId][CUR]` / `comparePrice[variantId][CUR]` decimal
+ * inputs into stored cents, rounded to what each currency can represent
+ * (¥10.50 → ¥11). Fields with a malformed currency code are ignored.
+ *
+ * @param {FormData} data
+ * @returns {Record<string, Record<string, { priceCents?: number, comparePriceCents?: number|null }>>}
+ */
+export function parseVariantPriceFormData(data) {
+  const priceKeys = [...data.keys()].filter((k) => k.startsWith('price['));
+  const comparePriceKeys = [...data.keys()].filter((k) =>
+    k.startsWith('comparePrice[')
+  );
+
+  const priceDataMap = {};
+  for (const key of priceKeys) {
+    const match = key.match(/^price\[([^\]]+)\]\[([^\]]+)\]$/);
+    if (!match) continue;
+    const [, varId, currency] = match;
+    if (!isValidCurrencyCode(currency)) continue;
+    if (!priceDataMap[varId]) priceDataMap[varId] = {};
+    if (!priceDataMap[varId][currency]) priceDataMap[varId][currency] = {};
+    const raw = data.get(key) ?? '';
+    const dollars = parseFloat(raw);
+    priceDataMap[varId][currency].priceCents = isNaN(dollars)
+      ? 0
+      : roundCentsToCurrency(Math.round(dollars * 100), currency);
+  }
+  for (const key of comparePriceKeys) {
+    const match = key.match(/^comparePrice\[([^\]]+)\]\[([^\]]+)\]$/);
+    if (!match) continue;
+    const [, varId, currency] = match;
+    if (!isValidCurrencyCode(currency)) continue;
+    if (!priceDataMap[varId]) priceDataMap[varId] = {};
+    if (!priceDataMap[varId][currency]) priceDataMap[varId][currency] = {};
+    const raw = data.get(key) ?? '';
+    const dollars = parseFloat(raw);
+    priceDataMap[varId][currency].comparePriceCents = isNaN(dollars)
+      ? null
+      : roundCentsToCurrency(Math.round(dollars * 100), currency);
+  }
+
+  return priceDataMap;
 }
 
 /**
@@ -266,36 +312,7 @@ export async function persistAdminProduct(productId, formData, options = {}) {
     variantDataMap[varId][field] = data.get(key);
   }
 
-  const priceKeys = [...data.keys()].filter((k) => k.startsWith('price['));
-  const comparePriceKeys = [...data.keys()].filter((k) =>
-    k.startsWith('comparePrice[')
-  );
-
-  const priceDataMap = {};
-  for (const key of priceKeys) {
-    const match = key.match(/^price\[([^\]]+)\]\[([^\]]+)\]$/);
-    if (!match) continue;
-    const [, varId, currency] = match;
-    if (!priceDataMap[varId]) priceDataMap[varId] = {};
-    if (!priceDataMap[varId][currency]) priceDataMap[varId][currency] = {};
-    const raw = data.get(key) ?? '';
-    const dollars = parseFloat(raw);
-    priceDataMap[varId][currency].priceCents = isNaN(dollars)
-      ? 0
-      : Math.round(dollars * 100);
-  }
-  for (const key of comparePriceKeys) {
-    const match = key.match(/^comparePrice\[([^\]]+)\]\[([^\]]+)\]$/);
-    if (!match) continue;
-    const [, varId, currency] = match;
-    if (!priceDataMap[varId]) priceDataMap[varId] = {};
-    if (!priceDataMap[varId][currency]) priceDataMap[varId][currency] = {};
-    const raw = data.get(key) ?? '';
-    const dollars = parseFloat(raw);
-    priceDataMap[varId][currency].comparePriceCents = isNaN(dollars)
-      ? null
-      : Math.round(dollars * 100);
-  }
+  const priceDataMap = parseVariantPriceFormData(data);
 
   for (const [varId, varData] of Object.entries(variantDataMap)) {
     const sku = varData.sku ?? null;

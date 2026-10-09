@@ -333,11 +333,27 @@ export async function seedDefaultChannel() {
   return channel;
 }
 
+/** Per-request memo: layout and route loaders share one Request object. */
+const channelByRequest = new WeakMap();
+
 /**
- * Resolve sales channel from request Host header.
+ * Resolve sales channel from request Host header. Memoized per Request, so
+ * the layout, page loaders, and `getRequestCurrency` query it once.
  * @param {Request} request
  */
-export async function resolveChannelFromRequest(request) {
+export function resolveChannelFromRequest(request) {
+  let pending = channelByRequest.get(request);
+  if (!pending) {
+    pending = findChannelForRequest(request);
+    channelByRequest.set(request, pending);
+  }
+  return pending;
+}
+
+/**
+ * @param {Request} request
+ */
+async function findChannelForRequest(request) {
   const host = new URL(request.url).host.toLowerCase();
   if (!host) return getDefaultChannel();
 

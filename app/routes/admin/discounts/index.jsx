@@ -20,6 +20,7 @@ import {
   handleAdminActionError,
   parseAdminSearchParams,
 } from '#/libs/api/admin-ui/index.server';
+import { formatPrice } from '#/core/currency/format';
 import {
   deleteDiscount,
   listDiscounts,
@@ -122,8 +123,10 @@ export async function action({ request }) {
  */
 function formatValue(type, value, currency) {
   if (type === 'percent') return `${value}%`;
-  const amount = (value / 100).toFixed(2);
-  return currency ? `${currency.toUpperCase()} ${amount}` : amount;
+  const code = currency?.toUpperCase();
+  // Rows saved before currency validation may hold codes Intl rejects.
+  if (!code || !/^[A-Z]{3}$/.test(code)) return (value / 100).toFixed(2);
+  return formatPrice(value, code);
 }
 
 /**

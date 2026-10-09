@@ -131,6 +131,21 @@ describe('channels', () => {
     });
   });
 
+  it('resolveChannelFromRequest queries once per request', async () => {
+    const channel = { id: 'ch2', handle: 'de', active: true };
+    prisma.salesChannel.findFirst.mockResolvedValueOnce(channel);
+    const request = new Request('https://de.example.com/');
+
+    const [first, second] = await Promise.all([
+      resolveChannelFromRequest(request),
+      resolveChannelFromRequest(request),
+    ]);
+
+    expect(first).toBe(channel);
+    expect(second).toBe(channel);
+    expect(prisma.salesChannel.findFirst).toHaveBeenCalledTimes(1);
+  });
+
   it('getChannel throws when missing', async () => {
     prisma.salesChannel.findUnique.mockResolvedValue(null);
     await expect(getChannel('missing')).rejects.toMatchObject({

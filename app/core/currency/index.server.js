@@ -1,5 +1,6 @@
 // app/core/currency/index.server.js
 
+import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import {
   DEFAULT_CURRENCY,
   SETTING_KEYS,
@@ -15,24 +16,39 @@ const CURRENCY_RE = /^[A-Z]{3}$/;
 
 /**
  * Resolve the currency for an incoming request.
- * Resolution order:
- *   1. `currency` cookie value, when it is an enabled currency
- *   2. `defaultCurrency` setting
- *   3. Hard fallback: 'USD'
+ * Resolution order (each step only when that currency is enabled):
+ *   1. `currency` cookie (the shopper's explicit choice)
+ *   2. the request's sales channel currency, for non-default channels
+ *   3. `defaultCurrency` setting
+ *   4. Hard fallback: 'USD'
  *
  * The cookie is client-controlled, so a code the merchant has not enabled
- * (or has since disabled) must never reach cart creation or checkout.
+ * (or has since disabled) must never reach cart creation or checkout. The
+ * default channel defers to the shop-wide `defaultCurrency` setting, which
+ * is what merchants edit in settings (the seeded default channel is USD).
  *
  * @param {Request} request
  * @returns {Promise<string>} 3-letter ISO currency code
  */
 export async function getRequestCurrency(request) {
+  const [enabled, channel] = await Promise.all([
+    getEnabledCurrencies(),
+    resolveChannelFromRequest(request),
+  ]);
+
   const cookieHeader = request.headers.get('cookie') ?? '';
   const match = cookieHeader.match(/(?:^|;\s*)currency=([^;]+)/);
   const fromCookie = match?.[1].trim();
-  if (fromCookie && CURRENCY_RE.test(fromCookie)) {
-    const enabled = await getEnabledCurrencies();
-    if (enabled.includes(fromCookie)) return fromCookie;
+  if (
+    fromCookie &&
+    CURRENCY_RE.test(fromCookie) &&
+    enabled.includes(fromCookie)
+  ) {
+    return fromCookie;
+  }
+
+  if (channel && !channel.isDefault && enabled.includes(channel.currency)) {
+    return channel.currency;
   }
 
   const fromSettings = await settingsGet(SETTING_KEYS.DEFAULT_CURRENCY);

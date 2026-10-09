@@ -6,6 +6,7 @@ import prisma from '#/libs/prisma.server';
 import { listProducts } from '#/core/catalog/index.server';
 import { listCollections } from '#/core/collections/index.server';
 import { listPublishedPages } from '#/core/content/index.server';
+import { centsToMajorUnitString } from '#/core/currency/format';
 import {
   DEFAULT_TITLE_TEMPLATE,
   normalizeTwitterHandle,
@@ -514,7 +515,10 @@ export function buildProductJsonLd(
       ? {
           '@type': 'Offer',
           'priceCurrency': priceEntry.currency,
-          'price': (priceEntry.priceCents / 100).toFixed(2),
+          'price': centsToMajorUnitString(
+            priceEntry.priceCents,
+            priceEntry.currency
+          ),
           'availability':
             variant?.inventoryTracked && variant.inventoryCount <= 0
               ? 'https://schema.org/OutOfStock'

@@ -39,12 +39,18 @@ Severity: **High** = money or security risk on a real deployment · **Medium** =
 - **Fix (applied):** added `currencyFractionDigits`, `centsToMinorUnits`, and `centsToMajorUnitString` to `#/core/currency/format`. Stripe converts every amount (checkout, PaymentIntent, refund, which already received `order.currency` from `#/core/orders/refunds.server`). For currencies that don't use 2 decimals, Stripe always charges one "Order total" line, so rounding each line can't drift from the total. PayPal formats with the currency's own precision.
 - **Check:** `npx vitest run app/core/currency app/core/payments`, which covers JPY checkout (2 × ¥1,000 → `unit_amount: 2000`), JPY refund, and KWD conversion.
 
-### M2. The money model lets you enter fractional yen and shows "¥1,000.00" (Medium) — open
+### M2. The money model let merchants enter fractional yen and showed "¥1,000.00" (Medium) — fixed
 
-- **Where:** `admin-product-form.server.js:285,297`, `product-editor.jsx:296`, `gift-card-editor.jsx`, `routes/admin/discounts/index.jsx:125`, `core/seo/index.server.js:517` (JSON-LD `price`), and `formatPrice` (`minimumFractionDigits: 2`).
-- **Problem:** Because everything is stored as 1/100 major unit, a merchant can enter `¥10.50`. M1's conversion rounds that to ¥11 at Stripe, so the captured amount no longer equals `order.totalCents`. The storefront, emails, and PDFs show "¥1,000.00", which is unusual for yen. JSON-LD always emits two decimals.
-- **Decide first (ask the user):** (a) keep the 1/100 model, but make admin inputs reject sub-unit precision (`step` from `currencyFractionDigits`, server-side validation in the product, gift-card, and discount parsers) and show amounts at the currency's own precision; or (b) migrate to true ISO minor units, which needs a data migration for existing non-2-decimal rows and a change to every `* 100` / `/ 100` site. **(a) is recommended:** it's smaller, has no data migration, and M1 already handles providers.
-- **Done when:** a JPY product can't be saved with a fractional price (core parser test), and `formatPrice(100000, 'JPY')` renders `¥1,000` (update the `formatPrice` test and drop `minimumFractionDigits: 2` only once fractional input is impossible).
+- **Where:** `parseVariantPriceFormData` in `core/catalog/admin-product-form.server.js`, the price grid in `components/admin/product-editor.jsx`, `getIssueGiftCardInputError` in `core/gift-cards/index.server.js`, `parseDiscountFormData` in `core/discounts/index.server.js`, JSON-LD `price` in `core/seo/index.server.js`, `formatValue` in `routes/admin/discounts/index.jsx`, and `formatPrice`.
+- **Problem:** Everything is stored as 1/100 of the major unit, so a merchant could enter `¥10.50`. M1's conversion rounds that to ¥11 at Stripe, and the captured amount then no longer equals `order.totalCents`. Yen displayed as "¥1,000.00", and JSON-LD always had two decimals.
+- **Decision:** option (a). Keep the 1/100 storage model, enforce each currency's precision at input, and display amounts at the currency's own precision. No data migration was needed. Option (b), true ISO minor units, was rejected because it needs a data migration and changes every `* 100` / `/ 100` site.
+- **Fix (applied):**
+  - New helpers in `#/core/currency/format`: `centsPerMinorUnit` (JPY 100), `roundCentsToCurrency`, `isCentsAtCurrencyPrecision`, `currencyInputStep`, `centsToInputValue`. `currencyFractionDigits` results are now cached.
+  - Product prices: inputs use `step="1"` for JPY. Server-side, the parser rounds to the currency's precision (¥1000.5 → ¥1001) and ignores field names with malformed currency codes, which `Intl` would otherwise reject. The parsing is extracted as `parseVariantPriceFormData` and covered by new tests.
+  - Gift cards: `getIssueGiftCardInputError` checks for a positive balance, a 3-letter currency, and whole-unit amounts. The admin form, the admin API, and `issueGiftCard` all use it.
+  - Fixed discounts: the currency is uppercased (before, `usd` never matched a `USD` cart) and validated, and the value must be a whole amount in that currency.
+  - Display: `formatPrice` uses the currency's default precision (`¥1,000`, `$19.99`, `KWD 12.340`). JSON-LD uses `centsToMajorUnitString`. The admin discount list formats values with `formatPrice`.
+- **Remaining:** gift-card balances are still typed in cents in the admin (¥1,000 = `100000`). Switching that input to a decimal major-unit field with `currencyInputStep` is a UX follow-up tracked as C7.
 
 ### M3. Switching currency with a non-empty cart breaks "add to cart", and carts in a disabled currency still check out (Medium) — open
 
@@ -53,11 +59,13 @@ Severity: **High** = money or security risk on a real deployment · **Medium** =
 - **Fix:** In the cart action, if the cart is empty, update `cart.currency` to the request currency. If it isn't empty, reprice its lines with `resolveVariantPrice` in the new currency (or reject with a translated `cart.currencyMismatch` message that offers a reset). In order placement, reject `cart.currency` values that aren't in `getEnabledCurrencies()` and map that to a checkout error.
 - **Done when:** route tests cover empty-cart currency switch, non-empty switch, and place-order refusal for a disabled currency.
 
-### M4. Sales-channel currency is ignored (Medium, needs a decision) — open
+### M4. Sales-channel currency was ignored (Medium) — fixed
 
-- **Where:** `getRequestCurrency`; the layout used to have an unreachable `?? channel.currency` fallback, removed in this pass.
-- **Problem:** `SalesChannel.currency` exists and channels are resolved per domain, but currency resolution never uses it. A shop with `shop.example.de → EUR` still defaults to the shop-wide `defaultCurrency`.
-- **Decide first:** precedence. Recommended: cookie (if enabled) → active channel's currency (if enabled) → `defaultCurrency`. Implement it inside `getRequestCurrency` so the layout, page context, cart, and checkout all agree. They call it separately today. Note that `resolveChannelFromRequest` queries the DB on every call without caching, so cache it with `getCachedResult` keyed by host if it ends up on every storefront request.
+- **Where:** `getRequestCurrency`, `resolveChannelFromRequest`.
+- **Problem:** `SalesChannel.currency` exists and channels are resolved per domain, but currency resolution never used it. A shop with `shop.example.de → EUR` still defaulted to the shop-wide `defaultCurrency`.
+- **Decision:** cookie → channel currency → `defaultCurrency`, where each step applies only if that currency is enabled. **The default channel defers to `defaultCurrency`.** It's seeded with a hard-coded `currency: 'USD'`, and merchants change the shop currency in settings, not on the channel. Letting it win would have switched every non-USD shop back to USD.
+- **Fix (applied):** `getRequestCurrency` resolves the channel itself, so the layout, page context, cart, and checkout all agree. `resolveChannelFromRequest` is memoized per `Request` with a `WeakMap`. Layout and route loaders share a request, so the extra lookup costs no query, and nothing is cached across requests, so admin channel edits apply immediately.
+- **Check:** `npx vitest run app/core/currency app/core/channels` covers channel vs cookie vs default precedence, a disabled channel currency, and the one-query-per-request memo.
 
 ### C1. Currency cookie wasn't checked against enabled currencies (Medium, integrity) — fixed
 
@@ -69,7 +77,7 @@ Severity: **High** = money or security risk on a real deployment · **Medium** =
 
 - Removed `lookupVariantPrice` and `lookupVariantPriceForBrowsing`, which had no callers because pricing goes through `#/core/pricing`, along with their tests.
 - Removed the "backward compat" `formatPrice` re-export from `index.server.js`. Every caller already imports `#/core/currency/format` or `#/core`.
-- Removed the unreachable `?? channel.currency ?? 'USD'` in the storefront layout, since `getRequestCurrency` always returns a string. See M4.
+- Removed the unreachable `?? channel.currency ?? 'USD'` in the storefront layout, since `getRequestCurrency` always returns a string. M4 moved channel currency into `getRequestCurrency`.
 
 ### Q2. Six duplicate money formatters (Low) — fixed
 
@@ -109,6 +117,12 @@ Severity: **High** = money or security risk on a real deployment · **Medium** =
 - **Where:** admin routes call `formatPrice(x, currency)` with the default `'en'` locale. `routes/admin/customers/$id.jsx:502` formats store credit with no currency, so it always shows USD.
 - **Fix:** Pass the admin UI locale from the loader. Resolve the store-credit currency (shop default currency, or a per-ledger currency if the model adds one).
 
+### C7. Gift-card balance is entered in cents (Low, UX) — open
+
+- **Where:** `components/admin/gift-card-editor.jsx` (`name="balanceCents"`), `routes/admin/gift-cards/new.jsx`.
+- **Problem:** Merchants type `2500` for $25 and `100000` for ¥1,000. M2's validation now rejects sub-yen amounts with a clear message, but the input itself is error-prone.
+- **Fix:** Turn it into a decimal major-unit `balance` input with `step={currencyInputStep(currency)}`, convert it server-side like `parseVariantPriceFormData`, and keep `balanceCents` for the admin API.
+
 ### T1. Test gaps (Low) — open
 
 - PayPal JPY payload: the module reads credentials at import, so use `vi.stubEnv` + `vi.resetModules` and assert `value: '1000'`.
@@ -116,7 +130,7 @@ Severity: **High** = money or security risk on a real deployment · **Medium** =
 
 ### D1. Undocumented money model and currency resolution (Low) — open
 
-- Document the M2 decision, the cents model, and the currency resolution order (C1/M4) in [docs/themes.md](../themes.md) (themes format prices) and [app/emails/README.md](../../app/emails/README.md) (use `formatPrice` with the email locale). [docs/phase-1-plan.md](../phase-1-plan.md) still describes the removed `lookupVariantPrice*` helpers. It's a historical plan, so leave it, but don't link it as current docs.
+- Document the cents model and precision rules (M2) and the currency resolution order (C1/M4) in [docs/themes.md](../themes.md) (themes format prices) and [app/emails/README.md](../../app/emails/README.md) (use `formatPrice` with the email locale). [docs/phase-1-plan.md](../phase-1-plan.md) still describes the removed `lookupVariantPrice*` helpers. It's a historical plan, so leave it, but don't link it as current docs.
 
 ## Work plan
 
@@ -124,8 +138,8 @@ Suggested PR split (Conventional Commit titles, per AGENTS.md). Each PR must pas
 
 1. **`fix(currency): charge zero-decimal currencies correctly and validate the currency cookie`**: M1, C1, Q1, Q2, P1. **Done in this pass.**
 2. **`fix(cart): handle currency switches and disabled cart currencies`**: M3, plus the T1 route tests.
-3. **`feat(currency): honor sales-channel currency`**: M4 (ask the user about precedence first).
-4. **`fix(currency): enforce currency precision in admin money inputs`**: M2 (ask the user about option (a)/(b) first), C5, C6, D1.
+3. **`feat(currency): honor sales-channel currency`**: M4. **Done** (shipped with PR 1, #240).
+4. **`fix(currency): enforce currency precision in admin money inputs`**: M2 **done** (shipped with PR 1, #240). Remaining: C5, C6, C7, D1.
 5. **`fix(storefront): shared cookie helper with Secure flag`**: C2, C3, C4.
 
 ### Validation
@@ -135,20 +149,21 @@ npx vitest run app/core/currency app/core/payments app/core/cart app/core/checko
 npm run lint
 ```
 
-No Prisma schema change is needed for M1–M4 or C1–C6. If M2 goes with option (b), it needs a data migration: follow the Prisma steps in CLAUDE.md.
+No Prisma schema change is needed for any finding. M2 went with option (a), so no data migration was needed.
 
 ## Status checklist
 
 - [x] M1 provider minor-unit conversion (Stripe checkout/intent/refund, PayPal order/refund)
-- [ ] M2 currency precision in admin inputs + display (decision needed)
+- [x] M2 currency precision in admin inputs + display (option (a))
 - [ ] M3 cart currency switch + disabled-currency checkout guard
-- [ ] M4 channel currency precedence (decision needed)
+- [x] M4 channel currency precedence (cookie → non-default channel → `defaultCurrency`)
 - [x] C1 cookie validated against enabled currencies
 - [ ] C2 shared cookie helper, `getCookieValue` removed
 - [ ] C3 `Secure` storefront cookies
 - [ ] C4 referral cookie cleared after tracking
 - [ ] C5 `formatPrice` survives bad input
 - [ ] C6 admin locale + store-credit currency
+- [ ] C7 gift-card balance as a decimal input
 - [x] Q1 dead code removed
 - [x] Q2 duplicate formatters consolidated; emails use their locale
 - [x] P1 formatter cache
