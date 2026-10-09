@@ -137,6 +137,17 @@ export function getRegisteredThemeBySlug(slug) {
 // resolveActiveTheme
 // ---------------------------------------------------------------------------
 
+// Settings are stored JSON-encoded (see core/settings); accept legacy plain strings too.
+function parseThemeId(raw) {
+  if (raw == null) return null;
+  try {
+    const value = JSON.parse(raw);
+    return typeof value === 'string' ? value : null;
+  } catch {
+    return raw;
+  }
+}
+
 /**
  * Resolves the active theme manifest from the in-memory registry.
  * The active theme ID is read from `Setting.activeTheme` (TTL-cached, 5 min).
@@ -150,7 +161,7 @@ export async function resolveActiveTheme() {
       const row = await prisma.setting.findUnique({
         where: { key: 'activeTheme' },
       });
-      return row?.value ?? null;
+      return parseThemeId(row?.value);
     },
     5 * 60 * 1000
   );
