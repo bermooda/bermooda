@@ -299,12 +299,38 @@ export async function disable(pluginId) {
 }
 
 /**
+ * Keeps at most one email-provider plugin in the persisted enabled list.
+ * The CLI (`bermooda plugin add --enable`) and hand-edited settings can enable
+ * several; keep the last one, which is also the provider that wins at runtime.
+ *
+ * @param {string[]} enabled
+ * @returns {Promise<string[]>}
+ */
+async function dropExtraEmailProviderPlugins(enabled) {
+  const emailPluginIds = enabled.filter(
+    (id) => registry.has(id) && pluginProvidesType(id, 'email')
+  );
+  if (emailPluginIds.length <= 1) return enabled;
+
+  const dropped = emailPluginIds.slice(0, -1);
+  const nextEnabled = enabled.filter((id) => !dropped.includes(id));
+  await settingsSet('enabledPlugins', nextEnabled);
+  logger.warn(
+    { kept: emailPluginIds.at(-1), disabled: dropped },
+    'Multiple email provider plugins were enabled; keeping only one'
+  );
+  return nextEnabled;
+}
+
+/**
  * Enable plugins persisted in settings (called during async bootstrap).
  *
  * @returns {Promise<void>}
  */
 export async function enablePersistedPlugins() {
-  const enabled = await getEnabledPluginIds();
+  const enabled = await dropExtraEmailProviderPlugins(
+    await getEnabledPluginIds()
+  );
   for (const pluginId of enabled) {
     if (!registry.has(pluginId)) continue;
     try {

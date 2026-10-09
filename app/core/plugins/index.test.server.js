@@ -139,6 +139,7 @@ const {
   enable: _enable,
   disable: _disable,
   setPluginEnabledState,
+  enablePersistedPlugins,
   pluginProvidesType,
   __resetRegistry,
   _registry,
@@ -1053,5 +1054,57 @@ describe('setPluginEnabledState email exclusivity', () => {
     onEnable.mockResolvedValueOnce(undefined);
     await setPluginEnabledState('@bermooda/plugin-flaky', true);
     expect(entry.isEnabled).toBe(true);
+  });
+});
+
+describe('enablePersistedPlugins email exclusivity', () => {
+  function emailPlugin(slug, title) {
+    return validPlugin({
+      id: `@bermooda/plugin-${slug}`,
+      title,
+      slug,
+      providers: {
+        [slug]: defineProvider('email', { name: title, send: vi.fn() }),
+      },
+    });
+  }
+
+  beforeEach(() => {
+    __resetRegistry();
+    vi.clearAllMocks();
+    getActiveEmailProviderId.mockReturnValue(null);
+    register(emailPlugin('resend', 'Resend'));
+    register(emailPlugin('sendgrid', 'SendGrid'));
+    register(validPlugin({ id: '@bermooda/plugin-search', slug: 'search' }));
+  });
+
+  it('keeps only the last enabled email provider plugin', async () => {
+    settingsGet.mockResolvedValue([
+      '@bermooda/plugin-resend',
+      '@bermooda/plugin-search',
+      '@bermooda/plugin-sendgrid',
+    ]);
+
+    await enablePersistedPlugins();
+
+    expect(settingsSet).toHaveBeenCalledWith('enabledPlugins', [
+      '@bermooda/plugin-search',
+      '@bermooda/plugin-sendgrid',
+    ]);
+    expect(_registry.get('@bermooda/plugin-resend').isEnabled).toBe(false);
+    expect(_registry.get('@bermooda/plugin-sendgrid').isEnabled).toBe(true);
+    expect(_registry.get('@bermooda/plugin-search').isEnabled).toBe(true);
+  });
+
+  it('leaves settings alone when at most one email provider is enabled', async () => {
+    settingsGet.mockResolvedValue([
+      '@bermooda/plugin-resend',
+      '@bermooda/plugin-search',
+    ]);
+
+    await enablePersistedPlugins();
+
+    expect(settingsSet).not.toHaveBeenCalled();
+    expect(_registry.get('@bermooda/plugin-resend').isEnabled).toBe(true);
   });
 });
