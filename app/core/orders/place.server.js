@@ -18,6 +18,7 @@ import { redeemGiftCard } from '#/core/gift-cards/index.server';
 import { decrementInventory } from '#/core/inventory/index.server';
 import { inventoryItemsFromLines } from '#/core/inventory/items';
 import { redeemLoyaltyPoints } from '#/core/loyalty/index.server';
+import { getEnabledCurrencies } from '#/core/settings/index.server';
 import { redeemStoreCredit } from '#/core/store-credit/index.server';
 
 /**
@@ -77,6 +78,13 @@ export async function placeOrder(
 
   if (preSession.step !== 'review') {
     throw new Error('CHECKOUT_SESSION_NOT_AT_REVIEW');
+  }
+
+  // Carts created before the merchant disabled their currency must not
+  // become orders in it.
+  const enabledCurrencies = await getEnabledCurrencies();
+  if (!enabledCurrencies.includes(preSession.cart.currency)) {
+    throw new Error('CART_CURRENCY_DISABLED');
   }
 
   const preTotals = await computeTotals(

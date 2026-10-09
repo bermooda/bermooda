@@ -12,6 +12,7 @@ import {
   createCart,
   getCart,
   removeLine,
+  setCartCurrency,
   updateQuantity,
 } from '#/core/cart/index.server';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
@@ -30,7 +31,8 @@ export async function loader({ request }) {
     themeId,
     cart,
     locale,
-    currency,
+    // Line prices are snapshots in the cart's currency; label them with it.
+    currency: cart?.currency ?? currency,
     slotBlocks,
   };
 }
@@ -63,6 +65,21 @@ export async function action({ request }) {
       });
       token = cart.token;
       appendCartTokenCookie(headers, token);
+    } else if (cart.currency !== currency) {
+      // The shopper switched currency (or it was disabled) after adding items.
+      try {
+        cart = await setCartCurrency(cart.id, currency);
+      } catch (err) {
+        if (err.message === 'PRICE_NOT_FOUND') {
+          return {
+            error: `Some items in your cart aren't available in ${currency}. Switch back to ${cart.currency} to keep shopping.`,
+          };
+        }
+        return handleError(err, {
+          source: 'storefront.cart.currency',
+          userMessage: 'Could not update cart.',
+        });
+      }
     }
 
     try {
@@ -73,7 +90,7 @@ export async function action({ request }) {
       });
     } catch (err) {
       if (err.message === 'CURRENCY_MISMATCH') {
-        return { error: 'Currency mismatch' };
+        return { error: 'Your cart changed currency. Please try again.' };
       }
       if (err.message === 'PRICE_NOT_FOUND') {
         return { error: 'Price not available in this currency' };

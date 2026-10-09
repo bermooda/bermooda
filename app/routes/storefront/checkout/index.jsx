@@ -168,6 +168,12 @@ export async function action({ request }) {
       paymentElement: result.paymentElement,
     };
   } catch (err) {
+    if (err.message === 'CART_CURRENCY_DISABLED') {
+      return {
+        error:
+          'Your cart is in a currency this shop no longer accepts. Choose another currency to continue.',
+      };
+    }
     return handleError(err, {
       source: 'storefront.checkout.placeOrder',
       userMessage:

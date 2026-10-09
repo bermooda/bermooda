@@ -52,12 +52,18 @@ Severity: **High** = money or security risk on a real deployment · **Medium** =
   - Display: `formatPrice` uses the currency's default precision (`¥1,000`, `$19.99`, `KWD 12.340`). JSON-LD uses `centsToMajorUnitString`. The admin discount list formats values with `formatPrice`.
 - **Remaining:** gift-card balances are still typed in cents in the admin (¥1,000 = `100000`). Switching that input to a decimal major-unit field with `currencyInputStep` is a UX follow-up tracked as C7.
 
-### M3. Switching currency with a non-empty cart breaks "add to cart", and carts in a disabled currency still check out (Medium) — open
+### M3. Switching currency with items in the cart broke "add to cart", and carts in a disabled currency still checked out (Medium) — fixed
 
-- **Where:** `routes/storefront/cart/index.jsx` (`intent === 'add'`), `addLine` in `core/cart/index.server.js:152-154`, checkout placement in `core/orders/place.server.js`.
-- **Problem:** The cart is locked to the currency it was created in. After the shopper picks another currency, every add returns the raw, untranslated string `'Currency mismatch'` until the 30-day cart cookie expires. Separately, a cart created before the merchant disabled its currency still checks out in that currency. C1 only protects new carts.
-- **Fix:** In the cart action, if the cart is empty, update `cart.currency` to the request currency. If it isn't empty, reprice its lines with `resolveVariantPrice` in the new currency (or reject with a translated `cart.currencyMismatch` message that offers a reset). In order placement, reject `cart.currency` values that aren't in `getEnabledCurrencies()` and map that to a checkout error.
-- **Done when:** route tests cover empty-cart currency switch, non-empty switch, and place-order refusal for a disabled currency.
+- **Where:** `setCartCurrency` in `core/cart/index.server.js`, the add action in `routes/storefront/cart/index.jsx`, `routes/storefront/api/set-currency/index.jsx`, `placeOrder` in `core/orders/place.server.js`, `loadCheckoutDisplayData` in `core/checkout/storefront.server.js`, and the place-order catch in `routes/storefront/checkout/index.jsx`.
+- **Problem:** A cart is locked to the currency it was created in. After the shopper picked another currency, every add returned the raw string `'Currency mismatch'` until the 30-day cart cookie expired. A cart created before the merchant disabled its currency still checked out in that currency, and checkout labeled the totals (computed in the cart's currency) with the request currency.
+- **Fix (applied):**
+  - New `setCartCurrency(cartId, currency)` reprices every line through `resolveVariantPrice` and switches the cart's currency in one transaction. It's all-or-nothing: if any line has no price in the new currency, it throws `PRICE_NOT_FOUND` and leaves the cart unchanged.
+  - The currency switcher reprices the shopper's cart when they pick a currency. Repricing never blocks saving the preference: a missing price keeps the cart's currency, and unexpected errors go through `handleError` for logging and alerting.
+  - Add-to-cart reprices a cart that's in a different currency than the request (for example after a cookie expired or the merchant disabled a currency). If items have no price there, it explains which currency to switch back to.
+  - `placeOrder` throws `CART_CURRENCY_DISABLED` before the transaction when the cart's currency isn't enabled. The checkout route maps that to a clear message instead of the generic "payment setup failed".
+  - Checkout display data and the cart page loader label amounts with the cart's currency, since line prices are snapshots in it.
+- **Note:** storefront route error strings in this repo are plain English (the theme owns translation). These messages follow that convention.
+- **Check:** `npx vitest run app/core/cart app/core/orders app/core/checkout app/routes/storefront`.
 
 ### M4. Sales-channel currency was ignored (Medium) — fixed
 
@@ -126,7 +132,8 @@ Severity: **High** = money or security risk on a real deployment · **Medium** =
 ### T1. Test gaps (Low) — open
 
 - PayPal JPY payload: the module reads credentials at import, so use `vi.stubEnv` + `vi.resetModules` and assert `value: '1000'`.
-- M3 route tests and C2 cookie-helper tests, as listed above.
+- C2 cookie-helper tests, as listed above. (M3's route tests shipped with M3.)
+- `routes/storefront/checkout/index.jsx` has no route tests; the `CART_CURRENCY_DISABLED` mapping is covered only through the core guard.
 
 ### D1. Undocumented money model and currency resolution (Low) — open
 
@@ -137,7 +144,7 @@ Severity: **High** = money or security risk on a real deployment · **Medium** =
 Suggested PR split (Conventional Commit titles, per AGENTS.md). Each PR must pass the validation below.
 
 1. **`fix(currency): charge zero-decimal currencies correctly and validate the currency cookie`**: M1, C1, Q1, Q2, P1. **Done in this pass.**
-2. **`fix(cart): handle currency switches and disabled cart currencies`**: M3, plus the T1 route tests.
+2. **`fix(cart): handle currency switches and disabled cart currencies`**: M3 **done** (shipped with PR 1, #240), including its route tests.
 3. **`feat(currency): honor sales-channel currency`**: M4. **Done** (shipped with PR 1, #240).
 4. **`fix(currency): enforce currency precision in admin money inputs`**: M2 **done** (shipped with PR 1, #240). Remaining: C5, C6, C7, D1.
 5. **`fix(storefront): shared cookie helper with Secure flag`**: C2, C3, C4.
@@ -155,7 +162,7 @@ No Prisma schema change is needed for any finding. M2 went with option (a), so n
 
 - [x] M1 provider minor-unit conversion (Stripe checkout/intent/refund, PayPal order/refund)
 - [x] M2 currency precision in admin inputs + display (option (a))
-- [ ] M3 cart currency switch + disabled-currency checkout guard
+- [x] M3 cart currency switch + disabled-currency checkout guard
 - [x] M4 channel currency precedence (cookie → non-default channel → `defaultCurrency`)
 - [x] C1 cookie validated against enabled currencies
 - [ ] C2 shared cookie helper, `getCookieValue` removed

@@ -24,6 +24,7 @@ vi.mock('#/libs/prisma.server', () => ({
     translation: {
       findUnique: vi.fn(),
     },
+    $transaction: vi.fn((ops) => Promise.all(ops)),
   },
 }));
 
@@ -51,6 +52,7 @@ import {
   lockCart,
   unlockCart,
   deleteCart,
+  setCartCurrency,
 } from '#/core/cart/index.server';
 import { queueEmit } from '#/core/events/job.server';
 import { resolveVariantPrice } from '#/core/pricing/index.server';
@@ -301,6 +303,81 @@ describe('addLine — upsert', () => {
 // ---------------------------------------------------------------------------
 // removeLine
 // ---------------------------------------------------------------------------
+
+describe('setCartCurrency', () => {
+  const cart = {
+    id: 'cart_1',
+    currency: 'USD',
+    customerId: null,
+    lines: [
+      { id: 'line_1', variantId: 'var_1', quantity: 2 },
+      { id: 'line_2', variantId: 'var_2', quantity: 1 },
+    ],
+  };
+
+  it('throws CART_NOT_FOUND when the cart is missing', async () => {
+    prisma.cart.findUnique.mockResolvedValueOnce(null);
+    await expect(setCartCurrency('missing', 'EUR')).rejects.toThrow(
+      'CART_NOT_FOUND'
+    );
+  });
+
+  it('returns the cart unchanged when the currency already matches', async () => {
+    prisma.cart.findUnique.mockResolvedValueOnce(cart);
+    await expect(setCartCurrency('cart_1', 'USD')).resolves.toBe(cart);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('reprices every line and switches the cart currency', async () => {
+    prisma.cart.findUnique.mockResolvedValueOnce(cart);
+    resolveVariantPrice
+      .mockResolvedValueOnce({ priceCents: 900 })
+      .mockResolvedValueOnce({ priceCents: 1800 });
+    prisma.cartLine.update.mockImplementation(({ where, data }) =>
+      Promise.resolve({ id: where.id, ...data })
+    );
+    prisma.cart.update.mockResolvedValueOnce({ ...cart, currency: 'EUR' });
+
+    const updated = await setCartCurrency('cart_1', 'EUR');
+
+    expect(resolveVariantPrice).toHaveBeenCalledWith({
+      variantId: 'var_1',
+      currency: 'EUR',
+      quantity: 2,
+      customerGroupIds: [],
+    });
+    expect(prisma.cartLine.update).toHaveBeenCalledWith({
+      where: { id: 'line_1' },
+      data: { priceCentsSnapshot: 900 },
+    });
+    expect(prisma.cartLine.update).toHaveBeenCalledWith({
+      where: { id: 'line_2' },
+      data: { priceCentsSnapshot: 1800 },
+    });
+    expect(prisma.cart.update).toHaveBeenCalledWith({
+      where: { id: 'cart_1' },
+      data: { currency: 'EUR' },
+    });
+    expect(updated.currency).toBe('EUR');
+    expect(queueEmit).toHaveBeenCalledWith('cart.updated', {
+      cartId: 'cart_1',
+      currency: 'EUR',
+    });
+  });
+
+  it('leaves the cart untouched when a line has no price in the new currency', async () => {
+    prisma.cart.findUnique.mockResolvedValueOnce(cart);
+    resolveVariantPrice
+      .mockResolvedValueOnce({ priceCents: 900 })
+      .mockResolvedValueOnce(null);
+
+    await expect(setCartCurrency('cart_1', 'EUR')).rejects.toThrow(
+      'PRICE_NOT_FOUND'
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.cart.update).not.toHaveBeenCalled();
+  });
+});
 
 describe('removeLine', () => {
   it('calls prisma.cartLine.delete with correct ids', async () => {

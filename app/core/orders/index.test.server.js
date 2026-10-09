@@ -93,6 +93,11 @@ vi.mock('#/core/payments/index.server', () => ({
   getProvider: vi.fn(),
 }));
 
+vi.mock('#/core/settings/index.server', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getEnabledCurrencies: vi.fn().mockResolvedValue(['USD', 'EUR']),
+}));
+
 vi.mock('#/utils/logger.server', () => ({
   default: {
     info: vi.fn(),
@@ -233,6 +238,19 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('placeOrder', () => {
+  it('refuses carts in a currency the shop no longer accepts', async () => {
+    const session = makeCheckoutSession();
+    prisma.checkoutSession.findUnique.mockResolvedValue({
+      ...session,
+      cart: { ...session.cart, currency: 'JPY' },
+    });
+
+    await expect(placeOrder('sess_1')).rejects.toThrow(
+      'CART_CURRENCY_DISABLED'
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
   it('calls decrementInventory with the tx client', async () => {
     const session = makeCheckoutSession();
     const order = makeOrder();
