@@ -195,7 +195,22 @@ export async function getProduct(id, { locale, currency, channelId } = {}) {
     return withPrices;
   }
 
-  const localized = await localizeEntity('product', id, locale, product);
+  // Category titles and slugs live in translations too (used for breadcrumbs).
+  const categories = await Promise.all(
+    (product.categories ?? []).map(async (entry) => ({
+      ...entry,
+      category: await localizeEntity(
+        'category',
+        entry.categoryId,
+        locale,
+        entry.category
+      ),
+    }))
+  );
+  const localized = await localizeEntity('product', id, locale, {
+    ...product,
+    categories,
+  });
   const [withPrices] = await applyChannelPricesToProducts(
     [localized],
     channelId,

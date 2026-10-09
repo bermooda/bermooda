@@ -195,6 +195,23 @@ describe('registerTheme + resolveActiveTheme', () => {
     expect(result).toBe(manifest);
   });
 
+  it('returns the registered theme when the stored id is JSON-encoded', async () => {
+    const manifest = validManifest({
+      id: '@bermooda/my-theme',
+      title: 'My Theme',
+      slug: 'my-theme',
+    });
+    registerTheme(manifest);
+
+    prisma.setting.findUnique.mockResolvedValueOnce({
+      key: 'activeTheme',
+      value: JSON.stringify('@bermooda/my-theme'),
+    });
+
+    const result = await resolveActiveTheme();
+    expect(result).toBe(manifest);
+  });
+
   it('returns null when DB returns no activeTheme setting', async () => {
     prisma.setting.findUnique.mockResolvedValueOnce(null);
 
