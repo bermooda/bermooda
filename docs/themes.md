@@ -242,6 +242,22 @@ export default function SomeRoute() {
 
 ---
 
+## Prices and currency
+
+**Money model.** Every amount (`priceCents`, `totalCents`, `balanceCents`, …) is an integer in _cents_: 1/100 of the currency's major unit, for **every** currency. `1999` USD is $19.99, and ¥1,000 is stored as `100000`. Zero-decimal currencies only hold whole units, so stored JPY cents are always a multiple of 100. Admin inputs and the gift-card and discount validators enforce this. Payment providers convert to ISO 4217 minor units themselves (`centsToMinorUnits` / `centsToMajorUnitString` in `#/core/currency/format`). Themes never convert.
+
+**Formatting.** Use `formatPrice(cents, currency, locale)` from `#/core` (client-safe). It formats at the currency's own precision (`$19.99`, `¥1,000`, `KWD 12.340`) and falls back to a plain decimal instead of throwing on a bad currency or locale. Inside the storefront layout, `useFormatPrice()` from `#/hooks/use-format-price` binds the active locale for you.
+
+**Which currency.** `currency` from `loadStorefrontPageContext` is the first match in this order, using each only when it's in the shop's enabled currencies:
+
+1. the shopper's `currency` cookie, set by `POST /api/set-currency` (the `CurrencySwitcher`)
+2. the request's sales channel currency, for non-default channels (domain-mapped channels)
+3. the `defaultCurrency` setting
+
+The default channel always defers to `defaultCurrency`. Use the request `currency` to pick catalog prices (`pickVariantPriceForCurrency`). Format cart and order amounts with the record's own currency (`cart.currency`, `order.currency`): the cart and checkout routes already pass the cart's currency as `currency`. Switching currency reprices the shopper's cart; when an item has no price in the new currency, the cart keeps its currency and add-to-cart returns an explanatory `error`.
+
+---
+
 ## Slot Names
 
 Slots are named injection points in the storefront layout where plugins can contribute UI blocks. The full list of well-known slot names is exported as `SLOT_NAMES` from `app/core/themes/index.server.js`.

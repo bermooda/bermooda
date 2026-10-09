@@ -7,7 +7,6 @@ import { Form, Link, useActionData, useLoaderData } from 'react-router';
 import { authenticate } from '#/libs/auth/admin/index.server';
 import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
-import { formatPrice } from '#/core/currency/format';
 import {
   deleteAddress,
   getCustomer,
@@ -24,11 +23,17 @@ import {
 } from '#/core/gdpr/index.server';
 import { useT } from '#/core/i18n';
 import {
+  DEFAULT_CURRENCY,
+  SETTING_KEYS,
+  get as getSetting,
+} from '#/core/settings/index.server';
+import {
   getCustomerStoreCreditSummary,
   issueStoreCredit,
   listLedgerEntries,
   parseIssueStoreCreditInput,
 } from '#/core/store-credit/index.server';
+import useFormatPrice from '#/hooks/use-format-price';
 import Badge from '#/components/admin/badge';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import FormSection from '#/components/admin/form-section';
@@ -54,12 +59,14 @@ export async function loader({ params }) {
     slotBlocks,
     storeCreditSummary,
     storeCreditLedger,
+    shopCurrency,
   ] = await Promise.all([
     getCustomerAdminDetail(id),
     getCustomerConsentSummary(id),
     getAdminSlotBlocksMap(['customer.detail']),
     getCustomerStoreCreditSummary(id),
     listLedgerEntries(id, { limit: 20 }),
+    getSetting(SETTING_KEYS.DEFAULT_CURRENCY),
   ]);
 
   if (!customer) {
@@ -101,6 +108,8 @@ export async function loader({ params }) {
       erasedAt: consentSummary.erasedAt,
     },
     storeCredit: {
+      // Ledgers have no currency of their own; they are kept in the shop's.
+      currency: shopCurrency ?? DEFAULT_CURRENCY,
       balanceCents: storeCreditSummary.balance,
       entries: storeCreditLedger.entries.map((entry) => ({
         id: entry.id,
@@ -278,6 +287,7 @@ export async function action({ request, params }) {
 // ---------------------------------------------------------------------------
 
 export default function AdminCustomerRoute() {
+  const formatPrice = useFormatPrice();
   const t = useT();
   const { customer, slotBlocks, storeCredit } = useLoaderData();
   const actionData = useActionData();
@@ -499,7 +509,7 @@ export default function AdminCustomerRoute() {
               {t('admin.customers.detail.currentBalance')}
             </p>
             <p className="text-text text-2xl font-semibold tabular-nums">
-              {formatPrice(storeCredit.balanceCents)}
+              {formatPrice(storeCredit.balanceCents, storeCredit.currency)}
             </p>
           </div>
 
@@ -574,10 +584,13 @@ export default function AdminCustomerRoute() {
                       )}
                     >
                       {entry.amountCents >= 0 ? '+' : ''}
-                      {formatPrice(entry.amountCents)}
+                      {formatPrice(entry.amountCents, storeCredit.currency)}
                     </Td>
                     <Td className="text-text text-right tabular-nums">
-                      {formatPrice(entry.balanceAfterCents)}
+                      {formatPrice(
+                        entry.balanceAfterCents,
+                        storeCredit.currency
+                      )}
                     </Td>
                   </tr>
                 ))}

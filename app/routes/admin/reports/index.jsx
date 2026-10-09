@@ -6,7 +6,6 @@ import { Form, Link, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin/index.server';
 import { recordAdminAudit } from '#/core/audit/index.server';
-import { formatPrice } from '#/core/currency/format';
 import {
   EXPORT_SCHEDULES,
   EXPORT_TYPES,
@@ -20,6 +19,7 @@ import {
   parseReportParams,
 } from '#/core/reporting/index.server';
 import { get } from '#/core/settings/index.server';
+import useFormatPrice from '#/hooks/use-format-price';
 import Card from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
@@ -118,6 +118,7 @@ function MetricCard({ label, value, sub }) {
  * @returns {React.ReactElement}
  */
 export default function AdminReportsRoute() {
+  const formatPrice = useFormatPrice();
   const t = useT();
   const { report, scheduledExports, filters, exportTypes, defaultCurrency } =
     useLoaderData();

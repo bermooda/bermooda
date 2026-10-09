@@ -6,10 +6,7 @@ import { randomBytes } from 'crypto';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { containsFilter } from '#/libs/prisma/filters/index.server';
-import {
-  centsPerMinorUnit,
-  isCentsAtCurrencyPrecision,
-} from '#/core/currency/format';
+import { isCentsAtCurrencyPrecision } from '#/core/currency/format';
 import { isValidCurrencyCode } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
@@ -99,7 +96,7 @@ export function getIssueGiftCardInputError(input) {
     return 'Currency must be a 3-letter ISO 4217 code.';
   }
   if (!isCentsAtCurrencyPrecision(input.balanceCents, input.currency)) {
-    return `Balance must be a whole amount in ${input.currency} (a multiple of ${centsPerMinorUnit(input.currency)} cents).`;
+    return `Balance must be a whole amount in ${input.currency}.`;
   }
   return null;
 }

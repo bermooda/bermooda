@@ -20,13 +20,13 @@ import {
   handleAdminActionError,
   parseAdminSearchParams,
 } from '#/libs/api/admin-ui/index.server';
-import { formatPrice } from '#/core/currency/format';
 import {
   deleteDiscount,
   listDiscounts,
   toggleDiscountActive,
 } from '#/core/discounts/index.server';
 import { useT } from '#/core/i18n';
+import useFormatPrice from '#/hooks/use-format-price';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
@@ -119,14 +119,13 @@ export async function action({ request }) {
  * @param {string} type
  * @param {number} value
  * @param {string | null | undefined} currency
+ * @param {(cents: number, currency?: string) => string} formatPrice
  * @returns {string}
  */
-function formatValue(type, value, currency) {
+function formatValue(type, value, currency, formatPrice) {
   if (type === 'percent') return `${value}%`;
-  const code = currency?.toUpperCase();
-  // Rows saved before currency validation may hold codes Intl rejects.
-  if (!code || !/^[A-Z]{3}$/.test(code)) return (value / 100).toFixed(2);
-  return formatPrice(value, code);
+  if (!currency) return (value / 100).toFixed(2);
+  return formatPrice(value, currency.toUpperCase());
 }
 
 /**
@@ -222,6 +221,7 @@ function DiscountActions({ discount }) {
 // ---------------------------------------------------------------------------
 
 export default function AdminDiscountsRoute() {
+  const formatPrice = useFormatPrice();
   const t = useT();
   const { discounts, total, page, totalPages, q } = useLoaderData();
   const [, setSearchParams] = useSearchParams();
@@ -369,7 +369,8 @@ export default function AdminDiscountsRoute() {
                     {formatValue(
                       discount.type,
                       discount.value,
-                      discount.currency
+                      discount.currency,
+                      formatPrice
                     )}
                   </Td>
                   <Td

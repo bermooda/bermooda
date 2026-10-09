@@ -29,6 +29,17 @@ export function useT() {
 }
 
 /**
+ * React hook that returns the active locale from the nearest I18nContext
+ * provider (falls back to 'en').
+ *
+ * @returns {string}
+ */
+export function useLocale() {
+  const { locale } = useContext(I18nContext);
+  return locale ?? 'en';
+}
+
+/**
  * Resolves a dot-notation key against a nested messages object.
  * Tries nested traversal first; falls back to flat key lookup.
  *

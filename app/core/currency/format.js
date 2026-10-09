@@ -35,7 +35,18 @@ function getFormatter(currency, locale) {
  * @returns {string} Formatted price string
  */
 export function formatPrice(cents, currency = 'USD', locale = 'en') {
-  return getFormatter(currency, locale).format(cents / 100);
+  const amount = cents / 100;
+  // Intl throws RangeError for a null/malformed currency or locale. One bad
+  // row must not take down a whole admin page or email render.
+  try {
+    return getFormatter(currency, locale).format(amount);
+  } catch {
+    try {
+      return getFormatter(currency, 'en').format(amount);
+    } catch {
+      return `${amount.toFixed(2)} ${currency ?? ''}`.trim();
+    }
+  }
 }
 
 /**
@@ -100,6 +111,18 @@ export function isCentsAtCurrencyPrecision(cents, currency) {
  */
 export function currencyInputStep(currency) {
   return String(centsPerMinorUnit(currency) / 100);
+}
+
+/**
+ * Parse a decimal major-unit form value into cents ("19.99" → 1999).
+ * Returns null for blank or non-numeric input.
+ *
+ * @param {unknown} raw
+ * @returns {number|null}
+ */
+export function parseDecimalToCents(raw) {
+  const value = parseFloat(String(raw ?? ''));
+  return Number.isNaN(value) ? null : Math.round(value * 100);
 }
 
 /**

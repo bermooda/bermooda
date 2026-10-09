@@ -2,7 +2,7 @@
 
 Audit date: 2026-10-09. Baseline commit: `ad82a38` (bermooda 0.11.1).
 
-This doc is a work queue for later sessions. Each finding has an ID, a severity, the exact location, what is wrong, the fix, and how to check it. Work through the **Work plan** at the end in order, tick the checklist, and update the `currency/` row in [code-quality-review.md](../code-quality-review.md) when everything is closed. Follow the agent rules at the top of that tracker: no follow-up placeholders, trace every caller before removing an export, and fix completely in the same change.
+Status: **closed.** Every finding below landed in PR #240 (branch `fix/currency-audit`). Each item records its fix and how it was verified. The `currency/` row in [code-quality-review.md](../code-quality-review.md) is ✅. The cookie findings first logged here as C2–C4 moved to their own audit, [storefront-cookies.md](storefront-cookies.md) (K1–K3).
 
 ## Why this area
 
@@ -50,7 +50,7 @@ Severity: **High** = money or security risk on a real deployment · **Medium** =
   - Gift cards: `getIssueGiftCardInputError` checks for a positive balance, a 3-letter currency, and whole-unit amounts. The admin form, the admin API, and `issueGiftCard` all use it.
   - Fixed discounts: the currency is uppercased (before, `usd` never matched a `USD` cart) and validated, and the value must be a whole amount in that currency.
   - Display: `formatPrice` uses the currency's default precision (`¥1,000`, `$19.99`, `KWD 12.340`). JSON-LD uses `centsToMajorUnitString`. The admin discount list formats values with `formatPrice`.
-- **Remaining:** gift-card balances are still typed in cents in the admin (¥1,000 = `100000`). Switching that input to a decimal major-unit field with `currencyInputStep` is a UX follow-up tracked as C7.
+- **Gift-card input:** the admin gift-card balance used to be typed in cents. C7 turned it into a decimal input whose `step` follows the selected currency.
 
 ### M3. Switching currency with items in the cart broke "add to cart", and carts in a disabled currency still checked out (Medium) — fixed
 
@@ -94,69 +94,56 @@ Severity: **High** = money or security risk on a real deployment · **Medium** =
 
 - `formatPrice` now caches one formatter per `locale|currency`. Admin order lists, the order detail page, and emails format dozens of amounts per render.
 
-### C2. Fragile, duplicated cookie parsing (Low) — open
+### C2–C4. Storefront cookie findings — moved
 
-- **Where:** `getRequestCurrency`, `app/utils/cart-cookie.server.js`, `app/utils/checkout-cookie.server.js`, `routes/storefront/_layout.jsx` (`bermooda_ref`), `core/i18n` (`parseCookieLocale`), and the unused `getCookieValue` in `app/utils/misc.js`.
-- **Problem:** Six regex parsers with different semantics. `decodeURIComponent` on a malformed `cart_token` or `bermooda_ref` throws `URIError`, which turns every storefront page into a 500 for that browser. `getCookieValue` does a substring match (`xcart_token=` matches `cart_token`) and has no callers.
-- **Fix:** Add one `readCookie(request, name)` in `#/utils/cookies` (exact name match, safe decode that returns `null` on failure), migrate all six callers, and delete `getCookieValue`. Unit-test the malformed-encoding case.
+Cookie parsing, `Secure`/`HttpOnly` flags, and referral tracking aren't currency work. They touch the cart, checkout, locale, consent, and loyalty cookies and deserve their own security review, so they're tracked in [storefront-cookies.md](storefront-cookies.md) as K1 (was C2), K2 (was C3), and K3 (was C4).
 
-### C3. Storefront cookies lack `Secure` in production (Low, security) — open
+### C5. `formatPrice` threw on bad input (Low) — fixed
 
-- **Where:** `setCurrencyCookie`, `buildCartTokenCookie`, `buildCheckoutSessionCookie`, the `bermooda_ref` cookie in the layout.
-- **Problem:** `cart_token` and `checkout_session` are bearer identifiers for the cart and checkout. Without `Secure` they can be sent over plain HTTP if a request is ever downgraded.
-- **Fix:** Build all four through the C2 helper and add `Secure` when `config.baseUrl` is `https:` (or `NODE_ENV === 'production'`). Add `HttpOnly` to `cart_token` if the theme doesn't read it client-side (check theme-default first).
+- **Where:** `formatPrice` in `format.js`.
+- **Problem:** `Intl.NumberFormat` throws `RangeError` for a `null` or malformed currency and for an invalid locale tag. One bad row (`Discount.currency` is nullable, and older rows weren't validated) took down a whole admin page or email render.
+- **Fix (applied):** on error, `formatPrice` retries with the `en` locale, then falls back to a plain decimal (`19.99 EURO`). There's no logging, because the file is client-safe. The admin discount list dropped its own regex guard and relies on this.
+- **Check:** `formatPrice` tests for `null`, `'EURO'`, and an invalid locale.
 
-### C4. Referral tracking runs on every storefront page view (Low, perf, adjacent) — open
+### C6. Admin money formatting ignored the admin locale and some currencies (Low) — fixed
 
-- **Where:** `routes/storefront/_layout.jsx` loader → `trackReferral`.
-- **Problem:** A logged-in customer carrying a `bermooda_ref` cookie (30-day max age) triggers loyalty DB work on every page for up to 30 days. Errors are silently swallowed.
-- **Fix:** After a successful (or permanently failed) `trackReferral`, clear the cookie with `Max-Age=0`. Log unexpected errors via `#/utils/logger.server` instead of discarding them.
+- **Where:** admin orders (list and detail), customer detail, dashboard, reports, gift cards, and the discount list.
+- **Problem:** every admin amount used the default `'en'` locale. Store credit on the customer page and dashboard revenue were formatted without a currency, so they always showed USD.
+- **Fix (applied):** `I18nContext` now carries `locale`; the admin, public admin, and storefront layouts provide it. `useLocale()` in `#/core/i18n` reads it, and `useFormatPrice()` in `#/hooks/use-format-price` binds it to `formatPrice`. Every admin page above uses the hook. Store credit and dashboard revenue are labeled with the shop's `defaultCurrency`, since store-credit ledgers have no currency of their own.
+- **Not fixed here (reporting/store-credit, recorded in the tracker's later-pass table):** dashboard and report revenue sum orders across currencies, and store credit is redeemed cent-for-cent against carts in any currency.
 
-### C5. `formatPrice` throws on bad input (Low) — open
+### C7. Gift-card balance was entered in cents (Low, UX) — fixed
 
-- **Where:** `format.js`.
-- **Problem:** `Intl.NumberFormat` throws `RangeError` for `null` or invalid currency codes and for invalid locale tags. One bad row (for example `Discount.currency` is nullable) takes down the whole admin page or email render.
-- **Fix:** Catch the `RangeError` in `formatPrice` and fall back to plain decimal formatting (`` `${(cents / 100).toFixed(2)} ${currency ?? ''}`.trim() ``). Don't log there, because the file is client-safe. Add tests.
+- **Where:** `components/admin/gift-card-editor.jsx`, `routes/admin/gift-cards/new.jsx`, `parseDecimalToCents` in `format.js`.
+- **Problem:** merchants typed `2500` for $25 and `100000` for ¥1,000, and the currency was a free-text field.
+- **Fix (applied):** the form takes a decimal `balance` ("25.50"), converted with the new shared `parseDecimalToCents`, which the product price parser now uses too. The currency is a select of the shop's enabled currencies (loaded by a new route loader, defaulting to `defaultCurrency`), and the amount input's `step`/`min` follow the selected currency. Sub-unit yen still gets the clear validation message. The admin API keeps accepting `balanceCents`. Labels in en/de/fr no longer say "cents".
+- **Check:** `app/routes/admin/gift-cards/new.test.jsx` covers the loader, decimal conversion, sub-unit rejection, and a missing balance.
 
-### C6. Admin money formatting ignores the admin locale and some currencies (Low) — open
+### T1. Test gaps (Low) — fixed
 
-- **Where:** admin routes call `formatPrice(x, currency)` with the default `'en'` locale. `routes/admin/customers/$id.jsx:502` formats store credit with no currency, so it always shows USD.
-- **Fix:** Pass the admin UI locale from the loader. Resolve the store-credit currency (shop default currency, or a per-ledger currency if the model adds one).
+- PayPal: `app/core/payments/paypal/index.test.server.js` stubs env and `fetch`, re-imports the module, and asserts JPY orders send `value: '1000'` and USD refunds send `'19.99'`.
+- Checkout route: `app/routes/storefront/checkout/index.test.jsx` covers the `CART_CURRENCY_DISABLED` message and the `handleError` path for other place-order failures.
 
-### C7. Gift-card balance is entered in cents (Low, UX) — open
+### D1. Undocumented money model and currency resolution (Low) — fixed
 
-- **Where:** `components/admin/gift-card-editor.jsx` (`name="balanceCents"`), `routes/admin/gift-cards/new.jsx`.
-- **Problem:** Merchants type `2500` for $25 and `100000` for ¥1,000. M2's validation now rejects sub-yen amounts with a clear message, but the input itself is error-prone.
-- **Fix:** Turn it into a decimal major-unit `balance` input with `step={currencyInputStep(currency)}`, convert it server-side like `parseVariantPriceFormData`, and keep `balanceCents` for the admin API.
+- [docs/themes.md](../themes.md#prices-and-currency) has a new **Prices and currency** section covering the cents model, precision rules, `formatPrice` and `useFormatPrice`, the currency resolution order, and how carts follow a currency switch. [app/emails/README.md](../../app/emails/README.md) points templates at `formatPrice` with the email locale. [docs/phase-1-plan.md](../phase-1-plan.md) still describes the removed `lookupVariantPrice*` helpers. It's a historical plan, so it stays as is.
 
-### T1. Test gaps (Low) — open
+### Hygiene
 
-- PayPal JPY payload: the module reads credentials at import, so use `vi.stubEnv` + `vi.resetModules` and assert `value: '1000'`.
-- C2 cookie-helper tests, as listed above. (M3's route tests shipped with M3.)
-- `routes/storefront/checkout/index.jsx` has no route tests; the `CART_CURRENCY_DISABLED` mapping is covered only through the core guard.
-
-### D1. Undocumented money model and currency resolution (Low) — open
-
-- Document the cents model and precision rules (M2) and the currency resolution order (C1/M4) in [docs/themes.md](../themes.md) (themes format prices) and [app/emails/README.md](../../app/emails/README.md) (use `formatPrice` with the email locale). [docs/phase-1-plan.md](../phase-1-plan.md) still describes the removed `lookupVariantPrice*` helpers. It's a historical plan, so leave it, but don't link it as current docs.
+- `queue.db` (written to the repo root by queue-backed tests) is now in `.gitignore`.
 
 ## Work plan
 
-Suggested PR split (Conventional Commit titles, per AGENTS.md). Each PR must pass the validation below.
-
-1. **`fix(currency): charge zero-decimal currencies correctly and validate the currency cookie`**: M1, C1, Q1, Q2, P1. **Done in this pass.**
-2. **`fix(cart): handle currency switches and disabled cart currencies`**: M3 **done** (shipped with PR 1, #240), including its route tests.
-3. **`feat(currency): honor sales-channel currency`**: M4. **Done** (shipped with PR 1, #240).
-4. **`fix(currency): enforce currency precision in admin money inputs`**: M2 **done** (shipped with PR 1, #240). Remaining: C5, C6, C7, D1.
-5. **`fix(storefront): shared cookie helper with Secure flag`**: C2, C3, C4.
+All of it shipped in one PR, #240 (`feat(currency): …`), across these commits: provider amounts and cookie validation (M1, C1, Q1, Q2, P1), precision and channel currency (M2, M4), cart currency switching (M3), and the rest (C5–C7, T1, D1).
 
 ### Validation
 
 ```bash
-npx vitest run app/core/currency app/core/payments app/core/cart app/core/checkout app/routes/storefront app/emails
+npx vitest run app/core/currency app/core/payments app/core/cart app/core/checkout app/core/orders app/routes/storefront app/routes/admin app/emails
 npm run lint
 ```
 
-No Prisma schema change is needed for any finding. M2 went with option (a), so no data migration was needed.
+No Prisma schema change was needed. M2 went with option (a), so there's no data migration.
 
 ## Status checklist
 
@@ -165,15 +152,13 @@ No Prisma schema change is needed for any finding. M2 went with option (a), so n
 - [x] M3 cart currency switch + disabled-currency checkout guard
 - [x] M4 channel currency precedence (cookie → non-default channel → `defaultCurrency`)
 - [x] C1 cookie validated against enabled currencies
-- [ ] C2 shared cookie helper, `getCookieValue` removed
-- [ ] C3 `Secure` storefront cookies
-- [ ] C4 referral cookie cleared after tracking
-- [ ] C5 `formatPrice` survives bad input
-- [ ] C6 admin locale + store-credit currency
-- [ ] C7 gift-card balance as a decimal input
+- [x] C2–C4 moved to [storefront-cookies.md](storefront-cookies.md) (K1–K3)
+- [x] C5 `formatPrice` survives bad input
+- [x] C6 admin locale + store-credit currency
+- [x] C7 gift-card balance as a decimal input
 - [x] Q1 dead code removed
 - [x] Q2 duplicate formatters consolidated; emails use their locale
 - [x] P1 formatter cache
-- [ ] T1 PayPal JPY test (M3/C2 tests ship with those items)
-- [ ] D1 docs
-- [ ] `currency/` row in [code-quality-review.md](../code-quality-review.md) marked ✅ with a summary
+- [x] T1 PayPal amount tests + checkout route tests
+- [x] D1 docs
+- [x] `currency/` row in [code-quality-review.md](../code-quality-review.md) marked ✅ with a summary

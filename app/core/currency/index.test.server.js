@@ -24,6 +24,7 @@ import {
   currencyInputStep,
   formatPrice,
   isCentsAtCurrencyPrecision,
+  parseDecimalToCents,
   roundCentsToCurrency,
 } from '#/core/currency/format';
 import {
@@ -169,6 +170,12 @@ describe('formatPrice', () => {
     expect(formatPrice(1234, 'KWD', 'en')).toMatch(/^KWD\s12\.340$/);
   });
 
+  it('falls back instead of throwing on bad currency or locale', () => {
+    expect(formatPrice(1999, null)).toBe('19.99');
+    expect(formatPrice(1999, 'EURO')).toBe('19.99 EURO');
+    expect(formatPrice(1999, 'USD', 'not a locale!')).toBe('$19.99');
+  });
+
   it('reuses formatters across calls', () => {
     expect(formatPrice(500, 'GBP', 'en')).toBe('£5.00');
     expect(formatPrice(750, 'GBP', 'en')).toBe('£7.50');
@@ -255,5 +262,19 @@ describe('currency precision helpers', () => {
     expect(centsToInputValue(100000, 'JPY')).toBe('1000');
     expect(centsToInputValue(150, 'JPY')).toBe('2');
     expect(centsToInputValue(0, 'USD')).toBe('0.00');
+  });
+});
+
+describe('parseDecimalToCents', () => {
+  it('parses decimal major-unit input', () => {
+    expect(parseDecimalToCents('19.99')).toBe(1999);
+    expect(parseDecimalToCents('0.1')).toBe(10);
+    expect(parseDecimalToCents(25)).toBe(2500);
+  });
+
+  it('returns null for blank or non-numeric input', () => {
+    expect(parseDecimalToCents('')).toBeNull();
+    expect(parseDecimalToCents(null)).toBeNull();
+    expect(parseDecimalToCents('abc')).toBeNull();
   });
 });

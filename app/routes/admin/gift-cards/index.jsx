@@ -5,9 +5,9 @@ import { GiftIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 
 import { parseAdminSearchParams } from '#/libs/api/admin-ui/index.server';
-import { formatPrice } from '#/core/currency/format';
 import { listGiftCards } from '#/core/gift-cards/index.server';
 import { useT } from '#/core/i18n';
+import useFormatPrice from '#/hooks/use-format-price';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
@@ -64,6 +64,7 @@ function giftCardStatusLabel(status, t) {
 }
 
 export default function AdminGiftCardsRoute() {
+  const formatPrice = useFormatPrice();
   const t = useT();
   const { giftCards, total, page, totalPages, q } = useLoaderData();
   const [, setSearchParams] = useSearchParams();

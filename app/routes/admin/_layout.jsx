@@ -426,7 +426,7 @@ export const handle = {
  */
 export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { messages, user } = useLoaderData();
+  const { locale, messages, user } = useLoaderData();
   const { open, setOpen, openPalette } = useCommandPalette();
   const location = useLocation();
 
@@ -438,7 +438,7 @@ export default function AdminLayout() {
     !user?.twoFactorEnabled && location.pathname !== '/admin/security';
 
   return (
-    <I18nContext.Provider value={{ t }}>
+    <I18nContext.Provider value={{ t, locale }}>
       {/*
         Document is the scrollport (no overflow on main). Nested overflow:auto
         on an unbounded main breaks position:sticky and can create empty

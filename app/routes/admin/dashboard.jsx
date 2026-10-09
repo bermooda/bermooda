@@ -8,9 +8,14 @@ import {
 import { Link, useLoaderData, useNavigate } from 'react-router';
 
 import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
-import { formatPrice } from '#/core/currency/format';
 import { useT } from '#/core/i18n';
 import { loadAdminDashboardData } from '#/core/reporting/index.server';
+import {
+  DEFAULT_CURRENCY,
+  SETTING_KEYS,
+  get as getSetting,
+} from '#/core/settings/index.server';
+import useFormatPrice from '#/hooks/use-format-price';
 import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
@@ -39,13 +44,15 @@ export function meta() {
  * is already authenticated.
  */
 export async function loader() {
-  const [dashboard, slotBlocks] = await Promise.all([
+  const [dashboard, slotBlocks, shopCurrency] = await Promise.all([
     loadAdminDashboardData(),
     getAdminSlotBlocksMap(['dashboard.widgets']),
+    getSetting(SETTING_KEYS.DEFAULT_CURRENCY),
   ]);
 
   return {
     ...dashboard,
+    shopCurrency: shopCurrency ?? DEFAULT_CURRENCY,
     slotBlocks,
   };
 }
@@ -101,11 +108,13 @@ function KpiTile({ icon: Icon, label, value }) {
  * @returns {React.ReactElement}
  */
 export default function AdminDashboardRoute() {
+  const formatPrice = useFormatPrice();
   const t = useT();
   const navigate = useNavigate();
   const {
     totalOrders,
     totalRevenueCents,
+    shopCurrency,
     abandonedCheckouts,
     lowStockCount,
     recentOrders,
@@ -128,7 +137,7 @@ export default function AdminDashboardRoute() {
         <KpiTile
           icon={BanknotesIcon}
           label={t('admin.dashboard.stat.totalRevenue')}
-          value={formatPrice(totalRevenueCents)}
+          value={formatPrice(totalRevenueCents, shopCurrency)}
         />
         <KpiTile
           icon={ArchiveBoxXMarkIcon}

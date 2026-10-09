@@ -61,3 +61,4 @@ async function handleSignUp(userData) {
 1. Create a new React component in this directory
 2. Export your component and add a sending function in `#/emails/index.server`
 3. Use Tailwind CSS classes for styling
+4. Format money with `formatPrice(cents, currency, locale)` from `#/core/currency/format`, passing the email's `locale` and the order's `currency`. Amounts are integer cents (1/100 of the major unit). See [Prices and currency](../../docs/themes.md#prices-and-currency).

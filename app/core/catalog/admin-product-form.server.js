@@ -3,7 +3,10 @@
 
 import prisma from '#/libs/prisma.server';
 import { publishProduct, unpublishProduct } from '#/core/catalog/index.server';
-import { roundCentsToCurrency } from '#/core/currency/format';
+import {
+  parseDecimalToCents,
+  roundCentsToCurrency,
+} from '#/core/currency/format';
 import { setDefaultLocationQuantity } from '#/core/inventory/locations/index.server';
 import { get, isValidCurrencyCode } from '#/core/settings/index.server';
 
@@ -92,11 +95,9 @@ export function parseVariantPriceFormData(data) {
     if (!isValidCurrencyCode(currency)) continue;
     if (!priceDataMap[varId]) priceDataMap[varId] = {};
     if (!priceDataMap[varId][currency]) priceDataMap[varId][currency] = {};
-    const raw = data.get(key) ?? '';
-    const dollars = parseFloat(raw);
-    priceDataMap[varId][currency].priceCents = isNaN(dollars)
-      ? 0
-      : roundCentsToCurrency(Math.round(dollars * 100), currency);
+    const cents = parseDecimalToCents(data.get(key));
+    priceDataMap[varId][currency].priceCents =
+      cents === null ? 0 : roundCentsToCurrency(cents, currency);
   }
   for (const key of comparePriceKeys) {
     const match = key.match(/^comparePrice\[([^\]]+)\]\[([^\]]+)\]$/);
@@ -105,11 +106,9 @@ export function parseVariantPriceFormData(data) {
     if (!isValidCurrencyCode(currency)) continue;
     if (!priceDataMap[varId]) priceDataMap[varId] = {};
     if (!priceDataMap[varId][currency]) priceDataMap[varId][currency] = {};
-    const raw = data.get(key) ?? '';
-    const dollars = parseFloat(raw);
-    priceDataMap[varId][currency].comparePriceCents = isNaN(dollars)
-      ? null
-      : roundCentsToCurrency(Math.round(dollars * 100), currency);
+    const cents = parseDecimalToCents(data.get(key));
+    priceDataMap[varId][currency].comparePriceCents =
+      cents === null ? null : roundCentsToCurrency(cents, currency);
   }
 
   return priceDataMap;
