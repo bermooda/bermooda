@@ -1,19 +1,7 @@
 // app/core/b2b/shared.server.js
 // Shared quote serialization helpers (used by companies nested quotes + quotes module).
 
-/**
- * Format cents as a localized currency string.
- *
- * @param {number} cents
- * @param {string} [currency]
- * @returns {string}
- */
-export function formatQuoteMoney(cents, currency = 'USD') {
-  return new Intl.NumberFormat('en', {
-    style: 'currency',
-    currency,
-  }).format(cents / 100);
-}
+import { formatPrice } from '#/core/currency/format';
 
 /**
  * Serialize a quote line for admin/API responses.
@@ -74,6 +62,6 @@ export function serializeQuote(record) {
         }
       : undefined,
     lines: record.lines?.map(serializeQuoteLine),
-    formattedTotal: formatQuoteMoney(record.totalCents, record.currency),
+    formattedTotal: formatPrice(record.totalCents, record.currency),
   };
 }

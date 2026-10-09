@@ -1,8 +1,13 @@
 // app/core/currency/index.server.js
 
-import prisma from '#/libs/prisma.server';
-import { DEFAULT_CURRENCY } from '#/core/settings/defaults';
-import { get as settingsGet } from '#/core/settings/index.server';
+import {
+  DEFAULT_CURRENCY,
+  SETTING_KEYS,
+  get as settingsGet,
+  getEnabledCurrencies,
+} from '#/core/settings/index.server';
+
+const CURRENCY_RE = /^[A-Z]{3}$/;
 
 // ---------------------------------------------------------------------------
 // getRequestCurrency
@@ -11,9 +16,12 @@ import { get as settingsGet } from '#/core/settings/index.server';
 /**
  * Resolve the currency for an incoming request.
  * Resolution order:
- *   1. `currency` cookie value
+ *   1. `currency` cookie value, when it is an enabled currency
  *   2. `defaultCurrency` setting
  *   3. Hard fallback: 'USD'
+ *
+ * The cookie is client-controlled, so a code the merchant has not enabled
+ * (or has since disabled) must never reach cart creation or checkout.
  *
  * @param {Request} request
  * @returns {Promise<string>} 3-letter ISO currency code
@@ -21,78 +29,21 @@ import { get as settingsGet } from '#/core/settings/index.server';
 export async function getRequestCurrency(request) {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const match = cookieHeader.match(/(?:^|;\s*)currency=([^;]+)/);
-  if (match) {
-    const raw = match[1].trim();
-    if (raw && /^[A-Z]{3}$/.test(raw)) return raw;
+  const fromCookie = match?.[1].trim();
+  if (fromCookie && CURRENCY_RE.test(fromCookie)) {
+    const enabled = await getEnabledCurrencies();
+    if (enabled.includes(fromCookie)) return fromCookie;
   }
 
-  const fromSettings = await settingsGet('defaultCurrency');
+  const fromSettings = await settingsGet(SETTING_KEYS.DEFAULT_CURRENCY);
   if (fromSettings) return fromSettings;
 
   return DEFAULT_CURRENCY;
 }
 
 // ---------------------------------------------------------------------------
-// lookupVariantPrice
-// ---------------------------------------------------------------------------
-
-/**
- * Exact-match price lookup. Returns null when no row exists for the given
- * variantId + currency combination.
- *
- * @param {string} variantId
- * @param {string} currency  3-letter ISO code
- * @returns {Promise<{ priceCents: number, compareAtCents: number|null, currency: string }|null>}
- */
-export async function lookupVariantPrice(variantId, currency) {
-  const row = await prisma.variantPrice.findUnique({
-    where: { variantId_currency: { variantId, currency } },
-  });
-  return row
-    ? {
-        priceCents: row.priceCents,
-        compareAtCents: row.compareAtCents ?? null,
-        currency: row.currency,
-      }
-    : null;
-}
-
-// ---------------------------------------------------------------------------
-// lookupVariantPriceForBrowsing
-// ---------------------------------------------------------------------------
-
-/**
- * Try exact match; fall back to the shop's defaultCurrency when not found.
- * Attaches an `isFallback` flag so callers can surface "shown in USD" notices.
- *
- * @param {string} variantId
- * @param {string} currency  Requested 3-letter ISO code
- * @returns {Promise<{ priceCents: number, compareAtCents: number|null, currency: string, isFallback: boolean }|null>}
- */
-export async function lookupVariantPriceForBrowsing(variantId, currency) {
-  const exact = await lookupVariantPrice(variantId, currency);
-  if (exact) return { ...exact, isFallback: false };
-
-  const defaultCurrency =
-    (await settingsGet('defaultCurrency')) ?? DEFAULT_CURRENCY;
-  if (defaultCurrency === currency) return null;
-  const fallback = await lookupVariantPrice(variantId, defaultCurrency);
-  if (fallback) return { ...fallback, isFallback: true };
-
-  return null;
-}
-
-// ---------------------------------------------------------------------------
-// formatPrice — re-exported from client-safe format.js for backward compat
-// ---------------------------------------------------------------------------
-
-export { formatPrice } from '#/core/currency/format';
-
-// ---------------------------------------------------------------------------
 // setCurrencyCookie
 // ---------------------------------------------------------------------------
-
-const CURRENCY_RE = /^[A-Z]{3}$/;
 
 /**
  * Append a `Set-Cookie` header that persists the chosen currency.

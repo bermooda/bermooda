@@ -3,6 +3,7 @@
 
 import logger from '#/utils/logger.server';
 import { summarizeCartLines } from '#/core/cart/lines';
+import { centsToMajorUnitString } from '#/core/currency/format';
 
 const log = logger.child({ provider: 'paypal' });
 
@@ -13,10 +14,6 @@ const PAYPAL_API_BASE =
 
 let _accessToken = null;
 let _tokenExpiresAt = 0;
-
-function centsToMajorUnit(cents) {
-  return (cents / 100).toFixed(2);
-}
 
 async function getAccessToken() {
   if (_accessToken && Date.now() < _tokenExpiresAt) {
@@ -84,7 +81,7 @@ export const paypalProvider = {
 
     const token = await getAccessToken();
     const currencyCode = (currency ?? cart?.currency ?? 'USD').toUpperCase();
-    const value = centsToMajorUnit(totalCents);
+    const value = centsToMajorUnitString(totalCents, currencyCode);
 
     const response = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
       method: 'POST',
@@ -210,7 +207,7 @@ export const paypalProvider = {
         },
         body: JSON.stringify({
           amount: {
-            value: centsToMajorUnit(amountCents),
+            value: centsToMajorUnitString(amountCents, currencyCode),
             currency_code: currencyCode,
           },
         }),

@@ -2,24 +2,28 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('#/libs/prisma.server', () => ({
-  default: { variantPrice: { findUnique: vi.fn() } },
-}));
-
 vi.mock('#/core/settings/index.server', () => ({
+  DEFAULT_CURRENCY: 'USD',
+  SETTING_KEYS: { DEFAULT_CURRENCY: 'defaultCurrency' },
   get: vi.fn(),
+  getEnabledCurrencies: vi.fn(),
 }));
 
 // Import after mocks are registered
-import prisma from '#/libs/prisma.server';
+import {
+  centsToMajorUnitString,
+  centsToMinorUnits,
+  currencyFractionDigits,
+  formatPrice,
+} from '#/core/currency/format';
 import {
   getRequestCurrency,
-  lookupVariantPrice,
-  lookupVariantPriceForBrowsing,
-  formatPrice,
   setCurrencyCookie,
 } from '#/core/currency/index.server';
-import { get as settingsGet } from '#/core/settings/index.server';
+import {
+  getEnabledCurrencies,
+  get as settingsGet,
+} from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -41,6 +45,7 @@ function makeResponse() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  getEnabledCurrencies.mockResolvedValue(['USD', 'EUR', 'GBP']);
 });
 
 // ---------------------------------------------------------------------------
@@ -80,92 +85,17 @@ describe('getRequestCurrency', () => {
     const req2 = makeRequest('currency=TOOLONG');
     expect(await getRequestCurrency(req2)).toBe('GBP');
   });
-});
 
-// ---------------------------------------------------------------------------
-// lookupVariantPrice
-// ---------------------------------------------------------------------------
-
-describe('lookupVariantPrice', () => {
-  it('returns price data on exact match', async () => {
-    prisma.variantPrice.findUnique.mockResolvedValueOnce({
-      priceCents: 1999,
-      compareAtCents: 2499,
-      currency: 'USD',
-    });
-
-    const result = await lookupVariantPrice('var_1', 'USD');
-
-    expect(result).toEqual({
-      priceCents: 1999,
-      compareAtCents: 2499,
-      currency: 'USD',
-    });
-    expect(prisma.variantPrice.findUnique).toHaveBeenCalledWith({
-      where: { variantId_currency: { variantId: 'var_1', currency: 'USD' } },
-    });
-  });
-
-  it('returns null when no row is found', async () => {
-    prisma.variantPrice.findUnique.mockResolvedValueOnce(null);
-    const result = await lookupVariantPrice('var_1', 'EUR');
-    expect(result).toBeNull();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// lookupVariantPriceForBrowsing
-// ---------------------------------------------------------------------------
-
-describe('lookupVariantPriceForBrowsing', () => {
-  it('returns exact price with isFallback: false when found', async () => {
-    prisma.variantPrice.findUnique.mockResolvedValueOnce({
-      priceCents: 999,
-      compareAtCents: null,
-      currency: 'EUR',
-    });
-
-    const result = await lookupVariantPriceForBrowsing('var_2', 'EUR');
-
-    expect(result).toEqual({
-      priceCents: 999,
-      compareAtCents: null,
-      currency: 'EUR',
-      isFallback: false,
-    });
-  });
-
-  it('returns fallback price with isFallback: true when exact not found', async () => {
-    // First call: exact miss; second call: fallback hit
-    prisma.variantPrice.findUnique
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        priceCents: 1499,
-        compareAtCents: null,
-        currency: 'USD',
-      });
-
+  it('ignores a well-formed cookie for a currency that is not enabled', async () => {
     settingsGet.mockResolvedValueOnce('USD');
-
-    const result = await lookupVariantPriceForBrowsing('var_3', 'EUR');
-
-    expect(result).toEqual({
-      priceCents: 1499,
-      compareAtCents: null,
-      currency: 'USD',
-      isFallback: true,
-    });
+    const req = makeRequest('currency=JPY');
+    expect(await getRequestCurrency(req)).toBe('USD');
   });
 
-  it('returns null when neither exact nor fallback found', async () => {
-    prisma.variantPrice.findUnique
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null);
+  it('does not match cookies whose name only ends in currency', async () => {
     settingsGet.mockResolvedValueOnce('USD');
-
-    const result = await lookupVariantPriceForBrowsing('var_4', 'EUR');
-
-    expect(result).toBeNull();
+    const req = makeRequest('xcurrency=EUR');
+    expect(await getRequestCurrency(req)).toBe('USD');
   });
 });
 
@@ -183,6 +113,47 @@ describe('formatPrice', () => {
     const result = formatPrice(1999, 'EUR', 'de-DE');
     expect(result).toMatch(/19[,.]99/);
     expect(result).toMatch(/EUR|€/);
+  });
+
+  it('reuses formatters across calls', () => {
+    expect(formatPrice(500, 'GBP', 'en')).toBe('£5.00');
+    expect(formatPrice(750, 'GBP', 'en')).toBe('£7.50');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Provider minor units
+// ---------------------------------------------------------------------------
+
+describe('currencyFractionDigits', () => {
+  it('returns ISO 4217 minor-unit digits', () => {
+    expect(currencyFractionDigits('USD')).toBe(2);
+    expect(currencyFractionDigits('JPY')).toBe(0);
+    expect(currencyFractionDigits('KWD')).toBe(3);
+  });
+});
+
+describe('centsToMinorUnits', () => {
+  it('keeps two-decimal currencies unchanged', () => {
+    expect(centsToMinorUnits(1999, 'USD')).toBe(1999);
+  });
+
+  it('converts zero-decimal currencies to whole units', () => {
+    // ¥1,000.00 stored as 100000 cents → Stripe amount 1000
+    expect(centsToMinorUnits(100000, 'JPY')).toBe(1000);
+    expect(centsToMinorUnits(150, 'JPY')).toBe(2);
+  });
+
+  it('converts three-decimal currencies', () => {
+    expect(centsToMinorUnits(1234, 'KWD')).toBe(12340);
+  });
+});
+
+describe('centsToMajorUnitString', () => {
+  it('uses the currency precision', () => {
+    expect(centsToMajorUnitString(1999, 'USD')).toBe('19.99');
+    expect(centsToMajorUnitString(100000, 'JPY')).toBe('1000');
+    expect(centsToMajorUnitString(1234, 'KWD')).toBe('12.340');
   });
 });
 

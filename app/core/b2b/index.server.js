@@ -30,7 +30,6 @@ export {
   parseCreateQuoteInput,
   parseCreateQuoteForm,
   parseUpdateQuoteStatusInput,
-  formatQuoteMoney,
   serializeQuoteLine,
   serializeQuote,
   listQuotes,

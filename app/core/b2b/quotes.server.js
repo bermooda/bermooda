@@ -12,13 +12,9 @@ import {
   listCompanies,
   requireCompanyRecord,
 } from '#/core/b2b/companies.server';
-import {
-  formatQuoteMoney,
-  serializeQuote,
-  serializeQuoteLine,
-} from '#/core/b2b/shared.server';
+import { serializeQuote, serializeQuoteLine } from '#/core/b2b/shared.server';
 
-export { formatQuoteMoney, serializeQuote, serializeQuoteLine };
+export { serializeQuote, serializeQuoteLine };
 
 export const QUOTE_STATUSES = [
   'draft',

@@ -5,6 +5,10 @@ import Stripe from 'stripe';
 
 import logger from '#/utils/logger.server';
 import { summarizeCartLines } from '#/core/cart/lines';
+import {
+  centsToMinorUnits,
+  currencyFractionDigits,
+} from '#/core/currency/format';
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -16,16 +20,22 @@ const stripe = new Stripe(STRIPE_SECRET_KEY, {
 const log = logger.child({ provider: 'stripe' });
 
 function buildStripeLineItems(cart, amountCents, currency) {
-  const effectiveCurrency = (currency ?? cart?.currency ?? 'USD').toLowerCase();
+  const currencyCode = (currency ?? cart?.currency ?? 'USD').toUpperCase();
+  const effectiveCurrency = currencyCode.toLowerCase();
   const lineSubtotal = summarizeCartLines(cart?.lines).subtotalCents;
   const chargeAmount = amountCents ?? lineSubtotal;
 
-  if (amountCents != null && amountCents !== lineSubtotal) {
+  // Per-line rounding to non-2-decimal minor units could drift from the
+  // order total, so those currencies always charge a single total line.
+  if (
+    (amountCents != null && amountCents !== lineSubtotal) ||
+    currencyFractionDigits(currencyCode) !== 2
+  ) {
     return [
       {
         price_data: {
           currency: effectiveCurrency,
-          unit_amount: chargeAmount,
+          unit_amount: centsToMinorUnits(chargeAmount, currencyCode),
           product_data: { name: 'Order total' },
         },
         quantity: 1,
@@ -53,7 +63,10 @@ function buildStripeLineItems(cart, amountCents, currency) {
  *   createCheckoutSession({ cart?, orderId?, amountCents?, currency?, successUrl, cancelUrl })
  *   verifyWebhook(request)
  *   handleWebhookEvent(event)
- *   createRefund({ paymentIntentId, amountCents, reason })
+ *   createRefund({ paymentIntentId, amountCents, reason, currency })
+ *
+ * Amounts arrive as stored cents and are converted to Stripe's minor units
+ * (zero-decimal currencies such as JPY) before every API call.
  */
 export const stripeProvider = {
   name: 'Stripe',
@@ -175,13 +188,13 @@ export const stripeProvider = {
   /**
    * Create a Stripe refund for a payment intent.
    *
-   * @param {{ paymentIntentId: string, amountCents: number, reason?: string }} params
+   * @param {{ paymentIntentId: string, amountCents: number, reason?: string, currency?: string }} params
    * @returns {Promise<{ refundId: string, status: string }>}
    */
-  async createRefund({ paymentIntentId, amountCents, reason }) {
+  async createRefund({ paymentIntentId, amountCents, reason, currency }) {
     const refund = await stripe.refunds.create({
       payment_intent: paymentIntentId,
-      amount: amountCents,
+      amount: centsToMinorUnits(amountCents, currency ?? 'USD'),
       reason: reason ?? 'requested_by_customer',
     });
 
@@ -201,10 +214,11 @@ export const stripeProvider = {
    */
   async createPaymentIntent({ cart, orderId, amountCents, currency }) {
     const amount = amountCents ?? summarizeCartLines(cart?.lines).subtotalCents;
+    const currencyCode = (currency ?? cart?.currency ?? 'USD').toUpperCase();
 
     const intent = await stripe.paymentIntents.create({
-      amount,
-      currency: (currency ?? cart?.currency ?? 'USD').toLowerCase(),
+      amount: centsToMinorUnits(amount, currencyCode),
+      currency: currencyCode.toLowerCase(),
       automatic_payment_methods: { enabled: true },
       metadata: orderId ? { orderId } : {},
     });

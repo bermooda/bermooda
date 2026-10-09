@@ -27,8 +27,7 @@ export async function loader({ request }) {
   const headers = new Headers();
   const locale = await resolveRequestLocale(request, headers);
   const channel = await resolveChannelFromRequest(request);
-  const currency =
-    (await getRequestCurrency(request)) ?? channel.currency ?? 'USD';
+  const currency = await getRequestCurrency(request);
 
   const url = new URL(request.url);
   const refCode = url.searchParams.get('ref');

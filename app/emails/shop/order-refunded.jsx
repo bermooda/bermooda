@@ -1,17 +1,12 @@
 import { Section, Text } from '@react-email/components';
 
 import config from '#/libs/config';
+import { formatPrice } from '#/core/currency/format';
 import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';
 import { emailT } from '#/emails/i18n.server';
-
-function fmt(cents, currency) {
-  return new Intl.NumberFormat('en', { style: 'currency', currency }).format(
-    cents / 100
-  );
-}
 
 /**
  * @param {Object} props
@@ -44,7 +39,7 @@ export default function OrderRefundedEmail({
       <Section className="dark-mode-bg rounded-xl bg-indigo-50 px-6 py-4">
         <Text className="dark-mode-text text-sm text-slate-700">
           {t('orderRefunded.amount')}:{' '}
-          <strong>{fmt(amountCents, currency)}</strong>
+          <strong>{formatPrice(amountCents, currency, locale)}</strong>
         </Text>
       </Section>
 

@@ -214,6 +214,34 @@ describe('stripeProvider.createCheckoutSession', () => {
     const [args] = mockSessionCreate.mock.calls;
     expect(args[0].line_items[0].price_data.currency).toBe('gbp');
   });
+
+  it('charges zero-decimal currencies in whole units as a single total line', async () => {
+    // ¥1,000.00 × 2 stored as cents → Stripe expects 2000 (yen)
+    const cart = makeCart({
+      currency: 'JPY',
+      lines: [
+        { priceCentsSnapshot: 100000, titleSnapshot: 'Tea', quantity: 2 },
+      ],
+    });
+
+    await stripeProvider.createCheckoutSession({
+      cart,
+      successUrl: '/ok',
+      cancelUrl: '/no',
+    });
+
+    const [args] = mockSessionCreate.mock.calls;
+    expect(args[0].line_items).toEqual([
+      {
+        price_data: {
+          currency: 'jpy',
+          unit_amount: 2000,
+          product_data: { name: 'Order total' },
+        },
+        quantity: 1,
+      },
+    ]);
+  });
 });
 
 describe('stripeProvider.verifyWebhook', () => {
@@ -269,6 +297,22 @@ describe('stripeProvider.createRefund', () => {
       reason: 'requested_by_customer',
     });
     expect(result).toEqual({ refundId: 're_123', status: 'succeeded' });
+  });
+
+  it('converts zero-decimal refund amounts to whole units', async () => {
+    mockRefundsCreate.mockResolvedValue({ id: 're_jpy', status: 'succeeded' });
+
+    await stripeProvider.createRefund({
+      paymentIntentId: 'pi_jpy',
+      amountCents: 50000,
+      currency: 'JPY',
+    });
+
+    expect(mockRefundsCreate).toHaveBeenCalledWith({
+      payment_intent: 'pi_jpy',
+      amount: 500,
+      reason: 'requested_by_customer',
+    });
   });
 });
 

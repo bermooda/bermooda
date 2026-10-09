@@ -2,18 +2,13 @@ import { Column, Row, Section, Text } from '@react-email/components';
 
 import config from '#/libs/config';
 import { cartLineTotal } from '#/core/cart/lines';
+import { formatPrice } from '#/core/currency/format';
 import EmailButton from '#/emails/components/button';
 import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';
 import { emailT } from '#/emails/i18n.server';
-
-function fmt(cents, currency) {
-  return new Intl.NumberFormat('en', { style: 'currency', currency }).format(
-    cents / 100
-  );
-}
 
 /**
  * @param {Object} props
@@ -57,7 +52,7 @@ export default function AbandonedCartEmail({
                   {line.title} × {line.quantity}
                 </Column>
                 <Column className="dark-mode-text text-right text-sm text-slate-700">
-                  {fmt(cartLineTotal(line), currency)}
+                  {formatPrice(cartLineTotal(line), currency, locale)}
                 </Column>
               </Row>
             ))}

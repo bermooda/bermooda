@@ -5,6 +5,7 @@ import { GiftIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 
 import { parseAdminSearchParams } from '#/libs/api/admin-ui/index.server';
+import { formatPrice } from '#/core/currency/format';
 import { listGiftCards } from '#/core/gift-cards/index.server';
 import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
@@ -40,17 +41,6 @@ export async function loader({ request }) {
     totalPages: Math.ceil(total / pageSize),
     q,
   };
-}
-
-/**
- * @param {number} cents
- * @param {string} currency
- * @returns {string}
- */
-function formatMoney(cents, currency) {
-  return new Intl.NumberFormat('en', { style: 'currency', currency }).format(
-    cents / 100
-  );
 }
 
 /**
@@ -180,7 +170,7 @@ export default function AdminGiftCardsRoute() {
                   </span>
                 </Td>
                 <Td sticky className="px-3 py-4 tabular-nums">
-                  {formatMoney(card.balanceCents, card.currency)}
+                  {formatPrice(card.balanceCents, card.currency)}
                 </Td>
                 <Td sticky className="px-3 py-4">
                   <Badge tone={statusTone(card.status)}>
