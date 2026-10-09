@@ -21,6 +21,9 @@ vi.mock('#/libs/prisma.server', () => ({
     variantPrice: {
       findUnique: vi.fn(),
     },
+    productVariant: {
+      findUnique: vi.fn(),
+    },
     translation: {
       findUnique: vi.fn(),
     },
@@ -285,10 +288,44 @@ describe('addLine — upsert', () => {
     });
   });
 
+  it('falls back to the product title when the variant has no title', async () => {
+    prisma.cart.findUnique.mockResolvedValue({ id: 'cart_1', currency: 'USD' });
+    resolveVariantPrice.mockResolvedValue({ priceCents: 999, source: 'base' });
+    prisma.translation.findUnique.mockImplementation(({ where }) =>
+      Promise.resolve(
+        where.entityType_entityId_locale_field.entityType === 'product'
+          ? { value: 'Stoneware mug' }
+          : null
+      )
+    );
+    prisma.productVariant.findUnique.mockResolvedValue({
+      productId: 'product_1',
+    });
+    prisma.cartLine.findFirst.mockResolvedValue(null);
+    prisma.cartLine.create.mockResolvedValue({ id: 'line_4', quantity: 1 });
+
+    await addLine('cart_1', 'variant_untitled', 1, { locale: 'en' });
+
+    expect(prisma.translation.findUnique).toHaveBeenLastCalledWith({
+      where: {
+        entityType_entityId_locale_field: {
+          entityType: 'product',
+          entityId: 'product_1',
+          locale: 'en',
+          field: 'title',
+        },
+      },
+    });
+    expect(prisma.cartLine.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ titleSnapshot: 'Stoneware mug' }),
+    });
+  });
+
   it('falls back to variantId as titleSnapshot when no translation found', async () => {
     prisma.cart.findUnique.mockResolvedValue({ id: 'cart_1', currency: 'USD' });
     resolveVariantPrice.mockResolvedValue({ priceCents: 999, source: 'base' });
     prisma.translation.findUnique.mockResolvedValue(null);
+    prisma.productVariant.findUnique.mockResolvedValue(null);
     prisma.cartLine.findFirst.mockResolvedValue(null);
     prisma.cartLine.create.mockResolvedValue({ id: 'line_3', quantity: 1 });
 

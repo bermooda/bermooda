@@ -15,21 +15,37 @@ export { cartLineTotal, summarizeCartLines } from '#/core/cart/lines';
 
 const CART_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
 
-async function resolveTitleSnapshot(variantId, locale) {
-  if (!locale) return variantId;
-
+async function findTitle(entityType, entityId, locale) {
   const translation = await prisma.translation.findUnique({
     where: {
       entityType_entityId_locale_field: {
-        entityType: 'variant',
-        entityId: variantId,
+        entityType,
+        entityId,
         locale,
         field: 'title',
       },
     },
   });
+  return translation?.value ?? null;
+}
 
-  return translation?.value ?? variantId;
+// Variant title, else the product title (single-variant products usually have
+// no variant title), else the raw variant id.
+async function resolveTitleSnapshot(variantId, locale) {
+  if (!locale) return variantId;
+
+  const variantTitle = await findTitle('variant', variantId, locale);
+  if (variantTitle) return variantTitle;
+
+  const variant = await prisma.productVariant.findUnique({
+    where: { id: variantId },
+    select: { productId: true },
+  });
+  const productTitle = variant
+    ? await findTitle('product', variant.productId, locale)
+    : null;
+
+  return productTitle ?? variantId;
 }
 
 async function rotateCartToken(cartId, extraData = {}) {
