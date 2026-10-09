@@ -7,6 +7,7 @@ import { Link, useLoaderData, useSearchParams } from 'react-router';
 import { parseAdminSearchParams } from '#/libs/api/admin-ui/index.server';
 import { listGiftCards } from '#/core/gift-cards/index.server';
 import { useT } from '#/core/i18n';
+import useFormatPrice from '#/hooks/use-format-price';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
 import PageHeader from '#/components/admin/page-header';
@@ -43,17 +44,6 @@ export async function loader({ request }) {
 }
 
 /**
- * @param {number} cents
- * @param {string} currency
- * @returns {string}
- */
-function formatMoney(cents, currency) {
-  return new Intl.NumberFormat('en', { style: 'currency', currency }).format(
-    cents / 100
-  );
-}
-
-/**
  * @param {string} status
  * @returns {'success'|'neutral'}
  */
@@ -74,6 +64,7 @@ function giftCardStatusLabel(status, t) {
 }
 
 export default function AdminGiftCardsRoute() {
+  const formatPrice = useFormatPrice();
   const t = useT();
   const { giftCards, total, page, totalPages, q } = useLoaderData();
   const [, setSearchParams] = useSearchParams();
@@ -180,7 +171,7 @@ export default function AdminGiftCardsRoute() {
                   </span>
                 </Td>
                 <Td sticky className="px-3 py-4 tabular-nums">
-                  {formatMoney(card.balanceCents, card.currency)}
+                  {formatPrice(card.balanceCents, card.currency)}
                 </Td>
                 <Td sticky className="px-3 py-4">
                   <Badge tone={statusTone(card.status)}>

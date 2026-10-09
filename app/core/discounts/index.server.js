@@ -7,6 +7,8 @@ import {
   equalsFilter,
 } from '#/libs/prisma/filters/index.server';
 import { summarizeCartLines } from '#/core/cart/lines';
+import { isCentsAtCurrencyPrecision } from '#/core/currency/format';
+import { isValidCurrencyCode } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -402,7 +404,8 @@ export function parseDiscountFormData(formData, { active } = {}) {
   const maxUsesCount = formData.get('maxUsesCount')?.toString().trim()
     ? parseInt(formData.get('maxUsesCount'), 10)
     : null;
-  const currency = formData.get('currency')?.toString().trim() || null;
+  const currency =
+    formData.get('currency')?.toString().trim().toUpperCase() || null;
   const expiresAtRaw = formData.get('expiresAt')?.toString().trim();
   const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null;
 
@@ -413,6 +416,12 @@ export function parseDiscountFormData(formData, { active } = {}) {
   }
   if (type === 'fixed' && !currency) {
     return { error: 'Currency is required for fixed discounts.' };
+  }
+  if (type === 'fixed' && !isValidCurrencyCode(currency)) {
+    return { error: 'Currency must be a 3-letter ISO 4217 code.' };
+  }
+  if (type === 'fixed' && !isCentsAtCurrencyPrecision(value, currency)) {
+    return { error: `Value must be a whole amount in ${currency}.` };
   }
 
   return {

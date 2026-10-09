@@ -6,6 +6,8 @@ import { randomBytes } from 'crypto';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { containsFilter } from '#/libs/prisma/filters/index.server';
+import { isCentsAtCurrencyPrecision } from '#/core/currency/format';
+import { isValidCurrencyCode } from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -80,6 +82,26 @@ export function parseIssueGiftCardInput(input = {}) {
 }
 
 /**
+ * Validation message for parsed issue input, or null when it is valid.
+ * Zero-decimal currencies need whole units (JPY balances in multiples of 100).
+ *
+ * @param {ReturnType<typeof parseIssueGiftCardInput>} input
+ * @returns {string|null}
+ */
+export function getIssueGiftCardInputError(input) {
+  if (!input.balanceCents || input.balanceCents <= 0) {
+    return 'Balance must be greater than zero.';
+  }
+  if (!isValidCurrencyCode(input.currency)) {
+    return 'Currency must be a 3-letter ISO 4217 code.';
+  }
+  if (!isCentsAtCurrencyPrecision(input.balanceCents, input.currency)) {
+    return `Balance must be a whole amount in ${input.currency}.`;
+  }
+  return null;
+}
+
+/**
  * @param {object|null|undefined} giftCard
  * @param {{ currency?: string, minBalanceCents?: number }} [options]
  * @returns {boolean}
@@ -127,7 +149,7 @@ export async function issueGiftCard({
     expiresAt,
   });
 
-  if (!parsed.balanceCents || parsed.balanceCents <= 0) {
+  if (getIssueGiftCardInputError(parsed)) {
     throw new Error('INVALID_GIFT_CARD_AMOUNT');
   }
 

@@ -44,7 +44,6 @@ import {
   buildQuoteWhere,
   createCompany,
   createQuote,
-  formatQuoteMoney,
   getCompany,
   getQuote,
   listCompanies,
@@ -104,10 +103,6 @@ describe('b2b core', () => {
 
     expect(serialized.memberCount).toBe(2);
     expect(serialized.quoteCount).toBe(1);
-  });
-
-  it('formatQuoteMoney formats cents', () => {
-    expect(formatQuoteMoney(1999, 'USD')).toContain('19.99');
   });
 
   it('createCompany persists company data', async () => {

@@ -11,7 +11,6 @@ import {
 
 import { handleAdminActionError } from '#/libs/api/admin-ui/index.server';
 import { getAdminSlotBlocksMap } from '#/core/admin/slots/index.server';
-import { formatPrice } from '#/core/currency/format';
 import { useT } from '#/core/i18n';
 import {
   addShipment,
@@ -30,6 +29,7 @@ import {
   completeReturn,
   receiveReturn,
 } from '#/core/returns/index.server';
+import useFormatPrice from '#/hooks/use-format-price';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import FormSection from '#/components/admin/form-section';
 import { controlClasses } from '#/components/admin/form/input';
@@ -346,6 +346,7 @@ const STATUS_TRANSITIONS = {
 // ---------------------------------------------------------------------------
 
 export default function AdminOrderRoute() {
+  const formatPrice = useFormatPrice();
   const t = useT();
   const { order, slotBlocks } = useLoaderData();
   const actionData = useActionData();

@@ -5,6 +5,7 @@ import PDFDocument from 'pdfkit';
 
 import { PLATFORM_NAME } from '#/libs/config';
 import prisma from '#/libs/prisma.server';
+import { formatPrice } from '#/core/currency/format';
 import { get as settingsGet, SETTING_KEYS } from '#/core/settings/index.server';
 
 const INVOICE_ORDER_INCLUDE = {
@@ -19,19 +20,6 @@ const PACKING_SLIP_SHIPMENT_INCLUDE = {
 // ---------------------------------------------------------------------------
 // Formatting helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Format cents as a localized currency string.
- *
- * @param {number} cents
- * @param {string} [currency]
- */
-export function formatCents(cents, currency = 'USD') {
-  return new Intl.NumberFormat('en', {
-    style: 'currency',
-    currency,
-  }).format(cents / 100);
-}
 
 /**
  * Parse a JSON address payload safely.
@@ -249,32 +237,32 @@ export async function generateInvoicePdf(orderId) {
 
   for (const line of order.lines) {
     doc.text(
-      `${line.title}  ×${line.quantity}  @ ${formatCents(line.priceCents, order.currency)}  = ${formatCents(line.totalCents, order.currency)}`
+      `${line.title}  ×${line.quantity}  @ ${formatPrice(line.priceCents, order.currency)}  = ${formatPrice(line.totalCents, order.currency)}`
     );
   }
 
   doc.moveDown();
-  doc.text(`Subtotal: ${formatCents(order.subtotalCents, order.currency)}`, {
+  doc.text(`Subtotal: ${formatPrice(order.subtotalCents, order.currency)}`, {
     align: 'right',
   });
   if (order.shippingCents > 0) {
-    doc.text(`Shipping: ${formatCents(order.shippingCents, order.currency)}`, {
+    doc.text(`Shipping: ${formatPrice(order.shippingCents, order.currency)}`, {
       align: 'right',
     });
   }
   if (order.taxCents > 0) {
-    doc.text(`Tax: ${formatCents(order.taxCents, order.currency)}`, {
+    doc.text(`Tax: ${formatPrice(order.taxCents, order.currency)}`, {
       align: 'right',
     });
   }
   if (order.discountCents > 0) {
-    doc.text(`Discount: -${formatCents(order.discountCents, order.currency)}`, {
+    doc.text(`Discount: -${formatPrice(order.discountCents, order.currency)}`, {
       align: 'right',
     });
   }
   doc
     .fontSize(12)
-    .text(`Total: ${formatCents(order.totalCents, order.currency)}`, {
+    .text(`Total: ${formatPrice(order.totalCents, order.currency)}`, {
       align: 'right',
     });
 

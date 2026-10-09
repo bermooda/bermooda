@@ -25,7 +25,7 @@ export async function loader({ request }) {
  * @returns {React.ReactElement}
  */
 export default function AdminPublicLayout() {
-  const { messages } = useLoaderData();
+  const { locale, messages } = useLoaderData();
 
   /**
    * @param {string} key
@@ -37,7 +37,7 @@ export default function AdminPublicLayout() {
   }
 
   return (
-    <I18nContext.Provider value={{ t }}>
+    <I18nContext.Provider value={{ t, locale }}>
       <Outlet />
     </I18nContext.Provider>
   );

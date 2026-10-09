@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Form, Link } from 'react-router';
 
+import { currencyInputStep } from '#/core/currency/format';
 import { useT } from '#/core/i18n';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import FormSection from '#/components/admin/form-section';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
+import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import { ErrorAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
@@ -15,10 +18,18 @@ import { ButtonSubmit } from '#/components/ui/button';
  * @param {Object} props
  * @param {{ error?: string }} [props.actionData]
  * @param {boolean} props.isSaving
+ * @param {string[]} props.currencies Enabled shop currencies
+ * @param {string} props.defaultCurrency
  * @returns {React.ReactElement}
  */
-export default function GiftCardEditor({ actionData, isSaving }) {
+export default function GiftCardEditor({
+  actionData,
+  isSaving,
+  currencies,
+  defaultCurrency,
+}) {
   const t = useT();
+  const [currency, setCurrency] = useState(defaultCurrency);
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -68,9 +79,10 @@ export default function GiftCardEditor({ actionData, isSaving }) {
               >
                 <Input
                   id="gift-card-balance"
-                  name="balanceCents"
+                  name="balance"
                   type="number"
-                  min="1"
+                  min={currencyInputStep(currency)}
+                  step={currencyInputStep(currency)}
                   required
                   placeholder={t('admin.giftCards.new.balancePlaceholder')}
                 />
@@ -80,13 +92,18 @@ export default function GiftCardEditor({ actionData, isSaving }) {
                 label={t('admin.giftCards.new.currency')}
                 htmlFor="gift-card-currency"
               >
-                <Input
+                <Select
                   id="gift-card-currency"
                   name="currency"
-                  defaultValue="USD"
-                  maxLength={3}
-                  className="uppercase"
-                />
+                  value={currency}
+                  onChange={(event) => setCurrency(event.target.value)}
+                >
+                  {currencies.map((code) => (
+                    <option key={code} value={code}>
+                      {code}
+                    </option>
+                  ))}
+                </Select>
               </Field>
             </div>
           </FormSection>

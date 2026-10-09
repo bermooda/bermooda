@@ -155,9 +155,11 @@ export async function loadCheckoutDisplayData(
   customerId
 ) {
   const locale = await getRequestLocale(request);
-  const currency = await getRequestCurrency(request);
   const { shippingAddress } = parseCheckoutSessionFields(session);
   const checkoutCart = session?.cart ?? cart;
+  // Totals are computed in the cart's currency, so display them in it too.
+  const currency =
+    checkoutCart?.currency ?? (await getRequestCurrency(request));
   const effectiveCustomerId = session?.customerId ?? customerId ?? undefined;
 
   const [shippingQuotes, paymentProviders, totals, tenderBalances, slotBlocks] =

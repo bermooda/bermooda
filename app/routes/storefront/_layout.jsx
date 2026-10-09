@@ -27,8 +27,7 @@ export async function loader({ request }) {
   const headers = new Headers();
   const locale = await resolveRequestLocale(request, headers);
   const channel = await resolveChannelFromRequest(request);
-  const currency =
-    (await getRequestCurrency(request)) ?? channel.currency ?? 'USD';
+  const currency = await getRequestCurrency(request);
 
   const url = new URL(request.url);
   const refCode = url.searchParams.get('ref');
@@ -98,14 +97,14 @@ export async function loader({ request }) {
 }
 
 export default function StorefrontLayout() {
-  const { messages } = useLoaderData();
+  const { locale, messages } = useLoaderData();
 
   function t(key, params) {
     return translate(key, params, messages);
   }
 
   return (
-    <I18nContext.Provider value={{ t }}>
+    <I18nContext.Provider value={{ t, locale }}>
       <Outlet />
     </I18nContext.Provider>
   );

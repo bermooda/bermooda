@@ -206,6 +206,62 @@ export async function addLine(
 }
 
 // ---------------------------------------------------------------------------
+// setCartCurrency
+// ---------------------------------------------------------------------------
+
+/**
+ * Move a cart to another currency, repricing every line in it, so shoppers
+ * can switch currency after adding items. All-or-nothing: when any line has
+ * no price in `currency`, throws PRICE_NOT_FOUND and leaves the cart as is.
+ *
+ * @param {string} cartId
+ * @param {string} currency
+ * @returns {Promise<object>} updated Cart
+ */
+export async function setCartCurrency(cartId, currency) {
+  const cart = await prisma.cart.findUnique({
+    where: { id: cartId },
+    include: { lines: true },
+  });
+  if (!cart) {
+    throw new Error('CART_NOT_FOUND');
+  }
+  if (cart.currency === currency) return cart;
+
+  const customerGroupIds = cart.customerId
+    ? await getCustomerGroupIds(cart.customerId)
+    : [];
+  const repriced = await Promise.all(
+    cart.lines.map(async (line) => {
+      const resolved = await resolveVariantPrice({
+        variantId: line.variantId,
+        currency,
+        quantity: line.quantity,
+        customerGroupIds,
+      });
+      if (!resolved) {
+        throw new Error('PRICE_NOT_FOUND');
+      }
+      return { id: line.id, priceCents: resolved.priceCents };
+    })
+  );
+
+  const results = await prisma.$transaction([
+    ...repriced.map((line) =>
+      prisma.cartLine.update({
+        where: { id: line.id },
+        data: { priceCentsSnapshot: line.priceCents },
+      })
+    ),
+    prisma.cart.update({ where: { id: cartId }, data: { currency } }),
+  ]);
+
+  await queueEmit('cart.updated', { cartId, currency });
+
+  return results.at(-1);
+}
+
+// ---------------------------------------------------------------------------
 // removeLine
 // ---------------------------------------------------------------------------
 

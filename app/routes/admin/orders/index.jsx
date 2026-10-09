@@ -9,9 +9,9 @@ import {
   useSearchParams,
 } from 'react-router';
 
-import { formatPrice } from '#/core/currency/format';
 import { useT } from '#/core/i18n';
 import { loadOrdersAdminIndexData } from '#/core/orders/index.server';
+import useFormatPrice from '#/hooks/use-format-price';
 import EmptyState from '#/components/admin/empty-state';
 import Select from '#/components/admin/form/select';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
@@ -41,6 +41,7 @@ function formatDate(iso) {
 }
 
 export default function AdminOrdersRoute() {
+  const formatPrice = useFormatPrice();
   const t = useT();
   const {
     rows,

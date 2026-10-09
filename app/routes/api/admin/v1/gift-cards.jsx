@@ -6,6 +6,7 @@ import {
   requireMethod,
 } from '#/libs/api/admin/index.server';
 import {
+  getIssueGiftCardInputError,
   issueGiftCard,
   listGiftCards,
   parseIssueGiftCardInput,
@@ -40,23 +41,15 @@ export async function action({ request }) {
   if (parsed.error) return parsed.error;
 
   const input = parseIssueGiftCardInput(parsed.body);
-  if (!input.balanceCents || input.balanceCents <= 0) {
-    return Response.json(
-      { error: 'balanceCents must be greater than zero' },
-      { status: 400 }
-    );
+  const inputError = getIssueGiftCardInputError(input);
+  if (inputError) {
+    return Response.json({ error: inputError }, { status: 400 });
   }
 
   try {
     const giftCard = await issueGiftCard(input);
     return Response.json({ giftCard }, { status: 201 });
   } catch (err) {
-    if (err.message === 'INVALID_GIFT_CARD_AMOUNT') {
-      return Response.json(
-        { error: 'balanceCents must be greater than zero' },
-        { status: 400 }
-      );
-    }
     return mapGiftCardError(err);
   }
 }

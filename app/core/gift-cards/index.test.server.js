@@ -19,6 +19,7 @@ import prisma from '#/libs/prisma.server';
 import {
   buildGiftCardSearchWhere,
   getGiftCardByCode,
+  getIssueGiftCardInputError,
   issueGiftCard,
   listGiftCards,
   normalizeGiftCardCode,
@@ -69,6 +70,40 @@ describe('parseIssueGiftCardInput', () => {
     expect(
       parseIssueGiftCardInput({ balanceCents: 1000, code: '   ' }).code
     ).toBe(null);
+  });
+});
+
+describe('getIssueGiftCardInputError', () => {
+  it('accepts valid input', () => {
+    expect(
+      getIssueGiftCardInputError(
+        parseIssueGiftCardInput({ balanceCents: 2500, currency: 'usd' })
+      )
+    ).toBeNull();
+  });
+
+  it('rejects non-positive balances and malformed currencies', () => {
+    expect(
+      getIssueGiftCardInputError(parseIssueGiftCardInput({ balanceCents: 0 }))
+    ).toBe('Balance must be greater than zero.');
+    expect(
+      getIssueGiftCardInputError(
+        parseIssueGiftCardInput({ balanceCents: 500, currency: 'EURO' })
+      )
+    ).toBe('Currency must be a 3-letter ISO 4217 code.');
+  });
+
+  it('requires whole units for zero-decimal currencies', () => {
+    expect(
+      getIssueGiftCardInputError(
+        parseIssueGiftCardInput({ balanceCents: 150, currency: 'JPY' })
+      )
+    ).toMatch(/whole amount in JPY/);
+    expect(
+      getIssueGiftCardInputError(
+        parseIssueGiftCardInput({ balanceCents: 100000, currency: 'JPY' })
+      )
+    ).toBeNull();
   });
 });
 

@@ -2,24 +2,39 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('#/libs/prisma.server', () => ({
-  default: { variantPrice: { findUnique: vi.fn() } },
+vi.mock('#/core/channels/index.server', () => ({
+  resolveChannelFromRequest: vi.fn(),
 }));
 
 vi.mock('#/core/settings/index.server', () => ({
+  DEFAULT_CURRENCY: 'USD',
+  SETTING_KEYS: { DEFAULT_CURRENCY: 'defaultCurrency' },
   get: vi.fn(),
+  getEnabledCurrencies: vi.fn(),
 }));
 
 // Import after mocks are registered
-import prisma from '#/libs/prisma.server';
+import { resolveChannelFromRequest } from '#/core/channels/index.server';
+import {
+  centsPerMinorUnit,
+  centsToInputValue,
+  centsToMajorUnitString,
+  centsToMinorUnits,
+  currencyFractionDigits,
+  currencyInputStep,
+  formatPrice,
+  isCentsAtCurrencyPrecision,
+  parseDecimalToCents,
+  roundCentsToCurrency,
+} from '#/core/currency/format';
 import {
   getRequestCurrency,
-  lookupVariantPrice,
-  lookupVariantPriceForBrowsing,
-  formatPrice,
   setCurrencyCookie,
 } from '#/core/currency/index.server';
-import { get as settingsGet } from '#/core/settings/index.server';
+import {
+  getEnabledCurrencies,
+  get as settingsGet,
+} from '#/core/settings/index.server';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -41,6 +56,11 @@ function makeResponse() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  getEnabledCurrencies.mockResolvedValue(['USD', 'EUR', 'GBP']);
+  resolveChannelFromRequest.mockResolvedValue({
+    isDefault: true,
+    currency: 'USD',
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -80,92 +100,52 @@ describe('getRequestCurrency', () => {
     const req2 = makeRequest('currency=TOOLONG');
     expect(await getRequestCurrency(req2)).toBe('GBP');
   });
-});
 
-// ---------------------------------------------------------------------------
-// lookupVariantPrice
-// ---------------------------------------------------------------------------
-
-describe('lookupVariantPrice', () => {
-  it('returns price data on exact match', async () => {
-    prisma.variantPrice.findUnique.mockResolvedValueOnce({
-      priceCents: 1999,
-      compareAtCents: 2499,
-      currency: 'USD',
-    });
-
-    const result = await lookupVariantPrice('var_1', 'USD');
-
-    expect(result).toEqual({
-      priceCents: 1999,
-      compareAtCents: 2499,
-      currency: 'USD',
-    });
-    expect(prisma.variantPrice.findUnique).toHaveBeenCalledWith({
-      where: { variantId_currency: { variantId: 'var_1', currency: 'USD' } },
-    });
+  it('ignores a well-formed cookie for a currency that is not enabled', async () => {
+    settingsGet.mockResolvedValueOnce('USD');
+    const req = makeRequest('currency=JPY');
+    expect(await getRequestCurrency(req)).toBe('USD');
   });
 
-  it('returns null when no row is found', async () => {
-    prisma.variantPrice.findUnique.mockResolvedValueOnce(null);
-    const result = await lookupVariantPrice('var_1', 'EUR');
-    expect(result).toBeNull();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// lookupVariantPriceForBrowsing
-// ---------------------------------------------------------------------------
-
-describe('lookupVariantPriceForBrowsing', () => {
-  it('returns exact price with isFallback: false when found', async () => {
-    prisma.variantPrice.findUnique.mockResolvedValueOnce({
-      priceCents: 999,
-      compareAtCents: null,
+  it('uses a non-default channel currency when there is no cookie', async () => {
+    resolveChannelFromRequest.mockResolvedValueOnce({
+      isDefault: false,
       currency: 'EUR',
     });
+    expect(await getRequestCurrency(makeRequest())).toBe('EUR');
+    expect(settingsGet).not.toHaveBeenCalled();
+  });
 
-    const result = await lookupVariantPriceForBrowsing('var_2', 'EUR');
-
-    expect(result).toEqual({
-      priceCents: 999,
-      compareAtCents: null,
+  it('prefers the cookie over the channel currency', async () => {
+    resolveChannelFromRequest.mockResolvedValueOnce({
+      isDefault: false,
       currency: 'EUR',
-      isFallback: false,
     });
+    expect(await getRequestCurrency(makeRequest('currency=GBP'))).toBe('GBP');
   });
 
-  it('returns fallback price with isFallback: true when exact not found', async () => {
-    // First call: exact miss; second call: fallback hit
-    prisma.variantPrice.findUnique
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        priceCents: 1499,
-        compareAtCents: null,
-        currency: 'USD',
-      });
-
-    settingsGet.mockResolvedValueOnce('USD');
-
-    const result = await lookupVariantPriceForBrowsing('var_3', 'EUR');
-
-    expect(result).toEqual({
-      priceCents: 1499,
-      compareAtCents: null,
+  it('lets the default channel defer to the defaultCurrency setting', async () => {
+    resolveChannelFromRequest.mockResolvedValueOnce({
+      isDefault: true,
       currency: 'USD',
-      isFallback: true,
     });
+    settingsGet.mockResolvedValueOnce('EUR');
+    expect(await getRequestCurrency(makeRequest())).toBe('EUR');
   });
 
-  it('returns null when neither exact nor fallback found', async () => {
-    prisma.variantPrice.findUnique
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null);
+  it('ignores a channel currency that is not enabled', async () => {
+    resolveChannelFromRequest.mockResolvedValueOnce({
+      isDefault: false,
+      currency: 'JPY',
+    });
     settingsGet.mockResolvedValueOnce('USD');
+    expect(await getRequestCurrency(makeRequest())).toBe('USD');
+  });
 
-    const result = await lookupVariantPriceForBrowsing('var_4', 'EUR');
-
-    expect(result).toBeNull();
+  it('does not match cookies whose name only ends in currency', async () => {
+    settingsGet.mockResolvedValueOnce('USD');
+    const req = makeRequest('xcurrency=EUR');
+    expect(await getRequestCurrency(req)).toBe('USD');
   });
 });
 
@@ -183,6 +163,58 @@ describe('formatPrice', () => {
     const result = formatPrice(1999, 'EUR', 'de-DE');
     expect(result).toMatch(/19[,.]99/);
     expect(result).toMatch(/EUR|€/);
+  });
+
+  it('uses the currency precision', () => {
+    expect(formatPrice(100000, 'JPY', 'en')).toBe('¥1,000');
+    expect(formatPrice(1234, 'KWD', 'en')).toMatch(/^KWD\s12\.340$/);
+  });
+
+  it('falls back instead of throwing on bad currency or locale', () => {
+    expect(formatPrice(1999, null)).toBe('19.99');
+    expect(formatPrice(1999, 'EURO')).toBe('19.99 EURO');
+    expect(formatPrice(1999, 'USD', 'not a locale!')).toBe('$19.99');
+  });
+
+  it('reuses formatters across calls', () => {
+    expect(formatPrice(500, 'GBP', 'en')).toBe('£5.00');
+    expect(formatPrice(750, 'GBP', 'en')).toBe('£7.50');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Provider minor units
+// ---------------------------------------------------------------------------
+
+describe('currencyFractionDigits', () => {
+  it('returns ISO 4217 minor-unit digits', () => {
+    expect(currencyFractionDigits('USD')).toBe(2);
+    expect(currencyFractionDigits('JPY')).toBe(0);
+    expect(currencyFractionDigits('KWD')).toBe(3);
+  });
+});
+
+describe('centsToMinorUnits', () => {
+  it('keeps two-decimal currencies unchanged', () => {
+    expect(centsToMinorUnits(1999, 'USD')).toBe(1999);
+  });
+
+  it('converts zero-decimal currencies to whole units', () => {
+    // ¥1,000.00 stored as 100000 cents → Stripe amount 1000
+    expect(centsToMinorUnits(100000, 'JPY')).toBe(1000);
+    expect(centsToMinorUnits(150, 'JPY')).toBe(2);
+  });
+
+  it('converts three-decimal currencies', () => {
+    expect(centsToMinorUnits(1234, 'KWD')).toBe(12340);
+  });
+});
+
+describe('centsToMajorUnitString', () => {
+  it('uses the currency precision', () => {
+    expect(centsToMajorUnitString(1999, 'USD')).toBe('19.99');
+    expect(centsToMajorUnitString(100000, 'JPY')).toBe('1000');
+    expect(centsToMajorUnitString(1234, 'KWD')).toBe('12.340');
   });
 });
 
@@ -205,5 +237,44 @@ describe('setCurrencyCookie', () => {
     expect(() => setCurrencyCookie(res, 'US')).toThrow();
     expect(() => setCurrencyCookie(res, 'USDD')).toThrow();
     expect(() => setCurrencyCookie(res, '')).toThrow();
+  });
+});
+
+describe('currency precision helpers', () => {
+  it('reports cents per smallest unit', () => {
+    expect(centsPerMinorUnit('USD')).toBe(1);
+    expect(centsPerMinorUnit('JPY')).toBe(100);
+    expect(centsPerMinorUnit('KWD')).toBe(1);
+  });
+
+  it('rounds and checks cents against the currency precision', () => {
+    expect(roundCentsToCurrency(150, 'JPY')).toBe(200);
+    expect(roundCentsToCurrency(1999, 'USD')).toBe(1999);
+    expect(isCentsAtCurrencyPrecision(150, 'JPY')).toBe(false);
+    expect(isCentsAtCurrencyPrecision(100000, 'JPY')).toBe(true);
+    expect(isCentsAtCurrencyPrecision(1999, 'USD')).toBe(true);
+  });
+
+  it('builds admin input step and value', () => {
+    expect(currencyInputStep('USD')).toBe('0.01');
+    expect(currencyInputStep('JPY')).toBe('1');
+    expect(centsToInputValue(1999, 'USD')).toBe('19.99');
+    expect(centsToInputValue(100000, 'JPY')).toBe('1000');
+    expect(centsToInputValue(150, 'JPY')).toBe('2');
+    expect(centsToInputValue(0, 'USD')).toBe('0.00');
+  });
+});
+
+describe('parseDecimalToCents', () => {
+  it('parses decimal major-unit input', () => {
+    expect(parseDecimalToCents('19.99')).toBe(1999);
+    expect(parseDecimalToCents('0.1')).toBe(10);
+    expect(parseDecimalToCents(25)).toBe(2500);
+  });
+
+  it('returns null for blank or non-numeric input', () => {
+    expect(parseDecimalToCents('')).toBeNull();
+    expect(parseDecimalToCents(null)).toBeNull();
+    expect(parseDecimalToCents('abc')).toBeNull();
   });
 });

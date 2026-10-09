@@ -1,18 +1,13 @@
 import { Column, Row, Section, Text } from '@react-email/components';
 
 import config from '#/libs/config';
+import { formatPrice } from '#/core/currency/format';
 import EmailButton from '#/emails/components/button';
 import EmailFooterLink from '#/emails/components/footer-link';
 import EmailHeading from '#/emails/components/heading';
 import EmailLayout from '#/emails/components/layout';
 import EmailSubheading from '#/emails/components/subheading';
 import { emailT } from '#/emails/i18n.server';
-
-function fmt(cents, currency) {
-  return new Intl.NumberFormat('en', { style: 'currency', currency }).format(
-    cents / 100
-  );
-}
 
 /**
  * @param {Object} props
@@ -66,7 +61,7 @@ export default function OrderConfirmationEmail({
               {line.title} × {line.quantity}
             </Column>
             <Column className="dark-mode-text text-right text-sm text-slate-700">
-              {fmt(line.totalCents, currency)}
+              {formatPrice(line.totalCents, currency, locale)}
             </Column>
           </Row>
         ))}
@@ -76,7 +71,7 @@ export default function OrderConfirmationEmail({
             {t('orderConfirmation.subtotal')}
           </Column>
           <Column className="dark-mode-text text-right text-sm text-slate-700">
-            {fmt(subtotalCents, currency)}
+            {formatPrice(subtotalCents, currency, locale)}
           </Column>
         </Row>
         {shippingCents > 0 && (
@@ -85,7 +80,7 @@ export default function OrderConfirmationEmail({
               {t('orderConfirmation.shipping')}
             </Column>
             <Column className="dark-mode-text text-right text-sm text-slate-700">
-              {fmt(shippingCents, currency)}
+              {formatPrice(shippingCents, currency, locale)}
             </Column>
           </Row>
         )}
@@ -95,7 +90,7 @@ export default function OrderConfirmationEmail({
               {t('orderConfirmation.tax')}
             </Column>
             <Column className="dark-mode-text text-right text-sm text-slate-700">
-              {fmt(taxCents, currency)}
+              {formatPrice(taxCents, currency, locale)}
             </Column>
           </Row>
         )}
@@ -105,7 +100,7 @@ export default function OrderConfirmationEmail({
               {t('orderConfirmation.discount')}
             </Column>
             <Column className="dark-mode-text text-right text-sm text-green-600">
-              -{fmt(discountCents, currency)}
+              -{formatPrice(discountCents, currency, locale)}
             </Column>
           </Row>
         )}
@@ -114,7 +109,7 @@ export default function OrderConfirmationEmail({
             {t('orderConfirmation.total')}
           </Column>
           <Column className="dark-mode-text text-right font-semibold text-slate-800">
-            {fmt(totalCents, currency)}
+            {formatPrice(totalCents, currency, locale)}
           </Column>
         </Row>
       </Section>

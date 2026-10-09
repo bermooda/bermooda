@@ -26,7 +26,6 @@ import {
   buildInvoiceFilename,
   buildPackingSlipFilename,
   formatAddressLines,
-  formatCents,
   generateInvoicePdf,
   generatePackingSlipPdf,
   loadOrderForInvoice,
@@ -83,10 +82,6 @@ const sampleShipment = {
 describe('documents helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('formatCents formats currency strings', () => {
-    expect(formatCents(1600, 'USD')).toContain('16.00');
   });
 
   it('parseAddressJson returns empty object for invalid JSON', () => {
