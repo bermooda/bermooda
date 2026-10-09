@@ -10,6 +10,7 @@ import {
 } from 'react-router';
 
 import { getThemeFromRequest } from '#/utils/theme.server';
+import { DEFAULT_LOCALE } from '#/core/i18n';
 import { ColorModeProvider } from '#/hooks/use-color-mode';
 
 // @ts-ignore
@@ -54,7 +55,15 @@ export function Layout({ children }) {
 
   // Get the theme from the root loader via matches (first match is root)
   const rootMatch = matches.find((match) => match.id === 'root');
-  const serverTheme = rootMatch?.data?.theme;
+  const serverTheme = rootMatch?.loaderData?.theme;
+
+  // `lang` follows the innermost i18n layout (storefront/admin) that resolved
+  // `locale` + `messages`, so assistive tech reads the page in its language.
+  const i18nMatch = matches.findLast(
+    (match) =>
+      typeof match.loaderData?.locale === 'string' && match.loaderData?.messages
+  );
+  const lang = i18nMatch?.loaderData.locale ?? DEFAULT_LOCALE;
 
   // Collect classes from all matched routes' handles
   const htmlClasses = matches
@@ -69,7 +78,7 @@ export function Layout({ children }) {
 
   return (
     <html
-      lang="en"
+      lang={lang}
       className={clsx(
         'dark:bg-dark-950 dark:text-dark-300 text-zinc-950 antialiased md:bg-zinc-100',
         htmlClasses,

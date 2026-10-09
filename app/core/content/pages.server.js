@@ -20,7 +20,7 @@ import {
   loadPageTitleMap,
   withTranslations,
 } from '#/core/catalog/translations.server';
-import { getAvailableLocales } from '#/core/i18n/index.server';
+import { getEnabledLocales } from '#/core/settings/index.server';
 
 export const PAGE_STATUSES = ['draft', 'published'];
 export const DEFAULT_PAGE_LIST_LIMIT = 20;
@@ -516,7 +516,7 @@ export async function getPage(id, { locale } = {}) {
  */
 export async function loadPageEditorData(id) {
   const page = await requirePageRecord(id);
-  const locales = await getAvailableLocales();
+  const locales = await getEnabledLocales();
   if (!locales.includes('en')) locales.unshift('en');
 
   const [translations, slugRows] = await Promise.all([

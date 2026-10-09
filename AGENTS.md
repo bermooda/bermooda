@@ -51,7 +51,7 @@ The install script is idempotent and safe to run repeatedly. To reset the local 
 
 **Do not add new ecommerce domain code under `app/services`.** Use `app/core/*` instead. See [.cursor/rules/ecommerce-architecture.mdc](.cursor/rules/ecommerce-architecture.mdc).
 
-**Further docs:** [docs/auth.md](docs/auth.md) (dual admin/customer auth), [docs/themes.md](docs/themes.md), [docs/plugins.md](docs/plugins.md), [docs/api.md](docs/api.md).
+**Further docs:** [docs/auth.md](docs/auth.md) (dual admin/customer auth), [docs/themes.md](docs/themes.md), [docs/plugins.md](docs/plugins.md), [docs/i18n.md](docs/i18n.md), [docs/api.md](docs/api.md).
 
 ### Running the dev server
 

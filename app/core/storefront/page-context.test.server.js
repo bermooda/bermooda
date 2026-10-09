@@ -78,4 +78,21 @@ describe('storefront page context', () => {
     formData.set('returnTo', 'https://evil.example/phish');
     expect(parseReturnTo(formData)).toBe('/');
   });
+
+  it.each([
+    ['//evil.example/phish'],
+    ['/\\evil.example/phish'],
+    ['/\t/evil.example'],
+    ['/\n/evil.example'],
+  ])('parseReturnTo rejects %j, which browsers resolve off-site', (value) => {
+    const formData = new FormData();
+    formData.set('returnTo', value);
+    expect(parseReturnTo(formData)).toBe('/');
+  });
+
+  it('parseReturnTo keeps query and hash', () => {
+    const formData = new FormData();
+    formData.set('returnTo', '/search?q=shirt#results');
+    expect(parseReturnTo(formData)).toBe('/search?q=shirt#results');
+  });
 });

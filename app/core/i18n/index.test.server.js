@@ -8,8 +8,19 @@ vi.mock('#/utils/cache/index.server', () => ({
   default: { delete: vi.fn() },
 }));
 
-vi.mock('#/core/settings/index.server', () => ({
-  get: vi.fn(),
+vi.mock('#/core/settings/index.server', async () => {
+  const { normalizeLocaleList } = await import('#/core/i18n/locales');
+  const get = vi.fn();
+  return {
+    get,
+    getEnabledLocales: vi.fn(async () =>
+      normalizeLocaleList(await get('locales'))
+    ),
+  };
+});
+
+vi.mock('#/utils/logger.server', () => ({
+  default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock('#/libs/auth/customer/index.server', () => ({
@@ -38,15 +49,16 @@ vi.mock('#/core/plugins/index.server', () => ({
 
 import { readFileSync } from 'fs';
 
+import logger from '#/utils/logger.server';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import prisma from '#/libs/prisma.server';
 import {
-  getAvailableLocales,
+  appendLocaleCookie,
+  getAdminRequestLocale,
   getRequestLocale,
   loadMessages,
+  loadStorefrontMessages,
   resolveLocale,
-  setLocaleCookie,
-  t,
 } from '#/core/i18n/index.server';
 import { getRegisteredPlugin } from '#/core/plugins/index.server';
 import { get as settingsGet } from '#/core/settings/index.server';
@@ -80,22 +92,6 @@ beforeEach(() => {
   getRegisteredTheme.mockReturnValue(null);
   getRegisteredPlugin.mockReturnValue(null);
   mockLocaleSettings();
-});
-
-describe('getAvailableLocales', () => {
-  it('returns enabled locales from settings', async () => {
-    settingsGet.mockImplementation(async (key) =>
-      key === 'locales' ? ['en', 'ja'] : null
-    );
-    await expect(getAvailableLocales()).resolves.toEqual(['en', 'ja']);
-  });
-
-  it('falls back when settings locales are empty', async () => {
-    settingsGet.mockImplementation(async (key) =>
-      key === 'locales' ? [] : null
-    );
-    await expect(getAvailableLocales()).resolves.toEqual(['en', 'de', 'fr']);
-  });
 });
 
 describe('getRequestLocale', () => {
@@ -158,11 +154,53 @@ describe('getRequestLocale', () => {
     await expect(getRequestLocale(request)).resolves.toBe('fr');
   });
 
+  it('negotiates past an unsupported first Accept-Language range', async () => {
+    mockLocaleSettings({ locales: ['en', 'fr'] });
+    const request = makeRequest({ acceptLanguage: 'es-ES,es;q=0.9,fr;q=0.8' });
+    await expect(getRequestLocale(request)).resolves.toBe('fr');
+  });
+
+  it('honors Accept-Language q-values over header order', async () => {
+    const request = makeRequest({ acceptLanguage: 'en;q=0.2,de;q=0.9' });
+    await expect(getRequestLocale(request)).resolves.toBe('de');
+  });
+
   it('prefers cookie over customer preferredLocale', async () => {
     getCustomerSession.mockResolvedValue({ user: { id: 'cust_1' } });
     prisma.customer.findUnique.mockResolvedValue({ preferredLocale: 'fr' });
     const request = makeRequest({ cookie: 'locale=de' });
     await expect(getRequestLocale(request)).resolves.toBe('de');
+  });
+});
+
+describe('getAdminRequestLocale', () => {
+  it('honors an admin locale cookie the storefront does not enable', async () => {
+    mockLocaleSettings({ locales: ['en'] });
+    const request = makeRequest({ cookie: 'locale=de' });
+    await expect(getAdminRequestLocale(request)).resolves.toBe('de');
+  });
+
+  it('ignores cookie locales without an admin catalog', async () => {
+    mockLocaleSettings({ locales: ['en', 'ja'] });
+    const request = makeRequest({ cookie: 'locale=ja', acceptLanguage: 'fr' });
+    await expect(getAdminRequestLocale(request)).resolves.toBe('fr');
+  });
+
+  it('never looks up the customer session', async () => {
+    getCustomerSession.mockResolvedValue({ user: { id: 'cust_1' } });
+    prisma.customer.findUnique.mockResolvedValue({ preferredLocale: 'fr' });
+    await expect(getAdminRequestLocale(makeRequest())).resolves.toBe('en');
+    expect(getCustomerSession).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the defaultLocale setting when it is an admin locale', async () => {
+    mockLocaleSettings({ defaultLocale: 'fr', locales: ['fr'] });
+    await expect(getAdminRequestLocale(makeRequest())).resolves.toBe('fr');
+  });
+
+  it('falls back to en when defaultLocale has no admin catalog', async () => {
+    mockLocaleSettings({ defaultLocale: 'ja', locales: ['ja'] });
+    await expect(getAdminRequestLocale(makeRequest())).resolves.toBe('en');
   });
 });
 
@@ -406,66 +444,35 @@ describe('loadMessages', () => {
   });
 });
 
-describe('t', () => {
-  const messages = {
-    'cart': { empty: 'Your cart is empty' },
-    'flat.key': 'flat value',
-  };
-
-  it('resolves dot-notation keys', () => {
-    expect(t('cart.empty', {}, messages)).toBe('Your cart is empty');
-  });
-
-  it('falls back to flat key lookup', () => {
-    expect(t('flat.key', {}, messages)).toBe('flat value');
-  });
-
-  it('substitutes {param} placeholders', () => {
-    const msgs = { greeting: 'Hello, {name}! You have {count} items.' };
-    expect(t('greeting', { name: 'Alice', count: 3 }, msgs)).toBe(
-      'Hello, Alice! You have 3 items.'
-    );
-  });
-
-  it('returns the key when not found', () => {
-    expect(t('missing.key', {}, messages)).toBe('missing.key');
-  });
-
-  it('leaves unreplaced placeholders intact when param is missing', () => {
-    const msgs = { msg: 'Hello, {name}!' };
-    expect(t('msg', {}, msgs)).toBe('Hello, {name}!');
-  });
-});
-
-describe('setLocaleCookie', () => {
-  it('appends a Set-Cookie header to the response', () => {
-    const response = new Response();
-    setLocaleCookie(response, 'fr');
-    expect(response.headers.get('set-cookie')).toBe(
+describe('appendLocaleCookie', () => {
+  it('appends a Set-Cookie header', () => {
+    const headers = new Headers();
+    appendLocaleCookie(headers, 'fr');
+    expect(headers.get('set-cookie')).toBe(
       'locale=fr; Path=/; Max-Age=31536000; SameSite=Lax; Secure'
     );
   });
 
   it('does not set a cookie for invalid locale values', () => {
-    const response = new Response();
-    setLocaleCookie(response, 'bad;locale');
-    expect(response.headers.get('set-cookie')).toBeNull();
+    const headers = new Headers();
+    appendLocaleCookie(headers, 'bad;locale');
+    expect(headers.get('set-cookie')).toBeNull();
   });
 
   it('does not set a cookie for locale with injection characters', () => {
-    const response = new Response();
-    setLocaleCookie(response, 'en; Path=/evil');
-    expect(response.headers.get('set-cookie')).toBeNull();
+    const headers = new Headers();
+    appendLocaleCookie(headers, 'en; Path=/evil');
+    expect(headers.get('set-cookie')).toBeNull();
   });
 });
 
 describe('resolveLocale', () => {
   it('sets the cookie when no locale cookie is present and returns the locale', async () => {
     const request = makeRequest({ acceptLanguage: 'de-DE,de;q=0.9' });
-    const response = new Response();
-    const locale = await resolveLocale(request, response);
+    const headers = new Headers();
+    const locale = await resolveLocale(request, headers);
     expect(locale).toBe('de');
-    expect(response.headers.get('set-cookie')).toBe(
+    expect(headers.get('set-cookie')).toBe(
       'locale=de; Path=/; Max-Age=31536000; SameSite=Lax; Secure'
     );
   });
@@ -476,9 +483,78 @@ describe('resolveLocale', () => {
       acceptLanguage: 'en-US',
     });
     mockLocaleSettings({ locales: ['en', 'ja'] });
-    const response = new Response();
-    const locale = await resolveLocale(request, response);
+    const headers = new Headers();
+    const locale = await resolveLocale(request, headers);
     expect(locale).toBe('ja');
-    expect(response.headers.get('set-cookie')).toBeNull();
+    expect(headers.get('set-cookie')).toBeNull();
+  });
+});
+
+describe('loadMessages catalog safety', () => {
+  function mockThemeCatalog(contents) {
+    settingsGet.mockImplementation(async (key) =>
+      key === 'activeTheme' ? '@acme/my-theme' : null
+    );
+    getRegisteredTheme.mockReturnValue({ slug: 'my-theme' });
+    readFileSync.mockReturnValue(contents);
+  }
+
+  it('logs and skips a theme catalog with invalid JSON', async () => {
+    mockThemeCatalog('{ not json');
+    const messages = await loadMessages('en');
+    expect(messages['common.save']).toBe('Save');
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filePath: expect.stringContaining('my-theme'),
+      }),
+      'Skipping unreadable i18n catalog'
+    );
+  });
+
+  it('logs and skips a theme catalog that is not an object', async () => {
+    mockThemeCatalog('["a", "b"]');
+    const messages = await loadMessages('en');
+    expect(messages['0']).toBeUndefined();
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.any(Object),
+      'Skipping i18n catalog that is not an object'
+    );
+  });
+
+  it('ignores __proto__ / constructor keys in extension catalogs', async () => {
+    mockThemeCatalog(
+      '{"__proto__": {"polluted": "yes"}, "constructor": {"x": 1}, "nav.home": "Home"}'
+    );
+    const messages = await loadMessages('en');
+    expect(messages['nav.home']).toBe('Home');
+    expect(Object.getPrototypeOf(messages)).toBe(Object.prototype);
+    expect(messages.polluted).toBeUndefined();
+    expect(Object.hasOwn(messages, 'constructor')).toBe(false);
+  });
+});
+
+describe('loadStorefrontMessages', () => {
+  it('drops flat and nested admin keys, keeping common + extension keys', async () => {
+    settingsGet.mockImplementation(async (key) =>
+      key === 'activeTheme' ? '@acme/my-theme' : null
+    );
+    getRegisteredTheme.mockReturnValue({ slug: 'my-theme' });
+    readFileSync.mockReturnValue(
+      JSON.stringify({
+        'cart.title': 'Shopping Cart',
+        'admin': { themeSettings: 'Theme settings' },
+        'administrator.note': 'kept',
+      })
+    );
+
+    const messages = await loadStorefrontMessages('en');
+
+    expect(messages['common.save']).toBe('Save');
+    expect(messages['cart.title']).toBe('Shopping Cart');
+    expect(messages['administrator.note']).toBe('kept');
+    expect(messages.admin).toBeUndefined();
+    expect(Object.keys(messages).some((key) => key.startsWith('admin.'))).toBe(
+      false
+    );
   });
 });

@@ -18,9 +18,8 @@ vi.mock('#/core/currency/index.server', () => ({
   getRequestCurrency: vi.fn().mockResolvedValue('USD'),
 }));
 vi.mock('#/core/i18n/index.server', () => ({
-  getAvailableLocales: vi.fn().mockResolvedValue(['en']),
-  loadMessages: vi.fn().mockResolvedValue({}),
-  resolveRequestLocale: vi.fn().mockResolvedValue('en'),
+  loadStorefrontMessages: vi.fn().mockResolvedValue({}),
+  resolveLocale: vi.fn().mockResolvedValue('en'),
 }));
 vi.mock('#/core/loyalty/index.server', () => ({
   normalizeReferralCode: (code) => code.trim().toUpperCase(),
@@ -28,6 +27,7 @@ vi.mock('#/core/loyalty/index.server', () => ({
 }));
 vi.mock('#/core/settings/index.server', () => ({
   getEnabledCurrencies: vi.fn().mockResolvedValue(['USD']),
+  getEnabledLocales: vi.fn().mockResolvedValue(['en']),
 }));
 vi.mock('#/core/themes/index.server', () => ({
   getSlotBlocksMap: vi.fn().mockResolvedValue({}),

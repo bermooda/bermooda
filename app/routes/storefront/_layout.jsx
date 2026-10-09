@@ -13,18 +13,20 @@ import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import { getMenuByHandle } from '#/core/content/index.server';
 import { getRequestCurrency } from '#/core/currency/index.server';
-import { translate } from '#/core/i18n';
+import { useI18nValue } from '#/core/i18n';
 import { I18nContext } from '#/core/i18n/context';
 import {
-  getAvailableLocales,
-  loadMessages,
-  resolveRequestLocale,
+  loadStorefrontMessages,
+  resolveLocale,
 } from '#/core/i18n/index.server';
 import {
   normalizeReferralCode,
   settleReferral,
 } from '#/core/loyalty/index.server';
-import { getEnabledCurrencies } from '#/core/settings/index.server';
+import {
+  getEnabledCurrencies,
+  getEnabledLocales,
+} from '#/core/settings/index.server';
 import { getSlotBlocksMap } from '#/core/themes/index.server';
 
 const REF_COOKIE = 'bermooda_ref';
@@ -32,7 +34,7 @@ const REF_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
 export async function loader({ request }) {
   const headers = new Headers();
-  const locale = await resolveRequestLocale(request, headers);
+  const locale = await resolveLocale(request, headers);
   const channel = await resolveChannelFromRequest(request);
   const currency = await getRequestCurrency(request);
 
@@ -59,9 +61,9 @@ export async function loader({ request }) {
     subHeaderMenu,
     slotBlocks,
   ] = await Promise.all([
-    loadMessages(locale),
+    loadStorefrontMessages(locale),
     getEnabledCurrencies(),
-    getAvailableLocales(),
+    getEnabledLocales(),
     getMenuByHandle('main', { locale }),
     getMenuByHandle('footer', { locale }),
     getMenuByHandle('sub-header', { locale }),
@@ -111,13 +113,10 @@ export async function loader({ request }) {
 
 export default function StorefrontLayout() {
   const { locale, messages } = useLoaderData();
-
-  function t(key, params) {
-    return translate(key, params, messages);
-  }
+  const i18n = useI18nValue(locale, messages);
 
   return (
-    <I18nContext.Provider value={{ t, locale }}>
+    <I18nContext.Provider value={i18n}>
       <Outlet />
     </I18nContext.Provider>
   );

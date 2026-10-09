@@ -1,8 +1,8 @@
 import { Outlet, useLoaderData } from 'react-router';
 
-import { translate } from '#/core/i18n';
+import { useI18nValue } from '#/core/i18n';
 import { I18nContext } from '#/core/i18n/context';
-import { getRequestLocale, loadMessages } from '#/core/i18n/index.server';
+import { getAdminRequestLocale, loadMessages } from '#/core/i18n/index.server';
 
 /**
  * Loader — loads locale messages for public admin auth pages.
@@ -12,7 +12,7 @@ import { getRequestLocale, loadMessages } from '#/core/i18n/index.server';
  * @returns {Promise<{ locale: string, messages: Record<string, string> }>}
  */
 export async function loader({ request }) {
-  const locale = await getRequestLocale(request);
+  const locale = await getAdminRequestLocale(request);
   const messages = await loadMessages(locale);
   return { locale, messages };
 }
@@ -26,18 +26,10 @@ export async function loader({ request }) {
  */
 export default function AdminPublicLayout() {
   const { locale, messages } = useLoaderData();
-
-  /**
-   * @param {string} key
-   * @param {Record<string, string|number>} [params]
-   * @returns {string}
-   */
-  function t(key, params) {
-    return translate(key, params, messages);
-  }
+  const i18n = useI18nValue(locale, messages);
 
   return (
-    <I18nContext.Provider value={{ t, locale }}>
+    <I18nContext.Provider value={i18n}>
       <Outlet />
     </I18nContext.Provider>
   );

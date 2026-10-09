@@ -86,11 +86,15 @@ export function SectionCard({ title, children }) {
 /**
  * @param {Object} props
  * @param {React.ReactNode} props.children
+ * @param {string} [props.htmlFor] - id of the control this label names
  * @returns {React.ReactElement}
  */
-export function FieldLabel({ children }) {
+export function FieldLabel({ children, htmlFor }) {
   return (
-    <label className="text-text mb-1 block text-sm font-medium">
+    <label
+      htmlFor={htmlFor}
+      className="text-text mb-1 block text-sm font-medium"
+    >
       {children}
     </label>
   );

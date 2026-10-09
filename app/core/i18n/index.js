@@ -1,9 +1,10 @@
 // app/core/i18n/index.js
 // Client-safe i18n exports. No server-only imports.
 
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 
 import { I18nContext } from '#/core/i18n/context';
+import { DEFAULT_LOCALE } from '#/core/i18n/locales';
 
 export {
   ADMIN_AVAILABLE_LOCALES,
@@ -11,8 +12,8 @@ export {
   LOCALE_LABELS,
   LOCALE_OPTIONS,
   isValidLocaleTag,
+  negotiateAcceptLanguage,
   normalizeLocaleList,
-  parseAcceptLanguage,
   parseCookieLocale,
   pickEnabledLocale,
 } from '#/core/i18n/locales';
@@ -30,13 +31,31 @@ export function useT() {
 
 /**
  * React hook that returns the active locale from the nearest I18nContext
- * provider (falls back to 'en').
+ * provider (falls back to `DEFAULT_LOCALE`).
  *
  * @returns {string}
  */
 export function useLocale() {
   const { locale } = useContext(I18nContext);
-  return locale ?? 'en';
+  return locale ?? DEFAULT_LOCALE;
+}
+
+/**
+ * Builds the `I18nContext` value for a layout that loaded `locale` + `messages`.
+ * Memoized so consumers only re-render when the locale or catalog changes.
+ *
+ * @param {string} locale
+ * @param {Record<string, any>} messages
+ * @returns {{ locale: string, t: (key: string, params?: Record<string, string|number>) => string }}
+ */
+export function useI18nValue(locale, messages) {
+  return useMemo(
+    () => ({
+      locale,
+      t: (key, params) => translate(key, params, messages),
+    }),
+    [locale, messages]
+  );
 }
 
 /**

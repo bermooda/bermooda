@@ -7,7 +7,7 @@ import { useLoaderData } from 'react-router';
 import { authenticate } from '#/libs/auth/admin/index.server';
 import { listProvidersWithDetails as listAddressValidationProviders } from '#/core/address-validation/index.server';
 import { ADMIN_AVAILABLE_LOCALES, useT } from '#/core/i18n';
-import { getRequestLocale } from '#/core/i18n/index.server';
+import { getAdminRequestLocale } from '#/core/i18n/index.server';
 import {
   listAdminUsers,
   requirePermission,
@@ -43,7 +43,7 @@ import Tabs from '#/components/admin/tabs';
  * @param {{ request: Request }} args
  */
 export async function loader({ request }) {
-  const adminLocale = await getRequestLocale(request);
+  const adminLocale = await getAdminRequestLocale(request);
 
   const [settings, users, addressValidationProviders] = await Promise.all([
     getAdminSettingsSnapshot(),
