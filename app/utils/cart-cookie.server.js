@@ -1,5 +1,7 @@
 // Shared cart_token cookie helpers for storefront routes.
 
+import { readCookie, serializeCookie } from '#/utils/cookies/index.server';
+
 const CART_COOKIE = 'cart_token';
 const CART_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
@@ -8,17 +10,21 @@ const CART_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
  * @returns {string | null}
  */
 export function getCartTokenFromRequest(request) {
-  const cookie = request.headers.get('cookie') ?? '';
-  const match = cookie.match(/(?:^|;\s*)cart_token=([^;]+)/);
-  return match ? decodeURIComponent(match[1].trim()) : null;
+  return readCookie(request, CART_COOKIE);
 }
 
 /**
+ * The token is a bearer credential for the cart, so it is HttpOnly (themes
+ * receive the cart through loader data, never from `document.cookie`).
+ *
  * @param {string} token
  * @returns {string}
  */
 export function buildCartTokenCookie(token) {
-  return `${CART_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${CART_MAX_AGE}; SameSite=Lax`;
+  return serializeCookie(CART_COOKIE, token, {
+    maxAge: CART_MAX_AGE,
+    httpOnly: true,
+  });
 }
 
 /**

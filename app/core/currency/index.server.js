@@ -1,5 +1,6 @@
 // app/core/currency/index.server.js
 
+import { readCookie, serializeCookie } from '#/utils/cookies/index.server';
 import { resolveChannelFromRequest } from '#/core/channels/index.server';
 import {
   DEFAULT_CURRENCY,
@@ -9,6 +10,8 @@ import {
 } from '#/core/settings/index.server';
 
 const CURRENCY_RE = /^[A-Z]{3}$/;
+const CURRENCY_COOKIE = 'currency';
+const CURRENCY_MAX_AGE = 365 * 24 * 60 * 60; // 1 year
 
 // ---------------------------------------------------------------------------
 // getRequestCurrency
@@ -36,9 +39,7 @@ export async function getRequestCurrency(request) {
     resolveChannelFromRequest(request),
   ]);
 
-  const cookieHeader = request.headers.get('cookie') ?? '';
-  const match = cookieHeader.match(/(?:^|;\s*)currency=([^;]+)/);
-  const fromCookie = match?.[1].trim();
+  const fromCookie = readCookie(request, CURRENCY_COOKIE)?.trim();
   if (
     fromCookie &&
     CURRENCY_RE.test(fromCookie) &&
@@ -76,6 +77,6 @@ export function setCurrencyCookie(response, currency) {
   }
   response.headers.append(
     'Set-Cookie',
-    `currency=${currency}; Path=/; SameSite=Lax; Max-Age=31536000`
+    serializeCookie(CURRENCY_COOKIE, currency, { maxAge: CURRENCY_MAX_AGE })
   );
 }

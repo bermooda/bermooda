@@ -6,6 +6,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 import { getCachedResult } from '#/utils/cache/index.server';
+import { serializeCookie } from '#/utils/cookies/index.server';
 import { getCustomerSession } from '#/libs/auth/customer/index.server';
 import prisma from '#/libs/prisma.server';
 import {
@@ -212,7 +213,7 @@ export function appendLocaleCookie(headers, locale) {
   if (!isValidLocaleTag(locale)) return;
   headers.append(
     'Set-Cookie',
-    `locale=${locale}; Path=/; SameSite=Lax; Max-Age=31536000`
+    serializeCookie('locale', locale, { maxAge: 365 * 24 * 60 * 60 })
   );
 }
 

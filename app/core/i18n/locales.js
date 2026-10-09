@@ -1,6 +1,8 @@
 // app/core/i18n/locales.js
 // Client-safe locale constants and parsing helpers.
 
+import { getCookie } from '#/utils/cookies';
+
 export const DEFAULT_LOCALE = 'en';
 
 /** Locales exposed in the admin UI chrome (locale switcher). */
@@ -33,18 +35,8 @@ export function isValidLocaleTag(locale) {
  * @returns {string|null}
  */
 export function parseCookieLocale(cookieHeader) {
-  if (!cookieHeader) return null;
-
-  for (const part of cookieHeader.split(';')) {
-    const [rawName, ...rest] = part.split('=');
-    const name = rawName.trim();
-    if (name === 'locale') {
-      const value = rest.join('=').trim();
-      return value && isValidLocaleTag(value) ? value : null;
-    }
-  }
-
-  return null;
+  const value = getCookie(cookieHeader, 'locale');
+  return value && isValidLocaleTag(value) ? value : null;
 }
 
 /**

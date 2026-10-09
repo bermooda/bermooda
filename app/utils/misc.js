@@ -13,16 +13,3 @@ export function getDomainUrl(request) {
 
   return `${protocol}://${host}`;
 }
-
-/**
- * Get a value from a request cookie
- *
- * @param {Request} request - The request object
- * @param {string} key - The key to get the value from
- * @returns {string|null} The value from the cookie
- */
-export function getCookieValue(request, key) {
-  const cookieHeader = request.headers.get('Cookie');
-  const cookieMatch = cookieHeader?.match(`${key}=([^;]+)`)?.[1];
-  return cookieMatch ?? null;
-}

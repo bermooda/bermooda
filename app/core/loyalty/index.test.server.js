@@ -21,6 +21,10 @@ vi.mock('#/libs/prisma.server', () => {
   return { default: prisma };
 });
 
+vi.mock('#/utils/logger.server', () => ({
+  default: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
+
 vi.mock('#/core/settings/index.server', () => ({
   get: vi.fn().mockResolvedValue(null),
   set: vi.fn(),
@@ -38,6 +42,7 @@ import {
   pointsToCents,
   redeemLoyaltyPoints,
   resolveLoyaltyRedemption,
+  settleReferral,
 } from '#/core/loyalty/index.server';
 import { get as settingsGet } from '#/core/settings/index.server';
 
@@ -177,5 +182,34 @@ describe('resolveLoyaltyRedemption', () => {
     const result = await resolveLoyaltyRedemption('c1', 500, 80);
     expect(result.loyaltyPointsCents).toBe(80);
     expect(result.pointsRedeemed).toBe(80);
+  });
+});
+
+describe('settleReferral', () => {
+  it('settles after attributing the referral', async () => {
+    prisma.referralCode.findUnique.mockResolvedValue({
+      id: 'rc_1',
+      customerId: 'cust_referrer',
+    });
+    prisma.referral.upsert.mockResolvedValue({ id: 'ref_1' });
+
+    await expect(settleReferral('abc', 'cust_new')).resolves.toBe(true);
+    expect(prisma.referral.upsert).toHaveBeenCalled();
+  });
+
+  it('settles for unknown codes and self-referrals', async () => {
+    prisma.referralCode.findUnique.mockResolvedValueOnce(null);
+    await expect(settleReferral('NOPE', 'cust_1')).resolves.toBe(true);
+
+    prisma.referralCode.findUnique.mockResolvedValueOnce({
+      id: 'rc_1',
+      customerId: 'cust_1',
+    });
+    await expect(settleReferral('MINE', 'cust_1')).resolves.toBe(true);
+  });
+
+  it('does not settle on unexpected errors, so tracking retries', async () => {
+    prisma.referralCode.findUnique.mockRejectedValueOnce(new Error('db down'));
+    await expect(settleReferral('ABC', 'cust_1')).resolves.toBe(false);
   });
 });
