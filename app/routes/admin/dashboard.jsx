@@ -16,10 +16,10 @@ import {
   get as getSetting,
 } from '#/core/settings/index.server';
 import useFormatPrice from '#/hooks/use-format-price';
-import Card from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
+import Stat from '#/components/admin/stat';
 import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import SlotBlocks from '#/components/slot-blocks';
 
@@ -75,27 +75,6 @@ function formatDate(iso) {
   });
 }
 
-/**
- * Single KPI metric tile.
- *
- * @param {{ icon: React.ElementType, label: string, value: string|number }} props
- */
-function KpiTile({ icon: Icon, label, value }) {
-  return (
-    <Card>
-      <div className="flex items-center gap-3">
-        <div className="bg-surface-2 text-text-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
-          <Icon className="h-5 w-5" />
-        </div>
-        <dt className="text-text-muted text-sm font-medium">{label}</dt>
-      </div>
-      <dd className="text-text mt-4 text-3xl font-semibold tracking-tight">
-        {value}
-      </dd>
-    </Card>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Route component
 // ---------------------------------------------------------------------------
@@ -128,28 +107,28 @@ export default function AdminDashboardRoute() {
         subtitle={t('admin.dashboard.subtitle')}
       />
 
-      <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiTile
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat
           icon={ShoppingBagIcon}
           label={t('admin.dashboard.stat.totalOrders')}
           value={totalOrders.toLocaleString('en')}
         />
-        <KpiTile
+        <Stat
           icon={BanknotesIcon}
           label={t('admin.dashboard.stat.totalRevenue')}
           value={formatPrice(totalRevenueCents, shopCurrency)}
         />
-        <KpiTile
+        <Stat
           icon={ArchiveBoxXMarkIcon}
           label={t('admin.dashboard.stat.abandonedCheckouts')}
           value={abandonedCheckouts.toLocaleString('en')}
         />
-        <KpiTile
+        <Stat
           icon={ExclamationTriangleIcon}
           label={t('admin.dashboard.stat.lowStockItems')}
           value={lowStockCount.toLocaleString('en')}
         />
-      </dl>
+      </div>
 
       <SlotBlocks
         blocks={slotBlocks['dashboard.widgets'] ?? []}
@@ -163,9 +142,19 @@ export default function AdminDashboardRoute() {
       />
 
       <div>
-        <h2 className="text-text mb-4 text-lg font-semibold">
-          {t('admin.dashboard.recentOrders')}
-        </h2>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-text text-base font-semibold">
+            {t('admin.dashboard.recentOrders')}
+          </h2>
+          {recentOrders.length > 0 && (
+            <Link
+              to="/admin/orders"
+              className="text-accent hover:text-accent-hover text-sm font-medium"
+            >
+              {t('admin.dashboard.viewAllOrders')}
+            </Link>
+          )}
+        </div>
 
         {recentOrders.length === 0 ? (
           <EmptyState
@@ -222,7 +211,7 @@ export default function AdminDashboardRoute() {
                     >
                       <span className="block min-w-0">
                         <span className="group-hover:text-accent block truncate font-mono font-medium transition-colors">
-                          #{order.orderNumber}
+                          {order.orderNumber}
                         </span>
                         <span className="text-text-muted mt-0.5 block truncate text-xs font-normal sm:hidden">
                           {customerLabel}
@@ -257,7 +246,7 @@ export default function AdminDashboardRoute() {
                         onClick={(event) => event.stopPropagation()}
                       >
                         {t('admin.dashboard.view')}
-                        <span className="sr-only">, #{order.orderNumber}</span>
+                        <span className="sr-only">, {order.orderNumber}</span>
                       </Link>
                     </Td>
                   </Tr>

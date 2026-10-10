@@ -325,7 +325,7 @@ function PluginsTab({ plugins, enabledPlugins }) {
   return (
     <div className="space-y-10">
       <section>
-        <h2 className="text-text mb-1 text-lg font-semibold">
+        <h2 className="text-text mb-1 text-base font-semibold">
           {t('admin.plugins.index.emailProvidersHeading')}
         </h2>
         <p className="text-text-muted mb-3 text-sm">
@@ -352,7 +352,7 @@ function PluginsTab({ plugins, enabledPlugins }) {
       </section>
 
       <section>
-        <h2 className="text-text mb-3 text-lg font-semibold">
+        <h2 className="text-text mb-3 text-base font-semibold">
           {t('admin.plugins.index.otherPluginsHeading')}
         </h2>
 

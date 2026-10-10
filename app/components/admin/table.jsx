@@ -25,10 +25,14 @@ export default function Table({
   className = '',
 }) {
   if (variant === 'sticky') {
-    // No overflow wrapper: any non-visible overflow ancestor becomes the
-    // sticky containing scrollport and breaks pinning to the document/viewport.
+    // No overflow wrapper from `sm` up: any non-visible overflow ancestor
+    // becomes the sticky containing scrollport and breaks pinning to the
+    // document/viewport. On phones, scroll the table itself instead of the
+    // whole page (headers then scroll with it).
     return (
-      <div className={clsx('flow-root', className)}>
+      <div
+        className={clsx('relative flow-root max-sm:overflow-x-auto', className)}
+      >
         <div className="inline-block min-w-full align-middle">
           <table className="min-w-full border-separate border-spacing-0">
             {children}
@@ -41,7 +45,7 @@ export default function Table({
   return (
     <div
       className={clsx(
-        'border-border bg-surface overflow-hidden border shadow-xs',
+        'border-border bg-surface overflow-hidden rounded-xl border shadow-xs',
         className
       )}
     >

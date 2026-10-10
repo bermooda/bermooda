@@ -86,7 +86,7 @@ export default function AdminAuditLogRoute() {
       <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
         <Form
           method="get"
-          className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
+          className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
         >
           <Input
             type="text"
@@ -109,7 +109,7 @@ export default function AdminAuditLogRoute() {
           </Button>
         </Form>
         <ToolbarGroup>
-          <span className="text-text-muted text-sm">
+          <span className="text-text-muted text-sm whitespace-nowrap">
             {total === 1
               ? t('admin.auditLog.resultsOne', { count: total })
               : t('admin.auditLog.results', { count: total })}

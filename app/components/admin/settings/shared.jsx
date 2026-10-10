@@ -5,7 +5,10 @@ import clsx from 'clsx';
 
 import { useT } from '#/core/i18n';
 import Card from '#/components/admin/card';
-import { controlClasses } from '#/components/admin/form/input';
+import {
+  controlClassName,
+  controlClasses,
+} from '#/components/admin/form/input';
 import Button from '#/components/ui/button';
 
 export const CHECKBOX_CLASS =
@@ -18,7 +21,7 @@ export const RADIO_CLASS =
  * @returns {string}
  */
 export function inputClass(extra) {
-  return clsx(controlClasses, extra);
+  return controlClassName(extra);
 }
 
 /**

@@ -1,6 +1,4 @@
-import clsx from 'clsx';
-
-import { controlClasses } from '#/components/admin/form/input';
+import { controlClassName } from '#/components/admin/form/input';
 
 /**
  * Select
@@ -13,7 +11,7 @@ import { controlClasses } from '#/components/admin/form/input';
  */
 export default function Select({ children, className = '', ...props }) {
   return (
-    <select className={clsx(controlClasses, 'pr-8', className)} {...props}>
+    <select className={controlClassName('pr-8', className)} {...props}>
       {children}
     </select>
   );

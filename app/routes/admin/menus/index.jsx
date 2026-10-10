@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import { useState } from 'react';
 import { Form, useActionData, useLoaderData } from 'react-router';
 
@@ -9,11 +8,13 @@ import {
 } from '#/core/content/index.server';
 import { useT } from '#/core/i18n';
 import Card from '#/components/admin/card';
+import FilterPills from '#/components/admin/filter-pills';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
 import SortableList, { SortableGrip } from '#/components/admin/sortable-list';
+import Toolbar from '#/components/admin/toolbar';
 import { SuccessAlert } from '#/components/ui/alert';
 import { ButtonSubmit } from '#/components/ui/button';
 
@@ -76,28 +77,23 @@ export default function AdminMenusRoute() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div>
       <PageHeader
         title={t('admin.menus.index.title')}
         subtitle={t('admin.menus.index.subtitle')}
       />
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {menuHandles.map((h) => (
-          <a
-            key={h}
-            href={`?handle=${h}`}
-            className={clsx(
-              'rounded-full px-3 py-1 text-sm font-medium capitalize transition-colors',
-              handle === h
-                ? 'bg-accent text-accent-fg'
-                : 'bg-surface-2 text-text-muted hover:text-text'
-            )}
-          >
-            {h}
-          </a>
-        ))}
-      </div>
+      <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
+        <FilterPills
+          options={menuHandles.map((h) => ({
+            value: h,
+            label: <span className="capitalize">{h}</span>,
+            href: `?handle=${h}`,
+          }))}
+          value={handle}
+          ariaLabel={t('admin.menus.index.title')}
+        />
+      </Toolbar>
 
       <Card>
         <Form method="post" className="space-y-4">

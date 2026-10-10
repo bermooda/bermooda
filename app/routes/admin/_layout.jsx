@@ -450,7 +450,7 @@ export default function AdminLayout() {
         />
 
         {/* Main content area */}
-        <div className="flex flex-1 flex-col md:ml-64">
+        <div className="flex min-w-0 flex-1 flex-col md:ml-64">
           <CommandPalette open={open} onOpenChange={setOpen} />
 
           <main className="flex-1">

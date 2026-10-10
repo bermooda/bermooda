@@ -11,7 +11,7 @@ import {
   sendCampaign,
 } from '#/core/marketing/index.server';
 import { queueAbandonedCartSequence } from '#/core/marketing/job.server';
-import Card from '#/components/admin/card';
+import Card, { CardHeader } from '#/components/admin/card';
 import PageHeader from '#/components/admin/page-header';
 
 export async function loader() {
@@ -59,6 +59,8 @@ export async function action({ request }) {
 
 const CTA_CLASS =
   'bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2';
+const SECONDARY_CLASS =
+  'border-border bg-surface text-text hover:bg-surface-2 focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2';
 
 export default function AdminMarketingRoute() {
   const t = useT();
@@ -73,16 +75,16 @@ export default function AdminMarketingRoute() {
 
       <div className="space-y-6">
         <Card>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-text text-lg font-semibold">
-              {t('admin.marketing.index.segments')}
-            </h2>
-            <Link to="/admin/marketing/segments/new" className={CTA_CLASS}>
-              <PlusIcon className="h-4 w-4" />
-              {t('admin.marketing.index.newSegment')}
-            </Link>
-          </div>
-          <ul className="text-text-muted mt-4 space-y-1 text-sm">
+          <CardHeader
+            title={t('admin.marketing.index.segments')}
+            action={
+              <Link to="/admin/marketing/segments/new" className={CTA_CLASS}>
+                <PlusIcon className="h-4 w-4" />
+                {t('admin.marketing.index.newSegment')}
+              </Link>
+            }
+          />
+          <ul className="text-text-muted space-y-1 text-sm">
             {segments.length === 0 ? (
               <li>
                 {t('admin.marketing.index.noSegments')}{' '}
@@ -108,16 +110,16 @@ export default function AdminMarketingRoute() {
         </Card>
 
         <Card>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-text text-lg font-semibold">
-              {t('admin.marketing.index.campaigns')}
-            </h2>
-            <Link to="/admin/marketing/campaigns/new" className={CTA_CLASS}>
-              <PlusIcon className="h-4 w-4" />
-              {t('admin.marketing.index.newCampaign')}
-            </Link>
-          </div>
-          <ul className="text-text-muted mt-4 space-y-2 text-sm">
+          <CardHeader
+            title={t('admin.marketing.index.campaigns')}
+            action={
+              <Link to="/admin/marketing/campaigns/new" className={CTA_CLASS}>
+                <PlusIcon className="h-4 w-4" />
+                {t('admin.marketing.index.newCampaign')}
+              </Link>
+            }
+          />
+          <ul className="text-text-muted space-y-2 text-sm">
             {campaigns.length === 0 ? (
               <li>
                 {t('admin.marketing.index.noCampaigns')}{' '}
@@ -162,28 +164,28 @@ export default function AdminMarketingRoute() {
         </Card>
 
         <Card>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-text text-lg font-semibold">
-              {t('admin.marketing.index.sequences')}
-            </h2>
-            <div className="flex flex-wrap items-center gap-2">
-              <Form method="post">
-                <input
-                  type="hidden"
-                  name="intent"
-                  value="run-abandoned-cart-sequence"
-                />
-                <button type="submit" className={CTA_CLASS}>
-                  {t('admin.marketing.index.runNow')}
-                </button>
-              </Form>
-              <Link to="/admin/marketing/sequences/new" className={CTA_CLASS}>
-                <PlusIcon className="h-4 w-4" />
-                {t('admin.marketing.index.newStep')}
-              </Link>
-            </div>
-          </div>
-          <ul className="text-text-muted mt-4 space-y-1 text-sm">
+          <CardHeader
+            title={t('admin.marketing.index.sequences')}
+            action={
+              <div className="flex flex-wrap items-center gap-2">
+                <Form method="post">
+                  <input
+                    type="hidden"
+                    name="intent"
+                    value="run-abandoned-cart-sequence"
+                  />
+                  <button type="submit" className={SECONDARY_CLASS}>
+                    {t('admin.marketing.index.runNow')}
+                  </button>
+                </Form>
+                <Link to="/admin/marketing/sequences/new" className={CTA_CLASS}>
+                  <PlusIcon className="h-4 w-4" />
+                  {t('admin.marketing.index.newStep')}
+                </Link>
+              </div>
+            }
+          />
+          <ul className="text-text-muted space-y-1 text-sm">
             {sequences.length === 0 ? (
               <li>
                 {t('admin.marketing.index.noSequences')}{' '}

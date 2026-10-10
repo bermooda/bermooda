@@ -12,11 +12,11 @@ import {
 import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
+import FilterPills from '#/components/admin/filter-pills';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
 import SearchField from '#/components/admin/search-field';
 import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
-import Tabs from '#/components/admin/tabs';
 import Toolbar, { ToolbarGroup } from '#/components/admin/toolbar';
 
 const PAGE_SIZE = 20;
@@ -68,10 +68,10 @@ export default function AdminBackInStockRoute() {
   const { subscriptions, total, page, totalPages, status, q } = useLoaderData();
   const [, setSearchParams] = useSearchParams();
 
-  const tabLabels = TAB_KEYS.map((key) =>
-    t(`admin.backInStock.index.tab.${key}`)
-  );
-  const activeTab = Math.max(0, TAB_KEYS.indexOf(status));
+  const statusFilters = TAB_KEYS.map((key) => ({
+    value: key,
+    label: t(`admin.backInStock.index.tab.${key}`),
+  }));
 
   /**
    * @param {string} next
@@ -103,13 +103,6 @@ export default function AdminBackInStockRoute() {
         subtitle={t('admin.backInStock.index.subtitle')}
       />
 
-      <Tabs
-        tabs={tabLabels}
-        active={activeTab}
-        onChange={(index) => setTab(TAB_KEYS[index])}
-        className="mb-4"
-      />
-
       <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
         <SearchField
           defaultValue={q}
@@ -118,6 +111,12 @@ export default function AdminBackInStockRoute() {
           hiddenFields={{ status }}
         />
         <ToolbarGroup>
+          <FilterPills
+            options={statusFilters}
+            value={status}
+            onChange={setTab}
+            ariaLabel={t('admin.backInStock.index.col.status')}
+          />
           <span className="text-text-muted text-sm">
             {total === 1
               ? t('admin.backInStock.index.resultsOne', { count: total })

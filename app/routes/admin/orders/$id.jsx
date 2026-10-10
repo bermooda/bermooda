@@ -32,7 +32,10 @@ import {
 import useFormatPrice from '#/hooks/use-format-price';
 import Breadcrumbs from '#/components/admin/breadcrumbs';
 import FormSection from '#/components/admin/form-section';
-import { controlClasses } from '#/components/admin/form/input';
+import {
+  controlClassName,
+  controlClasses,
+} from '#/components/admin/form/input';
 import { OrderStatusBadge } from '#/components/admin/order-status-badge';
 import PageHeader from '#/components/admin/page-header';
 import { ReturnStatusBadge } from '#/components/admin/return-status-badge';
@@ -389,7 +392,7 @@ export default function AdminOrderRoute() {
           <>
             <a
               href={`/admin/orders/${order.id}/documents`}
-              className="border-border bg-surface text-text hover:bg-surface-2 inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-xs transition"
+              className="border-border bg-surface text-text hover:bg-surface-2 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-semibold shadow-sm transition"
             >
               {t('admin.orders.detail.downloadInvoice')}
             </a>
@@ -689,7 +692,7 @@ export default function AdminOrderRoute() {
                           line.fulfilledQuantity -
                           line.returnedQuantity
                         }
-                        className={`${controlClasses} w-20`}
+                        className={controlClassName('w-20')}
                       />
                     </div>
                   ))}

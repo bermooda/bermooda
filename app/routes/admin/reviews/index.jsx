@@ -2,7 +2,6 @@
 // Reviews admin list — sticky-header table with status filters and moderation.
 
 import { StarIcon } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
 import { Form, useLoaderData, useSearchParams } from 'react-router';
 
 import { useT } from '#/core/i18n';
@@ -17,6 +16,7 @@ import {
 } from '#/core/reviews/index.server';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
+import FilterPills from '#/components/admin/filter-pills';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
 import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
@@ -120,23 +120,15 @@ export default function AdminReviewsRoute() {
 
       <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
         <ToolbarGroup>
-          <div className="flex flex-wrap gap-1.5">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setTab(tab.key)}
-                className={clsx(
-                  'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                  status === tab.key
-                    ? 'bg-accent text-accent-fg'
-                    : 'bg-surface-2 text-text-muted hover:text-text'
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <FilterPills
+            options={tabs.map((tab) => ({
+              value: tab.key,
+              label: tab.label,
+            }))}
+            value={status}
+            onChange={setTab}
+            ariaLabel={t('admin.reviews.index.col.status')}
+          />
         </ToolbarGroup>
         <ToolbarGroup>
           <span className="text-text-muted text-sm">

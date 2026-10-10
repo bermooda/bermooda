@@ -11,8 +11,9 @@ import {
 } from '#/core/channels/index.server';
 import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
-import Card from '#/components/admin/card';
+import Card, { CardHeader } from '#/components/admin/card';
 import EmptyState from '#/components/admin/empty-state';
+import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import Select from '#/components/admin/form/select';
 import PageHeader from '#/components/admin/page-header';
@@ -204,35 +205,61 @@ export default function AdminChannelsRoute() {
 
       {nonDefaultChannels.length > 0 && products.length > 0 && (
         <Card className="mt-8">
-          <h2 className="text-text text-lg font-semibold">
-            {t('admin.channels.index.priceOverride')}
-          </h2>
-          <Form method="post" className="mt-4 flex flex-wrap items-end gap-3">
+          <CardHeader
+            title={t('admin.channels.index.priceOverride')}
+            description={t('admin.channels.index.priceOverrideDescription')}
+          />
+          <Form method="post" className="flex flex-wrap items-end gap-3">
             <input type="hidden" name="intent" value="set-price" />
-            <Select name="channelId" className="w-auto">
-              {nonDefaultChannels.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
-            <Select name="variantId" className="w-auto">
-              {products.flatMap((p) =>
-                p.variants.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.sku ?? v.id}
+            <Field
+              label={t('admin.channels.index.field.channel')}
+              htmlFor="override-channel"
+            >
+              <Select id="override-channel" name="channelId" className="w-48">
+                {nonDefaultChannels.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
-                ))
-              )}
-            </Select>
-            <Input
-              name="priceCents"
-              type="number"
-              min="1"
-              placeholder={t('admin.channels.index.pricePlaceholder')}
-              className="w-32"
-            />
-            <Input name="currency" defaultValue="USD" className="w-20" />
+                ))}
+              </Select>
+            </Field>
+            <Field
+              label={t('admin.channels.index.field.variant')}
+              htmlFor="override-variant"
+            >
+              <Select id="override-variant" name="variantId" className="w-48">
+                {products.flatMap((p) =>
+                  p.variants.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.sku ?? v.id}
+                    </option>
+                  ))
+                )}
+              </Select>
+            </Field>
+            <Field
+              label={t('admin.channels.index.pricePlaceholder')}
+              htmlFor="override-price"
+            >
+              <Input
+                id="override-price"
+                name="priceCents"
+                type="number"
+                min="1"
+                className="w-32"
+              />
+            </Field>
+            <Field
+              label={t('admin.channels.index.field.currency')}
+              htmlFor="override-currency"
+            >
+              <Input
+                id="override-currency"
+                name="currency"
+                defaultValue="USD"
+                className="w-20"
+              />
+            </Field>
             <Button type="submit" variant="primary">
               {t('admin.channels.index.setOverride')}
             </Button>

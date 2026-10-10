@@ -1,3 +1,4 @@
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { Form, useActionData, useLoaderData } from 'react-router';
 
 import { authenticate } from '#/libs/auth/admin/index.server';
@@ -89,19 +90,17 @@ export default function AdminImportRoute() {
       <PageHeader
         title={t('admin.import.index.title')}
         subtitle={t('admin.import.index.subtitle')}
-      />
-
-      <div className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-        {types.map((type) => (
+        actions={types.map((type) => (
           <a
             key={type}
             href={`/admin/import?template=${type}`}
-            className="text-accent hover:text-accent-hover decoration-accent/30 underline underline-offset-2"
+            className="border-border bg-surface text-text hover:bg-surface-2 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-semibold shadow-sm transition"
           >
+            <ArrowDownTrayIcon className="h-4 w-4" aria-hidden="true" />
             {t('admin.import.index.downloadTemplate', { type })}
           </a>
         ))}
-      </div>
+      />
 
       <Card className="max-w-lg">
         <Form method="post" encType="multipart/form-data" className="space-y-4">

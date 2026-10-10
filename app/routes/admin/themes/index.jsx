@@ -299,7 +299,7 @@ export default function AdminThemesRoute() {
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="border-border bg-surface text-text hover:bg-surface-2 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition"
+            className="border-border bg-surface text-text hover:bg-surface-2 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-semibold shadow-sm transition"
           >
             {t('admin.themes.index.previewStorefront')}
             <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
@@ -316,7 +316,7 @@ export default function AdminThemesRoute() {
 
       {/* Theme list */}
       <div>
-        <h2 className="text-text mb-3 text-lg font-semibold">
+        <h2 className="text-text mb-3 text-base font-semibold">
           {t('admin.themes.index.registeredHeading')}
         </h2>
 
