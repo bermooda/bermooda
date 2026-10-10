@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.13.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.12.0...bermooda-v0.13.0) (2026-10-10)
+
+
+### Features
+
+* **admin:** align design language across admin navigation pages ([c7175a8](https://github.com/bermooda/bermooda/commit/c7175a88b21472e2fb09f14017a3cd30aa7dd2b7))
+
+
+### Bug Fixes
+
+* **admin:** avoid import('clsx') JSDoc tripping extension smoke check ([634e831](https://github.com/bermooda/bermooda/commit/634e831abf1fab5463f15344231b9a5eb6ce3adb))
+* **cart:** fall back to the product title for cart line titles ([1049dbd](https://github.com/bermooda/bermooda/commit/1049dbdef8ae318c5cb59f6b565a41b0f8e126e8))
+* **catalog:** localize category titles and slugs on product detail ([c2fec22](https://github.com/bermooda/bermooda/commit/c2fec22fe51782789d722bcf4fd221aa2a65a605))
+* **plugins:** keep a single email provider plugin enabled at startup ([14011ce](https://github.com/bermooda/bermooda/commit/14011ce6958e9519fefe0b6f948211458108f10e))
+* **themes:** parse the JSON-encoded activeTheme setting ([a2824ce](https://github.com/bermooda/bermooda/commit/a2824ce768973e7c5ab90c3c4444cf56e28d8e4c))
+
 ## [0.12.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.11.1...bermooda-v0.12.0) (2026-10-09)
 
 
