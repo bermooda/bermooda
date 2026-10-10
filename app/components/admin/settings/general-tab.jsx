@@ -27,7 +27,11 @@ export function AdminLocaleField({ adminLocale, availableLocales }) {
   if (!availableLocales || availableLocales.length <= 1) return null;
 
   return (
-    <fetcher.Form method="post" action="/api/set-locale">
+    <fetcher.Form
+      method="post"
+      action="/api/set-locale"
+      className="border-border border-t pt-6"
+    >
       <input type="hidden" name="returnTo" value={returnTo} />
       <FieldLabel htmlFor="admin-locale">
         {t('admin.settings.general.adminLocale')}
@@ -70,8 +74,11 @@ export function GeneralTab({ data }) {
         <fetcher.Form method="post" className="space-y-4">
           <input type="hidden" name="intent" value="save-general" />
           <div>
-            <FieldLabel>{t('admin.settings.general.shopName')}</FieldLabel>
+            <FieldLabel htmlFor="settings-shop-name">
+              {t('admin.settings.general.shopName')}
+            </FieldLabel>
             <input
+              id="settings-shop-name"
               type="text"
               name="shopName"
               defaultValue={data.shopName}
@@ -80,8 +87,11 @@ export function GeneralTab({ data }) {
             />
           </div>
           <div>
-            <FieldLabel>{t('admin.settings.general.contactEmail')}</FieldLabel>
+            <FieldLabel htmlFor="settings-contact-email">
+              {t('admin.settings.general.contactEmail')}
+            </FieldLabel>
             <input
+              id="settings-contact-email"
               type="email"
               name="contactEmail"
               defaultValue={data.contactEmail}
@@ -109,10 +119,11 @@ export function GeneralTab({ data }) {
             </select>
           </div>
           <div>
-            <FieldLabel>
+            <FieldLabel htmlFor="settings-default-currency">
               {t('admin.settings.general.defaultCurrency')}
             </FieldLabel>
             <select
+              id="settings-default-currency"
               name="defaultCurrency"
               defaultValue={data.defaultCurrency}
               className={selectClass()}

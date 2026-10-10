@@ -1,6 +1,4 @@
-import clsx from 'clsx';
-
-import { controlClasses } from '#/components/admin/form/input';
+import { controlClassName } from '#/components/admin/form/input';
 
 /**
  * Textarea
@@ -11,5 +9,5 @@ import { controlClasses } from '#/components/admin/form/input';
  * @returns {React.ReactElement}
  */
 export default function Textarea({ className = '', ...props }) {
-  return <textarea className={clsx(controlClasses, className)} {...props} />;
+  return <textarea className={controlClassName(className)} {...props} />;
 }

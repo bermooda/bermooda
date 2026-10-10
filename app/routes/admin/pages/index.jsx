@@ -2,7 +2,6 @@
 // Pages admin list — sticky-header table with search and status filters.
 
 import { DocumentTextIcon, PlusIcon } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
 import {
   Link,
   useLoaderData,
@@ -14,6 +13,7 @@ import { listPagesAdmin } from '#/core/content/index.server';
 import { useT } from '#/core/i18n';
 import Badge from '#/components/admin/badge';
 import EmptyState from '#/components/admin/empty-state';
+import FilterPills from '#/components/admin/filter-pills';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
 import SearchField from '#/components/admin/search-field';
@@ -141,23 +141,15 @@ export default function AdminPagesIndexRoute() {
           hiddenFields={status !== 'all' ? { status } : {}}
         />
         <ToolbarGroup>
-          <div className="flex flex-wrap gap-1.5">
-            {statusFilters.map((s) => (
-              <button
-                key={s.key}
-                type="button"
-                onClick={() => setStatus(s.key)}
-                className={clsx(
-                  'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                  status === s.key
-                    ? 'bg-accent text-accent-fg'
-                    : 'bg-surface-2 text-text-muted hover:text-text'
-                )}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
+          <FilterPills
+            options={statusFilters.map((s) => ({
+              value: s.key,
+              label: s.label,
+            }))}
+            value={status}
+            onChange={setStatus}
+            ariaLabel={t('admin.pages.index.col.status')}
+          />
           <span className="text-text-muted text-sm">
             {total === 1
               ? t('admin.pages.index.resultsOne', { count: total })

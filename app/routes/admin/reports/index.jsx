@@ -20,11 +20,13 @@ import {
 } from '#/core/reporting/index.server';
 import { get } from '#/core/settings/index.server';
 import useFormatPrice from '#/hooks/use-format-price';
-import Card from '#/components/admin/card';
+import Card, { CardHeader } from '#/components/admin/card';
 import Field from '#/components/admin/form/field';
 import Input from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
+import Stat from '#/components/admin/stat';
 import Table, { TBody, Td, Th, THead } from '#/components/admin/table';
+import Toolbar from '#/components/admin/toolbar';
 import { ButtonSubmit } from '#/components/ui/button';
 
 export function meta() {
@@ -100,21 +102,6 @@ export async function action({ request }) {
 }
 
 /**
- * @param {{ label: string, value: string|number, sub?: string }} props
- */
-function MetricCard({ label, value, sub }) {
-  return (
-    <Card>
-      <p className="text-text-muted text-sm font-medium">{label}</p>
-      <p className="text-text mt-2 text-2xl font-semibold tracking-tight">
-        {value}
-      </p>
-      {sub && <p className="text-text-muted mt-1 text-xs">{sub}</p>}
-    </Card>
-  );
-}
-
-/**
  * @returns {React.ReactElement}
  */
 export default function AdminReportsRoute() {
@@ -143,10 +130,10 @@ export default function AdminReportsRoute() {
         subtitle={t('admin.reports.index.subtitle')}
       />
 
-      <Card padded={false}>
+      <Toolbar className="border-border rounded-xl border shadow-xs sm:px-4">
         <Form
           method="get"
-          className="flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-end"
+          className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
         >
           <Field
             label={t('admin.reports.index.startDate')}
@@ -174,43 +161,43 @@ export default function AdminReportsRoute() {
           </Field>
           <ButtonSubmit>{t('admin.reports.index.apply')}</ButtonSubmit>
         </Form>
-      </Card>
+      </Toolbar>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat
           label={t('admin.reports.index.metric.revenue')}
           value={formatPrice(overview.revenueCents, defaultCurrency)}
-          sub={t('admin.reports.index.metric.paidOrdersSub', {
+          hint={t('admin.reports.index.metric.paidOrdersSub', {
             count: overview.paidOrders,
           })}
         />
-        <MetricCard
+        <Stat
           label={t('admin.reports.index.metric.aov')}
           value={formatPrice(overview.aovCents, defaultCurrency)}
         />
-        <MetricCard
+        <Stat
           label={t('admin.reports.index.metric.tax')}
           value={formatPrice(overview.taxCents, defaultCurrency)}
         />
-        <MetricCard
+        <Stat
           label={t('admin.reports.index.metric.discounts')}
           value={formatPrice(overview.discountCents, defaultCurrency)}
         />
-        <MetricCard
+        <Stat
           label={t('admin.reports.index.metric.refunds')}
           value={formatPrice(overview.refundCents, defaultCurrency)}
-          sub={t('admin.reports.index.metric.refundsSub', {
+          hint={t('admin.reports.index.metric.refundsSub', {
             count: overview.refundCount,
           })}
         />
-        <MetricCard
+        <Stat
           label={t('admin.reports.index.metric.totalOrders')}
           value={overview.orderCount.toLocaleString('en')}
         />
-        <MetricCard
+        <Stat
           label={t('admin.reports.index.metric.conversion')}
           value={`${overview.conversionRate}%`}
-          sub={t('admin.reports.index.metric.conversionSub', {
+          hint={t('admin.reports.index.metric.conversionSub', {
             completed: overview.completedCheckouts,
             started: overview.startedCheckouts,
           })}
@@ -265,13 +252,20 @@ export default function AdminReportsRoute() {
       </div>
 
       <Card>
-        <h2 className="text-text text-lg font-semibold">
-          {t('admin.reports.index.csvExports')}
-        </h2>
-        <p className="text-text-muted mt-1 text-sm">
-          {t('admin.reports.index.csvExportsDescription')}
-        </p>
-        <div className="mt-4 flex flex-wrap gap-3">
+        <CardHeader
+          title={t('admin.reports.index.csvExports')}
+          description={t('admin.reports.index.csvExportsDescription')}
+          action={
+            <Link
+              to="/admin/reports/schedules/new"
+              className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
+            >
+              <PlusIcon className="h-4 w-4" />
+              {t('admin.reports.index.scheduleExport')}
+            </Link>
+          }
+        />
+        <div className="flex flex-wrap gap-2">
           {exportTypes.map((type) => {
             const params = new URLSearchParams(exportQuery);
             params.set('type', type);
@@ -279,22 +273,12 @@ export default function AdminReportsRoute() {
               <a
                 key={type}
                 href={`/admin/reports/export?${params.toString()}`}
-                className="border-border bg-surface text-text hover:bg-surface-2 rounded-md border px-3 py-2 text-sm font-medium shadow-xs"
+                className="border-border bg-surface text-text hover:bg-surface-2 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-semibold shadow-sm transition"
               >
                 {t('admin.reports.index.exportType', { type })}
               </a>
             );
           })}
-        </div>
-
-        <div className="mt-6">
-          <Link
-            to="/admin/reports/schedules/new"
-            className="bg-accent text-accent-fg hover:bg-accent-hover focus-visible:outline-accent inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-offset-2"
-          >
-            <PlusIcon className="h-4 w-4" />
-            {t('admin.reports.index.scheduleExport')}
-          </Link>
         </div>
 
         {scheduledExports.length > 0 && (
@@ -373,11 +357,13 @@ export default function AdminReportsRoute() {
 function ReportTable({ title, headers, rows, empty }) {
   return (
     <Card padded={false}>
-      <div className="border-border border-b px-4 py-3">
-        <h2 className="text-text text-base font-semibold">{title}</h2>
+      <div className="border-border border-b px-4 py-3 sm:px-6">
+        <h2 className="text-text text-sm font-semibold tracking-tight">
+          {title}
+        </h2>
       </div>
       {rows.length === 0 ? (
-        <p className="text-text-muted px-4 py-6 text-sm">{empty}</p>
+        <p className="text-text-muted px-4 py-6 text-sm sm:px-6">{empty}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="divide-border min-w-full divide-y">

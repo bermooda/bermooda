@@ -2,7 +2,6 @@
 // Returns admin list — sticky-header table with status filters.
 
 import { ArrowUturnLeftIcon } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
 import {
   Link,
   useLoaderData,
@@ -17,6 +16,7 @@ import {
   RETURN_STATUSES,
 } from '#/core/returns/index.server';
 import EmptyState from '#/components/admin/empty-state';
+import FilterPills from '#/components/admin/filter-pills';
 import PageHeader from '#/components/admin/page-header';
 import Pagination from '#/components/admin/pagination';
 import { ReturnStatusBadge } from '#/components/admin/return-status-badge';
@@ -121,23 +121,15 @@ export default function AdminReturnsRoute() {
 
       <Toolbar className="border-border mb-4 rounded-xl border shadow-xs sm:px-4">
         <ToolbarGroup>
-          <div className="flex flex-wrap gap-1.5">
-            {statusFilters.map((s) => (
-              <button
-                key={s.key || 'all'}
-                type="button"
-                onClick={() => setStatus(s.key)}
-                className={clsx(
-                  'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                  status === s.key
-                    ? 'bg-accent text-accent-fg'
-                    : 'bg-surface-2 text-text-muted hover:text-text'
-                )}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
+          <FilterPills
+            options={statusFilters.map((s) => ({
+              value: s.key,
+              label: s.label,
+            }))}
+            value={status}
+            onChange={setStatus}
+            ariaLabel={t('admin.returns.index.col.status')}
+          />
         </ToolbarGroup>
         <ToolbarGroup>
           <span className="text-text-muted text-sm">

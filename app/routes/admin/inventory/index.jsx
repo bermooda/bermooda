@@ -1,7 +1,7 @@
 // app/routes/admin/inventory/index.jsx
 // Multi-location inventory admin.
 
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { BuildingStorefrontIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Form, Link, useLoaderData } from 'react-router';
 
 import { useT } from '#/core/i18n';
@@ -12,9 +12,11 @@ import {
   listRecentVariantsForInventory,
   setInventoryLevelQuantity,
 } from '#/core/inventory/index.server';
-import Card from '#/components/admin/card';
+import Badge from '#/components/admin/badge';
+import EmptyState from '#/components/admin/empty-state';
 import Input from '#/components/admin/form/input';
 import PageHeader from '#/components/admin/page-header';
+import Table, { TBody, Td, Th, THead, Tr } from '#/components/admin/table';
 import Button from '#/components/ui/button';
 
 export async function loader() {
@@ -68,80 +70,101 @@ export default function AdminInventoryRoute() {
         }
       />
 
-      <div className="space-y-6">
-        <Card>
-          <h2 className="text-text text-lg font-semibold">
-            {t('admin.inventory.index.locations')}
-          </h2>
-          <ul className="text-text-muted mt-3 space-y-2 text-sm">
-            {locations.map((location) => (
-              <li key={location.id}>
-                {location.name} ({location.code})
-                {location.isDefault
-                  ? t('admin.inventory.index.defaultSuffix')
-                  : ''}
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        <Card>
-          <h2 className="text-text text-lg font-semibold">
-            {t('admin.inventory.index.variantStock')}
-          </h2>
-          <div className="mt-4 space-y-6">
-            {variants.map((variant) => (
-              <div
-                key={variant.id}
-                className="border-border border-b pb-4 last:border-b-0 last:pb-0"
-              >
-                <p className="text-text font-medium">
-                  {variant.sku || variant.id}{' '}
-                  <span className="text-text-muted">
-                    {t('admin.inventory.index.total', {
-                      count: variant.inventoryCount,
-                    })}
+      {variants.length === 0 ? (
+        <EmptyState
+          icon={BuildingStorefrontIcon}
+          title={t('admin.inventory.index.emptyTitle')}
+          description={t('admin.inventory.index.emptyDescription')}
+        />
+      ) : (
+        <Table variant="sticky" className="mt-2">
+          <THead sticky>
+            <tr>
+              <Th sticky className="py-3.5 pr-3 pl-1 sm:pl-0">
+                {t('admin.inventory.index.col.variant')}
+              </Th>
+              <Th sticky className="px-3 py-3.5 text-right">
+                {t('admin.inventory.index.col.total')}
+              </Th>
+              {locations.map((location) => (
+                <Th key={location.id} sticky className="px-3 py-3.5">
+                  <span className="flex items-center gap-2">
+                    {location.name}
+                    {location.isDefault && (
+                      <Badge>{t('admin.inventory.index.defaultBadge')}</Badge>
+                    )}
                   </span>
-                </p>
-                <div className="mt-2 flex flex-wrap gap-4">
-                  {(levelsByVariant[variant.id] ?? []).map((level) => (
-                    <Form
-                      key={level.id}
-                      method="post"
-                      className="flex items-center gap-2 text-sm"
-                    >
-                      <input type="hidden" name="intent" value="update-level" />
-                      <input
-                        type="hidden"
-                        name="variantId"
-                        value={variant.id}
-                      />
-                      <input
-                        type="hidden"
-                        name="locationId"
-                        value={level.locationId}
-                      />
-                      <span className="text-text-muted">
-                        {level.location.name}
-                      </span>
-                      <Input
-                        name="quantity"
-                        type="number"
-                        min="0"
-                        defaultValue={level.quantity}
-                        className="w-20"
-                      />
-                      <Button type="submit" variant="secondary">
-                        {t('common.save')}
-                      </Button>
-                    </Form>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
+                  <span className="text-text-muted block font-mono text-xs font-normal">
+                    {location.code}
+                  </span>
+                </Th>
+              ))}
+            </tr>
+          </THead>
+          <TBody sticky>
+            {variants.map((variant) => {
+              const levels = levelsByVariant[variant.id] ?? [];
+              return (
+                <Tr key={variant.id}>
+                  <Td
+                    sticky
+                    className="text-text py-4 pr-3 pl-1 font-mono font-medium sm:pl-0"
+                  >
+                    {variant.sku || variant.id}
+                  </Td>
+                  <Td sticky className="px-3 py-4 text-right tabular-nums">
+                    {variant.inventoryCount}
+                  </Td>
+                  {locations.map((location) => {
+                    const level = levels.find(
+                      (entry) => entry.locationId === location.id
+                    );
+                    return (
+                      <Td key={location.id} sticky className="px-3 py-3">
+                        {level ? (
+                          <Form
+                            method="post"
+                            className="flex items-center gap-2"
+                          >
+                            <input
+                              type="hidden"
+                              name="intent"
+                              value="update-level"
+                            />
+                            <input
+                              type="hidden"
+                              name="variantId"
+                              value={variant.id}
+                            />
+                            <input
+                              type="hidden"
+                              name="locationId"
+                              value={location.id}
+                            />
+                            <Input
+                              name="quantity"
+                              type="number"
+                              min="0"
+                              defaultValue={level.quantity}
+                              aria-label={`${variant.sku || variant.id} — ${location.name}`}
+                              className="w-24 tabular-nums"
+                            />
+                            <Button type="submit" variant="secondary">
+                              {t('common.save')}
+                            </Button>
+                          </Form>
+                        ) : (
+                          <span className="text-text-muted">—</span>
+                        )}
+                      </Td>
+                    );
+                  })}
+                </Tr>
+              );
+            })}
+          </TBody>
+        </Table>
+      )}
     </div>
   );
 }
