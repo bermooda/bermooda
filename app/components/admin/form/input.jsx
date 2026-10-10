@@ -17,7 +17,7 @@ const WIDTH_UTILITY = /(^|\s)w-\S+/;
  * own base width. Without tailwind-merge, `w-full` would otherwise win over
  * `w-24` / `w-auto` and silently ignore the override.
  *
- * @param {...import('clsx').ClassValue} extra
+ * @param {...(string|false|null|undefined)} extra
  * @returns {string}
  */
 export function controlClassName(...extra) {
