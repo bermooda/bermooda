@@ -1,8 +1,9 @@
 // app/core/themes/index.server.js
 // Theme loader: define, register, and resolve storefront themes.
 
-import cache, {
+import {
   getCachedResult,
+  invalidateCacheKey,
   invalidateCachePrefix,
 } from '#/utils/cache/index.server';
 import logger from '#/utils/logger.server';
@@ -310,7 +311,7 @@ export async function setActiveTheme(themeId) {
   }
 
   await set('activeTheme', themeId);
-  cache.delete('theme:active');
+  invalidateCacheKey('theme:active');
   invalidateThemeCache();
   // Message catalogs embed the active theme — bust so the next request
   // merges catalogs for the newly selected theme.

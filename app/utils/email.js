@@ -1,7 +1,7 @@
 // app/utils/email.js
 // Shared email normalization and validation helpers.
 
-export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Trim and lowercase an email address for storage and lookup.

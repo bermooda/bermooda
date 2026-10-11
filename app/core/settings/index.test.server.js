@@ -13,10 +13,13 @@ vi.mock('#/libs/prisma.server', () => ({
 
 vi.mock('#/utils/cache/index.server', () => ({
   getCachedResult: vi.fn(async (_k, cb) => cb()),
-  default: { delete: vi.fn() },
+  invalidateCacheKey: vi.fn(),
 }));
 
-import cache, { getCachedResult } from '#/utils/cache/index.server';
+import {
+  getCachedResult,
+  invalidateCacheKey,
+} from '#/utils/cache/index.server';
 import prisma from '#/libs/prisma.server';
 import { SETTING_DEFAULTS } from '#/core/settings/defaults';
 import {
@@ -105,7 +108,7 @@ describe('set', () => {
       create: { key: 'defaultCurrency', value: '"EUR"' },
       update: { value: '"EUR"' },
     });
-    expect(cache.delete).toHaveBeenCalledWith('setting:defaultCurrency');
+    expect(invalidateCacheKey).toHaveBeenCalledWith('setting:defaultCurrency');
   });
 });
 

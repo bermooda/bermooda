@@ -2,6 +2,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+vi.mock('#/libs/config', () => ({
+  default: { baseUrl: 'https://shop.example' },
+}));
+
 vi.mock('#/libs/prisma.server', () => ({
   default: {
     slug: { findMany: vi.fn() },
@@ -72,7 +76,26 @@ beforeEach(() => {
 describe('buildCanonicalUrl', () => {
   it('builds absolute URL from request', () => {
     expect(buildCanonicalUrl(request, '/about')).toBe(
-      'http://shop.example/about'
+      'https://shop.example/about'
+    );
+  });
+
+  it('keeps the request host (sales-channel domains) with the baseUrl scheme', () => {
+    const channelRequest = new Request('http://shop.example.de/');
+    expect(buildCanonicalUrl(channelRequest, '/about')).toBe(
+      'https://shop.example.de/about'
+    );
+  });
+
+  it('ignores forged X-Forwarded-Host and X-Forwarded-Proto', () => {
+    const forged = new Request('https://shop.example/', {
+      headers: {
+        'X-Forwarded-Host': 'evil.example',
+        'X-Forwarded-Proto': 'http',
+      },
+    });
+    expect(buildCanonicalUrl(forged, '/about')).toBe(
+      'https://shop.example/about'
     );
   });
 });
@@ -187,7 +210,7 @@ describe('buildRobotsTxt', () => {
 
     const body = await buildRobotsTxt(request);
 
-    expect(body).toContain('Sitemap: http://shop.example/sitemap.xml');
+    expect(body).toContain('Sitemap: https://shop.example/sitemap.xml');
     expect(body).toContain('Disallow: /admin');
     expect(body).toContain('Disallow: /checkout');
   });
@@ -307,9 +330,9 @@ describe('buildSitemapXml', () => {
     const result = await buildSitemapXml({ request });
 
     expect(result.allowIndexing).toBe(true);
-    expect(result.xml).toContain('http://shop.example/products/mug');
-    expect(result.xml).toContain('http://shop.example/categories/drinkware');
-    expect(result.xml).toContain('http://shop.example/collections/summer');
-    expect(result.xml).toContain('http://shop.example/about');
+    expect(result.xml).toContain('https://shop.example/products/mug');
+    expect(result.xml).toContain('https://shop.example/categories/drinkware');
+    expect(result.xml).toContain('https://shop.example/collections/summer');
+    expect(result.xml).toContain('https://shop.example/about');
   });
 });

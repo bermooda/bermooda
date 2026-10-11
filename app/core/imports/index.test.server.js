@@ -155,6 +155,22 @@ describe('imports', () => {
     });
   });
 
+  it('importCustomersCsv reports malformed emails without writing', async () => {
+    const csv = [
+      'id,email,name,phone,preferred_locale,created_at',
+      ',not-an-email,Jane Doe,,en,',
+    ].join('\n');
+
+    const result = await importCustomersCsv(csv);
+
+    expect(result.created).toBe(0);
+    expect(result.errors).toEqual([
+      expect.objectContaining({ error: 'Invalid email' }),
+    ]);
+    expect(createCustomer).not.toHaveBeenCalled();
+    expect(prisma.customer.findUnique).not.toHaveBeenCalled();
+  });
+
   it('importCustomersCsv updates an existing customer by email', async () => {
     prisma.customer.findUnique.mockResolvedValue({ id: 'cust-1' });
     updateCustomer.mockResolvedValue({});

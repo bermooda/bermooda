@@ -1,6 +1,7 @@
 // app/core/back-in-stock/index.server.js
 // Back-in-stock subscriptions and notifications.
 
+import { isValidEmail, normalizeEmail } from '#/utils/email';
 import logger from '#/utils/logger.server';
 import prisma from '#/libs/prisma.server';
 import { containsFilter } from '#/libs/prisma/filters/index.server';
@@ -30,16 +31,6 @@ const SUBSCRIPTION_LIST_INCLUDE = {
 // ---------------------------------------------------------------------------
 // Input parsing
 // ---------------------------------------------------------------------------
-
-/**
- * Normalize a subscriber email for lookup and storage.
- *
- * @param {string} email
- * @returns {string}
- */
-export function normalizeSubscriberEmail(email) {
-  return email?.toString().trim().toLowerCase() ?? '';
-}
 
 /**
  * Parse back-in-stock subscription list query params.
@@ -97,7 +88,7 @@ export function buildSubscriptionWhere({
 
   const query = q?.trim();
   if (query) {
-    where.email = containsFilter(normalizeSubscriberEmail(query));
+    where.email = containsFilter(normalizeEmail(query));
   }
 
   return where;
@@ -106,11 +97,12 @@ export function buildSubscriptionWhere({
 /**
  * Parse subscribe payload from storefront/API input.
  *
- * @param {object} input
+ * @param {{ variantId?: unknown, email?: unknown, customerId?: unknown }} [input]
+ * @returns {{ variantId: string, email: string, customerId: string | null }}
  */
 export function parseSubscribeInput(input = {}) {
   const variantId = input.variantId?.toString().trim();
-  const email = normalizeSubscriberEmail(input.email);
+  const email = normalizeEmail(input.email);
   const customerId = input.customerId?.toString().trim() || null;
 
   if (!variantId) {
@@ -122,6 +114,12 @@ export function parseSubscribeInput(input = {}) {
   if (!email) {
     throw Object.assign(new Error('Email is required.'), {
       code: 'EMAIL_REQUIRED',
+    });
+  }
+
+  if (!isValidEmail(email)) {
+    throw Object.assign(new Error('Enter a valid email address.'), {
+      code: 'EMAIL_INVALID',
     });
   }
 

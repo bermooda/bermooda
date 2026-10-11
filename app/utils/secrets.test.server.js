@@ -44,6 +44,27 @@ describe('secrets.server', () => {
     expect(decryptSecret('plain-api-key')).toBe('plain-api-key');
   });
 
+  it('explains a failed decrypt after BETTER_AUTH_SECRET changes', () => {
+    const ciphertext = encryptSecret('re_live_abc123');
+    process.env.BETTER_AUTH_SECRET = 'rotated-secret';
+    expect(() => decryptSecret(ciphertext)).toThrow(
+      expect.objectContaining({
+        code: 'SECRET_DECRYPT_FAILED',
+        message: expect.stringMatching(/BETTER_AUTH_SECRET changed/),
+      })
+    );
+  });
+
+  it('rejects tampered ciphertext', () => {
+    const [prefix, version, iv, tag, data] = encryptSecret('x').split(':');
+    const flipped = data.startsWith('A')
+      ? `B${data.slice(1)}`
+      : `A${data.slice(1)}`;
+    expect(() =>
+      decryptSecret([prefix, version, iv, tag, flipped].join(':'))
+    ).toThrow(expect.objectContaining({ code: 'SECRET_DECRYPT_FAILED' }));
+  });
+
   it('throws when BETTER_AUTH_SECRET is missing', () => {
     delete process.env.BETTER_AUTH_SECRET;
     expect(() => encryptSecret('x')).toThrow(/BETTER_AUTH_SECRET/);

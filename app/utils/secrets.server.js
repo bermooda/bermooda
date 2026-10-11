@@ -67,7 +67,9 @@ export function encryptSecret(plaintext) {
 
 /**
  * Decrypt a value previously produced by {@link encryptSecret}.
- * Plain (non-prefixed) strings are returned as-is for robustness.
+ * Plain (non-prefixed) strings are returned as-is for robustness. Throws
+ * `SECRET_DECRYPT_FAILED` when the value was encrypted under another key or
+ * was tampered with.
  *
  * @param {string} ciphertext
  * @returns {string}
@@ -87,14 +89,24 @@ export function decryptSecret(ciphertext) {
     throw new Error('Invalid encrypted secret format');
   }
 
-  const iv = Buffer.from(parts[2], 'base64url');
-  const tag = Buffer.from(parts[3], 'base64url');
-  const data = Buffer.from(parts[4], 'base64url');
-  const decipher = createDecipheriv('aes-256-gcm', deriveKey(), iv);
-  decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(data), decipher.final()]).toString(
-    'utf8'
-  );
+  const key = deriveKey();
+  try {
+    const iv = Buffer.from(parts[2], 'base64url');
+    const tag = Buffer.from(parts[3], 'base64url');
+    const data = Buffer.from(parts[4], 'base64url');
+    const decipher = createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(tag);
+    return Buffer.concat([decipher.update(data), decipher.final()]).toString(
+      'utf8'
+    );
+  } catch (cause) {
+    throw Object.assign(
+      new Error(
+        'Could not decrypt a stored secret. If BETTER_AUTH_SECRET changed, re-enter the plugin credentials.'
+      ),
+      { code: 'SECRET_DECRYPT_FAILED', cause }
+    );
+  }
 }
 
 /**

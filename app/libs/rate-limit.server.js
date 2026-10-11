@@ -2,6 +2,7 @@
 // Preset rate-limit policies and enforcement helpers.
 
 import { consumeRateLimit } from '#/utils/rate-limit/index.server';
+import { getClientIp } from '#/utils/request/index.server';
 
 /** @type {Record<string, { limit: number, windowMs: number }>} */
 export const RATE_LIMITS = {
@@ -14,14 +15,13 @@ export const RATE_LIMITS = {
 };
 
 /**
- * Resolve a stable client key from the request.
+ * Resolve a stable client key from the request (client IP per `TRUST_PROXY`).
  *
  * @param {Request} request
+ * @returns {string}
  */
 export function getClientKey(request) {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  return request.headers.get('x-real-ip') ?? 'unknown';
+  return getClientIp(request) ?? 'unknown';
 }
 
 /**
@@ -29,6 +29,7 @@ export function getClientKey(request) {
  *
  * @param {Request} request
  * @param {keyof typeof RATE_LIMITS} policy
+ * @returns {void}
  */
 export function enforceRateLimit(request, policy) {
   const config = RATE_LIMITS[policy];
@@ -59,6 +60,7 @@ export function enforceRateLimit(request, policy) {
  * React Router middleware factory for rate limiting.
  *
  * @param {keyof typeof RATE_LIMITS} policy
+ * @returns {(args: { request: Request }, next: () => Promise<Response>) => Promise<Response>}
  */
 export function rateLimitMiddleware(policy) {
   return async function rateLimitMiddlewareHandler({ request }, next) {

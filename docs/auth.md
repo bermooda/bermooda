@@ -115,7 +115,8 @@ export const middleware = [
 ```
 
 `rateLimitMiddleware('auth')` applies the auth policy (20 requests/min per
-IP+path). `adminAuthHandlerMiddleware` / `customerAuthHandlerMiddleware` throw
+IP+path). The client IP comes from `X-Forwarded-For` as far as `TRUST_PROXY`
+allows (see the README's "Behind a reverse proxy"). `adminAuthHandlerMiddleware` / `customerAuthHandlerMiddleware` throw
 the better-auth handler response without calling `next()`.
 
 ---

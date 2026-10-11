@@ -197,6 +197,13 @@ docker run -p 3000:3000 --env-file .env \
   -e DATABASE_URL=file:/data/sqlite.db bermooda
 ```
 
+### Behind a reverse proxy
+
+Production deployments usually sit behind a TLS-terminating proxy or load balancer:
+
+- Set `TRUST_PROXY` to the number of proxies in front of the app (default `1`). Rate limits use the client IP the outermost trusted proxy appended to `X-Forwarded-For`, so clients can't dodge them by sending their own header.
+- Forward the original `Host` header (for nginx, `proxy_set_header Host $host;`). Sales-channel domains and absolute SEO URLs (canonical, hreflang, sitemap, robots.txt) use it. `X-Forwarded-Host` and `X-Forwarded-Proto` are ignored, and the URL scheme comes from `baseUrl` in `bermooda.config.js`.
+
 See [docs/storage.md](docs/storage.md) and [docs/postgres.md](docs/postgres.md) when you move beyond local SQLite.
 
 ## Contributing

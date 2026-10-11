@@ -182,6 +182,9 @@ export async function action({ request, params }) {
       if (err.code === 'EMAIL_REQUIRED') {
         return { backInStockError: 'Enter your email address.' };
       }
+      if (err.code === 'EMAIL_INVALID') {
+        return { backInStockError: 'Enter a valid email address.' };
+      }
       return { backInStockError: 'Could not subscribe. Try again.' };
     }
   }

@@ -35,7 +35,6 @@ import {
   deleteBackInStockSubscription,
   getBackInStockSubscription,
   listBackInStockSubscriptions,
-  normalizeSubscriberEmail,
   notifyBackInStockSubscribers,
   parseDeleteSubscriptionFromForm,
   parseSubscribeFromForm,
@@ -51,14 +50,6 @@ import { sendBackInStockEmail } from '#/emails/index.server';
 beforeEach(() => {
   vi.clearAllMocks();
   loadProductTitleMap.mockResolvedValue(new Map());
-});
-
-describe('normalizeSubscriberEmail', () => {
-  it('trims and lowercases email', () => {
-    expect(normalizeSubscriberEmail(' Shop@Example.com ')).toBe(
-      'shop@example.com'
-    );
-  });
 });
 
 describe('parseSubscriptionListParams', () => {
@@ -126,6 +117,12 @@ describe('parseSubscribeInput', () => {
     expect(() => parseSubscribeInput({ variantId: 'v1', email: '  ' })).toThrow(
       'Email is required'
     );
+  });
+
+  it('rejects malformed email', () => {
+    expect(() =>
+      parseSubscribeInput({ variantId: 'v1', email: 'not-an-email' })
+    ).toThrow(expect.objectContaining({ code: 'EMAIL_INVALID' }));
   });
 });
 
