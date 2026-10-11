@@ -51,32 +51,22 @@ export function ShippingTab({ data }) {
     );
   }
 
+  // The server trims names and derives ids for new zones
+  // (`parseAdminShippingZonesInput`).
   const zonesForSubmit = zones.map(
-    (
-      { id, name, countries, rateCents, freeOverCents, estimatedDays },
-      index
-    ) => {
-      const trimmedName = name?.trim() ?? '';
-      const slug =
-        trimmedName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '_')
-          .replace(/^_|_$/g, '') || `zone_${index}`;
-
-      return {
-        id: id || slug,
-        name: trimmedName,
-        countries:
-          typeof countries === 'string'
-            ? countries
-            : Array.isArray(countries)
-              ? countries.join(', ')
-              : '',
-        rateCents,
-        freeOverCents,
-        estimatedDays,
-      };
-    }
+    ({ id, name, countries, rateCents, freeOverCents, estimatedDays }) => ({
+      id,
+      name,
+      countries:
+        typeof countries === 'string'
+          ? countries
+          : Array.isArray(countries)
+            ? countries.join(', ')
+            : '',
+      rateCents,
+      freeOverCents,
+      estimatedDays,
+    })
   );
 
   return (

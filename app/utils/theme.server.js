@@ -1,29 +1,16 @@
-/**
- * Theme cookie utilities for server-side theme detection
- */
+// Theme cookie utilities for server-side color-mode detection.
+
+import { readCookie } from '#/utils/cookies';
 
 const THEME_COOKIE_NAME = 'theme';
 
 /**
- * Parse the theme from a cookie header
+ * Parse the color mode from the `theme` cookie.
  *
  * @param {Request} request - The incoming request
  * @returns {'light' | 'dark' | null} The theme from the cookie, or null if not set
  */
 export function getThemeFromRequest(request) {
-  const cookieHeader = request.headers.get('Cookie');
-  if (!cookieHeader) return null;
-
-  const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
-    const [key, value] = cookie.trim().split('=');
-    acc[key] = value;
-    return acc;
-  }, /** @type {Record<string, string>} */ ({}));
-
-  const theme = cookies[THEME_COOKIE_NAME];
-  if (theme === 'light' || theme === 'dark') {
-    return theme;
-  }
-
-  return null;
+  const theme = readCookie(request, THEME_COOKIE_NAME);
+  return theme === 'light' || theme === 'dark' ? theme : null;
 }
