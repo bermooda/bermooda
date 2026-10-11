@@ -1,6 +1,7 @@
 // app/core/imports/index.server.js
 // CSV import for products and customers (mirrors export formats).
 
+import { isValidEmail, normalizeEmail } from '#/utils/email';
 import prisma from '#/libs/prisma.server';
 import { createProduct, updateProduct } from '#/core/catalog/index.server';
 import { createCustomer, updateCustomer } from '#/core/customers/index.server';
@@ -240,6 +241,9 @@ export async function importProductsCsv(csvText) {
 
 /**
  * Import customers CSV.
+ *
+ * @param {string} csvText
+ * @returns {Promise<{ created: number, updated: number, errors: Array<{ row: string[], error: string }> }>}
  */
 export async function importCustomersCsv(csvText) {
   const { headers, rows } = parseCsv(csvText);
@@ -247,9 +251,13 @@ export async function importCustomersCsv(csvText) {
 
   for (const row of rows) {
     const data = rowToObject(headers, row);
-    const email = data.email?.trim().toLowerCase();
+    const email = normalizeEmail(data.email);
     if (!email) {
       results.errors.push({ row, error: 'Missing email' });
+      continue;
+    }
+    if (!isValidEmail(email)) {
+      results.errors.push({ row, error: 'Invalid email' });
       continue;
     }
 

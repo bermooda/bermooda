@@ -3,6 +3,7 @@
 // Auth is handled by better-auth (app/libs/auth/customer/index.server.js).
 // This service is data-only — no auth imports.
 
+import { isValidEmail, normalizeEmail } from '#/utils/email';
 import prisma from '#/libs/prisma.server';
 import { containsFilter } from '#/libs/prisma/filters/index.server';
 
@@ -138,17 +139,25 @@ export async function updateCustomer(id, data) {
 }
 
 /**
- * Create a customer profile.
+ * Create a customer profile. The email is trimmed and lowercased so it matches
+ * lookups from imports and auth.
  *
  * @param {{ email: string, name?: string|null, phone?: string|null, preferredLocale?: string|null }} data
  * @returns {Promise<object>}
  */
 export async function createCustomer({
-  email,
+  email: rawEmail,
   name = null,
   phone = null,
   preferredLocale = null,
 }) {
+  const email = normalizeEmail(rawEmail);
+  if (!isValidEmail(email)) {
+    throw Object.assign(new Error('Enter a valid email address.'), {
+      code: 'EMAIL_INVALID',
+    });
+  }
+
   const existing = await prisma.customer.findUnique({ where: { email } });
   if (existing) {
     throw Object.assign(

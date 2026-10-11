@@ -17,7 +17,7 @@ export async function action({ request }) {
     const customer = await createCustomer({ email, name, phone });
     return redirect(`/admin/customers/${customer.id}`);
   } catch (err) {
-    if (err.code === 'CUSTOMER_EMAIL_EXISTS') {
+    if (err.code === 'CUSTOMER_EMAIL_EXISTS' || err.code === 'EMAIL_INVALID') {
       return { error: err.message };
     }
     throw err;

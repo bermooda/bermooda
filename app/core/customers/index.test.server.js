@@ -267,6 +267,27 @@ describe('createCustomer', () => {
     });
     expect(prisma.customer.create).not.toHaveBeenCalled();
   });
+
+  it('normalizes the email before the duplicate check and insert', async () => {
+    prisma.customer.findUnique.mockResolvedValue(null);
+    prisma.customer.create.mockResolvedValue(makeCustomer());
+
+    await createCustomer({ email: '  Alice@Example.COM ' });
+
+    expect(prisma.customer.findUnique).toHaveBeenCalledWith({
+      where: { email: 'alice@example.com' },
+    });
+    expect(prisma.customer.create).toHaveBeenCalledWith({
+      data: { email: 'alice@example.com', name: null, phone: null },
+    });
+  });
+
+  it('throws EMAIL_INVALID for a malformed email', async () => {
+    await expect(createCustomer({ email: 'alice' })).rejects.toMatchObject({
+      code: 'EMAIL_INVALID',
+    });
+    expect(prisma.customer.create).not.toHaveBeenCalled();
+  });
 });
 
 // ---------------------------------------------------------------------------
