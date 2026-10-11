@@ -1,7 +1,8 @@
 // app/core/seo/index.server.js
 // SEO helpers: meta tags, canonical URLs, hreflang, JSON-LD, sitemap.
 
-import { getDomainUrl } from '#/utils/misc';
+import config from '#/libs/config';
+import { getRequestOrigin } from '#/utils/request/index.server';
 import prisma from '#/libs/prisma.server';
 import { listProducts } from '#/core/catalog/index.server';
 import { listCollections } from '#/core/collections/index.server';
@@ -43,9 +44,13 @@ const SEO_SETTING_KEYS = [
 
 /**
  * Build absolute URL for a path on this site.
+ *
+ * @param {Request} request
+ * @param {string} [path]
+ * @returns {string}
  */
 export function buildCanonicalUrl(request, path = '/') {
-  const base = getDomainUrl(request);
+  const base = getRequestOrigin(request, config.baseUrl);
   const normalized = path.startsWith('/') ? path : `/${path}`;
   return `${base}${normalized === '/' ? '' : normalized}`;
 }
