@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/bermooda/bermooda/compare/bermooda-v0.13.0...bermooda-v0.13.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* **security:** audit app/utils — forged proxy headers, rate-limit store, cache races, email validation ([#248](https://github.com/bermooda/bermooda/issues/248)) ([573a9e5](https://github.com/bermooda/bermooda/commit/573a9e545c43be4a4a13d9ec09d5ac61de2c4289))
+
 ## [0.13.0](https://github.com/bermooda/bermooda/compare/bermooda-v0.12.0...bermooda-v0.13.0) (2026-10-10)
 
 
