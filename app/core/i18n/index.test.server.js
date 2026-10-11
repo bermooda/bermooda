@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('#/utils/cache/index.server', () => ({
   getCachedResult: vi.fn(async (_k, cb) => cb()),
-  default: { delete: vi.fn() },
 }));
 
 vi.mock('#/core/settings/index.server', async () => {

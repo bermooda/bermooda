@@ -5,8 +5,13 @@ const DEFAULT_TTL = 1000 * 60 * 5;
 
 const cache = new TTLCache({ max: 10000, ttl: DEFAULT_TTL });
 
+/** @type {Map<string, Promise<unknown>>} */
+const inflight = new Map();
+
 /**
- * Gets a cached result from the cache.
+ * Gets a cached result from the cache. Concurrent misses for the same key
+ * share one refresh, and a refresh that was invalidated while running is
+ * returned to its callers but not cached.
  *
  * @template T
  * @param {string} key - The key to get the cached result for.
@@ -19,25 +24,47 @@ export async function getCachedResult(key, refreshCallback, ttl = DEFAULT_TTL) {
     return /** @type {T} */ (cache.get(key));
   }
 
-  const result = await refreshCallback();
-  cache.set(key, result, { ttl });
+  const pending = inflight.get(key);
+  if (pending) {
+    return /** @type {Promise<T>} */ (pending);
+  }
 
-  return result;
+  const refresh = Promise.resolve()
+    .then(refreshCallback)
+    .then(
+      (result) => {
+        if (inflight.get(key) === refresh) {
+          inflight.delete(key);
+          cache.set(key, result, { ttl });
+        }
+        return result;
+      },
+      (error) => {
+        if (inflight.get(key) === refresh) inflight.delete(key);
+        throw error;
+      }
+    );
+  inflight.set(key, refresh);
+
+  return refresh;
 }
 
 /**
  * Invalidate a single cache key.
  *
  * @param {string} key
+ * @returns {void}
  */
 export function invalidateCacheKey(key) {
   cache.delete(key);
+  inflight.delete(key);
 }
 
 /**
  * Invalidate all keys with the given prefix.
  *
  * @param {string} prefix
+ * @returns {void}
  */
 export function invalidateCachePrefix(prefix) {
   for (const key of /** @type {Iterable<string>} */ (cache.keys())) {
@@ -45,6 +72,19 @@ export function invalidateCachePrefix(prefix) {
       cache.delete(key);
     }
   }
+  for (const key of inflight.keys()) {
+    if (key.startsWith(prefix)) {
+      inflight.delete(key);
+    }
+  }
 }
 
-export default cache;
+/**
+ * Drop every cached and in-flight entry.
+ *
+ * @returns {void}
+ */
+export function clearCache() {
+  cache.clear();
+  inflight.clear();
+}

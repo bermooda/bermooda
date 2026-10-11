@@ -1,7 +1,10 @@
 // app/core/settings/index.server.js
 // Settings service: read-through TTL-cached get/set with seed defaults.
 
-import cache, { getCachedResult } from '#/utils/cache/index.server';
+import {
+  getCachedResult,
+  invalidateCacheKey,
+} from '#/utils/cache/index.server';
 import prisma from '#/libs/prisma.server';
 import { parseAddressValidationSettingsInput } from '#/core/address-validation/input';
 import { resolveAddressValidationProvider } from '#/core/address-validation/registry.server';
@@ -88,7 +91,7 @@ export async function set(key, value) {
     update: { value: serialized },
   });
 
-  cache.delete(`setting:${key}`);
+  invalidateCacheKey(`setting:${key}`);
 }
 
 /**
