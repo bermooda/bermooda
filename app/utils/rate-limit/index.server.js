@@ -1,7 +1,14 @@
 // app/utils/rate-limit/index.server.js
-// In-memory sliding-window rate limiter for auth, API, and webhook endpoints.
+// In-memory fixed-window rate limiter for auth, API, and webhook endpoints.
 
-const buckets = new Map();
+import { TTLCache } from '@isaacs/ttlcache';
+
+// Buckets expire with their window. The cap bounds memory when many clients
+// or paths are seen; past it, the buckets closest to expiry are dropped first.
+const MAX_BUCKETS = 50_000;
+
+/** @type {TTLCache<string, { count: number }>} */
+const buckets = new TTLCache({ max: MAX_BUCKETS, checkAgeOnGet: true });
 
 /**
  * @typedef {{ limit: number, windowMs: number }} RateLimitConfig
@@ -15,25 +22,21 @@ const buckets = new Map();
  * @returns {{ allowed: boolean, remaining: number, retryAfterMs: number }}
  */
 export function consumeRateLimit(key, { limit, windowMs }) {
-  const now = Date.now();
-  const bucket = buckets.get(key) ?? { count: 0, resetAt: now + windowMs };
-
-  if (now >= bucket.resetAt) {
-    bucket.count = 0;
-    bucket.resetAt = now + windowMs;
+  let bucket = buckets.get(key);
+  if (!bucket) {
+    bucket = { count: 0 };
+    buckets.set(key, bucket, { ttl: windowMs });
   }
 
   if (bucket.count >= limit) {
-    buckets.set(key, bucket);
     return {
       allowed: false,
       remaining: 0,
-      retryAfterMs: Math.max(0, bucket.resetAt - now),
+      retryAfterMs: Math.max(0, Math.ceil(buckets.getRemainingTTL(key))),
     };
   }
 
   bucket.count += 1;
-  buckets.set(key, bucket);
 
   return {
     allowed: true,
@@ -45,4 +48,13 @@ export function consumeRateLimit(key, { limit, windowMs }) {
 /** Reset all buckets — test use only. */
 export function __resetRateLimits() {
   buckets.clear();
+}
+
+/**
+ * Number of live buckets — test use only.
+ *
+ * @returns {number}
+ */
+export function __rateLimitBucketCount() {
+  return buckets.size;
 }
